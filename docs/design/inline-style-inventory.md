@@ -55,7 +55,7 @@
 
 | 文件 | px 次数 | 性质初判 |
 |---|---:|---|
-| `components/bi/PivotTable.tsx` | 35 | 容器 minHeight/minWidth + 混用 designTokens；多处 `border:'1px solid border.default'` 笔误值待修 |
+| `components/bi/PivotTable.tsx` | 35 | ✅ 第1批已修：失效字符串路径 `border.default/grey.400/700/text.muted/primary/common.white/lg` 全部映射到 theme.palette（divider/grey/text/common），tsc+eslint 绿；剩余 minHeight/minWidth 等固定尺寸属合理，裸 px 留 B 类抽常量 |
 | `components/ErrorBoundary.tsx` | 34 | 错误页布局，多为合理固定尺寸，少量间距可抽 |
 | `dev-tools/MicroFrontendDevTools.tsx` | 29 | D 类，dev 工具 |
 | `pages/performance/PerformanceTestPage.tsx` | 23 | D 类，性能测试载体 |
