@@ -51,6 +51,8 @@ pub struct Folder {
     pub id: Uuid,
     pub tenant_id: Uuid,
     pub name: String,
+    /// BE-09 P1：前端契约为 `parentId`（doc/index.ts:75）；alias 保留 `parent_id` 入站兼容。
+    #[serde(rename = "parentId", alias = "parent_id")]
     pub parent_id: Option<Uuid>,
     pub description: Option<String>,
     pub sort_order: Option<i32>,
@@ -108,6 +110,7 @@ pub struct UpdateTemplateRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateFolderRequest {
     pub name: String,
+    #[serde(alias = "parentId")]
     pub parent_id: Option<Uuid>,
     pub description: Option<String>,
     pub sort_order: Option<i32>,
@@ -117,6 +120,7 @@ pub struct CreateFolderRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateFolderRequest {
     pub name: Option<String>,
+    #[serde(alias = "parentId")]
     pub parent_id: Option<Uuid>,
     pub description: Option<String>,
     pub sort_order: Option<i32>,
