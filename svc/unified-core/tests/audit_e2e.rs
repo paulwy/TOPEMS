@@ -11,9 +11,7 @@ use axum::Extension;
 use topems_unified_core::modules::audit::handlers::list_operation_logs;
 use topems_unified_core::modules::audit::login_log_handlers::{list_login_logs, record_login};
 use topems_unified_core::modules::audit::models::{OperationLogListResponse, OperationLogQuery};
-use topems_unified_core::modules::audit::{
-    LoginLogQuery, RecordLoginRequest,
-};
+use topems_unified_core::modules::audit::{LoginLogQuery, RecordLoginRequest};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
