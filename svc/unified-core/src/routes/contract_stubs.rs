@@ -91,7 +91,9 @@ pub fn contract_stub_routes() -> Router<AppState> {
         .route("/search/suggestions", get(stub_list))
         .route("/search/recent", get(stub_list))
         .route("/search/recent", delete(stub_action))
-        .route("/dict/dict-types/{id}/items", get(stub_list))
+        // B4-⑤：/dict/dict-types/{id}/items 已由 master-data 真实路由承接
+        // （GET /api/master-data/dict/dict-types/{dict_type_id}/items, list_dict_items 走真 DB），
+        // 前端 dictItemApi.list 已改指 apiClient.master，core 空壳删除。
         .route("/tenant/{id}/analytics/overview", get(stub_list))
         .route("/tenant/{id}/analytics/usage", get(stub_list))
         .route("/tenant/{id}/analytics/activity", get(stub_list))

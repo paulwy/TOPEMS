@@ -142,8 +142,10 @@ export const dictItemApi = {
 
     const queryString = searchParams.toString();
     // 直拼 ?${queryString}（空串时为尾 ?）：避免嵌套三元模板被静态提取
-    // 误折叠为 /items/:x 伪路径（items 列表实为 /dict-types/{id}/items）
-    return apiClient.core.get(`/dict/dict-types/${dictTypeId}/items?${queryString}`);
+    // 误折叠为 /items/:x 伪路径（items 列表实为 /dict-types/{id}/items）。
+    // 2026-10-19：改指 master-data 真实路由（list_dict_items 走 core_dict_items 真 DB），
+    // 移除 core /dict 空壳兜底。
+    return apiClient.master.get(`/dict/dict-types/${dictTypeId}/items?${queryString}`);
   },
 
   async get(id: string): Promise<ApiResponse<DictItem>> {

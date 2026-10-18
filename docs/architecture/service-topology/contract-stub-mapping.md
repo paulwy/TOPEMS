@@ -23,7 +23,7 @@
 - **wms-approval（12）→ ✅ 第二批已对接删除**：复核纠正第一批"仅 4 条/不可对接"的单行 grep 误判——svc/wms 实际已挂 inbound/outbound/stock-take 各 start/approve/reject + transfer start/approve/reject（11 条，transfer 命名 `/transfers`）。前端 `wmsApprovalApi` 由裸 `apiClient`（core 兜底）改指 `apiClient.wms`（去 `/wms` 前缀、transfer 改 `/transfers`），body 对齐后端 `{operator, comment}`；core 12 条兜底删除，集成测试 18 passed。
 - **help（7）→ 保留**：`help.ts` 注释明示走 core client，非已迁出。
 - **search（4）→ 全保留**：`shared/index.ts:176,180,184,188` 活调 core `/search`、`/search/suggestions`、`/search/recent`(GET/DELETE)。
-- **dict（1）→ 保留**：`system/index.ts:146` 走 core `/dict/dict-types/{id}/items`。
+- **dict（1）→ 保留（第一批）**：`system/index.ts:146` 走 core `/dict/dict-types/{id}/items`。**⑤已对接**：改指 master-data 真实路由并删 core 空壳（见 4.8）。
 
 **第二批②③实测结论（无可静态闭环项，不擅自新建/删除）**：
 
@@ -52,7 +52,7 @@
 | 🔴 | **待上游新建**（全仓 0 命中） | 排期新建，或产品判定不做 |
 | ⚪ | **前端未确认调用** | 随 BE-08 业务勾选存废，可能直接删 |
 
-## 3. 总览（截至第二批④：79 条 / 21 域；原 125，已删 46 = 第一批26 + WMS审批12 + comments/favorites8）
+## 3. 总览（截至第二批⑤：78 条 / 21 域；原 125，已删 47 = 第一批26 + WMS审批12 + comments/favorites8 + dict items1）
 
 | 域 | 条数 | 主要状态 | 上游候选 / 现状 | 前端调用文件 |
 |---|---:|---|---|---|
@@ -63,7 +63,7 @@
 | comments | 0（原4，④已建） | ✅ 已实现 | `modules/engagement` 真实 CRUD（core_comments 表），空壳删除 | `api/shared/index.ts` |
 | favorites | 0（原4，④已建） | ✅ 已实现 | `modules/engagement` 真实 CRUD + 查重（core_favorites 表），空壳删除 | `api/shared/index.ts` |
 | search | 4 | 🟢 部分 | svc/search 已有 `/`、`/suggestions`；`/search/recent` 🔴 | `api/search/index.ts` |
-| dict | 1 | 🟢 | master-data `dict/handlers` 已有，待前缀核对 | `api/system/index.ts` |
+| dict | 0（原1，⑤已对接） | ✅ 已对接 | `dictItemApi.list` 改指 master-data `GET /dict/dict-types/{id}/items`（list_dict_items 走真 DB），core 空壳删除；其余 dict-type/item CRUD 本就走 master | `api/system/index.ts` |
 | tenant/analytics | 7 | 🔴（原误标🟡） | ②实测：无已写 handler（tenant_analytics.rs 不存在），非待挂载；前端封装无页面直接消费，待新建/转发 svc/analytics | `api/tenant/analytics.ts` |
 | tenant/billing | 8 | 🟡 部分 | core 已挂 `/billing`、`/invoices`；subscription/pay/plan/cancel/card 🔴 | `api/tenant/analytics.ts` |
 | tenant/settings | 2 | 🔴 | 无对应 handler | `api/tenant/config.ts` |
@@ -172,12 +172,12 @@
 
 - 现状：svc/search 已有 `/`、`/suggestions`；搜索历史（recent）未实现。
 
-### 4.8 dict（1）🟢 已有待前缀核对
+### 4.8 dict（原1）✅ ⑤已对接并删除
 | 方法 | 路径 | 兜底 | 状态 |
 |---|---|---|---|
-| GET | `/dict/dict-types/{id}/items` | 列表空壳 | 🟢 |
+| GET | `/dict/dict-types/{id}/items` | 列表空壳 | ✅ 已对接 |
 
-- 现状：master-data `dict/handlers` 已有字典项；核对前缀后移除兜底。
+- ⑤（2026-10-19）：`dictItemApi.list` 由 `apiClient.core` 改指 `apiClient.master` 的真实路由 `GET /dict/dict-types/{dict_type_id}/items`（`list_dict_items` 走 `core_dict_items` 真 DB，返回 items/total/page/page_size，与前端 `PaginatedResult<DictItem>` 对齐，消费方仅取 items/total）；core 空壳删除。dict-type CRUD 与 dict-item CRUD 本就走 master。
 
 ### 4.9 tenant/analytics（7）🟡 core handler 待挂
 | 方法 | 路径 | 兜底 | 状态 |
