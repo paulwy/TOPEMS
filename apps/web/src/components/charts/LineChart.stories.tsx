@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { LineChartComponent } from './LineChart';
+import { G2_PALETTE } from './chartPalette';
 
 const meta = {
   title: 'Charts/LineChart',
@@ -96,8 +97,8 @@ export const MultiSeries: Story = {
     title: '订单量 vs 访客量',
     height: 300,
     yKeys: [
-      { key: 'orders', name: '订单量', color: '#5B8FF9' },
-      { key: 'visitors', name: '访客量', color: '#F6BD16' },
+      { key: 'orders', name: '订单量', color: G2_PALETTE[0] },
+      { key: 'visitors', name: '访客量', color: G2_PALETTE[2] },
     ],
   },
 };
@@ -114,6 +115,6 @@ export const NoTitle: Story = {
   args: {
     data: revenueTrendData.slice(0, 6),
     height: 250,
-    color: '#E86452',
+    color: G2_PALETTE[3],
   },
 };

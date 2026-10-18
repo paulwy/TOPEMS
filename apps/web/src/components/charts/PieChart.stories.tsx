@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { PieChartComponent } from './PieChart';
+import { G2_PALETTE } from './chartPalette';
 
 const meta = {
   title: 'Charts/PieChart',
@@ -38,10 +39,10 @@ const marketShareData = [
 ];
 
 const deviceTypeData = [
-  { name: 'iOS', value: 45, color: '#5B8FF9' },
-  { name: 'Android', value: 35, color: '#5AD8A6' },
-  { name: 'Windows', value: 12, color: '#F6BD16' },
-  { name: 'macOS', value: 8, color: '#E86452' },
+  { name: 'iOS', value: 45, color: G2_PALETTE[0] },
+  { name: 'Android', value: 35, color: G2_PALETTE[1] },
+  { name: 'Windows', value: 12, color: G2_PALETTE[2] },
+  { name: 'macOS', value: 8, color: G2_PALETTE[3] },
 ];
 
 const orderStatusData = [

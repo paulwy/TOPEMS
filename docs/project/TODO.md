@@ -1,5 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
+> # ⚠️ 已归档（Archived · 不再维护）
+> 本文件为 V516 旧版任务执行日志（止于 2026-09-26），与现行仓库根目录 `TODO.md` 存在口径冲突。**现行任务真相源为仓库根目录 `TODO.md`**，本文件仅作历史存档，请勿据此排期或决策。
+
 > **版本**: V516 | **更新日期**: 2026-09-10 | **当前分支**: `main`（V477 后未开新 feature 分支）
 > **V517 文档体系重构（2026-09-26）✅ 已完成**：docs/ 346+ md 按读者分层重建（一级目录 30→19、根 .md 23→9），188 个文件集中归档（0 硬删除，全 git mv 可恢复），60+ 交叉引用修复（含 scripts/topems.sh 断链），5 份核心索引合并重建（docs/README、developer/README、admin/README、reports/README、UserManual v2.2）；方案全文 `docs/archive/misc/DOC_REORGANIZATION_PLAN.md`，提交 e5f173a8→e9e814be5 已推送
 >

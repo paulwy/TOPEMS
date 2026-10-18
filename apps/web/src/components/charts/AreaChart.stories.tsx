@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { AreaChart } from './AreaChart';
+import { G2_PALETTE } from './chartPalette';
 
 const meta = {
   title: 'Charts/AreaChart',
@@ -80,7 +81,7 @@ const dailyTrafficData = Array.from({ length: 30 }, (_, i) => ({
 export const Default: Story = {
   args: {
     xKey: 'month',
-    yKeys: [{ key: 'revenue', name: '营收（万元）', color: '#5B8FF9' }],
+    yKeys: [{ key: 'revenue', name: '营收（万元）', color: G2_PALETTE[0] }],
     data: monthlySalesData,
     height: 300,
   },
@@ -90,8 +91,8 @@ export const MultiSeries: Story = {
   args: {
     xKey: 'month',
     yKeys: [
-      { key: 'productA', name: '产品 A', color: '#5B8FF9' },
-      { key: 'productB', name: '产品 B', color: '#5AD8A6' },
+      { key: 'productA', name: '产品 A', color: G2_PALETTE[0] },
+      { key: 'productB', name: '产品 B', color: G2_PALETTE[1] },
     ],
     data: multiSeriesData,
     height: 300,
@@ -101,7 +102,7 @@ export const MultiSeries: Story = {
 const Dashed: Story = {
   args: {
     xKey: 'month',
-    yKeys: [{ key: 'revenue', name: '营收（万元）', color: '#E86452' }],
+    yKeys: [{ key: 'revenue', name: '营收（万元）', color: G2_PALETTE[3] }],
     data: monthlySalesData.slice(0, 8),
     height: 300,
     strokeType: 'dashed',
@@ -112,7 +113,7 @@ const Dashed: Story = {
 const DenseData: Story = {
   args: {
     xKey: 'day',
-    yKeys: [{ key: 'visits', name: '日访问量', color: '#6DC8EC' }],
+    yKeys: [{ key: 'visits', name: '日访问量', color: G2_PALETTE[4] }],
     data: dailyTrafficData,
     height: 350,
     showGrid: false,

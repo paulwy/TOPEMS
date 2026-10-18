@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { RadarChart } from './RadarChart';
+import { G2_PALETTE } from './chartPalette';
 
 const meta = {
   title: 'Charts/RadarChart',
@@ -68,8 +69,8 @@ export const Default: Story = {
     data: skillAssessmentData,
     dataKey: 'subject',
     yKeys: [
-      { key: 'teamA', name: 'A 团队', color: '#5B8FF9' },
-      { key: 'teamB', name: 'B 团队', color: '#E86452' },
+      { key: 'teamA', name: 'A 团队', color: G2_PALETTE[0] },
+      { key: 'teamB', name: 'B 团队', color: G2_PALETTE[3] },
     ],
     height: 350,
   },
@@ -79,7 +80,7 @@ const SingleSeries: Story = {
   args: {
     data: employeeCapabilityData,
     dataKey: 'subject',
-    yKeys: [{ key: 'score', name: '综合评分', color: '#5B8FF9' }],
+    yKeys: [{ key: 'score', name: '综合评分', color: G2_PALETTE[0] }],
     height: 350,
   },
 };
@@ -89,9 +90,9 @@ export const MultiSeries: Story = {
     data: productComparisonData,
     dataKey: 'dimension',
     yKeys: [
-      { key: 'productA', name: '产品 A', color: '#5B8FF9' },
-      { key: 'productB', name: '产品 B', color: '#5AD8A6' },
-      { key: 'productC', name: '产品 C', color: '#F6BD16' },
+      { key: 'productA', name: '产品 A', color: G2_PALETTE[0] },
+      { key: 'productB', name: '产品 B', color: G2_PALETTE[1] },
+      { key: 'productC', name: '产品 C', color: G2_PALETTE[2] },
     ],
     height: 350,
   },
@@ -101,7 +102,7 @@ const NoLegend: Story = {
   args: {
     data: employeeCapabilityData,
     dataKey: 'subject',
-    yKeys: [{ key: 'score', name: '评分', color: '#6DC8EC' }],
+    yKeys: [{ key: 'score', name: '评分', color: G2_PALETTE[4] }],
     height: 300,
     showLegend: false,
   },
