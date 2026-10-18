@@ -1,6 +1,16 @@
 
 ---
 
+## 待拍板项1 training records 表重设计（2026-10-18）✅ 核实已落地，无新改动
+
+> 原判"需业务拍板"——本次实读核实，发现此前批次已一步到位落地。
+- **前端契约**（`types/training.ts:24-44` TrainingRecord）：record_no/plan_id/title/training_type/category/trainer/training_date/location/duration_hours/participants(string[])/content/materials(string[])/result/pass_rate/status。TrainingPage 实调 records CRUD（TrainingPage.tsx:37-40,85）。
+- **现表 vs 契约**：`ehs.training_records` 已补齐全部契约列（record_no/title/training_type/category/trainer/training_date/location/duration_hours/participants/materials/content/result/pass_rate；participants/materials jsonb），保留 enrollment/completion/score/certificate 历史列；RLS FORCE + tenant policy 已开。
+- **handler 接真**：list(1052)/create(1206 INSERT RETURNING)/get(504)/update(554)/delete(666) 全 sqlx，`training_record_from_row` 列别名对齐契约（program_id→plan_id）。
+- 验证：DB `\d ehs.training_records` 列齐可查；`cargo check -p topems-ehs --lib` 0 错；`cargo test -p topems-ehs --lib` 231 绿。本批无代码/迁移改动（纯核实闭环）。
+
+---
+
 ## S1 ehs 消费中域终态核实（2026-10-18）✅ 无新接真需求，剩余桩面全冻结
 
 > 续接批：逐条核实剩余消费中域前端实调面，确认是否还有"前端在调、后端桩/404"的契约撒谎面。
