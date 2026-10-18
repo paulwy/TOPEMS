@@ -1,6 +1,16 @@
 //! 业务 Copilot API Handlers
 //!
 //! 提供业务 Copilot 模块的 HTTP API 端点
+//!
+//! A-2 持久化判定（2026-10-18）：
+//! - **无状态 AI/静态端点**（保留）：recognize_intent（LLM 单次调用）、list_modules/
+//!   get_module_config（代码内 curated 模块清单）。
+//! - **状态型端点**（create/get/delete/list_session、send_message、update_selected_records、
+//!   set_context_data）：当前由 CopilotSessionManager 内存 RwLock 持有，会话重启即丢。
+//!   该 manager 深度耦合 LLM provider 调用链，全量 sqlx 化需迁移建表 + RLS + manager
+//!   重构，成本高且风险大。判定：**立 follow-up ticket（A-2b）**，本批不硬接（避免半成品
+//!   迁移与 checksums 伪登记）。可复用 core.ai_conversations 表（id/tenant_id/user_id/title）
+//!   承接会话头，messages/records/context 另加 jsonb 列。
 
 use axum::{
     extract::{Path, State},

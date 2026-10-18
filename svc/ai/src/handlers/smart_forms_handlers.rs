@@ -1,5 +1,9 @@
 //! 智能表单 API Handlers（3.2b 真实数据联调）
 //!
+//! A-2 持久化判定（2026-10-18）：list/get_template 返回**内置静态模板**（代码内 curated，
+//! 非用户数据）；ai-fill/validate 为**AI 无状态调用**（请求→LLM→响应，无回存语义）。
+//! 判定：**保留现逻辑，不建表**。若后续需用户自定义模板库，另立 ticket。
+//!
 //! 提供智能表单模块的 HTTP API 端点：
 //! - GET  /dsh/smart-forms/templates          — 内置表单模板列表
 //! - GET  /dsh/smart-forms/templates/{id}     — 指定模板详情

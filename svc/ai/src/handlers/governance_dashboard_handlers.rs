@@ -1,6 +1,11 @@
 //! 治理仪表盘 API Handlers
 //!
 //! 提供 AI 治理仪表盘模块的 HTTP API 端点
+//!
+//! A-2 持久化判定（2026-10-18）：本组 11 端点（dashboard/score/risk/compliance/cost/
+//! performance/metrics/export/security-events/audit/recommendations + cache）全部为
+//! **实时聚合计算型**——GovernanceGenerator 基于内存指标即时派生展示数据，无业务状态
+//! 需落库；clear_cache 仅清内存缓存。判定：**保留现逻辑，不建表**（规避过度工程）。
 
 use axum::{
     extract::{Query, State},
