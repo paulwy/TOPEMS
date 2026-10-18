@@ -94,6 +94,26 @@
 
 ---
 
+## 批 B · P2 清债小批（2026-10-18）🟡 B6 闭环，B1 核销，B2/B3/B5 待方向抉择
+
+> 来源：审计报告批 B。逐项实测复核，不采信旧报告字面；每项独立小 commit、本地门禁绿。
+
+### B1（F9）误报核销，无改动
+- 旧报告称 `mobile/contract_fallback.rs` 134 死路由"未挂载可直接删"。实测 `mobile_real_module.rs:75` 已 `.merge(contract_fallback::routes())` 进活路由树，是 smoke 探测 165 个未实现端点的"轻量兜底防裸 404"层（240 行/139 路由）。删除会编译失败并致前端已调端点裸 404 → **保留**，与 F4 contract_stubs 同属占位兜底。
+
+### B6（H1/H2/H3）✅ 完成，提交 `8ec80da554`
+- **H1**：本地库 `mes._sqlx_migrations` 已不存在（仅 public 一份台账），无需 DROP。
+- **H2**：5 份 2026-08 管理文档（final-review/quality/risk/time/communication）git mv 入 `docs/archive/project-management-2026-08/`，重构 `docs/project/README.md`，`docs/project/TODO.md`（V516）加"已归档·现行以根 TODO 为准"横幅。
+- **H3**：新建 `src/components/charts/chartPalette.ts` 抽 G2 演示色板（G2_PALETTE + DEMO_COLORS + getG2Color），7 个 stories 硬编码 hex 全替换为常量。tsc/eslint/prettier 绿。
+
+### 待方向抉择（本轮不擅动，登记专项）
+- **B2（F8 MF 死配置）**：构建期 federation 插件已移除，运行时 Loader 零 JSX 使用；但 config.ts/core-modules remoteEntry/env 模式分支/vite `/remote` 代理构成"备用 MF 部署模式"，删除属架构回退，需先定"放弃 MF 部署 or 冻结保留"。
+- **B3（F5 DSH RAG 空壳）**：接 `ai_knowledge/rag.rs` 真实 RAG 或删 1096 行空壳，中风险，先定方向。
+- **B5（F7 休眠服务发现）**：etcd/consul/dns 生产零引用、k8s 仅测试引用；但 mod.rs 注释明确为有意保留的预留扩展点，删除违背设计意图，需专项定"冻结标注 or 删至一套"。
+- **B4（F4）**：125 条 contract_stubs 前端在用不可删，后续建 stub→上游实现映射台账（文档型）。
+
+---
+
 ## 待拍板项1 training records 表重设计（2026-10-18）✅ 核实已落地，无新改动
 
 > 原判"需业务拍板"——本次实读核实，发现此前批次已一步到位落地。
