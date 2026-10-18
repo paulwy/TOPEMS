@@ -4312,7 +4312,8 @@ pub async fn create_expense_approval(
         .get("expense_date")
         .and_then(|v| v.as_str())
         .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-        .map(|d| d.with_timezone(&chrono::Utc));
+        .map(|d| d.with_timezone(&chrono::Utc))
+        .unwrap_or_else(Utc::now);
     let expense_type = req
         .get("expense_type")
         .and_then(|v| v.as_str())
