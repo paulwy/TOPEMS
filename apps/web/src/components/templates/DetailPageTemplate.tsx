@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import { iconMd } from '../sharedStyles';
 import React, { useState } from 'react';
 import type { BoxProps } from '@mui/material';
 import {
@@ -167,7 +168,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   if (onEdit) {
     defaultActions.push({
       label: i18n.t('templates.detail_page_template.k0'),
-      icon: <Edit style={{ width: 18, height: 18 }} />,
+      icon: <Edit style={iconMd} />,
       onClick: onEdit,
       variant: 'outlined',
     });
@@ -175,7 +176,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   if (onShare) {
     defaultActions.push({
       label: i18n.t('templates.detail_page_template.k1'),
-      icon: <Share2 style={{ width: 18, height: 18 }} />,
+      icon: <Share2 style={iconMd} />,
       onClick: onShare,
       variant: 'text',
     });
@@ -183,7 +184,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   if (onDelete) {
     defaultActions.push({
       label: i18n.t('templates.detail_page_template.k2'),
-      icon: <Delete style={{ width: 18, height: 18 }} />,
+      icon: <Delete style={iconMd} />,
       onClick: onDelete,
       variant: 'text',
       color: 'error',

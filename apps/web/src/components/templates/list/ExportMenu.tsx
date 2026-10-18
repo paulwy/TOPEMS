@@ -1,4 +1,5 @@
 import React from 'react';
+import { iconSm } from '../../sharedStyles';
 import { Divider, ListItemIcon, ListItemText, Menu, MenuItem, Typography } from '@mui/material';
 import { FileJson, FileSpreadsheet, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -36,11 +37,11 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
     formats.map((fmt) => {
       const icon =
         fmt === 'csv' ? (
-          <FileText style={{ width: 16, height: 16 }} />
+          <FileText style={iconSm} />
         ) : fmt === 'json' ? (
-          <FileJson style={{ width: 16, height: 16 }} />
+          <FileJson style={iconSm} />
         ) : (
-          <FileSpreadsheet style={{ width: 16, height: 16 }} />
+          <FileSpreadsheet style={iconSm} />
         );
       const labelKey =
         fmt === 'csv'

@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import { iconSm } from '../sharedStyles';
 /**
  * StatsPageTemplate - 统计图表页面模板
  * 适用于数据统计、仪表盘、分析报表等场景
@@ -777,7 +778,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
           {showExport && onExport && (
             <Button
               variant='outlined'
-              startIcon={<Download style={{ width: 16, height: 16 }} />}
+              startIcon={<Download style={iconSm} />}
               onClick={onExport}
               size='small'
             >

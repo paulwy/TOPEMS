@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { iconSm } from '../sharedStyles';
 import { Chip } from '@mui/material';
 import { Edit2, Trash2, Eye } from 'lucide-react';
 
@@ -182,17 +183,17 @@ export const Default: Story = {
     rowActions: [
       {
         label: '查看',
-        icon: <Eye style={{ width: 16, height: 16 }} />,
+        icon: <Eye style={iconSm} />,
         onClick: () => {},
       },
       {
         label: '编辑',
-        icon: <Edit2 style={{ width: 16, height: 16 }} />,
+        icon: <Edit2 style={iconSm} />,
         onClick: () => {},
       },
       {
         label: '删除',
-        icon: <Trash2 style={{ width: 16, height: 16 }} />,
+        icon: <Trash2 style={iconSm} />,
         color: 'error',
         onClick: () => {},
         divider: true,
@@ -287,8 +288,8 @@ const WithRowNumbers: Story = {
     striped: true,
     searchable: true,
     rowActions: [
-      { label: '查看', icon: <Eye style={{ width: 16, height: 16 }} />, onClick: () => {} },
-      { label: '编辑', icon: <Edit2 style={{ width: 16, height: 16 }} />, onClick: () => {} },
+      { label: '查看', icon: <Eye style={iconSm} />, onClick: () => {} },
+      { label: '编辑', icon: <Edit2 style={iconSm} />, onClick: () => {} },
     ],
     pagination: {
       page: 0,

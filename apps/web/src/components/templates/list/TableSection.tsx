@@ -1,4 +1,5 @@
 import React from 'react';
+import { iconSm, iconMd } from '../../sharedStyles';
 import {
   Box,
   Checkbox,
@@ -355,7 +356,7 @@ export function TableSection<T>({
                 onClick={onOpenColumnConfig}
                 aria-label={i18n.t('templates.table_section.k0')}
               >
-                <Columns3 style={{ width: 18, height: 18 }} />
+                <Columns3 style={iconMd} />
               </IconButton>
             </Tooltip>
           </TableCell>
@@ -597,7 +598,7 @@ export function TableSection<T>({
                     onClick={(e) => onRowActionClick?.(e, row)}
                     aria-label={i18n.t('templates.table_section.k3')}
                   >
-                    <MoreHorizontal style={{ width: 18, height: 18 }} />
+                    <MoreHorizontal style={iconMd} />
                   </IconButton>
                 ) : (
                   <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
@@ -617,7 +618,7 @@ export function TableSection<T>({
                             color={action.color}
                             aria-label={i18n.t('templates.table_section.k4')}
                           >
-                            {action.icon || <MoreHorizontal style={{ width: 16, height: 16 }} />}
+                            {action.icon || <MoreHorizontal style={iconSm} />}
                           </IconButton>
                         </Tooltip>
                       );
@@ -628,7 +629,7 @@ export function TableSection<T>({
                         onClick={(e) => onRowActionClick?.(e, row)}
                         aria-label={i18n.t('templates.table_section.k5')}
                       >
-                        <MoreHorizontal style={{ width: 16, height: 16 }} />
+                        <MoreHorizontal style={iconSm} />
                       </IconButton>
                     )}
                   </Box>

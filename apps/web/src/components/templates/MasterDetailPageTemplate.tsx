@@ -4,6 +4,7 @@
  * 响应式：移动端折叠为单列或使用 Drawer 展示详情
  */
 
+import { iconSm, iconMd } from '../sharedStyles';
 import React, { useState, useCallback, useMemo } from 'react';
 import type { BoxProps } from '@mui/material';
 import {
@@ -372,11 +373,7 @@ export function MasterDetailPageTemplate<T>({
               onClick={() => setCollapsed(!collapsed)}
               aria-label={i18n.t('templates.master_detail_page_template.k7')}
             >
-              {collapsed ? (
-                <PanelLeftOpen style={{ width: 16, height: 16 }} />
-              ) : (
-                <PanelLeftClose style={{ width: 16, height: 16 }} />
-              )}
+              {collapsed ? <PanelLeftOpen style={iconSm} /> : <PanelLeftClose style={iconSm} />}
             </IconButton>
           </Tooltip>
         )}
@@ -821,7 +818,7 @@ export function MasterDetailPageTemplate<T>({
                 onClick={handleCloseDetail}
                 aria-label={i18n.t('templates.master_detail_page_template.k13')}
               >
-                <X style={{ width: 18, height: 18 }} />
+                <X style={iconMd} />
               </IconButton>
             </Tooltip>
           )}
@@ -878,7 +875,7 @@ export function MasterDetailPageTemplate<T>({
               <Button
                 variant='contained'
                 size='small'
-                startIcon={addButtonIcon || <Plus style={{ width: 16, height: 16 }} />}
+                startIcon={addButtonIcon || <Plus style={iconSm} />}
                 onClick={onAdd}
               >
                 {addButtonText}
@@ -927,7 +924,7 @@ export function MasterDetailPageTemplate<T>({
               <Button
                 variant='contained'
                 size='small'
-                startIcon={addButtonIcon || <Plus style={{ width: 16, height: 16 }} />}
+                startIcon={addButtonIcon || <Plus style={iconSm} />}
                 onClick={onAdd}
               >
                 {addButtonText}
@@ -989,7 +986,7 @@ export function MasterDetailPageTemplate<T>({
                   variant='contained'
                   size='small'
                   fullWidth
-                  startIcon={addButtonIcon || <Plus style={{ width: 16, height: 16 }} />}
+                  startIcon={addButtonIcon || <Plus style={iconSm} />}
                   onClick={onAdd}
                 >
                   {addButtonText}
@@ -1022,7 +1019,7 @@ export function MasterDetailPageTemplate<T>({
                 onClick={() => setCollapsed(false)}
                 aria-label={i18n.t('templates.master_detail_page_template.k15')}
               >
-                <PanelLeftOpen style={{ width: 18, height: 18 }} />
+                <PanelLeftOpen style={iconMd} />
               </IconButton>
             </Tooltip>
           </Box>

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { iconSm, iconLg } from '../sharedStyles';
 import { Box, Typography } from '@mui/material';
 import {
   DollarSign,
@@ -118,7 +119,7 @@ const mockRecentItems: RecentItem[] = [
     description: '精密轴承 A-200 生产完成，产量 500 件',
     time: '10 分钟前',
     status: 'success',
-    icon: <Package style={{ width: 16, height: 16 }} />,
+    icon: <Package style={iconSm} />,
   },
   {
     id: '2',
@@ -126,7 +127,7 @@ const mockRecentItems: RecentItem[] = [
     description: '供应商: 华东材料 | 金额: 52,800 元',
     time: '30 分钟前',
     status: 'warning',
-    icon: <ClipboardList style={{ width: 16, height: 16 }} />,
+    icon: <ClipboardList style={iconSm} />,
   },
   {
     id: '3',
@@ -134,7 +135,7 @@ const mockRecentItems: RecentItem[] = [
     description: '产品 B-150 不合格率超过阈值 (3.2%)',
     time: '1 小时前',
     status: 'error',
-    icon: <FileText style={{ width: 16, height: 16 }} />,
+    icon: <FileText style={iconSm} />,
   },
   {
     id: '4',
@@ -142,7 +143,7 @@ const mockRecentItems: RecentItem[] = [
     description: '陈十三 已完成入职手续，分配至研发部',
     time: '2 小时前',
     status: 'info',
-    icon: <Users style={{ width: 16, height: 16 }} />,
+    icon: <Users style={iconSm} />,
   },
   {
     id: '5',
@@ -157,28 +158,28 @@ const mockQuickActions: QuickAction[] = [
   {
     id: 'create-order',
     label: '创建工单',
-    icon: <Plus style={{ width: 20, height: 20 }} />,
+    icon: <Plus style={iconLg} />,
     description: '创建新的生产工单',
     color: designTokens.colors.primary[700],
   },
   {
     id: 'add-product',
     label: '添加产品',
-    icon: <Package style={{ width: 20, height: 20 }} />,
+    icon: <Package style={iconLg} />,
     description: '录入新的产品信息',
     color: '#2e7d32',
   },
   {
     id: 'export-report',
     label: '导出报表',
-    icon: <Download style={{ width: 20, height: 20 }} />,
+    icon: <Download style={iconLg} />,
     description: '导出业务数据报表',
     color: designTokens.colors.warning[500],
   },
   {
     id: 'settings',
     label: '系统设置',
-    icon: <Settings style={{ width: 20, height: 20 }} />,
+    icon: <Settings style={iconLg} />,
     description: '配置系统参数',
     color: designTokens.colors.secondary[700],
     badge: 2,

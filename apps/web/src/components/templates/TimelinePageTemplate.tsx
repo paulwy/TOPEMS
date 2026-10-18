@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import { iconSm, iconMd } from '../sharedStyles';
 import React, { useState, useCallback } from 'react';
 import type { BoxProps } from '@mui/material';
 import {
@@ -200,13 +201,13 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
           />
         );
       case 'task':
-        return <Clock style={{ width: 16, height: 16 }} />;
+        return <Clock style={iconSm} />;
       case 'meeting':
-        return <Users style={{ width: 16, height: 16 }} />;
+        return <Users style={iconSm} />;
       case 'reminder':
-        return <Tag style={{ width: 16, height: 16 }} />;
+        return <Tag style={iconSm} />;
       default:
-        return <Calendar style={{ width: 16, height: 16 }} />;
+        return <Calendar style={iconSm} />;
     }
   };
 
@@ -294,7 +295,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
               size='small'
               aria-label={i18n.t('components.timeline_page_template.k5')}
             >
-              <Filter style={{ width: 18, height: 18 }} />
+              <Filter style={iconMd} />
             </IconButton>
           </Tooltip>
         )}
@@ -304,7 +305,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
             size='small'
             aria-label={i18n.t('components.timeline_page_template.k7')}
           >
-            <RefreshCw style={{ width: 18, height: 18 }} />
+            <RefreshCw style={iconMd} />
           </IconButton>
         </Tooltip>
       </Box>
@@ -509,11 +510,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                   }}
                   aria-label={i18n.t('components.timeline_page_template.k8')}
                 >
-                  {isExpanded ? (
-                    <ChevronUp style={{ width: 16, height: 16 }} />
-                  ) : (
-                    <ChevronDown style={{ width: 16, height: 16 }} />
-                  )}
+                  {isExpanded ? <ChevronUp style={iconSm} /> : <ChevronDown style={iconSm} />}
                 </IconButton>
               )}
             </Box>
@@ -585,11 +582,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
               size='small'
               aria-label={i18n.t('components.timeline_page_template.k9')}
             >
-              {isExpanded ? (
-                <ChevronUp style={{ width: 18, height: 18 }} />
-              ) : (
-                <ChevronDown style={{ width: 18, height: 18 }} />
-              )}
+              {isExpanded ? <ChevronUp style={iconMd} /> : <ChevronDown style={iconMd} />}
             </IconButton>
           )}
         </Box>

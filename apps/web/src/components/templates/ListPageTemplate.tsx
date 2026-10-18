@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import { iconSm, iconMd, iconLg } from '../sharedStyles';
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
@@ -2520,7 +2521,7 @@ export function ListPageTemplate<
                 onClick={(e) => setColumnConfigAnchor(e.currentTarget)}
                 aria-label={i18n.t('templates.list_page_template.k20')}
               >
-                <Columns3 style={{ width: 18, height: 18 }} />
+                <Columns3 style={iconMd} />
               </IconButton>
             </Tooltip>
           </TableCell>
@@ -2862,7 +2863,7 @@ export function ListPageTemplate<
                     onClick={(e) => handleRowActionClick(e, row)}
                     aria-label={i18n.t('templates.list_page_template.k24')}
                   >
-                    <MoreHorizontal style={{ width: 18, height: 18 }} />
+                    <MoreHorizontal style={iconMd} />
                   </IconButton>
                 ) : (
                   <Box
@@ -2888,7 +2889,7 @@ export function ListPageTemplate<
                             color={action.color}
                             aria-label={action.label}
                           >
-                            {action.icon || <MoreHorizontal style={{ width: 16, height: 16 }} />}
+                            {action.icon || <MoreHorizontal style={iconSm} />}
                           </IconButton>
                         </Tooltip>
                       );
@@ -2899,7 +2900,7 @@ export function ListPageTemplate<
                         onClick={(e) => handleRowActionClick(e, row)}
                         aria-label={i18n.t('templates.list_page_template.k25')}
                       >
-                        <MoreHorizontal style={{ width: 16, height: 16 }} />
+                        <MoreHorizontal style={iconSm} />
                       </IconButton>
                     )}
                   </Box>
@@ -3213,7 +3214,7 @@ export function ListPageTemplate<
                       onClick={(e) => handleRowActionClick(e, row)}
                       aria-label={i18n.t('templates.list_page_template.k27')}
                     >
-                      <MoreHorizontal style={{ width: 18, height: 18 }} />
+                      <MoreHorizontal style={iconMd} />
                     </IconButton>
                   )}
                 </Box>
@@ -3430,7 +3431,7 @@ export function ListPageTemplate<
                           {resolvedExportFormats.includes('csv') && (
                             <MenuItem onClick={() => handleExport('csv', 'current')}>
                               <ListItemIcon>
-                                <FileText style={{ width: 16, height: 16 }} />
+                                <FileText style={iconSm} />
                               </ListItemIcon>
                               <ListItemText>{i18n.t('templates.listPage.k0')}</ListItemText>
                             </MenuItem>
@@ -3438,7 +3439,7 @@ export function ListPageTemplate<
                           {resolvedExportFormats.includes('json') && (
                             <MenuItem onClick={() => handleExport('json', 'current')}>
                               <ListItemIcon>
-                                <FileJson style={{ width: 16, height: 16 }} />
+                                <FileJson style={iconSm} />
                               </ListItemIcon>
                               <ListItemText>{i18n.t('templates.listPage.k1')}</ListItemText>
                             </MenuItem>
@@ -3446,7 +3447,7 @@ export function ListPageTemplate<
                           {resolvedExportFormats.includes('excel') && (
                             <MenuItem onClick={() => handleExport('excel', 'current')}>
                               <ListItemIcon>
-                                <FileSpreadsheet style={{ width: 16, height: 16 }} />
+                                <FileSpreadsheet style={iconSm} />
                               </ListItemIcon>
                               <ListItemText>{i18n.t('templates.listPage.k2')}</ListItemText>
                             </MenuItem>
@@ -3472,7 +3473,7 @@ export function ListPageTemplate<
                               disabled={selectedIds.size === 0}
                             >
                               <ListItemIcon>
-                                <FileText style={{ width: 16, height: 16 }} />
+                                <FileText style={iconSm} />
                               </ListItemIcon>
                               <ListItemText>{i18n.t('templates.listPage.k0')}</ListItemText>
                             </MenuItem>
@@ -3483,7 +3484,7 @@ export function ListPageTemplate<
                               disabled={selectedIds.size === 0}
                             >
                               <ListItemIcon>
-                                <FileJson style={{ width: 16, height: 16 }} />
+                                <FileJson style={iconSm} />
                               </ListItemIcon>
                               <ListItemText>{i18n.t('templates.listPage.k1')}</ListItemText>
                             </MenuItem>
@@ -3494,7 +3495,7 @@ export function ListPageTemplate<
                               disabled={selectedIds.size === 0}
                             >
                               <ListItemIcon>
-                                <FileSpreadsheet style={{ width: 16, height: 16 }} />
+                                <FileSpreadsheet style={iconSm} />
                               </ListItemIcon>
                               <ListItemText>{i18n.t('templates.listPage.k2')}</ListItemText>
                             </MenuItem>
@@ -3535,7 +3536,7 @@ export function ListPageTemplate<
                               aria-label={i18n.t('templates.list_page_template.k36')}
                               onClick={(e) => setMobileMenuEl(e.currentTarget)}
                             >
-                              <MoreHorizontal style={{ width: 20, height: 20 }} />
+                              <MoreHorizontal style={iconLg} />
                             </IconButton>
                           </Tooltip>
                           <Menu

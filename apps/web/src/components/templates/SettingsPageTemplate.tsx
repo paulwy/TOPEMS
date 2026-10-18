@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { iconSm, iconLg } from '../sharedStyles';
 import type { BoxProps } from '@mui/material';
 import {
   Box,
@@ -264,7 +265,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
 
   const getSectionIcon = (icon?: React.ReactNode) => {
     if (icon) return icon;
-    return <Settings style={{ width: 20, height: 20 }} />;
+    return <Settings style={iconLg} />;
   };
 
   const renderField = (field: SettingField) => {
@@ -593,7 +594,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           )}
           {Object.keys(errors).length > 0 && (
             <Box sx={{ display: 'flex', alignItems: 'center', color: 'error.main' }}>
-              <AlertCircle style={{ width: 16, height: 16 }} />
+              <AlertCircle style={iconSm} />
               <Typography variant='caption'>
                 {Object.keys(errors).length}
                 {i18n.t('components.settings_page_template.k2')}
@@ -609,7 +610,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
               className='settings-page-reset-btn'
               onClick={handleReset}
               disabled={saving || loading || !hasChanges}
-              startIcon={<RotateCcw style={{ width: 16, height: 16 }} />}
+              startIcon={<RotateCcw style={iconSm} />}
             >
               {resetButtonText}
             </Button>
@@ -628,7 +629,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
                     height={16}
                   />
                 ) : (
-                  <Save style={{ width: 16, height: 16 }} />
+                  <Save style={iconSm} />
                 )
               }
             >
@@ -658,14 +659,14 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
         <Alert
           severity='error'
           sx={{ mb: 3 }}
-          icon={<AlertCircle style={{ width: 20, height: 20 }} />}
+          icon={<AlertCircle style={iconLg} />}
           action={
             <IconButton
               size='small'
               onClick={() => setErrors({})}
               aria-label={i18n.t('templates.settings_page_template.k8')}
             >
-              <X style={{ width: 16, height: 16 }} />
+              <X style={iconSm} />
             </IconButton>
           }
         >
@@ -677,14 +678,14 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
         <Alert
           severity='success'
           sx={{ mb: 3 }}
-          icon={<CheckCircle style={{ width: 20, height: 20 }} />}
+          icon={<CheckCircle style={iconLg} />}
           action={
             <IconButton
               size='small'
               onClick={() => {}}
               aria-label={i18n.t('templates.settings_page_template.k9')}
             >
-              <X style={{ width: 16, height: 16 }} />
+              <X style={iconSm} />
             </IconButton>
           }
         >

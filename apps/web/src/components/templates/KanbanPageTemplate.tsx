@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import { iconSm, iconMd } from '../sharedStyles';
 import React, { useState, useCallback, useMemo } from 'react';
 import type { BoxProps } from '@mui/material';
 import {
@@ -404,7 +405,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               size='small'
               aria-label={i18n.t('components.kanban_page_template.k5')}
             >
-              <Filter style={{ width: 18, height: 18 }} />
+              <Filter style={iconMd} />
             </IconButton>
           </Tooltip>
         )}
@@ -414,7 +415,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             size='small'
             aria-label={i18n.t('components.kanban_page_template.k7')}
           >
-            <RefreshCw style={{ width: 18, height: 18 }} />
+            <RefreshCw style={iconMd} />
           </IconButton>
         </Tooltip>
       </Box>
@@ -469,7 +470,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             size='small'
             aria-label={i18n.t('components.kanban_page_template.k8')}
           >
-            <MoreHorizontal style={{ width: 16, height: 16 }} />
+            <MoreHorizontal style={iconSm} />
           </IconButton>
         </Box>
 
@@ -679,7 +680,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                     onClick={column.onAddCard}
                     aria-label={i18n.t('components.kanban_page_template.k12')}
                   >
-                    <Plus style={{ width: 16, height: 16 }} />
+                    <Plus style={iconSm} />
                   </IconButton>
                 </Tooltip>
               )}

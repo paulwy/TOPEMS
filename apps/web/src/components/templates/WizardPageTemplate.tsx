@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { iconSm, iconLg } from '../sharedStyles';
 import type { BoxProps } from '@mui/material';
 import {
   Box,
@@ -356,7 +357,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
               variant='outlined'
               onClick={onCancel}
               disabled={submitting || loading}
-              startIcon={<XCircle style={{ width: 16, height: 16 }} />}
+              startIcon={<XCircle style={iconSm} />}
             >
               {cancelButtonText}
             </Button>
@@ -381,7 +382,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
               variant='outlined'
               onClick={handleBack}
               disabled={submitting || loading}
-              startIcon={<ChevronLeft style={{ width: 16, height: 16 }} />}
+              startIcon={<ChevronLeft style={iconSm} />}
             >
               {backButtonText}
             </Button>
@@ -392,7 +393,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
               variant='text'
               onClick={handleSkip}
               disabled={submitting || loading}
-              startIcon={<SkipForward style={{ width: 16, height: 16 }} />}
+              startIcon={<SkipForward style={iconSm} />}
             >
               {skipButtonText}
             </Button>
@@ -411,7 +412,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
               variant='contained'
               onClick={handleNext}
               disabled={submitting || loading}
-              endIcon={<ChevronRight style={{ width: 16, height: 16 }} />}
+              endIcon={<ChevronRight style={iconSm} />}
             >
               {nextButtonText}
             </Button>
@@ -468,7 +469,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
         <Alert
           severity='error'
           sx={{ mb: 3 }}
-          icon={<AlertCircle style={{ width: 20, height: 20 }} />}
+          icon={<AlertCircle style={iconLg} />}
         >
           {error}
         </Alert>
@@ -478,7 +479,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
         <Alert
           severity='success'
           sx={{ mb: 3 }}
-          icon={<CheckCircle style={{ width: 20, height: 20 }} />}
+          icon={<CheckCircle style={iconLg} />}
         >
           {success}
         </Alert>
@@ -488,14 +489,14 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
         <Alert
           severity='error'
           sx={{ mb: 3 }}
-          icon={<AlertCircle style={{ width: 20, height: 20 }} />}
+          icon={<AlertCircle style={iconLg} />}
           action={
             <IconButton
               size='small'
               onClick={() => setValidationError(null)}
               aria-label={i18n.t('templates.wizard_page_template.k8')}
             >
-              <XCircle style={{ width: 16, height: 16 }} />
+              <XCircle style={iconSm} />
             </IconButton>
           }
         >

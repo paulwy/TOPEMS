@@ -3,6 +3,7 @@
  * 适用于任务卡片、设备卡片、订单卡片等场景
  */
 
+import { iconMd } from '../sharedStyles';
 import React, { useState, useCallback } from 'react';
 import {
   Box,
@@ -858,7 +859,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
           {addButton && (
             <Button
               variant='contained'
-              startIcon={addButton.icon || <Plus style={{ width: 18, height: 18 }} />}
+              startIcon={addButton.icon || <Plus style={iconMd} />}
               onClick={addButton.onClick}
             >
               {addButton.text || i18n.t('templates.card_list_template.k5')}

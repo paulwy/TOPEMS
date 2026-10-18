@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import { iconMd } from '../../sharedStyles';
 import React, { useState } from 'react';
 import {
   Box,
@@ -95,7 +96,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
                   }}
                   aria-label={i18n.t('templates.chart_card_component.k0')}
                 >
-                  <ChevronDown style={{ width: 18, height: 18 }} />
+                  <ChevronDown style={iconMd} />
                 </IconButton>
               )}
               <IconButton
@@ -103,7 +104,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
                 onClick={(e) => setAnchorEl(e.currentTarget)}
                 aria-label={i18n.t('templates.chart_card_component.k1')}
               >
-                <MoreVertical style={{ width: 18, height: 18 }} />
+                <MoreVertical style={iconMd} />
               </IconButton>
               <Menu
                 anchorEl={anchorEl}
@@ -118,7 +119,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
                     }}
                   >
                     <ListItemIcon>
-                      <RefreshCw style={{ width: 18, height: 18 }} />
+                      <RefreshCw style={iconMd} />
                     </ListItemIcon>
                     <ListItemText>{i18n.t('templates.chart_card_component.k2')}</ListItemText>
                   </MenuItem>
@@ -131,7 +132,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
                     }}
                   >
                     <ListItemIcon>
-                      <Download style={{ width: 18, height: 18 }} />
+                      <Download style={iconMd} />
                     </ListItemIcon>
                     <ListItemText>{i18n.t('templates.chart_card_component.k3')}</ListItemText>
                   </MenuItem>
@@ -144,7 +145,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
                     }}
                   >
                     <ListItemIcon>
-                      <Maximize style={{ width: 18, height: 18 }} />
+                      <Maximize style={iconMd} />
                     </ListItemIcon>
                     <ListItemText>{i18n.t('templates.chart_card_component.k4')}</ListItemText>
                   </MenuItem>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { iconMd } from '../../sharedStyles';
 import { Box, Checkbox, IconButton, Skeleton, Typography } from '@mui/material';
 import { MoreHorizontal } from 'lucide-react';
 import type { ColumnDef } from './types';
@@ -192,7 +193,7 @@ export function MobileCardView<T>({
                     onClick={(e) => onRowActionClick(e, row)}
                     aria-label={i18n.t('templates.mobile_card_view.k0')}
                   >
-                    <MoreHorizontal style={{ width: 18, height: 18 }} />
+                    <MoreHorizontal style={iconMd} />
                   </IconButton>
                 )}
               </Box>

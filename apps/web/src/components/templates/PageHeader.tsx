@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import { iconSm, iconMd, iconLg } from '../sharedStyles';
 import React from 'react';
 import {
   Box,
@@ -194,7 +195,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
     return (
       <Breadcrumbs
-        separator={<ChevronRight style={{ width: 16, height: 16 }} />}
+        separator={<ChevronRight style={iconSm} />}
         sx={{ mb: 2 }}
       >
         {breadcrumbs.map((item, index) => {
@@ -380,7 +381,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               size='small'
               aria-label={i18n.t('templates.page_header.k1')}
             >
-              <MoreHorizontal style={{ width: 20, height: 20 }} />
+              <MoreHorizontal style={iconLg} />
             </IconButton>
           </Tooltip>
         )}
@@ -627,7 +628,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     onClick={onRefresh}
                     aria-label={i18n.t('templates.page_header.k3')}
                   >
-                    <RefreshCw style={{ width: 18, height: 18 }} />
+                    <RefreshCw style={iconMd} />
                   </IconButton>
                 </Tooltip>
               )}

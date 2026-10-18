@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { iconSm, iconMd, iconLg } from '../sharedStyles';
 import type { BoxProps } from '@mui/material';
 import {
   Box,
@@ -836,7 +837,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               sx={{ position: 'absolute', top: 0, right: 0 }}
               aria-label={i18n.t('templates.form_page_template.k4')}
             >
-              <Info style={{ width: 16, height: 16 }} />
+              <Info style={iconSm} />
             </IconButton>
           </Tooltip>
         )}
@@ -1183,11 +1184,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               size='small'
               aria-label={i18n.t('templates.form_page_template.k8')}
             >
-              {isExpanded ? (
-                <ChevronUp style={{ width: 18, height: 18 }} />
-              ) : (
-                <ChevronDown style={{ width: 18, height: 18 }} />
-              )}
+              {isExpanded ? <ChevronUp style={iconMd} /> : <ChevronDown style={iconMd} />}
             </IconButton>
           )}
         </Box>
@@ -1315,7 +1312,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           variant='outlined'
           size='small'
           onClick={() => setShowDraftDialog(true)}
-          startIcon={<FileText style={{ width: 16, height: 16 }} />}
+          startIcon={<FileText style={iconSm} />}
         >
           {i18n.t('components.form_page_template.k0')}
           {drafts.length})
@@ -1358,7 +1355,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                 color: 'error.main',
               }}
             >
-              <AlertCircle style={{ width: 16, height: 16 }} />
+              <AlertCircle style={iconSm} />
               <Typography
                 variant='caption'
                 sx={{ ml: 0.5 }}
@@ -1376,7 +1373,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           <Button
             variant='outlined'
             onClick={() => {}}
-            startIcon={<Unlock style={{ width: 16, height: 16 }} />}
+            startIcon={<Unlock style={iconSm} />}
           >
             {i18n.t('components.form_page_template.k2')}
           </Button>
@@ -1386,7 +1383,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             variant='outlined'
             onClick={onCancel}
             disabled={submitting}
-            startIcon={<X style={{ width: 16, height: 16 }} />}
+            startIcon={<X style={iconSm} />}
           >
             {cancelText}
           </Button>
@@ -1396,7 +1393,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             variant='text'
             onClick={handleReset}
             disabled={submitting || !isDirty}
-            startIcon={<RotateCcw style={{ width: 16, height: 16 }} />}
+            startIcon={<RotateCcw style={iconSm} />}
           >
             {resetText}
           </Button>
@@ -1414,7 +1411,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                   height={16}
                 />
               ) : (
-                <Save style={{ width: 16, height: 16 }} />
+                <Save style={iconSm} />
               )
             }
           >
@@ -1459,14 +1456,14 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           <Alert
             severity='error'
             sx={{ mb: 3 }}
-            icon={<AlertCircle style={{ width: 20, height: 20 }} />}
+            icon={<AlertCircle style={iconLg} />}
             action={
               <IconButton
                 size='small'
                 onClick={() => {}}
                 aria-label={i18n.t('templates.form_page_template.k11')}
               >
-                <X style={{ width: 16, height: 16 }} />
+                <X style={iconSm} />
               </IconButton>
             }
           >
@@ -1479,14 +1476,14 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           <Alert
             severity='success'
             sx={{ mb: 3 }}
-            icon={<CheckCircle style={{ width: 20, height: 20 }} />}
+            icon={<CheckCircle style={iconLg} />}
             action={
               <IconButton
                 size='small'
                 onClick={() => {}}
                 aria-label={i18n.t('templates.form_page_template.k12')}
               >
-                <X style={{ width: 16, height: 16 }} />
+                <X style={iconSm} />
               </IconButton>
             }
           >
@@ -1518,13 +1515,13 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
             onClose={() => setShowHint(false)}
             icon={
               validationHint?.type === 'success' ? (
-                <CheckCircle style={{ width: 20, height: 20 }} />
+                <CheckCircle style={iconLg} />
               ) : validationHint?.type === 'warning' ? (
-                <AlertTriangle style={{ width: 20, height: 20 }} />
+                <AlertTriangle style={iconLg} />
               ) : validationHint?.type === 'error' ? (
-                <AlertCircle style={{ width: 20, height: 20 }} />
+                <AlertCircle style={iconLg} />
               ) : (
-                <Info style={{ width: 20, height: 20 }} />
+                <Info style={iconLg} />
               )
             }
           >

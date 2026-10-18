@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import { iconMd } from '../sharedStyles';
 /**
  * TreePageTemplate - 树形结构+详情面板布局模板
  * 适用于部门管理、分类管理等场景
@@ -606,7 +607,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
           {showAddButton && onAdd && (
             <Button
               variant='contained'
-              startIcon={addButtonIcon || <Plus style={{ width: 18, height: 18 }} />}
+              startIcon={addButtonIcon || <Plus style={iconMd} />}
               onClick={onAdd}
             >
               {addButtonText}

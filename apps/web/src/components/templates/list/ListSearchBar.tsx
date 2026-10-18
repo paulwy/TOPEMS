@@ -1,4 +1,5 @@
 import React from 'react';
+import { iconMd } from '../../sharedStyles';
 import {
   Box,
   TextField,
@@ -131,7 +132,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
               input: {
                 startAdornment: (
                   <InputAdornment position='start'>
-                    <Search style={{ width: 18, height: 18 }} />
+                    <Search style={iconMd} />
                   </InputAdornment>
                 ),
               },
@@ -206,7 +207,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
             input: {
               startAdornment: (
                 <InputAdornment position='start'>
-                  <Search style={{ width: 18, height: 18 }} />
+                  <Search style={iconMd} />
                 </InputAdornment>
               ),
             },
@@ -257,7 +258,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
             onClick={onRefresh}
             aria-label={i18n.t('components.list_search_bar.k1')}
           >
-            <RefreshCw style={{ width: 18, height: 18 }} />
+            <RefreshCw style={iconMd} />
           </IconButton>
         </Tooltip>
       )}
