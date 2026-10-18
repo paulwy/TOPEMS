@@ -62,13 +62,13 @@ const NotificationTemplatesPage: React.FC = () => {
         if (!response.success || !response.data) {
           return { data: [], total: 0 };
         }
-        let templates = response.data.templates;
+        let templates = Array.isArray(response.data.templates) ? response.data.templates : [];
         if (typeFilter && typeFilter !== 'all') {
           templates = templates.filter((t) => t.notification_type === typeFilter);
         }
         return {
           data: templates as unknown as Record<string, unknown>[],
-          total: response.data.total || templates.length,
+          total: response.data.total ?? templates.length,
         };
       },
       create: async (data) => {

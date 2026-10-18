@@ -9,7 +9,7 @@
 - [x] **P1 · DSH 三组内存桩持久化** ✅ 完成（A-2 判定 `ffe8f18887` + A-2b copilot 落库 `96cbba6b00`）：copilot 6 状态型端点复用 `core.ai_conversations`+jsonb 列接真（迁移 `20261018000006` 补 5 列，实机链路 6 步全绿）；governance 11 计算型/smart_forms AI 型按"勿过度工程"标注保留不建表
 - [x] **P1 · 财务报表聚合 f64→Decimal** ✅ 完成（2026-10-18，见下方批次块「批 A1」）：`financial_reports.rs` 报表查询聚合层金额全程 Decimal，仅比率/growth_rate 最后一步转 f64；finance lib 1087 passed / 0 failed
 - [x] **P1 · 前端空态兜底** ✅ 核销（2026-10-18 批 A2）：原「约 1100 页无空态」为宽口径高估（混入表单/详情/图表/静态桩）。实测两套模板层早已闭环——CrudPage/ListPageTemplate/TableSection 与 redesign DataTable 均内置 loading 骨架 + ErrorEmptyState + EmptyState 三态（历史已接线 48 页，见下方三态批次块）；走模板的查询主列表无白屏。本批补唯一实测白屏自绘列表 `gis/GisFencePage`（围栏列表区分「暂无数据/搜索无匹配」，zh/en 补 k63/k64），typecheck/eslint 绿。**长尾降 P2**：自绘子表纯文本空文案统一到共享 EmptyState、静态桩接真后补空态，按需处理，不机械铺改。
-- [x] **P1 · 批 C 路由冒烟 + CRUD 数据流补测** ✅ 部分完成（2026-10-18，见下方批次块「批 C」）：真起后端栈（8099 健康、admin 真登录）；C1 静态路由基线绿（v2-routes.smoke 6/6、489 页面 import 0 断链、注册路由 526）；C2 经盘点核销不硬补后端单测；C3 树立 2 个真数据流断言范本（crm 客户列表/详情、finance 凭证详情），真栈 3/3 绿。**遗留**：全量 479 路由 >1h 需分批 ROUTE_FILTER 跑、e2e 入 CI 待 E3 外部恢复、其余弱 spec 照范本后续补。
+- [x] **P1 · 批 C 路由冒烟 + CRUD 数据流补测** ✅ 完成（2026-10-18，见下方批次块「批 C」）：真起后端栈（8099 健康、admin 真登录）；C1 静态路由基线绿（v2-routes.smoke 6/6、489 页面 import 0 断链、注册路由 526）；C2 盘点核销不硬补后端单测；C3 树立 2 个真数据流断言范本（crm 客户列表/详情、finance 凭证详情，真栈 3/3 绿）；C4 全量 471 路由分 14 批实跑 **硬失败 0**（296 条 403 为 test_admin 权限噪声、无 5xx；2 条 rate-limit/feature-flag 404 为后端未挂载），顺带修 2 处前端数组兜底崩溃。**遗留**：e2e 入 CI 待 E3 外部恢复、其余弱 spec 照范本后续补。
 - [ ] **P1 · 内联样式治理**（2026-10-18 实测 3236 处；热区 components/templates 已收敛到 token/样式常量，长尾分批，新代码禁新增）
 - [x] **P1 · 测试前置一键脚本** ✅ 完成（`26461d2f51`）：`scripts/dev/run-e2e-stack.sh` + testUtils 真 token 化，使 full-route-smoke 脱离 mock token 假失败（待实跑全量路由验证）
 - [x] **P2 · menu 域冻结标注** ✅ 完成（`4780760e13`/`3247c12ecf`）：routes/master.rs:197-224 有路由注册 4 handler + init_database 初始化，非"未挂载"；前端 0 消费，判定"后端已实现、前端页面未开发"，冻结保留待前端接线
@@ -57,7 +57,7 @@
 
 ---
 
-## 批 C · 路由冒烟 + CRUD 数据流补测（2026-10-18）🟡 范本落地，全量分批待跑
+## 批 C · 路由冒烟 + CRUD 数据流补测（2026-10-18）✅ 范本落地 + 全量 471 路由实跑 0 硬失败
 
 > 来源：`artifacts/TOPEMS-全面审计与一步到位规划-2026-10-18.md` 批 C。目标：把「仅可达不崩」的弱 spec 升级为对后端返回记录有真实字段断言的用例。
 
@@ -77,8 +77,17 @@
 - **验证**：真栈 playwright **3 passed / 0 failed**；prettier 合规；`tsc --noEmit` exit 0（e2e 目录在 eslint/hardcoded/i18n 豁免内）。
 - **提交**：本地提交未 push；本次仅触豁免目录 e2e spec + TODO.md，全量 i18n/perm 扫描钩子留待 pre-push/CI。
 
+### C4 · 全量路由冒烟分批实跑（完成）
+- **方法**：真栈（8099）下按 `ROUTE_FILTER` 分 14 批跑完 spec 运行时推导的 **471 条静态去重路由**（动态段 `:param` 已过滤），逐批落 json 后汇总。
+- **结果**：**硬失败 = 0**（无 pageerror / 无被踢 /login / 无空白 / 无 404 页）；非预期跳转 34（均为模块根 → 子页正常重定向，INFO）。
+- **HTTP 错误甄别**：296 条 **403 全部是 test_admin 未绑角色的后端鉴权噪声**（前端守卫被 mock 权限骗过、后端 API 拒），非缺陷；**无 5xx**。
+- **2 条 404 登记（后端端点未挂载，非前端可修）**：`/admin/rate-limit`、`/admin/feature-flag` 调 `/api/core/iam/v1/rate-limit/config[/anti-replay]`，后端两种前缀均 404，属未实现端点，待后端接线。
+- **顺带修 2 处前端健壮性崩溃（真栈暴露）**：
+  - `pages/shared/FavoritesPage.tsx`：`recentSearchesData ?? []` 在 data 为对象时不兜底，`recentSearches.map is not a function` 触发 ErrorBoundary → 改 `Array.isArray` 归一。
+  - `pages/notification/NotificationTemplatesPage.tsx`：list 响应 `data.templates` 非数组时 `.length`/`.filter` 崩溃 → `Array.isArray` 兜底 + `total ?? length`。
+  - 修复后重跑两路由，对应 console 错误消失；`tsc --noEmit` 绿、eslint/prettier 合规。
+
 ### 遗留（非本批可决 / 长尾）
-- 全量 `full-route-smoke.spec.ts`（479 路由单线程 >1h）需起栈后按 `ROUTE_FILTER` 分批跑，未一次性执行。
 - e2e 栈纳入 CI 待 E3 GitHub Billing/CI 恢复（外部阻塞，技术不可决）。
 - 其余域弱 spec（antd 选择器、无真断言）照本范本后续逐个补；空库域（qms/srm/pm/pdm/gis）需先 API 造数才能闭环。
 - `test_admin` 未绑业务角色：后续 spec 可改用 admin 登录，或给种子 test_admin 补绑角色。
