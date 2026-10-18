@@ -170,42 +170,9 @@ pub fn contract_stub_routes() -> Router<AppState> {
         )
         .route("/system/api-keys/{id}", get(stub_list))
         .route("/system/api-keys/{id}", put(stub_action))
-        .route("/wms/inbound-orders/{id}/approval/start", post(stub_action))
-        .route(
-            "/wms/inbound-orders/{id}/approval/approve",
-            post(stub_action),
-        )
-        .route(
-            "/wms/inbound-orders/{id}/approval/reject",
-            post(stub_action),
-        )
-        .route(
-            "/wms/outbound-orders/{id}/approval/start",
-            post(stub_action),
-        )
-        .route(
-            "/wms/outbound-orders/{id}/approval/approve",
-            post(stub_action),
-        )
-        .route(
-            "/wms/outbound-orders/{id}/approval/reject",
-            post(stub_action),
-        )
-        .route("/wms/stock-takes/{id}/approval/start", post(stub_action))
-        .route("/wms/stock-takes/{id}/approval/approve", post(stub_action))
-        .route("/wms/stock-takes/{id}/approval/reject", post(stub_action))
-        .route(
-            "/wms/transfer-orders/{id}/approval/start",
-            post(stub_action),
-        )
-        .route(
-            "/wms/transfer-orders/{id}/approval/approve",
-            post(stub_action),
-        )
-        .route(
-            "/wms/transfer-orders/{id}/approval/reject",
-            post(stub_action),
-        )
+        // B4-①：WMS 四类审批（inbound/outbound/stock-take/transfer × start/approve/reject）
+        // 已由 svc/wms 真实实现，前端 wmsApprovalApi 改指 apiClient.wms（调拨命名 /transfers），
+        // core 12 条兜底删除。
         // ===== Help 服务（FAQ + 指南）契约兜底 =====
         // 真实实现位于 svc/portal（/api/portal/help/*），前端按 Group1 走 /api/core/help/*。
         // unified-core 暂无 help 表与 handler，做轻量兜底：列表空壳、写操作成功回执、

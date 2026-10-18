@@ -118,7 +118,8 @@
 
 ### 待办（本轮不擅动）
 - **B4（F4）✅ 台账完成（2026-10-19）**：125 条 contract_stub 已建 stub→上游实现映射台账 `docs/architecture/service-topology/contract-stub-mapping.md`（21 域，🟢46 上游已有待对接 / 🟡12 core handler 待挂载 / 🔴67 待产品排期或存废）；纯文档不改代码，端点存废随 BE-08 业务勾选。
-- **B4 第一批 ✅ 对接后移除冗余兜底（2026-10-19，125→99 删 26 条）**：按"core 无同前缀真实路由 + 活前端无 core 调用 + 上游已承接"三判据逐条核，删除死兜底 governance10 / forms6 / copilot5 / documents5；保留前端仍走 core 兜底的 trends/refresh、GET /forms/{id}、copilot sessions(GET/DELETE)/faq、documents parse/summary/search。实测推翻原台账误标：system/api-keys 由 🟢 改 🔴（真实仅列表/创建/删除，stub 详情/PUT 未实现）；wms-approval 真实仅 4 条且 `/transfers`≠`/transfer-orders`、无 start/outbound，不可对接保留；help/search/dict 前端仍走 core 保留。`cargo check` + openapi/smoke 绿。其余 99 条按台账分档待对接/挂载/BE-08 存废。
+- **B4 第一批 ✅ 对接后移除冗余兜底（2026-10-19，125→99 删 26 条）**：按"core 无同前缀真实路由 + 活前端无 core 调用 + 上游已承接"三判据逐条核，删除死兜底 governance10 / forms6 / copilot5 / documents5；保留前端仍走 core 兜底的 trends/refresh、GET /forms/{id}、copilot sessions(GET/DELETE)/faq、documents parse/summary/search。实测推翻原台账误标：system/api-keys 由 🟢 改 🔴（真实仅列表/创建/删除，stub 详情/PUT 未实现）；help/search/dict 前端仍走 core 保留。`cargo check` + openapi/smoke 绿。
+- **B4 第二批① ✅ WMS 审批对接后删 12 条 core 兜底（2026-10-19，99→87）**：复核推翻第一批"wms 仅 4 条不可对接"的单行 grep 误判——svc/wms 实际已挂 inbound/outbound/stock-take 各 start/approve/reject + transfer（`/transfers`）start/approve/reject。`wmsApprovalApi` 由裸 `apiClient`（core 兜底）改指 `apiClient.wms`（去 `/wms` 前缀、transfer 对齐 `/transfers`），body 由 `{entityId,entityType,approverId,rejectorId,reason}` 对齐后端 `ApprovalRequest{operator,comment}`；core 12 条 `/wms/*/approval/*` 删除。集成测试 18 passed、typecheck 绿、cargo check 绿。注：封装无页面消费仅测试；端到端 FSM 状态门/事务需起栈造单验证。剩余 87 条按台账分档待 ②tenant handler 挂载 / ③comments·favorites BE-08 存废。
 
 ---
 

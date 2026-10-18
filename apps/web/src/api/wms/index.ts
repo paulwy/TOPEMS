@@ -156,44 +156,44 @@ export const wmsApi = {
 
 // ============================================================================
 // 审批端点（4 类实体 × 3 端点 = 12 个调用）
-// 路径严格与后端 svc/wms Route 对齐：
-//   /wms/inbound-orders/${id}/approval/{start,approve,reject}
-//   /wms/outbound-orders/${id}/approval/{start,approve,reject}
-//   /wms/stock-takes/${id}/approval/{start,approve,reject}
-//   /wms/transfer-orders/${id}/approval/{start,approve,reject}
+// 走 apiClient.wms（base=/api/wms），路径严格对齐 svc/wms Route：
+//   /inbound-orders/${id}/approval/{start,approve,reject}
+//   /outbound-orders/${id}/approval/{start,approve,reject}
+//   /stock-takes/${id}/approval/{start,approve,reject}
+//   /transfers/${id}/approval/{start,approve,reject}（调拨真实命名为 transfers）
 // ============================================================================
 export const wmsApprovalApi = {
   inbound: {
     start: (id: string, body: ApprovalStartRequest) =>
-      apiClient.post(`/wms/inbound-orders/${id}/approval/start`, body),
+      apiClient.wms.post(`/inbound-orders/${id}/approval/start`, body),
     approve: (id: string, body: ApprovalApproveRequest) =>
-      apiClient.post(`/wms/inbound-orders/${id}/approval/approve`, body),
+      apiClient.wms.post(`/inbound-orders/${id}/approval/approve`, body),
     reject: (id: string, body: ApprovalRejectRequest) =>
-      apiClient.post(`/wms/inbound-orders/${id}/approval/reject`, body),
+      apiClient.wms.post(`/inbound-orders/${id}/approval/reject`, body),
   },
   outbound: {
     start: (id: string, body: ApprovalStartRequest) =>
-      apiClient.post(`/wms/outbound-orders/${id}/approval/start`, body),
+      apiClient.wms.post(`/outbound-orders/${id}/approval/start`, body),
     approve: (id: string, body: ApprovalApproveRequest) =>
-      apiClient.post(`/wms/outbound-orders/${id}/approval/approve`, body),
+      apiClient.wms.post(`/outbound-orders/${id}/approval/approve`, body),
     reject: (id: string, body: ApprovalRejectRequest) =>
-      apiClient.post(`/wms/outbound-orders/${id}/approval/reject`, body),
+      apiClient.wms.post(`/outbound-orders/${id}/approval/reject`, body),
   },
   stockTake: {
     start: (id: string, body: ApprovalStartRequest) =>
-      apiClient.post(`/wms/stock-takes/${id}/approval/start`, body),
+      apiClient.wms.post(`/stock-takes/${id}/approval/start`, body),
     approve: (id: string, body: ApprovalApproveRequest) =>
-      apiClient.post(`/wms/stock-takes/${id}/approval/approve`, body),
+      apiClient.wms.post(`/stock-takes/${id}/approval/approve`, body),
     reject: (id: string, body: ApprovalRejectRequest) =>
-      apiClient.post(`/wms/stock-takes/${id}/approval/reject`, body),
+      apiClient.wms.post(`/stock-takes/${id}/approval/reject`, body),
   },
   transferOrder: {
     start: (id: string, body: ApprovalStartRequest) =>
-      apiClient.post(`/wms/transfer-orders/${id}/approval/start`, body),
+      apiClient.wms.post(`/transfers/${id}/approval/start`, body),
     approve: (id: string, body: ApprovalApproveRequest) =>
-      apiClient.post(`/wms/transfer-orders/${id}/approval/approve`, body),
+      apiClient.wms.post(`/transfers/${id}/approval/approve`, body),
     reject: (id: string, body: ApprovalRejectRequest) =>
-      apiClient.post(`/wms/transfer-orders/${id}/approval/reject`, body),
+      apiClient.wms.post(`/transfers/${id}/approval/reject`, body),
   },
 };
 

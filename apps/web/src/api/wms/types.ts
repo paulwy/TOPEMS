@@ -1174,24 +1174,20 @@ export type {
 // ============================================================================
 // 审批 DTO（与 7 FSM 的 requires_approval gate 对应）
 // ============================================================================
+// 对齐 svc/wms ApprovalRequest：{ operator, comment? }（操作人 + 审批备注/驳回原因）
 export interface ApprovalStartRequest {
-  entityId: string;
-  entityType: string;
-  remark?: string;
+  operator: string;
+  comment?: string;
 }
 
 export interface ApprovalApproveRequest {
-  entityId: string;
-  entityType: string;
-  approverId: string;
-  remark?: string;
+  operator: string;
+  comment?: string;
 }
 
 export interface ApprovalRejectRequest {
-  entityId: string;
-  entityType: string;
-  rejectorId: string;
-  reason: string;
+  operator: string;
+  comment?: string;
 }
 
 // ============================================================================

@@ -5,8 +5,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 //   1. service 级（apiClient.wms / apiClient.tms / apiClient.erp）— 供 outboundOrderApi /
 //      inboundOrderApi / transferApi / shipmentApi / salesOrderApi / purchaseOrderApi /
 //      erp inventoryApi / materialApi / wms inventoryApi 等使用
-//   2. 顶层 post/get/put/delete — 供 wmsApprovalApi 使用（实际代码用 apiClient.post 调
-//      `/wms/inbound-orders/{id}/approval/approve` 等路径）
+//   2. service 级 apiClient.wms — wmsApprovalApi 审批已改指 apiClient.wms（base=/api/wms，
+//      路径无 /wms 前缀；调拨为 /transfers），不再走顶层 apiClient.post
 // ============================================================================
 vi.mock('@/api/client', () => {
   const createMockModule = () => ({
@@ -91,8 +91,8 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
       const { tmsApi } = await import('@/api/tms');
       const { apiClient } = await import('@/api/client');
 
-      // wmsApprovalApi.outbound.approve 实际走 apiClient.post（顶层，路径 /wms/...）
-      apiClient.post.mockResolvedValue({
+      // wmsApprovalApi.outbound.approve 走 apiClient.wms（base=/api/wms，无 /wms 前缀）
+      apiClient.wms.post.mockResolvedValue({
         success: true,
         data: { id: 'out-001', status: 'shipping' },
       });
@@ -102,15 +102,13 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
       });
 
       const approveResult = await wmsApprovalApi.outbound.approve('out-001', {
-        entityId: 'out-001',
-        entityType: 'outbound_order',
-        approverId: 'user-001',
+        operator: 'user-001',
       });
       const dispatchResult = await tmsApi.dispatchShipment('ship-001');
 
-      expect(apiClient.post).toHaveBeenCalledWith(
-        '/wms/outbound-orders/out-001/approval/approve',
-        expect.objectContaining({ entityId: 'out-001' })
+      expect(apiClient.wms.post).toHaveBeenCalledWith(
+        '/outbound-orders/out-001/approval/approve',
+        expect.objectContaining({ operator: 'user-001' })
       );
       expect(apiClient.tms.post).toHaveBeenCalledWith('/shipments/ship-001/dispatch');
       expect(approveResult.data.status).toBe('shipping');
@@ -204,8 +202,8 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
         success: true,
         data: { id: 'inb-001', status: 'received' },
       });
-      // approval.approve (received→completed) — 走顶层 apiClient.post
-      apiClient.post.mockResolvedValue({
+      // approval.approve (received→completed) — 同走 apiClient.wms
+      apiClient.wms.post.mockResolvedValueOnce({
         success: true,
         data: { id: 'inb-001', status: 'completed' },
       });
@@ -214,21 +212,16 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
         { item_id: 'item-1', received_quantity: 50 },
       ]);
       const approveResult = await wmsApprovalApi.inbound.approve('inb-001', {
-        entityId: 'inb-001',
-        entityType: 'inbound_order',
-        approverId: 'user-002',
+        operator: 'user-002',
       });
 
       expect(apiClient.wms.post).toHaveBeenCalledWith(
         '/inbound-orders/inb-001/receive',
         expect.anything()
       );
-      expect(apiClient.post).toHaveBeenCalledWith(
-        '/wms/inbound-orders/inb-001/approval/approve',
-        expect.objectContaining({
-          entityId: 'inb-001',
-          entityType: 'inbound_order',
-        })
+      expect(apiClient.wms.post).toHaveBeenCalledWith(
+        '/inbound-orders/inb-001/approval/approve',
+        expect.objectContaining({ operator: 'user-002' })
       );
       expect(receiveResult.data.status).toBe('received');
       expect(approveResult.data.status).toBe('completed');
@@ -314,8 +307,8 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
         success: true,
         data: { id: 'trf-001', status: 'confirmed' },
       });
-      // approval.approve (confirmed→shipped, APV-4) — 走顶层 apiClient.post
-      apiClient.post.mockResolvedValue({
+      // approval.approve (confirmed→shipped, APV-4) — 同走 apiClient.wms，命名 transfers
+      apiClient.wms.post.mockResolvedValueOnce({
         success: true,
         data: { id: 'trf-001', status: 'shipped' },
       });
@@ -327,16 +320,14 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
 
       const confirmResult = await transferApi.confirm('trf-001');
       const approveResult = await wmsApprovalApi.transferOrder.approve('trf-001', {
-        entityId: 'trf-001',
-        entityType: 'transfer_order',
-        approverId: 'user-003',
+        operator: 'user-003',
       });
       const dispatchResult = await tmsApi.dispatchShipment('ship-002');
 
       expect(apiClient.wms.post).toHaveBeenCalledWith('/transfers/trf-001/confirm');
-      expect(apiClient.post).toHaveBeenCalledWith(
-        '/wms/transfer-orders/trf-001/approval/approve',
-        expect.objectContaining({ entityId: 'trf-001' })
+      expect(apiClient.wms.post).toHaveBeenCalledWith(
+        '/transfers/trf-001/approval/approve',
+        expect.objectContaining({ operator: 'user-003' })
       );
       expect(apiClient.tms.post).toHaveBeenCalledWith('/shipments/ship-002/dispatch');
       expect(confirmResult.data.status).toBe('confirmed');
@@ -573,11 +564,10 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
       // 断言：TMS 失败后，WMS outbound 没有调用 approval.approve（仍停留在 packing）
       expect(apiClient.wms.post).toHaveBeenCalledWith('/outbound-orders/out-003/pack');
       expect(apiClient.tms.post).toHaveBeenCalledWith('/shipments', expect.anything());
-      expect(apiClient.post).not.toHaveBeenCalled();
       expect(packResult.data.status).toBe('packing');
       expect(shipmentFailed).toBe(true);
       // 关键：approval.approve 路径从未被调用 → outbound 未前进至 shipping
-      expect(apiClient.post).not.toHaveBeenCalledWith(
+      expect(apiClient.wms.post).not.toHaveBeenCalledWith(
         expect.stringContaining('/outbound-orders/out-003/approval/approve'),
         expect.anything()
       );
@@ -588,19 +578,17 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
       const { apiClient } = await import('@/api/client');
 
       // 后端 FSM 检测到 created→completed 非法转换，返回 success:false
-      apiClient.post.mockResolvedValue({
+      apiClient.wms.post.mockResolvedValue({
         success: false,
         message: 'InvalidTransition: created → completed is not allowed',
       });
 
       const result = await wmsApprovalApi.outbound.approve('out-004', {
-        entityId: 'out-004',
-        entityType: 'outbound_order',
-        approverId: 'user-001',
+        operator: 'user-001',
       });
 
-      expect(apiClient.post).toHaveBeenCalledWith(
-        '/wms/outbound-orders/out-004/approval/approve',
+      expect(apiClient.wms.post).toHaveBeenCalledWith(
+        '/outbound-orders/out-004/approval/approve',
         expect.anything()
       );
       expect(result.success).toBe(false);
@@ -612,19 +600,17 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
       const { apiClient } = await import('@/api/client');
 
       // inbound 处于 created 状态（非审批态），调用 approve 应被拒绝
-      apiClient.post.mockResolvedValue({
+      apiClient.wms.post.mockResolvedValue({
         success: false,
         message: 'not in approval state: current state is created',
       });
 
       const result = await wmsApprovalApi.inbound.approve('inb-003', {
-        entityId: 'inb-003',
-        entityType: 'inbound_order',
-        approverId: 'user-002',
+        operator: 'user-002',
       });
 
-      expect(apiClient.post).toHaveBeenCalledWith(
-        '/wms/inbound-orders/inb-003/approval/approve',
+      expect(apiClient.wms.post).toHaveBeenCalledWith(
+        '/inbound-orders/inb-003/approval/approve',
         expect.anything()
       );
       expect(result.success).toBe(false);

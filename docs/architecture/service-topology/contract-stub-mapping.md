@@ -20,7 +20,7 @@
 **本批实测纠正（推翻原台账 🟢 判断，不可删）**：
 
 - **system/api-keys（2）→ 改 🔴**：`settings.rs` 真实仅 GET 列表 / POST 创建 / DELETE `{id}`；stub 的 GET 详情、PUT 更新是**未实现**，非冗余。
-- **wms-approval（12）→ 不可对接**：svc/wms 真实仅 4 条（inbound reject、stock-take reject、transfer approve/reject），且命名 `/transfers` ≠ stub `/transfer-orders`，无 start、无 outbound；前端 `wms/index.ts:168-196` 走裸 `apiClient`（core 兜底），改指也会 404，保留待真实服务补齐。
+- **wms-approval（12）→ ✅ 第二批已对接删除**：复核纠正第一批"仅 4 条/不可对接"的单行 grep 误判——svc/wms 实际已挂 inbound/outbound/stock-take 各 start/approve/reject + transfer start/approve/reject（11 条，transfer 命名 `/transfers`）。前端 `wmsApprovalApi` 由裸 `apiClient`（core 兜底）改指 `apiClient.wms`（去 `/wms` 前缀、transfer 改 `/transfers`），body 对齐后端 `{operator, comment}`；core 12 条兜底删除，集成测试 18 passed。
 - **help（7）→ 保留**：`help.ts` 注释明示走 core client，非已迁出。
 - **search（4）→ 全保留**：`shared/index.ts:176,180,184,188` 活调 core `/search`、`/search/suggestions`、`/search/recent`(GET/DELETE)。
 - **dict（1）→ 保留**：`system/index.ts:146` 走 core `/dict/dict-types/{id}/items`。
@@ -66,7 +66,7 @@
 | tenant/webhooks | 5 | 🟢 部分 | integration `plugin.rs` / communication 有 webhook 能力可复用 | `api/tenant/config.ts`、`api/notification/webhook.ts` |
 | tenant/security | 18 | 🟡 部分 | iam/auth 已有 password-policy；2fa/api-keys/audit-logs/sessions/ip-whitelist 🔴 | `api/tenant/security.ts` |
 | system/api-keys | 2 | 🔴（原误标🟢） | 真实仅列表/创建/删除；stub 的 GET 详情、PUT 更新为未实现，非冗余 | `api/unified-core/system.ts` |
-| wms-approval | 12 | 🔴 不可对接 | svc/wms 真实仅 4 条且命名 `/transfers`≠`/transfer-orders`、无 start/outbound；前端走 core 兜底，保留待补齐 | `api/wms/index.ts` |
+| wms-approval | 0（原12，第二批已删） | ✅ 已对接 | 前端改指 apiClient.wms（transfer=/transfers），core 兜底删除 | `api/wms/index.ts` |
 | help | 7 | ⚠ 保留 | `help.ts` 仍走 core client（非已迁出），删除会裸 404 | `api/help.ts` |
 
 ## 4. 分组明细
@@ -283,23 +283,12 @@
 
 - 现状：core `settings.rs:43` 已挂 `/system/api-keys/{id}`（含 PUT/DELETE），本组兜底冗余，可直接移除。
 
-### 4.20 wms-approval（12）🟢 上游已有，前缀冗余
-| 方法 | 路径 | 兜底 | 状态 |
-|---|---|---|---|
-| POST | `/wms/inbound-orders/{id}/approval/start` | 成功回执 | 🟢 |
-| POST | `/wms/inbound-orders/{id}/approval/approve` | 成功回执 | 🟢 |
-| POST | `/wms/inbound-orders/{id}/approval/reject` | 成功回执 | 🟢 |
-| POST | `/wms/outbound-orders/{id}/approval/start` | 成功回执 | 🟢 |
-| POST | `/wms/outbound-orders/{id}/approval/approve` | 成功回执 | 🟢 |
-| POST | `/wms/outbound-orders/{id}/approval/reject` | 成功回执 | 🟢 |
-| POST | `/wms/stock-takes/{id}/approval/start` | 成功回执 | 🟢 |
-| POST | `/wms/stock-takes/{id}/approval/approve` | 成功回执 | 🟢 |
-| POST | `/wms/stock-takes/{id}/approval/reject` | 成功回执 | 🟢 |
-| POST | `/wms/transfer-orders/{id}/approval/start` | 成功回执 | 🟢 |
-| POST | `/wms/transfer-orders/{id}/approval/approve` | 成功回执 | 🟢 |
-| POST | `/wms/transfer-orders/{id}/approval/reject` | 成功回执 | 🟢 |
+### 4.20 wms-approval（原 12）✅ 第二批已对接并删除
 
-- 现状：svc/wms `inbound_order/outbound_order/stock_take/transfer_order` 已实现真实审批，前端走 `/api/wms/*`；core `/wms/*` 兜底冗余。
+- 12 条 core 兜底（inbound/outbound/stock-take/transfer × start/approve/reject）已删除。
+- 对接：`wmsApprovalApi` 改指 `apiClient.wms`（base=/api/wms，去 `/wms` 前缀；transfer 由 `/transfer-orders` 对齐真实 `/transfers`），body 由 `{entityId,entityType,approverId,rejectorId,reason}` 对齐后端 `ApprovalRequest{operator,comment}`。
+- 真实路由：svc/wms inbound/outbound/stock-take 为 `/{entity}/{id}/approval/{start,approve,reject}`，transfer 为 `/transfers/{id}/approval/{start,approve,reject}`。
+- 注：本封装无页面消费，仅集成测试；端到端 FSM（状态门/事务提交）需起栈造单验证，静态层已对齐契约。
 
 ### 4.21 help（7）🟢 上游已有（svc/portal）
 | 方法 | 路径 | 兜底 | 状态 |
