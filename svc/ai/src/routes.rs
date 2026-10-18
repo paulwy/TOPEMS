@@ -607,6 +607,15 @@ pub fn create_routes(
             "/dsh/copilot/modules/{module}",
             get(crate::handlers::business_copilot_handlers::get_module_config),
         )
+        // BE-P0：补 auth + tenant 中间件（此前裸奔，对齐 dsh_agent_router :469-476 范式）。
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
         .with_state(copilot_state);
 
     // 治理仪表盘路由
@@ -662,6 +671,15 @@ pub fn create_routes(
             "/dsh/governance/cache",
             delete(crate::handlers::governance_dashboard_handlers::clear_cache),
         )
+        // BE-P0：补 auth + tenant 中间件（对齐 dsh_enhanced_router :562-569 范式）。
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
         .with_state(governance_state);
 
     // 智能表单路由（3.2b）
@@ -683,6 +701,15 @@ pub fn create_routes(
             "/dsh/smart-forms/validate",
             post(crate::handlers::smart_forms_handlers::validate),
         )
+        // BE-P0：补 auth + tenant 中间件（对齐范式）。
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
         .with_state(smart_forms_state);
 
     let recommendation_router = Router::new()
