@@ -10,7 +10,7 @@
 - [ ] **P1 · 前端空态兜底**（空态缺失仅 170/886 页覆盖）
 - [ ] **P1 · 内联样式治理**（3563 处，热区收敛到 token/样式文件）
 - [ ] **P1 · 测试前置一键脚本**（一键后端栈+种子，让 full-route-smoke 脱离 mock token 假失败）
-- [ ] **P2 · menu 域 DROP**（技术能决，同 C1 判法：10 handler 未挂载+前端零消费）
+- [ ] **P2 · menu 域冻结标注**（2026-10-18 复核：routes/master.rs:197-224 有路由注册 4 handler（update_group/delete_group/update_menu/delete_menu）+ embedded.rs:102/main.rs:331 init_database 初始化——非"未挂载"；前端 0 消费确认（grep apps/web/src/api = 0），但后端 API 存在且 DB 初始化，判定为"后端 API 已实现、前端页面未开发"——冻结保留，待前端 menu 页面开发时接线）
 - [ ] **P2 · z-index 语义层 / 双层 sticky 复核**（魔法数 → 语义 token）
 - [ ] **P2 · aria 抽检 / chartPalette 一致性**
 - [ ] **P2 · DSH 零消费面冻结**（~20 端点前端零消费，冻结标注）
