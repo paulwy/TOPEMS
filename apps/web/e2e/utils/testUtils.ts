@@ -40,10 +40,17 @@ export async function apiLogin(username: string, password: string): Promise<stri
       return data.data.access_token || data.data.token || data.token || '';
     } catch (error) {
       if (attempt === 1) {
-        // Fallback: 如果 IAM 服务不可用，返回 mock token
-        console.warn(`[apiLogin] IAM 服务不可用，使用 mock token: ${(error as Error).message}`);
-        const role = username.includes('admin') ? 'superadmin' : 'employee';
-        return generateMockToken(username, role);
+        // Fallback：mock token 改为 opt-in（默认关闭）。
+        // 批 C-1：后端栈不齐时 mock token 会造成 401 假失败并误判「redirect:/login」。
+        // 仅当显式 ALLOW_MOCK_TOKEN=1 才回退；否则抛错，要求先起真后端栈（scripts/dev/run-e2e-stack.sh login）。
+        if (process.env.ALLOW_MOCK_TOKEN === '1') {
+          console.warn(`[apiLogin] IAM 服务不可用，使用 mock token（ALLOW_MOCK_TOKEN=1）: ${(error as Error).message}`);
+          const role = username.includes('admin') ? 'superadmin' : 'employee';
+          return generateMockToken(username, role);
+        }
+        throw new Error(
+          `IAM 登录不可用且 ALLOW_MOCK_TOKEN≠1：请先起真后端栈（scripts/dev/run-e2e-stack.sh login）。原因：${(error as Error).message}`,
+        );
       }
       // 首次/二次失败：退避后重试（高负载下 IAM 偶发 401/500/连接重置）
       await new Promise((r) => setTimeout(r, 600 + attempt * 500));
