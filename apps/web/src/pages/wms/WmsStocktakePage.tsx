@@ -40,6 +40,28 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['wms', 'stocktake'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+const rowGap2: React.CSSProperties = { display: 'flex', gap: 'var(--space-2)' };
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface StocktakeOrder {
   id: string;
   order_no: string;
@@ -607,7 +629,7 @@ const WmsStocktakePage: React.FC = () => {
                 style={{ width: 140 }}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div style={rowGap2}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -706,7 +728,7 @@ const WmsStocktakePage: React.FC = () => {
         size='lg'
       >
         {selectedOrder && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             <Card>
               <div
                 style={{
@@ -716,9 +738,7 @@ const WmsStocktakePage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedOrder.order_no}
-                  </div>
+                  <div style={detailLabel}>{selectedOrder.order_no}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -729,7 +749,7 @@ const WmsStocktakePage: React.FC = () => {
                     {selectedOrder.title}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <div style={rowGap2}>
                   <Badge variant={typeConfig[selectedOrder.type]?.variant || 'default'}>
                     {typeConfig[selectedOrder.type]?.label ||
                       t('wms.stocktake_page.status_unknown')}
@@ -793,45 +813,29 @@ const WmsStocktakePage: React.FC = () => {
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.stocktake_page.col_warehouse')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedOrder.warehouse}
-                  </div>
+                  <div style={detailLabel}>{t('wms.stocktake_page.col_warehouse')}</div>
+                  <div style={detailValue}>{selectedOrder.warehouse}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.stocktake_page.label_creator')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedOrder.creator}
-                  </div>
+                  <div style={detailLabel}>{t('wms.stocktake_page.label_creator')}</div>
+                  <div style={detailValue}>{selectedOrder.creator}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.stocktake_page.col_start_date')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.stocktake_page.col_start_date')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.start_date}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.stocktake_page.label_finish_date')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.stocktake_page.label_finish_date')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.end_date || '-'}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.stocktake_page.label_discrepancy_count')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.stocktake_page.label_discrepancy_count')}</div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>
                     {t('wms.stocktake_page.items_unit', { count: selectedOrder.discrepancy_items })}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.stocktake_page.label_created_at')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.stocktake_page.label_created_at')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedOrder.created_at)}
                   </div>
@@ -883,11 +887,11 @@ const WmsStocktakePage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div>
             <label
               htmlFor='field-1'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={sectionTitle}
             >
               {t('wms.stocktake_page.field_title')}
             </label>
@@ -901,7 +905,7 @@ const WmsStocktakePage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-2'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('wms.stocktake_page.field_warehouse')}
               </label>
@@ -931,7 +935,7 @@ const WmsStocktakePage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-3'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('wms.stocktake_page.field_type')}
               </label>
@@ -948,7 +952,7 @@ const WmsStocktakePage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-4'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('wms.stocktake_page.col_start_date')}
               </label>
