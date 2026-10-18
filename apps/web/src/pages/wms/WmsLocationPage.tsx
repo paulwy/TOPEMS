@@ -40,6 +40,20 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['wms', 'locations'];
 
+// 详情/卡片重复文本样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const cellSub: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-tertiary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+
 interface Location {
   id: string;
   code: string;
@@ -409,9 +423,7 @@ const WmsLocationPage: React.FC = () => {
         render: (row) => (
           <div>
             <div style={{ fontWeight: 500 }}>{row.name}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-              {row.zone}
-            </div>
+            <div style={cellSub}>{row.zone}</div>
           </div>
         ),
       },
@@ -472,9 +484,7 @@ const WmsLocationPage: React.FC = () => {
           row.current_product ? (
             <div>
               <div style={{ fontSize: 'var(--text-sm)' }}>{row.current_product}</div>
-              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-                {row.current_sku}
-              </div>
+              <div style={cellSub}>{row.current_sku}</div>
             </div>
           ) : (
             <span style={{ color: 'var(--text-tertiary)' }}>-</span>
@@ -791,35 +801,21 @@ const WmsLocationPage: React.FC = () => {
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.location_page.col_warehouse')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedLocation.warehouse}
-                  </div>
+                  <div style={detailLabel}>{t('wms.location_page.col_warehouse')}</div>
+                  <div style={detailValue}>{selectedLocation.warehouse}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.location_page.label_zone')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedLocation.zone}
-                  </div>
+                  <div style={detailLabel}>{t('wms.location_page.label_zone')}</div>
+                  <div style={detailValue}>{selectedLocation.zone}</div>
                 </div>
                 {selectedLocation.current_product && (
                   <>
                     <div>
-                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                        {t('wms.location_page.label_current_material')}
-                      </div>
-                      <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                        {selectedLocation.current_product}
-                      </div>
+                      <div style={detailLabel}>{t('wms.location_page.label_current_material')}</div>
+                      <div style={detailValue}>{selectedLocation.current_product}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                        {t('wms.location_page.label_sku')}
-                      </div>
+                      <div style={detailLabel}>{t('wms.location_page.label_sku')}</div>
                       <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                         {selectedLocation.current_sku}
                       </div>
@@ -827,9 +823,7 @@ const WmsLocationPage: React.FC = () => {
                   </>
                 )}
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.location_page.label_created_at')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.location_page.label_created_at')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedLocation.created_at)}
                   </div>

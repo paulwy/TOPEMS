@@ -73,7 +73,7 @@
 2. **第 1 批 · C 类颜色笔误 ✅ 已落地（2026-10-19）**：`PivotTable.tsx` 失效主题路径（border.default/grey.x/text.muted/primary/common.white/非法 lg）全映射 theme.palette；全仓复查其余命中均在 sx 合法路径或 schemas 契约键，无需改。tsc 0 error、eslint 零新增。
 3. **第 2 批 · B 类按域抽常量（进行中，单页样板已起）**：
    - 已起：`pages/wms/WmsInventoryPage.tsx` 详情面板重复文本样式（detailLabel×5/cellSub×2/detailValue×2）等价抽为局部 `React.CSSProperties` 常量，值逐字不变。
-   - 排队（每页一次提交、视觉回归核对，不并行铺）：`WmsLocationPage`(47)、`WmsStocktakePage`(46)、`WmsOutboundOrderPage`(41)、`WmsInboundOrderPage`(40)；其后 qms 域。跨页同构单元（详情项 label/value、统计卡）待视觉回归条件具备时再沉淀为共享组件，不在无回归环境下盲重组。
+   - 进度：✅ `WmsInventoryPage`、✅ `WmsLocationPage`（detailLabel/cellSub/detailValue 等价抽取，prettier 顺带格式化）。排队：`WmsStocktakePage`(46)、`WmsOutboundOrderPage`(41)、`WmsInboundOrderPage`(40)；其后 qms 域。跨页同构单元（详情项 label/value、统计卡）待视觉回归条件具备时再沉淀为共享组件，不在无回归环境下盲重组。
 4. **A 类不动；D 类随演示载体迭代。**
 
 ## 6. 局限
