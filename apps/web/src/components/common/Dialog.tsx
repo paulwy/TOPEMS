@@ -2,7 +2,7 @@
  * 统一 Dialog 组件
  * 基于 ConfirmDialog，提供更简洁的 API
  */
-import React from 'react';
+import React, { useId } from 'react';
 import {
   Dialog as MuiDialog,
   DialogTitle,
@@ -186,12 +186,15 @@ export const Dialog: React.FC<DialogProps> = ({
     return buttons.length > 0 ? buttons : null;
   };
 
+  const titleId = useId();
+
   return (
     <MuiDialog
       open={open}
       onClose={closeOnBackdropClick && closable ? handleClose : undefined}
       maxWidth={maxWidth}
       fullWidth={fullWidth}
+      aria-labelledby={title ? titleId : undefined}
       sx={{
         '& .MuiDialog-container': {
           alignItems: centered ? 'center' : 'flex-start',
@@ -202,6 +205,7 @@ export const Dialog: React.FC<DialogProps> = ({
       {/* 标题区域 */}
       {title && (
         <DialogTitle
+          id={titleId}
           sx={{
             display: 'flex',
             alignItems: 'center',

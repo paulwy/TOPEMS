@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { Drawer as MuiDrawer, Box, IconButton, Typography, Divider } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { X } from 'lucide-react';
@@ -87,6 +87,7 @@ export const Drawer: React.FC<DrawerProps> = ({
           <>
             {showTitle && title && (
               <Typography
+                id={titleId}
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
@@ -120,12 +121,15 @@ export const Drawer: React.FC<DrawerProps> = ({
     );
   };
 
+  const titleId = useId();
+
   return (
     <MuiDrawer
       anchor={anchor}
       open={open}
       onClose={closeOnBackdropClick && closable ? handleClose : undefined}
       variant={variant}
+      aria-labelledby={showTitle && title ? titleId : undefined}
       sx={{
         ...sx,
         '& .MuiDrawer-paper': getPaperSx(),
