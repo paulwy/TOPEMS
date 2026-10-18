@@ -28,7 +28,11 @@
 **第二批②③实测结论（无可静态闭环项，不擅自新建/删除）**：
 
 - **② tenant 🟡「已写 handler 待挂载」经实测不成立**：`modules/tenant/handlers.rs` 全部已写函数（CRUD/stats/metrics/usage/billing/invoices/quota/modules/switch/invite 等）均已在 `master.rs` 挂载；stub 的 `analytics/*`、`billing/subscription|plan|cancel|card`、`features/*`、`settings/branding/domains/email-config/integrations/webhooks/security/*` 在 core **无对应已写 handler**（`tenant_analytics.rs`/`tenant_security.rs` 等文件不存在），属待新建而非待挂载；前端 `tenantConfigApi/tenantSecurityApi/tenantAnalyticsApi` 封装无页面直接消费。故本批不挂载、不新建，台账 🟡 纠正为 🔴。
-- **③ comments/favorites 不可走存废删除**：`CommentsPage.tsx`、`FavoritesPage.tsx` 页面在用，core 无通用实现，属待新建活需求，删除会裸 404；待 BE-08 之外单独立项新建后端，本批不动。
+- **③ comments/favorites 不可走存废删除**：`CommentsPage.tsx`、`FavoritesPage.tsx` 页面在用，core 无通用实现，属待新建活需求，删除会裸 404。→ 已由 ④ 落地真实后端，见下。
+
+**第二批④ 真实落地（2026-10-19，87 → 79，删 8 条空壳）**：
+
+- **comments（4）+ favorites（4）→ ✅ 新建通用后端替换**：新增 `modules/engagement`（`mod.rs` 幂等自举建表 `core_comments` / `core_favorites`，`handlers.rs` 7 个 handler，`models.rs` 对齐前端契约）。评论按 `entity_type+entity_id` 扁平列出、作者本人改/软删；收藏按当前用户隔离、唯一键幂等、`/favorites/check` 返回 boolean。路由挂 `master.rs`（登录即可用，靠全局 auth_middleware 注入 Claims，不绑细粒度权限点），`embedded.rs`/`main.rs` 注册 `init_database`。core 8 条空壳删除。`cargo check`/clippy/fmt 绿，engagement 3 个 serde 单测通过。注：评论首版扁平（`parent_id` 存锚点、不服务端组装 replies 树）；端到端造单需起栈验证。
 
 ## 1. 兜底类型（4 种 handler）
 
@@ -48,7 +52,7 @@
 | 🔴 | **待上游新建**（全仓 0 命中） | 排期新建，或产品判定不做 |
 | ⚪ | **前端未确认调用** | 随 BE-08 业务勾选存废，可能直接删 |
 
-## 3. 总览（第一批核销后 99 条 / 21 域；原 125，已删 26）
+## 3. 总览（截至第二批④：79 条 / 21 域；原 125，已删 46 = 第一批26 + WMS审批12 + comments/favorites8）
 
 | 域 | 条数 | 主要状态 | 上游候选 / 现状 | 前端调用文件 |
 |---|---:|---|---|---|
@@ -56,8 +60,8 @@
 | forms | 1（原7，已删6） | 🟢 已核销 | 6 条死兜底已删；仅 GET `/forms/{id}` 走 core | `api/ai/businessIntelligence.ts` |
 | documents | 4（原9，已删5） | 🔴 部分 | CRUD/generate 死兜底已删；parse/summary/search 仍走 core | `api/ai/businessIntelligence.ts` |
 | governance | 2（原12，已删10） | 🟢 已核销 | 10 条死兜底已删；trends/refresh 仍走 core | `api/ai/governanceDashboard.ts` |
-| comments | 4 | 🔴 待新建（有页面） | `CommentsPage.tsx` 在用，core 无通用实现（doc/ticket 评论独立），待新建不可删 | `api/shared/index.ts` |
-| favorites | 4 | 🔴 待新建（有页面） | `FavoritesPage.tsx` 在用，core 无实现，待新建不可删 | `api/shared/index.ts` |
+| comments | 0（原4，④已建） | ✅ 已实现 | `modules/engagement` 真实 CRUD（core_comments 表），空壳删除 | `api/shared/index.ts` |
+| favorites | 0（原4，④已建） | ✅ 已实现 | `modules/engagement` 真实 CRUD + 查重（core_favorites 表），空壳删除 | `api/shared/index.ts` |
 | search | 4 | 🟢 部分 | svc/search 已有 `/`、`/suggestions`；`/search/recent` 🔴 | `api/search/index.ts` |
 | dict | 1 | 🟢 | master-data `dict/handlers` 已有，待前缀核对 | `api/system/index.ts` |
 | tenant/analytics | 7 | 🔴（原误标🟡） | ②实测：无已写 handler（tenant_analytics.rs 不存在），非待挂载；前端封装无页面直接消费，待新建/转发 svc/analytics | `api/tenant/analytics.ts` |

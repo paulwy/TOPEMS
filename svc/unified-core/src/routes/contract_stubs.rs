@@ -85,14 +85,8 @@ pub fn contract_stub_routes() -> Router<AppState> {
         // 仅 trends(GET)、refresh(POST) 仍由 core 承载，保留。
         .route("/governance/trends", get(stub_list))
         .route("/governance/refresh", post(stub_action))
-        .route("/comments", get(stub_list))
-        .route("/comments", post(stub_action))
-        .route("/comments/{id}", put(stub_action))
-        .route("/comments/{id}", delete(stub_action))
-        .route("/favorites", get(stub_list))
-        .route("/favorites", post(stub_action))
-        .route("/favorites/{id}", delete(stub_action))
-        .route("/favorites/check", get(stub_list))
+        // B4-④：/comments/* 与 /favorites/* 已由 modules::engagement 真实实现
+        // （core_comments / core_favorites 表 + CRUD + 收藏查重），空壳删除。
         .route("/search", get(stub_list))
         .route("/search/suggestions", get(stub_list))
         .route("/search/recent", get(stub_list))

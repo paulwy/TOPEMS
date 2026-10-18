@@ -100,6 +100,10 @@ async fn build_router_inner(
     })
     .await;
     try_init("menu", || crate::modules::menu::init_database(&ctx.db)).await;
+    try_init("engagement", || {
+        crate::modules::engagement::init_database(&ctx.db)
+    })
+    .await;
     try_init("audit", || crate::modules::audit::init_database(&ctx.db)).await;
     try_init("doc", || {
         crate::modules::doc::services::init_database(&ctx.db)

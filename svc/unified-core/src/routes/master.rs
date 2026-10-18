@@ -228,6 +228,44 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             require_permission("system:write"),
         ));
 
+    // 通用评论 / 个人收藏：登录即可用（全局 auth_middleware 已注入 Claims），
+    // 不绑定细粒度权限点；作者本人改删评论，收藏按当前用户隔离。
+    let engagement_read = Router::new()
+        .route(
+            "/comments",
+            get(modules::engagement::handlers::list_comments),
+        )
+        .route(
+            "/favorites",
+            get(modules::engagement::handlers::list_favorites),
+        )
+        .route(
+            "/favorites/check",
+            get(modules::engagement::handlers::check_favorite),
+        );
+
+    let engagement_write = Router::new()
+        .route(
+            "/comments",
+            post(modules::engagement::handlers::create_comment),
+        )
+        .route(
+            "/comments/{id}",
+            put(modules::engagement::handlers::update_comment),
+        )
+        .route(
+            "/comments/{id}",
+            delete(modules::engagement::handlers::delete_comment),
+        )
+        .route(
+            "/favorites",
+            post(modules::engagement::handlers::add_favorite),
+        )
+        .route(
+            "/favorites/{id}",
+            delete(modules::engagement::handlers::remove_favorite),
+        );
+
     // ===== MDM 主数据路由（V15 新增）=====
     let mdm_read = Router::new()
         .route(
@@ -281,6 +319,8 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         // .merge(dict_write)
         .merge(menu_read)
         .merge(menu_write)
+        .merge(engagement_read)
+        .merge(engagement_write)
         .merge(mdm_read)
         .merge(mdm_write)
 }

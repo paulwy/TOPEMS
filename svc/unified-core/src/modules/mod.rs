@@ -14,6 +14,8 @@ pub mod business_tools;
 pub mod communication;
 // V68.1 A2.3: dict 模块已合并到 svc/master-data/src/modules/dict/（主数据域）
 pub mod doc;
+// 通用评论 / 个人收藏（替代 contract_stubs 的 /comments/* /favorites/* 空壳）
+pub mod engagement;
 pub mod file;
 pub mod flow;
 // V68.1 A2.4.2: help 模块已迁移至 svc/portal/src/modules/help/（Portal BFF 用户服务域）

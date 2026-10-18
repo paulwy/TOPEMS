@@ -329,6 +329,7 @@ async fn main() -> anyhow::Result<()> {
     })
     .await;
     try_init("menu", || modules::menu::init_database(&ctx.db)).await;
+    try_init("engagement", || modules::engagement::init_database(&ctx.db)).await;
     // V68.1 A2.4.2: help 模块已迁移至 svc/portal/src/modules/help/（Portal BFF，8063 端口启动）
     // V68.1 A2.4.1: login_log init 已合并到 audit::init_database（统一建表）
     try_init("audit", || modules::audit::init_database(&ctx.db)).await;
