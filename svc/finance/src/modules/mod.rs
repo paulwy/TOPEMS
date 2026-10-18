@@ -4188,13 +4188,30 @@ pub async fn list_expense_approvals(
     Extension(claims): Extension<Claims>,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1).max(1);
-    let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20).min(100);
+    let page = params
+        .get("page")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(1)
+        .max(1);
+    let page_size = params
+        .get("page_size")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(20)
+        .min(100);
     let offset = (page - 1) * page_size;
-    let search = params.get("search").and_then(|v| v.as_str()).map(|s| format!("%{}%", s));
-    let status_filter = params.get("status").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let search = params
+        .get("search")
+        .and_then(|v| v.as_str())
+        .map(|s| format!("%{}%", s));
+    let status_filter = params
+        .get("status")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
 
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
@@ -4211,8 +4228,8 @@ pub async fn list_expense_approvals(
     .bind(&search)
     .bind(&status_filter)
     .bind(&tenant_id)
-    .bind(page_size as i64)
-    .bind(offset as i64)
+    .bind(i64::try_from(page_size).unwrap_or(i64::MAX))
+    .bind(i64::try_from(offset).unwrap_or(i64::MAX))
     .fetch_all(&state.pool)
     .await;
 
@@ -4237,9 +4254,10 @@ pub async fn list_expense_approvals(
                     "updated_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("updated_at").ok().flatten(),
                 })
             }).collect();
-            let total: i64 = sqlx::query_scalar(
-                only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM expense_approvals WHERE deleted_at IS NULL"#)
-            )
+            let total: i64 = sqlx::query_scalar(only_own_schema_query!(
+                "finance",
+                r#"SELECT COUNT(*) FROM expense_approvals WHERE deleted_at IS NULL"#
+            ))
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
@@ -4269,16 +4287,46 @@ pub async fn create_expense_approval(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
-    let expense_no = req.get("expense_no").and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let employee_id = req.get("employee_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
-    let employee_name = req.get("employee_name").and_then(|v| v.as_str()).map(|s| s.to_string());
-    let department = req.get("department").and_then(|v| v.as_str()).map(|s| s.to_string());
-    let expense_date = req.get("expense_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok()).map(|d| d.with_timezone(&chrono::Utc));
-    let expense_type = req.get("expense_type").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let expense_no = req
+        .get("expense_no")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let employee_id = req
+        .get("employee_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let employee_name = req
+        .get("employee_name")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let department = req
+        .get("department")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let expense_date = req
+        .get("expense_date")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|d| d.with_timezone(&chrono::Utc));
+    let expense_type = req
+        .get("expense_type")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
     let total_amount = req.get("total_amount").and_then(|v| v.as_f64());
-    let status = req.get("status").and_then(|v| v.as_str()).unwrap_or("pending").to_string();
-    let description = req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let status = req
+        .get("status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("pending")
+        .to_string();
+    let description = req
+        .get("description")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
 
     let result = sqlx::query(
         only_own_schema_query!(
@@ -4319,52 +4367,57 @@ pub async fn get_expense_approval(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     let id_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::from(TopemsError::NotFound("无效的ID".to_string()))),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::NotFound(
+                "无效的ID".to_string(),
+            )))
+        }
     };
 
-    let row = sqlx::query(
-        only_own_schema_query!(
-            "finance",
-            r#"SELECT id, expense_no, employee_id, employee_name, department, expense_date,
+    let row = sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"SELECT id, expense_no, employee_id, employee_name, department, expense_date,
                       expense_type, total_amount, status, description, approver_id, approver_name,
                       approval_note, created_at, updated_at
                FROM expense_approvals
                WHERE id = $1 AND deleted_at IS NULL
                  AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
-        )
-    )
+    ))
     .bind(id_uuid)
     .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
     match row {
-        Ok(Some(row)) => {
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "id": row.try_get::<Uuid, _>("id").ok(),
-                    "expense_no": row.try_get::<String, _>("expense_no").ok(),
-                    "employee_id": row.try_get::<Option<Uuid>, _>("employee_id").ok().flatten(),
-                    "employee_name": row.try_get::<Option<String>, _>("employee_name").ok().flatten(),
-                    "department": row.try_get::<Option<String>, _>("department").ok().flatten(),
-                    "expense_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("expense_date").ok().flatten(),
-                    "expense_type": row.try_get::<Option<String>, _>("expense_type").ok().flatten(),
-                    "total_amount": row.try_get::<Option<rust_decimal::Decimal>, _>("total_amount").ok().flatten(),
-                    "status": row.try_get::<Option<String>, _>("status").ok().flatten(),
-                    "description": row.try_get::<Option<String>, _>("description").ok().flatten(),
-                    "approver_id": row.try_get::<Option<Uuid>, _>("approver_id").ok().flatten(),
-                    "approver_name": row.try_get::<Option<String>, _>("approver_name").ok().flatten(),
-                    "approval_note": row.try_get::<Option<String>, _>("approval_note").ok().flatten(),
-                    "created_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("created_at").ok().flatten(),
-                    "updated_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("updated_at").ok().flatten(),
-                }),
-                "查询成功",
-            ))
-        }
-        Ok(None) => Json(ApiResponse::from(TopemsError::NotFound("费用审批不存在".to_string()))),
+        Ok(Some(row)) => Json(ApiResponse::success(
+            serde_json::json!({
+                "id": row.try_get::<Uuid, _>("id").ok(),
+                "expense_no": row.try_get::<String, _>("expense_no").ok(),
+                "employee_id": row.try_get::<Option<Uuid>, _>("employee_id").ok().flatten(),
+                "employee_name": row.try_get::<Option<String>, _>("employee_name").ok().flatten(),
+                "department": row.try_get::<Option<String>, _>("department").ok().flatten(),
+                "expense_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("expense_date").ok().flatten(),
+                "expense_type": row.try_get::<Option<String>, _>("expense_type").ok().flatten(),
+                "total_amount": row.try_get::<Option<rust_decimal::Decimal>, _>("total_amount").ok().flatten(),
+                "status": row.try_get::<Option<String>, _>("status").ok().flatten(),
+                "description": row.try_get::<Option<String>, _>("description").ok().flatten(),
+                "approver_id": row.try_get::<Option<Uuid>, _>("approver_id").ok().flatten(),
+                "approver_name": row.try_get::<Option<String>, _>("approver_name").ok().flatten(),
+                "approval_note": row.try_get::<Option<String>, _>("approval_note").ok().flatten(),
+                "created_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("created_at").ok().flatten(),
+                "updated_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("updated_at").ok().flatten(),
+            }),
+            "查询成功",
+        )),
+        Ok(None) => Json(ApiResponse::from(TopemsError::NotFound(
+            "费用审批不存在".to_string(),
+        ))),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
