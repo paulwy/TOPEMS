@@ -86,11 +86,16 @@ pub struct HealthStatistics {
 
 pub async fn list_records(
     State(state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    // /health 走 public 早退路径时 auth 中间件不注入 Claims，故容错为 Option
+    claims_ext: Option<Extension<Claims>>,
     _headers: HeaderMap,
     axum::extract::Query(q): axum::extract::Query<HealthQuery>,
 ) -> Json<ApiResponse<Vec<HealthRecord>>> {
-    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let claims = claims_ext.as_ref().map(|e| &e.0);
+    let tenant_bind = claims
+        .map(resolve_tenant_id)
+        .unwrap_or_default()
+        .to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -152,17 +157,16 @@ pub async fn list_records(
 
 pub async fn create_record(
     State(state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    // /health 走 public 早退路径时 auth 中间件不注入 Claims，故容错为 Option
+    claims_ext: Option<Extension<Claims>>,
     _headers: HeaderMap,
     Json(req): Json<CreateHealthRecordRequest>,
 ) -> Json<ApiResponse<HealthRecord>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| Uuid::parse_str(t).ok())
+    let claims = claims_ext.as_ref().map(|e| &e.0);
+    let tenant_opt: Option<Uuid> = match claims {
+        Some(c) if c.is_superuser => None,
+        Some(c) => c.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()),
+        None => None,
     };
     let tenant_id = tenant_opt.unwrap_or_else(Uuid::nil);
 
