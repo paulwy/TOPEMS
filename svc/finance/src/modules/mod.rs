@@ -20,7 +20,6 @@ pub mod risk_v59;
 pub mod sales_invoice;
 pub mod settlement_center;
 pub mod settlement_v55;
-pub mod shared_services;
 pub mod tax_v56;
 pub mod treasury_v58;
 pub mod voucher_template;
@@ -4543,7 +4542,6 @@ pub fn create_routes() -> Router<AppState> {
         .merge(report_center::create_routes())
         .merge(forecasting::create_routes())
         .merge(multi_dimensional::create_routes())
-        .merge(shared_services::create_routes())
         .merge(financial_reports::create_routes())
         .merge(accounting_subjects::create_routes())
         .nest("/cqrs", cqrs_routes::cqrs_routes())
