@@ -570,7 +570,7 @@ pub fn create_routes(
         .with_state(app_state.clone());
 
     // 业务 Copilot 路由
-    let copilot_state = crate::handlers::business_copilot_handlers::CopilotAppState::new();
+    let copilot_state = crate::handlers::business_copilot_handlers::CopilotAppState::new(pool.clone());
     let business_copilot_router = Router::new()
         .route(
             "/dsh/copilot/sessions",
