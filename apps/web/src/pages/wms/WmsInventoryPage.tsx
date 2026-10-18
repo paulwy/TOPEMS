@@ -337,9 +337,7 @@ const WmsInventoryPage: React.FC = () => {
       render: (row) => (
         <div>
           <div style={{ fontWeight: 500 }}>{row.product_name}</div>
-          <div style={cellSub}>
-            {row.product_code}
-          </div>
+          <div style={cellSub}>{row.product_code}</div>
         </div>
       ),
     },
@@ -578,9 +576,7 @@ const WmsInventoryPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={detailLabel}>
-                    {selectedItem.sku}
-                  </div>
+                  <div style={detailLabel}>{selectedItem.sku}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -606,33 +602,25 @@ const WmsInventoryPage: React.FC = () => {
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
-                  <div style={detailLabel}>
-                    {t('wms.inventory_page.label_current_stock')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inventory_page.label_current_stock')}</div>
                   <div style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)' }}>
                     {selectedItem.quantity.toLocaleString()} {selectedItem.unit}
                   </div>
                 </div>
                 <div>
-                  <div style={detailLabel}>
-                    {t('wms.inventory_page.label_safety_stock')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inventory_page.label_safety_stock')}</div>
                   <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-semibold)' }}>
                     {selectedItem.safety_stock.toLocaleString()} {selectedItem.unit}
                   </div>
                 </div>
                 <div>
-                  <div style={detailLabel}>
-                    {t('wms.inventory_page.label_warehouse_location')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inventory_page.label_warehouse_location')}</div>
                   <div style={detailValue}>
                     {selectedItem.warehouse} / {selectedItem.location}
                   </div>
                 </div>
                 <div>
-                  <div style={detailLabel}>
-                    {t('wms.inventory_page.label_price_value')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inventory_page.label_price_value')}</div>
                   <div style={detailValue}>
                     ¥{selectedItem.unit_price.toLocaleString()} / ¥
                     {selectedItem.total_value.toLocaleString()}
