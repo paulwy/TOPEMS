@@ -173,7 +173,8 @@ pub async fn create_session(
     let business_module = parse_business_module(&module);
     let user_id = req.user_id.clone();
     // A-2b：tenant 字符串→uuid（"default"→nil，走 RLS 超管豁免）
-    let tenant_uuid = req.tenant_id
+    let tenant_uuid = req
+        .tenant_id
         .as_deref()
         .and_then(|t| uuid::Uuid::parse_str(t).ok())
         .unwrap_or_else(uuid::Uuid::nil);
@@ -238,10 +239,16 @@ pub async fn get_session(
 ) -> impl IntoResponse {
     let sid = match uuid::Uuid::parse_str(&session_id) {
         Ok(s) => s,
-        Err(_) => return (StatusCode::NOT_FOUND, Json(ApiError {
-            error: "session_not_found".to_string(),
-            message: format!("Session {} not found", session_id),
-        })).into_response(),
+        Err(_) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(ApiError {
+                    error: "session_not_found".to_string(),
+                    message: format!("Session {} not found", session_id),
+                }),
+            )
+                .into_response()
+        }
     };
     // A-2b：真表查询
     let row: Option<(String, String, i32, String, String)> = sqlx::query_as(
@@ -260,15 +267,20 @@ pub async fn get_session(
                 session_id,
                 module,
                 user_id,
-                message_count: msg_count as usize,
+                message_count: usize::try_from(msg_count).unwrap_or(usize::MAX),
                 created_at,
                 updated_at,
             }),
-        ).into_response(),
-        None => (StatusCode::NOT_FOUND, Json(ApiError {
-            error: "session_not_found".to_string(),
-            message: format!("Session {} not found", session_id),
-        })).into_response(),
+        )
+            .into_response(),
+        None => (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: "session_not_found".to_string(),
+                message: format!("Session {} not found", session_id),
+            }),
+        )
+            .into_response(),
     }
 }
 
@@ -282,19 +294,25 @@ pub async fn delete_session(
         Err(_) => return StatusCode::NOT_FOUND.into_response(),
     };
     // A-2b：软删
-    let affected = sqlx::query("UPDATE core.ai_conversations SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL")
-        .bind(sid)
-        .execute(&state.pool)
-        .await
-        .map(|r| r.rows_affected())
-        .unwrap_or(0);
+    let affected = sqlx::query(
+        "UPDATE core.ai_conversations SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(sid)
+    .execute(&state.pool)
+    .await
+    .map(|r| r.rows_affected())
+    .unwrap_or(0);
     if affected > 0 {
         StatusCode::NO_CONTENT.into_response()
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiError {
-            error: "session_not_found".to_string(),
-            message: format!("Session {} not found", session_id),
-        })).into_response()
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: "session_not_found".to_string(),
+                message: format!("Session {} not found", session_id),
+            }),
+        )
+            .into_response()
     }
 }
 
@@ -380,10 +398,16 @@ pub async fn update_selected_records(
 ) -> impl IntoResponse {
     let sid = match uuid::Uuid::parse_str(&session_id) {
         Ok(s) => s,
-        Err(_) => return (StatusCode::NOT_FOUND, Json(ApiError {
-            error: "session_not_found".to_string(),
-            message: format!("Session {} not found", session_id),
-        })).into_response(),
+        Err(_) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(ApiError {
+                    error: "session_not_found".to_string(),
+                    message: format!("Session {} not found", session_id),
+                }),
+            )
+                .into_response()
+        }
     };
     // A-2b：jsonb 落库
     let affected = sqlx::query("UPDATE core.ai_conversations SET selected_records = $2::jsonb, updated_at = now() WHERE id = $1 AND deleted_at IS NULL")
@@ -394,12 +418,23 @@ pub async fn update_selected_records(
         .map(|r| r.rows_affected())
         .unwrap_or(0);
     if affected > 0 {
-        (StatusCode::OK, Json(SessionWriteOkResponse { success: true, session_id })).into_response()
+        (
+            StatusCode::OK,
+            Json(SessionWriteOkResponse {
+                success: true,
+                session_id,
+            }),
+        )
+            .into_response()
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiError {
-            error: "session_not_found".to_string(),
-            message: format!("Session {} not found", session_id),
-        })).into_response()
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: "session_not_found".to_string(),
+                message: format!("Session {} not found", session_id),
+            }),
+        )
+            .into_response()
     }
 }
 
@@ -415,10 +450,16 @@ pub async fn set_context_data(
 ) -> impl IntoResponse {
     let sid = match uuid::Uuid::parse_str(&session_id) {
         Ok(s) => s,
-        Err(_) => return (StatusCode::NOT_FOUND, Json(ApiError {
-            error: "session_not_found".to_string(),
-            message: format!("Session {} not found", session_id),
-        })).into_response(),
+        Err(_) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(ApiError {
+                    error: "session_not_found".to_string(),
+                    message: format!("Session {} not found", session_id),
+                }),
+            )
+                .into_response()
+        }
     };
     // A-2b：jsonb 落库（key 合并进 context_data）
     let affected = sqlx::query(
@@ -432,25 +473,39 @@ pub async fn set_context_data(
         .map(|r| r.rows_affected())
         .unwrap_or(0);
     if affected > 0 {
-        (StatusCode::OK, Json(SessionWriteOkResponse { success: true, session_id })).into_response()
+        (
+            StatusCode::OK,
+            Json(SessionWriteOkResponse {
+                success: true,
+                session_id,
+            }),
+        )
+            .into_response()
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiError {
-            error: "session_not_found".to_string(),
-            message: format!("Session {} not found", session_id),
-        })).into_response()
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: "session_not_found".to_string(),
+                message: format!("Session {} not found", session_id),
+            }),
+        )
+            .into_response()
     }
 }
 
 /// 获取活跃会话列表
 pub async fn list_active_sessions(State(state): State<CopilotAppState>) -> impl IntoResponse {
     // A-2b：真表计数
-    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core.ai_conversations WHERE deleted_at IS NULL")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
+    let total: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM core.ai_conversations WHERE deleted_at IS NULL")
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(0);
     (
         StatusCode::OK,
-        Json(ActiveSessionsResponse { total: total as usize }),
+        Json(ActiveSessionsResponse {
+            total: usize::try_from(total).unwrap_or(usize::MAX),
+        }),
     )
         .into_response()
 }
