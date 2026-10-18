@@ -76,6 +76,22 @@
    - 进度：✅ wms 五、✅ qms 四、✅ crm 三、✅ hrm 三、✅ erp 两、✅ admin SystemSettings 完成。重复文本与布局（detailLabel/cellSub/detailValue/heroValue/headingReset/rowGap2/colGap4/gridTwoCol/gridTwoCol3/sectionTitle）等价抽为局部 `React.CSSProperties` 常量，值逐字不变，prettier 顺带格式化，tsc/eslint 绿。**跳过（旧 MUI 口径，待单独评估，不混入本轮）**：erp PurchaseOrderPage（裸 px12/error-500/按钮行）；admin PerformanceMonitor/TenantManagement/ConfigDebug/Dictionary 等（theme.palette 与 designTokens 对象、裸 px 尺寸、多行 style 对象、opacity）。无法定位整串的 mono 组合、单独弱语义 fontSize 跳过。跨页同构组件（详情项/统计卡）仍待视觉回归条件再沉淀。跨页同构单元（详情项 label/value、统计卡）待视觉回归条件具备时再沉淀为共享组件，不在无回归环境下盲重组。
 4. **A 类不动；D 类随演示载体迭代。**
 
+### 5.1 旧 MUI 口径页处置评估（本轮只评估、不改代码）
+
+B 类等价抽取只覆盖 token 化、同构的 redesign 页。下列页口径不同，**不混入等价抽取**，按实测分三类（计数为原生 `style` 块内出现次数的粗估，需人工复核）：
+
+| 页面 | 实测口径 | 分类 | 处置建议 |
+| --- | --- | --- | --- |
+| `admin/PerformanceMonitorPage` | designTokens 18 / ct(=designTokens.colors) 16 / 裸px 17 | **A·令牌对象引用（非缺陷）** | 用的是正式 `designTokens` 令牌，非硬编码；重复的 `ct.grey[500]+scale['0.875rem']` 可抽局部常量，低优先；图标 16/20 固定尺寸属合法语义尺寸，保留 |
+| `admin/AccountManagementPage` | designTokens 36（图表配色双轨 `var(--…, designTokens…)`） | **A·图表色板（不动）** | chartPalette 回退体系，属数据可视化契约，禁止盲改 |
+| `admin/TenantBillingPage` | designTokens 2 / ct 1 / opacity 4 | **A·令牌+透明度** | 令牌引用合法，opacity 用于层级弱化，低优先保留 |
+| `admin/DictionaryManagementPage` | theme.palette 6 / ct 6 | **A·合法 MUI 主题路径** | `theme.palette.primary.dark/text.disabled/secondary` 是合法 MUI 主题取值，非硬编码，保留 |
+| `erp/PurchaseOrderPage` | 颜色已 `var(--token)`；裸px字号 11/12/13/14/20/24、固定列宽 150/280/140、图标24、按钮行 `justifyContent:flex-end`×3、`error-500`×2 | **B·半token化，需字号迁移** | 颜色合规；字号应迁 `text-xs/sm`、固定列宽/图标抽局部常量；按钮行可抽 `rowActions`。**改字号属视觉微调，需浏览器视觉核对**，无回归环境前不动 |
+| `admin/TenantManagementPage` | 裸px标题 fontSize12/14、多行 style 对象、ct 3 | **B·半token化，需标题迁移** | 标题字号迁 token、多行对象整体抽常量；需视觉核对 |
+| `admin/ConfigDebugPage` | dt 2 / ct 8 / 裸px 27 | **C·调试工具页（低优先）** | 配置调试内部工具，随载体迭代，不单独治理 |
+
+**结论**：真正需要后续治理的只有两张半 token 化业务页（PurchaseOrder、TenantManagement），且性质是**字号/尺寸 token 迁移 + 视觉核对**，不是本轮"值逐字不变"的等价抽取；其余均为合法令牌对象、MUI 主题路径或调试载体，保留即可。
+
 ## 6. 局限
 - 单行 grep 口径低估多行 style 块；精确处数需配合 AST（如 ESLint 规则）统计。
 - px 是否"魔法"需结合语义人工判断，本报告只给聚集候选，不替每处下结论。
