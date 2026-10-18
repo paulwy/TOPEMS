@@ -9,6 +9,7 @@
 - [x] **P1 · DSH 三组内存桩持久化** ✅ 完成（A-2 判定 `ffe8f18887` + A-2b copilot 落库 `96cbba6b00`）：copilot 6 状态型端点复用 `core.ai_conversations`+jsonb 列接真（迁移 `20261018000006` 补 5 列，实机链路 6 步全绿）；governance 11 计算型/smart_forms AI 型按"勿过度工程"标注保留不建表
 - [x] **P1 · 财务报表聚合 f64→Decimal** ✅ 完成（2026-10-18，见下方批次块「批 A1」）：`financial_reports.rs` 报表查询聚合层金额全程 Decimal，仅比率/growth_rate 最后一步转 f64；finance lib 1087 passed / 0 failed
 - [x] **P1 · 前端空态兜底** ✅ 核销（2026-10-18 批 A2）：原「约 1100 页无空态」为宽口径高估（混入表单/详情/图表/静态桩）。实测两套模板层早已闭环——CrudPage/ListPageTemplate/TableSection 与 redesign DataTable 均内置 loading 骨架 + ErrorEmptyState + EmptyState 三态（历史已接线 48 页，见下方三态批次块）；走模板的查询主列表无白屏。本批补唯一实测白屏自绘列表 `gis/GisFencePage`（围栏列表区分「暂无数据/搜索无匹配」，zh/en 补 k63/k64），typecheck/eslint 绿。**长尾降 P2**：自绘子表纯文本空文案统一到共享 EmptyState、静态桩接真后补空态，按需处理，不机械铺改。
+- [x] **P1 · 批 C 路由冒烟 + CRUD 数据流补测** ✅ 部分完成（2026-10-18，见下方批次块「批 C」）：真起后端栈（8099 健康、admin 真登录）；C1 静态路由基线绿（v2-routes.smoke 6/6、489 页面 import 0 断链、注册路由 526）；C2 经盘点核销不硬补后端单测；C3 树立 2 个真数据流断言范本（crm 客户列表/详情、finance 凭证详情），真栈 3/3 绿。**遗留**：全量 479 路由 >1h 需分批 ROUTE_FILTER 跑、e2e 入 CI 待 E3 外部恢复、其余弱 spec 照范本后续补。
 - [ ] **P1 · 内联样式治理**（2026-10-18 实测 3236 处；热区 components/templates 已收敛到 token/样式常量，长尾分批，新代码禁新增）
 - [x] **P1 · 测试前置一键脚本** ✅ 完成（`26461d2f51`）：`scripts/dev/run-e2e-stack.sh` + testUtils 真 token 化，使 full-route-smoke 脱离 mock token 假失败（待实跑全量路由验证）
 - [x] **P2 · menu 域冻结标注** ✅ 完成（`4780760e13`/`3247c12ecf`）：routes/master.rs:197-224 有路由注册 4 handler + init_database 初始化，非"未挂载"；前端 0 消费，判定"后端已实现、前端页面未开发"，冻结保留待前端接线
@@ -53,6 +54,34 @@
   - 注：lint-staged 门禁对该历史文件顺带做了整文件 prettier 规整（故 tsx diff 行数大），**逻辑改动仅空态块**。
 - **验证**：`tsc --noEmit` exit 0；eslint 0；zh/en JSON 解析有效。
 - **长尾（降 P2，按需）**：自绘子表纯文本空文案统一到共享 `<EmptyState>`；静态桩接真后再补空态。不机械铺改 52 个混杂文件，避免过度工程。
+
+---
+
+## 批 C · 路由冒烟 + CRUD 数据流补测（2026-10-18）🟡 范本落地，全量分批待跑
+
+> 来源：`artifacts/TOPEMS-全面审计与一步到位规划-2026-10-18.md` 批 C。目标：把「仅可达不崩」的弱 spec 升级为对后端返回记录有真实字段断言的用例。
+
+### C1 · 静态路由基线（完成）
+- `src/__tests__/v2-routes.smoke.test.ts` **6/6 绿**。
+- 自写脚本静态核对 **489 个页面 `import('@/pages/...')` 0 断链**；注册路由 **526**（471 静态去重 + 47 动态段）。
+
+### C2 · 后端 CRUD 单测盘点（核销，不硬补）
+- 后端各服务测试密集（finance 1171 / ai 1072 / erp 936 等），仅 `svc/server` 装配胶水层（39 文件 / 1 测试）薄弱，但纯逻辑少，硬补属过度工程 → 不新增后端单测。
+
+### C3 · 真栈实跑 + 真数据流断言范本（完成 2 域）
+- **真栈**：`run-e2e-stack.sh login` 成功（8099 健康、test_admin 种子、admin/admin123 真登录 token 511）；前端 `pnpm dev --port 3001`，`API_URL=http://localhost:8099`。
+- **真栈暴露弱 spec 缺陷**：旧 spec 用 antd 选择器（`.ant-modal/.ant-table`，本项目为 MUI）、导航未注册的 `/crm/customers/create` 独立路由、`test_admin` 未绑 crm 角色被权限守卫拦截；旧 `crm-customer.spec.ts` 真栈下 2 failed / 3 passed。
+- **交付 2 个真数据流断言范本**（admin 真登录 → API GET 取首条记录 → 页面断言正文渲染该记录，非空壳/mock）：
+  - `e2e/ui/crm-customer.spec.ts`：TC-CRM-001 列表展示后端客户名、TC-CRM-002 详情页展示客户名（2 用例）。
+  - `e2e/ui/finance-voucher.spec.ts`：TC-FIN-001 凭证详情页展示后端凭证号 `voucher_no`（1 用例）。
+- **验证**：真栈 playwright **3 passed / 0 failed**；prettier 合规；`tsc --noEmit` exit 0（e2e 目录在 eslint/hardcoded/i18n 豁免内）。
+- **提交**：本地提交未 push；本次仅触豁免目录 e2e spec + TODO.md，全量 i18n/perm 扫描钩子留待 pre-push/CI。
+
+### 遗留（非本批可决 / 长尾）
+- 全量 `full-route-smoke.spec.ts`（479 路由单线程 >1h）需起栈后按 `ROUTE_FILTER` 分批跑，未一次性执行。
+- e2e 栈纳入 CI 待 E3 GitHub Billing/CI 恢复（外部阻塞，技术不可决）。
+- 其余域弱 spec（antd 选择器、无真断言）照本范本后续逐个补；空库域（qms/srm/pm/pdm/gis）需先 API 造数才能闭环。
+- `test_admin` 未绑业务角色：后续 spec 可改用 admin 登录，或给种子 test_admin 补绑角色。
 
 ---
 
