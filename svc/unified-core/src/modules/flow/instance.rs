@@ -137,22 +137,27 @@ pub async fn list_instances(
 
     let items: Vec<WorkflowInstance> = if !has_filters {
         match sqlx::query_as::<_, WorkflowInstance>(
-            r#"SELECT id, tenant_id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at FROM core_workflow_instances
-               WHERE ($1::uuid IS NULL OR initiator_id = $1 OR EXISTS (
+            r#"SELECT i.id, i.tenant_id, i.workflow_id, i.title, i.initiator_id, i.current_node_id, i.status, i.variables, i.started_at, i.completed_at, i.created_at, i.updated_at,
+                      w.name AS workflow_name,
+                      COALESCE(u.full_name, u.username) AS start_user_name
+               FROM core_workflow_instances i
+               LEFT JOIN public.core_workflows w ON w.id = i.workflow_id
+               LEFT JOIN iam.users u ON u.id = i.initiator_id
+               WHERE ($1::uuid IS NULL OR i.initiator_id = $1 OR EXISTS (
                    SELECT 1 FROM core_workflow_tasks t
-                   WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
+                   WHERE t.instance_id = i.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
                ) OR EXISTS (
                    SELECT 1 FROM approvals a
-                   WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                   WHERE a.workflow_instance_id = i.id AND a.deleted_at IS NULL
                      AND (a.assignee_id = $1 OR a.approved_by = $1)
                ) OR EXISTS (
                    SELECT 1 FROM approval_records ar
                    JOIN approvals a ON a.id = ar.approval_id
-                   WHERE a.workflow_instance_id = core_workflow_instances.id
+                   WHERE a.workflow_instance_id = i.id
                      AND ar.actor_id = $1 AND ar.deleted_at IS NULL
                ))
-               AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
-               ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
+               AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR i.tenant_id = $2::uuid)
+               ORDER BY i.created_at DESC LIMIT $3 OFFSET $4"#
         )
         .bind(user_uuid)
         .bind(get_tenant_id(&claims))
@@ -174,26 +179,30 @@ pub async fn list_instances(
             .and_then(|s| Uuid::parse_str(&s).ok());
 
         match sqlx::query_as::<_, WorkflowInstance>(
-            r#"SELECT id, tenant_id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at
-               FROM core_workflow_instances
-               WHERE (title ILIKE $1 OR $1 = '')
-                 AND (status = $2 OR $2 = '')
-                 AND (workflow_id = $3 OR $3 IS NULL)
-                 AND ($4::uuid IS NULL OR initiator_id = $4 OR EXISTS (
+            r#"SELECT i.id, i.tenant_id, i.workflow_id, i.title, i.initiator_id, i.current_node_id, i.status, i.variables, i.started_at, i.completed_at, i.created_at, i.updated_at,
+                      w.name AS workflow_name,
+                      COALESCE(u.full_name, u.username) AS start_user_name
+               FROM core_workflow_instances i
+               LEFT JOIN public.core_workflows w ON w.id = i.workflow_id
+               LEFT JOIN iam.users u ON u.id = i.initiator_id
+               WHERE (i.title ILIKE $1 OR $1 = '')
+                 AND (i.status = $2 OR $2 = '')
+                 AND (i.workflow_id = $3 OR $3 IS NULL)
+                 AND ($4::uuid IS NULL OR i.initiator_id = $4 OR EXISTS (
                      SELECT 1 FROM core_workflow_tasks t
-                     WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $4 AND t.deleted_at IS NULL
+                     WHERE t.instance_id = i.id AND t.assignee_id = $4 AND t.deleted_at IS NULL
                  ) OR EXISTS (
                      SELECT 1 FROM approvals a
-                     WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                     WHERE a.workflow_instance_id = i.id AND a.deleted_at IS NULL
                        AND (a.assignee_id = $4 OR a.approved_by = $4)
                  ) OR EXISTS (
                      SELECT 1 FROM approval_records ar
                      JOIN approvals a ON a.id = ar.approval_id
-                     WHERE a.workflow_instance_id = core_workflow_instances.id
+                     WHERE a.workflow_instance_id = i.id
                        AND ar.actor_id = $4 AND ar.deleted_at IS NULL
                  ))
-                 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)
-               ORDER BY created_at DESC LIMIT $6 OFFSET $7"#
+                 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR i.tenant_id = $5::uuid)
+               ORDER BY i.created_at DESC LIMIT $6 OFFSET $7"#
         )
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())

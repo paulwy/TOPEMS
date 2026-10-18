@@ -53,6 +53,8 @@ pub struct WorkflowInstance {
     pub workflow_id: Uuid,
     pub title: String,
     pub initiator_id: Uuid,
+    /// BE-09 P2：前端契约读 `currentnode`（workflow/types.ts:125）；alias 保留 `current_node_id`。
+    #[serde(rename = "currentnode", alias = "current_node_id")]
     pub current_node_id: Option<String>,
     pub status: String,
     pub variables: Option<serde_json::Value>,
@@ -60,6 +62,14 @@ pub struct WorkflowInstance {
     pub completed_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    /// BE-09 P2：LEFT JOIN core_workflows 出工作流名（types.ts:121）。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(default)]
+    pub workflow_name: Option<String>,
+    /// BE-09 P2：LEFT JOIN iam.users 出发起人展示名（types.ts:128 start_user_name）。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(default)]
+    pub start_user_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -499,6 +509,8 @@ mod tests {
             completed_at: None,
             created_at: sample_time(),
             updated_at: sample_time(),
+            workflow_name: None,
+            start_user_name: None,
         };
         let json =
             serde_json::to_string(&inst).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
