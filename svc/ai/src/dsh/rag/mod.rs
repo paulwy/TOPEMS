@@ -1027,6 +1027,31 @@ mod tests {
         assert!(engine.config().enabled);
     }
 
+    /// B3(F5) 核销：RagEngine 已接真实 pgvector（routes.rs 注入 pool+ai_client）；
+    /// 此处验证未注入依赖（with_defaults 测试态）时安全回退为空，不 panic、不裸返回。
+    #[tokio::test]
+    async fn test_retrieve_without_pool_returns_empty() {
+        let engine = RagEngine::with_defaults();
+        let request = RetrievalRequest {
+            query: "测试问题".to_string(),
+            conversation_history: vec![],
+            top_k: Some(5),
+            similarity_threshold: Some(0.3),
+            filters: None,
+            metadata_filters: None,
+        };
+        let response = engine.retrieve(request).await;
+        assert!(response.documents.is_empty());
+        assert!(response.context.is_empty());
+        assert_eq!(response.stats.vector_results, 0);
+    }
+
+    #[test]
+    fn test_build_context_empty_documents() {
+        let engine = RagEngine::with_defaults();
+        assert_eq!(engine.build_context(&[]), "");
+    }
+
     #[test]
     fn test_rag_stats_default() {
         let stats = RagStats::default();
