@@ -1,6 +1,27 @@
 
 ---
 
+## 下一步工作规划（2026-10-18）📌 待办，源自 5 方向全面评估报告 artifacts/TOPEMS-下一步工作规划报告-2026-10-18.md
+
+> 5 方向评估产出（TODO 全库核查 / 前端测试覆盖 / 布局 / UI / DSH 差距），按优先级分批推进。当前 HEAD==origin==153da334e2。
+
+- [x] **P0（批 A-1，安全优先）· DSH 认证补丁** ✅ 完成（`f47178b116`）：copilot/governance/smart-forms **23 端点补 auth+tenant 中间件**（复用既有 tenant_middleware+auth_middleware 范式，零新建；豁免无；ai 单测 981 passed，boundary-gate PASS）
+- [x] **P1 · DSH 三组内存桩持久化** ✅ 完成（A-2 判定 `ffe8f18887` + A-2b copilot 落库 `96cbba6b00`）：copilot 6 状态型端点复用 `core.ai_conversations`+jsonb 列接真（迁移 `20261018000006` 补 5 列，实机链路 6 步全绿）；governance 11 计算型/smart_forms AI 型按"勿过度工程"标注保留不建表
+- [ ] **P1 · 前端空态兜底**（空态缺失仅 170/886 页覆盖）
+- [ ] **P1 · 内联样式治理**（3563 处，热区收敛到 token/样式文件）
+- [ ] **P1 · 测试前置一键脚本**（一键后端栈+种子，让 full-route-smoke 脱离 mock token 假失败）
+- [ ] **P2 · menu 域 DROP**（技术能决，同 C1 判法：10 handler 未挂载+前端零消费）
+- [ ] **P2 · z-index 语义层 / 双层 sticky 复核**（魔法数 → 语义 token）
+- [ ] **P2 · aria 抽检 / chartPalette 一致性**
+- [ ] **P2 · DSH 零消费面冻结**（~20 端点前端零消费，冻结标注）
+- [ ] **P2 · TODO.md 滞后标注清理**（7 项标注滞后于实际，实读对齐）
+- [ ] **需业务/外部 · BE-08 349 条勾选**（决策表 artifacts/BE-08-业务确认决策表-2026-10-18.md 已交付）
+- [ ] **需业务/外部 · none 级流量观测立项**（部署期 8099 网关 access log，≥30 天 0 请求）
+- [ ] **需部署主机 · 生产 nginx reload**（verify-nginx-prod.sh 本机 MAP_OK，reload 需目标机）
+- [ ] **冻结确认 · ehs occupational_health 桩 / DSH 零消费面**（不接真不删除）
+
+---
+
 ## 待拍板项1 training records 表重设计（2026-10-18）✅ 核实已落地，无新改动
 
 > 原判"需业务拍板"——本次实读核实，发现此前批次已一步到位落地。
