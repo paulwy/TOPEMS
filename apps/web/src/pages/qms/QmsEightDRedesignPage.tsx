@@ -38,6 +38,28 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['qms', 'eight-d'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+const rowGap2: React.CSSProperties = { display: 'flex', gap: 'var(--space-2)' };
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface EightDReport {
   id: string;
   report_no: string;
@@ -265,11 +287,7 @@ const QmsEightDRedesignPage: React.FC = () => {
   });
 
   // 真实数据优先；API 空/失败时降级 mock（渲染层兜底，不依赖 queryFn 分支是否命中）
-  const reports = data?.reports?.length
-    ? data.reports
-    : isLoading
-      ? []
-      : mockEightDReports;
+  const reports = data?.reports?.length ? data.reports : isLoading ? [] : mockEightDReports;
 
   const pushToast = (type: Toast['variant'], message: string) => {
     const id = Date.now().toString();
@@ -596,7 +614,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                 style={{ width: 140 }}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div style={rowGap2}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -695,7 +713,7 @@ const QmsEightDRedesignPage: React.FC = () => {
         size='lg'
       >
         {selectedReport && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             <Card>
               <div
                 style={{
@@ -705,9 +723,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedReport.report_no}
-                  </div>
+                  <div style={detailLabel}>{selectedReport.report_no}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -718,7 +734,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                     {selectedReport.title}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <div style={rowGap2}>
                   <Badge variant={severityConfig[selectedReport.severity]?.variant || 'default'}>
                     {severityConfig[selectedReport.severity]?.label ||
                       t('qms.eight_d_redesign.unknown')}
@@ -780,50 +796,32 @@ const QmsEightDRedesignPage: React.FC = () => {
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.eight_d_redesign.drawer_product_name')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedReport.product_name}
-                  </div>
+                  <div style={detailLabel}>{t('qms.eight_d_redesign.drawer_product_name')}</div>
+                  <div style={detailValue}>{selectedReport.product_name}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.eight_d_redesign.drawer_problem_source')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
+                  <div style={detailLabel}>{t('qms.eight_d_redesign.drawer_problem_source')}</div>
+                  <div style={detailValue}>
                     {sourceConfig[selectedReport.problem_source]?.label ||
                       t('qms.eight_d_redesign.unknown')}
                   </div>
                 </div>
                 {selectedReport.customer_name && (
                   <div>
-                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                      {t('qms.eight_d_redesign.drawer_customer')}
-                    </div>
-                    <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                      {selectedReport.customer_name}
-                    </div>
+                    <div style={detailLabel}>{t('qms.eight_d_redesign.drawer_customer')}</div>
+                    <div style={detailValue}>{selectedReport.customer_name}</div>
                   </div>
                 )}
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.eight_d_redesign.col_owner')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedReport.owner}
-                  </div>
+                  <div style={detailLabel}>{t('qms.eight_d_redesign.col_owner')}</div>
+                  <div style={detailValue}>{selectedReport.owner}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.eight_d_redesign.col_due_date')}
-                  </div>
+                  <div style={detailLabel}>{t('qms.eight_d_redesign.col_due_date')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedReport.due_date}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.eight_d_redesign.drawer_created_at')}
-                  </div>
+                  <div style={detailLabel}>{t('qms.eight_d_redesign.drawer_created_at')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedReport.created_at)}
                   </div>
@@ -878,11 +876,11 @@ const QmsEightDRedesignPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div>
             <label
               htmlFor='field-1'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={sectionTitle}
             >
               {t('qms.eight_d_redesign.field_title_label')}
             </label>
@@ -896,7 +894,7 @@ const QmsEightDRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-2'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.eight_d_redesign.field_source_label')}
               </label>
@@ -914,7 +912,7 @@ const QmsEightDRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-3'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.eight_d_redesign.field_severity_label')}
               </label>
@@ -931,7 +929,7 @@ const QmsEightDRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-4'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.eight_d_redesign.drawer_product_name')}
               </label>
@@ -944,7 +942,7 @@ const QmsEightDRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-5'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.eight_d_redesign.col_owner')}
               </label>
@@ -957,7 +955,7 @@ const QmsEightDRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-6'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.eight_d_redesign.col_due_date')}
               </label>

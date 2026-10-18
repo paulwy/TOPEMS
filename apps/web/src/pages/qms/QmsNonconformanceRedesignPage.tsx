@@ -39,6 +39,28 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['qms', 'nonconformance'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+const rowGap2: React.CSSProperties = { display: 'flex', gap: 'var(--space-2)' };
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface Nonconformance {
   id: string;
   nc_no: string;
@@ -641,7 +663,7 @@ const QmsNonconformancePage: React.FC = () => {
                 style={{ width: 140 }}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div style={rowGap2}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -740,7 +762,7 @@ const QmsNonconformancePage: React.FC = () => {
         size='lg'
       >
         {selectedNc && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             <Card>
               <div
                 style={{
@@ -750,9 +772,7 @@ const QmsNonconformancePage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedNc.nc_no}
-                  </div>
+                  <div style={detailLabel}>{selectedNc.nc_no}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -763,7 +783,7 @@ const QmsNonconformancePage: React.FC = () => {
                     {selectedNc.title}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <div style={rowGap2}>
                   <Badge variant={severityConfig[selectedNc.severity]?.variant || 'default'}>
                     {severityConfig[selectedNc.severity]?.label ||
                       t('qms.nonconformance_redesign.unknown')}
@@ -787,45 +807,35 @@ const QmsNonconformancePage: React.FC = () => {
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('qms.nonconformance_redesign.drawer_product_name')}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedNc.product_name}
-                  </div>
+                  <div style={detailValue}>{selectedNc.product_name}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.nonconformance_redesign.drawer_batch_no')}
-                  </div>
+                  <div style={detailLabel}>{t('qms.nonconformance_redesign.drawer_batch_no')}</div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     {selectedNc.batch_no}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.nonconformance_redesign.col_quantity')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedNc.quantity.toLocaleString()}
-                  </div>
+                  <div style={detailLabel}>{t('qms.nonconformance_redesign.col_quantity')}</div>
+                  <div style={detailValue}>{selectedNc.quantity.toLocaleString()}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('qms.nonconformance_redesign.col_discovered_by')}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedNc.discovered_by}
-                  </div>
+                  <div style={detailValue}>{selectedNc.discovered_by}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('qms.nonconformance_redesign.col_discovered_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedNc.discovered_date}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('qms.nonconformance_redesign.drawer_created_at')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
@@ -875,8 +885,7 @@ const QmsNonconformancePage: React.FC = () => {
               onClick={() => {
                 const formData: Partial<Nonconformance> = {
                   nc_no: `NC2026${Date.now().toString().slice(-5)}`,
-                  title:
-                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
+                  title: (document.getElementById('field-1') as HTMLInputElement)?.value || '',
                   nc_type:
                     ((document.getElementById('field-2') as HTMLSelectElement)
                       ?.value as Nonconformance['nc_type']) || 'product',
@@ -909,11 +918,11 @@ const QmsNonconformancePage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div>
             <label
               htmlFor='field-1'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={sectionTitle}
             >
               {t('qms.nonconformance_redesign.field_title_label')}
             </label>
@@ -927,7 +936,7 @@ const QmsNonconformancePage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-2'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.nonconformance_redesign.field_type_label')}
               </label>
@@ -945,7 +954,7 @@ const QmsNonconformancePage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-3'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.nonconformance_redesign.field_severity_label')}
               </label>
@@ -962,7 +971,7 @@ const QmsNonconformancePage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-4'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.nonconformance_redesign.drawer_product_name')}
               </label>
@@ -975,7 +984,7 @@ const QmsNonconformancePage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-5'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.nonconformance_redesign.col_quantity')}
               </label>
@@ -990,7 +999,7 @@ const QmsNonconformancePage: React.FC = () => {
           <div>
             <label
               htmlFor='field-6'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={sectionTitle}
             >
               {t('qms.nonconformance_redesign.field_detail_label')}
             </label>

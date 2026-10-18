@@ -39,6 +39,33 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['qms', 'inspections'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+const rowGap2: React.CSSProperties = { display: 'flex', gap: 'var(--space-2)' };
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const gridTwoCol: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: 'var(--space-4)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface Inspection {
   id: string;
   check_no: string;
@@ -573,7 +600,7 @@ const QmsInspectionPage: React.FC = () => {
                 style={{ width: 140 }}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div style={rowGap2}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -672,7 +699,7 @@ const QmsInspectionPage: React.FC = () => {
         size='lg'
       >
         {selectedInspection && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             <Card>
               <div
                 style={{
@@ -682,9 +709,7 @@ const QmsInspectionPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedInspection.check_no}
-                  </div>
+                  <div style={detailLabel}>{selectedInspection.check_no}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -695,7 +720,7 @@ const QmsInspectionPage: React.FC = () => {
                     {selectedInspection.title}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <div style={rowGap2}>
                   <Badge
                     variant={typeConfig[selectedInspection.inspection_type]?.variant || 'default'}
                   >
@@ -711,38 +736,24 @@ const QmsInspectionPage: React.FC = () => {
             </Card>
 
             <Card title={t('qms.inspection_redesign.card_basic_info')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={gridTwoCol}>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.inspection_redesign.drawer_product_name')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedInspection.product_name}
-                  </div>
+                  <div style={detailLabel}>{t('qms.inspection_redesign.drawer_product_name')}</div>
+                  <div style={detailValue}>{selectedInspection.product_name}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.inspection_redesign.drawer_batch_no')}
-                  </div>
+                  <div style={detailLabel}>{t('qms.inspection_redesign.drawer_batch_no')}</div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     {selectedInspection.batch_no}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.inspection_redesign.col_quantity')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedInspection.quantity.toLocaleString()}
-                  </div>
+                  <div style={detailLabel}>{t('qms.inspection_redesign.col_quantity')}</div>
+                  <div style={detailValue}>{selectedInspection.quantity.toLocaleString()}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.inspection_redesign.col_inspector')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
+                  <div style={detailLabel}>{t('qms.inspection_redesign.col_inspector')}</div>
+                  <div style={detailValue}>
                     {selectedInspection.inspector || t('qms.inspection_redesign.unassigned')}
                   </div>
                 </div>
@@ -750,21 +761,15 @@ const QmsInspectionPage: React.FC = () => {
             </Card>
 
             <Card title={t('qms.inspection_redesign.card_time')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={gridTwoCol}>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.inspection_redesign.drawer_created_at')}
-                  </div>
+                  <div style={detailLabel}>{t('qms.inspection_redesign.drawer_created_at')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedInspection.created_at)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('qms.inspection_redesign.drawer_completed_at')}
-                  </div>
+                  <div style={detailLabel}>{t('qms.inspection_redesign.drawer_completed_at')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedInspection.completed_at)}
                   </div>
@@ -786,7 +791,7 @@ const QmsInspectionPage: React.FC = () => {
                       style={{ color: 'var(--error-500)' }}
                     />
                   )}
-                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
+                  <span style={detailValue}>
                     {selectedInspection.result === 'qualified'
                       ? t('qms.inspection_redesign.result_qualified_text')
                       : t('qms.inspection_redesign.result_unqualified_text')}
@@ -846,11 +851,11 @@ const QmsInspectionPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div>
             <label
               htmlFor='field-1'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={sectionTitle}
             >
               {t('qms.inspection_redesign.field_title_label')}
             </label>
@@ -864,7 +869,7 @@ const QmsInspectionPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-2'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.inspection_redesign.field_type_label')}
               </label>
@@ -881,7 +886,7 @@ const QmsInspectionPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-3'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.inspection_redesign.field_product_label')}
               </label>
@@ -894,7 +899,7 @@ const QmsInspectionPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-4'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.inspection_redesign.field_batch_no_label')}
               </label>
@@ -907,7 +912,7 @@ const QmsInspectionPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-5'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('qms.inspection_redesign.field_quantity_label')}
               </label>
