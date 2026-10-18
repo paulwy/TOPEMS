@@ -40,6 +40,32 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['wms', 'inbound-orders'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const gridTwoCol: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: 'var(--space-4)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface InboundOrder {
   id: string;
   order_no: string;
@@ -628,7 +654,7 @@ const WmsInboundOrderPage: React.FC = () => {
         size='lg'
       >
         {selectedOrder && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             {/* 状态卡片 */}
             <Card>
               <div
@@ -639,9 +665,7 @@ const WmsInboundOrderPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.inbound_order_page.col_order_no')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inbound_order_page.col_order_no')}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -662,37 +686,21 @@ const WmsInboundOrderPage: React.FC = () => {
 
             {/* 基本信息 */}
             <Card title={t('wms.inbound_order_page.section_basic_info')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={gridTwoCol}>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.inbound_order_page.col_supplier')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedOrder.supplier_name}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inbound_order_page.col_supplier')}</div>
+                  <div style={detailValue}>{selectedOrder.supplier_name}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.inbound_order_page.col_warehouse')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedOrder.warehouse}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inbound_order_page.col_warehouse')}</div>
+                  <div style={detailValue}>{selectedOrder.warehouse}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.inbound_order_page.label_total_quantity')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedOrder.total_quantity.toLocaleString()}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inbound_order_page.label_total_quantity')}</div>
+                  <div style={detailValue}>{selectedOrder.total_quantity.toLocaleString()}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.inbound_order_page.label_total_amount')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inbound_order_page.label_total_amount')}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-sm)',
@@ -708,27 +716,19 @@ const WmsInboundOrderPage: React.FC = () => {
 
             {/* 时间信息 */}
             <Card title={t('wms.inbound_order_page.section_time_info')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={gridTwoCol}>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.inbound_order_page.label_expected_date')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inbound_order_page.label_expected_date')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.expected_date}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.inbound_order_page.label_actual_date')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inbound_order_page.label_actual_date')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {selectedOrder.actual_date || '-'}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('wms.inbound_order_page.label_created_at')}
-                  </div>
+                  <div style={detailLabel}>{t('wms.inbound_order_page.label_created_at')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedOrder.created_at)}
                   </div>
@@ -797,12 +797,12 @@ const WmsInboundOrderPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
             <div>
               <label
                 htmlFor='supplier'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('wms.inbound_order_page.field_supplier')}
               </label>
@@ -815,7 +815,7 @@ const WmsInboundOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='warehouse'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('wms.inbound_order_page.field_warehouse')}
               </label>
@@ -851,7 +851,7 @@ const WmsInboundOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='expected-date'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('wms.inbound_order_page.label_expected_date')}
               </label>
@@ -864,7 +864,7 @@ const WmsInboundOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='status'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('wms.inbound_order_page.col_status')}
               </label>
@@ -882,7 +882,7 @@ const WmsInboundOrderPage: React.FC = () => {
           <div>
             <label
               htmlFor='remark'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={sectionTitle}
             >
               {t('wms.inbound_order_page.section_remark')}
             </label>
