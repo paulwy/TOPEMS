@@ -1942,6 +1942,57 @@ impl From<ServiceClientError> for topems_shared_core::error::TopemsError {
     }
 }
 
+// ===== B5/F7：按模式选择服务发现（static | env | k8s）=====
+
+/// 服务发现模式。默认 `Static`（内存手动注册）；`Env` 读 `TOPEMS_SERVICE_` 前缀；
+/// `K8s` 在集群内从 Service/Endpoints 解析，集群外构造失败自动回退 `Static`。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DiscoveryMode {
+    Static,
+    Env,
+    K8s,
+}
+
+impl DiscoveryMode {
+    /// 从原始字符串解析模式（大小写/空白不敏感），未知或缺省回退 `Static`。
+    pub fn parse(raw: &str) -> Self {
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "env" => Self::Env,
+            "k8s" | "kubernetes" => Self::K8s,
+            _ => Self::Static,
+        }
+    }
+
+    /// 从 `TOPEMS_DISCOVERY_MODE` 环境变量读取模式。
+    pub fn from_env() -> Self {
+        Self::parse(&std::env::var("TOPEMS_DISCOVERY_MODE").unwrap_or_default())
+    }
+}
+
+/// 按指定模式构造服务发现实例。
+///
+/// `K8s` 在集群外（缺 `KUBERNETES_SERVICE_HOST` 或凭证不可读）构造失败时回退
+/// `Static`，避免进程因环境缺配直接崩溃；调用方始终拿到一个可用的 `ServiceDiscovery`。
+pub fn build_discovery_with(mode: DiscoveryMode) -> Box<dyn ServiceDiscovery> {
+    match mode {
+        DiscoveryMode::Static => Box::new(StaticServiceDiscovery::new()),
+        DiscoveryMode::Env => Box::new(EnvServiceDiscovery::new()),
+        DiscoveryMode::K8s => {
+            match super::k8s_service_discovery::K8sConfig::from_in_cluster()
+                .and_then(super::k8s_service_discovery::K8sServiceDiscovery::new)
+            {
+                Ok(discovery) => Box::new(discovery),
+                Err(_) => Box::new(StaticServiceDiscovery::new()),
+            }
+        }
+    }
+}
+
+/// 读取 `TOPEMS_DISCOVERY_MODE` 并构造对应服务发现（缺省/未知 = Static）。
+pub fn build_discovery() -> Box<dyn ServiceDiscovery> {
+    build_discovery_with(DiscoveryMode::from_env())
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
@@ -2013,5 +2064,42 @@ mod tests {
         assert!(configs.iter().any(|c| c.name == "crm"));
         assert!(configs.iter().any(|c| c.name == "erp"));
         assert!(configs.iter().any(|c| c.name == "finance"));
+    }
+
+    #[test]
+    fn test_discovery_mode_parse() {
+        assert_eq!(DiscoveryMode::parse("env"), DiscoveryMode::Env);
+        assert_eq!(DiscoveryMode::parse("k8s"), DiscoveryMode::K8s);
+        assert_eq!(DiscoveryMode::parse("Kubernetes"), DiscoveryMode::K8s);
+        assert_eq!(DiscoveryMode::parse("  static "), DiscoveryMode::Static);
+        assert_eq!(DiscoveryMode::parse("unknown"), DiscoveryMode::Static);
+        assert_eq!(DiscoveryMode::parse(""), DiscoveryMode::Static);
+    }
+
+    #[tokio::test]
+    async fn test_build_static_discovery_returns_none_for_unknown() {
+        let discovery = build_discovery_with(DiscoveryMode::Static);
+        let result = discovery.discover("does-not-exist").await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn test_build_env_discovery_returns_none_when_unset() {
+        let discovery = build_discovery_with(DiscoveryMode::Env);
+        assert!(discovery
+            .discover("does-not-exist")
+            .await
+            .unwrap()
+            .is_none());
+    }
+
+    #[tokio::test]
+    async fn test_build_k8s_falls_back_to_static_off_cluster() {
+        // 本机/CI 无 KUBERNETES_SERVICE_HOST：构造失败应回退 Static 且不 panic
+        let discovery = build_discovery_with(DiscoveryMode::K8s);
+        let result = discovery.discover("does-not-exist").await;
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
     }
 }
