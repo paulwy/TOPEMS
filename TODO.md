@@ -10,7 +10,7 @@
 - [x] **P1 · 财务报表聚合 f64→Decimal** ✅ 完成（2026-10-18，见下方批次块「批 A1」）：`financial_reports.rs` 报表查询聚合层金额全程 Decimal，仅比率/growth_rate 最后一步转 f64；finance lib 1087 passed / 0 failed
 - [x] **P1 · 前端空态兜底** ✅ 核销（2026-10-18 批 A2）：原「约 1100 页无空态」为宽口径高估（混入表单/详情/图表/静态桩）。实测两套模板层早已闭环——CrudPage/ListPageTemplate/TableSection 与 redesign DataTable 均内置 loading 骨架 + ErrorEmptyState + EmptyState 三态（历史已接线 48 页，见下方三态批次块）；走模板的查询主列表无白屏。本批补唯一实测白屏自绘列表 `gis/GisFencePage`（围栏列表区分「暂无数据/搜索无匹配」，zh/en 补 k63/k64），typecheck/eslint 绿。**长尾降 P2**：自绘子表纯文本空文案统一到共享 EmptyState、静态桩接真后补空态，按需处理，不机械铺改。
 - [x] **P1 · 批 C 路由冒烟 + CRUD 数据流补测** ✅ 完成（2026-10-18，见下方批次块「批 C」）：真起后端栈（8099 健康、admin 真登录）；C1 静态路由基线绿（v2-routes.smoke 6/6、489 页面 import 0 断链、注册路由 526）；C2 盘点核销不硬补后端单测；C3 树立 2 个真数据流断言范本（crm 客户列表/详情、finance 凭证详情，真栈 3/3 绿）；C4 全量 471 路由分 14 批实跑 **硬失败 0**（296 条 403 为 test_admin 权限噪声、无 5xx；2 条 rate-limit/feature-flag 404 为后端未挂载），顺带修 2 处前端数组兜底崩溃。**遗留**：e2e 入 CI 待 E3 外部恢复、其余弱 spec 照范本后续补。
-- [x] **P2 · 批 B 清债小批** ✅ 完成（2026-10-18，见下方「批 B」块）：B6(H1/H2/H3) `8ec80da554`、B1(F9) 误报核销保留、B3(F5) 已接真核销+补测 `d12ea83d97`、B2(F8) 放弃 MF 删零引用 Loader `fcaaf48392`、B5(F7) 后端接 k8s 模式选择 `79cbfa26b8`；仅 B4 contract_stubs 映射台账待文档补。
+- [x] **P2 · 批 B 清债小批** ✅ 完成（2026-10-18，见下方「批 B」块）：B6(H1/H2/H3) `8ec80da554`、B1(F9) 误报核销保留、B3(F5) 已接真核销+补测 `d12ea83d97`、B2(F8) 放弃 MF 删零引用 Loader `fcaaf48392`、B5(F7) 后端接 k8s 模式选择 `79cbfa26b8`；B4(F4) 125 条 stub 映射台账完成 `docs/architecture/service-topology/contract-stub-mapping.md`。**批 B 全部闭环。**
 - [ ] **P1 · 内联样式治理**（2026-10-18 实测 3236 处；热区 components/templates 已收敛到 token/样式常量，长尾分批，新代码禁新增）
 - [x] **P1 · 测试前置一键脚本** ✅ 完成（`26461d2f51`）：`scripts/dev/run-e2e-stack.sh` + testUtils 真 token 化，使 full-route-smoke 脱离 mock token 假失败（待实跑全量路由验证）
 - [x] **P2 · menu 域冻结标注** ✅ 完成（`4780760e13`/`3247c12ecf`）：routes/master.rs:197-224 有路由注册 4 handler + init_database 初始化，非"未挂载"；前端 0 消费，判定"后端已实现、前端页面未开发"，冻结保留待前端接线
@@ -95,7 +95,7 @@
 
 ---
 
-## 批 B · P2 清债小批（2026-10-18）🟢 B1 核销 / B2 删 MF Loader / B3 核销补测 / B5 接 k8s / B6 闭环；仅 B4 台账待文档
+## 批 B · P2 清债小批（2026-10-18~19）🟢 全闭环：B1 核销 / B2 删 MF Loader / B3 核销补测 / B4 stub 映射台账 / B5 接 k8s / B6 闭环
 
 > 来源：审计报告批 B。逐项实测复核，不采信旧报告字面；每项独立小 commit、本地门禁绿。
 
@@ -117,7 +117,7 @@
 - `service_client` 新增 `DiscoveryMode`(parse/from_env) + `build_discovery(_with)`，按 `TOPEMS_DISCOVERY_MODE=static|env|k8s` 选择实现，k8s 集群外构造失败回退 static。补 4 单测，lib 10 passed/0 failed，cargo check 绿。按决策**不做前端面板**；etcd/consul/dns 保留预留扩展点；工厂已可被主链路装配，真正注入 ServiceRegistry 登记后续。
 
 ### 待办（本轮不擅动）
-- **B4（F4）**：125 条 contract_stubs 前端在用不可删，后续建 stub→上游实现映射台账（文档型）。
+- **B4（F4）✅ 台账完成（2026-10-19）**：125 条 contract_stub 已建 stub→上游实现映射台账 `docs/architecture/service-topology/contract-stub-mapping.md`（21 域，🟢46 上游已有待对接 / 🟡12 core handler 待挂载 / 🔴67 待产品排期或存废）；纯文档不改代码，端点存废随 BE-08 业务勾选。
 
 ---
 
