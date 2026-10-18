@@ -37,6 +37,28 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['crm', 'contracts'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+const rowGap2: React.CSSProperties = { display: 'flex', gap: 'var(--space-2)' };
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface Contract {
   id: string;
   contract_no: string;
@@ -543,7 +565,7 @@ const CrmContractRedesignPage: React.FC = () => {
                 style={{ width: 140 }}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div style={rowGap2}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -642,7 +664,7 @@ const CrmContractRedesignPage: React.FC = () => {
         size='lg'
       >
         {selectedContract && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             <Card>
               <div
                 style={{
@@ -652,9 +674,7 @@ const CrmContractRedesignPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedContract.contract_no}
-                  </div>
+                  <div style={detailLabel}>{selectedContract.contract_no}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -668,7 +688,7 @@ const CrmContractRedesignPage: React.FC = () => {
                     {selectedContract.customer_name}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <div style={rowGap2}>
                   <Badge variant={typeConfig[selectedContract.type]?.variant || 'default'}>
                     {typeConfig[selectedContract.type]?.label ||
                       t('crm.contract_redesign.label_unknown')}
@@ -692,37 +712,25 @@ const CrmContractRedesignPage: React.FC = () => {
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.contract_redesign.field_sign_date')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
+                  <div style={detailLabel}>{t('crm.contract_redesign.field_sign_date')}</div>
+                  <div style={detailValue}>
                     {selectedContract.sign_date || t('crm.contract_redesign.not_signed')}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.contract_redesign.field_owner')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedContract.owner}
-                  </div>
+                  <div style={detailLabel}>{t('crm.contract_redesign.field_owner')}</div>
+                  <div style={detailValue}>{selectedContract.owner}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.contract_redesign.col_start_date')}
-                  </div>
+                  <div style={detailLabel}>{t('crm.contract_redesign.col_start_date')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedContract.start_date}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.contract_redesign.col_end_date')}
-                  </div>
+                  <div style={detailLabel}>{t('crm.contract_redesign.col_end_date')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedContract.end_date}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.contract_redesign.field_create_time')}
-                  </div>
+                  <div style={detailLabel}>{t('crm.contract_redesign.field_create_time')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedContract.created_at)}
                   </div>
@@ -779,11 +787,11 @@ const CrmContractRedesignPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div>
             <label
               htmlFor='field-1'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={sectionTitle}
             >
               {t('crm.contract_redesign.field_title_required')}
             </label>
@@ -797,7 +805,7 @@ const CrmContractRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-2'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.contract_redesign.field_customer_name_required')}
               </label>
@@ -810,7 +818,7 @@ const CrmContractRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-3'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.contract_redesign.field_type_required')}
               </label>
@@ -828,7 +836,7 @@ const CrmContractRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-4'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.contract_redesign.field_amount')}
               </label>
@@ -842,7 +850,7 @@ const CrmContractRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-5'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.contract_redesign.field_status')}
               </label>
@@ -862,7 +870,7 @@ const CrmContractRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-6'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.contract_redesign.col_start_date')}
               </label>
@@ -875,7 +883,7 @@ const CrmContractRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-7'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.contract_redesign.col_end_date')}
               </label>

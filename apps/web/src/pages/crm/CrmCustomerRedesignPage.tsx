@@ -38,6 +38,41 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['crm', 'customers'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const cellSub: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-tertiary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+const heroValue: React.CSSProperties = {
+  fontSize: 'var(--text-lg)',
+  fontWeight: 'var(--font-bold)',
+};
+const rowGap2: React.CSSProperties = { display: 'flex', gap: 'var(--space-2)' };
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const gridTwoCol: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: 'var(--space-4)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface Customer {
   id: string;
   customer_no: string;
@@ -424,9 +459,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
             <div style={{ fontWeight: 500 }}>
               {localizedName(row.customer_name, row.customer_name_en)}
             </div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-              {row.industry}
-            </div>
+            <div style={cellSub}>{row.industry}</div>
           </div>
         ),
       },
@@ -445,9 +478,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         render: (row) => (
           <div>
             <div style={{ fontSize: 'var(--text-sm)' }}>{row.contact_person}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-              {row.contact_phone}
-            </div>
+            <div style={cellSub}>{row.contact_phone}</div>
           </div>
         ),
       },
@@ -581,7 +612,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 style={{ width: 140 }}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div style={rowGap2}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -680,7 +711,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         size='lg'
       >
         {selectedCustomer && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             <Card>
               <div
                 style={{
@@ -690,9 +721,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedCustomer.customer_no}
-                  </div>
+                  <div style={detailLabel}>{selectedCustomer.customer_no}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -709,7 +738,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                     {selectedCustomer.industry}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <div style={rowGap2}>
                   <Badge variant={levelConfig[selectedCustomer.level]?.variant || 'default'}>
                     {levelConfig[selectedCustomer.level]?.label ||
                       t('crm.customer_list_page.label_unknown')}
@@ -723,72 +752,50 @@ const CrmCustomerRedesignPage: React.FC = () => {
             </Card>
 
             <Card title={t('crm.customer_list_page.section_contact_info')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={gridTwoCol}>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.customer_list_page.field_contact_person')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedCustomer.contact_person}
-                  </div>
+                  <div style={detailLabel}>{t('crm.customer_list_page.field_contact_person')}</div>
+                  <div style={detailValue}>{selectedCustomer.contact_person}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.customer_list_page.field_contact_phone')}
-                  </div>
+                  <div style={detailLabel}>{t('crm.customer_list_page.field_contact_phone')}</div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     {selectedCustomer.contact_phone}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.customer_list_page.field_email')}
-                  </div>
+                  <div style={detailLabel}>{t('crm.customer_list_page.field_email')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedCustomer.email}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.customer_list_page.field_address')}
-                  </div>
+                  <div style={detailLabel}>{t('crm.customer_list_page.field_address')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedCustomer.address}</div>
                 </div>
               </div>
             </Card>
 
             <Card title={t('crm.customer_list_page.section_transaction_info')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={gridTwoCol}>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('crm.customer_list_page.col_total_order_amount')}
                   </div>
-                  <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
+                  <div style={heroValue}>
                     {formatAmount(selectedCustomer.total_order_amount, t)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.customer_list_page.field_order_count')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
+                  <div style={detailLabel}>{t('crm.customer_list_page.field_order_count')}</div>
+                  <div style={heroValue}>
                     {selectedCustomer.order_count} {t('crm.customer_list_page.unit_orders')}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.customer_list_page.field_owner')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedCustomer.owner}
-                  </div>
+                  <div style={detailLabel}>{t('crm.customer_list_page.field_owner')}</div>
+                  <div style={detailValue}>{selectedCustomer.owner}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.customer_list_page.field_create_time')}
-                  </div>
+                  <div style={detailLabel}>{t('crm.customer_list_page.field_create_time')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedCustomer.created_at)}
                   </div>
@@ -847,12 +854,12 @@ const CrmCustomerRedesignPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
             <div>
               <label
                 htmlFor='field-1'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.customer_list_page.field_customer_name_required')}
               </label>
@@ -865,7 +872,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-2'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.customer_list_page.field_industry')}
               </label>
@@ -878,7 +885,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-3'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.customer_list_page.field_level_required')}
               </label>
@@ -896,7 +903,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-4'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.customer_list_page.field_contact_person')}
               </label>
@@ -909,7 +916,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-5'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.customer_list_page.field_contact_phone')}
               </label>
@@ -922,7 +929,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-6'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.customer_list_page.field_email')}
               </label>
@@ -936,7 +943,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
           <div>
             <label
               htmlFor='field-7'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={sectionTitle}
             >
               {t('crm.customer_list_page.field_address')}
             </label>

@@ -38,6 +38,31 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['crm', 'opportunities'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+const heroValue: React.CSSProperties = {
+  fontSize: 'var(--text-lg)',
+  fontWeight: 'var(--font-bold)',
+};
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface Opportunity {
   id: string;
   opp_no: string;
@@ -675,7 +700,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         size='lg'
       >
         {selectedOpp && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             <Card>
               <div
                 style={{
@@ -685,9 +710,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedOpp.opp_no}
-                  </div>
+                  <div style={detailLabel}>{selectedOpp.opp_no}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -742,48 +765,30 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.opportunity_redesign.col_amount')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
-                    {formatAmount(selectedOpp.amount)}
-                  </div>
+                  <div style={detailLabel}>{t('crm.opportunity_redesign.col_amount')}</div>
+                  <div style={heroValue}>{formatAmount(selectedOpp.amount)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.opportunity_redesign.col_probability')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
-                    {selectedOpp.probability}%
-                  </div>
+                  <div style={detailLabel}>{t('crm.opportunity_redesign.col_probability')}</div>
+                  <div style={heroValue}>{selectedOpp.probability}%</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.opportunity_redesign.field_expected_date')}
-                  </div>
+                  <div style={detailLabel}>{t('crm.opportunity_redesign.field_expected_date')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOpp.expected_date}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.opportunity_redesign.field_source')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
+                  <div style={detailLabel}>{t('crm.opportunity_redesign.field_source')}</div>
+                  <div style={detailValue}>
                     {sourceConfig[selectedOpp.source]?.label ||
                       t('crm.opportunity_redesign.label_unknown')}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.opportunity_redesign.field_owner')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedOpp.owner}
-                  </div>
+                  <div style={detailLabel}>{t('crm.opportunity_redesign.field_owner')}</div>
+                  <div style={detailValue}>{selectedOpp.owner}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('crm.opportunity_redesign.field_create_time')}
-                  </div>
+                  <div style={detailLabel}>{t('crm.opportunity_redesign.field_create_time')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedOpp.created_at)}
                   </div>
@@ -843,11 +848,11 @@ const CrmOpportunityRedesignPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div>
             <label
               htmlFor='field-1'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={sectionTitle}
             >
               {t('crm.opportunity_redesign.field_name_required')}
             </label>
@@ -861,7 +866,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-2'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.opportunity_redesign.field_customer_name_required')}
               </label>
@@ -874,7 +879,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-3'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.opportunity_redesign.field_stage_required')}
               </label>
@@ -894,7 +899,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-4'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.opportunity_redesign.field_amount')}
               </label>
@@ -908,7 +913,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-5'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.opportunity_redesign.field_probability')}
               </label>
@@ -922,7 +927,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-6'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.opportunity_redesign.field_expected_date')}
               </label>
@@ -935,7 +940,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-7'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('crm.opportunity_redesign.field_source')}
               </label>

@@ -73,7 +73,7 @@
 2. **第 1 批 · C 类颜色笔误 ✅ 已落地（2026-10-19）**：`PivotTable.tsx` 失效主题路径（border.default/grey.x/text.muted/primary/common.white/非法 lg）全映射 theme.palette；全仓复查其余命中均在 sx 合法路径或 schemas 契约键，无需改。tsc 0 error、eslint 零新增。
 3. **第 2 批 · B 类按域抽常量（进行中，单页样板已起）**：
    - 已起：`pages/wms/WmsInventoryPage.tsx` 详情面板重复文本样式（detailLabel×5/cellSub×2/detailValue×2）等价抽为局部 `React.CSSProperties` 常量，值逐字不变。
-   - 进度：✅ wms 五主页面、✅ qms 四 redesign 页（EightD/Inspection/Nonconformance/Audit）全部完成。重复文本与布局（detailLabel/cellSub/detailValue/rowGap2/colGap4/gridTwoCol/sectionTitle）等价抽为局部 `React.CSSProperties` 常量，值逐字不变，prettier 顺带格式化，tsc/eslint 绿。候选下一域：crm(155)/hrm(147)/erp(140)/admin(123)，按同样去重盘点逐页推进；跨页同构组件（详情项/统计卡）仍待视觉回归条件再沉淀。跨页同构单元（详情项 label/value、统计卡）待视觉回归条件具备时再沉淀为共享组件，不在无回归环境下盲重组。
+   - 进度：✅ wms 五主页面、✅ qms 四 redesign 页、✅ crm 三 redesign 页（Customer/Opportunity/Contract）全部完成。重复文本与布局（detailLabel/cellSub/detailValue/heroValue/rowGap2/colGap4/gridTwoCol/sectionTitle）等价抽为局部 `React.CSSProperties` 常量，值逐字不变，prettier 顺带格式化，tsc/eslint 绿。候选下一域：hrm(147)/erp(140)/admin(123)，按同样去重盘点逐页推进；跨页同构组件（详情项/统计卡）仍待视觉回归条件再沉淀。跨页同构单元（详情项 label/value、统计卡）待视觉回归条件具备时再沉淀为共享组件，不在无回归环境下盲重组。
 4. **A 类不动；D 类随演示载体迭代。**
 
 ## 6. 局限
