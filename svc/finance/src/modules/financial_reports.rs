@@ -43,11 +43,12 @@ fn period_string((y, m): (i32, i32)) -> String {
     format!("{:04}-{:02}", y, m)
 }
 
+/// 期间借贷/净额汇总，全程 Decimal（NUMERIC(18,4)），不经 f64，避免尾差。
 async fn period_net_total(
     pool: &sqlx::PgPool,
     tenant_id: Option<Uuid>,
     period: &str,
-) -> (f64, f64, f64) {
+) -> (Decimal, Decimal, Decimal) {
     let result: Result<(Option<Decimal>, Option<Decimal>, Option<Decimal>), _> = sqlx::query_as(
         only_own_schema_query!("finance", "SELECT COALESCE(SUM(debit), 0) as td, COALESCE(SUM(credit), 0) as tc, COALESCE(SUM(debit - credit), 0) as net
          FROM finance.core_finance_ledger WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period = $2"),
@@ -58,12 +59,22 @@ async fn period_net_total(
     .await;
     match result {
         Ok((td, tc, net)) => (
-            td.unwrap_or(Decimal::ZERO).to_f64().unwrap_or(0.0),
-            tc.unwrap_or(Decimal::ZERO).to_f64().unwrap_or(0.0),
-            net.unwrap_or(Decimal::ZERO).to_f64().unwrap_or(0.0),
+            td.unwrap_or(Decimal::ZERO),
+            tc.unwrap_or(Decimal::ZERO),
+            net.unwrap_or(Decimal::ZERO),
         ),
-        Err(_) => (0.0, 0.0, 0.0),
+        Err(_) => (Decimal::ZERO, Decimal::ZERO, Decimal::ZERO),
     }
+}
+
+/// 同比/环比增长率（%）：金额相减相除在 Decimal 域完成，仅最后一步转 f64 用于展示。
+fn decimal_growth_rate(cur: Decimal, prev: Decimal) -> f64 {
+    if prev == Decimal::ZERO {
+        return 0.0;
+    }
+    ((cur - prev) / prev.abs() * Decimal::from(100u32))
+        .to_f64()
+        .unwrap_or(0.0)
 }
 
 // ========== Phase 3: 报表项目明细 ==========
@@ -124,9 +135,9 @@ pub async fn get_report_item_details(
                         "account_code": r.try_get::<String, _>("account_code").ok(),
                         "account_name": r.try_get::<String, _>("account_name").ok(),
                         "period": r.try_get::<String, _>("period").ok(),
-                        "debit": r.try_get::<f64, _>("debit").ok(),
-                        "credit": r.try_get::<f64, _>("credit").ok(),
-                        "balance": r.try_get::<f64, _>("balance").ok(),
+                        "debit": r.try_get::<Decimal, _>("debit").ok(),
+                        "credit": r.try_get::<Decimal, _>("credit").ok(),
+                        "balance": r.try_get::<Decimal, _>("balance").ok(),
                     })
                 })
                 .collect();
@@ -213,9 +224,9 @@ pub async fn get_report_item_vouchers(
                         "voucher_date": r.try_get::<chrono::DateTime<Utc>, _>("voucher_date").ok(),
                         "period": r.try_get::<String, _>("period").ok(),
                         "description": r.try_get::<Option<String>, _>("description").ok().flatten(),
-                        "debit": r.try_get::<f64, _>("debit").ok(),
-                        "credit": r.try_get::<f64, _>("credit").ok(),
-                        "balance": r.try_get::<f64, _>("balance").ok(),
+                        "debit": r.try_get::<Decimal, _>("debit").ok(),
+                        "credit": r.try_get::<Decimal, _>("credit").ok(),
+                        "balance": r.try_get::<Decimal, _>("balance").ok(),
                     })
                 })
                 .collect();
@@ -280,11 +291,7 @@ pub async fn get_report_comparison(
     let (cur_d, cur_c, cur_net) = period_net_total(&state.pool, tenant_id, period_to).await;
     let (prev_d, prev_c, prev_net) = period_net_total(&state.pool, tenant_id, period_from).await;
     let net_change = cur_net - prev_net;
-    let growth_rate = if prev_net.abs() > f64::EPSILON {
-        (cur_net - prev_net) / prev_net.abs() * 100.0
-    } else {
-        0.0
-    };
+    let growth_rate = decimal_growth_rate(cur_net, prev_net);
     Json(ApiResponse::success(
         serde_json::json!({
             "report_type": report_type,
@@ -344,14 +351,14 @@ pub async fn get_report_trend(
     };
 
     let mut points: Vec<serde_json::Value> = Vec::new();
-    let mut prev_net: Option<f64> = None;
+    let mut prev_net: Option<Decimal> = None;
     let mut cur = start;
     loop {
         let p_str = period_string(cur);
         let (_, _, net) = period_net_total(&state.pool, tenant_id, &p_str).await;
         let growth_rate = match prev_net {
-            Some(pv) if pv.abs() > f64::EPSILON => (net - pv) / pv.abs() * 100.0,
-            _ => 0.0,
+            Some(pv) => decimal_growth_rate(net, pv),
+            None => 0.0,
         };
         points.push(serde_json::json!({
             "period": p_str,
@@ -418,11 +425,7 @@ pub async fn get_report_year_over_year(
     let (prev_d, prev_c, prev_net) =
         period_net_total(&state.pool, tenant_id, previous_year_period).await;
     let net_change = cur_net - prev_net;
-    let growth_rate = if prev_net.abs() > f64::EPSILON {
-        (cur_net - prev_net) / prev_net.abs() * 100.0
-    } else {
-        0.0
-    };
+    let growth_rate = decimal_growth_rate(cur_net, prev_net);
     Json(ApiResponse::success(
         serde_json::json!({
             "report_type": report_type,
@@ -479,11 +482,7 @@ pub async fn get_report_period_over_period(
     let (prev_d, prev_c, prev_net) =
         period_net_total(&state.pool, tenant_id, previous_period).await;
     let net_change = cur_net - prev_net;
-    let growth_rate = if prev_net.abs() > f64::EPSILON {
-        (cur_net - prev_net) / prev_net.abs() * 100.0
-    } else {
-        0.0
-    };
+    let growth_rate = decimal_growth_rate(cur_net, prev_net);
     Json(ApiResponse::success(
         serde_json::json!({
             "report_type": report_type,
@@ -2093,7 +2092,7 @@ pub async fn get_project_summary(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let rows: Vec<(Option<Uuid>, Option<String>, f64, f64)> =
+    let rows: Vec<(Option<Uuid>, Option<String>, Decimal, Decimal)> =
         sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT vi.project_id, NULL::text as project_name,
@@ -2146,7 +2145,7 @@ pub async fn get_project_summary(
 pub async fn get_monthly_trend(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let rows: Vec<(String, f64, i64)> = sqlx::query_as(only_own_schema_query!(
+    let rows: Vec<(String, Decimal, i64)> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT period,
                   COALESCE(SUM(total_debit), 0) as total_amount,
@@ -2197,7 +2196,7 @@ pub async fn get_department_summary(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let rows: Vec<(Option<Uuid>, f64, f64)> = sqlx::query_as(only_own_schema_query!(
+    let rows: Vec<(Option<Uuid>, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT vi.department_id,
                   COALESCE(SUM(vi.debit), 0) as total_debit,
@@ -2251,7 +2250,7 @@ pub async fn get_aging_analysis(
     let _period = params.get("period").cloned().unwrap_or_default();
 
     // 简化版账龄分析：按凭证日期距今天数分组
-    let rows: Vec<(i32, f64)> = sqlx::query_as(only_own_schema_query!(
+    let rows: Vec<(i32, Decimal)> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT
               CASE
@@ -2299,7 +2298,7 @@ pub async fn get_voucher_statistics(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let rows: Vec<(String, i64, f64)> = sqlx::query_as(only_own_schema_query!(
+    let rows: Vec<(String, i64, Decimal)> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT status,
                   COUNT(*) as count,
@@ -2772,6 +2771,29 @@ pub fn create_routes() -> Router<AppState> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_decimal_growth_rate_zero_prev_no_div_by_zero() {
+        // 基期为 0 时不触发除零，返回 0
+        assert_eq!(
+            decimal_growth_rate(Decimal::new(10000, 2), Decimal::ZERO),
+            0.0
+        );
+    }
+
+    #[test]
+    fn test_decimal_growth_rate_positive() {
+        // 100.00 -> 125.00 = +25%，Decimal 域运算无浮点尾差
+        let rate = decimal_growth_rate(Decimal::new(12500, 2), Decimal::new(10000, 2));
+        assert!((rate - 25.0).abs() < 1e-6, "rate={rate}");
+    }
+
+    #[test]
+    fn test_decimal_growth_rate_negative() {
+        // 100.00 -> 80.00 = -20%
+        let rate = decimal_growth_rate(Decimal::new(8000, 2), Decimal::new(10000, 2));
+        assert!((rate - (-20.0)).abs() < 1e-6, "rate={rate}");
+    }
 
     #[test]
     fn test_item_details_query_deserialize() {

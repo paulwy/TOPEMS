@@ -7,18 +7,37 @@
 
 - [x] **P0（批 A-1，安全优先）· DSH 认证补丁** ✅ 完成（`f47178b116`）：copilot/governance/smart-forms **23 端点补 auth+tenant 中间件**（复用既有 tenant_middleware+auth_middleware 范式，零新建；豁免无；ai 单测 981 passed，boundary-gate PASS）
 - [x] **P1 · DSH 三组内存桩持久化** ✅ 完成（A-2 判定 `ffe8f18887` + A-2b copilot 落库 `96cbba6b00`）：copilot 6 状态型端点复用 `core.ai_conversations`+jsonb 列接真（迁移 `20261018000006` 补 5 列，实机链路 6 步全绿）；governance 11 计算型/smart_forms AI 型按"勿过度工程"标注保留不建表
-- [ ] **P1 · 前端空态兜底**（空态缺失仅 170/886 页覆盖）
-- [ ] **P1 · 内联样式治理**（3563 处，热区收敛到 token/样式文件）
-- [ ] **P1 · 测试前置一键脚本**（一键后端栈+种子，让 full-route-smoke 脱离 mock token 假失败）
-- [ ] **P2 · menu 域冻结标注**（2026-10-18 复核：routes/master.rs:197-224 有路由注册 4 handler（update_group/delete_group/update_menu/delete_menu）+ embedded.rs:102/main.rs:331 init_database 初始化——非"未挂载"；前端 0 消费确认（grep apps/web/src/api = 0），但后端 API 存在且 DB 初始化，判定为"后端 API 已实现、前端页面未开发"——冻结保留，待前端 menu 页面开发时接线）
-- [ ] **P2 · z-index 语义层 / 双层 sticky 复核**（魔法数 → 语义 token）
-- [ ] **P2 · aria 抽检 / chartPalette 一致性**
+- [x] **P1 · 财务报表聚合 f64→Decimal** ✅ 完成（2026-10-18，见下方批次块「批 A1」）：`financial_reports.rs` 报表查询聚合层金额全程 Decimal，仅比率/growth_rate 最后一步转 f64；finance lib 1087 passed / 0 failed
+- [ ] **P1 · 前端空态兜底**（2026-10-18 实测：严格口径仅 42/1411 tsx 用 EmptyState/文案，宽口径含手写 length===0 共 239，约 1100 页无空态；先接高频 CRUD 域 mes/wms/scm/erp/hrm/qms）
+- [ ] **P1 · 内联样式治理**（2026-10-18 实测 3236 处；热区 components/templates 已收敛到 token/样式常量，长尾分批，新代码禁新增）
+- [x] **P1 · 测试前置一键脚本** ✅ 完成（`26461d2f51`）：`scripts/dev/run-e2e-stack.sh` + testUtils 真 token 化，使 full-route-smoke 脱离 mock token 假失败（待实跑全量路由验证）
+- [x] **P2 · menu 域冻结标注** ✅ 完成（`4780760e13`/`3247c12ecf`）：routes/master.rs:197-224 有路由注册 4 handler + init_database 初始化，非"未挂载"；前端 0 消费，判定"后端已实现、前端页面未开发"，冻结保留待前端接线
+- [x] **P2 · z-index 语义层** ✅ 完成（`8568f8a383`）：魔法数收敛到语义 token，补 floatingDock:1101 语义层，叠放顺序不变
+- [x] **P2 · aria 抽检** ✅ 完成（`d2f0d9f0fd`）：高频交互组件 Dialog/Drawer 补全，useId 把 title 接到 aria-labelledby
+- [ ] **P2 · chartPalette 一致性**（G2 配色散落各 stories，抽 `chartPalette.ts` 常量，未做）
 - [ ] **P2 · DSH 零消费面冻结**（~20 端点前端零消费，冻结标注）
-- [ ] **P2 · TODO.md 滞后标注清理**（7 项标注滞后于实际，实读对齐）
+- [x] **P2 · TODO.md 滞后标注清理** ✅ 完成（`f9f8eea391`，7 项实核闭环标注对齐；该提交本地未 push）
 - [ ] **需业务/外部 · BE-08 349 条勾选**（决策表 artifacts/BE-08-业务确认决策表-2026-10-18.md 已交付）
 - [ ] **需业务/外部 · none 级流量观测立项**（部署期 8099 网关 access log，≥30 天 0 请求）
 - [ ] **需部署主机 · 生产 nginx reload**（verify-nginx-prod.sh 本机 MAP_OK，reload 需目标机）
 - [ ] **冻结确认 · ehs occupational_health 桩 / DSH 零消费面**（不接真不删除）
+
+---
+
+## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成
+
+> 来源：`artifacts/TOPEMS-全面审计与一步到位规划-2026-10-18.md` F1（P1 金额精度债）。只读审计定位 → 本批落地报表查询聚合层。
+
+- **改动文件**：`svc/finance/src/modules/financial_reports.rs`（+56 / −34）
+- **金额全程 Decimal（NUMERIC(18,4)），不经 f64**：
+  - `period_net_total` 返回 `(Decimal,Decimal,Decimal)`（原 f64 三元组），借贷/净额 SUM 不再 `to_f64()` 转一手；
+  - 对比/同比/环比/趋势 4 处增长率改走新增 `decimal_growth_rate(cur,prev)`：金额相减相除在 Decimal 域完成，**仅最后一步 to_f64 用于展示**，并修掉原 `prev_net.abs() > f64::EPSILON` 的浮点判零；
+  - 明细两处 `try_get::<f64>`（debit/credit/balance，NUMERIC 列原被 `.ok()` 吞成 null）改 `try_get::<Decimal>`；
+  - 5 个聚合查询元组 f64→Decimal：project_summary（借/贷）、monthly_trend（SUM total_debit）、department_summary（借/贷）、aging_analysis（账龄金额）、voucher_statistics（SUM total_debit），`net = debit - credit` 在 Decimal 域相减。
+- **保留 f64（合理，未改）**：增长率/利润率/匹配率/置信度等比率；forecast_v53 预测模型与 risk_v59 风险分（统计/概率量本就用浮点，非金额结算债）；合并报表内存桩（create/update entity、elimination，未接真，另立待接真）。
+- **补单测**：`decimal_growth_rate` 3 例（基期为 0 不除零 / +25% / −20%）。
+- **验证**：`SQLX_OFFLINE=true cargo check -p topems-finance` exit 0；`cargo test -p topems-finance --lib` **1087 passed / 0 failed**；clippy 对本文件 0 warning；cargo fmt 合规。
+- **遗留登记（非本批）**：`get_business_overview` 仍为占位——`total_credit` 误复用 `total_debit`、`net_profit: 0.0` 硬编码，属未接真业务逻辑，待接真时修正；forecast/risk 模型 f64 维持；其余 finance 文件金额写入路径早已 Decimal。
 
 ---
 
