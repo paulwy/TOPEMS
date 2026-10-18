@@ -25,6 +25,11 @@
 - **search（4）→ 全保留**：`shared/index.ts:176,180,184,188` 活调 core `/search`、`/search/suggestions`、`/search/recent`(GET/DELETE)。
 - **dict（1）→ 保留**：`system/index.ts:146` 走 core `/dict/dict-types/{id}/items`。
 
+**第二批②③实测结论（无可静态闭环项，不擅自新建/删除）**：
+
+- **② tenant 🟡「已写 handler 待挂载」经实测不成立**：`modules/tenant/handlers.rs` 全部已写函数（CRUD/stats/metrics/usage/billing/invoices/quota/modules/switch/invite 等）均已在 `master.rs` 挂载；stub 的 `analytics/*`、`billing/subscription|plan|cancel|card`、`features/*`、`settings/branding/domains/email-config/integrations/webhooks/security/*` 在 core **无对应已写 handler**（`tenant_analytics.rs`/`tenant_security.rs` 等文件不存在），属待新建而非待挂载；前端 `tenantConfigApi/tenantSecurityApi/tenantAnalyticsApi` 封装无页面直接消费。故本批不挂载、不新建，台账 🟡 纠正为 🔴。
+- **③ comments/favorites 不可走存废删除**：`CommentsPage.tsx`、`FavoritesPage.tsx` 页面在用，core 无通用实现，属待新建活需求，删除会裸 404；待 BE-08 之外单独立项新建后端，本批不动。
+
 ## 1. 兜底类型（4 种 handler）
 
 | Handler | 返回 | 用途 |
@@ -51,15 +56,15 @@
 | forms | 1（原7，已删6） | 🟢 已核销 | 6 条死兜底已删；仅 GET `/forms/{id}` 走 core | `api/ai/businessIntelligence.ts` |
 | documents | 4（原9，已删5） | 🔴 部分 | CRUD/generate 死兜底已删；parse/summary/search 仍走 core | `api/ai/businessIntelligence.ts` |
 | governance | 2（原12，已删10） | 🟢 已核销 | 10 条死兜底已删；trends/refresh 仍走 core | `api/ai/governanceDashboard.ts` |
-| comments | 4 | 🔴 | 通用评论未建（doc/ticket 各自域评论独立，非此端点） | `api/shared/index.ts`（通用） |
-| favorites | 4 | 🔴 | 收藏/「是否已收藏」0 命中 | `api/shared/index.ts` |
+| comments | 4 | 🔴 待新建（有页面） | `CommentsPage.tsx` 在用，core 无通用实现（doc/ticket 评论独立），待新建不可删 | `api/shared/index.ts` |
+| favorites | 4 | 🔴 待新建（有页面） | `FavoritesPage.tsx` 在用，core 无实现，待新建不可删 | `api/shared/index.ts` |
 | search | 4 | 🟢 部分 | svc/search 已有 `/`、`/suggestions`；`/search/recent` 🔴 | `api/search/index.ts` |
 | dict | 1 | 🟢 | master-data `dict/handlers` 已有，待前缀核对 | `api/system/index.ts` |
-| tenant/analytics | 7 | 🟡 | core `get_usage_metrics/get_tenant_stats` 待挂；可转发 svc/analytics | `api/tenant/analytics.ts` |
+| tenant/analytics | 7 | 🔴（原误标🟡） | ②实测：无已写 handler（tenant_analytics.rs 不存在），非待挂载；前端封装无页面直接消费，待新建/转发 svc/analytics | `api/tenant/analytics.ts` |
 | tenant/billing | 8 | 🟡 部分 | core 已挂 `/billing`、`/invoices`；subscription/pay/plan/cancel/card 🔴 | `api/tenant/analytics.ts` |
 | tenant/settings | 2 | 🔴 | 无对应 handler | `api/tenant/config.ts` |
 | tenant/branding | 2 | 🔴 | 0 命中（租户品牌定制） | `api/tenant/config.ts` |
-| tenant/features | 4 | 🟡 | core `list_modules/activate_module/deactivate_module` 待挂此路径 | `api/tenant/config.ts` |
+| tenant/features | 4 | 🔴（原误标🟡） | ②实测：模块开关已挂在 `/tenant/tenants/{id}/modules/{code}/activate|deactivate`，非 `/tenant/{id}/features/*`；无对应已写 handler，待新建 | `api/tenant/config.ts` |
 | tenant/domains | 3 | 🔴 | 0 命中（自定义域名） | `api/tenant/config.ts` |
 | tenant/email-config | 2 | 🔴 | 0 命中（邮件发信配置） | `api/tenant/config.ts` |
 | tenant/integrations | 4 | 🔴 | 0 命中（第三方集成登记） | `api/tenant/config.ts` |
