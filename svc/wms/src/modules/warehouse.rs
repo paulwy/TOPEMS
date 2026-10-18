@@ -424,12 +424,17 @@ pub async fn update_warehouse(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let request_data = serde_json::to_value(&req).ok();
-    let tenant_id = get_tenant_id(&claims, &headers);
+    // 超管→None（SQL NULL，匹配 RLS 公共行）；普通用户→claims.tenant_id，与 get/list 对齐
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
 
     let existing = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
-        FROM wms.warehouses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        FROM wms.warehouses WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL
         "#),
     )
     .bind(id)
@@ -459,7 +464,7 @@ pub async fn update_warehouse(
         only_own_schema_query!("wms", r#"
         UPDATE wms.warehouses SET
             warehouse_name = $2, warehouse_code = $3, address = $4, manager = $5, contact_phone = $6, status = $7, updated_at = $8, warehouse_name_en = COALESCE($10, warehouse_name_en)
-        WHERE id = $1 AND tenant_id = $9 AND deleted_at IS NULL
+        WHERE id = $1 AND ($9::uuid IS NULL OR tenant_id = $9) AND deleted_at IS NULL
         RETURNING id, tenant_id, CASE WHEN $11 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#),
     )
@@ -508,7 +513,7 @@ pub async fn update_warehouse(
                 return Json(ApiResponse::error(500, "事务提交失败"));
             }
         }
-        let cache_key = warehouse_cache_key(&Some(tenant_id), id, None);
+        let cache_key = warehouse_cache_key(&tenant_id, id, None);
         state.warehouse_cache.remove(&cache_key).await;
         state.warehouse_cache.clear_l1();
         tracing::debug!("🗑️ 仓库缓存已失效: {}", cache_key);
@@ -568,10 +573,15 @@ pub async fn delete_warehouse(
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    // 超管→None（SQL NULL，匹配 RLS 公共行）；普通用户→claims.tenant_id，与 get/list 对齐
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
 
     let result = sqlx::query(
-        only_own_schema_query!("wms", r#"UPDATE wms.warehouses SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#),
+        only_own_schema_query!("wms", r#"UPDATE wms.warehouses SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL"#),
     )
     .bind(id)
     .bind(tenant_id)
@@ -618,7 +628,7 @@ pub async fn delete_warehouse(
     };
 
     if status_str == "success" {
-        let cache_key = warehouse_cache_key(&Some(tenant_id), id, None);
+        let cache_key = warehouse_cache_key(&tenant_id, id, None);
         state.warehouse_cache.remove(&cache_key).await;
         state.warehouse_cache.clear_l1();
         tracing::debug!("🗑️ 仓库缓存已失效: {}", cache_key);
