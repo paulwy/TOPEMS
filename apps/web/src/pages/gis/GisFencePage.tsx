@@ -744,81 +744,93 @@ export const GisFencePage: React.FC = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {filteredFences.map((fence) => (
-                        <TableRow key={fence.id}>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <MapPin size={16} />
-                              {fence.name}
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              size='small'
-                              label={getTypeLabel(fence.type)}
-                              variant='outlined'
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant='caption'>{fence.coordinates}</Typography>
-                            {fence.radius && (
-                              <Typography
-                                variant='caption'
-                                color='text.secondary'
-                              >
-                                ({t('gis.gis_fence_page.l1', { v1: fence.radius })})
-                              </Typography>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                              {fence.alertOnEnter && (
-                                <Chip
-                                  size='small'
-                                  label={t('gis.gis_fence_page.k30')}
-                                  color='warning'
-                                />
-                              )}
-                              {fence.alertOnExit && (
-                                <Chip
-                                  size='small'
-                                  label={t('gis.gis_fence_page.k31')}
-                                  color='info'
-                                />
-                              )}
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              size='small'
-                              label={
-                                fence.status === 'active'
-                                  ? t('gis.gis_fence_page.k33')
-                                  : t('gis.gis_fence_page.k32')
-                              }
-                              color={fence.status === 'active' ? 'success' : 'default'}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                              <IconButton
-                                size='small'
-                                aria-label={t('gis.gis_fence_page.k34')}
-                              >
-                                <Edit size={16} />
-                              </IconButton>
-                              <IconButton
-                                size='small'
-                                color='error'
-                                onClick={() => handleDeleteFence(fence.id)}
-                                aria-label={t('gis.gis_fence_page.k35')}
-                              >
-                                <Delete size={16} />
-                              </IconButton>
-                            </Box>
+                      {filteredFences.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={7}
+                            align='center'
+                            sx={{ color: 'text.secondary', py: 6 }}
+                          >
+                            {searchTerm ? t('gis.gis_fence_page.k64') : t('gis.gis_fence_page.k63')}
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : (
+                        filteredFences.map((fence) => (
+                          <TableRow key={fence.id}>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <MapPin size={16} />
+                                {fence.name}
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                size='small'
+                                label={getTypeLabel(fence.type)}
+                                variant='outlined'
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant='caption'>{fence.coordinates}</Typography>
+                              {fence.radius && (
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
+                                  ({t('gis.gis_fence_page.l1', { v1: fence.radius })})
+                                </Typography>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                {fence.alertOnEnter && (
+                                  <Chip
+                                    size='small'
+                                    label={t('gis.gis_fence_page.k30')}
+                                    color='warning'
+                                  />
+                                )}
+                                {fence.alertOnExit && (
+                                  <Chip
+                                    size='small'
+                                    label={t('gis.gis_fence_page.k31')}
+                                    color='info'
+                                  />
+                                )}
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                size='small'
+                                label={
+                                  fence.status === 'active'
+                                    ? t('gis.gis_fence_page.k33')
+                                    : t('gis.gis_fence_page.k32')
+                                }
+                                color={fence.status === 'active' ? 'success' : 'default'}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', gap: 1 }}>
+                                <IconButton
+                                  size='small'
+                                  aria-label={t('gis.gis_fence_page.k34')}
+                                >
+                                  <Edit size={16} />
+                                </IconButton>
+                                <IconButton
+                                  size='small'
+                                  color='error'
+                                  onClick={() => handleDeleteFence(fence.id)}
+                                  aria-label={t('gis.gis_fence_page.k35')}
+                                >
+                                  <Delete size={16} />
+                                </IconButton>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </TableContainer>

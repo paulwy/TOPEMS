@@ -8,7 +8,7 @@
 - [x] **P0（批 A-1，安全优先）· DSH 认证补丁** ✅ 完成（`f47178b116`）：copilot/governance/smart-forms **23 端点补 auth+tenant 中间件**（复用既有 tenant_middleware+auth_middleware 范式，零新建；豁免无；ai 单测 981 passed，boundary-gate PASS）
 - [x] **P1 · DSH 三组内存桩持久化** ✅ 完成（A-2 判定 `ffe8f18887` + A-2b copilot 落库 `96cbba6b00`）：copilot 6 状态型端点复用 `core.ai_conversations`+jsonb 列接真（迁移 `20261018000006` 补 5 列，实机链路 6 步全绿）；governance 11 计算型/smart_forms AI 型按"勿过度工程"标注保留不建表
 - [x] **P1 · 财务报表聚合 f64→Decimal** ✅ 完成（2026-10-18，见下方批次块「批 A1」）：`financial_reports.rs` 报表查询聚合层金额全程 Decimal，仅比率/growth_rate 最后一步转 f64；finance lib 1087 passed / 0 failed
-- [ ] **P1 · 前端空态兜底**（2026-10-18 实测：严格口径仅 42/1411 tsx 用 EmptyState/文案，宽口径含手写 length===0 共 239，约 1100 页无空态；先接高频 CRUD 域 mes/wms/scm/erp/hrm/qms）
+- [x] **P1 · 前端空态兜底** ✅ 核销（2026-10-18 批 A2）：原「约 1100 页无空态」为宽口径高估（混入表单/详情/图表/静态桩）。实测两套模板层早已闭环——CrudPage/ListPageTemplate/TableSection 与 redesign DataTable 均内置 loading 骨架 + ErrorEmptyState + EmptyState 三态（历史已接线 48 页，见下方三态批次块）；走模板的查询主列表无白屏。本批补唯一实测白屏自绘列表 `gis/GisFencePage`（围栏列表区分「暂无数据/搜索无匹配」，zh/en 补 k63/k64），typecheck/eslint 绿。**长尾降 P2**：自绘子表纯文本空文案统一到共享 EmptyState、静态桩接真后补空态，按需处理，不机械铺改。
 - [ ] **P1 · 内联样式治理**（2026-10-18 实测 3236 处；热区 components/templates 已收敛到 token/样式常量，长尾分批，新代码禁新增）
 - [x] **P1 · 测试前置一键脚本** ✅ 完成（`26461d2f51`）：`scripts/dev/run-e2e-stack.sh` + testUtils 真 token 化，使 full-route-smoke 脱离 mock token 假失败（待实跑全量路由验证）
 - [x] **P2 · menu 域冻结标注** ✅ 完成（`4780760e13`/`3247c12ecf`）：routes/master.rs:197-224 有路由注册 4 handler + init_database 初始化，非"未挂载"；前端 0 消费，判定"后端已实现、前端页面未开发"，冻结保留待前端接线
@@ -38,6 +38,21 @@
 - **补单测**：`decimal_growth_rate` 3 例（基期为 0 不除零 / +25% / −20%）。
 - **验证**：`SQLX_OFFLINE=true cargo check -p topems-finance` exit 0；`cargo test -p topems-finance --lib` **1087 passed / 0 failed**；clippy 对本文件 0 warning；cargo fmt 合规。
 - **遗留登记（非本批）**：`get_business_overview` 仍为占位——`total_credit` 误复用 `total_debit`、`net_profit: 0.0` 硬编码，属未接真业务逻辑，待接真时修正；forecast/risk 模型 f64 维持；其余 finance 文件金额写入路径早已 Decimal。
+
+---
+
+## 批 A2 · 前端列表空态兜底核销（2026-10-18）✅ 完成
+
+> 来源：`artifacts/TOPEMS-全面审计与一步到位规划-2026-10-18.md` F2（原估「约 1100 页无空态」为宽口径，混入表单/详情/图表/静态桩，高估）。
+
+- **口径修正（实测）**：721 个 pages（排除 tests）中 338 走标准模板/表格；两套模板层——`CrudPage/ListPageTemplate/TableSection` 与 redesign `DataTable`——均已内置 loading 骨架 + `ErrorEmptyState` + `EmptyState` 三态（链路 useQuery→crudResult→ListPageTemplate(loading/error)→TableSection(data.length===0)），**走模板的查询主列表三态闭环，无大面积白屏**；历史批次已接线 48 页。
+- **真实缺口（小）**：66 个手写 MUI Table 多为详情抽屉子表（已有纯文本空文案或父级 `!record` 守卫）、图表/风险矩阵、弹窗、表单、写死的静态桩（无数据数组/无 fetch，加空态无意义，随「接真」处理）。
+- **改动文件**：
+  - `apps/web/src/pages/gis/GisFencePage.tsx`：补唯一实测「fetch 数组直接 map、空时表体空白」的自绘围栏列表——`filteredFences.length===0` 渲染 colSpan=7 空态行，`searchTerm` 非空显示「未找到匹配的围栏」否则「暂无围栏数据，可点击右上角新建」。
+  - `apps/web/src/i18n/locales/zh/gis.json` / `en/gis.json`：对称补 `k63`（暂无数据）/ `k64`（搜索无匹配）。
+  - 注：lint-staged 门禁对该历史文件顺带做了整文件 prettier 规整（故 tsx diff 行数大），**逻辑改动仅空态块**。
+- **验证**：`tsc --noEmit` exit 0；eslint 0；zh/en JSON 解析有效。
+- **长尾（降 P2，按需）**：自绘子表纯文本空文案统一到共享 `<EmptyState>`；静态桩接真后再补空态。不机械铺改 52 个混杂文件，避免过度工程。
 
 ---
 

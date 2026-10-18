@@ -256,6 +256,8 @@
   "gis.gis_fence_page.k60": "Alert on Entry",
   "gis.gis_fence_page.k61": "Alert on exit",
   "gis.gis_fence_page.k62": "Cancel",
+  "gis.gis_fence_page.k63": "No geofences yet. Click the top-right button to create one.",
+  "gis.gis_fence_page.k64": "No matching geofences",
   "gis.gis_tracking_page.k0": "Failed to load equipment list",
   "gis.gis_tracking_page.k1": "Failed to load trajectory data",
   "gis.gis_tracking_page.k2": "Failed to load equipment list",

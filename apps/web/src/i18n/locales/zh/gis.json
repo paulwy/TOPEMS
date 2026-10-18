@@ -256,6 +256,8 @@
   "gis.gis_fence_page.k60": "进入时告警",
   "gis.gis_fence_page.k61": "离开时告警",
   "gis.gis_fence_page.k62": "取消",
+  "gis.gis_fence_page.k63": "暂无围栏数据，可点击右上角新建",
+  "gis.gis_fence_page.k64": "未找到匹配的围栏",
   "gis.gis_tracking_page.k0": "加载设备列表失败",
   "gis.gis_tracking_page.k1": "加载轨迹数据失败",
   "gis.gis_tracking_page.k2": "加载设备列表失败",
