@@ -4,6 +4,7 @@
  * 提供基类组件和多种特化组件，支持丰富的交互和动画效果
  */
 import React, { useEffect, useState, useRef } from 'react';
+import { iconSm } from '../sharedStyles';
 import {
   Box,
   Typography,
@@ -825,10 +826,10 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
 
   const chartTypeIcons: Record<ChartType, React.ReactNode> = {
-    bar: <BarChart3 style={{ width: 16, height: 16 }} />,
-    line: <LineChart style={{ width: 16, height: 16 }} />,
-    area: <AreaChart style={{ width: 16, height: 16 }} />,
-    pie: <PieChart style={{ width: 16, height: 16 }} />,
+    bar: <BarChart3 style={iconSm} />,
+    line: <LineChart style={iconSm} />,
+    area: <AreaChart style={iconSm} />,
+    pie: <PieChart style={iconSm} />,
   };
 
   const getTrendIcon = () => {
@@ -956,7 +957,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               onClick={(e) => setActionMenuAnchor(e.currentTarget)}
               aria-label={i18n.t('shared.stat_card.k6')}
             >
-              <MoreVertical style={{ width: 16, height: 16 }} />
+              <MoreVertical style={iconSm} />
             </IconButton>
           </Box>
         }
@@ -1005,7 +1006,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 variant='outlined'
                 size='small'
                 onClick={onRefresh}
-                startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
+                startIcon={<RefreshCw style={iconSm} />}
               >
                 {i18n.t('components.stat_card.k2')}
               </Button>

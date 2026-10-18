@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { iconSm, flexRowCenter } from '../sharedStyles';
 import {
   BarChart3,
   LineChart,
@@ -82,14 +83,14 @@ interface ChartCardProps {
 }
 
 const ChartCardIcon: Record<ChartType, React.ReactNode> = {
-  bar: <BarChart3 style={{ width: 16, height: 16 }} />,
-  line: <LineChart style={{ width: 16, height: 16 }} />,
-  area: <AreaChart style={{ width: 16, height: 16 }} />,
-  pie: <PieChart style={{ width: 16, height: 16 }} />,
-  histogram: <BarChart2 style={{ width: 16, height: 16 }} />,
-  gauge: <Target style={{ width: 16, height: 16 }} />,
-  scatter: <Grid3X3 style={{ width: 16, height: 16 }} />,
-  radar: <Grid3X3 style={{ width: 16, height: 16 }} />,
+  bar: <BarChart3 style={iconSm} />,
+  line: <LineChart style={iconSm} />,
+  area: <AreaChart style={iconSm} />,
+  pie: <PieChart style={iconSm} />,
+  histogram: <BarChart2 style={iconSm} />,
+  gauge: <Target style={iconSm} />,
+  scatter: <Grid3X3 style={iconSm} />,
+  radar: <Grid3X3 style={iconSm} />,
 };
 
 export const ChartCard: React.FC<ChartCardProps> = ({
@@ -162,7 +163,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
           borderBottom: bordered ? `1px solid ${designTokens.colors.action.hover}` : 'none',
         }}
         action={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={flexRowCenter}>
             {showChartType && chartTypes.length > 1 && (
               <div
                 style={{
@@ -221,7 +222,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               size='small'
               onClick={(e) => setActionMenuAnchor(e.currentTarget)}
             >
-              <MoreVertical style={{ width: 16, height: 16 }} />
+              <MoreVertical style={iconSm} />
             </Button>
           </div>
         }

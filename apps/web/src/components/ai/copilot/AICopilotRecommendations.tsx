@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip } from '@mui/material';
+import { iconSm } from '../../sharedStyles';
 import {
   AlertTriangle,
   BarChart3,
@@ -26,24 +27,24 @@ interface AICopilotRecommendationsProps {
 }
 
 const iconMap: Record<string, React.ReactNode> = {
-  'user-plus': <UserPlus style={{ width: 16, height: 16 }} />,
-  'file-text': <FileText style={{ width: 16, height: 16 }} />,
-  'calendar-check': <Calendar style={{ width: 16, height: 16 }} />,
-  'trending-up': <TrendingUp style={{ width: 16, height: 16 }} />,
-  star: <Star style={{ width: 16, height: 16 }} />,
-  'message-square': <MessageSquare style={{ width: 16, height: 16 }} />,
-  'bar-chart': <BarChart3 style={{ width: 16, height: 16 }} />,
-  'bar-chart-2': <BarChart3 style={{ width: 16, height: 16 }} />,
-  briefcase: <Briefcase style={{ width: 16, height: 16 }} />,
-  'alert-triangle': <AlertTriangle style={{ width: 16, height: 16 }} />,
-  'alert-circle': <AlertTriangle style={{ width: 16, height: 16 }} />,
-  'file-check': <FileCheck style={{ width: 16, height: 16 }} />,
-  wallet: <Wallet style={{ width: 16, height: 16 }} />,
-  'pie-chart': <BarChart3 style={{ width: 16, height: 16 }} />,
-  'file-edit': <FileEdit style={{ width: 16, height: 16 }} />,
-  search: <Search style={{ width: 16, height: 16 }} />,
-  code: <Code style={{ width: 16, height: 16 }} />,
-  'message-circle': <MessageSquare style={{ width: 16, height: 16 }} />,
+  'user-plus': <UserPlus style={iconSm} />,
+  'file-text': <FileText style={iconSm} />,
+  'calendar-check': <Calendar style={iconSm} />,
+  'trending-up': <TrendingUp style={iconSm} />,
+  star: <Star style={iconSm} />,
+  'message-square': <MessageSquare style={iconSm} />,
+  'bar-chart': <BarChart3 style={iconSm} />,
+  'bar-chart-2': <BarChart3 style={iconSm} />,
+  briefcase: <Briefcase style={iconSm} />,
+  'alert-triangle': <AlertTriangle style={iconSm} />,
+  'alert-circle': <AlertTriangle style={iconSm} />,
+  'file-check': <FileCheck style={iconSm} />,
+  wallet: <Wallet style={iconSm} />,
+  'pie-chart': <BarChart3 style={iconSm} />,
+  'file-edit': <FileEdit style={iconSm} />,
+  search: <Search style={iconSm} />,
+  code: <Code style={iconSm} />,
+  'message-circle': <MessageSquare style={iconSm} />,
 };
 
 export const AICopilotRecommendations: React.FC<AICopilotRecommendationsProps> = ({
@@ -83,7 +84,7 @@ export const AICopilotRecommendations: React.FC<AICopilotRecommendationsProps> =
               flexShrink: 0,
             }}
           >
-            {iconMap[item.icon || 'star'] || <Lightbulb style={{ width: 16, height: 16 }} />}
+            {iconMap[item.icon || 'star'] || <Lightbulb style={iconSm} />}
           </Box>
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>

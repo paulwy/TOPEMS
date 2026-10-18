@@ -1,4 +1,5 @@
 import React from 'react';
+import { flexRowCenter } from '../sharedStyles';
 import { Volume2, VolumeX, Monitor, Smartphone } from 'lucide-react';
 import type { NotificationSettingsData } from '../../hooks/useNotificationSettings';
 import useNotificationSettings from '../../hooks/useNotificationSettings';
@@ -36,7 +37,7 @@ const NotificationSettings: React.FC = () => {
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={flexRowCenter}>
             <Monitor style={{ width: 16, height: 16, color: 'text.secondary' }} />
             <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
               {i18n.t('components.notification_settings.k1')}
@@ -78,7 +79,7 @@ const NotificationSettings: React.FC = () => {
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={flexRowCenter}>
             {settings.enableSound ? (
               <Volume2 style={{ width: 16, height: 16, color: 'text.secondary' }} />
             ) : (
@@ -124,7 +125,7 @@ const NotificationSettings: React.FC = () => {
             justifyContent: 'spaceBetween',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={flexRowCenter}>
             <Smartphone style={{ width: 16, height: 16, color: 'text.secondary' }} />
             <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
               {i18n.t('components.notification_settings.k3')}
@@ -265,7 +266,7 @@ const NotificationSettings: React.FC = () => {
           </div>
 
           {settings.quietHours.enabled && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={flexRowCenter}>
               <input
                 type='time'
                 value={settings.quietHours.start}
