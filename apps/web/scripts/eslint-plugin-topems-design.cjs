@@ -105,6 +105,79 @@ const noHardcodedColors = {
   },
 };
 
+// 仅拦截十六进制色值（#rgb / #rrggbb / #rrggbbaa），不连坐 rgb()/hsl()/命名色，
+// 用于 L14 第0批「禁新增硬编码 hex」门禁；历史 rgb/命名色不在本规则范围。
+const HEX_COLOR_REGEX = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+function isHexColor(value) {
+  return typeof value === 'string' && HEX_COLOR_REGEX.test(value.trim());
+}
+
+function colorPropertyNames(keyName) {
+  const name = String(keyName || '').toLowerCase();
+  return (
+    name.includes('color') ||
+    name.includes('bgcolor') ||
+    name.includes('background') ||
+    name.includes('bordercolor') ||
+    name === 'fill' ||
+    name === 'stroke'
+  );
+}
+
+const noHardcodedHex = {
+  meta: {
+    type: 'suggestion',
+    docs: {
+      description: '禁止新增硬编码十六进制色值(#hex)，使用 design tokens / theme palette 代替',
+      category: 'Design System',
+      recommended: true,
+    },
+    fixable: null,
+    schema: [],
+    messages: {
+      hardcodedHex: '硬编码十六进制色值 "{{ value }}"，请使用 design token（var(--*)）或 theme palette 代替，不要新增 #hex',
+    },
+  },
+  create(context) {
+    function reportHex(node, value) {
+      if (!isHexColor(value)) return;
+      context.report({ node, messageId: 'hardcodedHex', data: { value } });
+    }
+
+    return {
+      // sx={{ }} 对象内的颜色键
+      JSXAttribute(node) {
+        if (node.name.name !== 'sx' || !node.value || node.value.type !== 'JSXExpressionContainer') return;
+        const expr = node.value.expression;
+        if (expr.type !== 'ObjectExpression') return;
+        for (const prop of expr.properties) {
+          if (prop.type !== 'Property') continue;
+          const keyName = prop.key?.name || prop.key?.value;
+          if (!colorPropertyNames(keyName)) continue;
+          if (prop.value.type === 'Literal' && typeof prop.value.value === 'string') {
+            reportHex(prop.value, prop.value.value);
+          } else if (prop.value.type === 'TemplateLiteral' && prop.value.expressions.length === 0) {
+            reportHex(prop.value, prop.value.quasis[0].value.raw);
+          }
+        }
+      },
+
+      // 任意 style 对象 / 普通对象里颜色键的 hex 字面量
+      Property(node) {
+        if (!node.key || !node.value) return;
+        const keyName = node.key.name || node.key.value;
+        if (!colorPropertyNames(keyName)) return;
+        if (node.value.type === 'Literal' && typeof node.value.value === 'string') {
+          reportHex(node.value, node.value.value);
+        } else if (node.value.type === 'TemplateLiteral' && node.value.expressions.length === 0) {
+          reportHex(node.value, node.value.quasis[0].value.raw);
+        }
+      },
+    };
+  },
+};
+
 const noHardcodedSpacing = {
   meta: {
     type: 'suggestion',
@@ -164,6 +237,7 @@ const noHardcodedSpacing = {
 module.exports = {
   rules: {
     'no-hardcoded-colors': noHardcodedColors,
+    'no-hardcoded-hex': noHardcodedHex,
     'no-hardcoded-spacing': noHardcodedSpacing,
   },
   configs: {

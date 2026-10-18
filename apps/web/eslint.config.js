@@ -267,8 +267,17 @@ export default [
       'check-file/folder-naming-convention': 'off',
 
       // TOPEMS Design System 规则 - 引导使用 design tokens
-      'topems-design/no-hardcoded-colors': 'off', // 暂时关闭，后续逐步修复
+      'topems-design/no-hardcoded-colors': 'off', // 暂时关闭，后续逐步修复（含 rgb/命名色，历史未清零）
+      // L14 第0批：禁新增硬编码 #hex（精准，不连坐 rgb/命名色）；色板常量 chartPalette.ts 在下方 override 豁免
+      'topems-design/no-hardcoded-hex': 'warn',
       'topems-design/no-hardcoded-spacing': 'warn',
+    },
+  },
+  {
+    // 色板集中地（合法 #hex 常量）豁免 hex 门禁
+    files: ['src/components/charts/chartPalette.ts'],
+    rules: {
+      'topems-design/no-hardcoded-hex': 'off',
     },
   },
   {
@@ -316,6 +325,8 @@ export default [
       '@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
       'check-file/filename-naming-convention': 'off',
+      // 测试 mock/快照示例色不受产品 hex 门禁约束
+      'topems-design/no-hardcoded-hex': 'off',
     },
   },
   {

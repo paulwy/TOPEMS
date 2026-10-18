@@ -69,7 +69,7 @@
 
 ## 5. 分批路线建议
 
-1. **第 0 批 · 防新增门禁（零代码风险，先立规矩）**：加一条轻量 eslint/扫描规则，禁止活代码新增硬编码 hex（`#rrggbb`）；**不**一刀切禁 px（固定语义尺寸合法）。把"新代码禁新增"从口号变成可执行检查。
+1. **第 0 批 · 防新增门禁 ✅ 已落地（2026-10-19）**：扩展 `scripts/eslint-plugin-topems-design.cjs` 新增 `no-hardcoded-hex`（仅拦 `#rgb/#rrggbb/#rrggbbaa`，不连坐 rgb()/hsl()/命名色），`eslint.config.js` 开为 warn；豁免色板常量 `charts/chartPalette.ts` 与 `__tests__`/`*.test`（mock 示例色）。实测产品代码 hex 命中 0，探针可正确报警、放过 `var(--token)` 与合法间距。**不**一刀切禁 px（固定语义尺寸合法）。
 2. **第 1 批 · C 类清零**：按 §4 清单逐处人工复核，修掉笔误颜色值、把脱离 token 的裸 px 换成 space/text token；每文件单独核对视觉。
 3. **第 2 批起 · B 类按域抽常量**：从聚集最高的 wms/qms 开始，逐页把重复布局抽局部 styles 对象/就近 CSS 类，每页一次提交、视觉回归核对；不跨域并行铺改。
 4. **A 类不动；D 类随演示载体迭代。**
