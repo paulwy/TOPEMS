@@ -34,6 +34,28 @@ die()  { echo -e "\033[0;31m[✗]\033[0m $*" >&2; exit 1; }
 
 check_port() { lsof -Pi ":$1" -sTCP:LISTEN -t >/dev/null 2>&1; }
 
+# 从 DATABASE_URL 提取连接（供 psql 种子用）
+db_dsn() {
+  local pw; pw="$(echo "${DATABASE_URL:-}" | sed -E 's#.*:([^:@]+)@.*#\1#')"
+  local host; host="$(echo "${DATABASE_URL:-}" | sed -E 's#.*@([^:/]+).*#\1#')"
+  local db; db="$(echo "${DATABASE_URL:-}" | sed -E 's#.*/([^/?]+)(\?.*)?$#\1#')"
+  echo "${pw}|${host}|${db}"
+}
+
+# 种子 e2e 账号 test_admin（复制 admin 凭据哈希，幂等）。
+# full-route-smoke.spec.ts:96 硬编码 test_admin/admin123；默认库仅 admin。
+seed_e2e_account() {
+  IFS='|' read -r pw host db <<<"$(db_dsn)"
+  if [ -z "${pw:-}" ]; then warn "未取到 DATABASE_URL，跳过 test_admin 种子"; return 0; fi
+  info "种子 e2e 账号 test_admin（复制 admin 凭据哈希）..."
+  PGPASSWORD="$pw" psql -h "${host:-127.0.0.1}" -U topems_app -d "${db:-topems}" -q -c \
+    "INSERT INTO iam.users (username,email,password_hash,full_name,role_id,status,email_verified)
+     SELECT 'test_admin','test_admin@test.local',password_hash,'E2E 管理员',role_id,'active',true
+     FROM iam.users WHERE username='admin'
+     ON CONFLICT (username) DO UPDATE SET password_hash=(SELECT password_hash FROM iam.users WHERE username='admin'), status='active';" \
+    >/dev/null 2>&1 && ok "test_admin 就绪" || warn "test_admin 种子失败（可能表不存在）——smoke 将走 admin"
+}
+
 wait_health() {
   local tries="${1:-60}"
   info "等待 $API_URL/health ..."
@@ -51,15 +73,21 @@ up() {
   if check_port "$PORT"; then
     ok "8099 已在运行，跳过启动"
   else
+    # debug 二进制缺失检测：run_monolith.sh 依赖 target/debug/topems-server
+    if [ ! -x "$PROJECT_ROOT/target/debug/topems-server" ]; then
+      warn "未找到 target/debug/topems-server，自动 cargo build（首次约 10+ 分钟）..."
+      SQLX_OFFLINE=true cargo build -p topems-server
+    fi
     info "启动模块化单体（后台，日志 ${LOG}）..."
     nohup ./scripts/run_monolith.sh --daemon >"${LOG}" 2>&1 &
   fi
-  wait_health 90
+  wait_health 120
 }
 
 login() {
   up
-  info "校验真登录 $E2E_USER@$API_URL ..."
+  seed_e2e_account
+  info "校验真登录 ${E2E_USER}@$API_URL ..."
   local body
   body=$(curl -sf -X POST "$API_URL/api/core/iam/auth/login" \
     -H 'Content-Type: application/json' \
