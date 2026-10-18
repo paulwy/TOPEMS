@@ -50,7 +50,7 @@ const securityConfig: SecurityConfig = {
           'https://*.google.com',
           'https://*.google-analytics.com',
         ],
-    styleSrc: ["'self'", "'unsafe-inline'"],
+    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     imgSrc: [
       "'self'",
       'data:',
@@ -59,7 +59,7 @@ const securityConfig: SecurityConfig = {
       'https://*.gravatar.com',
       'https://*.openstreetmap.org',
     ],
-    fontSrc: ["'self'"],
+    fontSrc: ["'self'", 'https://fonts.gstatic.com'],
     connectSrc: isDev
       ? [
           "'self'",
@@ -82,9 +82,9 @@ const securityConfig: SecurityConfig = {
     ? [
         "default-src 'self' http://localhost:* http://127.0.0.1:*",
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* wss://localhost:* wss://127.0.0.1:*",
-        "style-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
-        "font-src 'self'",
+        "font-src 'self' https://fonts.gstatic.com",
         "connect-src 'self' data: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* wss://localhost:* wss://127.0.0.1:*",
         "object-src 'none'",
         "frame-src 'self' https://*.amap.com",
@@ -95,9 +95,9 @@ const securityConfig: SecurityConfig = {
     : [
         "default-src 'self'",
         "script-src 'self' 'strict-dynamic' 'unsafe-inline' https://*.amap.com https://*.baidu.com https://*.google.com https://*.google-analytics.com",
-        "style-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
-        "font-src 'self'",
+        "font-src 'self' https://fonts.gstatic.com",
         "connect-src 'self' https://*.amap.com https://api.map.baidu.com wss://*",
         "object-src 'none'",
         "frame-src 'self' https://*.amap.com",

@@ -52,9 +52,9 @@ impl SecurityHeadersConfig {
             content_security_policy: Some(
                 "default-src 'self'; \
                  script-src 'self' 'strict-dynamic'; \
-                 style-src 'self' 'unsafe-inline'; \
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; \
                  img-src 'self' data: https:; \
-                 font-src 'self'; \
+                 font-src 'self' https://fonts.gstatic.com; \
                  object-src 'none'; \
                  frame-src 'none'; \
                  connect-src 'self'; \
@@ -79,9 +79,9 @@ impl SecurityHeadersConfig {
             content_security_policy: Some(
                 "default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; \
                  script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; \
-                 style-src 'self' 'unsafe-inline'; \
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; \
                  img-src 'self' data: http: https:; \
-                 font-src 'self'; \
+                 font-src 'self' https://fonts.gstatic.com; \
                  connect-src 'self' http://localhost:* ws://localhost:*; \
                  frame-src 'self' http://localhost:*; \
                  prefetch-src 'self' http://localhost:*;"
