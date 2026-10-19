@@ -43,7 +43,6 @@ regex.workspace = true
 
 rand.workspace = true
 async-trait.workspace = true
-hickory-resolver.workspace = true
 async-stream.workspace = true
 
 [dev-dependencies]

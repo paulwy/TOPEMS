@@ -6541,7 +6541,6 @@ dependencies = [
  "chrono",
  "flate2",
  "futures-util",
- "hickory-resolver",
  "lazy_static",
  "lettre",
  "prometheus",

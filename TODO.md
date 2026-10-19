@@ -289,6 +289,14 @@
 - **登记待核实（不擅改）**：H-5 `rollback.sh:289`/`start-production.sh` 旧 8000/`topems-unified-core`，需对照生产 systemd（topems-server.service=8099 BFF / topems-unified-core.service 并存）核实后再统一；H-9 developer 三文档 8000 为 dev 独立进程语境（api-base 已双标注 8000/8099），不影响生产；H-10 `.env.example` 样例口令附警示，保留。
 - **长尾不排硬期**：NEW-P2-3（F10 ApiResponse::error 生产 3497 处宏收敛）、NEW-P2-4（F11 生产裸 Client::new 60 处）；NEW-P2-5（F7 etcd/consul/dns 2243 行未启用）需用户拍板归档/flag/删除。
 
+### P2-5 · F7 三套未启用服务发现物理删除（2026-10-20，用户拍板删除）✅
+
+- **决策**：用户选定物理删除（非归档/flag）。删除前复核：三实现零外部引用，不在 `DiscoveryMode{Static,Env,K8s}` match 分支，仅 `shared/mod.rs` 的 `pub mod` 声明；`lib/shared-event` 的 EtcdClient/ConsulClient 是独立 crate，与本模块同名不同物，不动。
+- **删除**：`svc/unified-core/src/shared/{etcd,consul,dns}_service_discovery.rs`（729+584+630=1,943 行）；摘除 `mod.rs` 三行声明并更新登记注释；移除本 crate 仅 dns 使用的 `hickory-resolver` 直接依赖（根 workspace 定义一并删；lock 中 hickory 为间接传递依赖，保留）。
+- **保留**：`k8s_service_discovery.rs`（集群内 Endpoints 发现，活路径）、`service_client.rs` 的 Static/Env/K8s 三模式。
+- **门禁**：`cargo check`/`clippy -D correctness`/`fmt` 绿，unified-core lib 536 passed / 0 failed。
+- **登记遗留（不在本批扩大）**：config 层悬空 `CONSUL_URL/CONSUL_ENABLED`（`config/schema.json`、`config/env/.env.production.template`、废弃 compose）代码已不读，属独立 config 治理面，另案清理；如需接注册中心，从 git 历史取回三文件再实现。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

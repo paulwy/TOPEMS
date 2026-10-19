@@ -1,15 +1,13 @@
 //! Shared module for unified-core service
 //! Contains unified types and utilities for all core modules
 
-// 服务发现实现登记（D5/U9 2026-10-03 收敛后形态）：
-// - 唯一活路径 = env SERVICE_URL 静态寻址（service_client.rs）+ nginx 静态转发 + config/services.yaml 权威源
-// - 保留：consul（预留扩展点，设 CONSUL_URL 即启用，默认关）、etcd（opt-in 配置管理，仅 ai/portal）
-//   dns/k8s（环境感知发现实现，非注册中心）、config_store_simple（配置存储）
-// - 已移除（未接线残留）：eureka / nacos / zookeeper 服务发现实现（2026-10-03）
+// 服务发现实现登记（D5/U9 2026-10-03；2026-10-20 P2-5 清理后形态）：
+// - 活路径 = env SERVICE_URL 静态寻址（service_client.rs）+ nginx 静态转发 + config/services.yaml 权威源；
+//   DiscoveryMode = Static / Env / K8s 三模式（build_discovery_with）。
+// - 2026-10-20 物理删除零调用的预留实现：etcd / consul / dns_service_discovery（2,243 行），
+//   仅保留 k8s（集群内 Endpoints 发现）；如需接注册中心，从 git 历史取回再实现。
+// - 已移除（更早）：eureka / nacos / zookeeper 服务发现实现（2026-10-03）。
 pub mod config_store_simple;
-pub mod consul_service_discovery;
-pub mod dns_service_discovery;
-pub mod etcd_service_discovery;
 pub mod k8s_service_discovery;
 pub mod service_client;
 pub mod util;
