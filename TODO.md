@@ -32,6 +32,7 @@
 - [x] **P2 · 其余金额面连库甄别 + 三处金额 Decimal** ✅ 完成（2026-10-20，见下方「批 E7」块）：对应 NEW-P2-2 续。逐模块连库甄别 DB 列类型：v58/v55/openapi/events/财务凭证/合并域(InternalTransaction/ConsolidationReport/Line 早已 Decimal) 均非 numeric 错配，不改；闭环 erp 三处持久化边界——`Material.unit_price`(18,4)、`OpeningBalance.debit/credit_balance`(18,4)、`Customer.credit_limit`(18,2) f64→Decimal；erp lib 902 passed、check/clippy/fmt 绿。
 - [x] **P2 · crm.revenue / hrm.salary·new_salary 金额 Decimal** ✅ 完成（2026-10-20，见下方「批 E8」块）：NEW-P2-2 续，跨 crate 连库甄别后只改强类型 query_as 模型。闭环 `crm.customers.revenue`(18,2) 与 profile DTO、`hrm.contracts.salary`/`contract_renewals.new_salary`(18,2) f64→Decimal；crm lib 504、hrm lib 293 passed，check/clippy/fmt 绿。
 - [x] **P2 · 动态 Value 通道金额 Decimal（finance 收/付/银 + erp 银行账户）** ✅ 完成（2026-10-20，见下方「批 E9」块）：NEW-P2-2 续。hrm 其余工资面甄别全为 BigDecimal/Decimal/内存报表 DTO，零改动；改 finance `collection/payment_record/payable/receivable` 动态 `sqlx::query` 通道金额读/写为 Decimal（含账龄 SUM 聚合）、erp `bank_accounts.balance`(18,4)；finance 1087、erp 902 passed，check/clippy/fmt 绿。
+- [x] **P2 · tax_v56.rs 连库甄别** ✅ 完成（2026-10-20，见下方「批 E10」块）：六张 `finance_v56_tax_*` 表金额/比率/阈值列全为 double precision，模型 f64 匹配，**非错配、零改动**。
 
 ---
 
@@ -184,7 +185,18 @@
   - 改：`bank_accounts.balance` numeric(18,4)，动态通道 Create/Update/读改 `Option<Decimal>`，create 默认 `Decimal::ZERO`。
   - 不改：`sales_orders` 读模型已 Decimal、bind 前有 `dec()/dec_owned()` 转 Decimal；`purchase_orders` 四列 DB=`double precision`（f64 匹配）；`inventory.unit_price/total_amount` DB=double；`Asset.purchase_amount` 早已 Decimal。
 - **验证**：`cargo check -p topems-finance/topems-erp --lib/--tests` exit 0；finance lib **1087 passed**、erp lib **902 passed**；clippy `-D correctness` 无 error；`cargo fmt --check` 干净。
-- **遗留（非本批）**：tax_v56.rs 连库甄别；finance 其余版本化报表/仿真浮点保留 f64；erp/finance 内存聚合 DTO 不改。
+- **遗留（非本批）**：finance 其余版本化报表/仿真浮点保留 f64；erp/finance 内存聚合 DTO 不改。（tax_v56.rs 已由批 E10 甄别：全表 double precision，非错配。）
+
+---
+
+## 批 E10 · tax_v56.rs 连库甄别（2026-10-20）✅ 完成 · 零改动
+
+> 来源：E9 遗留项。结论：**无 f64↔numeric 错配，不改代码。**
+
+- 连库核查 `finance.finance_v56_tax_*` 六表（forms/lines/rates/brackets/plans/suggestions）：**全部金额/比率/阈值列均为 `double precision`，无任何 `numeric` 列**。
+  - `forms.total_tax_amount`、`lines.taxable_amount/tax_rate/tax_amount`、`brackets.threshold_from/to/rate`、`rates.rate`、`plans.projected_savings`、`suggestions.estimated_savings` 全 float8。
+- 模型 `TaxForm/TaxLine/TaxRate/TaxBracket/TaxResult/TaxBreakdown/TaxPlan/TaxSuggestion` 的 f64 与 DB float8 匹配，属版本化模拟模块的既有浮点设计，非精度债；税率/比率/储蓄建议本就该 f64。
+- **改动：无。** 无需重跑测试。登记以避免重复排查。
 
 ---
 
