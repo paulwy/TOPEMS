@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -9,7 +10,7 @@ pub struct OfficeSupply {
     pub category: Option<String>,
     pub quantity: i32,
     pub unit: Option<String>,
-    pub price: Option<f64>,
+    pub price: Option<Decimal>,
     pub location: Option<String>,
     pub status: String,
     pub created_at: DateTime<Utc>,
@@ -22,7 +23,7 @@ pub struct CreateOfficeSupplyRequest {
     pub category: Option<String>,
     pub quantity: i32,
     pub unit: Option<String>,
-    pub price: Option<f64>,
+    pub price: Option<Decimal>,
     pub location: Option<String>,
 }
 
@@ -32,7 +33,7 @@ pub struct UpdateOfficeSupplyRequest {
     pub category: Option<String>,
     pub quantity: Option<i32>,
     pub unit: Option<String>,
-    pub price: Option<f64>,
+    pub price: Option<Decimal>,
     pub location: Option<String>,
     pub status: Option<String>,
 }
@@ -43,6 +44,10 @@ mod tests {
     use super::*;
     use chrono::Utc;
     use uuid::Uuid;
+
+    fn d(v: f64) -> Option<Decimal> {
+        Decimal::from_f64_retain(v)
+    }
 
     fn sample_uuid() -> Uuid {
         Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -56,7 +61,7 @@ mod tests {
             category: Some("纸张".into()),
             quantity: 500,
             unit: Some("包".into()),
-            price: Some(25.5),
+            price: d(25.5),
             location: Some("3楼储物间".into()),
             status: "in_stock".into(),
             created_at: Utc::now(),
@@ -100,7 +105,7 @@ mod tests {
             category: None,
             quantity: -10,
             unit: Some("个".into()),
-            price: Some(-5.0),
+            price: d(-5.0),
             location: None,
             status: "error".into(),
             created_at: Utc::now(),
@@ -109,7 +114,7 @@ mod tests {
         let v = serde_json::to_value(&o).unwrap();
         let o2: OfficeSupply = serde_json::from_value(v).unwrap();
         assert_eq!(o2.quantity, -10);
-        assert_eq!(o2.price, Some(-5.0));
+        assert_eq!(o2.price, d(-5.0));
     }
 
     #[test]
@@ -120,7 +125,7 @@ mod tests {
             category: Some("misc".into()),
             quantity: i32::MAX,
             unit: Some("pcs".into()),
-            price: Some(0.01),
+            price: d(0.01),
             location: Some("大仓库".into()),
             status: "active".into(),
             created_at: Utc::now(),
@@ -138,7 +143,7 @@ mod tests {
             category: Some("文具".into()),
             quantity: 50,
             unit: Some("台".into()),
-            price: Some(18.8),
+            price: d(18.8),
             location: Some("前台".into()),
         };
         let v = serde_json::to_value(&r).unwrap();
@@ -169,7 +174,7 @@ mod tests {
             category: None,
             quantity: Some(100),
             unit: None,
-            price: Some(99.99),
+            price: d(99.99),
             location: None,
             status: Some("discontinued".into()),
         };

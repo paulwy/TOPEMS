@@ -243,6 +243,17 @@
   - **保留 f64（聚合/仪表盘，非结算，勿改）**：`supply_chain_dashboard`/`analytics`/`inventory_turnover`/`mrp`/`incoming_inspection` 的 SUM/AVG `::float8` 喂内存 DTO；`price_comparison.rs` 比价评分纯函数；`supplier_evaluation.price` 评分；`purchase_items.amount`(float8)；`purchase_requisition_items` 无引用。
   - 其余 crate：pm `project_benefit.rs`/`report.rs` 聚合 DTO、mes analytics 元组、erp consolidation/finance.rs 待核 query_as；wms/finance/erp 长尾代码侧反查。
 
+### E11-d · erp/finance 残留反查（2026-10-20）✅ 完成 · erp 1 处真错配，finance 零改动
+
+> 方法：列 erp/finance 全部 `query_as::<_, X>` 强类型绑定模型 → 连库核 `information_schema.columns` → 只改 numeric 真错配；float8/转换层/未接线/内存 DTO/比率/评分保留 f64。
+
+- **改动（唯一真错配）**：`erp.office_supplies.price`(numeric) 裸读 + bind f64，`OfficeSupply` 及 Create/Update 请求体 `price` f64→Option<Decimal>；module 裸读/bind 自动对齐，无算术。erp 复跑 **902 passed**，check/clippy/fmt 绿。
+- **erp 甄别不改**：
+  - `erp.inventory.unit_price/total_amount`=float8（f64 匹配）；`erp.purchase_orders` 四金额列全 float8（匹配，module 内 `Decimal::from_f64` 仅为下游转换）；`sales_orders` 模型已 Decimal，请求体 f64 经 `calculate_sales_order_amounts`+`dec_owned` 转换层落库（在线安全）。
+  - `models/finance.rs` 的 FinancialVoucher/VoucherItem/CollectionRecord/PaymentRecord/VoucherTemplate 均**无 query_as 接线**（预留 DTO），不改；`consolidation.rs` 为内存合并 DTO；`AccountingSubject` 无金额；`asset.rs` 已 Decimal；`production_order` 全为数量。
+- **finance 零改动**：settlement Invoice/InvoiceItem/PaymentRequest/PaymentResult 无 query_as（内存领域模型）；`finance_v58_cash_pools/pool_allocations/pool_transfers/liquidity_targets` 金额列全 float8（匹配）；CreditProfile 无金额；BudgetVariance 已 Decimal（仅 variance_percentage 比率保留）；tax_v56 全 float8（E10）；主链路 E6/E9 已 Decimal。
+- **遗留（下一批）**：wms 20+ 表金额列逐表连库甄别（面最大）；crm/hrm 已在 E8/E9 闭环，仅需抽验。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成
