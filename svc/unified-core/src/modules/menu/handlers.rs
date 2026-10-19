@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 
@@ -23,6 +24,7 @@ const MENU_COLUMNS: &str =
 
 pub async fn list_groups(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<MenuGroupQuery>,
 ) -> Json<ApiResponse<MenuGroupListResponse>> {
     let page = query.page.unwrap_or(1).max(1);
@@ -31,14 +33,21 @@ pub async fn list_groups(
 
     let search = query.search.clone();
     let status = query.status.clone();
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_menu_groups
            WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
-             AND ($2::text IS NULL OR status = $2)"#,
+             AND ($2::text IS NULL OR status = $2)
+             AND ($3::uuid IS NULL OR tenant_id = $3)"#,
     )
     .bind(search.clone())
     .bind(status.clone())
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -53,14 +62,16 @@ pub async fn list_groups(
         r#"SELECT {} FROM core_menu_groups
            WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
              AND ($2::text IS NULL OR status = $2)
+             AND ($3::uuid IS NULL OR tenant_id = $3)
            ORDER BY sort_order ASC, created_at DESC
-           LIMIT $3 OFFSET $4"#,
+           LIMIT $4 OFFSET $5"#,
         MENU_GROUP_COLUMNS
     );
 
     let items: Vec<MenuGroup> = match sqlx::query_as(&sql)
         .bind(search)
         .bind(status)
+        .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.pool)
@@ -116,8 +127,10 @@ pub async fn get_group(
 
 pub async fn create_group(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMenuGroupRequest>,
 ) -> Json<ApiResponse<MenuGroup>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
     if req.code.trim().is_empty() {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
             "菜单分组编码不能为空".to_string(),
@@ -137,7 +150,7 @@ pub async fn create_group(
     );
 
     let group: MenuGroup = match sqlx::query_as(&sql)
-        .bind(Uuid::new_v4())
+        .bind(tenant_id)
         .bind(req.name)
         .bind(req.code)
         .bind(req.icon)
@@ -248,6 +261,7 @@ pub async fn delete_group(
 
 pub async fn list_menus(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<MenuQuery>,
 ) -> Json<ApiResponse<MenuListResponse>> {
     let page = query.page.unwrap_or(1).max(1);
@@ -258,18 +272,25 @@ pub async fn list_menus(
     let parent_id = query.parent_id;
     let search = query.search.clone();
     let status = query.status.clone();
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_menus
            WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR group_id = $1)
              AND ($2::uuid IS NULL OR parent_id = $2)
              AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%' OR code ILIKE '%' || $3 || '%')
-             AND ($4::text IS NULL OR status = $4)"#,
+             AND ($4::text IS NULL OR status = $4)
+             AND ($5::uuid IS NULL OR tenant_id = $5)"#,
     )
     .bind(group_id)
     .bind(parent_id)
     .bind(search.clone())
     .bind(status.clone())
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -288,8 +309,9 @@ pub async fn list_menus(
              AND ($2::uuid IS NULL OR parent_id = $2)
              AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%' OR code ILIKE '%' || $3 || '%')
              AND ($4::text IS NULL OR status = $4)
+             AND ($5::uuid IS NULL OR tenant_id = $5)
            ORDER BY sort_order ASC, created_at DESC
-           LIMIT $5 OFFSET $6"#,
+           LIMIT $6 OFFSET $7"#,
         MENU_COLUMNS
     );
 
@@ -298,6 +320,7 @@ pub async fn list_menus(
         .bind(parent_id)
         .bind(search)
         .bind(status)
+        .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.pool)
@@ -353,8 +376,10 @@ pub async fn get_menu(
 
 pub async fn create_menu(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMenuRequest>,
 ) -> Json<ApiResponse<Menu>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
     if req.code.trim().is_empty() {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
             "菜单项编码不能为空".to_string(),
@@ -374,7 +399,7 @@ pub async fn create_menu(
     );
 
     let menu: Menu = match sqlx::query_as(&sql)
-        .bind(Uuid::new_v4())
+        .bind(tenant_id)
         .bind(req.group_id)
         .bind(req.parent_id)
         .bind(req.name)
