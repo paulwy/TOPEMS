@@ -36,6 +36,10 @@ export const priceComparisonApi = {
     return apiClient.scm.delete(`/comparisons/${id}`);
   },
 
+  approve: async (id: string): Promise<ApiResponse<PriceComparison>> => {
+    return apiClient.scm.post(`/comparisons/${id}/approve`);
+  },
+
   result: async (id: string): Promise<ApiResponse<PriceComparisonResult>> => {
     return apiClient.scm.get(`/comparisons/${id}`);
   },

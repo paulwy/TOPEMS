@@ -463,6 +463,20 @@ export interface SupplierPerformanceQueryParams extends PaginationParams {
 }
 
 /**
+ * 供应链实时状态（GET /dashboard/real-time-status）
+ */
+export interface SupplyChainRealTimeStatus {
+  pending_purchase_orders: number;
+  pending_inbound_orders: number;
+  pending_outbound_orders: number;
+  low_stock_items: number;
+  pending_inspections: number;
+  pending_replenishment_suggestions: number;
+  pending_mrp_suggestions: number;
+  timestamp: string;
+}
+
+/**
  * 价格比价
  */
 export interface PriceComparison {

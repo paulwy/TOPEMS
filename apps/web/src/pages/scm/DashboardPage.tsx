@@ -10,6 +10,9 @@ import {
   TrendingUp,
   DollarSign,
   Package,
+  AlertTriangle,
+  Warehouse,
+  Inbox,
 } from 'lucide-react';
 import {
   DashboardTemplate,
@@ -21,6 +24,7 @@ import { PageContainer } from '@/components/common';
 import { scmApi, scmAnalyticsApi } from '@/api/scm';
 import type {
   SupplyChainOverview,
+  SupplyChainRealTimeStatus,
   MrpPlan,
   IncomingInspection,
   InventoryTurnoverStat,
@@ -92,6 +96,19 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: realtime } = useQuery({
+    queryKey: QUERY_KEYS.SCM.REAL_TIME_STATUS,
+    queryFn: async () => {
+      const response = await scmApi.supplyChainDashboard.realTimeStatus();
+      if (response.success && response.data) {
+        return response.data as SupplyChainRealTimeStatus;
+      }
+      return null;
+    },
+    staleTime: 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+  });
+
   const { isPending: mrpLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.MRP_PLANS,
     queryFn: async () => {
@@ -161,13 +178,43 @@ export const DashboardPage: React.FC = () => {
       {
         id: 'orders',
         title: i18n.t('scm.dashboard_page.k12'),
-        value: overview?.pending_orders?.toString() || '45',
+        value:
+          realtime?.pending_purchase_orders?.toString() ??
+          overview?.pending_orders?.toString() ??
+          '45',
         icon: <ShoppingCart size={24} />,
         change: overview?.total_purchase_orders
           ? Math.round((overview.pending_orders / overview.total_purchase_orders) * 100)
           : 8,
         changeLabel: i18n.t('scm.dashboard_page.k13'),
         color: 'success',
+      },
+      {
+        id: 'pendingInbound',
+        title: i18n.t('scm.dashboard_page.k31'),
+        value: realtime?.pending_inbound_orders?.toString() ?? '0',
+        icon: <Inbox size={24} />,
+        change: 0,
+        changeLabel: i18n.t('scm.dashboard_page.k32'),
+        color: 'info',
+      },
+      {
+        id: 'pendingOutbound',
+        title: i18n.t('scm.dashboard_page.k33'),
+        value: realtime?.pending_outbound_orders?.toString() ?? '0',
+        icon: <Warehouse size={24} />,
+        change: 0,
+        changeLabel: i18n.t('scm.dashboard_page.k34'),
+        color: 'info',
+      },
+      {
+        id: 'lowStock',
+        title: i18n.t('scm.dashboard_page.k35'),
+        value: realtime?.low_stock_items?.toString() ?? '0',
+        icon: <AlertTriangle size={24} />,
+        change: 0,
+        changeLabel: i18n.t('scm.dashboard_page.k36'),
+        color: 'error',
       },
       {
         id: 'turnover',
@@ -208,7 +255,10 @@ export const DashboardPage: React.FC = () => {
       {
         id: 'pendingInspection',
         title: t('scm.dashboard_page.k22'),
-        value: overview?.pending_inspection_count?.toString() || '0',
+        value:
+          realtime?.pending_inspections?.toString() ??
+          overview?.pending_inspection_count?.toString() ??
+          '0',
         icon: <Package size={24} />,
         change: 0,
         changeLabel: t('scm.dashboard_page.k23'),

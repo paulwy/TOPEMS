@@ -36,6 +36,10 @@ export const purchaseOrderApi = {
     return apiClient.scm.post(`/purchase-orders/${id}/approve`, { remarks });
   },
 
+  reject: async (id: string, remarks?: string): Promise<ApiResponse<PurchaseOrder>> => {
+    return apiClient.scm.post(`/purchase-orders/${id}/reject`, { remarks });
+  },
+
   confirm: async (id: string, remarks?: string): Promise<ApiResponse<PurchaseOrder>> => {
     return apiClient.scm.post(`/purchase-orders/${id}/confirm`, { remarks });
   },

@@ -154,6 +154,14 @@ describe('SCM purchaseOrderApi', () => {
       remarks: undefined,
     });
   });
+
+  it('should call POST /purchase-orders/:id/reject for reject', async () => {
+    mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
+    await purchaseOrderApi.reject('1', 'Rejected');
+    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-orders/1/reject', {
+      remarks: 'Rejected',
+    });
+  });
 });
 
 describe('SCM purchaseItemApi', () => {
@@ -500,6 +508,12 @@ describe('SCM supplyChainDashboardApi', () => {
       params: undefined,
     });
   });
+
+  it('should call GET /dashboard/real-time-status for realTimeStatus', async () => {
+    mockApiClient.get.mockResolvedValue({ success: true, data: {} });
+    await supplyChainDashboardApi.realTimeStatus();
+    expect(mockApiClient.get).toHaveBeenCalledWith('/dashboard/real-time-status');
+  });
 });
 
 describe('SCM priceComparisonApi', () => {
@@ -544,6 +558,12 @@ describe('SCM priceComparisonApi', () => {
     mockApiClient.delete.mockResolvedValue({ success: true, data: undefined });
     await priceComparisonApi.delete('1');
     expect(mockApiClient.delete).toHaveBeenCalledWith('/comparisons/1');
+  });
+
+  it('should call POST /comparisons/:id/approve for approve', async () => {
+    mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
+    await priceComparisonApi.approve('1');
+    expect(mockApiClient.post).toHaveBeenCalledWith('/comparisons/1/approve');
   });
 
   it('should call GET /quotes for quotes', async () => {

@@ -490,6 +490,7 @@ export const QUERY_KEYS = {
   },
   SCM: {
     OVERVIEW: ['scm', 'overview'],
+    REAL_TIME_STATUS: ['scm', 'real-time-status'],
     FULL_LINK_STATS: ['scm', 'full-link-stats'],
     MRP_PLANS: ['scm', 'mrp-plans'],
     MRP_SUGGESTIONS: ['scm', 'mrp-suggestions'],

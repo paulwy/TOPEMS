@@ -5,6 +5,7 @@ import type {
   SupplyChainFullLinkStat,
   SupplierPerformance,
   SupplierPerformanceQueryParams,
+  SupplyChainRealTimeStatus,
 } from './types';
 
 export const supplyChainDashboardApi = {
@@ -20,5 +21,9 @@ export const supplyChainDashboardApi = {
     params?: SupplierPerformanceQueryParams
   ): Promise<ApiResponse<PaginatedResponse<SupplierPerformance>>> => {
     return apiClient.scm.get('/dashboard/supplier-performance', { params });
+  },
+
+  realTimeStatus: async (): Promise<ApiResponse<SupplyChainRealTimeStatus>> => {
+    return apiClient.scm.get('/dashboard/real-time-status');
   },
 };
