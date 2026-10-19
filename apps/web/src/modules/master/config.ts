@@ -25,6 +25,7 @@ interface DataAssetCatalogPageProps {
 const MASTER_PATHS = {
   root: '/master',
   dataAssetCatalog: '/master/data-asset-catalog',
+  schemaRegistry: '/master/schema-registry',
 } as const;
 
 // ---- 路由配置 ----
@@ -44,6 +45,19 @@ const dataAssetCatalogRoute: RouteConfigV2<DataAssetCatalogPageProps> = {
   action: 'read',
 };
 
+const schemaRegistryRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.schemaRegistry,
+  element: lazyWithRetry(() => import('@/pages/master/SchemaRegistryPage'), 'SchemaRegistryPage'),
+  module: 'master',
+  code: 'master-schema-registry',
+  title: i18n.t('master.schemaRegistry'),
+  titleKey: 'master.schemaRegistry',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master-data:schema:read'],
+  action: 'read',
+};
+
 export const masterModuleConfig: RouteModuleConfig = {
   code: 'master',
   name: i18n.t('master.moduleName'),
@@ -56,7 +70,7 @@ export const masterModuleConfig: RouteModuleConfig = {
   order: 95,
   description: i18n.t('master.module_desc'),
   permission: 'master:data-asset:read',
-  routes: [dataAssetCatalogRoute],
+  routes: [dataAssetCatalogRoute, schemaRegistryRoute],
 };
 
 // ---- 导航菜单配置 ----
@@ -81,6 +95,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.data_asset_catalog.desc'),
+    },
+    {
+      code: 'master-schema-registry',
+      label: i18n.t('master.schemaRegistry'),
+      labelKey: 'master.schemaRegistry',
+      icon: 'Database',
+      path: MASTER_PATHS.schemaRegistry,
+      permission: 'master-data:schema:read',
+      order: 1,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.schema_registry.desc'),
     },
   ],
 };
