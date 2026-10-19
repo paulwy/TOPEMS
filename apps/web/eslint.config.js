@@ -119,7 +119,7 @@ export default [
         caughtErrorsIgnorePattern: '^_',
         destructuredArrayIgnorePattern: '^_',
       }],
-      '@typescript-eslint/no-explicit-any': 'off', // 暂时关闭，后续逐步修复
+      '@typescript-eslint/no-explicit-any': 'warn', // 2026-10-19 恢复 warn（审计 B4），逐步收敛
       '@typescript-eslint/naming-convention': [
         'warn',
         {
@@ -319,7 +319,7 @@ export default [
       },
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/naming-convention': 'off',
       '@typescript-eslint/consistent-type-imports': 'off',
       '@typescript-eslint/no-misused-promises': 'off',

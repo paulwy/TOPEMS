@@ -220,7 +220,6 @@ export const API_PATHS = {
     register: buildApiPath({ service: 'iam', path: '/auth/register' }),
     resetPassword: buildApiPath({ service: 'iam', path: '/auth/reset-password' }),
     setNewPassword: buildApiPath({ service: 'iam', path: '/auth/set-new-password' }),
-    passwordPolicy: buildApiPath({ service: 'iam', path: '/auth/password-policy' }),
   },
   iam: {
     users: buildApiPath({ service: 'iam', path: '/users' }),
