@@ -6,6 +6,7 @@ import { semanticSearchApi } from './semanticSearch';
 import { versioningApi } from './versioning';
 import { dataAssetCatalogApiV66 } from './dataAssetCatalogV66';
 import { schemaRegistryApi } from './schemaRegistry';
+import { lineageAnalyticsApi } from './lineageAnalytics';
 
 export { qualityApi } from './quality';
 export { governanceApi } from './governance';
@@ -15,6 +16,7 @@ export { semanticSearchApi } from './semanticSearch';
 export { versioningApi } from './versioning';
 export { dataAssetCatalogApiV66 } from './dataAssetCatalogV66';
 export { schemaRegistryApi } from './schemaRegistry';
+export { lineageAnalyticsApi } from './lineageAnalytics';
 
 const masterApi = {
   quality: qualityApi,
@@ -25,6 +27,7 @@ const masterApi = {
   versioning: versioningApi,
   dataAssetCatalogV66: dataAssetCatalogApiV66,
   schemaRegistry: schemaRegistryApi,
+  lineageAnalytics: lineageAnalyticsApi,
 };
 
 export default masterApi;

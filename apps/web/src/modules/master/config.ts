@@ -26,6 +26,7 @@ const MASTER_PATHS = {
   root: '/master',
   dataAssetCatalog: '/master/data-asset-catalog',
   schemaRegistry: '/master/schema-registry',
+  lineageAnalytics: '/master/lineage-analytics',
 } as const;
 
 // ---- 路由配置 ----
@@ -58,6 +59,22 @@ const schemaRegistryRoute: RouteConfigV2<Record<string, never>> = {
   action: 'read',
 };
 
+const lineageAnalyticsRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.lineageAnalytics,
+  element: lazyWithRetry(
+    () => import('@/pages/master/LineageAnalyticsPage'),
+    'LineageAnalyticsPage'
+  ),
+  module: 'master',
+  code: 'master-lineage-analytics',
+  title: i18n.t('master.lineageAnalytics'),
+  titleKey: 'master.lineageAnalytics',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:lineage:read'],
+  action: 'read',
+};
+
 export const masterModuleConfig: RouteModuleConfig = {
   code: 'master',
   name: i18n.t('master.moduleName'),
@@ -70,7 +87,7 @@ export const masterModuleConfig: RouteModuleConfig = {
   order: 95,
   description: i18n.t('master.module_desc'),
   permission: 'master:data-asset:read',
-  routes: [dataAssetCatalogRoute, schemaRegistryRoute],
+  routes: [dataAssetCatalogRoute, schemaRegistryRoute, lineageAnalyticsRoute],
 };
 
 // ---- 导航菜单配置 ----
@@ -107,6 +124,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.schema_registry.desc'),
+    },
+    {
+      code: 'master-lineage-analytics',
+      label: i18n.t('master.lineageAnalytics'),
+      labelKey: 'master.lineageAnalytics',
+      icon: 'AccountTree',
+      path: MASTER_PATHS.lineageAnalytics,
+      permission: 'master_data:lineage:read',
+      order: 2,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.lineage_analytics.desc'),
     },
   ],
 };
