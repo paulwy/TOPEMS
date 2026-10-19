@@ -275,17 +275,6 @@ export const updateArchiveConfig = async (
   return response;
 };
 
-export interface AutoArchiveResponse {
-  archived_count: number;
-}
-
-export const runAutoArchive = async (): Promise<ApiResponse<AutoArchiveResponse>> => {
-  const response = await apiClient.notification.post<AutoArchiveResponse>(
-    '/notifications/archive/run'
-  );
-  return response;
-};
-
 export const getMyNotificationStats = async (): Promise<ApiResponse<NotificationStats>> => {
   const response = await apiClient.notification.get<NotificationStats>('/notifications/stats/me');
   return response;

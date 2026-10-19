@@ -12,8 +12,10 @@ use topems_shared_core::locale::Locale;
 use uuid::Uuid;
 
 use crate::models::{
-    ArchiveConfig, BroadcastNotificationRequest, BulkIdsRequest, ChannelMetrics, ChannelQuery,
-    CreateChannelRequest, CreateTemplateRequest, NotificationChannel, NotificationQuery,
+    ArchiveConfig, BroadcastNotificationRequest, BulkConditionRequest, BulkIdsRequest,
+    BulkIdsV2Request, BulkTemplateStatusRequest, CategoryPreferenceUpdate, ChannelMetrics,
+    ChannelQuery, CreateChannelRequest, CreateTemplateRequest, GlobalMuteRequest,
+    NotificationChannel, NotificationQuery, PreferencesUpdate, QuietHoursUpdate,
     SendNotificationRequest, UpdateChannelRequest, UpdateTemplateRequest,
 };
 
@@ -2685,6 +2687,966 @@ pub async fn get_channel_metrics(
     };
     Json(serde_json::json!({
         "success": true, "message": "ok", "data": metrics, "code": 200
+    }))
+}
+
+/// 批量标记未读（`POST /notifications/bulk-unread`，载荷 `{ ids }`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/bulk-unread",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn bulk_mark_unread(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<BulkIdsV2Request>,
+) -> Json<serde_json::Value> {
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Invalid user ID: {}", e);
+            return Json(serde_json::json!({
+                "success": false, "message": "无效的用户ID", "data": null, "code": 400
+            }));
+        }
+    };
+    if payload.ids.is_empty() {
+        return Json(serde_json::json!({
+            "success": true, "message": "No notifications to mark as unread",
+            "data": { "updated_count": 0 }
+        }));
+    }
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
+        "UPDATE core_notifications SET is_read = FALSE, read_at = NULL WHERE user_id = $1 AND id = ANY($2)"
+    ))
+    .bind(user_id)
+    .bind(&payload.ids)
+    .execute(&pool)
+    .await;
+    match result {
+        Ok(r) => Json(serde_json::json!({
+            "success": true,
+            "message": format!("Marked {} notifications as unread", r.rows_affected()),
+            "data": { "updated_count": r.rows_affected() }
+        })),
+        Err(e) => {
+            tracing::error!("Failed to bulk mark notifications as unread: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to bulk mark notifications as unread: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 条件批量已读（`POST /notifications/bulk-read-by-condition`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/bulk-read-by-condition",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn bulk_read_by_condition(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<BulkConditionRequest>,
+) -> Json<serde_json::Value> {
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Invalid user ID: {}", e);
+            return Json(serde_json::json!({
+                "success": false, "message": "无效的用户ID", "data": null, "code": 400
+            }));
+        }
+    };
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
+        r#"
+        UPDATE core_notifications SET is_read = TRUE, read_at = NOW()
+        WHERE user_id = $1
+          AND ($2::uuid[] IS NULL OR id = ANY($2))
+          AND ($3::int IS NULL OR created_at < NOW() - ($3 * INTERVAL '1 day'))
+          AND ($4::text[] IS NULL OR notification_type = ANY($4))
+        "#
+    ))
+    .bind(user_id)
+    .bind(&req.ids)
+    .bind(req.older_than_days)
+    .bind(req.notification_types)
+    .execute(&pool)
+    .await;
+    match result {
+        Ok(r) => Json(serde_json::json!({
+            "success": true,
+            "message": format!("Marked {} notifications as read", r.rows_affected()),
+            "data": { "updated_count": r.rows_affected() }
+        })),
+        Err(e) => {
+            tracing::error!("Failed to bulk read by condition: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to bulk read by condition: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 条件批量删除（`POST /notifications/bulk-delete-by-condition`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/bulk-delete-by-condition",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn bulk_delete_by_condition(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<BulkConditionRequest>,
+) -> Json<serde_json::Value> {
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Invalid user ID: {}", e);
+            return Json(serde_json::json!({
+                "success": false, "message": "无效的用户ID", "data": null, "code": 400
+            }));
+        }
+    };
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
+        r#"
+        UPDATE core_notifications SET deleted_at = NOW()
+        WHERE user_id = $1
+          AND ($2::uuid[] IS NULL OR id = ANY($2))
+          AND ($3::int IS NULL OR created_at < NOW() - ($3 * INTERVAL '1 day'))
+          AND ($4::text[] IS NULL OR notification_type = ANY($4))
+          AND (COALESCE($5, FALSE) OR is_archived = FALSE)
+        "#
+    ))
+    .bind(user_id)
+    .bind(&req.ids)
+    .bind(req.older_than_days)
+    .bind(req.notification_types)
+    .bind(req.include_archived)
+    .execute(&pool)
+    .await;
+    match result {
+        Ok(r) => Json(serde_json::json!({
+            "success": true,
+            "message": format!("Deleted {} notifications", r.rows_affected()),
+            "data": { "deleted_count": r.rows_affected() }
+        })),
+        Err(e) => {
+            tracing::error!("Failed to bulk delete by condition: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to bulk delete by condition: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 批量归档（`POST /notifications/bulk-archive`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/bulk-archive",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn bulk_archive(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<BulkConditionRequest>,
+) -> Json<serde_json::Value> {
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Invalid user ID: {}", e);
+            return Json(serde_json::json!({
+                "success": false, "message": "无效的用户ID", "data": null, "code": 400
+            }));
+        }
+    };
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
+        r#"
+        UPDATE core_notifications SET is_archived = TRUE
+        WHERE user_id = $1 AND is_archived = FALSE
+          AND ($2::uuid[] IS NULL OR id = ANY($2))
+          AND ($3::int IS NULL OR created_at < NOW() - ($3 * INTERVAL '1 day'))
+          AND ($4::text[] IS NULL OR notification_type = ANY($4))
+        "#
+    ))
+    .bind(user_id)
+    .bind(&req.ids)
+    .bind(req.older_than_days)
+    .bind(req.notification_types)
+    .execute(&pool)
+    .await;
+    match result {
+        Ok(r) => Json(serde_json::json!({
+            "success": true,
+            "message": format!("Archived {} notifications", r.rows_affected()),
+            "data": { "archived_count": r.rows_affected() }
+        })),
+        Err(e) => {
+            tracing::error!("Failed to bulk archive notifications: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to bulk archive notifications: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 批量取消归档（`POST /notifications/bulk-unarchive`，载荷 `{ ids }`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/bulk-unarchive",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn bulk_unarchive(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<BulkIdsV2Request>,
+) -> Json<serde_json::Value> {
+    let user_id = match Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Invalid user ID: {}", e);
+            return Json(serde_json::json!({
+                "success": false, "message": "无效的用户ID", "data": null, "code": 400
+            }));
+        }
+    };
+    if payload.ids.is_empty() {
+        return Json(serde_json::json!({
+            "success": true, "message": "No notifications to unarchive",
+            "data": { "updated_count": 0 }
+        }));
+    }
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
+        "UPDATE core_notifications SET is_archived = FALSE WHERE user_id = $1 AND id = ANY($2)"
+    ))
+    .bind(user_id)
+    .bind(&payload.ids)
+    .execute(&pool)
+    .await;
+    match result {
+        Ok(r) => Json(serde_json::json!({
+            "success": true,
+            "message": format!("Unarchived {} notifications", r.rows_affected()),
+            "data": { "updated_count": r.rows_affected() }
+        })),
+        Err(e) => {
+            tracing::error!("Failed to bulk unarchive notifications: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to bulk unarchive notifications: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 模板批量状态更新（`PUT /notification-templates/batch-status`，载荷 `{ ids, status }`）
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:notification:admin"])),
+    path = "/notification/notification-templates/batch-status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn batch_update_template_status(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<BulkTemplateStatusRequest>,
+) -> Json<serde_json::Value> {
+    if !claims.is_superuser && !claims.has_permission("notification:admin") {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "没有权限更新通知模板状态",
+            "data": null,
+            "code": 403
+        }));
+    }
+    if req.ids.is_empty() {
+        return Json(serde_json::json!({
+            "success": true, "message": "No templates to update",
+            "data": { "updated_count": 0 }
+        }));
+    }
+    let tenant_bind = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id)
+    };
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
+        r#"
+        UPDATE core_notification_templates
+        SET status = $1, updated_at = NOW()
+        WHERE id = ANY($2) AND ($3::uuid IS NULL OR tenant_id = $3)
+        "#
+    ))
+    .bind(&req.status)
+    .bind(&req.ids)
+    .bind(tenant_bind)
+    .execute(&pool)
+    .await;
+    match result {
+        Ok(r) => Json(serde_json::json!({
+            "success": true,
+            "message": format!("Updated {} templates", r.rows_affected()),
+            "data": { "updated_count": r.rows_affected() }
+        })),
+        Err(e) => {
+            tracing::error!("Failed to batch update template status: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to batch update template status: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+fn default_preferences(user_id: Uuid) -> serde_json::Value {
+    serde_json::json!({
+        "user_id": user_id.to_string(),
+        "categories": [],
+        "quiet_hours": {
+            "enabled": false,
+            "start_time": "22:00",
+            "end_time": "08:00",
+            "days_of_week": [1, 2, 3, 4, 5],
+            "bypass_priority": 2
+        },
+        "global_mute": { "enabled": false },
+        "default_channels": ["in_app"],
+        "language": "zh-CN",
+        "timezone": "Asia/Shanghai",
+        "updated_at": chrono::Utc::now().to_rfc3339()
+    })
+}
+
+fn resolve_user_id(claims: &Claims) -> Result<Uuid, serde_json::Value> {
+    Uuid::parse_str(&claims.sub).map_err(|e| {
+        tracing::error!("Invalid user ID: {}", e);
+        serde_json::json!({
+            "success": false, "message": "无效的用户ID", "data": null, "code": 400
+        })
+    })
+}
+
+fn tenant_bind_for(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    }
+}
+
+/// 读取用户偏好行；不存在时返回 None
+type PrefRow = (
+    serde_json::Value,
+    serde_json::Value,
+    serde_json::Value,
+    Vec<String>,
+    String,
+    String,
+);
+
+async fn load_preference_row(pool: &PgPool, user_id: Uuid) -> Result<Option<PrefRow>, String> {
+    let row = sqlx::query(
+        "SELECT categories, quiet_hours, global_mute, default_channels, language, timezone \
+         FROM core_notification_preferences WHERE user_id = $1",
+    )
+    .bind(user_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| format!("Failed to load preferences: {}", e))?;
+
+    match row {
+        None => Ok(None),
+        Some(r) => Ok(Some((
+            r.try_get::<serde_json::Value, _>("categories")
+                .map_err(|e| format!("bad categories: {}", e))?,
+            r.try_get::<serde_json::Value, _>("quiet_hours")
+                .map_err(|e| format!("bad quiet_hours: {}", e))?,
+            r.try_get::<serde_json::Value, _>("global_mute")
+                .map_err(|e| format!("bad global_mute: {}", e))?,
+            r.try_get::<Vec<String>, _>("default_channels")
+                .map_err(|e| format!("bad default_channels: {}", e))?,
+            r.try_get::<String, _>("language")
+                .map_err(|e| format!("bad language: {}", e))?,
+            r.try_get::<String, _>("timezone")
+                .map_err(|e| format!("bad timezone: {}", e))?,
+        ))),
+    }
+}
+
+/// 获取当前用户偏好（`GET /notification/preferences`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/preferences",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn get_preferences(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    match load_preference_row(&pool, user_id).await {
+        Ok(Some((categories, quiet_hours, global_mute, channels, language, timezone))) => {
+            Json(serde_json::json!({
+                "success": true,
+                "message": "ok",
+                "data": {
+                    "user_id": user_id.to_string(),
+                    "categories": categories,
+                    "quiet_hours": quiet_hours,
+                    "global_mute": global_mute,
+                    "default_channels": channels,
+                    "language": language,
+                    "timezone": timezone,
+                    "updated_at": chrono::Utc::now().to_rfc3339()
+                }
+            }))
+        }
+        Ok(None) => Json(serde_json::json!({
+            "success": true,
+            "message": "ok",
+            "data": default_preferences(user_id)
+        })),
+        Err(e) => {
+            tracing::error!("{}", e);
+            Json(serde_json::json!({
+                "success": false, "message": e, "data": null
+            }))
+        }
+    }
+}
+
+/// 更新当前用户偏好（`PUT /notification/preferences`）
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/preferences",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn update_preferences(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<PreferencesUpdate>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let existing = load_preference_row(&pool, user_id).await.unwrap_or(None);
+    let (old_cat, old_qh, old_gm, old_ch, old_lang, old_tz) = existing.unwrap_or((
+        serde_json::json!([]),
+        serde_json::json!({}),
+        serde_json::json!({}),
+        vec!["in_app".to_string()],
+        "zh-CN".to_string(),
+        "Asia/Shanghai".to_string(),
+    ));
+    let categories = req.categories.unwrap_or(old_cat);
+    let quiet_hours = req.quiet_hours.unwrap_or(old_qh);
+    let global_mute = old_gm;
+    let default_channels = req.default_channels.unwrap_or(old_ch);
+    let language = req.language.unwrap_or(old_lang);
+    let timezone = req.timezone.unwrap_or(old_tz);
+    let tenant_bind = tenant_bind_for(&claims);
+
+    let result = sqlx::query(
+        "INSERT INTO core_notification_preferences \
+         (user_id, categories, quiet_hours, global_mute, default_channels, language, timezone, tenant_id, updated_at) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) \
+         ON CONFLICT (user_id) DO UPDATE SET \
+         categories = EXCLUDED.categories, quiet_hours = EXCLUDED.quiet_hours, \
+         global_mute = EXCLUDED.global_mute, default_channels = EXCLUDED.default_channels, \
+         language = EXCLUDED.language, timezone = EXCLUDED.timezone, updated_at = NOW()",
+    )
+    .bind(user_id)
+    .bind(&categories)
+    .bind(&quiet_hours)
+    .bind(&global_mute)
+    .bind(&default_channels)
+    .bind(&language)
+    .bind(&timezone)
+    .bind(tenant_bind)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(_) => get_preferences(State(pool), Extension(claims)).await,
+        Err(e) => {
+            tracing::error!("Failed to update preferences: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to update preferences: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 获取分类偏好（`GET /notification/preferences/categories`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/preferences/categories",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn get_category_preferences(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    match load_preference_row(&pool, user_id).await {
+        Ok(Some((categories, _, _, _, _, _))) => Json(serde_json::json!({
+            "success": true, "message": "ok", "data": { "categories": categories }
+        })),
+        Ok(None) => Json(serde_json::json!({
+            "success": true, "message": "ok", "data": { "categories": [] }
+        })),
+        Err(e) => {
+            tracing::error!("{}", e);
+            Json(serde_json::json!({
+                "success": false, "message": e, "data": null
+            }))
+        }
+    }
+}
+
+/// 更新单个分类偏好（`PUT /notification/preferences/categories/{category}`）
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/preferences/categories/{category}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn update_category_preference(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(category): Path<String>,
+    Json(req): Json<CategoryPreferenceUpdate>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let (current, _, _, _, _, _) = load_preference_row(&pool, user_id)
+        .await
+        .unwrap_or(None)
+        .unwrap_or((
+            serde_json::json!([]),
+            serde_json::json!({}),
+            serde_json::json!({}),
+            vec!["in_app".to_string()],
+            "zh-CN".to_string(),
+            "Asia/Shanghai".to_string(),
+        ));
+    let mut cats: Vec<serde_json::Value> = serde_json::from_value(current).unwrap_or_default();
+    let mut updated_item = serde_json::json!({ "category": category });
+    if let Some(enabled) = req.enabled {
+        updated_item["enabled"] = serde_json::json!(enabled);
+    }
+    if let Some(channels) = req.channels {
+        updated_item["channels"] = serde_json::json!(channels);
+    }
+    if let Some(priority) = req.min_priority {
+        updated_item["min_priority"] = serde_json::json!(priority);
+    }
+    let mut found = false;
+    for item in cats.iter_mut() {
+        if item.get("category").and_then(|c| c.as_str()) == Some(category.as_str()) {
+            if let Some(obj) = item.as_object_mut() {
+                for (k, v) in updated_item.as_object().cloned().unwrap_or_default() {
+                    obj.insert(k, v);
+                }
+            }
+            found = true;
+            break;
+        }
+    }
+    if !found {
+        cats.push(updated_item);
+    }
+    let tenant_bind = tenant_bind_for(&claims);
+    let result = sqlx::query(
+        "INSERT INTO core_notification_preferences (user_id, categories, tenant_id, updated_at) \
+         VALUES ($1, $2, $3, NOW()) \
+         ON CONFLICT (user_id) DO UPDATE SET categories = EXCLUDED.categories, updated_at = NOW()",
+    )
+    .bind(user_id)
+    .bind(serde_json::json!(cats))
+    .bind(tenant_bind)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true, "message": "ok",
+            "data": serde_json::json!({ "category": category })
+        })),
+        Err(e) => {
+            tracing::error!("Failed to update category preference: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to update category preference: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 开启全局静音（`POST /notification/preferences/global-mute`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/preferences/global-mute",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn set_global_mute(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<GlobalMuteRequest>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let mute = serde_json::json!({
+        "enabled": true,
+        "muted_until": req.muted_until,
+        "reason": req.reason
+    });
+    let tenant_bind = tenant_bind_for(&claims);
+    let result = sqlx::query(
+        "INSERT INTO core_notification_preferences (user_id, global_mute, tenant_id, updated_at) \
+         VALUES ($1, $2, $3, NOW()) \
+         ON CONFLICT (user_id) DO UPDATE SET global_mute = EXCLUDED.global_mute, updated_at = NOW()",
+    )
+    .bind(user_id)
+    .bind(&mute)
+    .bind(tenant_bind)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true, "message": "ok", "data": mute
+        })),
+        Err(e) => {
+            tracing::error!("Failed to set global mute: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to set global mute: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 取消全局静音（`DELETE /notification/preferences/global-mute`）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/preferences/global-mute",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn cancel_global_mute(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let mute = serde_json::json!({ "enabled": false });
+    let tenant_bind = tenant_bind_for(&claims);
+    let result = sqlx::query(
+        "INSERT INTO core_notification_preferences (user_id, global_mute, tenant_id, updated_at) \
+         VALUES ($1, $2, $3, NOW()) \
+         ON CONFLICT (user_id) DO UPDATE SET global_mute = EXCLUDED.global_mute, updated_at = NOW()",
+    )
+    .bind(user_id)
+    .bind(&mute)
+    .bind(tenant_bind)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true, "message": "ok", "data": mute
+        })),
+        Err(e) => {
+            tracing::error!("Failed to cancel global mute: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to cancel global mute: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 获取免打扰时段（`GET /notification/preferences/quiet-hours`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/preferences/quiet-hours",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn get_quiet_hours(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    match load_preference_row(&pool, user_id).await {
+        Ok(Some((_, quiet_hours, _, _, _, _))) => Json(serde_json::json!({
+            "success": true, "message": "ok", "data": quiet_hours
+        })),
+        Ok(None) => Json(serde_json::json!({
+            "success": true, "message": "ok",
+            "data": {
+                "enabled": false,
+                "start_time": "22:00",
+                "end_time": "08:00",
+                "days_of_week": [1, 2, 3, 4, 5],
+                "bypass_priority": 2
+            }
+        })),
+        Err(e) => {
+            tracing::error!("{}", e);
+            Json(serde_json::json!({
+                "success": false, "message": e, "data": null
+            }))
+        }
+    }
+}
+
+/// 更新免打扰时段（`PUT /notification/preferences/quiet-hours`）
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/preferences/quiet-hours",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn update_quiet_hours(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<QuietHoursUpdate>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let (_, old_qh, _, _, _, _) = load_preference_row(&pool, user_id)
+        .await
+        .unwrap_or(None)
+        .unwrap_or((
+            serde_json::json!([]),
+            serde_json::json!({}),
+            serde_json::json!({}),
+            vec!["in_app".to_string()],
+            "zh-CN".to_string(),
+            "Asia/Shanghai".to_string(),
+        ));
+    let mut qh = old_qh.as_object().cloned().unwrap_or_default();
+    if let Some(v) = req.enabled {
+        qh.insert("enabled".into(), serde_json::json!(v));
+    }
+    if let Some(v) = req.start_time {
+        qh.insert("start_time".into(), serde_json::json!(v));
+    }
+    if let Some(v) = req.end_time {
+        qh.insert("end_time".into(), serde_json::json!(v));
+    }
+    if let Some(v) = req.days_of_week {
+        qh.insert("days_of_week".into(), serde_json::json!(v));
+    }
+    if let Some(v) = req.bypass_priority {
+        qh.insert("bypass_priority".into(), serde_json::json!(v));
+    }
+    let tenant_bind = tenant_bind_for(&claims);
+    let result = sqlx::query(
+        "INSERT INTO core_notification_preferences (user_id, quiet_hours, tenant_id, updated_at) \
+         VALUES ($1, $2, $3, NOW()) \
+         ON CONFLICT (user_id) DO UPDATE SET quiet_hours = EXCLUDED.quiet_hours, updated_at = NOW()",
+    )
+    .bind(user_id)
+    .bind(serde_json::json!(qh))
+    .bind(tenant_bind)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true, "message": "ok", "data": serde_json::json!(qh)
+        })),
+        Err(e) => {
+            tracing::error!("Failed to update quiet hours: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to update quiet hours: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 重置偏好（`POST /notification/preferences/reset`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/preferences/reset",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn reset_preferences(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let defaults = default_preferences(user_id);
+    let tenant_bind = tenant_bind_for(&claims);
+    let result = sqlx::query(
+        "INSERT INTO core_notification_preferences \
+         (user_id, categories, quiet_hours, global_mute, default_channels, language, timezone, tenant_id, updated_at) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) \
+         ON CONFLICT (user_id) DO UPDATE SET \
+         categories = EXCLUDED.categories, quiet_hours = EXCLUDED.quiet_hours, \
+         global_mute = EXCLUDED.global_mute, default_channels = EXCLUDED.default_channels, \
+         language = EXCLUDED.language, timezone = EXCLUDED.timezone, updated_at = NOW()",
+    )
+    .bind(user_id)
+    .bind(serde_json::json!([]))
+    .bind(defaults["quiet_hours"].clone())
+    .bind(defaults["global_mute"].clone())
+    .bind(vec!["in_app".to_string()])
+    .bind("zh-CN".to_string())
+    .bind("Asia/Shanghai".to_string())
+    .bind(tenant_bind)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true, "message": "ok", "data": defaults
+        })),
+        Err(e) => {
+            tracing::error!("Failed to reset preferences: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to reset preferences: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 获取默认偏好（`GET /notification/preferences/defaults`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/preferences/defaults",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn get_default_preferences(
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    let user_id = Uuid::parse_str(&claims.sub).unwrap_or_default();
+    Json(serde_json::json!({
+        "success": true, "message": "ok", "data": default_preferences(user_id)
     }))
 }
 

@@ -76,6 +76,63 @@ pub struct BulkIdsRequest {
     pub notification_ids: Vec<Uuid>,
 }
 
+/// 前端批量操作统一 `{ ids }` 载荷
+#[derive(Debug, Deserialize)]
+pub struct BulkIdsV2Request {
+    pub ids: Vec<Uuid>,
+}
+
+/// 条件批量操作（ids / 时间窗口 / 类型 / 含归档）
+#[derive(Debug, Deserialize)]
+pub struct BulkConditionRequest {
+    pub ids: Option<Vec<Uuid>>,
+    pub older_than_days: Option<i32>,
+    pub notification_types: Option<Vec<String>>,
+    pub include_archived: Option<bool>,
+}
+
+/// 模板批量状态
+#[derive(Debug, Deserialize)]
+pub struct BulkTemplateStatusRequest {
+    pub ids: Vec<Uuid>,
+    pub status: String,
+}
+
+/// 用户偏好整体更新（PUT /notification/preferences）
+#[derive(Debug, Deserialize)]
+pub struct PreferencesUpdate {
+    pub categories: Option<serde_json::Value>,
+    pub quiet_hours: Option<serde_json::Value>,
+    pub default_channels: Option<Vec<String>>,
+    pub language: Option<String>,
+    pub timezone: Option<String>,
+}
+
+/// 单分类偏好更新（PUT /notification/preferences/categories/{category}）
+#[derive(Debug, Deserialize)]
+pub struct CategoryPreferenceUpdate {
+    pub enabled: Option<bool>,
+    pub channels: Option<Vec<String>>,
+    pub min_priority: Option<i32>,
+}
+
+/// 全局静音（POST /notification/preferences/global-mute）
+#[derive(Debug, Deserialize)]
+pub struct GlobalMuteRequest {
+    pub muted_until: Option<String>,
+    pub reason: Option<String>,
+}
+
+/// 免打扰时段（PUT /notification/preferences/quiet-hours）
+#[derive(Debug, Deserialize)]
+pub struct QuietHoursUpdate {
+    pub enabled: Option<bool>,
+    pub start_time: Option<String>,
+    pub end_time: Option<String>,
+    pub days_of_week: Option<Vec<i32>>,
+    pub bypass_priority: Option<i32>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateTemplateRequest {
     pub name: String,

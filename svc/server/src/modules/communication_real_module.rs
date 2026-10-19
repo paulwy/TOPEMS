@@ -258,6 +258,74 @@ impl CommunicationRealModule {
                     post(notification::bulk_mark_read),
                 )
                 .route(
+                    "/notifications/bulk-unread",
+                    post(notification::bulk_mark_unread),
+                )
+                .route(
+                    "/notifications/bulk-read-by-condition",
+                    post(notification::bulk_read_by_condition),
+                )
+                .route(
+                    "/notifications/bulk-delete-by-condition",
+                    post(notification::bulk_delete_by_condition),
+                )
+                .route(
+                    "/notifications/bulk-archive",
+                    post(notification::bulk_archive),
+                )
+                .route(
+                    "/notifications/bulk-unarchive",
+                    post(notification::bulk_unarchive),
+                )
+                .route(
+                    "/notifications/bulk-delete-all",
+                    post(notification::delete_all_notifications),
+                )
+                .route(
+                    "/notification-templates/batch-status",
+                    put(notification::batch_update_template_status),
+                )
+                .route(
+                    "/preferences",
+                    get(notification::get_preferences),
+                )
+                .route(
+                    "/preferences",
+                    put(notification::update_preferences),
+                )
+                .route(
+                    "/preferences/categories",
+                    get(notification::get_category_preferences),
+                )
+                .route(
+                    "/preferences/categories/{category}",
+                    put(notification::update_category_preference),
+                )
+                .route(
+                    "/preferences/global-mute",
+                    post(notification::set_global_mute),
+                )
+                .route(
+                    "/preferences/global-mute",
+                    delete(notification::cancel_global_mute),
+                )
+                .route(
+                    "/preferences/quiet-hours",
+                    get(notification::get_quiet_hours),
+                )
+                .route(
+                    "/preferences/quiet-hours",
+                    put(notification::update_quiet_hours),
+                )
+                .route(
+                    "/preferences/reset",
+                    post(notification::reset_preferences),
+                )
+                .route(
+                    "/preferences/defaults",
+                    get(notification::get_default_preferences),
+                )
+                .route(
                     "/notifications/bulk-delete",
                     delete(notification::bulk_delete),
                 )
