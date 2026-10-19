@@ -367,3 +367,25 @@ pub fn decrement_subscriptions() {
     ACTIVE_SUBSCRIPTIONS.fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
     tracing::debug!("[graphql] 活跃订阅数递减至 {}", get_active_subscriptions());
 }
+
+#[cfg(test)]
+mod service_url_tests {
+    use super::service_url;
+
+    #[test]
+    fn maps_known_service_to_listening_port() {
+        assert_eq!(service_url("erp"), "http://localhost:8010");
+        assert_eq!(service_url("crm"), "http://localhost:8029");
+        assert_eq!(service_url("hrm"), "http://localhost:8020");
+        assert_eq!(service_url("finance"), "http://localhost:8011");
+        assert_eq!(service_url("mes"), "http://localhost:8030");
+        assert_eq!(service_url("workflow"), "http://localhost:8000");
+        assert_eq!(service_url("notification"), "http://localhost:8084");
+    }
+
+    #[test]
+    fn unknown_service_falls_back_to_default_port() {
+        assert_eq!(service_url("nonexistent"), "http://localhost:8000");
+        assert_eq!(service_url(""), "http://localhost:8000");
+    }
+}
