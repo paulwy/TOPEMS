@@ -233,8 +233,12 @@
 - **测试**：serde 字面量改 `Decimal::from_f64_retain` helper；JSON 反序列化断言用 `Decimal::from_str("1234.56")` 精确比较（避免 f64 尾差）。
 - **验证（-p topems-scm）**：check 0 error/unused；`cargo test --lib` **337 passed / 0 failed**；clippy -D correctness 0；fmt 绿。顺带清 srm E11a 测试 helper 的 unused `FromPrimitive` import（srm 复跑 559 passed）。
 - **E11c-1（同批并入）· 合同明细行**：`purchase_contract_items.unit_price/amount`(numeric) 强类型 `PurchaseContractItem` 由 f64→Option<Decimal>，去 1 处 `unit_price::float8/amount::float8`；`quantity`(数量) 保留 f64；创建请求体 `unit_price` 同步 Decimal（module 无 item 落库写路径，仅读取）。scm 复跑 337 passed。
-- **E11c 遗留（scm 报价/其余明细，先连库+核 SQL 映射再定）**：
-  - ✅ 已做：`purchase_contract_items.unit_price/amount`。待办：`purchase_requisition_items.unit_price/amount`（无 query_as 强类型，待核是否 JSON embedded）、`purchase_items.unit_price/total_price`、`supplier_quotes.total_amount`(`QuoteListRecord` float8)、`supplier_quote_items.unit_price/total_price`（均 numeric，需区分强类型模型 vs JSON embedded/聚合）。
+- **E11c-2 · 报价列表 + 采购物料**：
+  - `supplier_quotes.total_amount`(numeric) 经 `QuoteListRecord`（price_comparison.rs:380/533，原 `::float8` 规避）f64→Option<Decimal>，去 2 处 `q.total_amount::float8`；纯读出序列化无算术。
+  - `purchase_items.unit_price`(numeric, 裸读真错配) f64→Option<Decimal>；**`amount`=double precision 保留 f64**、`quantity`(数量) 保留；Create/Update 请求体 `unit_price` 同步 Decimal。
+  - `PurchaseRequisitionItem` 全 crate 无引用（死结构，非持久化边界），不改。
+- **E11c 遗留（scm 剩余，先连库+核 SQL 映射再定）**：
+  - ✅ 已做：`purchase_contract_items.unit_price/amount`、`supplier_quotes.total_amount`、`purchase_items.unit_price`。待办：`supplier_quote_items.unit_price/total_price`（核是否强类型/JSON embedded）；`purchase_requisition_items` 无引用不改。
   - **保留 f64（聚合/仪表盘，非结算）**：`supply_chain_dashboard`/`analytics`/`inventory_turnover`/`mrp`/`incoming_inspection` 的 SUM/AVG `::float8` 喂内存 DTO；`price_comparison.rs` 比价评分纯函数；`supplier_evaluation.price` 评分。
   - 其余 crate：pm `project_benefit.rs`/`report.rs` 聚合 DTO、mes analytics 元组、erp consolidation/finance.rs 待核 query_as；wms/finance/erp 长尾代码侧反查。
 

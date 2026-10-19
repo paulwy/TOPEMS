@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -12,7 +13,7 @@ pub struct PurchaseItem {
     pub specification: Option<String>,
     pub unit: Option<String>,
     pub quantity: f64,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<Decimal>,
     pub amount: Option<f64>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -26,7 +27,7 @@ pub struct CreatePurchaseItemRequest {
     pub specification: Option<String>,
     pub unit: Option<String>,
     pub quantity: f64,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<Decimal>,
     pub amount: Option<f64>,
 }
 
@@ -37,13 +38,17 @@ pub struct UpdatePurchaseItemRequest {
     pub specification: Option<String>,
     pub unit: Option<String>,
     pub quantity: Option<f64>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<Decimal>,
     pub amount: Option<f64>,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn d(v: f64) -> Option<Decimal> {
+        Decimal::from_f64_retain(v)
+    }
 
     fn fixed_uuid() -> Uuid {
         Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -74,7 +79,7 @@ mod tests {
             specification: Some("M6x20".to_string()),
             unit: Some("个".to_string()),
             quantity: 100.0,
-            unit_price: Some(0.25),
+            unit_price: d(0.25),
             amount: Some(25.0),
             created_at: fixed_dt(),
             updated_at: fixed_dt(),
@@ -118,7 +123,7 @@ mod tests {
         let item: PurchaseItem = serde_json::from_str(raw).unwrap();
         assert_eq!(item.product_name, "螺母");
         assert_eq!(item.quantity, 50.0);
-        assert_eq!(item.unit_price, Some(0.5));
+        assert_eq!(item.unit_price, d(0.5));
     }
 
     #[test]
@@ -130,7 +135,7 @@ mod tests {
             specification: Some("D8".to_string()),
             unit: Some("片".to_string()),
             quantity: 200.0,
-            unit_price: Some(0.1),
+            unit_price: d(0.1),
             amount: Some(20.0),
         };
         roundtrip(&req);
@@ -189,7 +194,7 @@ mod tests {
             specification: None,
             unit: None,
             quantity: 7.0,
-            unit_price: Some(3.5),
+            unit_price: d(3.5),
             amount: Some(24.5),
             created_at: fixed_dt(),
             updated_at: fixed_dt(),
