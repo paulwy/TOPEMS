@@ -660,6 +660,10 @@ export const dataAssetCatalogApiV66 = {
     return apiClient.master.get<AssetLineageGraph>(`/mdm-v66/lineage/column?${qs.toString()}`);
   },
 
+  /**
+   * @deprecated V66 预埋（P1 契约偏差：后端 /lineage/refresh 缺 {id} 路径参数，待 V66 落地）
+   * 现役 V60 血缘刷新请使用 buildLineageGraph + getLineageGraph。
+   */
   async refreshLineage(assetId?: string): Promise<ApiResponse<{ refreshed: number }>> {
     const qs = new URLSearchParams();
     if (assetId) qs.set('asset_id', assetId);
@@ -674,6 +678,10 @@ export const dataAssetCatalogApiV66 = {
     return apiClient.master.post<AssetTag>('/mdm-v66/tags', data);
   },
 
+  /**
+   * @deprecated V66 预埋（P1 契约偏差：后端无 GET /tags 方法缺口，待 V66 落地）。
+   * 现役 V60 打标请使用 addMetadataTag；资产列表标签随 listAssets 返回。
+   */
   async listTags(params?: {
     category?: string;
     search?: string;
@@ -721,6 +729,10 @@ export const dataAssetCatalogApiV66 = {
     return apiClient.master.get<AssetCategory[]>('/mdm-v66/categories/tree');
   },
 
+  /**
+   * @deprecated V66 预埋（P1 契约偏差：后端无 GET /categories 方法缺口，待 V66 落地）。
+   * 现役 V60 资产分类随 listAssets 的 category 维度返回，无独立分类目录端点。
+   */
   async listCategories(params?: {
     parent_id?: string;
     search?: string;
@@ -754,6 +766,10 @@ export const dataAssetCatalogApiV66 = {
     return apiClient.master.get<DataMap>(`/mdm-v66/maps/${id}`);
   },
 
+  /**
+   * @deprecated V66 预埋（P1 契约偏差：后端无 GET /maps 方法缺口，待 V66 落地）。
+   * 现役 V60 无数据地图端点；如需血缘图请使用 buildLineageGraph/getLineageGraph。
+   */
   async listDataMaps(params?: {
     scope?: string;
     domain?: string;
@@ -824,6 +840,10 @@ export const dataAssetCatalogApiV66 = {
     return mapResp(res, toDashboard);
   },
 
+  /**
+   * @deprecated V66 预埋（P1 契约偏差：后端缺 /dashboard/recent 路径，待 V66 落地）。
+   * 现役 V60 最近资产可经 listAssets（按 updated_at 排序）或 getDashboard().recent_updated 获取。
+   */
   async getRecentAssets(limit?: number): Promise<ApiResponse<DataAsset[]>> {
     const qs = new URLSearchParams();
     if (limit !== undefined) qs.set('limit', String(limit));
