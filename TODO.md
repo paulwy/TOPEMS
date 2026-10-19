@@ -280,6 +280,15 @@
 - **甄别不改**：ai governance/cost_metering/model_admin（内存聚合，cost 硬编码 0.0）；erp procurement_e2e/material_calc/erp_adapter（内存/外部 DTO）；master-data commercial_v55（price_monthly/total_amount/cost_per_mb/compensation_amount 全 float8）；mes production_cost（内存聚合）、equipment 写路径经 f64_to_big_decimal；portal graphql/adaptive/optimizer（内存估算 DTO）；monitor error_budget（监控指标非货币）；unified-core TenantInvoice（无 SQL DTO）；scm quality/price_score（评分）。
 - **登记读侧 query! 动态（在线安全仅尾差，不扩改）**：finance sales_invoice `total_amount/paid_amount/amount::float8`、finance/mod.rs debit/credit_balance；统一强类型化时再去 float8。
 
+### 审计报告 P2 核销批（2026-10-20）✅
+
+- **NEW-P2-6（部署口径漂移 H-1/H-2/H-3/H-11）核销：已在批 E3（`b0876ddc32`）闭环**。复核现状：runbook 删 map 逐字比对/快照改 upstream 8099 校验；`verify-nginx-prod.sh` 第2步改 upstream 8099 校验并拦截遗留 map（不再恒 MAP_EMPTY→FAIL）；`deploy/README.md` systemd 为生产主路径、compose 已弃用；`check-config-consistency.py` 规则2改验 8099 upstream 双 conf，实跑 `services.yaml 29 ↔ ports.env 38 ↔ nginx upstream 8099 2 份 conf` EXIT=0。
+- **NEW-P2-7（请求路径 panic）核销：已在批 E5（#60）闭环**。`lineage_v52.rs` analysis_from_row 返回 Result→map_err 不 panic；`business_tools/mod.rs` 改 `if let Some(data)` 不 unwrap；现网无 panic 字面量、无 `data.as_ref().unwrap()`。审计旧行号（:59/65/:496）已漂移，勿据旧号重找。
+- **本批新修 · H-8**：`docs/project/roadmap.md` 归档横幅真相源由已归档的 `docs/project/TODO.md` 改指根 `TODO.md`。
+- **本批新修 · H-4**：`scripts/dev/health-check.sh`（LEGACY-DEV 本地独立进程探测）去硬编码 `admin/admin123`，改读 `TOPEMS_DEV_USER/TOPEMS_DEV_PASSWORD` 环境变量、未设置则跳过登录；加遗留标注（生产用 verify-nginx-prod.sh）。shellcheck 绿。
+- **登记待核实（不擅改）**：H-5 `rollback.sh:289`/`start-production.sh` 旧 8000/`topems-unified-core`，需对照生产 systemd（topems-server.service=8099 BFF / topems-unified-core.service 并存）核实后再统一；H-9 developer 三文档 8000 为 dev 独立进程语境（api-base 已双标注 8000/8099），不影响生产；H-10 `.env.example` 样例口令附警示，保留。
+- **长尾不排硬期**：NEW-P2-3（F10 ApiResponse::error 生产 3497 处宏收敛）、NEW-P2-4（F11 生产裸 Client::new 60 处）；NEW-P2-5（F7 etcd/consul/dns 2243 行未启用）需用户拍板归档/flag/删除。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

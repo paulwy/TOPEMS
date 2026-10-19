@@ -1,8 +1,13 @@
 #!/bin/bash
 # shellcheck disable=SC2034
-# TOPEMS 部署验证脚本
+# TOPEMS 本地开发模式健康检查（LEGACY-DEV · 非生产 /health 路径）
 # 位置: /opt/topems/scripts/health_check.sh
-# 使用: ./scripts/health_check.sh
+# 使用: ./scripts/dev/health-check.sh
+#
+# ⚠️ 遗留说明：本脚本面向「本地独立进程开发模式」（直连各服务旧端口 8000/8020/8010、
+# 可选 docker 中间件），不代表生产拓扑。生产唯一入口为 nginx upstream server_service → :8099，
+# 生产验收请使用 scripts/verify-nginx-prod.sh，勿用本脚本判定生产健康。
+# 登录凭据不硬编码：从环境变量 TOPEMS_DEV_USER / TOPEMS_DEV_PASSWORD 读取，未设置则跳过登录检查。
 
 set -e
 
@@ -145,23 +150,27 @@ else
     print_info "跳过数据库数据检查（无法连接数据库）"
 fi
 
-# 10. 测试管理员登录
+# 10. 测试管理员登录（凭据来自环境变量，不硬编码默认口令）
 echo ""
 echo "10. 测试管理员登录..."
-LOGIN_RESULT=$(curl -s -X POST http://localhost:8000/api/core/iam/auth/login \
-    -H "Content-Type: application/json" \
-    -d '{"username":"admin","password":"admin123"}' 2>/dev/null)
-
-LOGIN_SUCCESS=$(echo "$LOGIN_RESULT" | jq -r '.success' 2>/dev/null || echo "false")
-if [ "$LOGIN_SUCCESS" = "true" ]; then
-    print_ok "管理员登录成功"
-    
-    # 获取 Token
-    TOKEN=$(echo "$LOGIN_RESULT" | jq -r '.data.token' 2>/dev/null)
-    PERM_LIST=$(echo "$LOGIN_RESULT" | jq -r '.data.permissions | length' 2>/dev/null || echo "0")
-    print_info "管理员拥有 $PERM_LIST 个权限"
+if [[ -z "${TOPEMS_DEV_USER:-}" || -z "${TOPEMS_DEV_PASSWORD:-}" ]]; then
+    print_info "跳过登录检查：未设置 TOPEMS_DEV_USER / TOPEMS_DEV_PASSWORD 环境变量"
 else
-    print_fail "管理员登录失败"
+    LOGIN_RESULT=$(curl -s -X POST http://localhost:8000/api/core/iam/auth/login \
+        -H "Content-Type: application/json" \
+        -d "{\"username\":\"${TOPEMS_DEV_USER}\",\"password\":\"${TOPEMS_DEV_PASSWORD}\"}" 2>/dev/null)
+
+    LOGIN_SUCCESS=$(echo "$LOGIN_RESULT" | jq -r '.success' 2>/dev/null || echo "false")
+    if [ "$LOGIN_SUCCESS" = "true" ]; then
+        print_ok "管理员登录成功"
+
+        # 获取 Token
+        TOKEN=$(echo "$LOGIN_RESULT" | jq -r '.data.token' 2>/dev/null)
+        PERM_LIST=$(echo "$LOGIN_RESULT" | jq -r '.data.permissions | length' 2>/dev/null || echo "0")
+        print_info "管理员拥有 $PERM_LIST 个权限"
+    else
+        print_fail "管理员登录失败"
+    fi
 fi
 
 # 11. Shared Bootstrap V2 迁移验证（V66.2 新增）
