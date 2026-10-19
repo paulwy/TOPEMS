@@ -30,6 +30,7 @@
 - [x] **P2 · 请求路径反序列化 panic 改错误返回** ✅ 完成（2026-10-20，见下方「批 E5」块）：对应 10-19 重审 NEW-P2-7。master-data `lineage_v52.rs` 两处反序列化 panic 改 `Result` 传播 `TopemsError::BusinessLogic`，删死函数 `simulation_from_row`；unified-core `business_tools` 宏内守卫 unwrap 改 `if let`；master-data 451 / unified-core 559 passed、check/clippy/fmt 绿。
 - [x] **P2 · sales_invoice/回款金额持久化边界 f64→Decimal** ✅ 完成（2026-10-20，见下方「批 E6」块）：对应 10-19 重审 NEW-P2-2。连库核 `finance.sales_invoices`(amount/tax/total/paid) 与 `finance.erp_collection_records.amount` 均 numeric(18,2)；发票主表四金额 + 回款 Out/Payload + 确认回写主表 paid_amount 链改 `rust_decimal::Decimal`，读 SQL 去 `::float8`；账龄/逾期内存聚合与导出 CSV 保留 f64；finance lib 1087 passed、check/clippy/fmt 绿。
 - [x] **P2 · 其余金额面连库甄别 + 三处金额 Decimal** ✅ 完成（2026-10-20，见下方「批 E7」块）：对应 NEW-P2-2 续。逐模块连库甄别 DB 列类型：v58/v55/openapi/events/财务凭证/合并域(InternalTransaction/ConsolidationReport/Line 早已 Decimal) 均非 numeric 错配，不改；闭环 erp 三处持久化边界——`Material.unit_price`(18,4)、`OpeningBalance.debit/credit_balance`(18,4)、`Customer.credit_limit`(18,2) f64→Decimal；erp lib 902 passed、check/clippy/fmt 绿。
+- [x] **P2 · crm.revenue / hrm.salary·new_salary 金额 Decimal** ✅ 完成（2026-10-20，见下方「批 E8」块）：NEW-P2-2 续，跨 crate 连库甄别后只改强类型 query_as 模型。闭环 `crm.customers.revenue`(18,2) 与 profile DTO、`hrm.contracts.salary`/`contract_renewals.new_salary`(18,2) f64→Decimal；crm lib 504、hrm lib 293 passed，check/clippy/fmt 绿。
 
 ---
 
@@ -151,6 +152,21 @@
   - 前端金额字段本就声明 `number`，零改动；Decimal 在本项目按字符串序列化为 JSON（与 E4/E6 既有行为一致）。
 - **验证**：`cargo check -p topems-erp --lib/--tests` exit 0；`cargo test -p topems-erp --lib` **902 passed / 0 failed**；clippy `-D correctness` exit 0；`cargo fmt --check` 干净。
 - **遗留（非本批，逐 struct 续做）**：实际 `query_as` 直连 numeric 列的 erp 模型——sales_orders(total/tax/payable/discount)、assets(purchase_amount)、purchase_orders、payables/receivables、bank_accounts.balance；internal_transactions/consolidation_reports 模型已 Decimal 仅需复核 SQL；多已用 SQL `::float8` 规避（精度债非在线崩溃），逐 struct 转；tax_v56.rs 连库甄别；forecast/risk 仿真浮点保留 f64。
+
+---
+
+## 批 E8 · crm.revenue / hrm.salary·new_salary 金额 f64→Decimal（2026-10-20）✅ 完成
+
+> 来源：10-19 重审 NEW-P2-2（续 E7）。跨 crate 连库甄别，只改强类型 `query_as` 模型的 numeric 金额错配；数量/工时/比率/评分/动态 Value 通道不改。
+
+- **连库甄别（错配才改）**：
+  - 改：`crm.customers.revenue` numeric(18,2)；`hrm.contracts.salary` numeric(18,2)、`hrm.contract_renewals.new_salary` numeric。
+  - 不改（DB=`double precision` 或非金额）：`lims.qa_lab_instruments.cost`、`erp.purchase_orders.total_amount`、`pdm.pdm_projects.budget`、`scm/wms` 快照 total_amount；finance service 层 `collection.rs/payment_record.rs` 为动态 `sqlx::query`+`json!` Value 通道（非强类型模型），另批处理。
+- **改动**：
+  - crm：`Customer.revenue`、`Create/UpdateCustomerRequest.revenue`、profile 响应 DTO `revenue` 全改 `Option<Decimal>`；读 SQL 去 `revenue::float8`；高/中价值客户阈值比较改 `Decimal::from(1_000_000u64)/100_000u64`。
+  - hrm：`Contract.salary`、`Create/UpdateContractRequest.salary`、`ContractRenewal.new_salary`、`CreateRenewalRequest.new_salary` 改 `Option<Decimal>`；读 SQL 去 `salary::float8`，new_salary 本就裸 SELECT。
+- **验证**：`cargo check -p topems-crm/topems-hrm --lib/--tests` exit 0；crm lib **504 passed**（2 ignored）、hrm lib **293 passed**；clippy `-D correctness` 无 error；`cargo fmt --check` 干净。
+- **遗留（非本批）**：hrm 其余 numeric 金额列（job_openings.salary_min/max、payroll.base/net_salary、positions.salary_range、recruitment.expected_salary、salary_adjustments.previous/new_salary）逐 struct；finance 动态 Value 通道 collection/payment_record；erp sales_orders/assets/payables/receivables/bank_accounts。
 
 ---
 

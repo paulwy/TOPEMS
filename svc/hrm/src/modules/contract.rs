@@ -105,7 +105,7 @@ pub async fn list_contracts(
         only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name,
                party_a_contact, party_b_name, party_b_contact, start_date::timestamptz AS start_date,
-               end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
+               end_date::timestamptz AS end_date, salary, probation_period_days,
                probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
                status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         FROM hrm.contracts
@@ -195,7 +195,7 @@ pub async fn list_expiring_contracts(
         only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name,
                party_a_contact, party_b_name, party_b_contact, start_date::timestamptz AS start_date,
-               end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
+               end_date::timestamptz AS end_date, salary, probation_period_days,
                probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
                status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         FROM hrm.contracts
@@ -324,7 +324,7 @@ pub async fn create_contract(
                   $19, $20, $21, $22, $23, $24, $25)
         RETURNING id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name, party_a_contact,
                   party_b_name, party_b_contact, start_date::timestamptz AS start_date,
-                  end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
+                  end_date::timestamptz AS end_date, salary, probation_period_days,
                   probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
                   status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         "#),
@@ -435,7 +435,7 @@ pub async fn get_contract(
         only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name,
                party_a_contact, party_b_name, party_b_contact, start_date::timestamptz AS start_date,
-               end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
+               end_date::timestamptz AS end_date, salary, probation_period_days,
                probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
                status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         FROM hrm.contracts WHERE deleted_at IS NULL AND id = $1
@@ -510,7 +510,7 @@ pub async fn update_contract(
         only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name,
                party_a_contact, party_b_name, party_b_contact, start_date::timestamptz AS start_date,
-               end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
+               end_date::timestamptz AS end_date, salary, probation_period_days,
                probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
                status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         FROM hrm.contracts WHERE deleted_at IS NULL AND id = $1
@@ -565,7 +565,7 @@ pub async fn update_contract(
         WHERE id = $1 AND deleted_at IS NULL
         RETURNING id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name, party_a_contact,
                   party_b_name, party_b_contact, start_date::timestamptz AS start_date,
-                  end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
+                  end_date::timestamptz AS end_date, salary, probation_period_days,
                   probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
                   status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         "#),

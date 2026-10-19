@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -21,7 +22,7 @@ pub struct Contract {
     pub start_date: DateTime<Utc>,
     pub end_date: Option<DateTime<Utc>>,
     #[serde(alias = "salary", rename = "base_salary")]
-    pub salary: Option<f64>,
+    pub salary: Option<Decimal>,
     #[serde(alias = "probation_period_days", rename = "probation_period")]
     pub probation_period_days: Option<i32>,
     pub probation_end_date: Option<DateTime<Utc>>,
@@ -55,7 +56,7 @@ pub struct CreateContractRequest {
     pub start_date: DateTime<Utc>,
     pub end_date: Option<DateTime<Utc>>,
     #[serde(alias = "salary", rename = "base_salary")]
-    pub salary: Option<f64>,
+    pub salary: Option<Decimal>,
     #[serde(alias = "probation_period_days", rename = "probation_period")]
     pub probation_period_days: Option<i32>,
     pub probation_end_date: Option<DateTime<Utc>>,
@@ -85,7 +86,7 @@ pub struct UpdateContractRequest {
     pub start_date: Option<DateTime<Utc>>,
     pub end_date: Option<DateTime<Utc>>,
     #[serde(alias = "salary", rename = "base_salary")]
-    pub salary: Option<f64>,
+    pub salary: Option<Decimal>,
     #[serde(alias = "probation_period_days", rename = "probation_period")]
     pub probation_period_days: Option<i32>,
     pub probation_end_date: Option<DateTime<Utc>>,
@@ -112,7 +113,7 @@ pub struct ContractRenewal {
     pub renewal_reason: Option<String>,
     pub new_start_date: DateTime<Utc>,
     pub new_end_date: Option<DateTime<Utc>>,
-    pub new_salary: Option<f64>,
+    pub new_salary: Option<Decimal>,
     pub status: String,
     pub approver_id: Option<Uuid>,
     pub approved_at: Option<DateTime<Utc>>,
@@ -129,7 +130,7 @@ pub struct CreateRenewalRequest {
     pub renewal_reason: Option<String>,
     pub new_start_date: DateTime<Utc>,
     pub new_end_date: Option<DateTime<Utc>>,
-    pub new_salary: Option<f64>,
+    pub new_salary: Option<Decimal>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -167,7 +168,7 @@ mod tests {
             party_b_contact: Some("employee@example.com".to_string()),
             start_date: created_at,
             end_date: None,
-            salary: Some(80000.0),
+            salary: Some(Decimal::from(80000u64)),
             probation_period_days: Some(90),
             contract_file_path: None,
             reminder_days: Some(30),
@@ -205,7 +206,7 @@ mod tests {
             party_b_contact: None,
             start_date,
             end_date: None,
-            salary: Some(50000.0),
+            salary: Some(Decimal::from(50000u64)),
             probation_period_days: Some(30),
             contract_file_path: None,
             reminder_days: None,
@@ -234,7 +235,7 @@ mod tests {
             party_b_contact: None,
             start_date: None,
             end_date: None,
-            salary: Some(60000.0),
+            salary: Some(Decimal::from(60000u64)),
             probation_period_days: None,
             contract_file_path: None,
             reminder_days: None,
@@ -270,7 +271,7 @@ mod tests {
             renewal_reason: None,
             new_start_date,
             new_end_date: None,
-            new_salary: Some(90000.0),
+            new_salary: Some(Decimal::from(90000u64)),
             status: "pending".to_string(),
             approver_id: None,
             approved_at: None,

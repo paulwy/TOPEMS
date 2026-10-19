@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -44,7 +45,7 @@ pub struct Customer {
     #[serde(default)]
     pub employee_count: Option<i32>,
     #[serde(default)]
-    pub revenue: Option<f64>,
+    pub revenue: Option<Decimal>,
     #[serde(default)]
     pub source: Option<String>,
     #[serde(default)]
@@ -155,7 +156,7 @@ pub struct CreateCustomerRequest {
     #[serde(default)]
     pub employee_count: Option<i32>,
     #[serde(default)]
-    pub revenue: Option<f64>,
+    pub revenue: Option<Decimal>,
     #[serde(default)]
     pub source: Option<String>,
     #[serde(default)]
@@ -201,7 +202,7 @@ pub struct UpdateCustomerRequest {
     #[serde(default)]
     pub employee_count: Option<i32>,
     #[serde(default)]
-    pub revenue: Option<f64>,
+    pub revenue: Option<Decimal>,
     #[serde(default)]
     pub source: Option<String>,
     #[serde(default)]
@@ -311,7 +312,7 @@ mod tests {
             country: Some("中国".to_string()),
             company_size: Some("500-999".to_string()),
             employee_count: Some(800),
-            revenue: Some(5200000.0),
+            revenue: Some(Decimal::from(5200000u64)),
             source: Some("manual".to_string()),
             status: Some("active".to_string()),
             fax: Some("021-66668888".to_string()),

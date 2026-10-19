@@ -34,7 +34,7 @@ pub struct CustomerProfile {
     pub customer_type: Option<String>,
     pub source: Option<String>,
     pub rating: Option<String>,
-    pub revenue: Option<f64>,
+    pub revenue: Option<Decimal>,
     pub employee_count: Option<i32>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -137,7 +137,7 @@ pub async fn get_customer_profile(
 
     let customer_result = sqlx::query_as::<_, Customer>(
         r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, customer_type, industry, COALESCE(rating, '') AS rating, region, COALESCE(owner_id, '00000000-0000-0000-0000-000000000000') AS owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, customer_type, industry, COALESCE(rating, '') AS rating, region, COALESCE(owner_id, '00000000-0000-0000-0000-000000000000') AS owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at
         FROM crm.customers WHERE id = $1
         "#,
     )
@@ -356,9 +356,9 @@ fn generate_profile_tags(
     }
 
     if let Some(revenue) = customer.revenue {
-        if revenue >= 1_000_000.0 {
+        if revenue >= Decimal::from(1_000_000u64) {
             tags.push("高价值客户".to_string());
-        } else if revenue >= 100_000.0 {
+        } else if revenue >= Decimal::from(100_000u64) {
             tags.push("中价值客户".to_string());
         } else {
             tags.push("潜力客户".to_string());
@@ -530,7 +530,7 @@ pub async fn list_customer_profiles(
 
     let customers_result = sqlx::query_as::<_, Customer>(
         r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, customer_type, industry, COALESCE(rating, '') AS rating, region, COALESCE(owner_id, '00000000-0000-0000-0000-000000000000') AS owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, customer_type, industry, COALESCE(rating, '') AS rating, region, COALESCE(owner_id, '00000000-0000-0000-0000-000000000000') AS owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at
         FROM crm.customers
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
