@@ -371,15 +371,14 @@ describe('SCM incomingInspectionApi', () => {
   });
 
   it('should call POST /incoming-inspections/:id/pass for pass', async () => {
+    const data = { passed_quantity: 10, remarks: 'Passed' };
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
-    await incomingInspectionApi.pass('1', 'Passed');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/incoming-inspections/1/pass', {
-      remarks: 'Passed',
-    });
+    await incomingInspectionApi.pass('1', data);
+    expect(mockApiClient.post).toHaveBeenCalledWith('/incoming-inspections/1/pass', data);
   });
 
   it('should call POST /incoming-inspections/:id/reject for reject', async () => {
-    const data = { disposal_type: 'return' };
+    const data = { passed_quantity: 0, failed_quantity: 10, remarks: 'Rejected' };
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await incomingInspectionApi.reject('1', data);
     expect(mockApiClient.post).toHaveBeenCalledWith('/incoming-inspections/1/reject', data);

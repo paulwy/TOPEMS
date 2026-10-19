@@ -125,10 +125,12 @@ export const DashboardPage: React.FC = () => {
     queryKey: QUERY_KEYS.SCM.INCOMING_INSPECTIONS,
     queryFn: async () => {
       const response = await scmApi.incomingInspections.list({ page: 1, pageSize: 5 });
-      // 后端 /incoming-inspections list 返回 { notices, total, page, page_size }
+      // 后端 /incoming-inspections list 返回 { inspections, total, page, page_size }
       // （非共享 PaginatedResponse 的 items），此处对齐实际契约。
       if (response.success && response.data) {
-        return (response.data as unknown as { notices?: IncomingInspection[] }).notices ?? [];
+        return (
+          (response.data as unknown as { inspections?: IncomingInspection[] }).inspections ?? []
+        );
       }
       return [];
     },

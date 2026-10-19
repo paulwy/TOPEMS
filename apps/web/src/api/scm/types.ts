@@ -250,55 +250,72 @@ export interface MrpMaterialSummaryQueryParams {
 }
 
 /**
- * 到货检验
+ * 到货检验（GET /incoming-inspections）
+ * 字段对齐后端 inspection_row_to_json 实际返回（以远端契约为准）
  */
 export interface IncomingInspection {
   id: string;
-  inspection_no: string;
-  notice_no?: string;
-  supplier_id?: string;
-  supplier_name?: string;
-  order_id?: string;
-  orderNo?: string;
-  warehouse?: string;
-  inspection_date?: string;
-  inspector?: string;
-  status: string;
-  total_quantity?: number;
-  qualified_quantity?: number;
-  unqualified_quantity?: number;
+  inspection_number: string;
+  notice_id?: string;
+  notice_number?: string;
+  material_code?: string;
+  material_name?: string;
+  specification?: string;
+  unit?: string;
+  batch_number?: string;
+  inspected_quantity?: number;
+  passed_quantity?: number;
+  failed_quantity?: number;
+  sampling_quantity?: number;
   inspection_result?: string;
+  inspection_date?: string;
+  inspector_id?: string;
+  inspector_name?: string;
+  inbound_order_id?: string;
+  inbound_order_number?: string;
+  status: string;
+  inspection_items?: unknown;
   remarks?: string;
   created_at: string;
   updated_at: string;
 }
 
+/** POST /incoming-inspections（对齐后端 CreateInspectionRequest） */
 export interface CreateIncomingInspectionRequest {
-  inspection_no: string;
-  notice_no?: string;
-  supplier_id?: string;
-  order_id?: string;
-  warehouse?: string;
+  notice_id: string;
+  material_code: string;
+  material_name: string;
+  specification?: string;
+  unit?: string;
+  batch_number?: string;
+  inspected_quantity: number;
+  sampling_quantity?: number;
+  inspection_items?: unknown;
   remarks?: string;
 }
 
+/** PUT /incoming-inspections/{id}（对齐后端 UpdateInspectionRequest） */
 export interface UpdateIncomingInspectionRequest {
-  supplier_id?: string;
-  order_id?: string;
-  warehouse?: string;
-  inspection_date?: string;
-  inspector?: string;
-  status?: string;
-  total_quantity?: number;
-  qualified_quantity?: number;
-  unqualified_quantity?: number;
-  inspection_result?: string;
+  passed_quantity?: number;
+  failed_quantity?: number;
+  inspection_items?: unknown;
   remarks?: string;
 }
 
 export interface IncomingInspectionQueryParams extends PaginationParams {
   status?: string;
   supplier_id?: string;
+}
+
+/**
+ * 检验处置（POST /incoming-inspections/{id}/pass、/reject）
+ * 对齐后端 InspectionResultRequest
+ */
+export interface InspectionResultRequest {
+  passed_quantity: number;
+  failed_quantity?: number;
+  inspector_name?: string;
+  remarks?: string;
 }
 
 /**
@@ -397,6 +414,9 @@ export interface InspectionDisposalRequest {
   disposal_quantity: number;
   remarks?: string;
 }
+
+/** @deprecated 由 InspectionResultRequest 取代（pass/reject 对齐后端 InspectionResultRequest） */
+export type { InspectionResultRequest as InspectionResultRequestAlias };
 
 /**
  * 库存周转分析

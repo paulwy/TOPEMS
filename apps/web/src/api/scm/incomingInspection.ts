@@ -5,7 +5,7 @@ import type {
   CreateIncomingInspectionRequest,
   UpdateIncomingInspectionRequest,
   IncomingInspectionQueryParams,
-  InspectionDisposalRequest,
+  InspectionResultRequest,
   IncomingNotice,
   CreateIncomingNoticeRequest,
   UpdateIncomingNoticeRequest,
@@ -35,13 +35,16 @@ export const incomingInspectionApi = {
     return apiClient.scm.put(`/incoming-inspections/${id}`, data);
   },
 
-  pass: async (id: string, remarks?: string): Promise<ApiResponse<IncomingInspection>> => {
-    return apiClient.scm.post(`/incoming-inspections/${id}/pass`, { remarks });
+  pass: async (
+    id: string,
+    data: InspectionResultRequest
+  ): Promise<ApiResponse<IncomingInspection>> => {
+    return apiClient.scm.post(`/incoming-inspections/${id}/pass`, data);
   },
 
   reject: async (
     id: string,
-    data: InspectionDisposalRequest
+    data: InspectionResultRequest
   ): Promise<ApiResponse<IncomingInspection>> => {
     return apiClient.scm.post(`/incoming-inspections/${id}/reject`, data);
   },

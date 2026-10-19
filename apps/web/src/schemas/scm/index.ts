@@ -12,3 +12,4 @@ export * from './supplierAdmission';
 export * from './purchaseItem';
 export * from './inventoryTurnover';
 export * from './incomingNotice';
+export * from './incomingInspection';
