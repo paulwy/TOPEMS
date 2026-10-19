@@ -2738,4 +2738,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - iam：`user/models.rs:72` UserResponse.is_active → serde rename `isactive`（alias 保留 is_active）；`user/crud.rs:94` list_users 批量 JOIN core_user_roles→core_roles 取真实角色名（替代硬编码 ["user"]），get_user 同路径。
   - doc：Document/Template 走 `content_type`/`created_by`（DB 真实列 `mime_type` 保留，前端 `schemas/doc/document.tsx` 读 `content_type`）；`uploader_id` 零残留。
   - flow：`flow/task.rs:106/142` list_tasks/get_task SQL LEFT JOIN iam.users 出 `assignee_name`（COALESCE full_name/username），node_display 走 LATERAL 兜底。
-- **menu 域冻结标注（P3 待批）**：svc/unified-core/src/modules/menu/handlers.rs 10 个 handler 完整（真实 SQL 列），但 routes/menu.rs 不存在 = HTTP 路由未挂载；前端 apps/web/src 零 /menu API 消费。判定：后端实现完整但未接线域。选项：(a) 补 routes/menu.rs 挂载 + 前端开页面；(b) P3 批 DROP handlers+models。待用户拍板，当前不接不挂不删。
+- ✅ **menu 域核销（2026-10-19，用户选 (a) 补挂载开页面）**：
+  - 核查修正旧判断：10 个 handler 的 HTTP 路由其实**早已在 `routes/master.rs` 的 menu_read/menu_write 挂载**（`/menu/groups`、`/menu/menus`，read=system:read / write=system:write），并非"未挂载"；缺的是前端消费面。
+  - 后端补强：`create_group/create_menu` 原 `tenant_id` 用 `Uuid::new_v4()` 随机绑定（多租户撒谎）→ 改 `get_tenant_id_from_claims(&claims)` 取真实租户；`list_groups/list_menus` 补 `tenant_id` 隔离（superuser 不过滤，普通用户限本租户），COUNT/SELECT 参数顺延。
+  - 前端开页面：新增 `api/unified-core/menu.ts`（10 端点 CRUD）+ `pages/system/MenuManagementPage`（分组/菜单项双区块列表 + 新增/编辑 Dialog + 删除），`modules/admin/config.ts` 注册 `/admin/menu` 路由与导航项（icon=Menu，permission=system:read），zh/en i18n 补 `admin.nav.admin-menu`。
+  - 验证：`cargo check -p topems-unified-core --lib` 绿、menu 4 serde 单测过；前端 `tsc --noEmit` 0 error、新文件 eslint 0 error。
+  - 已知留口：菜单 `permissions` JSONB 高级字段本版未暴露在表单（后端可选，留空即 null），后续按需补；`core_menus.permissions`、父子树级联删除为未来增强。
