@@ -39,5 +39,19 @@
   "master.moduleName": "主数据治理",
   "master.module_desc": "主数据治理与数据资产目录管理",
   "master.dataAssetCatalog": "数据资产目录",
-  "master.data_asset_catalog.desc": "数据资产编目、搜索与治理"
+  "master.data_asset_catalog.desc": "数据资产编目、搜索与治理",
+  "master.data_asset_catalog.impact_title": "影响分析",
+  "master.data_asset_catalog.impact_nodes": "受影响节点",
+  "master.data_asset_catalog.impact_downstream": "下游影响数",
+  "master.data_asset_catalog.impact_confidence": "置信度",
+  "master.data_asset_catalog.impact_score": "影响评分",
+  "master.data_asset_catalog.lifecycle_title": "生命周期",
+  "master.data_asset_catalog.lifecycle_current": "当前阶段",
+  "master.data_asset_catalog.lifecycle_history": "流转历史",
+  "master.data_asset_catalog.lifecycle_stage_active": "启用",
+  "master.data_asset_catalog.lifecycle_stage_maintenance": "维护",
+  "master.data_asset_catalog.lifecycle_stage_deprecated": "弃用",
+  "master.data_asset_catalog.lifecycle_stage_archived": "归档",
+  "master.data_asset_catalog.lifecycle_stage_deleted": "删除",
+  "master.data_asset_catalog.transition_reason": "页面手动流转"
 }

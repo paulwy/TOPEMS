@@ -363,6 +363,151 @@ function mapResp<T, R>(res: ApiResponse<T>, fn: (d: T) => R): ApiResponse<R> {
   return { ...res, data: fn(res.data) };
 }
 
+// ============ V60 真实契约类型（metadata_v60.rs 结构体对齐） ============
+
+export interface V60LineageNode {
+  id: string;
+  entity_id: string;
+  entity_type: string;
+  name: string;
+  attributes: Record<string, unknown>;
+  level: number;
+  position: Record<string, unknown>;
+}
+
+export interface V60LineageEdge {
+  id: string;
+  source_id: string;
+  target_id: string;
+  transformation_type: 'filter' | 'map' | 'aggregate' | 'join' | 'transform' | 'load' | 'extract';
+  transformation_details: Record<string, unknown>;
+  confidence: number;
+}
+
+export interface V60LineageGraph {
+  id: string;
+  nodes: V60LineageNode[];
+  edges: V60LineageEdge[];
+  root_ids: string[];
+  updated_at: string;
+}
+
+export interface V60LineageImpact {
+  entity_id: string;
+  entity_type: string;
+  affected_nodes: number;
+  affected_downstream: number;
+  confidence: number;
+  impact_score: number;
+}
+
+export interface V60LineageDashboard {
+  total_graphs: number;
+  total_nodes: number;
+  total_edges: number;
+  entity_types: string[];
+  avg_confidence: number;
+  deepest_level: number;
+}
+
+export interface V60LineageExport {
+  graphs: V60LineageGraph[];
+  nodes: V60LineageNode[];
+  edges: V60LineageEdge[];
+  exported_at: string;
+  format: string;
+}
+
+export type V60LifecycleStage =
+  'created' | 'active' | 'maintenance' | 'deprecated' | 'archived' | 'deleted';
+
+export interface V60LifecycleHistory {
+  id: string;
+  entity_id: string;
+  stage: V60LifecycleStage;
+  from_stage?: V60LifecycleStage | null;
+  reason: string;
+  changed_at: string;
+  changed_by: string;
+}
+
+export interface V60LifecyclePolicy {
+  id: string;
+  entity_type: string;
+  transitions: Record<string, unknown>;
+  duration_days: number;
+  actions: string[];
+}
+
+export interface V60LifecycleDashboard {
+  total_entities: number;
+  by_stage: Record<string, number>;
+  policies_count: number;
+  recent_transitions: V60LifecycleHistory[];
+}
+
+export interface V60MetadataAttribute {
+  id: string;
+  object_id: string;
+  key: string;
+  value: string;
+  data_type: string;
+  is_required: boolean;
+}
+
+export interface V60MetadataTag {
+  id: string;
+  name: string;
+  color: string;
+  description: string;
+  usage_count: number;
+}
+
+export interface AddV60AttributeRequest {
+  object_id?: string;
+  key: string;
+  value: string;
+  data_type?: string;
+  is_required?: boolean;
+}
+
+export interface AddV60TagRequest {
+  name: string;
+  color?: string;
+  description?: string;
+}
+
+export interface BuildV60LineageGraphRequest {
+  root_entity_id: string;
+  root_entity_type: string;
+  max_depth?: number;
+}
+
+export interface GetV60LineagePathRequest {
+  source_id: string;
+  target_id: string;
+}
+
+export interface TransitionV60LifecycleRequest {
+  new_stage: string;
+  reason?: string;
+  changed_by?: string;
+}
+
+export interface CreateV60LifecyclePolicyRequest {
+  entity_type: string;
+  transitions: Record<string, unknown>;
+  duration_days?: number;
+  actions?: string[];
+}
+
+export interface BulkTransitionV60LifecycleRequest {
+  entity_ids: string[];
+  target_stage: string;
+  reason?: string;
+  changed_by?: string;
+}
+
 // ============ API ============
 
 export const dataAssetCatalogApiV66 = {
@@ -689,6 +834,99 @@ export const dataAssetCatalogApiV66 = {
 
   async getOrphanAssets(): Promise<ApiResponse<DataAsset[]>> {
     return apiClient.master.get<DataAsset[]>('/mdm-v66/dashboard/orphans');
+  },
+
+  // ===== V60 血缘增强（B5 接线，metadata_v60.rs 契约） =====
+
+  async buildLineageGraph(
+    data: BuildV60LineageGraphRequest
+  ): Promise<ApiResponse<V60LineageGraph>> {
+    return apiClient.master.post<V60LineageGraph>('/mdm-v60/lineage/graph', data);
+  },
+
+  async getLineageGraph(id: string): Promise<ApiResponse<V60LineageGraph>> {
+    return apiClient.master.get<V60LineageGraph>(`/mdm-v60/lineage/graph/${id}`);
+  },
+
+  async getLineagePath(data: GetV60LineagePathRequest): Promise<ApiResponse<V60LineageEdge[]>> {
+    return apiClient.master.post<V60LineageEdge[]>('/mdm-v60/lineage/path', data);
+  },
+
+  async getLineageImpact(id: string): Promise<ApiResponse<V60LineageImpact>> {
+    return apiClient.master.get<V60LineageImpact>(`/mdm-v60/lineage/${id}/impact`);
+  },
+
+  async getLineageDashboard(): Promise<ApiResponse<V60LineageDashboard>> {
+    return apiClient.master.get<V60LineageDashboard>('/mdm-v60/lineage/dashboard');
+  },
+
+  async exportLineage(format?: 'json' | 'csv'): Promise<ApiResponse<V60LineageExport>> {
+    const qs = new URLSearchParams();
+    if (format) qs.set('format', format);
+    return apiClient.master.get<V60LineageExport>(
+      `/mdm-v60/lineage/export${qs.toString() ? `?${qs.toString()}` : ''}`
+    );
+  },
+
+  // ===== V60 生命周期管理（B5 接线，metadata_v60.rs 契约） =====
+
+  async getLifecycleStage(id: string): Promise<ApiResponse<{ stage: string }>> {
+    return apiClient.master.get<{ stage: string }>(`/mdm-v60/lifecycle/${id}/stage`);
+  },
+
+  async transitionLifecycleStage(
+    id: string,
+    data: TransitionV60LifecycleRequest
+  ): Promise<ApiResponse<V60LifecycleHistory>> {
+    return apiClient.master.post<V60LifecycleHistory>(`/mdm-v60/lifecycle/${id}/transition`, data);
+  },
+
+  async getLifecycleHistory(id: string): Promise<ApiResponse<V60LifecycleHistory[]>> {
+    return apiClient.master.get<V60LifecycleHistory[]>(`/mdm-v60/lifecycle/${id}/history`);
+  },
+
+  async createLifecyclePolicy(
+    data: CreateV60LifecyclePolicyRequest
+  ): Promise<ApiResponse<V60LifecyclePolicy>> {
+    return apiClient.master.post<V60LifecyclePolicy>('/mdm-v60/lifecycle/policy', data);
+  },
+
+  async getLifecyclePolicies(entityType?: string): Promise<ApiResponse<V60LifecyclePolicy[]>> {
+    const qs = new URLSearchParams();
+    if (entityType) qs.set('entity_type', entityType);
+    return apiClient.master.get<V60LifecyclePolicy[]>(
+      `/mdm-v60/lifecycle/policies${qs.toString() ? `?${qs.toString()}` : ''}`
+    );
+  },
+
+  async autoTransitionLifecycle(): Promise<ApiResponse<V60LifecycleHistory[]>> {
+    return apiClient.master.post<V60LifecycleHistory[]>('/mdm-v60/lifecycle/auto-transition', {});
+  },
+
+  async getLifecycleDashboard(): Promise<ApiResponse<V60LifecycleDashboard>> {
+    return apiClient.master.get<V60LifecycleDashboard>('/mdm-v60/lifecycle/dashboard');
+  },
+
+  async bulkTransitionLifecycle(
+    data: BulkTransitionV60LifecycleRequest
+  ): Promise<ApiResponse<{ results: V60LifecycleHistory[]; failed?: number }>> {
+    return apiClient.master.post<{ results: V60LifecycleHistory[]; failed?: number }>(
+      '/mdm-v60/lifecycle/bulk',
+      data
+    );
+  },
+
+  // ===== V60 元数据属性/标签（B5 接线） =====
+
+  async addMetadataAttribute(
+    id: string,
+    data: AddV60AttributeRequest
+  ): Promise<ApiResponse<V60MetadataAttribute>> {
+    return apiClient.master.post<V60MetadataAttribute>(`/mdm-v60/metadata/${id}/attribute`, data);
+  },
+
+  async addMetadataTag(data: AddV60TagRequest): Promise<ApiResponse<V60MetadataTag>> {
+    return apiClient.master.post<V60MetadataTag>('/mdm-v60/metadata/tag', data);
   },
 };
 

@@ -39,5 +39,19 @@
   "master.moduleName": "Master Data Governance",
   "master.module_desc": "Master data governance & data asset catalog management",
   "master.dataAssetCatalog": "Data Asset Catalog",
-  "master.data_asset_catalog.desc": "Data asset cataloging, search & governance"
+  "master.data_asset_catalog.desc": "Data asset cataloging, search & governance",
+  "master.data_asset_catalog.impact_title": "Impact Analysis",
+  "master.data_asset_catalog.impact_nodes": "Affected Nodes",
+  "master.data_asset_catalog.impact_downstream": "Downstream Affected",
+  "master.data_asset_catalog.impact_confidence": "Confidence",
+  "master.data_asset_catalog.impact_score": "Impact Score",
+  "master.data_asset_catalog.lifecycle_title": "Lifecycle",
+  "master.data_asset_catalog.lifecycle_current": "Current Stage",
+  "master.data_asset_catalog.lifecycle_history": "Transition History",
+  "master.data_asset_catalog.lifecycle_stage_active": "Enabled",
+  "master.data_asset_catalog.lifecycle_stage_maintenance": "Maintenance",
+  "master.data_asset_catalog.lifecycle_stage_deprecated": "Deprecated",
+  "master.data_asset_catalog.lifecycle_stage_archived": "Archived",
+  "master.data_asset_catalog.lifecycle_stage_deleted": "Deleted",
+  "master.data_asset_catalog.transition_reason": "Manual transition from catalog page"
 }

@@ -32,9 +32,18 @@ import DatasetIcon from '@mui/icons-material/Dataset';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ApiIcon from '@mui/icons-material/Api';
 import { dataAssetCatalogApiV66 } from '@/api/master/dataAssetCatalogV66';
-import type { DataAsset, AssetCatalogDashboard } from '@/api/master/dataAssetCatalogV66';
+import type {
+  DataAsset,
+  AssetCatalogDashboard,
+  V60LineageImpact,
+  V60LifecycleHistory,
+} from '@/api/master/dataAssetCatalogV66';
 import i18n from '@/i18n';
 import { assetTypeColors, assetStatusColors, assetSensitivityColors } from '@/theme/presets';
+
+const LIFECYCLE_TRANSITIONS: Array<
+  'active' | 'maintenance' | 'deprecated' | 'archived' | 'deleted'
+> = ['active', 'maintenance', 'deprecated', 'archived', 'deleted'];
 
 const DataAssetCatalogPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -48,6 +57,58 @@ const DataAssetCatalogPage: React.FC = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailAsset, setDetailAsset] = useState<DataAsset | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // B5 接线：详情弹窗内 血缘影响分析 + 生命周期
+  const [impact, setImpact] = useState<V60LineageImpact | null>(null);
+  const [stage, setStage] = useState<string | null>(null);
+  const [history, setHistory] = useState<V60LifecycleHistory[]>([]);
+  const [lineageBusy, setLineageBusy] = useState(false);
+  const [transitionBusy, setTransitionBusy] = useState(false);
+
+  const loadImpactAndLifecycle = useCallback(async (assetId: string) => {
+    setLineageBusy(true);
+    setImpact(null);
+    setStage(null);
+    setHistory([]);
+    try {
+      const [impactRes, stageRes, historyRes] = await Promise.all([
+        dataAssetCatalogApiV66.getLineageImpact(assetId),
+        dataAssetCatalogApiV66.getLifecycleStage(assetId),
+        dataAssetCatalogApiV66.getLifecycleHistory(assetId),
+      ]);
+      if (impactRes.success && impactRes.data) setImpact(impactRes.data);
+      if (stageRes.success && stageRes.data) setStage(stageRes.data.stage);
+      if (historyRes.success && historyRes.data) setHistory(historyRes.data);
+    } catch (err) {
+      console.error('加载血缘/生命周期失败', err);
+    } finally {
+      setLineageBusy(false);
+    }
+  }, []);
+
+  const handleTransition = useCallback(
+    async (newStage: string) => {
+      if (!detailAsset) return;
+      setTransitionBusy(true);
+      try {
+        const res = await dataAssetCatalogApiV66.transitionLifecycleStage(detailAsset.id, {
+          new_stage: newStage,
+          reason: i18n.t('master.data_asset_catalog.transition_reason'),
+          changed_by: 'admin',
+        });
+        if (res.success) {
+          setStage(newStage);
+          const historyRes = await dataAssetCatalogApiV66.getLifecycleHistory(detailAsset.id);
+          if (historyRes.success && historyRes.data) setHistory(historyRes.data);
+        }
+      } catch (err) {
+        console.error('生命周期流转失败', err);
+      } finally {
+        setTransitionBusy(false);
+      }
+    },
+    [detailAsset]
+  );
 
   // 加载资产列表
   const loadAssets = useCallback(async () => {
@@ -109,6 +170,7 @@ const DataAssetCatalogPage: React.FC = () => {
       setDetailAsset(asset);
     }
     setDetailOpen(true);
+    loadImpactAndLifecycle(asset.id);
   };
 
   // 删除
@@ -729,6 +791,142 @@ const DataAssetCatalogPage: React.FC = () => {
                     ? new Date(detailAsset.updated_at).toLocaleString('zh-CN')
                     : '-'}
                 </Typography>
+              </Box>
+              <Box sx={{ flex: '1 1 100%', minWidth: '100%' }}>
+                <Divider sx={{ my: 1 }} />
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600, mb: 1 }}
+                >
+                  {i18n.t('master.data_asset_catalog.impact_title')}
+                </Typography>
+                {lineageBusy ? (
+                  <CircularProgress size={20} />
+                ) : impact ? (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                    <Box sx={{ flex: '1 1 20%', minWidth: 120 }}>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {i18n.t('master.data_asset_catalog.impact_nodes')}
+                      </Typography>
+                      <Typography
+                        variant='body1'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {impact.affected_nodes}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ flex: '1 1 20%', minWidth: 120 }}>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {i18n.t('master.data_asset_catalog.impact_downstream')}
+                      </Typography>
+                      <Typography
+                        variant='body1'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {impact.affected_downstream}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ flex: '1 1 20%', minWidth: 120 }}>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {i18n.t('master.data_asset_catalog.impact_confidence')}
+                      </Typography>
+                      <Typography
+                        variant='body1'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {impact.confidence.toFixed(2)}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ flex: '1 1 20%', minWidth: 120 }}>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {i18n.t('master.data_asset_catalog.impact_score')}
+                      </Typography>
+                      <Typography
+                        variant='body1'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {impact.impact_score.toFixed(2)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Typography variant='body1'>-</Typography>
+                )}
+              </Box>
+
+              <Box sx={{ flex: '1 1 100%', minWidth: '100%' }}>
+                <Divider sx={{ my: 1 }} />
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600, mb: 1 }}
+                >
+                  {i18n.t('master.data_asset_catalog.lifecycle_title')}
+                </Typography>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1 }}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    {i18n.t('master.data_asset_catalog.lifecycle_current')}
+                  </Typography>
+                  {lineageBusy ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <Chip
+                      label={stage || '-'}
+                      size='small'
+                      color={stage === 'deleted' ? 'error' : 'primary'}
+                    />
+                  )}
+                </Box>
+                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1 }}>
+                  {LIFECYCLE_TRANSITIONS.map((s) => (
+                    <Button
+                      key={s}
+                      size='small'
+                      variant={stage === s ? 'contained' : 'outlined'}
+                      disabled={transitionBusy || stage === s}
+                      onClick={() => handleTransition(s)}
+                    >
+                      {i18n.t(`master.data_asset_catalog.lifecycle_stage_${s}`)}
+                    </Button>
+                  ))}
+                </Box>
+                {history.length > 0 && (
+                  <Box>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      sx={{ mb: 0.5 }}
+                    >
+                      {i18n.t('master.data_asset_catalog.lifecycle_history')}
+                    </Typography>
+                    {history.slice(0, 5).map((h) => (
+                      <Typography
+                        key={h.id}
+                        variant='body2'
+                        sx={{ mb: 0.25 }}
+                      >
+                        {h.from_stage ?? '-'} → {h.stage} · {h.reason || '-'} ·{' '}
+                        {new Date(h.changed_at).toLocaleString('zh-CN')} · {h.changed_by}
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
               </Box>
             </Box>
           )}
