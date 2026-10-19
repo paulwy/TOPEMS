@@ -205,7 +205,7 @@ impl MesErpSyncService {
         &self,
         erp_order: &ErpProductionOrderData,
     ) -> Result<MesOrderInfo, TopemsError> {
-        let client = reqwest::Client::new();
+        let client = topems_shared_core::shared_http_client();
         let url = format!("{}/api/mes/production-orders/from-erp", self.mes_url);
 
         let request_body = serde_json::json!({
@@ -360,7 +360,7 @@ impl MesErpSyncService {
         &self,
         progress: &MesProductionProgressData,
     ) -> Result<(), TopemsError> {
-        let client = reqwest::Client::new();
+        let client = topems_shared_core::shared_http_client();
         let url = format!(
             "{}/api/erp/production-orders/sync/mes-progress",
             self.erp_url
@@ -412,7 +412,7 @@ impl MesErpSyncService {
         _tenant_id: Uuid,
         erp_order_id: Uuid,
     ) -> Result<ErpProductionOrderData, TopemsError> {
-        let client = reqwest::Client::new();
+        let client = topems_shared_core::shared_http_client();
         let url = format!(
             "{}/api/erp/production-orders/{}",
             self.erp_url, erp_order_id
@@ -503,7 +503,7 @@ impl MesErpSyncService {
         _tenant_id: Uuid,
         mes_order_id: Uuid,
     ) -> Result<MesOrderProgress, TopemsError> {
-        let client = reqwest::Client::new();
+        let client = topems_shared_core::shared_http_client();
         let url = format!(
             "{}/api/mes/production-orders/{}",
             self.mes_url, mes_order_id

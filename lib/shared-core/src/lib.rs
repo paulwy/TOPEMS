@@ -21,6 +21,7 @@ pub mod feature_flag;
 pub mod fsm;
 pub mod health;
 pub mod hrm;
+pub mod http_client;
 pub mod id;
 pub mod l2_cache;
 pub mod layers;
@@ -67,6 +68,7 @@ pub use health::{
     ServiceMonitor, SimpleHealthConfig, SystemMetrics,
 };
 pub use hrm::{AppState, PaginatedResult, PaginationQuery};
+pub use http_client::shared_http_client;
 pub use l2_cache::{AsyncL2Cache, L2CacheConfig};
 pub use layers::{can_depend, module_layer, modules_by_layer, Layer};
 pub use logging::{

@@ -22,7 +22,7 @@ fn send_email_async(
     bcc: Option<Vec<String>>,
 ) {
     tokio::spawn(async move {
-        let client = reqwest::Client::new();
+        let client = topems_shared_core::shared_http_client();
         let endpoint = std::env::var("COMMUNICATION_SERVICE_URL")
             .unwrap_or_else(|_| "http://localhost:8084".to_string());
         let params = serde_json::json!({

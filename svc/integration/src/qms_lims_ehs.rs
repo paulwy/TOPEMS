@@ -43,7 +43,7 @@ fn rand_suffix(n: usize) -> String {
 }
 
 async fn post_json(url: &str, body: &Value) -> Result<(), TopemsError> {
-    let client = reqwest::Client::new();
+    let client = topems_shared_core::shared_http_client();
     let resp = client
         .post(url)
         .json(body)

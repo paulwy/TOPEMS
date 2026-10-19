@@ -388,7 +388,7 @@ async fn create_ticket_for_reconciliation(
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
         .build()
-        .unwrap_or_else(|_| reqwest::Client::new());
+        .unwrap_or_else(|_| topems_shared_core::shared_http_client());
 
     let url = format!("{}/api/core/master/tickets", core_url.trim_end_matches('/'));
 

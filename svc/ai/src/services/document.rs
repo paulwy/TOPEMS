@@ -41,7 +41,7 @@ impl DocumentService {
             pdf_parser: PdfParser::new(),
             file_client: None,
             qa_config: None,
-            http_client: Client::new(),
+            http_client: topems_shared_core::shared_http_client(),
         }
     }
 
@@ -52,7 +52,7 @@ impl DocumentService {
             pdf_parser: PdfParser::new(),
             file_client: Some(FileServiceClient::new(file_service_url)),
             qa_config: None,
-            http_client: Client::new(),
+            http_client: topems_shared_core::shared_http_client(),
         }
     }
 

@@ -80,7 +80,7 @@ impl AppState {
             auth_state,
             service_registry: Arc::new(LocalServiceRegistry::new()),
             service_aggregator: Arc::new(aggregator),
-            http_client: Client::new(),
+            http_client: topems_shared_core::shared_http_client(),
             pool,
             event_publisher,
             dashboard_cache,

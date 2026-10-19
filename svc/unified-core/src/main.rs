@@ -15,7 +15,6 @@ pub mod modules;
 use crate::shared::config_store_simple::ConfigStoreService;
 
 use axum_prometheus::PrometheusMetricLayer;
-use reqwest::Client;
 
 use topems_shared_auth::security::{
     AuditLoggerConfig, AuditLoggerMiddleware, BodyLimitConfig, BodyLimitMiddleware,
@@ -349,7 +348,7 @@ async fn main() -> anyhow::Result<()> {
     let ws_state = std::sync::Arc::new(modules::communication::ws::WsState::new(
         std::sync::Arc::new(ctx.auth_state.clone()),
     ));
-    let http_client = Client::new();
+    let http_client = topems_shared_core::shared_http_client();
 
     let rate_limit_config = middleware::rate_limit::RateLimitConfig::default()
         .add_path_rule("/api/core/iam/auth/", 30, 60)

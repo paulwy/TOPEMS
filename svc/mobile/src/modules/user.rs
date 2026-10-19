@@ -373,7 +373,7 @@ pub async fn change_password(
         .unwrap_or_default()
         .to_string();
 
-    let client = reqwest::Client::new();
+    let client = topems_shared_core::shared_http_client();
     match client
         .put(&url)
         .header(reqwest::header::AUTHORIZATION, auth_value)

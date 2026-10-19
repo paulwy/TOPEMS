@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use axum::{routing::get, Json, Router};
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::env;
 
@@ -142,7 +141,7 @@ pub async fn auto_register_to_core(_core_url: Option<&str>) {
         category: Some("other".to_string()),
     };
 
-    let client = Client::new();
+    let client = topems_shared_core::shared_http_client();
     let url = format!("{}/dev/runtime/portal/register", core_url);
 
     let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();

@@ -120,7 +120,7 @@ async fn build_router_inner(
     let ws_state = std::sync::Arc::new(crate::modules::communication::ws::WsState::new(
         std::sync::Arc::new(ctx.auth_state.clone()),
     ));
-    let http_client = reqwest::Client::new();
+    let http_client = topems_shared_core::shared_http_client();
 
     let rate_limit_config = crate::middleware::rate_limit::RateLimitConfig::default()
         .add_path_rule("/api/core/iam/auth/", 30, 60)

@@ -246,7 +246,7 @@ async fn health() -> ServiceHealth {
 
 #[allow(dead_code)]
 async fn check_service_health(url: &str) -> bool {
-    let client = reqwest::Client::new();
+    let client = topems_shared_core::shared_http_client();
     match client
         .get(format!("{}/health", url))
         .timeout(std::time::Duration::from_secs(2))

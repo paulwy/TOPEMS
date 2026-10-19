@@ -274,7 +274,7 @@ pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiRespons
         category: Some("erp".to_string()),
     };
 
-    let client = reqwest::Client::new();
+    let client = topems_shared_core::shared_http_client();
     let url = format!("{}/dev/runtime/erp/register", core_url);
 
     let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
@@ -347,7 +347,7 @@ pub async fn auto_register_to_core(_core_url: Option<&str>) {
         category: Some("erp".to_string()),
     };
 
-    let client = reqwest::Client::new();
+    let client = topems_shared_core::shared_http_client();
     let url = format!("{}/dev/runtime/erp/register", core_url);
 
     let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();

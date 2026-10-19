@@ -142,7 +142,7 @@ pub async fn auto_register_to_core(_core_url: Option<&str>) {
         ])),
     };
 
-    let client = reqwest::Client::new();
+    let client = topems_shared_core::shared_http_client();
     let url = format!("{}/dev/runtime/rs/register", core_url);
 
     let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();

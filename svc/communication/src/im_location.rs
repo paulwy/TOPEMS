@@ -627,7 +627,7 @@ pub async fn unified_search_pois(
     // 通过 gis 服务 API 搜索 POI（避免跨服务直读 gis 表，schema 边界门禁）
     let gis_service_url =
         std::env::var("GIS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8071".to_string());
-    let client = reqwest::Client::new();
+    let client = topems_shared_core::shared_http_client();
 
     if let Ok(resp) = client
         .get(format!("{}/api/gis/search", gis_service_url))
@@ -713,7 +713,7 @@ async fn sync_geofence_to_gis_internal(geofence: &ImGeofence) -> Result<Option<U
     let gis_service_url =
         std::env::var("GIS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8071".to_string());
 
-    let client = reqwest::Client::new();
+    let client = topems_shared_core::shared_http_client();
 
     let gis_fence_data = serde_json::json!({
         "name": geofence.name,

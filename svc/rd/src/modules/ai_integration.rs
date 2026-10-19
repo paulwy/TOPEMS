@@ -5,7 +5,6 @@ use axum::{
     Json,
 };
 use chrono::{DateTime, Utc};
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::env;
@@ -355,7 +354,7 @@ async fn call_ai_service(
     ai_service_url: &Option<String>,
 ) -> Result<String, TopemsError> {
     let url = ai_service_url.as_deref().unwrap_or(DEFAULT_AI_SERVICE_URL);
-    let client = Client::new();
+    let client = topems_shared_core::shared_http_client();
     let endpoint = format!("{}/api/core/rd/ai/chat", url);
 
     debug!(

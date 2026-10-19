@@ -287,7 +287,7 @@
 - **本批新修 · H-8**：`docs/project/roadmap.md` 归档横幅真相源由已归档的 `docs/project/TODO.md` 改指根 `TODO.md`。
 - **本批新修 · H-4**：`scripts/dev/health-check.sh`（LEGACY-DEV 本地独立进程探测）去硬编码 `admin/admin123`，改读 `TOPEMS_DEV_USER/TOPEMS_DEV_PASSWORD` 环境变量、未设置则跳过登录；加遗留标注（生产用 verify-nginx-prod.sh）。shellcheck 绿。
 - **登记待核实（不擅改）**：H-5 `rollback.sh:289`/`start-production.sh` 旧 8000/`topems-unified-core`，需对照生产 systemd（topems-server.service=8099 BFF / topems-unified-core.service 并存）核实后再统一；H-9 developer 三文档 8000 为 dev 独立进程语境（api-base 已双标注 8000/8099），不影响生产；H-10 `.env.example` 样例口令附警示，保留。
-- **长尾不排硬期**：NEW-P2-3（F10 ApiResponse::error 生产 3497 处宏收敛）、NEW-P2-4（F11 生产裸 Client::new 60 处）；NEW-P2-5（F7 etcd/consul/dns 2243 行未启用）需用户拍板归档/flag/删除。
+- **长尾不排硬期**：NEW-P2-3（F10 ApiResponse::error 生产 3497 处宏收敛）。NEW-P2-4（F11 裸 Client::new）已在本批闭环（见下）；NEW-P2-5（F7 etcd/consul/dns 2243 行未启用）已物理删除（见下）。
 
 ### P2-5 · F7 三套未启用服务发现物理删除（2026-10-20，用户拍板删除）✅
 
@@ -296,6 +296,14 @@
 - **保留**：`k8s_service_discovery.rs`（集群内 Endpoints 发现，活路径）、`service_client.rs` 的 Static/Env/K8s 三模式。
 - **门禁**：`cargo check`/`clippy -D correctness`/`fmt` 绿，unified-core lib 536 passed / 0 failed。
 - **登记遗留（不在本批扩大）**：config 层悬空 `CONSUL_URL/CONSUL_ENABLED`（`config/schema.json`、`config/env/.env.production.template`、废弃 compose）代码已不读，属独立 config 治理面，另案清理；如需接注册中心，从 git 历史取回三文件再实现。
+
+### P2-4 · F11 裸 Client::new 收敛到共享 client 工厂（2026-10-20）✅
+
+- **问题（审计 shard-A F11 / P2-2）**：生产侧异步裸 `reqwest::Client::new()` 每次新建客户端，不复用连接池、无统一超时；审计口径生产约 60 处（含内联 test 块）。
+- **工厂落点**：新增 `lib/shared-core/src/http_client.rs`，`pub fn shared_http_client() -> reqwest::Client`，进程级 `OnceLock` 单例，30s 整体超时 / 5s 连接超时（与 BaseServiceClient 对齐），builder 失败兜底 `Client::new()`；返回 clone（reqwest::Client 内部 Arc 共享连接池）。放 shared-core 因所有被改 crate 均已依赖，无需新增依赖；`lib.rs` 注册 `pub mod http_client` 并 re-export `shared_http_client`。
+- **替换**：生产异步裸构造 48 处 / 37 文件改 `topems_shared_core::shared_http_client()`；覆盖各 `*_plugin.rs` 注册回调、integration（event_bus/mes_erp_sync×4/routes/plugin/qms_lims_ehs）、unified-core（main/embedded/iam auth）、ai（health handler / document service×2）、mobile（user/mobile_plugin）、communication im_location×2、analytics（bi/report）、rd ai_integration、portal（shared 字段/portal_plugin）、finance reconciliation 兜底；清理随之 unused 的 `use reqwest::Client`（main/portal_plugin/ai health/rd）。
+- **保留（合理，未改）**：① `svc/erp/src/services/erp_adapter/{kingdee,yonyou,sap}_adapter.rs` 用 `reqwest::blocking::Client`（同步阻塞适配，类型不同不可换异步单例）；② finance reconciliation 自定义 10s builder 成功路径保留，仅失败兜底改共享 client；③ `ai/dsh/alerting/mod.rs:460` 纯注释；④ tests/ 目录与内联 `#[cfg(test)]` 夹具内的 `Client::new()` 属测试夹具，本批未收。
+- **门禁**：shared-core 791 passed；`cargo check --workspace --lib --tests` exit 0；`clippy -D correctness` exit 0；`cargo fmt --check` 绿；抽测 unified-core 536 / integration 182 / portal 582 / ai 983 / finance 1087 / mobile 250 / communication 211 / rd 155 / analytics 192 / pm 497 全 0 failed（其余 crate 由 push 钩子全量 cargo-test-workspace 覆盖）。
 
 ---
 

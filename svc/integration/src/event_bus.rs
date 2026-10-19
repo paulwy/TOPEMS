@@ -348,7 +348,7 @@ pub struct WebhookSender {
 impl WebhookSender {
     pub fn new() -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: topems_shared_core::shared_http_client(),
         }
     }
 
