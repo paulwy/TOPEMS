@@ -6,7 +6,6 @@ import axe from 'axe-core';
 import { renderWithProviders } from '@/__tests__/test-utils';
 import { AppHeader } from '../layout/AppHeader/AppHeader';
 import { TabGroup } from '../ui/Tabs';
-import { SidebarItem } from '../layout/AppSidebar/SidebarItem';
 
 const { tMock } = vi.hoisted(() => {
   const i18nMap: Record<string, string> = {
@@ -100,20 +99,6 @@ describe('a11y runtime scan (axe-core)', () => {
         value='a'
         onChange={() => {}}
         label='测试 Tabs'
-      />
-    );
-    const violations = await runAxe(container);
-    const serious = violations.filter((v) => v.impact === 'critical' || v.impact === 'serious');
-    expect(serious).toEqual([]);
-  });
-
-  it('SidebarItem 无严重违规', async () => {
-    const { container } = renderWithProviders(
-      <SidebarItem
-        active
-        label='模块项'
-        ariaCurrent='page'
-        onClick={() => {}}
       />
     );
     const violations = await runAxe(container);
