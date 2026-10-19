@@ -175,6 +175,28 @@ pub struct BatchUnsubscribeRequest {
     pub ids: Vec<Uuid>,
 }
 
+/// 投递列表查询（GET /notification/deliveries）
+#[derive(Debug, Deserialize)]
+pub struct DeliveryQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub status: Option<String>,
+    pub channel: Option<String>,
+    pub user_id: Option<Uuid>,
+    pub notification_id: Option<Uuid>,
+    pub batch_id: Option<Uuid>,
+    pub from_date: Option<String>,
+    pub to_date: Option<String>,
+}
+
+/// 投递统计查询（GET /notification/deliveries/stats）
+#[derive(Debug, Deserialize)]
+pub struct DeliveryStatsQuery {
+    pub from_date: Option<String>,
+    pub to_date: Option<String>,
+    pub channel: Option<String>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateTemplateRequest {
     pub name: String,

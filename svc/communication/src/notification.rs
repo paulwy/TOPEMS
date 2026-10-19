@@ -15,9 +15,10 @@ use crate::models::{
     ArchiveConfig, BatchSubscribeRequest, BatchUnsubscribeRequest, BroadcastNotificationRequest,
     BulkConditionRequest, BulkIdsRequest, BulkIdsV2Request, BulkTemplateStatusRequest,
     CategoryPreferenceUpdate, ChannelMetrics, ChannelQuery, CreateChannelRequest,
-    CreateSubscriptionRequest, CreateTemplateRequest, GlobalMuteRequest, NotificationChannel,
-    NotificationQuery, PreferencesUpdate, QuietHoursUpdate, SendNotificationRequest,
-    SubscriptionQuery, UpdateChannelRequest, UpdateSubscriptionRequest, UpdateTemplateRequest,
+    CreateSubscriptionRequest, CreateTemplateRequest, DeliveryQuery, DeliveryStatsQuery,
+    GlobalMuteRequest, NotificationChannel, NotificationQuery, PreferencesUpdate, QuietHoursUpdate,
+    SendNotificationRequest, SubscriptionQuery, UpdateChannelRequest, UpdateSubscriptionRequest,
+    UpdateTemplateRequest,
 };
 
 /// 通知优先级枚举
@@ -4290,6 +4291,612 @@ pub async fn list_event_types() -> Json<serde_json::Value> {
         { "event_type": "announcement", "description": "公告", "category": "announcement" }
     ]);
     Json(serde_json::json!({ "success": true, "message": "ok", "data": types }))
+}
+
+fn delivery_row_to_json(r: &sqlx::postgres::PgRow) -> Result<serde_json::Value, String> {
+    let id: Uuid = r.try_get("id").map_err(|e| format!("bad id: {}", e))?;
+    let notification_id: Uuid = r
+        .try_get("notification_id")
+        .map_err(|e| format!("bad notification_id: {}", e))?;
+    let user_id: Option<Uuid> = r
+        .try_get("user_id")
+        .map_err(|e| format!("bad user_id: {}", e))?;
+    let channel: String = r
+        .try_get("channel")
+        .map_err(|e| format!("bad channel: {}", e))?;
+    let status: String = r
+        .try_get("status")
+        .map_err(|e| format!("bad status: {}", e))?;
+    let recipient: String = r
+        .try_get("recipient")
+        .map_err(|e| format!("bad recipient: {}", e))?;
+    let subject: Option<String> = r
+        .try_get("subject")
+        .map_err(|e| format!("bad subject: {}", e))?;
+    let body: Option<String> = r.try_get("body").map_err(|e| format!("bad body: {}", e))?;
+    let sent_at: Option<chrono::DateTime<chrono::Utc>> = r
+        .try_get("sent_at")
+        .map_err(|e| format!("bad sent_at: {}", e))?;
+    let delivered_at: Option<chrono::DateTime<chrono::Utc>> = r
+        .try_get("delivered_at")
+        .map_err(|e| format!("bad delivered_at: {}", e))?;
+    let failed_at: Option<chrono::DateTime<chrono::Utc>> = r
+        .try_get("failed_at")
+        .map_err(|e| format!("bad failed_at: {}", e))?;
+    let failure_reason: Option<String> = r
+        .try_get("failure_reason")
+        .map_err(|e| format!("bad failure_reason: {}", e))?;
+    let retry_count: i32 = r
+        .try_get("retry_count")
+        .map_err(|e| format!("bad retry_count: {}", e))?;
+    let max_retries: i32 = r
+        .try_get("max_retries")
+        .map_err(|e| format!("bad max_retries: {}", e))?;
+    let next_retry_at: Option<chrono::DateTime<chrono::Utc>> = r
+        .try_get("next_retry_at")
+        .map_err(|e| format!("bad next_retry_at: {}", e))?;
+    let provider_message_id: Option<String> = r
+        .try_get("provider_message_id")
+        .map_err(|e| format!("bad provider_message_id: {}", e))?;
+    let metadata: Option<serde_json::Value> = r
+        .try_get("metadata")
+        .map_err(|e| format!("bad metadata: {}", e))?;
+    let created_at: chrono::DateTime<chrono::Utc> = r
+        .try_get("created_at")
+        .map_err(|e| format!("bad created_at: {}", e))?;
+    let updated_at: chrono::DateTime<chrono::Utc> = r
+        .try_get("updated_at")
+        .map_err(|e| format!("bad updated_at: {}", e))?;
+    Ok(serde_json::json!({
+        "id": id.to_string(),
+        "notification_id": notification_id.to_string(),
+        "user_id": user_id.map(|u| u.to_string()),
+        "channel": channel,
+        "status": status,
+        "recipient": recipient,
+        "subject": subject,
+        "body": body,
+        "sent_at": sent_at.map(|t| t.to_rfc3339()),
+        "delivered_at": delivered_at.map(|t| t.to_rfc3339()),
+        "failed_at": failed_at.map(|t| t.to_rfc3339()),
+        "failure_reason": failure_reason,
+        "retry_count": retry_count,
+        "max_retries": max_retries,
+        "next_retry_at": next_retry_at.map(|t| t.to_rfc3339()),
+        "provider_message_id": provider_message_id,
+        "metadata": metadata,
+        "created_at": created_at.to_rfc3339(),
+        "updated_at": updated_at.to_rfc3339()
+    }))
+}
+
+fn delivery_select_sql() -> &'static str {
+    "SELECT id, notification_id, user_id, channel, status, recipient, subject, body, \
+     sent_at, delivered_at, failed_at, failure_reason, retry_count, max_retries, \
+     next_retry_at, provider_message_id, metadata, created_at, updated_at \
+     FROM core_notification_deliveries"
+}
+
+fn parse_ts(s: &Option<String>) -> Option<chrono::DateTime<chrono::Utc>> {
+    s.as_deref().and_then(|v| {
+        chrono::DateTime::parse_from_rfc3339(v)
+            .ok()
+            .map(|d| d.with_timezone(&chrono::Utc))
+    })
+}
+
+async fn paginated_deliveries(
+    pool: &PgPool,
+    user_id: Uuid,
+    query: &DeliveryQuery,
+) -> Json<serde_json::Value> {
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
+    let from = parse_ts(&query.from_date);
+    let to = parse_ts(&query.to_date);
+    let filter = format!(
+        "WHERE user_id = $1 \
+         AND ($2::text IS NULL OR status = $2) \
+         AND ($3::text IS NULL OR channel = $3) \
+         AND ($4::uuid IS NULL OR notification_id = $4) \
+         AND ($5::uuid IS NULL OR batch_id = $5) \
+         AND ($6::timestamptz IS NULL OR created_at >= $6) \
+         AND ($7::timestamptz IS NULL OR created_at <= $7)"
+    );
+    let sql = format!(
+        "{} {} ORDER BY created_at DESC LIMIT $8 OFFSET $9",
+        delivery_select_sql(),
+        filter
+    );
+    let mut q = sqlx::query(&sql);
+    q = q.bind(user_id);
+    q = q.bind(&query.status);
+    q = q.bind(&query.channel);
+    q = q.bind(query.notification_id);
+    q = q.bind(query.batch_id);
+    q = q.bind(from);
+    q = q.bind(to);
+    q = q.bind(page_size);
+    q = q.bind(offset);
+    let rows = q.fetch_all(pool).await;
+    let count_sql = format!(
+        "SELECT COUNT(*) FROM core_notification_deliveries {}",
+        filter
+    );
+    let mut c = sqlx::query(&count_sql);
+    c = c.bind(user_id);
+    c = c.bind(&query.status);
+    c = c.bind(&query.channel);
+    c = c.bind(query.notification_id);
+    c = c.bind(query.batch_id);
+    c = c.bind(from);
+    c = c.bind(to);
+    let total = c.fetch_one(pool).await;
+    match (rows, total) {
+        (Ok(rows), Ok(total)) => {
+            let items: Vec<serde_json::Value> = rows
+                .iter()
+                .filter_map(|r| delivery_row_to_json(r).ok())
+                .collect();
+            let total: i64 = total.try_get("count").unwrap_or(0);
+            Json(serde_json::json!({
+                "success": true, "message": "ok",
+                "data": { "deliveries": items, "total": total, "page": page, "page_size": page_size }
+            }))
+        }
+        (Err(e), _) | (_, Err(e)) => {
+            tracing::error!("Failed to list deliveries: {}", e);
+            Json(serde_json::json!({
+                "success": false, "message": format!("Failed to list deliveries: {}", e), "data": null
+            }))
+        }
+    }
+}
+
+/// 投递列表（`GET /notification/deliveries`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/deliveries",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn list_deliveries(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<DeliveryQuery>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    paginated_deliveries(&pool, user_id, &query).await
+}
+
+/// 获取单条投递（`GET /notification/deliveries/{id}`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/deliveries/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn get_delivery(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(uid) => uid,
+        Err(v) => return Json(v),
+    };
+    let row = sqlx::query(&format!(
+        "{} WHERE id = $1 AND user_id = $2",
+        delivery_select_sql()
+    ))
+    .bind(id)
+    .bind(user_id)
+    .fetch_optional(&pool)
+    .await;
+    match row {
+        Ok(Some(r)) => match delivery_row_to_json(&r) {
+            Ok(v) => Json(serde_json::json!({ "success": true, "message": "ok", "data": v })),
+            Err(e) => Json(serde_json::json!({ "success": false, "message": e, "data": null })),
+        },
+        Ok(None) => Json(serde_json::json!({
+            "success": false, "message": "投递记录不存在", "data": null, "code": 404
+        })),
+        Err(e) => {
+            tracing::error!("Failed to get delivery: {}", e);
+            Json(serde_json::json!({
+                "success": false, "message": format!("Failed to get delivery: {}", e), "data": null
+            }))
+        }
+    }
+}
+
+/// 重试投递（`POST /notification/deliveries/{id}/retry`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/deliveries/{id}/retry",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn retry_delivery(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(uid) => uid,
+        Err(v) => return Json(v),
+    };
+    let prev = sqlx::query_scalar::<_, String>(
+        "SELECT status FROM core_notification_deliveries WHERE id = $1 AND user_id = $2",
+    )
+    .bind(id)
+    .bind(user_id)
+    .fetch_optional(&pool)
+    .await;
+    let previous_status = match prev {
+        Ok(Some(s)) => s,
+        Ok(None) => {
+            return Json(serde_json::json!({
+                "success": false, "message": "投递记录不存在", "data": null, "code": 404
+            }))
+        }
+        Err(e) => {
+            return Json(serde_json::json!({
+                "success": false, "message": format!("Failed to retry delivery: {}", e), "data": null
+            }))
+        }
+    };
+    let row = sqlx::query(
+        "UPDATE core_notification_deliveries SET status = 'pending', \
+         retry_count = retry_count + 1, failure_reason = NULL, \
+         next_retry_at = NOW() + INTERVAL '5 minutes', updated_at = NOW() \
+         WHERE id = $1 AND user_id = $2 \
+         RETURNING id, notification_id, user_id, channel, status, recipient, subject, body, \
+         sent_at, delivered_at, failed_at, failure_reason, retry_count, max_retries, \
+         next_retry_at, provider_message_id, metadata, created_at, updated_at",
+    )
+    .bind(id)
+    .bind(user_id)
+    .fetch_optional(&pool)
+    .await;
+    match row {
+        Ok(Some(_)) => Json(serde_json::json!({
+            "success": true, "message": "ok",
+            "data": { "id": id.to_string(), "previous_status": previous_status, "new_status": "pending" }
+        })),
+        Ok(None) => Json(serde_json::json!({
+            "success": false, "message": "投递记录不存在", "data": null, "code": 404
+        })),
+        Err(e) => {
+            tracing::error!("Failed to retry delivery: {}", e);
+            Json(serde_json::json!({
+                "success": false, "message": format!("Failed to retry delivery: {}", e), "data": null
+            }))
+        }
+    }
+}
+
+/// 按批次查询投递（`GET /notification/deliveries/batch/{batchId}`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/deliveries/batch/{batchId}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn list_batch_deliveries(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(batch_id): Path<Uuid>,
+    Query(query): Query<DeliveryQuery>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(uid) => uid,
+        Err(v) => return Json(v),
+    };
+    let mut q = query;
+    q.batch_id = Some(batch_id);
+    paginated_deliveries(&pool, user_id, &q).await
+}
+
+/// 按用户查询投递（`GET /notification/deliveries/by-user/{userId}`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/deliveries/by-user/{userId}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn list_user_deliveries(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(user_id): Path<Uuid>,
+    Query(query): Query<DeliveryQuery>,
+) -> Json<serde_json::Value> {
+    let current = match resolve_user_id(&claims) {
+        Ok(uid) => uid,
+        Err(v) => return Json(v),
+    };
+    let _ = current;
+    paginated_deliveries(&pool, user_id, &query).await
+}
+
+/// 投递统计（`GET /notification/deliveries/stats`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/deliveries/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn delivery_stats(
+    State(pool): State<PgPool>,
+    Query(query): Query<DeliveryStatsQuery>,
+) -> Json<serde_json::Value> {
+    let from = parse_ts(&query.from_date);
+    let to = parse_ts(&query.to_date);
+    let agg = sqlx::query(
+        "SELECT COUNT(*) AS total, \
+         COUNT(*) FILTER (WHERE status = 'pending') AS pending, \
+         COUNT(*) FILTER (WHERE status = 'delivered') AS delivered, \
+         COUNT(*) FILTER (WHERE status = 'failed') AS failed, \
+         COUNT(*) FILTER (WHERE status = 'expired') AS expired, \
+         COALESCE(AVG(CASE WHEN delivered_at IS NOT NULL \
+           THEN EXTRACT(EPOCH FROM (delivered_at - COALESCE(sent_at, created_at))) * 1000 END), 0) AS avg_ms \
+         FROM core_notification_deliveries \
+         WHERE ($1::timestamptz IS NULL OR created_at >= $1) \
+           AND ($2::timestamptz IS NULL OR created_at <= $2) \
+           AND ($3::text IS NULL OR channel = $3)",
+    )
+    .bind(from)
+    .bind(to)
+    .bind(&query.channel)
+    .fetch_one(&pool)
+    .await;
+    let by_channel = sqlx::query(
+        "SELECT channel, COUNT(*) AS cnt FROM core_notification_deliveries \
+         WHERE ($1::timestamptz IS NULL OR created_at >= $1) \
+           AND ($2::timestamptz IS NULL OR created_at <= $2) \
+           AND ($3::text IS NULL OR channel = $3) GROUP BY channel",
+    )
+    .bind(from)
+    .bind(to)
+    .bind(&query.channel)
+    .fetch_all(&pool)
+    .await;
+    let by_status = sqlx::query(
+        "SELECT status, COUNT(*) AS cnt FROM core_notification_deliveries \
+         WHERE ($1::timestamptz IS NULL OR created_at >= $1) \
+           AND ($2::timestamptz IS NULL OR created_at <= $2) \
+           AND ($3::text IS NULL OR channel = $3) GROUP BY status",
+    )
+    .bind(from)
+    .bind(to)
+    .bind(&query.channel)
+    .fetch_all(&pool)
+    .await;
+    let reasons = sqlx::query(
+        "SELECT COALESCE(failure_reason, 'unknown') AS reason, COUNT(*) AS cnt \
+         FROM core_notification_deliveries WHERE status = 'failed' \
+         GROUP BY reason ORDER BY cnt DESC LIMIT 10",
+    )
+    .fetch_all(&pool)
+    .await;
+
+    match (agg, by_channel, by_status, reasons) {
+        (Ok(a), Ok(ch), Ok(st), Ok(rs)) => {
+            let total: i64 = a.try_get("total").unwrap_or(0);
+            let pending: i64 = a.try_get("pending").unwrap_or(0);
+            let delivered: i64 = a.try_get("delivered").unwrap_or(0);
+            let failed: i64 = a.try_get("failed").unwrap_or(0);
+            let expired: i64 = a.try_get("expired").unwrap_or(0);
+            let avg_ms: f64 = a.try_get("avg_ms").unwrap_or(0.0);
+            let mut by_channel_map = serde_json::Map::new();
+            for r in &ch {
+                let c: String = r.try_get("channel").unwrap_or_default();
+                let n: i64 = r.try_get("cnt").unwrap_or(0);
+                by_channel_map.insert(c, serde_json::json!(n));
+            }
+            let mut by_status_map = serde_json::Map::new();
+            for r in &st {
+                let s: String = r.try_get("status").unwrap_or_default();
+                let n: i64 = r.try_get("cnt").unwrap_or(0);
+                by_status_map.insert(s, serde_json::json!(n));
+            }
+            let mut failure_reasons = Vec::new();
+            for r in &rs {
+                let reason: String = r.try_get("reason").unwrap_or_default();
+                let n: i64 = r.try_get("cnt").unwrap_or(0);
+                failure_reasons.push(serde_json::json!({ "reason": reason, "count": n }));
+            }
+            #[allow(clippy::cast_precision_loss, clippy::as_conversions)]
+            let delivery_rate = if total > 0 {
+                delivered as f64 / total as f64
+            } else {
+                0.0
+            };
+            Json(serde_json::json!({
+                "success": true, "message": "ok",
+                "data": {
+                    "total": total, "pending": pending, "delivered": delivered,
+                    "failed": failed, "expired": expired,
+                    "by_channel": by_channel_map, "by_status": by_status_map,
+                    "delivery_rate": delivery_rate,
+                    "average_delivery_time_ms": avg_ms,
+                    "failure_reasons": failure_reasons
+                }
+            }))
+        }
+        (Err(e), _, _, _) => {
+            tracing::error!("Failed to compute delivery stats: {}", e);
+            Json(serde_json::json!({
+                "success": false, "message": format!("Failed to compute delivery stats: {}", e), "data": null
+            }))
+        }
+        (_, Err(e), _, _) | (_, _, Err(e), _) | (_, _, _, Err(e)) => {
+            tracing::error!("Failed to compute delivery stats: {}", e);
+            Json(serde_json::json!({
+                "success": false, "message": format!("Failed to compute delivery stats: {}", e), "data": null
+            }))
+        }
+    }
+}
+
+/// 失败投递列表（`GET /notification/deliveries/failed`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/deliveries/failed",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn list_failed_deliveries(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<DeliveryQuery>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let mut q = query;
+    q.status = Some("failed".to_string());
+    paginated_deliveries(&pool, user_id, &q).await
+}
+
+/// 全部失败重试（`POST /notification/deliveries/retry-all`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/deliveries/retry-all",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn retry_all_failed(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let result = sqlx::query(
+        "UPDATE core_notification_deliveries SET status = 'pending', \
+         retry_count = retry_count + 1, failure_reason = NULL, \
+         next_retry_at = NOW() + INTERVAL '5 minutes', updated_at = NOW() \
+         WHERE status = 'failed' AND user_id = $1",
+    )
+    .bind(user_id)
+    .execute(&pool)
+    .await;
+    match result {
+        Ok(r) => Json(serde_json::json!({
+            "success": true, "message": "ok",
+            "data": { "retried_count": r.rows_affected() }
+        })),
+        Err(e) => {
+            tracing::error!("Failed to retry all failed deliveries: {}", e);
+            Json(serde_json::json!({
+                "success": false, "message": format!("Failed to retry all failed deliveries: {}", e), "data": null
+            }))
+        }
+    }
+}
+
+/// 按渠道查询投递（`GET /notification/deliveries/by-channel/{channel}`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/deliveries/by-channel/{channel}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn list_channel_deliveries(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(channel): Path<String>,
+    Query(query): Query<DeliveryQuery>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let mut q = query;
+    q.channel = Some(channel);
+    paginated_deliveries(&pool, user_id, &q).await
+}
+
+/// 删除投递记录（`DELETE /notification/deliveries/{id}`）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/deliveries/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn delete_delivery(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(uid) => uid,
+        Err(v) => return Json(v),
+    };
+    let result =
+        sqlx::query("DELETE FROM core_notification_deliveries WHERE id = $1 AND user_id = $2")
+            .bind(id)
+            .bind(user_id)
+            .execute(&pool)
+            .await;
+    match result {
+        Ok(r) => Json(serde_json::json!({
+            "success": true, "message": "ok", "data": r.rows_affected() > 0
+        })),
+        Err(e) => {
+            tracing::error!("Failed to delete delivery: {}", e);
+            Json(serde_json::json!({
+                "success": false, "message": format!("Failed to delete delivery: {}", e), "data": null
+            }))
+        }
+    }
 }
 
 #[cfg(test)]

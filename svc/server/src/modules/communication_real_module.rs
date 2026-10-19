@@ -346,6 +346,31 @@ impl CommunicationRealModule {
                     delete(notification::unsubscribe_event),
                 )
                 .route("/event-types", get(notification::list_event_types))
+                .route("/deliveries", get(notification::list_deliveries))
+                .route("/deliveries/{id}", get(notification::get_delivery))
+                .route("/deliveries/{id}", delete(notification::delete_delivery))
+                .route("/deliveries/{id}/retry", post(notification::retry_delivery))
+                .route(
+                    "/deliveries/batch/{batchId}",
+                    get(notification::list_batch_deliveries),
+                )
+                .route(
+                    "/deliveries/by-user/{userId}",
+                    get(notification::list_user_deliveries),
+                )
+                .route("/deliveries/stats", get(notification::delivery_stats))
+                .route(
+                    "/deliveries/failed",
+                    get(notification::list_failed_deliveries),
+                )
+                .route(
+                    "/deliveries/retry-all",
+                    post(notification::retry_all_failed),
+                )
+                .route(
+                    "/deliveries/by-channel/{channel}",
+                    get(notification::list_channel_deliveries),
+                )
                 .route(
                     "/notifications/bulk-delete",
                     delete(notification::bulk_delete),
