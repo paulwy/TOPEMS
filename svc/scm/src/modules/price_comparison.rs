@@ -265,9 +265,9 @@ pub struct QuoteItem {
     pub specification: Option<String>,
     pub unit: Option<String>,
     pub quantity: Option<f64>,
-    pub target_price: Option<f64>,
-    pub unit_price: Option<f64>,
-    pub total_price: Option<f64>,
+    pub target_price: Option<Decimal>,
+    pub unit_price: Option<Decimal>,
+    pub total_price: Option<Decimal>,
     pub lead_time_days: Option<i32>,
 }
 
@@ -554,8 +554,8 @@ pub async fn get_quote(
             let items = sqlx::query_as::<_, QuoteItem>(only_own_schema_query!(
                 "scm",
                 r#"
-                SELECT qi.id, qi.item_name, qi.specification, qi.unit, qi.quantity::float8, qi.target_price::float8,
-                       sqi.unit_price::float8, sqi.total_price::float8, sqi.lead_time_days
+                SELECT qi.id, qi.item_name, qi.specification, qi.unit, qi.quantity::float8, qi.target_price,
+                       sqi.unit_price, sqi.total_price, sqi.lead_time_days
                 FROM scm.supplier_quote_items sqi
                 JOIN scm.purchase_inquiry_items qi ON sqi.inquiry_item_id = qi.id
                 WHERE sqi.quote_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR sqi.tenant_id = $2::uuid)
