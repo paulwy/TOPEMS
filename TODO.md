@@ -2732,8 +2732,8 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 
 ## BE-09 unified-core 撒谎面修复（2026-10-18）
 
-- 已修（3 commit，未 push）：
-  - `801cf8872d` iam：UserResponse.is_active → serde rename `isactive`（alias 保留 is_active）；list_users/get_user 批量 JOIN core_user_roles→core_roles 取真实角色名（替代硬编码 ["user"]）。
-  - `a7147b0c0a` doc/file：FileInfo.mime_type → rename `content_type`；uploader_id → rename `created_by`；补发 filename/original_filename 字段。
-  - `ae8333c164` flow：list_tasks/get_task SQL LEFT JOIN iam.users 出 assignee_name，node_name 兜底=node_id。
+- ✅ 核销（2026-10-19 核查，三处均已在 main 落地，旧 dangling commit `801cf8872d/a7147b0c0a/ae8333c164` 不采用、改动已被重新实现进主线；`cargo check -p topems-unified-core --lib` 绿）：
+  - iam：`user/models.rs:72` UserResponse.is_active → serde rename `isactive`（alias 保留 is_active）；`user/crud.rs:94` list_users 批量 JOIN core_user_roles→core_roles 取真实角色名（替代硬编码 ["user"]），get_user 同路径。
+  - doc：Document/Template 走 `content_type`/`created_by`（DB 真实列 `mime_type` 保留，前端 `schemas/doc/document.tsx` 读 `content_type`）；`uploader_id` 零残留。
+  - flow：`flow/task.rs:106/142` list_tasks/get_task SQL LEFT JOIN iam.users 出 `assignee_name`（COALESCE full_name/username），node_display 走 LATERAL 兜底。
 - **menu 域冻结标注（P3 待批）**：svc/unified-core/src/modules/menu/handlers.rs 10 个 handler 完整（真实 SQL 列），但 routes/menu.rs 不存在 = HTTP 路由未挂载；前端 apps/web/src 零 /menu API 消费。判定：后端实现完整但未接线域。选项：(a) 补 routes/menu.rs 挂载 + 前端开页面；(b) P3 批 DROP handlers+models。待用户拍板，当前不接不挂不删。
