@@ -1,4 +1,5 @@
 use chrono::{DateTime, NaiveDate, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -14,7 +15,7 @@ pub struct PurchaseContract {
     pub sign_date: Option<NaiveDate>,
     pub effective_date: Option<NaiveDate>,
     pub expiry_date: Option<NaiveDate>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub currency: Option<String>,
     pub payment_terms: Option<String>,
     pub delivery_terms: Option<String>,
@@ -56,7 +57,7 @@ pub struct CreatePurchaseContractRequest {
     pub sign_date: Option<String>,
     pub effective_date: Option<String>,
     pub expiry_date: Option<String>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub currency: Option<String>,
     pub payment_terms: Option<String>,
     pub delivery_terms: Option<String>,
@@ -85,7 +86,7 @@ pub struct UpdatePurchaseContractRequest {
     pub sign_date: Option<String>,
     pub effective_date: Option<String>,
     pub expiry_date: Option<String>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub currency: Option<String>,
     pub payment_terms: Option<String>,
     pub delivery_terms: Option<String>,
@@ -108,6 +109,10 @@ pub struct PurchaseContractQueryParams {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn d(v: f64) -> Option<Decimal> {
+        Decimal::from_f64_retain(v)
+    }
 
     fn fixed_uuid() -> Uuid {
         Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -140,7 +145,7 @@ mod tests {
             sign_date: Some(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()),
             effective_date: Some(NaiveDate::from_ymd_opt(2026, 1, 15).unwrap()),
             expiry_date: Some(NaiveDate::from_ymd_opt(2027, 1, 14).unwrap()),
-            total_amount: Some(500000.0),
+            total_amount: d(500000.0),
             currency: Some("CNY".to_string()),
             payment_terms: Some("net30".to_string()),
             delivery_terms: Some("FOB".to_string()),
@@ -204,7 +209,7 @@ mod tests {
             sign_date: None,
             effective_date: None,
             expiry_date: None,
-            total_amount: Some(1.0),
+            total_amount: d(1.0),
             currency: None,
             payment_terms: None,
             delivery_terms: None,
@@ -254,7 +259,7 @@ mod tests {
             sign_date: Some("2026-01-01".to_string()),
             effective_date: None,
             expiry_date: Some("2027-01-01".to_string()),
-            total_amount: Some(10000.0),
+            total_amount: d(10000.0),
             currency: Some("CNY".to_string()),
             payment_terms: None,
             delivery_terms: None,
@@ -327,7 +332,7 @@ mod tests {
             sign_date: None,
             effective_date: None,
             expiry_date: None,
-            total_amount: Some(999.0),
+            total_amount: d(999.0),
             currency: None,
             payment_terms: Some("net60".to_string()),
             delivery_terms: None,

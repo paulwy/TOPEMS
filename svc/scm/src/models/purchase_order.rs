@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -10,7 +11,7 @@ pub struct PurchaseOrder {
     pub supplier_id: Option<Uuid>,
     pub order_date: DateTime<Utc>,
     pub delivery_date: Option<DateTime<Utc>>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub status: String,
     pub remarks: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -23,7 +24,7 @@ pub struct CreatePurchaseOrderRequest {
     pub supplier_id: Option<Uuid>,
     pub order_date: DateTime<Utc>,
     pub delivery_date: Option<DateTime<Utc>>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub remarks: Option<String>,
 }
 
@@ -31,7 +32,7 @@ pub struct CreatePurchaseOrderRequest {
 pub struct UpdatePurchaseOrderRequest {
     pub supplier_id: Option<Uuid>,
     pub delivery_date: Option<DateTime<Utc>>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub status: Option<String>,
     pub remarks: Option<String>,
 }
@@ -39,6 +40,10 @@ pub struct UpdatePurchaseOrderRequest {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn d(v: f64) -> Option<Decimal> {
+        Decimal::from_f64_retain(v)
+    }
 
     fn fixed_uuid() -> Uuid {
         Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -67,7 +72,7 @@ mod tests {
             supplier_id: Some(fixed_uuid()),
             order_date: fixed_dt(),
             delivery_date: Some(fixed_dt()),
-            total_amount: Some(12345.67),
+            total_amount: d(12345.67),
             status: "approved".to_string(),
             remarks: Some("urgent".to_string()),
             created_at: fixed_dt(),
@@ -127,7 +132,7 @@ mod tests {
             supplier_id: Some(fixed_uuid()),
             order_date: fixed_dt(),
             delivery_date: Some(fixed_dt()),
-            total_amount: Some(100.0),
+            total_amount: d(100.0),
             status: "pending".to_string(),
             remarks: Some("r".to_string()),
             created_at: fixed_dt(),
@@ -146,7 +151,7 @@ mod tests {
             supplier_id: Some(fixed_uuid()),
             order_date: fixed_dt(),
             delivery_date: Some(fixed_dt()),
-            total_amount: Some(500.0),
+            total_amount: d(500.0),
             remarks: Some("new order".to_string()),
         };
         roundtrip(&req);
@@ -185,7 +190,7 @@ mod tests {
         let req = UpdatePurchaseOrderRequest {
             supplier_id: Some(fixed_uuid()),
             delivery_date: None,
-            total_amount: Some(999.0),
+            total_amount: d(999.0),
             status: Some("approved".to_string()),
             remarks: None,
         };
@@ -193,7 +198,7 @@ mod tests {
         let back: UpdatePurchaseOrderRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(back.supplier_id, req.supplier_id);
         assert!(back.delivery_date.is_none());
-        assert_eq!(back.total_amount, Some(999.0));
+        assert_eq!(back.total_amount, d(999.0));
         assert_eq!(back.status, Some("approved".to_string()));
     }
 }

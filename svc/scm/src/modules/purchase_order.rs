@@ -15,7 +15,6 @@ use crate::models::purchase_order::{
 };
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
-use rust_decimal::prelude::FromPrimitive;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
@@ -633,9 +632,7 @@ pub async fn approve_order(
                 let order_id = order.id;
                 let order_no = order.order_number.clone();
                 let supplier_id = order.supplier_id;
-                let total_amount = order.total_amount.map(|v| {
-                    rust_decimal::Decimal::from_f64(v).unwrap_or(rust_decimal::Decimal::ZERO)
-                });
+                let total_amount = order.total_amount;
                 let approver_name_val = req.approver_name.clone().or(Some(claims.username.clone()));
                 let now_val = Utc::now();
                 let tenant_id = event_tenant_id;

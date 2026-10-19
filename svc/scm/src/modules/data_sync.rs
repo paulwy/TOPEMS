@@ -233,7 +233,7 @@ pub async fn create_inbound_from_purchase_internal(
 ) {
     let purchase_order = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
-        SELECT id, po_no AS order_number, supplier_id, order_date, delivery_date, total_amount::float8 AS total_amount, status, remarks, created_at, updated_at
+        SELECT id, po_no AS order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
         FROM scm.purchase_orders
         WHERE id = $1 AND status = 'approved' AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#),
@@ -1345,7 +1345,7 @@ pub async fn batch_sync_purchase_to_wms(
     let tenant_bind = tenant_bind_value(&claims);
     let approved_po = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
-        SELECT id, po_no AS order_number, supplier_id, order_date, delivery_date, total_amount::float8 AS total_amount, status, remarks, created_at, updated_at
+        SELECT id, po_no AS order_number, supplier_id, order_date, delivery_date, total_amount, status, remarks, created_at, updated_at
         FROM scm.purchase_orders
         WHERE status = 'approved' AND is_synced_to_wms = FALSE AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
         ORDER BY created_at ASC

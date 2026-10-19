@@ -33,7 +33,7 @@
 - [x] **P2 · crm.revenue / hrm.salary·new_salary 金额 Decimal** ✅ 完成（2026-10-20，见下方「批 E8」块）：NEW-P2-2 续，跨 crate 连库甄别后只改强类型 query_as 模型。闭环 `crm.customers.revenue`(18,2) 与 profile DTO、`hrm.contracts.salary`/`contract_renewals.new_salary`(18,2) f64→Decimal；crm lib 504、hrm lib 293 passed，check/clippy/fmt 绿。
 - [x] **P2 · 动态 Value 通道金额 Decimal（finance 收/付/银 + erp 银行账户）** ✅ 完成（2026-10-20，见下方「批 E9」块）：NEW-P2-2 续。hrm 其余工资面甄别全为 BigDecimal/Decimal/内存报表 DTO，零改动；改 finance `collection/payment_record/payable/receivable` 动态 `sqlx::query` 通道金额读/写为 Decimal（含账龄 SUM 聚合）、erp `bank_accounts.balance`(18,4)；finance 1087、erp 902 passed，check/clippy/fmt 绿。
 - [x] **P2 · tax_v56.rs 连库甄别** ✅ 完成（2026-10-20，见下方「批 E10」块）：六张 `finance_v56_tax_*` 表金额/比率/阈值列全为 double precision，模型 f64 匹配，**非错配、零改动**。
-- [x] **P2 · E11 全局收口反查（srm 闭环）** ✅ 部分完成（2026-10-20，见下方「批 E11a」块）：代码侧反查持久化边界 f64 + 连库核类型；闭环 srm `purchase_orders.total_amount`/`supplier_contracts.total_amount`(numeric, 裸读真错配) f64→Decimal，srm lib 559 passed、check/clippy/fmt 绿；scm/pm/mes/erp 残留甄别见 E11a 遗留。
+- [x] **P2 · E11 全局收口反查（srm + scm 主表）** ✅ 部分完成（2026-10-20，见下方「批 E11a/E11b」块）：代码侧反查持久化边界 f64 + 连库核类型；闭环 srm `purchase_orders/supplier_contracts.total_amount`、scm `purchase_orders/purchase_contracts/purchase_requisitions.total_amount`(numeric) f64→Decimal；srm 559、scm 337 passed，check/clippy/fmt 绿；scm 明细/报价与其余 crate 见 E11c 遗留。
 
 ---
 
@@ -218,6 +218,24 @@
   - pm `budgets`/`settlements` 主表模型已是 Decimal（E4-2 落地）；`project_benefit.rs`/`report.rs` 为响应聚合 DTO，待核非落库。
   - mes `analytics` cost 为 `(String,Option<f64>)` 动态聚合元组，非强类型模型；gis total_distance 是米（非金额）；`erp/consolidation.rs`、`erp/models/finance.rs` 待核 query_as（前者内存合并、后者仅 serde）。
   - 其余 wms 35、finance 58、erp 35、crm 19、hrm 20 numeric 列多数已 Decimal/动态通道，需代码侧反查收口。
+
+---
+
+## 批 E11b · scm 采购三主表金额 f64→Decimal（2026-10-20）✅ 完成 · 主表
+
+> 来源：E11a 遗留。代码侧反查 query_as 强类型模型 + 连库核 `information_schema.columns`；只改主表持久化，明细 item/报价/聚合仪表盘留 E11c。
+
+- **连库核 scm 主表**：`purchase_orders.total_amount`=numeric（裸读，真错配）、`purchase_contracts.total_amount`=numeric（原 `::float8` 规避，精度债）、`purchase_requisitions.total_amount`=numeric（只读，请求体无此字段）。
+- **改动（Option<f64>→Option<Decimal>）**：
+  - `models/purchase_order.rs`：`PurchaseOrder.total_amount` + Create/Update 请求体；`models/purchase_contract.rs`：`PurchaseContract.total_amount` + Create/Update 请求体（**Item 的 quantity/unit_price/amount 本批不动**）；`models/purchase_requisition.rs`：`PurchaseRequisition.total_amount`（只读）。
+  - SQL：`purchase_contract.rs` 主表 10 处 `total_amount::float8` 去规避；`data_sync.rs` 2 处 PO `total_amount::float8` 去规避；`purchase_order.rs` 审批事件 payload 去掉 `from_f64` 中转，直接用模型 Decimal；requisition SQL 本就裸读，无需改。
+  - 无负校验/算术，纯 bind/COALESCE(`$7::numeric`)/or 取值，类型随模型对齐。
+- **测试**：serde 字面量改 `Decimal::from_f64_retain` helper；JSON 反序列化断言用 `Decimal::from_str("1234.56")` 精确比较（避免 f64 尾差）。
+- **验证（-p topems-scm）**：check 0 error/unused；`cargo test --lib` **337 passed / 0 failed**；clippy -D correctness 0；fmt 绿。顺带清 srm E11a 测试 helper 的 unused `FromPrimitive` import（srm 复跑 559 passed）。
+- **E11c 遗留（scm 明细/报价，先连库+核 SQL 映射再定）**：
+  - `purchase_contract_items.unit_price/amount`、`purchase_requisition_items.unit_price/amount`、`purchase_items.unit_price/total_price`、`supplier_quotes.total_amount`、`supplier_quote_items.unit_price/total_price`（均 numeric，需区分强类型模型 vs JSON embedded/聚合）。
+  - **保留 f64（聚合/仪表盘，非结算）**：`supply_chain_dashboard`/`analytics`/`inventory_turnover`/`mrp`/`incoming_inspection` 的 SUM/AVG `::float8` 喂内存 DTO；`price_comparison.rs` 比价评分纯函数；`supplier_evaluation.price` 评分。
+  - 其余 crate：pm `project_benefit.rs`/`report.rs` 聚合 DTO、mes analytics 元组、erp consolidation/finance.rs 待核 query_as；wms/finance/erp 长尾代码侧反查。
 
 ---
 

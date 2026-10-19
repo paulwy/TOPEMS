@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -14,7 +15,7 @@ pub struct PurchaseRequisition {
     pub department_name: Option<String>,
     pub request_date: DateTime<Utc>,
     pub required_date: Option<DateTime<Utc>>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub currency: Option<String>,
     pub status: String,
     pub priority: Option<String>,
@@ -81,6 +82,11 @@ pub struct PurchaseRequisitionQueryParams {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
+
+    fn d(v: f64) -> Option<Decimal> {
+        Decimal::from_f64_retain(v)
+    }
 
     fn fixed_uuid() -> Uuid {
         Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -113,7 +119,7 @@ mod tests {
             department_name: Some("生产部".to_string()),
             request_date: fixed_dt(),
             required_date: Some(fixed_dt()),
-            total_amount: Some(99999.99),
+            total_amount: d(99999.99),
             currency: Some("CNY".to_string()),
             status: "pending".to_string(),
             priority: Some("high".to_string()),
@@ -312,6 +318,6 @@ mod tests {
         assert_eq!(r.requisition_no, Some("PR-JSON-001".to_string()));
         assert_eq!(r.status, "approved");
         assert_eq!(r.priority, Some("high".to_string()));
-        assert_eq!(r.total_amount, Some(1234.56));
+        assert_eq!(r.total_amount, Decimal::from_str("1234.56").ok());
     }
 }

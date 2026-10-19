@@ -50,7 +50,6 @@ mod tests {
     use super::*;
 
     fn d(v: f64) -> Option<Decimal> {
-        use rust_decimal::prelude::FromPrimitive;
         Decimal::from_f64_retain(v)
     }
 
