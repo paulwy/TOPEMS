@@ -33,7 +33,11 @@ import {
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { WMS_PATHS } from '@/modules/wms/config';
 import { inboundOrderApi } from '@/api/wms/inbound';
-import type { InboundOrder as ApiInboundOrder } from '@/api/wms/types';
+import type {
+  InboundOrder as ApiInboundOrder,
+  CreateInboundOrderRequest,
+  UpdateInboundOrderRequest,
+} from '@/api/wms/types';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -81,21 +85,37 @@ interface InboundOrder {
 }
 
 // Mock 数据
-// 将 API 返回的 InboundOrder 类型映射为页面使用的 InboundOrder 类型
-const mapApiInboundOrders = (apiOrders: ApiInboundOrder[]): InboundOrder[] => {
+// 将 API 返回的 InboundOrder 类型映射为页面使用的 InboundOrder 类型。
+// 部分历史接口使用驼峰别名，收窄为可选字段（ApiInboundOrderCompat），避免 `as any`。
+type InboundTab = 'all' | 'pending' | 'in_progress' | 'completed';
+type ApiInboundOrderCompat = ApiInboundOrder & {
+  order_no?: string;
+  orderNo?: string;
+  supplierName?: string;
+  warehouse?: string;
+  totalQuantity?: number;
+  totalAmount?: number;
+  expectedDate?: string;
+  received_date?: string;
+  receivedDate?: string;
+  receiver?: string;
+  receiverName?: string;
+  remark?: string;
+};
+
+const mapApiInboundOrders = (apiOrders: ApiInboundOrderCompat[]): InboundOrder[] => {
   return apiOrders.map((o, index) => ({
     id: o.id,
-    order_no:
-      (o as any).order_no || (o as any).orderNo || `IN2026${String(index + 1).padStart(5, '0')}`,
-    supplier_name: (o as any).supplier_name || (o as any).supplierName || '-',
-    warehouse: (o as any).warehouse || '-',
-    status: ((o as any).status as InboundOrder['status']) || 'pending',
-    total_quantity: (o as any).total_quantity || (o as any).totalQuantity || 0,
-    total_amount: (o as any).total_amount || (o as any).totalAmount || 0,
-    expected_date: (o as any).expected_date || (o as any).expectedDate || '-',
-    received_date: (o as any).received_date || (o as any).receivedDate || '-',
-    receiver: (o as any).receiver || (o as any).receiverName || '-',
-    remark: (o as any).remark || '',
+    order_no: o.order_no || o.orderNo || `IN2026${String(index + 1).padStart(5, '0')}`,
+    supplier_name: o.supplier_name || o.supplierName || '-',
+    warehouse: o.warehouse || '-',
+    status: (o.status as InboundOrder['status']) || 'pending',
+    total_quantity: o.total_quantity || o.totalQuantity || 0,
+    total_amount: o.total_amount || o.totalAmount || 0,
+    expected_date: o.expected_date || o.expectedDate || '-',
+    received_date: o.received_date || o.receivedDate || '-',
+    receiver: o.receiver || o.receiverName || '-',
+    remark: o.remark || '',
     created_at: o.created_at || new Date().toISOString(),
   }));
 };
@@ -201,9 +221,7 @@ const WmsInboundOrderPage: React.FC = () => {
     },
   ];
 
-  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'in_progress' | 'completed'>(
-    'all'
-  );
+  const [activeTab, setActiveTab] = useState<InboundTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
@@ -228,7 +246,7 @@ const WmsInboundOrderPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; warehouse?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -250,7 +268,11 @@ const WmsInboundOrderPage: React.FC = () => {
           apiOrders = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData.data as any;
+          const dataObj = resData.data as {
+            list?: ApiInboundOrder[];
+            items?: ApiInboundOrder[];
+            total?: number;
+          };
           apiOrders = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -307,13 +329,13 @@ const WmsInboundOrderPage: React.FC = () => {
     mutationFn: async (data: Partial<InboundOrder>) => {
       try {
         await inboundOrderApi.create({
-          order_no: (data as any).order_no,
-          supplier_name: (data as any).supplier_name,
-          warehouse: (data as any).warehouse,
+          order_no: data.order_no,
+          supplier_name: data.supplier_name,
+          warehouse: data.warehouse,
           status: data.status,
-          expected_date: (data as any).expected_date,
-          total_amount: (data as any).total_amount,
-        } as any);
+          expected_date: data.expected_date,
+          total_amount: data.total_amount,
+        } as unknown as CreateInboundOrderRequest);
       } catch (e) {
         console.warn('[WMS Inbound Orders] Create API unavailable, using mock create:', e);
       }
@@ -335,8 +357,8 @@ const WmsInboundOrderPage: React.FC = () => {
       try {
         await inboundOrderApi.update(id, {
           status: data.status,
-          actual_date: (data as any).actual_date,
-        } as any);
+          actual_date: data.actual_date,
+        } as unknown as UpdateInboundOrderRequest);
       } catch (e) {
         console.warn('[WMS Inbound Orders] Update API unavailable, using mock update:', e);
       }
@@ -355,7 +377,7 @@ const WmsInboundOrderPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredOrders = orders;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedOrders = filteredOrders;
 
@@ -621,7 +643,7 @@ const WmsInboundOrderPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as InboundTab)}
         />
       </ListPageTemplate>
 

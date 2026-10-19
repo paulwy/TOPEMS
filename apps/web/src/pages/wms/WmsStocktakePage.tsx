@@ -33,7 +33,7 @@ import {
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { WMS_PATHS } from '@/modules/wms/config';
 import { stockTakeApi } from '@/api/wms/stocktake';
-import type { StockTake as ApiStockTake } from '@/api/wms/types';
+import type { StockTake as ApiStockTake, CreateStockTakeRequest } from '@/api/wms/types';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -79,26 +79,52 @@ interface StocktakeOrder {
 }
 
 // Mock 数据
-// 将 API 返回的 StockTake 类型映射为页面使用的 StocktakeOrder 类型
-const mapApiStocktakes = (apiRecords: ApiStockTake[]): StocktakeOrder[] => {
+// 将 API 返回的 StockTake 类型映射为页面使用的 StocktakeOrder 类型。
+// 部分历史接口使用驼峰别名，收窄为可选字段（ApiStockTakeCompat），避免 `as any`。
+type StocktakeTab = 'all' | 'draft' | 'in_progress' | 'completed';
+type ApiStockTakeCompat = ApiStockTake & {
+  order_no?: string;
+  stock_take_no?: string;
+  title?: string;
+  name?: string;
+  warehouse?: string;
+  warehouse_name?: string;
+  type?: string;
+  total_items?: number;
+  counted_items?: number;
+  discrepancy_items?: number;
+  totalItems?: number;
+  countedItems?: number;
+  discrepancyItems?: number;
+  plannedDate?: string;
+  start_date?: string;
+  completed_date?: string;
+  completedDate?: string;
+  creator?: string;
+  creatorName?: string;
+  remark?: string;
+};
+
+const mapApiStocktakes = (apiRecords: ApiStockTakeCompat[]): StocktakeOrder[] => {
   return apiRecords.map((r, index) => ({
     id: r.id,
     order_no:
-      (r as any).order_no ||
-      (r as any).stock_take_no ||
+      r.order_no ||
+      r.stock_take_no ||
+      r.stock_take_number ||
       `ST2026${String(index + 1).padStart(5, '0')}`,
-    title: (r as any).title || (r as any).name || '-',
-    warehouse: (r as any).warehouse || (r as any).warehouse_name || '-',
-    status: ((r as any).status as StocktakeOrder['status']) || 'draft',
-    type: ((r as any).type as StocktakeOrder['type']) || 'full',
-    total_items: (r as any).total_items || (r as any).totalItems || 0,
-    counted_items: (r as any).counted_items || (r as any).countedItems || 0,
-    discrepancy_items: (r as any).discrepancy_items || (r as any).discrepancyItems || 0,
-    planned_date: (r as any).planned_date || (r as any).plannedDate || '-',
-    start_date: (r as any).start_date || (r as any).startDate || '-',
-    completed_date: (r as any).completed_date || (r as any).completedDate || '-',
-    creator: (r as any).creator || (r as any).creatorName || '-',
-    remark: (r as any).remark || '',
+    title: r.title || r.name || '-',
+    warehouse: r.warehouse || r.warehouse_name || '-',
+    status: (r.status as StocktakeOrder['status']) || 'draft',
+    type: (r.type as StocktakeOrder['type']) || 'full',
+    total_items: r.total_items || r.totalItems || r.totalitems || 0,
+    counted_items: r.counted_items || r.countedItems || r.counteditems || 0,
+    discrepancy_items: r.discrepancy_items || r.discrepancyItems || r.discrepancyitems || 0,
+    planned_date: r.planned_date || r.plannedDate || '-',
+    start_date: r.start_date || r.actual_date || '-',
+    completed_date: r.completed_date || r.completedDate || '-',
+    creator: r.creator || r.creatorName || '-',
+    remark: r.remark || '',
     created_at: r.created_at || new Date().toISOString(),
   }));
 };
@@ -221,7 +247,7 @@ const WmsStocktakePage: React.FC = () => {
     },
   ];
 
-  const [activeTab, setActiveTab] = useState<'all' | 'draft' | 'in_progress' | 'completed'>('all');
+  const [activeTab, setActiveTab] = useState<StocktakeTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
@@ -245,7 +271,7 @@ const WmsStocktakePage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; warehouse?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -265,7 +291,11 @@ const WmsStocktakePage: React.FC = () => {
           apiRecords = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData.data as any;
+          const dataObj = resData.data as {
+            list?: ApiStockTake[];
+            items?: ApiStockTake[];
+            total?: number;
+          };
           apiRecords = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -321,13 +351,13 @@ const WmsStocktakePage: React.FC = () => {
     mutationFn: async (data: Partial<StocktakeOrder>) => {
       try {
         await stockTakeApi.create({
-          order_no: (data as any).order_no,
-          warehouse: (data as any).warehouse,
+          order_no: data.order_no,
+          warehouse: data.warehouse,
           status: data.status,
-          start_date: (data as any).start_date,
-          end_date: (data as any).end_date,
-          type: (data as any).type,
-        } as any);
+          start_date: data.start_date,
+          end_date: data.end_date,
+          type: data.type,
+        } as unknown as CreateStockTakeRequest);
       } catch (e) {
         console.warn('[WMS Stocktake] Create API unavailable, using mock create:', e);
       }
@@ -349,8 +379,8 @@ const WmsStocktakePage: React.FC = () => {
       try {
         await stockTakeApi.update(id, {
           status: data.status,
-          end_date: (data as any).end_date,
-        } as any);
+          end_date: data.end_date,
+        } as unknown as Partial<ApiStockTake>);
       } catch (e) {
         console.warn('[WMS Stocktake] Update API unavailable, using mock update:', e);
       }
@@ -369,7 +399,7 @@ const WmsStocktakePage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredOrders = orders;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedOrders = filteredOrders;
 
@@ -695,7 +725,7 @@ const WmsStocktakePage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as StocktakeTab)}
         />
       </ListPageTemplate>
 

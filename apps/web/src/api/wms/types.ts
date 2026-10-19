@@ -158,7 +158,7 @@ export interface ReceiveItemRequest {
   received_quantity: number;
 }
 
-interface UpdateInboundOrderRequest {
+export interface UpdateInboundOrderRequest {
   order_number?: string;
   order_type?: string;
   warehouse_id?: string;
@@ -272,7 +272,7 @@ export interface CreateOutboundOrderRequest {
   items: CreateOutboundOrderItemRequest[];
 }
 
-interface UpdateOutboundOrderRequest {
+export interface UpdateOutboundOrderRequest {
   order_number?: string;
   order_type?: string;
   warehouse_id?: string;

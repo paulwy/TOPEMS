@@ -34,7 +34,11 @@ import {
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { WMS_PATHS } from '@/modules/wms/config';
 import { outboundOrderApi } from '@/api/wms/outbound';
-import type { OutboundOrder as ApiOutboundOrder } from '@/api/wms/types';
+import type {
+  OutboundOrder as ApiOutboundOrder,
+  CreateOutboundOrderRequest,
+  UpdateOutboundOrderRequest,
+} from '@/api/wms/types';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -84,22 +88,38 @@ interface OutboundOrder {
 }
 
 // Mock 数据
-// 将 API 返回的 OutboundOrder 类型映射为页面使用的 OutboundOrder 类型
-const mapApiOutboundOrders = (apiOrders: ApiOutboundOrder[]): OutboundOrder[] => {
+// 将 API 返回的 OutboundOrder 类型映射为页面使用的 OutboundOrder 类型。
+// 部分历史接口使用驼峰别名，收窄为可选字段（ApiOutboundOrderCompat），避免 `as any`。
+type OutboundTab = 'all' | 'pending' | 'picking' | 'shipped' | 'completed';
+type ApiOutboundOrderCompat = ApiOutboundOrder & {
+  order_no?: string;
+  orderNo?: string;
+  customerName?: string;
+  warehouse?: string;
+  totalQuantity?: number;
+  totalAmount?: number;
+  expectedDate?: string;
+  shipped_date?: string;
+  shippedDate?: string;
+  shipper?: string;
+  shipperName?: string;
+  remark?: string;
+};
+
+const mapApiOutboundOrders = (apiOrders: ApiOutboundOrderCompat[]): OutboundOrder[] => {
   return apiOrders.map((o, index) => ({
     id: o.id,
-    order_no:
-      (o as any).order_no || (o as any).orderNo || `OUT2026${String(index + 1).padStart(5, '0')}`,
-    customer_name: (o as any).customer_name || (o as any).customerName || '-',
-    warehouse: (o as any).warehouse || '-',
-    status: ((o as any).status as OutboundOrder['status']) || 'pending',
-    priority: ((o as any).priority as OutboundOrder['priority']) || 'normal',
-    total_quantity: (o as any).total_quantity || (o as any).totalQuantity || 0,
-    total_amount: (o as any).total_amount || (o as any).totalAmount || 0,
-    expected_date: (o as any).expected_date || (o as any).expectedDate || '-',
-    shipped_date: (o as any).shipped_date || (o as any).shippedDate || '-',
-    shipper: (o as any).shipper || (o as any).shipperName || '-',
-    remark: (o as any).remark || '',
+    order_no: o.order_no || o.orderNo || `OUT2026${String(index + 1).padStart(5, '0')}`,
+    customer_name: o.customer_name || o.customerName || '-',
+    warehouse: o.warehouse || '-',
+    status: (o.status as OutboundOrder['status']) || 'pending',
+    priority: (o.priority as OutboundOrder['priority']) || 'normal',
+    total_quantity: o.total_quantity || o.totalQuantity || 0,
+    total_amount: o.total_amount || o.totalAmount || 0,
+    expected_date: o.expected_date || o.expectedDate || '-',
+    shipped_date: o.shipped_date || o.shippedDate || '-',
+    shipper: o.shipper || o.shipperName || '-',
+    remark: o.remark || '',
     created_at: o.created_at || new Date().toISOString(),
   }));
 };
@@ -222,9 +242,7 @@ const WmsOutboundOrderPage: React.FC = () => {
     },
   ];
 
-  const [activeTab, setActiveTab] = useState<
-    'all' | 'pending' | 'picking' | 'shipped' | 'completed'
-  >('all');
+  const [activeTab, setActiveTab] = useState<OutboundTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
@@ -248,7 +266,7 @@ const WmsOutboundOrderPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; warehouse?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -270,7 +288,11 @@ const WmsOutboundOrderPage: React.FC = () => {
           apiOrders = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData.data as any;
+          const dataObj = resData.data as {
+            list?: ApiOutboundOrder[];
+            items?: ApiOutboundOrder[];
+            total?: number;
+          };
           apiOrders = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -326,13 +348,13 @@ const WmsOutboundOrderPage: React.FC = () => {
     mutationFn: async (data: Partial<OutboundOrder>) => {
       try {
         await outboundOrderApi.create({
-          order_no: (data as any).order_no,
-          customer_name: (data as any).customer_name,
-          warehouse: (data as any).warehouse,
+          order_no: data.order_no,
+          customer_name: data.customer_name,
+          warehouse: data.warehouse,
           status: data.status,
-          expected_date: (data as any).expected_date,
-          total_amount: (data as any).total_amount,
-        } as any);
+          expected_date: data.expected_date,
+          total_amount: data.total_amount,
+        } as unknown as CreateOutboundOrderRequest);
       } catch (e) {
         console.warn('[WMS Outbound Orders] Create API unavailable, using mock create:', e);
       }
@@ -354,8 +376,8 @@ const WmsOutboundOrderPage: React.FC = () => {
       try {
         await outboundOrderApi.update(id, {
           status: data.status,
-          actual_date: (data as any).actual_date,
-        } as any);
+          actual_date: data.actual_date,
+        } as unknown as UpdateOutboundOrderRequest);
       } catch (e) {
         console.warn('[WMS Outbound Orders] Update API unavailable, using mock update:', e);
       }
@@ -374,7 +396,7 @@ const WmsOutboundOrderPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredOrders = orders;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedOrders = filteredOrders;
 
@@ -638,7 +660,7 @@ const WmsOutboundOrderPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as OutboundTab)}
         />
       </ListPageTemplate>
 
