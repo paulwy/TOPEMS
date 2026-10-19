@@ -273,6 +273,13 @@
 - **pm**：`pm.project_benefits` 的 planned_cost/actual_cost/planned_value/earned_value/actual_cost_eva/cpi/spi/eac 等全 double precision（匹配，不改）；`ProjectReport.budget_total/budget_variance` 为内存聚合（SELECT 无此列）；`project_resources` 模型已是 Option\<Decimal\>；`ContractPaymentSchedule.actual_payment_amount`(numeric) 未被 SELECT/写入（无边界，不改）。
 - **遗留边缘（登记，不属强类型持久化边界）**：`wms.replenishment_orders/items` 动态 JSON bind；`rd.project_members.cost_rate` 动态；后续若统一强类型化再处理。
 
+### E11 收尾补漏 · 内联 struct + 非财务 crate 连库甄别（2026-10-20）✅
+
+- **真错配修复 1 · crm**：`SegmentedCustomer.revenue`（query_as 读 `crm.customers.revenue` numeric）f64→Option\<Decimal\>，高/中价值阈值比较改 Decimal；`CustomerFinanceInfo` 为内存 DTO、`UpdateCustomerFinanceRequest` 经 `to_bd` 转 BigDecimal 落库（在线安全），不改。crm 504 passed。
+- **真错配修复 2 · lims**：`lims.maintenance_records.cost`=numeric 原 `cost::float8` 规避，去 float8，MaintenanceRecord/Create/Update 请求体 cost→Option\<Decimal\>（新增 rust_decimal serde 依赖）。lims 149 passed。
+- **甄别不改**：ai governance/cost_metering/model_admin（内存聚合，cost 硬编码 0.0）；erp procurement_e2e/material_calc/erp_adapter（内存/外部 DTO）；master-data commercial_v55（price_monthly/total_amount/cost_per_mb/compensation_amount 全 float8）；mes production_cost（内存聚合）、equipment 写路径经 f64_to_big_decimal；portal graphql/adaptive/optimizer（内存估算 DTO）；monitor error_budget（监控指标非货币）；unified-core TenantInvoice（无 SQL DTO）；scm quality/price_score（评分）。
+- **登记读侧 query! 动态（在线安全仅尾差，不扩改）**：finance sales_invoice `total_amount/paid_amount/amount::float8`、finance/mod.rs debit/credit_balance；统一强类型化时再去 float8。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

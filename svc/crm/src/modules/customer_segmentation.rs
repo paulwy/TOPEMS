@@ -42,7 +42,7 @@ pub struct SegmentedCustomer {
     pub status: String,
     pub score: Option<i32>,
     pub score_level: Option<String>,
-    pub revenue: Option<f64>,
+    pub revenue: Option<rust_decimal::Decimal>,
     pub segment_tags: Vec<String>,
 }
 
@@ -765,9 +765,9 @@ fn generate_segment_tags(customer: &SegmentedCustomer) -> Vec<String> {
     }
 
     if let Some(revenue) = customer.revenue {
-        if revenue >= 1_000_000.0 {
+        if revenue >= rust_decimal::Decimal::new(1_000_000, 0) {
             tags.push("高价值".to_string());
-        } else if revenue >= 100_000.0 {
+        } else if revenue >= rust_decimal::Decimal::new(100_000, 0) {
             tags.push("中价值".to_string());
         } else {
             tags.push("潜力客户".to_string());
