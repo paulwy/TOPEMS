@@ -84,7 +84,12 @@ async fn create_group_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -
         icon: Some("home".to_string()),
         sort_order: Some(1),
     };
-    let resp = create_group(State(test_app_state(pool.clone())), Json(req)).await;
+    let resp = create_group(
+        State(test_app_state(pool.clone())),
+        Extension(super_claims()),
+        Json(req),
+    )
+    .await;
     let data = resp
         .0
         .data
@@ -99,7 +104,12 @@ async fn create_group_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -
 #[sqlx::test(migrations = false)]
 async fn list_groups_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let resp = list_groups(State(test_app_state(pool)), Query(empty_group_query())).await;
+    let resp = list_groups(
+        State(test_app_state(pool)),
+        Extension(super_claims()),
+        Query(empty_group_query()),
+    )
+    .await;
     let data = resp
         .0
         .data
@@ -114,6 +124,7 @@ async fn create_group_and_list(pool: sqlx::PgPool) {
 
     let resp = list_groups(
         State(test_app_state(pool.clone())),
+        Extension(super_claims()),
         Query(empty_group_query()),
     )
     .await;
@@ -140,7 +151,12 @@ async fn delete_group_removes(pool: sqlx::PgPool) {
     .await;
     assert!(del.0.data.is_some(), "delete failed: {:?}", del.0.message);
 
-    let resp = list_groups(State(test_app_state(pool)), Query(empty_group_query())).await;
+    let resp = list_groups(
+        State(test_app_state(pool)),
+        Extension(super_claims()),
+        Query(empty_group_query()),
+    )
+    .await;
     let data = resp
         .0
         .data
@@ -151,7 +167,12 @@ async fn delete_group_removes(pool: sqlx::PgPool) {
 #[sqlx::test(migrations = false)]
 async fn list_menus_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
-    let resp = list_menus(State(test_app_state(pool)), Query(empty_menu_query())).await;
+    let resp = list_menus(
+        State(test_app_state(pool)),
+        Extension(super_claims()),
+        Query(empty_menu_query()),
+    )
+    .await;
     let data = resp
         .0
         .data
@@ -174,7 +195,12 @@ async fn create_menu_with_group_and_list(pool: sqlx::PgPool) {
         sort_order: Some(1),
         permissions: Some(serde_json::json!(["dashboard:read"])),
     };
-    let created = create_menu(State(test_app_state(pool.clone())), Json(req)).await;
+    let created = create_menu(
+        State(test_app_state(pool.clone())),
+        Extension(super_claims()),
+        Json(req),
+    )
+    .await;
     let data = created
         .0
         .data
@@ -183,7 +209,12 @@ async fn create_menu_with_group_and_list(pool: sqlx::PgPool) {
     assert_eq!(menu["name"], "仪表盘");
     assert_eq!(menu["code"], "dashboard");
 
-    let resp = list_menus(State(test_app_state(pool)), Query(empty_menu_query())).await;
+    let resp = list_menus(
+        State(test_app_state(pool)),
+        Extension(super_claims()),
+        Query(empty_menu_query()),
+    )
+    .await;
     let list = resp
         .0
         .data
@@ -206,7 +237,12 @@ async fn get_menu_returns(pool: sqlx::PgPool) {
         sort_order: None,
         permissions: None,
     };
-    let created = create_menu(State(test_app_state(pool.clone())), Json(req)).await;
+    let created = create_menu(
+        State(test_app_state(pool.clone())),
+        Extension(super_claims()),
+        Json(req),
+    )
+    .await;
     let menu_id: uuid::Uuid = serde_json::to_value(
         created
             .0
