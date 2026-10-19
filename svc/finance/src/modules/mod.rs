@@ -4088,7 +4088,10 @@ pub async fn get_opening_balances(
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     let company_id = params
         .get("company_id")
         .and_then(|v| v.as_str())
@@ -4109,7 +4112,21 @@ pub async fn get_opening_balances(
         .unwrap_or(20);
     let offset = (page - 1).max(0) * page_size;
 
-    let rows: Result<Vec<(Uuid, Uuid, String, Option<String>, String, f64, f64, Option<Uuid>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>, sqlx::Error> = sqlx::query_as(only_own_schema_query!(
+    let rows: Result<
+        Vec<(
+            Uuid,
+            Uuid,
+            String,
+            Option<String>,
+            String,
+            f64,
+            f64,
+            Option<Uuid>,
+            chrono::DateTime<chrono::Utc>,
+            chrono::DateTime<chrono::Utc>,
+        )>,
+        sqlx::Error,
+    > = sqlx::query_as(only_own_schema_query!(
         "erp",
         r#"SELECT id, company_id, subject_code, subject_name, period,
                    debit_balance::float8, credit_balance::float8, tenant_id, created_at, updated_at
@@ -4148,14 +4165,16 @@ pub async fn get_opening_balances(
 
             let list: Vec<serde_json::Value> = items
                 .into_iter()
-                .map(|(id, cid, code, name, p, debit, credit, tid, created_at, updated_at)| {
-                    serde_json::json!({
-                        "id": id, "company_id": cid, "subject_code": code,
-                        "subject_name": name, "period": p,
-                        "debit_balance": debit, "credit_balance": credit,
-                        "tenant_id": tid, "created_at": created_at, "updated_at": updated_at,
-                    })
-                })
+                .map(
+                    |(id, cid, code, name, p, debit, credit, tid, created_at, updated_at)| {
+                        serde_json::json!({
+                            "id": id, "company_id": cid, "subject_code": code,
+                            "subject_name": name, "period": p,
+                            "debit_balance": debit, "credit_balance": credit,
+                            "tenant_id": tid, "created_at": created_at, "updated_at": updated_at,
+                        })
+                    },
+                )
                 .collect();
             Json(ApiResponse::success(
                 serde_json::json!({"items": list, "total": total}),
@@ -4174,7 +4193,10 @@ pub async fn create_opening_balances(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     let company_id = req
         .get("company_id")
         .and_then(|v| v.as_str())
@@ -4195,8 +4217,14 @@ pub async fn create_opening_balances(
         .and_then(|v| v.as_str())
         .unwrap_or_default()
         .replace('-', "");
-    let debit_balance: f64 = req.get("debit_balance").and_then(|v| v.as_f64()).unwrap_or(0.0);
-    let credit_balance: f64 = req.get("credit_balance").and_then(|v| v.as_f64()).unwrap_or(0.0);
+    let debit_balance: f64 = req
+        .get("debit_balance")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0);
+    let credit_balance: f64 = req
+        .get("credit_balance")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0);
     // 科目名称（查不到则空）
     let subject_name: Option<String> = sqlx::query_scalar(only_own_schema_query!(
         "finance",
@@ -4247,7 +4275,10 @@ pub async fn set_opening_balance(
     Path(account_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     // 由科目 id 解析 code/name/组织
     let subject: Option<(String, Option<String>, Option<Uuid>)> = sqlx::query_as(
         only_own_schema_query!(
@@ -4273,8 +4304,14 @@ pub async fn set_opening_balance(
         .and_then(|v| v.as_str())
         .unwrap_or_default()
         .replace('-', "");
-    let debit_balance: f64 = req.get("debit_balance").and_then(|v| v.as_f64()).unwrap_or(0.0);
-    let credit_balance: f64 = req.get("credit_balance").and_then(|v| v.as_f64()).unwrap_or(0.0);
+    let debit_balance: f64 = req
+        .get("debit_balance")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0);
+    let credit_balance: f64 = req
+        .get("credit_balance")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0);
 
     // 覆盖式更新：先软删旧行，再插入新行
     let _ = sqlx::query(only_own_schema_query!(
@@ -4326,7 +4363,10 @@ pub async fn carry_forward_opening_balance(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<String>> {
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     let from_period = req
         .get("from_period")
         .and_then(|v| v.as_str())
