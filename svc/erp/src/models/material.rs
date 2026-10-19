@@ -74,7 +74,7 @@ pub struct Customer {
     pub customer_type: String,
     pub industry: Option<String>,
     pub scale: Option<String>,
-    pub credit_limit: f64,
+    pub credit_limit: Decimal,
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -100,7 +100,7 @@ pub struct CreateCustomerRequest {
     pub customer_type: String,
     pub industry: Option<String>,
     pub scale: Option<String>,
-    pub credit_limit: Option<f64>,
+    pub credit_limit: Option<Decimal>,
     pub status: Option<String>,
 }
 
@@ -119,7 +119,7 @@ pub struct UpdateCustomerRequest {
     pub customer_type: Option<String>,
     pub industry: Option<String>,
     pub scale: Option<String>,
-    pub credit_limit: Option<f64>,
+    pub credit_limit: Option<Decimal>,
     pub status: Option<String>,
 }
 
@@ -514,7 +514,7 @@ mod tests {
             customer_type: "enterprise".into(),
             industry: Some("IT".into()),
             scale: Some("large".into()),
-            credit_limit: 500000.0,
+            credit_limit: Decimal::from(500000u64),
             status: "active".into(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
@@ -547,7 +547,7 @@ mod tests {
             customer_type: "individual".into(),
             industry: None,
             scale: None,
-            credit_limit: 0.0,
+            credit_limit: Decimal::ZERO,
             status: "inactive".into(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
@@ -557,7 +557,7 @@ mod tests {
         };
         let s = serde_json::to_string(&c).unwrap();
         let c2: Customer = serde_json::from_str(&s).unwrap();
-        assert_eq!(c2.credit_limit, 0.0);
+        assert_eq!(c2.credit_limit, Decimal::ZERO);
         assert!(c2.email.is_none());
     }
 
@@ -578,7 +578,7 @@ mod tests {
             customer_type: "x".into(),
             industry: None,
             scale: None,
-            credit_limit: -1000.0,
+            credit_limit: -Decimal::from(1000u64),
             status: "active".into(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
@@ -588,7 +588,7 @@ mod tests {
         };
         let v = serde_json::to_value(&c).unwrap();
         let c2: Customer = serde_json::from_value(v).unwrap();
-        assert_eq!(c2.credit_limit, -1000.0);
+        assert_eq!(c2.credit_limit, -Decimal::from(1000u64));
     }
 
     #[test]
@@ -608,13 +608,13 @@ mod tests {
             customer_type: "vip".into(),
             industry: Some("制造".into()),
             scale: Some("medium".into()),
-            credit_limit: Some(10000.0),
+            credit_limit: Some(Decimal::from(10000u64)),
             status: Some("active".into()),
         };
         let v = serde_json::to_value(&r).unwrap();
         let r2: CreateCustomerRequest = serde_json::from_value(v).unwrap();
         assert_eq!(r2.customer_type, "vip");
-        assert_eq!(r2.credit_limit, Some(10000.0));
+        assert_eq!(r2.credit_limit, Some(Decimal::from(10000u64)));
     }
 
     #[test]
@@ -633,13 +633,13 @@ mod tests {
             customer_type: None,
             industry: None,
             scale: None,
-            credit_limit: Some(999.0),
+            credit_limit: Some(Decimal::from(999u64)),
             status: Some("inactive".into()),
         };
         let v = serde_json::to_value(&r).unwrap();
         let r2: UpdateCustomerRequest = serde_json::from_value(v).unwrap();
         assert_eq!(r2.name, Some("改名".into()));
-        assert_eq!(r2.credit_limit, Some(999.0));
+        assert_eq!(r2.credit_limit, Some(Decimal::from(999u64)));
     }
 
     // ========== Supplier ==========

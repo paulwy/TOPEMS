@@ -5,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
@@ -23,8 +24,8 @@ pub struct OpeningBalance {
     pub subject_code: String,
     pub subject_name: String,
     pub period: String,
-    pub debit_balance: f64,
-    pub credit_balance: f64,
+    pub debit_balance: Decimal,
+    pub credit_balance: Decimal,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -34,14 +35,14 @@ pub struct CreateOpeningBalanceRequest {
     pub company_id: Uuid,
     pub subject_code: String,
     pub period: String,
-    pub debit_balance: f64,
-    pub credit_balance: f64,
+    pub debit_balance: Decimal,
+    pub credit_balance: Decimal,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateOpeningBalanceRequest {
-    pub debit_balance: Option<f64>,
-    pub credit_balance: Option<f64>,
+    pub debit_balance: Option<Decimal>,
+    pub credit_balance: Option<Decimal>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -104,18 +105,19 @@ pub async fn list_opening_balances(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let result = sqlx::query_as::<_, OpeningBalance>(
-        only_own_schema_query!("erp", r#"
+    let result = sqlx::query_as::<_, OpeningBalance>(only_own_schema_query!(
+        "erp",
+        r#"
         SELECT ob.id, ob.company_id, ob.subject_code, ob.subject_name, ob.period, 
-               ob.debit_balance::float8 AS debit_balance, ob.credit_balance::float8 AS credit_balance, ob.created_at, ob.updated_at
+               ob.debit_balance, ob.credit_balance, ob.created_at, ob.updated_at
         FROM erp.opening_balances ob
         WHERE ($1::uuid IS NULL OR ob.company_id = $1)
           AND ($2::text IS NULL OR ob.period = $2)
           AND ($3::text IS NULL OR ob.subject_code = $3)
         ORDER BY ob.period DESC, ob.subject_code ASC
         LIMIT $4 OFFSET $5
-        "#),
-    )
+        "#
+    ))
     .bind(
         params
             .company_id
@@ -302,7 +304,7 @@ pub async fn get_opening_balance(
     };
     let result = sqlx::query_as::<_, OpeningBalance>(
         only_own_schema_query!("erp", r#"
-        SELECT id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at
+        SELECT id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at
         FROM erp.opening_balances WHERE id = $1
         "#),
     )
@@ -348,7 +350,7 @@ pub async fn update_opening_balance(
         None => unreachable!("rls txn missing"),
     };
     let existing = sqlx::query_as::<_, OpeningBalance>(
-        only_own_schema_query!("erp", "SELECT id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at FROM erp.opening_balances WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("erp", "SELECT id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at FROM erp.opening_balances WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -379,7 +381,7 @@ pub async fn update_opening_balance(
         only_own_schema_query!("erp", r#"
         UPDATE erp.opening_balances SET debit_balance = $2, credit_balance = $3, updated_at = $4
         WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-        RETURNING id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at
+        RETURNING id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -676,7 +678,7 @@ pub async fn carry_forward_opening_balance(
     let request_data = serde_json::to_value(&req).ok();
 
     let query = r#"
-        INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at, tenant_id)
+        INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at, tenant_id)
         SELECT uuid_generate_v4(), company_id, subject_code, subject_name, $2, debit_balance, credit_balance, NOW(), NOW(), COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')
         FROM erp.opening_balances
         WHERE period = $1
@@ -758,8 +760,8 @@ mod tests {
             subject_code: "1001".to_string(),
             subject_name: "库存现金".to_string(),
             period: "2024-01".to_string(),
-            debit_balance: 10000.0,
-            credit_balance: 0.0,
+            debit_balance: Decimal::from(10000u64),
+            credit_balance: Decimal::ZERO,
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
@@ -767,8 +769,8 @@ mod tests {
         assert_eq!(json["subject_code"], "1001");
         assert_eq!(json["subject_name"], "库存现金");
         assert_eq!(json["period"], "2024-01");
-        assert_eq!(json["debit_balance"], 10000.0);
-        assert_eq!(json["credit_balance"], 0.0);
+        assert_eq!(json["debit_balance"], serde_json::json!("10000"));
+        assert_eq!(json["credit_balance"], serde_json::json!("0"));
     }
 
     #[test]
@@ -783,23 +785,23 @@ mod tests {
         let request: CreateOpeningBalanceRequest = serde_json::from_str(json).unwrap();
         assert_eq!(request.subject_code, "1001");
         assert_eq!(request.period, "2024-01");
-        assert_eq!(request.debit_balance, 10000.0);
-        assert_eq!(request.credit_balance, 0.0);
+        assert_eq!(request.debit_balance, Decimal::from(10000u64));
+        assert_eq!(request.credit_balance, Decimal::ZERO);
     }
 
     #[test]
     fn test_update_opening_balance_request_deserialize() {
         let json = r#"{"debit_balance": 15000.0, "credit_balance": 500.0}"#;
         let request: UpdateOpeningBalanceRequest = serde_json::from_str(json).unwrap();
-        assert_eq!(request.debit_balance, Some(15000.0));
-        assert_eq!(request.credit_balance, Some(500.0));
+        assert_eq!(request.debit_balance, Some(Decimal::from(15000u64)));
+        assert_eq!(request.credit_balance, Some(Decimal::from(500u64)));
     }
 
     #[test]
     fn test_update_opening_balance_request_partial() {
         let json = r#"{"debit_balance": 20000.0}"#;
         let request: UpdateOpeningBalanceRequest = serde_json::from_str(json).unwrap();
-        assert_eq!(request.debit_balance, Some(20000.0));
+        assert_eq!(request.debit_balance, Some(Decimal::from(20000u64)));
         assert!(request.credit_balance.is_none());
     }
 

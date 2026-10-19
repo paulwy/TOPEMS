@@ -29,7 +29,7 @@
 - [x] **P1 · PM 金额 f64→Decimal（同结构体完整集）** ✅ 完成（2026-10-19，见下方「批 E4」块）：对应 10-19 重审 NEW-P1-1。project_expenses.amount、contracts.amount、contract_milestones.payment_amount/payment_percent、contract_payment_schedule.payment_amount/payment_percent 改 `rust_decimal::Decimal`；pm lib 497 passed、workspace check/clippy/fmt 绿。**遗留1连库复现已闭环**（TEMP TABLE 探针实证 Decimal↔numeric 往返、f64 解码 numeric 真实报错）；**遗留2 pm 其余 numeric 列已逐块甄别**：直接 query_as 映射的资源/结算 variance_percent/验收 score/报告取数 4 处改 Decimal，float8 的 EVM 列与内存聚合保留 f64（见「批 E4-遗留2」子块）。
 - [x] **P2 · 请求路径反序列化 panic 改错误返回** ✅ 完成（2026-10-20，见下方「批 E5」块）：对应 10-19 重审 NEW-P2-7。master-data `lineage_v52.rs` 两处反序列化 panic 改 `Result` 传播 `TopemsError::BusinessLogic`，删死函数 `simulation_from_row`；unified-core `business_tools` 宏内守卫 unwrap 改 `if let`；master-data 451 / unified-core 559 passed、check/clippy/fmt 绿。
 - [x] **P2 · sales_invoice/回款金额持久化边界 f64→Decimal** ✅ 完成（2026-10-20，见下方「批 E6」块）：对应 10-19 重审 NEW-P2-2。连库核 `finance.sales_invoices`(amount/tax/total/paid) 与 `finance.erp_collection_records.amount` 均 numeric(18,2)；发票主表四金额 + 回款 Out/Payload + 确认回写主表 paid_amount 链改 `rust_decimal::Decimal`，读 SQL 去 `::float8`；账龄/逾期内存聚合与导出 CSV 保留 f64；finance lib 1087 passed、check/clippy/fmt 绿。
-- [x] **P2 · 其余金额面连库甄别 + Material.unit_price Decimal** ✅ 完成（2026-10-20，见下方「批 E7」块）：对应 NEW-P2-2 续。逐模块连库甄别 DB 列类型：v58/v55/openapi/events/财务凭证均非 numeric 错配（DB=float8 或纯内存 DTO/serde 测试），不改；闭环 erp `Material.unit_price`（materials.unit_price numeric(18,4)）f64→Decimal；erp lib 902 passed、check/clippy/fmt 绿。
+- [x] **P2 · 其余金额面连库甄别 + 三处金额 Decimal** ✅ 完成（2026-10-20，见下方「批 E7」块）：对应 NEW-P2-2 续。逐模块连库甄别 DB 列类型：v58/v55/openapi/events/财务凭证/合并域(InternalTransaction/ConsolidationReport/Line 早已 Decimal) 均非 numeric 错配，不改；闭环 erp 三处持久化边界——`Material.unit_price`(18,4)、`OpeningBalance.debit/credit_balance`(18,4)、`Customer.credit_limit`(18,2) f64→Decimal；erp lib 902 passed、check/clippy/fmt 绿。
 
 ---
 
@@ -143,9 +143,14 @@
   - `erp/src/openapi.rs`：纯外部 API 抓取 DTO，无 sqlx/SELECT，不落库。
   - `finance/domain/events.rs`：领域事件内存 DTO，无持久化。
   - `erp/models/finance.rs` 的 `FinancialVoucher/VoucherItem`：仅 serde 往返测试构造，无 `query_as`、不从 DB 读。
-- **本批改（`erp/material` 持久化边界）**：`Material.unit_price`（`erp.materials.unit_price numeric(18,4)`）f64→`Decimal`，`Create/UpdateMaterialRequest.unit_price` 同步 Option<Decimal>；列表/详情/创建 RETURNING/UPDATE RETURNING 读 SQL 去 `unit_price::float8`，create/batch bind 默认值 `Decimal::ZERO`；`safety_stock`(数量)、`tax_rate`(比率) 保留 f64 与其 `::float8`。前端 `core/types.ts` unit_price 为 number，零改动。
+  - 合并域 `erp/models/consolidation.rs`：`InternalTransaction`、`ConsolidationReport`、`ConsolidationReportLine` 金额**早已是 Decimal**，非错配；`EliminationResult.total_eliminated` 是内存聚合结果，保留 f64。
+- **本批改（三处持久化边界，f64→`rust_decimal::Decimal`，读 SQL 去 `::float8`，bind 自动匹配）**：
+  - `Material.unit_price`（`erp.materials.unit_price numeric(18,4)`）+ `Create/UpdateMaterialRequest.unit_price` Option<Decimal>；`safety_stock`(数量)、`tax_rate`(比率) 保留 f64。
+  - `OpeningBalance.debit_balance/credit_balance`（`erp.opening_balances` numeric(18,4)）+ Create/Update payload；`default`/`unwrap_or` 走 Decimal，读 SQL 去 `::float8`。
+  - `Customer.credit_limit`（`erp.customers.credit_limit numeric(18,2)`）+ Create/Update payload；纯函数 `default_credit_limit(Option<Decimal>)→Decimal`（负值钳 0）同步改；全部读/RETURNING SQL 去 `credit_limit::float8`。
+  - 前端金额字段本就声明 `number`，零改动；Decimal 在本项目按字符串序列化为 JSON（与 E4/E6 既有行为一致）。
 - **验证**：`cargo check -p topems-erp --lib/--tests` exit 0；`cargo test -p topems-erp --lib` **902 passed / 0 failed**；clippy `-D correctness` exit 0；`cargo fmt --check` 干净。
-- **遗留（非本批，逐 struct 续做）**：实际 `query_as` 直连 numeric 列的 erp 模型——sales_orders(total/tax/payable/discount)、internal_transactions(amount/eliminated/remaining)、opening_balances(debit/credit)、consolidation_reports(八项)、assets(purchase_amount)、purchase_orders、payables/receivables、bank_accounts.balance——多已用 SQL `::float8` 规避（精度债非在线崩溃），需逐 struct 转 Decimal；tax_v56.rs 连库甄别；forecast/risk 仿真浮点保留 f64。
+- **遗留（非本批，逐 struct 续做）**：实际 `query_as` 直连 numeric 列的 erp 模型——sales_orders(total/tax/payable/discount)、assets(purchase_amount)、purchase_orders、payables/receivables、bank_accounts.balance；internal_transactions/consolidation_reports 模型已 Decimal 仅需复核 SQL；多已用 SQL `::float8` 规避（精度债非在线崩溃），逐 struct 转；tax_v56.rs 连库甄别；forecast/risk 仿真浮点保留 f64。
 
 ---
 

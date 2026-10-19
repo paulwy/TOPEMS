@@ -2,6 +2,8 @@
 //!
 //! 从 `customer.rs` handler 中提取的内联逻辑，便于单元测试与复用。
 
+use rust_decimal::Decimal;
+
 // ── 分页 ───────────────────────────────────────────────
 
 /// 将可选的分页参数归一化为 `(page, page_size, offset)`。
@@ -36,9 +38,9 @@ pub fn has_customer_filters(
 
 // ── 默认值 ─────────────────────────────────────────────
 
-/// 信用额度缺省 0.0，负值钳制为 0
-pub fn default_credit_limit(credit: Option<f64>) -> f64 {
-    credit.unwrap_or(0.0).max(0.0)
+/// 信用额度缺省 0，负值钳制为 0
+pub fn default_credit_limit(credit: Option<Decimal>) -> Decimal {
+    credit.unwrap_or(Decimal::ZERO).max(Decimal::ZERO)
 }
 
 /// 客户状态缺省 `"active"`
@@ -211,22 +213,28 @@ mod tests {
 
     #[test]
     fn test_credit_limit_none_defaults_zero() {
-        assert_eq!(default_credit_limit(None), 0.0);
+        assert_eq!(default_credit_limit(None), Decimal::ZERO);
     }
 
     #[test]
     fn test_credit_limit_some_value() {
-        assert_eq!(default_credit_limit(Some(50000.0)), 50000.0);
+        assert_eq!(
+            default_credit_limit(Some(Decimal::from(50000u64))),
+            Decimal::from(50000u64)
+        );
     }
 
     #[test]
     fn test_credit_limit_negative_clamped_to_zero() {
-        assert_eq!(default_credit_limit(Some(-100.0)), 0.0);
+        assert_eq!(
+            default_credit_limit(Some(-Decimal::from(100u64))),
+            Decimal::ZERO
+        );
     }
 
     #[test]
     fn test_credit_limit_zero_allowed() {
-        assert_eq!(default_credit_limit(Some(0.0)), 0.0);
+        assert_eq!(default_credit_limit(Some(Decimal::ZERO)), Decimal::ZERO);
     }
 
     // ── default_customer_status ───────────────────────
