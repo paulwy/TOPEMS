@@ -2,10 +2,12 @@
 # ============================================================================
 # TopEMS nginx 生产首部署复核校验脚本（A1 固化）
 #
-# 三步复核：
+# 三步复核（P0-3 双轨合一后：唯一对外入口 = upstream server_service -> localhost:8099，
+# 原 $request_uri -> $api_upstream 前缀 map 路由表已移除，不再做 map 比对）：
 #   1. nginx -t 语法校验（仅 Linux 执行；macOS 本机 `use epoll` 不可加载 → 跳过并提示）
-#   2. map 路由表逐字比对（生产 conf vs 仓库事实源 deploy/nginx/topems.conf）
-#   3. 冒烟端点探测（默认 6 域，可 --services 覆盖；每域 probe 路径可配）
+#   2. upstream server_service 指向 8099 校验（生产 conf vs 仓库事实源 deploy/nginx/topems.conf，
+#      并确认无遗留 map 路由表）
+#   3. 冒烟端点探测（默认 6 域，可 --services 覆盖；每域 probe 路径可配；需 --base 真栈）
 #
 # 用法：
 #   bash scripts/verify-nginx-prod.sh \
@@ -51,21 +53,26 @@ else
   echo "NGINX_T_SKIP_WARN (非 Linux 环境，use epoll 不可加载——待生产环境执行)"
 fi
 
-echo "== [2/3] map 路由表逐字比对 =="
+echo "== [2/3] upstream server_service -> 8099 校验 =="
 if [[ -f "$CONF" && -f "$REPO_CONF" ]]; then
-  extract_map() {
-    awk '/^[[:space:]]*map \$request_uri \$api_upstream/,/^[[:space:]]*\}[[:space:]]*$/' "$1" \
-      | grep -v '^[[:space:]]*$'
+  extract_upstream() {
+    awk '/^[[:space:]]*upstream[[:space:]]+server_service[[:space:]]*\{/,/^[[:space:]]*\}[[:space:]]*$/' "$1"
   }
-  prod_map="$(extract_map "$CONF")"
-  repo_map="$(extract_map "$REPO_CONF")"
-  if [[ -z "$prod_map" ]]; then echo "MAP_EMPTY (生产 conf 未找到 map 段——可能不是 topems.conf)"; FAIL=1
-  elif [[ "$prod_map" == "$repo_map" ]]; then echo "MAP_OK"
+  prod_up="$(extract_upstream "$CONF")"
+  repo_up="$(extract_upstream "$REPO_CONF")"
+  if [[ -z "$prod_up" ]]; then
+    echo "UPSTREAM_MISSING (生产 conf 未找到 upstream server_service——可能不是 topems.conf)"; FAIL=1
+  elif ! grep -q 'server localhost:8099' <<<"$prod_up"; then
+    echo "UPSTREAM_PORT_MISMATCH (server_service 未指向 localhost:8099)"; FAIL=1
+  elif grep -vE '^[[:space:]]*#' "$CONF" | grep -qF "map \$request_uri \$api_upstream"; then
+    echo "LEGACY_MAP_PRESENT (P0-3 后应无 \$request_uri -> \$api_upstream 前缀 map 路由表)"; FAIL=1
+  elif [[ "$prod_up" == "$repo_up" ]]; then
+    echo "UPSTREAM_OK (server_service -> localhost:8099，与仓库事实源一致)"
   else
-    echo "MAP_DIFF:"; diff <(echo "$repo_map") <(echo "$prod_map") | head -20; FAIL=1
+    echo "UPSTREAM_DIFF:"; diff <(echo "$repo_up") <(echo "$prod_up") | head -20; FAIL=1
   fi
 else
-  echo "MAP_SKIP (conf 或仓库基准缺失: $CONF / $REPO_CONF)"; FAIL=1
+  echo "UPSTREAM_SKIP (conf 或仓库基准缺失: $CONF / $REPO_CONF)"; FAIL=1
 fi
 
 echo "== [3/3] 冒烟端点 =="

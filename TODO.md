@@ -25,6 +25,7 @@
 - [x] **冻结确认 · ehs occupational_health 桩 / DSH 零消费面** ✅ 完成（2026-10-19）：统一登记 `dsh-zero-consumption-freeze.md`。DSH 18 端点零消费冻结；ehs occupational_health 已挂路由，records 接真 DB、check-plans/check-records/contraindications/statistics 为内存桩，前端封装零页面消费，均不接真不删除，待对应页面开发再接线/接真。
 - [x] **P3 · eslint 回绿（格式 + ignore）** ✅ 完成（2026-10-19，见下方「批 E1」块）：对应 10-19 重审 NEW-P3-1/P3-2。`eslint .` 由 26 errors / 86 warnings → **0 errors / 86 warnings**（exit 0），tsc 0 error；24 处 prettier 格式 `--fix`（零逻辑改动）+ `src/_archive-microfrontend/**` 补入 ignores（2 parser error 消除）；85 处 unused-vars warning 属既有长尾，不在本批。
 - [x] **P2 · menu 管理页整页 i18n** ✅ 完成（2026-10-19，见下方「批 E2」块）：对应 10-19 重审 NEW-P2-1。`MenuManagementPage` 59 行硬编码中文 → `system.menu_management.*` zh/en 39 键，`window.confirm` 换共享 `ConfirmDialog` + `useConfirmDialog`；tsc/eslint/i18n quality/hardcode 全绿。
+- [x] **P2 · 部署文档/脚本 8099 单上游口径对齐** ✅ 完成（2026-10-19，见下方「批 E3」块）：对应 10-19 重审 H-1/H-2/H-3/H-11。runbook 重写、verify 脚本 map→upstream 校验、deploy/README systemd 主路径、config-consistency 规则 2 改 upstream 8099；shellcheck/config-consistency/独立 source 校验全绿。
 
 ---
 
@@ -48,6 +49,21 @@
   - `pages/system/MenuManagementPage/index.tsx`：接入 `useTranslation('system')`；59 处硬编码中文（页头/副标题/刷新、分组与菜单项标题计数、表头、状态、空态、两个弹窗标题/字段/按钮、全部错误回退文案）抽到 `system.menu_management.*`；两处 `window.confirm`（删分组/删菜单项）换共享 `useConfirmDialog` + `@topems/shared-components` 的 `ConfirmDialog`（danger 红钮，onConfirm 内执行删除，与 MigrationAdminPage 同款）。
   - `i18n/locales/zh|en/system.json`：新增 39 个 `system.menu_management.*` 键（含 `{{count}}`/`{{name}}` 插值，zh/en 镜像；既有键零改动）。
 - **验证**：`tsc --noEmit` exit 0；页面 `eslint` 0 error（6 处 prettier 已 `--fix`）；`check-i18n.cjs --mode=quality --strict` 7-in-1 PASS；`--mode=hardcode --strict` PASS（本页 0 硬编码；剩余 4 处在既有 qms/QmsEightDPage adapter，不在本批）；JSON 镜像/插值/覆盖经脚本核对。
+
+---
+
+## 批 E3 · 部署文档/脚本按 8099 单上游口径对齐（2026-10-19）✅ 完成
+
+> 来源：`artifacts/TOPEMS-重新审计与评估-2026-10-19.md` H-1（runbook 停留在 P0-3 前 map 多上游）、H-2（`verify-nginx-prod.sh` map 比对恒 MAP_EMPTY→FAIL）、H-3（`deploy/README.md` 误称 docker-compose 主路径）、H-11（`check-config-consistency.py` 规则 2 map 校验 vacuous）。纯文档/静态脚本，零业务逻辑。
+
+- **改动**：
+  - `docs/deploy/nginx-prod-first-deploy-runbook.md`（H-1）：按 P0-3 单上游重写——删 map 逐字比对与 map 快照附录，改为 upstream `server_service → localhost:8099` 校验 + `/health` 代理 + 经 BFF 冒烟；前置检查上游可达改 `curl localhost:8099/health`。
+  - `scripts/verify-nginx-prod.sh`（H-2）：第 2 步 map 逐字比对 → upstream server_service 指向 8099 校验（含无遗留 map 检测，注释行排除）；头注释同步。
+  - `scripts/gen-nginx-drill-conf.sh`：两处「map 段逐字保留」旧注释改为 upstream 8099 口径。
+  - `deploy/README.md`（H-3）：systemd 改为生产主路径，docker-compose 标 DEPRECATED（仅临时演练/参考），k8s 标可选未启用；目录注释与「快速开始」段同步。
+  - `scripts/dev/check-config-consistency.py`（H-11）：规则 2 由「nginx map ↔ services.yaml」改为「dev(`apps/web/nginx.conf`) + 生产(`deploy/nginx/topems.conf`) 两份 conf 的 upstream server_service → 8099、无遗留 map」；删空转的 MERGE_ALIASES/NAME_ALIASES。
+- **验证**：`check-config-consistency.py` exit 0（29 服务 ↔ 38 端口 ↔ upstream 8099 2 份 conf）；负例（端口非 8099 / 残留 map）均被捕获；`check-config-sources.cjs` exit 0（nginx upstream 1）；`shellcheck -S warning` 全量 78 脚本 0 告警。
+- **遗留（不在本批）**：H-4 `health-check.sh` 旧多端口/docker-first/默认口令、H-5 `rollback.sh`/`start-production.sh` 旧 8000 口径待核、H-9 developer 三份标准文档 8000 直连口径待补注；`check-config-sources.cjs` 的 mapBlock 为可选解析（匹配不到即空，不失败），未改；`docs/audit/arch-analysis/ENTRY.md` 为历史分析快照，未改。
 
 ---
 

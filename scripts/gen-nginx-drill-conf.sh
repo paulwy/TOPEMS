@@ -3,8 +3,9 @@
 # TopEMS nginx 生产 conf → 本机演练 conf 生成器（A1）
 #
 # 生产 conf（deploy/nginx/topems.conf）含平台专属/环境专属指令，本机 macOS
-# nginx 无法直接加载。本脚本生成等价演练 conf（map 路由表逐字保留），用于
-# 在本机完成 A1 逻辑验证（加载 + map 比对 + 冒烟）。
+# nginx 无法直接加载。P0-3 双轨合一后唯一对外入口为 upstream server_service
+# -> localhost:8099（无前缀 map 路由表）。本脚本生成等价演练 conf，用于
+# 在本机完成加载 + upstream 8099 校验 + 冒烟。
 #
 # 根因（2026-10-07 实测定位）：
 #   1. `user www-data;`        → macOS 无此用户（getpwnam 失败）→ 删除
@@ -50,6 +51,6 @@ s = re.sub(r"(server localhost:)\d+", r"\g<1>8099", s)      # 6
 s = re.sub(r"^[ \t]*brotli[^;]*;[ \t]*\n", "", s, flags=re.M)  # 7
 s = s.replace("root /usr/share/nginx/html;", "root %s/html;" % out)
 p.write_text(s)
-print(f"drill conf: {out}/topems-drill.conf (map 段逐字保留)")
+print(f"drill conf: {out}/topems-drill.conf (upstream server_service -> localhost:8099)")
 PYEOF
 echo "生成完成：$OUT/topems-drill.conf（nginx -t -c 校验 + nginx -c 启动后跑 verify-nginx-prod.sh --insecure）"

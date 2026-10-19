@@ -2,22 +2,23 @@
 
 ## 部署体系说明
 
-项目提供三套部署方案，**docker-compose 为主路径**，k8s 和 systemd 为可选方案：
+> 2026-10-08 容器策略定案（见 `docs/deploy/container-strategy.md`）：**生产走 systemd 模型，
+> 生产数据禁入容器**。Docker Compose 已弃用、仅作临时验证/历史参考；Kubernetes 为可选、当前未启用。
 
 | 方案 | 定位 | 适用场景 | 目录 |
 |------|------|---------|------|
-| **Docker Compose** | **主部署方式**（推荐） | 开发环境、单机生产、快速启动 | `docker/` |
-| **Kubernetes** | 生产可选 | 多节点集群、云原生部署 | `k8s/` |
-| **systemd** | 备选/遗留 | 裸机 Linux 服务管理 | `systemd/` |
-| **Nginx** | 反向代理（通用） | 配合上述任一方案使用 | `nginx/` |
+| **systemd** | **生产主路径**（现用） | 裸机 Linux 生产服务管理（`scripts/deploy/install.sh`/`update.sh`/`rollback.sh`） | `systemd/` |
+| **Docker Compose** | **已弃用**（临时验证/历史参考，非生产） | 一次性测试/演示；生产数据禁入容器 | `docker/`（DEPRECATED，见其 README） |
+| **Kubernetes** | 可选（当前未启用） | 多节点集群、云原生部署 | `k8s/` |
+| **Nginx** | 反向代理（通用） | 配合生产 systemd 方案使用，唯一入口 upstream → :8099 | `nginx/` |
 
 ## 目录结构
 
 ```
 deploy/
 ├── README.md                 # 本文档
-├── docker/                   # Docker Compose 主部署配置
-│   ├── docker-compose.yml    # 全量 compose 文件（含全部业务服务与中间件）
+├── docker/                   # Docker Compose（DEPRECATED，仅临时验证/历史参考，非生产）
+│   ├── docker-compose.yml    # 全量 compose 文件（历史基准；生产不使用）
 │   ├── docker-compose.dify.yml       # Dify AI 平台集成（可选叠加）
 │   ├── etcd-compose.yml      # etcd 中间件独立栈（可选；仅 ai/portal opt-in 配置管理）
 │   ├── Dockerfile.service    # 统一服务 Dockerfile 模板
@@ -36,23 +37,31 @@ deploy/
 │   ├── kustomization.yaml
 │   ├── base/                 # 基础资源（ConfigMap/Secret/Ingress/Postgres/Redis）
 │   └── services/             # 各服务 Deployment
-├── systemd/                  # systemd 服务单元（备选/遗留）
+├── systemd/                  # systemd 服务单元（生产主路径）
 │   └── *.service             # 各服务的 systemd unit 文件
 └── nginx/                    # Nginx 反向代理配置（通用）
     └── topems.conf
 ```
 
-## 快速开始（Docker Compose）
+## 生产部署（systemd 主路径）
+
+生产使用 `scripts/deploy/` 下的 systemd 范式脚本（install/update/rollback/start-production 等，
+见下方「部署脚本」），**不使用 docker-compose**。生产数据直连 PostgreSQL（5432），禁入容器。
+
+## Docker Compose（DEPRECATED，仅临时演练/参考）
+
+> 以下 compose 命令仅用于一次性测试/演示或未来明确采用 docker 的目标环境，**不得用于生产**；
+> 详见 `deploy/docker/README.md` 与 `docs/deploy/container-strategy.md`。
 
 ```bash
-# 启动全量服务（docker-compose.yml 为单文件全量配置，含全部业务服务与中间件）
+# （非生产）启动全量服务演练
 cd deploy/docker
 docker compose up -d
 
-# 叠加 Dify AI 平台集成
+# 叠加 Dify AI 平台集成（可选）
 docker compose -f docker-compose.yml -f docker-compose.dify.yml up -d
 
-# 启动可选中间件独立栈（etcd 仅 ai/portal opt-in 配置管理；consul 为预留服务发现扩展点，默认关）
+# 可选中间件独立栈（etcd 仅 ai/portal opt-in 配置管理；consul 为预留服务发现扩展点，默认关）
 # 注（D5/U9 2026-10-03）：eureka/nacos/zookeeper 独立栈已移除（未接线残留）
 docker compose -f etcd-compose.yml up -d
 ```
