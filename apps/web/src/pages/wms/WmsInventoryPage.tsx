@@ -68,26 +68,44 @@ interface InventoryItem {
 }
 
 // Mock 数据
-// 将 API 返回的 InventoryItem 类型映射为页面使用的 InventoryItem 类型
-const mapApiInventory = (apiItems: ApiInventoryItem[]): InventoryItem[] => {
+// 将 API 返回的 InventoryItem 类型映射为页面使用的 InventoryItem 类型。
+// 部分历史接口使用驼峰别名，收窄为可选字段（ApiInventoryItemCompat），避免 `as any`。
+type InventoryTab = 'all' | 'normal' | 'low' | 'out' | 'overstock';
+type ApiInventoryItemCompat = ApiInventoryItem & {
+  sku_code?: string;
+  product_name?: string;
+  product_code?: string;
+  warehouse?: string;
+  location?: string;
+  safety_stock?: number;
+  unit_price?: number;
+  productName?: string;
+  productCode?: string;
+  safetyStock?: number;
+  unitPrice?: number;
+  totalValue?: number;
+  last_restock?: string;
+  lastRestock?: string;
+  status?: string;
+};
+
+const mapApiInventory = (apiItems: ApiInventoryItemCompat[]): InventoryItem[] => {
   return apiItems.map((item, index) => ({
     id: item.id,
-    sku: (item as any).sku || (item as any).sku_code || `SKU-${String(index + 1).padStart(3, '0')}`,
-    product_name: (item as any).product_name || (item as any).productName || '-',
-    product_code: (item as any).product_code || (item as any).productCode || '-',
-    warehouse: (item as any).warehouse || '-',
-    location: (item as any).location || '-',
-    quantity: (item as any).quantity || 0,
-    safety_stock: (item as any).safety_stock || (item as any).safetyStock || 0,
-    unit: (item as any).unit || '-',
-    unit_price: (item as any).unit_price || (item as any).unitPrice || 0,
+    sku: item.sku || item.sku_code || `SKU-${String(index + 1).padStart(3, '0')}`,
+    product_name: item.product_name || item.productName || '-',
+    product_code: item.product_code || item.productCode || '-',
+    warehouse: item.warehouse || '-',
+    location: item.location || '-',
+    quantity: item.quantity || 0,
+    safety_stock: item.safety_stock || item.safetyStock || 0,
+    unit: item.unit || '-',
+    unit_price: item.unit_price || item.unitPrice || 0,
     total_value:
-      (item as any).total_value ||
-      (item as any).totalValue ||
-      ((item as any).quantity || 0) * ((item as any).unit_price || 0),
-    status: ((item as any).status as InventoryItem['status']) || 'normal',
-    last_restock: (item as any).last_restock || (item as any).lastRestock || '-',
-    updated_at: (item as any).updated_at || new Date().toISOString(),
+      item.total_value || item.totalValue || (item.quantity || 0) * (item.unit_price || 0),
+    status: (item.status as InventoryItem['status']) || 'normal',
+    last_restock: item.last_restock || item.lastRestock || '-',
+    updated_at: item.updated_at || new Date().toISOString(),
   }));
 };
 
@@ -209,7 +227,7 @@ const WmsInventoryPage: React.FC = () => {
     return value.toLocaleString('zh-CN');
   };
 
-  const [activeTab, setActiveTab] = useState<'all' | 'normal' | 'low' | 'out' | 'overstock'>('all');
+  const [activeTab, setActiveTab] = useState<InventoryTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
@@ -230,7 +248,7 @@ const WmsInventoryPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API
-        const res = await inventoryApi.list({ page: 1, pageSize: 100 } as any);
+        const res = await inventoryApi.list({ page: 1, pageSize: 100 });
         const resData = res as unknown as {
           data?: { list?: ApiInventoryItem[]; items?: ApiInventoryItem[] } | ApiInventoryItem[];
         };
@@ -533,7 +551,7 @@ const WmsInventoryPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as InventoryTab)}
         />
       </ListPageTemplate>
 
