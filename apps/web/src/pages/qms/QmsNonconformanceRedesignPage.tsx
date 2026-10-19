@@ -32,7 +32,7 @@ import {
 } from '@/components/redesign';
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { issueApi } from '@/api/qms/issue';
-import type { QualityIssue as ApiQualityIssue } from '@/api/qms/types';
+import type { QualityIssue as ApiQualityIssue, CreateQualityIssueRequest } from '@/api/qms/types';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -78,31 +78,45 @@ interface Nonconformance {
 }
 
 // Mock 数据
-// 将 API 返回的 QualityIssue 类型映射为页面使用的 Nonconformance 类型
-const mapApiNonconformances = (apiIssues: ApiQualityIssue[]): Nonconformance[] => {
+// 将 API 返回的 QualityIssue 类型映射为页面使用的 Nonconformance 类型。
+// 部分历史接口使用驼峰别名，收窄为可选字段（ApiQualityIssueCompat），避免 `as any`。
+type NonconformanceTab = 'all' | 'open' | 'investigating' | 'contained' | 'resolved';
+type ApiQualityIssueCompat = ApiQualityIssue & {
+  nc_no?: string;
+  issue_no?: string;
+  nc_type?: string;
+  name?: string;
+  product_name?: string;
+  batch_no?: string;
+  quantity?: number;
+  title?: string;
+  description?: string;
+  created_at?: string;
+  discovered_by?: string;
+  discovered_date?: string;
+  productName?: string;
+  batchNo?: string;
+  reporter?: string;
+  reporterName?: string;
+  discoveredBy?: string;
+  discoveredDate?: string;
+  reported_date?: string;
+};
+
+const mapApiNonconformances = (apiIssues: ApiQualityIssueCompat[]): Nonconformance[] => {
   return apiIssues.map((issue, index) => ({
     id: issue.id,
-    nc_no:
-      (issue as any).nc_no ||
-      (issue as any).issue_no ||
-      `NC2026${String(index + 1).padStart(5, '0')}`,
-    title: (issue as any).title || (issue as any).name || '-',
-    nc_type: ((issue as any).nc_type as Nonconformance['nc_type']) || 'product',
-    severity: ((issue as any).severity as Nonconformance['severity']) || 'major',
-    status: ((issue as any).status as Nonconformance['status']) || 'open',
-    product_name: (issue as any).product_name || (issue as any).productName || '-',
-    batch_no: (issue as any).batch_no || (issue as any).batchNo || '-',
-    quantity: (issue as any).quantity || 0,
-    reporter: (issue as any).reporter || (issue as any).reporterName || '-',
-    discovered_by:
-      (issue as any).discovered_by || (issue as any).reporter || (issue as any).discoveredBy || '-',
-    discovered_date:
-      (issue as any).discovered_date ||
-      (issue as any).discoveredDate ||
-      (issue as any).reported_date ||
-      '-',
-    reported_date: (issue as any).reported_date || (issue as any).reportedDate || '-',
-    description: (issue as any).description || '',
+    nc_no: issue.nc_no || issue.issue_no || `NC2026${String(index + 1).padStart(5, '0')}`,
+    title: issue.title || issue.name || '-',
+    nc_type: (issue.nc_type as Nonconformance['nc_type']) || 'product',
+    severity: (issue.severity as Nonconformance['severity']) || 'major',
+    status: (issue.status as Nonconformance['status']) || 'open',
+    product_name: issue.product_name || issue.productName || '-',
+    batch_no: issue.batch_no || issue.batchNo || '-',
+    quantity: issue.quantity || 0,
+    discovered_by: issue.discovered_by || issue.reporter || issue.discoveredBy || '-',
+    discovered_date: issue.discovered_date || issue.discoveredDate || issue.reported_date || '-',
+    description: issue.description || '',
     created_at: issue.created_at || new Date().toISOString(),
   }));
 };
@@ -261,9 +275,7 @@ const QmsNonconformancePage: React.FC = () => {
     [t]
   );
 
-  const [activeTab, setActiveTab] = useState<
-    'all' | 'open' | 'investigating' | 'contained' | 'resolved'
-  >('all');
+  const [activeTab, setActiveTab] = useState<NonconformanceTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
@@ -289,7 +301,7 @@ const QmsNonconformancePage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; severity?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -301,14 +313,24 @@ const QmsNonconformancePage: React.FC = () => {
         }
         const res = await issueApi.listIssues();
         const resData = res as unknown as
-          { data?: ApiQualityIssue[]; total?: number } | ApiQualityIssue[];
+          | {
+              data?: ApiQualityIssue[];
+              list?: ApiQualityIssue[];
+              items?: ApiQualityIssue[];
+              total?: number;
+            }
+          | ApiQualityIssue[];
         let apiIssues: ApiQualityIssue[] = [];
         let total = 0;
         if (Array.isArray(resData)) {
           apiIssues = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData as any;
+          const dataObj = resData as {
+            list?: ApiQualityIssue[];
+            items?: ApiQualityIssue[];
+            total?: number;
+          };
           apiIssues = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -389,7 +411,7 @@ const QmsNonconformancePage: React.FC = () => {
           category: record.nc_type,
           status: record.status,
           assignee: record.discovered_by,
-        } as any);
+        } as unknown as CreateQualityIssueRequest);
       } catch (e) {
         console.warn('[QMS Nonconformance] Create API unavailable, using mock create:', e);
       }
@@ -421,7 +443,7 @@ const QmsNonconformancePage: React.FC = () => {
           severity: data.severity,
           status: data.status,
           assignee: data.discovered_by,
-        } as any);
+        } as unknown as CreateQualityIssueRequest);
       } catch (e) {
         console.warn('[QMS Nonconformance] Update API unavailable, using mock update:', e);
       }
@@ -430,13 +452,16 @@ const QmsNonconformancePage: React.FC = () => {
     },
     onSuccess: ({ id, data }: { id: string; data: Partial<Nonconformance> }) => {
       // 本地替换该记录（API 失败时表单变更即时可见，不被 mock 覆盖）
-      queryClient.setQueriesData({ queryKey: QUERY_KEY }, (old: any) => {
-        if (!old?.items) return old;
-        return {
-          ...old,
-          items: old.items.map((i: Nonconformance) => (i.id === id ? { ...i, ...data } : i)),
-        };
-      });
+      queryClient.setQueriesData(
+        { queryKey: QUERY_KEY },
+        (old: { items?: Nonconformance[] } | undefined) => {
+          if (!old?.items) return old;
+          return {
+            ...old,
+            items: old.items.map((i) => (i.id === id ? { ...i, ...data } : i)),
+          };
+        }
+      );
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
       pushToast('success', t('qms.nonconformance_redesign.toast_update_success'));
@@ -448,7 +473,7 @@ const QmsNonconformancePage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredItems = items;
-  const totalItems = ((data as any)?.total || 0) + locallyCreated.length;
+  const totalItems = (data?.total || 0) + locallyCreated.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedItems = filteredItems;
 
@@ -729,7 +754,7 @@ const QmsNonconformancePage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as NonconformanceTab)}
         />
       </ListPageTemplate>
 

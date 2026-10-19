@@ -32,7 +32,7 @@ import {
 } from '@/components/redesign';
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { inspectionApi } from '@/api/qms/inspection';
-import type { QualityCheck as ApiQualityCheck } from '@/api/qms/types';
+import type { QualityCheck as ApiQualityCheck, CreateQualityCheckRequest } from '@/api/qms/types';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -75,6 +75,8 @@ interface Inspection {
   product_name: string;
   batch_no: string;
   inspector?: string;
+  standard_id?: string;
+  created_by?: string;
   result?: 'qualified' | 'unqualified' | 'pending';
   quantity: number;
   created_at: string;
@@ -82,24 +84,35 @@ interface Inspection {
 }
 
 // Mock 数据
-// 将 API 返回的 QualityCheck 类型映射为页面使用的 Inspection 类型
-const mapApiInspections = (apiChecks: ApiQualityCheck[]): Inspection[] => {
+// 将 API 返回的 QualityCheck 类型映射为页面使用的 Inspection 类型。
+// 部分历史接口使用驼峰别名，收窄为可选字段（ApiQualityCheckCompat），避免 `as any`。
+type InspectionTab = 'all' | 'pending' | 'in_progress' | 'completed' | 'rejected';
+type ApiQualityCheckCompat = ApiQualityCheck & {
+  check_no?: string;
+  checkNo?: string;
+  title?: string;
+  name?: string;
+  productName?: string;
+  batch_no?: string;
+  batchNo?: string;
+  inspectorName?: string;
+  check_date?: string;
+  checkDate?: string;
+};
+
+const mapApiInspections = (apiChecks: ApiQualityCheckCompat[]): Inspection[] => {
   return apiChecks.map((c, index) => ({
     id: c.id,
     check_no:
-      (c as any).inspection_no ||
-      (c as any).check_no ||
-      (c as any).checkNo ||
-      `QC2026${String(index + 1).padStart(5, '0')}`,
-    title: (c as any).title || (c as any).name || '-',
-    inspection_type: ((c as any).inspection_type as Inspection['inspection_type']) || 'incoming',
-    status: ((c as any).status as Inspection['status']) || 'pending',
-    product_name: (c as any).product_name || (c as any).productName || '-',
-    batch_no: (c as any).batch_no || (c as any).batchNo || '-',
-    quantity: (c as any).quantity || 0,
-    inspector: (c as any).inspector || (c as any).inspectorName || '-',
-    result: ((c as any).result as Inspection['result']) || 'pending',
-    check_date: (c as any).check_date || (c as any).checkDate || '-',
+      c.inspection_no || c.check_no || c.checkNo || `QC2026${String(index + 1).padStart(5, '0')}`,
+    title: c.title || c.name || '-',
+    inspection_type: (c.inspection_type as Inspection['inspection_type']) || 'incoming',
+    status: (c.status as Inspection['status']) || 'pending',
+    product_name: c.product_name || c.productName || '-',
+    batch_no: c.batch_no || c.batchNo || '-',
+    quantity: c.quantity || 0,
+    inspector: c.inspector || c.inspectorName || '-',
+    result: (c.result as Inspection['result']) || 'pending',
     created_at: c.created_at || new Date().toISOString(),
   }));
 };
@@ -230,9 +243,7 @@ const QmsInspectionPage: React.FC = () => {
     [t]
   );
 
-  const [activeTab, setActiveTab] = useState<
-    'all' | 'pending' | 'in_progress' | 'completed' | 'rejected'
-  >('all');
+  const [activeTab, setActiveTab] = useState<InspectionTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -256,7 +267,7 @@ const QmsInspectionPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; type?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -268,14 +279,24 @@ const QmsInspectionPage: React.FC = () => {
         }
         const res = await inspectionApi.listChecks(params);
         const resData = res as unknown as
-          { data?: ApiQualityCheck[]; total?: number } | ApiQualityCheck[];
+          | {
+              data?: ApiQualityCheck[];
+              list?: ApiQualityCheck[];
+              items?: ApiQualityCheck[];
+              total?: number;
+            }
+          | ApiQualityCheck[];
         let apiChecks: ApiQualityCheck[] = [];
         let total = 0;
         if (Array.isArray(resData)) {
           apiChecks = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData as any;
+          const dataObj = resData as {
+            list?: ApiQualityCheck[];
+            items?: ApiQualityCheck[];
+            total?: number;
+          };
           apiChecks = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -331,12 +352,12 @@ const QmsInspectionPage: React.FC = () => {
     mutationFn: async (data: Partial<Inspection>) => {
       try {
         await inspectionApi.createCheck({
-          inspection_type: (data as any).inspection_type ?? 'incoming',
-          product_name: (data as any).product_name,
-          standard_id: (data as any).standard_id,
-          quantity: Number((data as any).quantity ?? 100),
-          created_by: (data as any).created_by,
-        } as any);
+          inspection_type: data.inspection_type ?? 'incoming',
+          product_name: data.product_name,
+          standard_id: data.standard_id,
+          quantity: Number(data.quantity ?? 100),
+          created_by: data.created_by,
+        } as CreateQualityCheckRequest);
       } catch (e) {
         console.warn('[QMS Inspections] Create API unavailable, using mock create:', e);
       }
@@ -357,11 +378,11 @@ const QmsInspectionPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<Inspection> }) => {
       try {
         await inspectionApi.updateCheck(id, {
-          inspection_type: (data as any).inspection_type,
-          product_name: (data as any).product_name,
-          standard_id: (data as any).standard_id,
+          inspection_type: data.inspection_type,
+          product_name: data.product_name,
+          standard_id: data.standard_id,
           quantity: data.quantity !== undefined ? Number(data.quantity) : undefined,
-        } as any);
+        } as CreateQualityCheckRequest);
       } catch (e) {
         console.warn('[QMS Inspections] Update API unavailable, using mock update:', e);
       }
@@ -380,7 +401,7 @@ const QmsInspectionPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredInspections = inspections;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedInspections = filteredInspections;
 
@@ -666,7 +687,7 @@ const QmsInspectionPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as InspectionTab)}
         />
       </ListPageTemplate>
 

@@ -76,24 +76,38 @@ interface AuditPlan {
 }
 
 // Mock 数据
-// 将 API 返回的 AuditPlan 类型映射为页面使用的 AuditPlan 类型
-const mapApiAuditPlans = (apiPlans: ApiAuditPlan[]): AuditPlan[] => {
+// 将 API 返回的 AuditPlan 类型映射为页面使用的 AuditPlan 类型。
+// 部分历史接口使用驼峰别名，收窄为可选字段（ApiAuditPlanCompat），避免 `as any`。
+type AuditTab = 'all' | 'planned' | 'in_progress' | 'completed';
+type ApiAuditPlanCompat = ApiAuditPlan & {
+  audit_no?: string;
+  auditNo?: string;
+  name?: string;
+  auditee?: string;
+  auditeeName?: string;
+  auditorName?: string;
+  plan_date?: string;
+  plannedDate?: string;
+  completed_date?: string;
+  completedDate?: string;
+  department?: string;
+  remark?: string;
+  findings?: number;
+};
+
+const mapApiAuditPlans = (apiPlans: ApiAuditPlanCompat[]): AuditPlan[] => {
   return apiPlans.map((p, index) => ({
     id: p.id,
     audit_no:
-      (p as any).audit_no || (p as any).auditNo || `AUD2026${String(index + 1).padStart(5, '0')}`,
-    title: (p as any).title || (p as any).name || '-',
-    audit_type: ((p as any).audit_type as AuditPlan['audit_type']) || 'internal',
-    status: ((p as any).status as AuditPlan['status']) || 'planned',
-    auditor: (p as any).auditor || (p as any).auditorName || '-',
-    auditee: (p as any).auditee || (p as any).auditeeName || '-',
-    department: (p as any).department || '-',
-    plan_date: (p as any).plan_date || (p as any).planned_date || (p as any).plannedDate || '-',
-    planned_date: (p as any).planned_date || (p as any).plannedDate || '-',
-    completed_date: (p as any).completed_date || (p as any).completedDate || '-',
-    scope: (p as any).scope || '-',
-    findings: (p as any).findings || 0,
-    remark: (p as any).remark || '',
+      p.audit_no || p.auditNo || p.plan_no || `AUD2026${String(index + 1).padStart(5, '0')}`,
+    title: p.title || p.name || '-',
+    audit_type: (p.audit_type as AuditPlan['audit_type']) || 'internal',
+    status: (p.status as AuditPlan['status']) || 'planned',
+    auditor: p.auditor || p.auditorName || '-',
+    auditee: p.auditee || p.auditeeName || '-',
+    plan_date: p.plan_date || p.planned_date || p.plannedDate || '-',
+    scope: p.scope || '-',
+    findings: p.findings || 0,
     created_at: p.created_at || new Date().toISOString(),
   }));
 };
@@ -217,9 +231,7 @@ const QmsAuditRedesignPage: React.FC = () => {
     [t]
   );
 
-  const [activeTab, setActiveTab] = useState<'all' | 'planned' | 'in_progress' | 'completed'>(
-    'all'
-  );
+  const [activeTab, setActiveTab] = useState<AuditTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -243,7 +255,7 @@ const QmsAuditRedesignPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; type?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -255,14 +267,19 @@ const QmsAuditRedesignPage: React.FC = () => {
         }
         const res = await auditApi.listAuditPlans();
         const resData = res as unknown as
-          { data?: ApiAuditPlan[]; total?: number } | ApiAuditPlan[];
+          | { data?: ApiAuditPlan[]; list?: ApiAuditPlan[]; items?: ApiAuditPlan[]; total?: number }
+          | ApiAuditPlan[];
         let apiPlans: ApiAuditPlan[] = [];
         let total = 0;
         if (Array.isArray(resData)) {
           apiPlans = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData as any;
+          const dataObj = resData as {
+            list?: ApiAuditPlan[];
+            items?: ApiAuditPlan[];
+            total?: number;
+          };
           apiPlans = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -325,7 +342,7 @@ const QmsAuditRedesignPage: React.FC = () => {
           auditor: data.auditor,
           auditee: data.auditee,
           plan_date: data.plan_date,
-        } as any);
+        } as unknown as Omit<ApiAuditPlan, 'id' | 'created_at' | 'updated_at'>);
       } catch (e) {
         console.warn('[QMS Audit Plans] Create API unavailable, using mock create:', e);
       }
@@ -368,7 +385,7 @@ const QmsAuditRedesignPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredAudits = audits;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedAudits = filteredAudits;
 
@@ -641,7 +658,7 @@ const QmsAuditRedesignPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as AuditTab)}
         />
       </ListPageTemplate>
 

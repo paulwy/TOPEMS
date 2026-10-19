@@ -31,7 +31,7 @@ import {
 } from '@/components/redesign';
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { eightDApi } from '@/api/qms/eightD';
-import type { EightDReport as ApiEightDReport } from '@/api/qms/types';
+import type { EightDReport as ApiEightDReport, CreateEightDReportRequest } from '@/api/qms/types';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -76,25 +76,49 @@ interface EightDReport {
 }
 
 // Mock 数据
-// 将 API 返回的 EightDReport 类型映射为页面使用的 EightDReport 类型
-const mapApiEightDReports = (apiReports: ApiEightDReport[]): EightDReport[] => {
+// 将 API 返回的 EightDReport 类型映射为页面使用的 EightDReport 类型。
+// 部分历史接口使用驼峰别名，收窄为可选字段（ApiEightDReportCompat），避免 `as any`。
+type EightDTab = 'all' | 'in_progress' | 'closed';
+type BadgeVariant = 'warning' | 'amber' | 'info' | 'cyan' | 'success' | 'default' | 'error';
+type ApiEightDReportCompat = ApiEightDReport & {
+  report_no?: string;
+  reportNo?: string;
+  problem_source?: string;
+  customer_name?: string;
+  product_name?: string;
+  owner?: string;
+  title?: string;
+  due_date?: string;
+  severity?: string;
+  status?: string;
+  name?: string;
+  customerName?: string;
+  productName?: string;
+  leader?: string;
+  leaderName?: string;
+  ownerName?: string;
+  current_step?: string;
+  currentStep?: number;
+  created_date?: string;
+  createdDate?: string;
+  dueDate?: string;
+  created_at?: string;
+};
+
+const mapApiEightDReports = (apiReports: ApiEightDReportCompat[]): EightDReport[] => {
   return apiReports.map((r, index) => ({
     id: r.id,
-    report_no:
-      (r as any).report_no || (r as any).reportNo || `8D2026${String(index + 1).padStart(5, '0')}`,
-    title: (r as any).title || (r as any).name || '-',
-    problem_source: ((r as any).problem_source as EightDReport['problem_source']) || 'internal',
-    severity: ((r as any).severity as EightDReport['severity']) || 'major',
-    status: ((r as any).status as EightDReport['status']) || 'd1',
-    customer_name: (r as any).customer_name || (r as any).customerName || '-',
-    product_name: (r as any).product_name || (r as any).productName || '-',
-    leader: (r as any).leader || (r as any).leaderName || '-',
-    owner: (r as any).owner || (r as any).ownerName || (r as any).leader || '-',
-    current_step: (r as any).current_step || (r as any).currentStep || 1,
-    created_date: (r as any).created_date || (r as any).createdDate || '-',
-    due_date: (r as any).due_date || (r as any).dueDate || '-',
-    created_at: (r as any).created_at || new Date().toISOString(),
-    createdAt: (r as any).created_at || new Date().toISOString(),
+    report_no: r.report_no || r.reportNo || `8D2026${String(index + 1).padStart(5, '0')}`,
+    title: r.title || r.name || '-',
+    problem_source: (r.problem_source as EightDReport['problem_source']) || 'internal',
+    severity: (r.severity as EightDReport['severity']) || 'major',
+    status: (r.status as EightDReport['status']) || 'd1',
+    customer_name: r.customer_name || r.customerName || '-',
+    product_name: r.product_name || r.productName || '-',
+    owner: r.owner || r.ownerName || r.leader || '-',
+    current_step: String(r.current_step || r.currentStep || 1),
+    due_date: r.due_date || r.dueDate || '-',
+    created_at: r.created_at || new Date().toISOString(),
   }));
 };
 
@@ -180,7 +204,9 @@ const QmsEightDRedesignPage: React.FC = () => {
     },
   ];
 
-  const statusConfig = useMemo<Record<string, { label: string; variant: any; step: number }>>(
+  const statusConfig = useMemo<
+    Record<string, { label: string; variant: BadgeVariant; step: number }>
+  >(
     () => ({
       d1: { label: t('qms.eight_d_redesign.status_d1'), variant: 'warning', step: 1 },
       d2: { label: t('qms.eight_d_redesign.status_d2'), variant: 'warning', step: 2 },
@@ -214,7 +240,7 @@ const QmsEightDRedesignPage: React.FC = () => {
     [t]
   );
 
-  const [activeTab, setActiveTab] = useState<'all' | 'in_progress' | 'closed'>('all');
+  const [activeTab, setActiveTab] = useState<EightDTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
@@ -238,7 +264,7 @@ const QmsEightDRedesignPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; severity?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -250,14 +276,24 @@ const QmsEightDRedesignPage: React.FC = () => {
         }
         const res = await eightDApi.listEightDReports();
         const resData = res as unknown as
-          { data?: ApiEightDReport[]; total?: number } | ApiEightDReport[];
+          | {
+              data?: ApiEightDReport[];
+              list?: ApiEightDReport[];
+              items?: ApiEightDReport[];
+              total?: number;
+            }
+          | ApiEightDReport[];
         let apiReports: ApiEightDReport[] = [];
         let total = 0;
         if (Array.isArray(resData)) {
           apiReports = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData as any;
+          const dataObj = resData as {
+            list?: ApiEightDReport[];
+            items?: ApiEightDReport[];
+            total?: number;
+          };
           apiReports = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -324,7 +360,7 @@ const QmsEightDRedesignPage: React.FC = () => {
           owner: data.owner,
           current_step: data.current_step,
           due_date: data.due_date,
-        } as any);
+        } as unknown as CreateEightDReportRequest);
       } catch (e) {
         console.warn('[QMS 8D Reports] Create API unavailable, using mock create:', e);
       }
@@ -349,7 +385,7 @@ const QmsEightDRedesignPage: React.FC = () => {
           current_step: data.current_step,
           due_date: data.due_date,
           owner: data.owner,
-        } as any);
+        } as unknown as CreateEightDReportRequest);
       } catch (e) {
         console.warn('[QMS 8D Reports] Update API unavailable, using mock update:', e);
       }
@@ -368,7 +404,7 @@ const QmsEightDRedesignPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredReports = reports;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedReports = filteredReports;
 
@@ -680,7 +716,7 @@ const QmsEightDRedesignPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as EightDTab)}
         />
       </ListPageTemplate>
 
