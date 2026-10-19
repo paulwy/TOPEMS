@@ -134,7 +134,9 @@ impl DatabaseAuditLogStore {
         let metadata_map: HashMap<String, String> = if metadata.is_object() {
             metadata
                 .as_object()
-                .unwrap_or_else(|| panic!("metadata guarded by is_object check"))
+                .ok_or_else(|| {
+                    AuditLogError::StoreError("metadata is_object guard violated".to_string())
+                })?
                 .iter()
                 .map(|(k, v)| (k.clone(), v.as_str().unwrap_or("").to_string()))
                 .collect()
