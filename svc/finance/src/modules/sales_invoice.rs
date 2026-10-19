@@ -32,6 +32,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
@@ -50,10 +51,10 @@ pub struct SalesInvoiceOut {
     pub customer_name: String,
     pub invoice_date: String,
     pub due_date: Option<String>,
-    pub amount: f64,
-    pub tax_amount: f64,
-    pub total_amount: f64,
-    pub paid_amount: f64,
+    pub amount: Decimal,
+    pub tax_amount: Decimal,
+    pub total_amount: Decimal,
+    pub paid_amount: Decimal,
     pub status: String,
     pub invoice_type: String,
     pub cancel_reason: Option<String>,
@@ -71,17 +72,17 @@ pub struct InvoiceCreatePayload {
     #[serde(default)]
     pub due_date: Option<String>,
     #[serde(default)]
-    pub amount: f64,
+    pub amount: Decimal,
     #[serde(default)]
-    pub tax_amount: f64,
+    pub tax_amount: Decimal,
     #[serde(default = "default_total_calc", rename = "totalAmount")]
-    pub total_amount: f64,
+    pub total_amount: Decimal,
     #[serde(default)]
     pub invoice_type: String,
 }
 
-fn default_total_calc() -> f64 {
-    0.0
+fn default_total_calc() -> Decimal {
+    Decimal::ZERO
 }
 
 #[derive(Debug, Deserialize)]
@@ -91,9 +92,9 @@ pub struct InvoiceUpdatePayload {
     #[serde(default)]
     pub due_date: Option<String>,
     #[serde(default)]
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     #[serde(default)]
-    pub tax_amount: Option<f64>,
+    pub tax_amount: Option<Decimal>,
     #[serde(default)]
     pub invoice_type: Option<String>,
 }
@@ -140,7 +141,7 @@ pub struct CollectionOut {
     pub customer_name: Option<String>,
     pub invoice_id: Option<Uuid>,
     pub collection_date: Option<String>,
-    pub amount: f64,
+    pub amount: Decimal,
     pub payment_method: Option<String>,
     pub bank_account: Option<String>,
     pub remark: Option<String>,
@@ -162,7 +163,7 @@ pub struct CollectionCreatePayload {
     #[serde(default)]
     pub collection_date: Option<String>,
     #[serde(default)]
-    pub amount: f64,
+    pub amount: Decimal,
     #[serde(default)]
     pub payment_method: Option<String>,
     #[serde(default)]
@@ -238,7 +239,7 @@ async fn fetch_invoice(
         "SELECT id, invoice_number, customer_id, customer_name,
                 to_char(invoice_date, 'YYYY-MM-DD') AS invoice_date,
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
-                amount::float8, tax_amount::float8, total_amount::float8, paid_amount::float8,
+                amount, tax_amount, total_amount, paid_amount,
                 status, invoice_type, cancel_reason, red_flush_of
          FROM finance.sales_invoices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
@@ -321,7 +322,7 @@ pub async fn list_sales_invoices(
         "SELECT id, invoice_number, customer_id, customer_name,
                 to_char(invoice_date, 'YYYY-MM-DD') AS invoice_date,
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
-                amount::float8, tax_amount::float8, total_amount::float8, paid_amount::float8,
+                amount, tax_amount, total_amount, paid_amount,
                 status, invoice_type, cancel_reason, red_flush_of
          FROM finance.sales_invoices WHERE {where_sql}
          ORDER BY created_at DESC LIMIT $7 OFFSET $8"
@@ -419,7 +420,7 @@ pub async fn create_sales_invoice(
     Json(payload): Json<InvoiceCreatePayload>,
 ) -> Json<ApiResponse<SalesInvoiceOut>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let total = if payload.total_amount > 0.0 {
+    let total = if payload.total_amount > Decimal::ZERO {
         payload.total_amount
     } else {
         payload.amount + payload.tax_amount
@@ -712,7 +713,7 @@ async fn fetch_collection(
                  WHERE si.invoice_number = erc.invoice_no AND si.tenant_id = erc.tenant_id) AS invoice_id,
                 customer_id, customer_name,
                 CASE WHEN collection_date IS NULL THEN NULL ELSE to_char(collection_date, 'YYYY-MM-DD') END AS collection_date,
-                amount::float8, payment_method, NULL AS bank_account, remark, status, confirmed_by,
+                amount, payment_method, NULL AS bank_account, remark, status, confirmed_by,
                 CASE WHEN confirmed_at IS NULL THEN NULL ELSE to_char(confirmed_at, 'YYYY-MM-DD\"T\"HH24:MI:SS') END AS confirmed_at
          FROM finance.erp_collection_records erc
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
@@ -796,7 +797,7 @@ pub async fn list_collections(
                  WHERE si.invoice_number = erc.invoice_no AND si.tenant_id = erc.tenant_id) AS invoice_id,
                 customer_id, customer_name,
                 CASE WHEN collection_date IS NULL THEN NULL ELSE to_char(collection_date, 'YYYY-MM-DD') END AS collection_date,
-                amount::float8, payment_method, NULL AS bank_account, remark, status, confirmed_by,
+                amount, payment_method, NULL AS bank_account, remark, status, confirmed_by,
                 CASE WHEN confirmed_at IS NULL THEN NULL ELSE to_char(confirmed_at, 'YYYY-MM-DD\"T\"HH24:MI:SS') END AS confirmed_at
          FROM finance.erp_collection_records erc WHERE {where_sql}
          ORDER BY created_at DESC LIMIT $6 OFFSET $7"
@@ -972,7 +973,7 @@ pub async fn confirm_collection(
     let pool = &state.pool;
 
     let rec = match sqlx::query(
-        "SELECT amount::float8, (SELECT si.id FROM finance.sales_invoices si WHERE si.invoice_number = erc.invoice_no AND si.tenant_id = erc.tenant_id) AS invoice_id, status FROM finance.erp_collection_records erc
+        "SELECT amount, (SELECT si.id FROM finance.sales_invoices si WHERE si.invoice_number = erc.invoice_no AND si.tenant_id = erc.tenant_id) AS invoice_id, status FROM finance.erp_collection_records erc
          WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
@@ -980,7 +981,7 @@ pub async fn confirm_collection(
     .fetch_optional(pool)
     .await
     {
-        Ok(Some(r)) => (r.get::<f64, _>("amount"), r.get::<Option<Uuid>, _>("invoice_id"), r.get::<String, _>("status")),
+        Ok(Some(r)) => (r.get::<Decimal, _>("amount"), r.get::<Option<Uuid>, _>("invoice_id"), r.get::<String, _>("status")),
         Ok(None) => return Json(ApiResponse::<CollectionOut>::error(404, "回款记录不存在")),
         Err(e) => return Json(crate::shared::err_resp(e)),
     };

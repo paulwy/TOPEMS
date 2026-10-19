@@ -28,6 +28,7 @@
 - [x] **P2 · 部署文档/脚本 8099 单上游口径对齐** ✅ 完成（2026-10-19，见下方「批 E3」块）：对应 10-19 重审 H-1/H-2/H-3/H-11。runbook 重写、verify 脚本 map→upstream 校验、deploy/README systemd 主路径、config-consistency 规则 2 改 upstream 8099；shellcheck/config-consistency/独立 source 校验全绿。
 - [x] **P1 · PM 金额 f64→Decimal（同结构体完整集）** ✅ 完成（2026-10-19，见下方「批 E4」块）：对应 10-19 重审 NEW-P1-1。project_expenses.amount、contracts.amount、contract_milestones.payment_amount/payment_percent、contract_payment_schedule.payment_amount/payment_percent 改 `rust_decimal::Decimal`；pm lib 497 passed、workspace check/clippy/fmt 绿。**遗留1连库复现已闭环**（TEMP TABLE 探针实证 Decimal↔numeric 往返、f64 解码 numeric 真实报错）；**遗留2 pm 其余 numeric 列已逐块甄别**：直接 query_as 映射的资源/结算 variance_percent/验收 score/报告取数 4 处改 Decimal，float8 的 EVM 列与内存聚合保留 f64（见「批 E4-遗留2」子块）。
 - [x] **P2 · 请求路径反序列化 panic 改错误返回** ✅ 完成（2026-10-20，见下方「批 E5」块）：对应 10-19 重审 NEW-P2-7。master-data `lineage_v52.rs` 两处反序列化 panic 改 `Result` 传播 `TopemsError::BusinessLogic`，删死函数 `simulation_from_row`；unified-core `business_tools` 宏内守卫 unwrap 改 `if let`；master-data 451 / unified-core 559 passed、check/clippy/fmt 绿。
+- [x] **P2 · sales_invoice/回款金额持久化边界 f64→Decimal** ✅ 完成（2026-10-20，见下方「批 E6」块）：对应 10-19 重审 NEW-P2-2。连库核 `finance.sales_invoices`(amount/tax/total/paid) 与 `finance.erp_collection_records.amount` 均 numeric(18,2)；发票主表四金额 + 回款 Out/Payload + 确认回写主表 paid_amount 链改 `rust_decimal::Decimal`，读 SQL 去 `::float8`；账龄/逾期内存聚合与导出 CSV 保留 f64；finance lib 1087 passed、check/clippy/fmt 绿。
 
 ---
 
@@ -113,6 +114,21 @@
   - `svc/unified-core/src/modules/business_tools/mod.rs`：`define_business_tool` 宏内 `if request.data.is_some() { ...request.data.as_ref().unwrap() }` 改 `if let Some(data) = &request.data`，消除守卫内 unwrap（原逻辑安全，属卫生清理）。
 - **范围边界（刻意不改）**：middleware 固定 URI（`Uri::try_from` 字面量）、固定结构体 serde 序列化的 `unwrap_or_else(panic)` 为编译期已知合法的良性 fail-fast；`shared/util.rs` 测试内序列化断言 panic；生产 `unwrap/expect/panic` 长尾（NEW-P3-7，416/927/61）另行登记，本批不机械清除。
 - **验证**：`cargo check -p topems-master-data -p topems-unified-core` exit 0；`cargo clippy ... -D correctness` exit 0；`cargo fmt --check` 干净；`cargo test --lib` master-data **451 passed / 0 failed**、unified-core **559 passed / 0 failed**。
+
+---
+
+## 批 E6 · sales_invoice/回款金额持久化边界 f64→Decimal（2026-10-20）✅ 完成
+
+> 来源：`artifacts/TOPEMS-重新审计与评估-2026-10-19.md` NEW-P2-2（finance 金额面 f64↔numeric 错配，建 DB 列↔模型对照表只改持久化边界，内存计算可留 f64）。本批闭环 sales_invoice.rs 发票主表 + 回款一条链，其余模块（treasury_v58/settlement_v55/erp openapi）另批连库甄别。
+
+- **连库甄别（information_schema.columns）**：`finance.sales_invoices` 的 amount/tax_amount/total_amount/paid_amount 与 `finance.erp_collection_records.amount` 均 `numeric(18,2)`，属错配；原 SQL 显式 `::float8` 把 numeric 转 f64 规避在线报错（代价是尾差/精度丢失，非 P1 在线崩溃）。
+- **改动（仅持久化边界，`svc/finance/src/modules/sales_invoice.rs`）**：
+  - `SalesInvoiceOut` amount/tax_amount/total_amount/paid_amount、`InvoiceCreatePayload` amount/tax_amount/total_amount（`default_total_calc`→`Decimal::ZERO`）、`InvoiceUpdatePayload` amount/tax_amount、`CollectionOut.amount`、`CollectionCreatePayload.amount` 全改 `rust_decimal::Decimal`；`total > 0.0` 改 `> Decimal::ZERO`。
+  - 详情/列表两处主表读 SQL、回款详情两处读 SQL、confirm 读 SQL 去掉 `amount::float8`；红冲 `-original.amount/tax/total` 一元负号在 Decimal 域有效；INSERT/UPDATE/confirm 回写 `paid_amount = paid_amount + $3` bind 类型随 payload 自动匹配。
+- **保留 f64（刻意不改，内存聚合/导出）**：`AgingBucket`/`ReceivableSummary`/`OverdueItem` 账龄与逾期汇总、1125–1427 行 f64 算术；回款/发票导出 CSV 的 `r.get::<f64>`（导出视图，非 Out 模型）。
+- **前端零改动**：`apps/web/src/api/crmFinance/index.ts` SalesInvoice/CollectionRecord 金额均声明 `number`，裸 Decimal 序列化为 JSON number。
+- **验证**：`SQLX_OFFLINE=true cargo check -p topems-finance --lib` exit 0（仅既有无关 unused `now` warning）；`cargo test -p topems-finance --lib` **1087 passed / 0 failed**；`cargo clippy -p topems-finance --lib -- -D correctness` exit 0；`cargo fmt -p topems-finance -- --check` 干净。
+- **遗留（非本批）**：treasury_v58(15)、settlement_v55(12)、erp openapi(11) 金额面需连库逐列核对只改持久化边界；forecast_v53/risk_v59 等仿真浮点与 EVM 列保留 f64。
 
 ---
 
