@@ -43,6 +43,15 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['mes', 'work-orders'];
 
+// L14 B类：文件内同构重复布局等价抽常量，值逐字不变，视觉零差异
+const styles: Record<string, React.CSSProperties> = {
+  fieldLabel: { display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 },
+  footerRow: { display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' },
+  gridTwoCol: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' },
+  columnStack: { display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' },
+  inlineRow: { display: 'flex', alignItems: 'center', gap: 'var(--space-2)' },
+};
+
 interface WorkOrder {
   id: string;
   order_no: string;
@@ -351,7 +360,7 @@ const MesWorkOrderPage: React.FC = () => {
       key: 'product',
       header: t('mes.work_order_page.col_product'),
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+        <div style={styles.inlineRow}>
           <div
             style={{
               width: 32,
@@ -450,7 +459,7 @@ const MesWorkOrderPage: React.FC = () => {
       key: 'operator',
       header: t('mes.work_order_page.operator'),
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+        <div style={styles.inlineRow}>
           <div
             style={{
               width: 24,
@@ -676,7 +685,7 @@ const MesWorkOrderPage: React.FC = () => {
         size='lg'
       >
         {selectedOrder && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={styles.columnStack}>
             {/* 状态卡片 */}
             <Card>
               <div
@@ -750,9 +759,7 @@ const MesWorkOrderPage: React.FC = () => {
 
             {/* 基本信息 */}
             <Card title={t('mes.work_order.k49')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={styles.gridTwoCol}>
                 <InfoItem
                   label={t('mes.work_order_page.product_name')}
                   value={selectedOrder.product_name}
@@ -790,9 +797,7 @@ const MesWorkOrderPage: React.FC = () => {
 
             {/* 时间信息 */}
             <Card title={t('mes.work_order_page.card_time_info')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={styles.gridTwoCol}>
                 <InfoItem
                   label={t('mes.work_order.k11')}
                   value={formatDateTime(selectedOrder.planned_start)}
@@ -823,7 +828,7 @@ const MesWorkOrderPage: React.FC = () => {
 
             {/* 操作按钮 */}
             {selectedOrder.status === 'pending' && (
-              <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+              <div style={styles.footerRow}>
                 <Button
                   variant='primary'
                   leftIcon={<Play size={16} />}
@@ -834,7 +839,7 @@ const MesWorkOrderPage: React.FC = () => {
               </div>
             )}
             {selectedOrder.status === 'in_progress' && (
-              <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+              <div style={styles.footerRow}>
                 <Button
                   variant='ghost'
                   leftIcon={<Pause size={16} />}
@@ -852,7 +857,7 @@ const MesWorkOrderPage: React.FC = () => {
               </div>
             )}
             {selectedOrder.status === 'paused' && (
-              <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+              <div style={styles.footerRow}>
                 <Button
                   variant='primary'
                   leftIcon={<Play size={16} />}
@@ -892,12 +897,12 @@ const MesWorkOrderPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={styles.columnStack}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
             <div>
               <label
                 htmlFor='wo-product-name'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={styles.fieldLabel}
               >
                 {t('mes.work_order_page.product_name')} *
               </label>
@@ -909,7 +914,7 @@ const MesWorkOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='wo-product-code'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={styles.fieldLabel}
               >
                 {t('mes.work_order_page.product_code')} *
               </label>
@@ -921,7 +926,7 @@ const MesWorkOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='wo-quantity'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={styles.fieldLabel}
               >
                 {t('mes.work_order.k7')} *
               </label>
@@ -934,7 +939,7 @@ const MesWorkOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='wo-priority'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={styles.fieldLabel}
               >
                 {t('mes.work_order.k15')}
               </label>
@@ -951,7 +956,7 @@ const MesWorkOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='wo-workshop'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={styles.fieldLabel}
               >
                 {t('mes.work_order_page.workshop')}
               </label>
@@ -977,7 +982,7 @@ const MesWorkOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='wo-line'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={styles.fieldLabel}
               >
                 {t('mes.work_order_page.line')}
               </label>
@@ -1004,7 +1009,7 @@ const MesWorkOrderPage: React.FC = () => {
           <div>
             <label
               htmlFor='wo-remark'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={styles.fieldLabel}
             >
               {t('mes.work_order.k30')}
             </label>
@@ -1028,7 +1033,7 @@ const MesWorkOrderPage: React.FC = () => {
           <div>
             <label
               htmlFor='field-1'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={styles.fieldLabel}
             >
               {t('mes.work_order_page.attachments')}
             </label>
