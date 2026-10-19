@@ -253,7 +253,7 @@ pub async fn get_contract(
     match contract {
         Ok(contract) => {
             let items = sqlx::query_as::<_, PurchaseContractItem>(
-                only_own_schema_query!("scm", "SELECT id, tenant_id, contract_id, line_number, product_code, product_name, specification, unit, quantity::float8, unit_price::float8, amount::float8, delivery_date, remarks, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) ORDER BY line_number"),
+                only_own_schema_query!("scm", "SELECT id, tenant_id, contract_id, line_number, product_code, product_name, specification, unit, quantity::float8, unit_price, amount, delivery_date, remarks, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) ORDER BY line_number"),
             )
             .bind(contract_id)
             .bind(tenant_bind)
