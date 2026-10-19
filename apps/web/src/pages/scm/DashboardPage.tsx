@@ -28,6 +28,7 @@ import type {
   MrpPlan,
   IncomingInspection,
   InventoryTurnoverStat,
+  InventoryTurnoverDaysStat,
   PriceComparison,
 } from '@/api/scm';
 import { SCM_PATHS } from '@/modules/scm/config';
@@ -149,6 +150,19 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // C8 接线：GET /inventory-turnover/days 整体库存周转统计（近 90 天默认窗口）
+  const { data: turnoverDaysStat, isPending: turnoverDaysLoading } = useQuery({
+    queryKey: [QUERY_KEYS.SCM.INVENTORY_TURNOVER, 'days'],
+    queryFn: async () => {
+      const response = await scmApi.inventoryTurnover.days();
+      if (response.success && response.data) {
+        return response.data as InventoryTurnoverDaysStat;
+      }
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { isPending: priceLoading } = useQuery({
     queryKey: QUERY_KEYS.SCM.PRICE_COMPARISONS,
     queryFn: async () => {
@@ -162,7 +176,12 @@ export const DashboardPage: React.FC = () => {
   });
 
   const loading =
-    overviewLoading || mrpLoading || inspectionLoading || inventoryLoading || priceLoading;
+    overviewLoading ||
+    mrpLoading ||
+    inspectionLoading ||
+    inventoryLoading ||
+    turnoverDaysLoading ||
+    priceLoading;
 
   const stats: StatCard[] = useMemo(
     () => [
@@ -228,6 +247,19 @@ export const DashboardPage: React.FC = () => {
         color: 'info',
       },
       {
+        id: 'turnoverDays',
+        title: i18n.t('scm.dashboard_page.k37'),
+        value: turnoverDaysStat
+          ? `${turnoverDaysStat.overall_turnover_days.toFixed(0)} ${i18n.t(
+              'scm.dashboard_page.k39'
+            )}`
+          : '—',
+        icon: <RefreshCw size={24} />,
+        change: turnoverDaysStat?.overall_turnover_rate ?? 0,
+        changeLabel: i18n.t('scm.dashboard_page.k38'),
+        color: 'info',
+      },
+      {
         id: 'quality',
         title: i18n.t('scm.dashboard_page.k16'),
         value: `${overview?.quality_pass_rate || 0}%`,
@@ -276,7 +308,7 @@ export const DashboardPage: React.FC = () => {
         color: 'info',
       },
     ],
-    [overview, t]
+    [overview, turnoverDaysStat, t]
   );
 
   const charts: ChartCard[] = useMemo(

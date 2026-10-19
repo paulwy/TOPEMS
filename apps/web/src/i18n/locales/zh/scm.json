@@ -1058,5 +1058,8 @@
   "scm.scm_incoming_inspection_page.k11": "检验不合格",
   "scm.scm_incoming_inspection_page.k12": "检验不合格已提交",
   "scm.scm_incoming_inspection_page.k13": "提交不合格失败",
-  "scm.scm_incoming_inspection_page.k14": "来料检验"
+  "scm.scm_incoming_inspection_page.k14": "来料检验",
+  "scm.dashboard_page.k37": "库存周转天数",
+  "scm.dashboard_page.k38": "周转率",
+  "scm.dashboard_page.k39": "天"
 }

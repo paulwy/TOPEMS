@@ -493,6 +493,14 @@ describe('SCM inventoryTurnoverApi', () => {
     });
   });
 
+  it('should call GET /inventory-turnover/days for days', async () => {
+    mockApiClient.get.mockResolvedValue({ success: true, data: {} });
+    await inventoryTurnoverApi.days();
+    expect(mockApiClient.get).toHaveBeenCalledWith('/inventory-turnover/days', {
+      params: undefined,
+    });
+  });
+
   it('should call GET /inventory-turnover/trend for trend', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: [] });
     await inventoryTurnoverApi.trend();

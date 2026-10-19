@@ -480,6 +480,30 @@ export interface TurnoverTrendQueryParams {
 }
 
 /**
+ * GET /inventory-turnover/days 整体库存周转统计
+ * 契约（svc/scm/src/modules/inventory_turnover.rs turnover_days）：
+ * overall_turnover_rate / overall_turnover_days / total_inventory_value /
+ * total_outbound_value / sku_count / active_skus / start_date / end_date
+ */
+export interface InventoryTurnoverDaysStat {
+  overall_turnover_rate: number;
+  overall_turnover_days: number;
+  total_inventory_value: number;
+  total_outbound_value: number;
+  sku_count: number;
+  active_skus: number;
+  start_date: string;
+  end_date: string;
+}
+
+export interface TurnoverDaysQueryParams {
+  start_date?: string;
+  end_date?: string;
+  warehouse_id?: string;
+  category?: string;
+}
+
+/**
  * 供应链看板
  */
 export interface SupplyChainOverview {

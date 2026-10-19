@@ -3,6 +3,8 @@ import type { ApiResponse, PaginatedResponse } from '../client';
 import type {
   InventoryTurnoverStat,
   InventoryTurnoverQueryParams,
+  InventoryTurnoverDaysStat,
+  TurnoverDaysQueryParams,
   AbcClassification,
   AbcClassificationQueryParams,
   TurnoverTrendData,
@@ -18,6 +20,12 @@ export const inventoryTurnoverApi = {
 
   get: async (id: string): Promise<ApiResponse<InventoryTurnoverStat>> => {
     return apiClient.scm.get(`/inventory-turnover/${id}`);
+  },
+
+  days: async (
+    params?: TurnoverDaysQueryParams
+  ): Promise<ApiResponse<InventoryTurnoverDaysStat>> => {
+    return apiClient.scm.get('/inventory-turnover/days', { params });
   },
 
   abcClassification: async (

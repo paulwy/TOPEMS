@@ -1990,5 +1990,8 @@
   "scm.scm_incoming_inspection_page.k11": "Inspection failed",
   "scm.scm_incoming_inspection_page.k12": "Inspection failure submitted",
   "scm.scm_incoming_inspection_page.k13": "Failed to submit rejection",
-  "scm.scm_incoming_inspection_page.k14": "Incoming Inspections"
+  "scm.scm_incoming_inspection_page.k14": "Incoming Inspections",
+  "scm.dashboard_page.k37": "Inventory Turnover Days",
+  "scm.dashboard_page.k38": "Turnover Rate",
+  "scm.dashboard_page.k39": "days"
 }
