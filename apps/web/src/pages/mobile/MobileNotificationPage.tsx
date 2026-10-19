@@ -32,8 +32,8 @@ import {
   markAsRead,
   markAllAsRead,
   deleteNotification,
-  bulkDeleteNotifications,
 } from '@/api/notification';
+import { batchApi } from '@/api/notification/batch';
 import { useNotificationStore } from '../../store';
 import { getMobileNotificationSchema } from '@/schemas/mobile';
 
@@ -157,7 +157,7 @@ export const MobileNotificationPage: React.FC = () => {
     [notifications, addNotification, invalidateNotifications]
   );
   const handleClearAll = useCallback(async () => {
-    await bulkDeleteNotifications(notifications.map((n) => n.id));
+    await batchApi.bulkDeleteNotifications(notifications.map((n) => n.id));
     invalidateNotifications();
     addNotification({
       title: i18n.t('mobile.mobile_notification_page.k24'),

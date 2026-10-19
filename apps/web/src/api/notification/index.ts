@@ -372,13 +372,6 @@ export const bulkMarkAsRead = async (ids: string[]): Promise<ApiResponse<number>
   return response;
 };
 
-export const bulkDeleteNotifications = async (ids: string[]): Promise<ApiResponse<number>> => {
-  const response = await apiClient.notification.delete<number>('/notifications/bulk', {
-    data: { ids },
-  });
-  return response;
-};
-
 interface HealthResponse {
   status: string;
   uptime: string;

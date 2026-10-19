@@ -8,10 +8,10 @@ import {
   markAsRead,
   deleteNotification,
   bulkMarkAsRead,
-  bulkDeleteNotifications,
   type Notification,
   type NotificationTypeEnum,
 } from '@/api/notification';
+import { batchApi } from '@/api/notification/batch';
 import i18n from '@/i18n';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { useNotificationStore } from '@/store';
@@ -126,7 +126,7 @@ export const NotificationListPage: React.FC = () => {
     },
   });
   const bulkDeleteMutation = useMutation({
-    mutationFn: (ids: string[]) => bulkDeleteNotifications(ids),
+    mutationFn: (ids: string[]) => batchApi.bulkDeleteNotifications(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.NOTIFICATION_BASE,
