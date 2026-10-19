@@ -1898,6 +1898,97 @@ pub async fn get_template(
     }
 }
 
+/// 渲染模板（变量替换，预览）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/notification-templates/{id}/render",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn render_template(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(data): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Rendering template: {} for user: {}", id, claims.username);
+
+    let result = sqlx::query(only_own_schema_query!(
+        "public",
+        r#"
+        SELECT title_template AS title, content_template AS content
+        FROM core_notification_templates
+        WHERE id = $1
+        "#
+    ))
+    .bind(id)
+    .fetch_optional(&pool)
+    .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let title_tpl = row.get::<Option<String>, _>("title").unwrap_or_default();
+            let content_tpl = row.get::<Option<String>, _>("content").unwrap_or_default();
+            let obj = data.as_object();
+            let rendered_title = render_template_vars(&title_tpl, obj);
+            let rendered_content = render_template_vars(&content_tpl, obj);
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Render template success",
+                "data": {
+                    "title": rendered_title,
+                    "content": rendered_content,
+                }
+            }))
+        }
+        Ok(None) => Json(serde_json::json!({
+            "success": false,
+            "message": "Template not found",
+            "data": null
+        })),
+        Err(e) => {
+            tracing::error!("Failed to render template: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to render template: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 渲染模板变量：将 `{{var}}` 替换为 data 中对应字符串值；缺失时保留原占位
+fn render_template_vars(
+    template: &str,
+    data: Option<&serde_json::Map<String, serde_json::Value>>,
+) -> String {
+    let mut out = String::with_capacity(template.len());
+    let mut rest = template;
+    while let Some(start) = rest.find("{{") {
+        out.push_str(&rest[..start]);
+        if let Some(end_rel) = rest[start + 2..].find("}}") {
+            let key = rest[start + 2..start + 2 + end_rel].trim().to_string();
+            let end = start + 2 + end_rel + 2;
+            let replacement = data
+                .and_then(|o| o.get(&key))
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| rest[start..end].to_string());
+            out.push_str(&replacement);
+            rest = &rest[end..];
+        } else {
+            out.push_str(&rest[start..]);
+            rest = "";
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
 /// 创建模板
 // gate: admin-only
 #[utoipa::path(

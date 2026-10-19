@@ -84,7 +84,6 @@ const NOTIF_STUB_GET: &[&str] = &[
 ];
 const NOTIF_STUB_POST: &[&str] = &[
     "/notification-templates/{id}/clone",
-    "/notification-templates/{id}/render",
     "/notification-templates/{id}/test",
     "/notification/batch-subscribe",
     "/notification/deliveries/retry-all",
@@ -308,6 +307,10 @@ impl CommunicationRealModule {
                 .route(
                     "/notification-templates/{id}",
                     delete(notification::delete_template),
+                )
+                .route(
+                    "/notification-templates/{id}/render",
+                    post(notification::render_template),
                 )
                 // --- 通知渠道（前端相对路径 /notification/channels/*，crate 已实现） ---
                 .route("/notification/channels", get(notification::list_channels))
