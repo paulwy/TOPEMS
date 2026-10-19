@@ -266,6 +266,13 @@
 - **不改**：`inbound_orders.total_value`=float8（f64 匹配，total_amount 为其别名）；`inventory.total_value` 未接线；`order_item.rs` Inbound/OutboundOrderItem 无 query_as（预留 DTO）；数量/重量/体积保留 f64。
 - **第二批甄别（无强类型改动点）**：`purchase_order_snapshots.total_amount` 已是 Option\<Decimal\> 直接 bind；`stock_take_items.unit_price`、`wms.transfers.total_value` 代码未读写（未接线）；`replenishment_orders/items` 走 serde_json::Value 动态 bind（无强类型请求体，精度债小，登记不扩改）；`inbound_orders.total_value`=float8、`outbound.total_value/shipping_cost` 未读写、`order_item.rs` 无 query_as，均保留 f64。**wms 强类型金额主链路已闭环。**
 
+### E11 全局反查补充 · mes/rd/pm 连库甄别（2026-10-20）✅ 无改动
+
+- **mes**：`models/cost.rs` ProductionCostRecordResponse/EnergyRecordResponse 为 `#![allow(dead_code)]` 仅 Serialize 的 Response DTO，无 query_as 接线，不改；mes 绑定的 TeamRow/AuditLog/FlowStepRow/ProductionPlan 无金额字段。
+- **rd（表在 `rs` schema）**：`rs.projects.budget/actual_cost`=double precision（f64 匹配，不改）；`rs.project_members.cost_rate/hourly_rate`=numeric 但走动态 SELECT（非 query_as），属费率/单价，非金额，登记不扩改；`budgeted_hours` 为工时保留 f64。
+- **pm**：`pm.project_benefits` 的 planned_cost/actual_cost/planned_value/earned_value/actual_cost_eva/cpi/spi/eac 等全 double precision（匹配，不改）；`ProjectReport.budget_total/budget_variance` 为内存聚合（SELECT 无此列）；`project_resources` 模型已是 Option\<Decimal\>；`ContractPaymentSchedule.actual_payment_amount`(numeric) 未被 SELECT/写入（无边界，不改）。
+- **遗留边缘（登记，不属强类型持久化边界）**：`wms.replenishment_orders/items` 动态 JSON bind；`rd.project_members.cost_rate` 动态；后续若统一强类型化再处理。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成
