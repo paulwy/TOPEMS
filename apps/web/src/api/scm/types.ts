@@ -301,6 +301,47 @@ export interface IncomingInspectionQueryParams extends PaginationParams {
   supplier_id?: string;
 }
 
+/**
+ * 到货通知（GET /incoming-notices）
+ */
+export interface IncomingNotice {
+  id: string;
+  notice_number: string;
+  purchase_order_id?: string;
+  purchase_order_number?: string;
+  supplier_id?: string;
+  supplier_name?: string;
+  warehouse_id?: string;
+  warehouse_name?: string;
+  expected_arrival_date?: string;
+  actual_arrival_date?: string;
+  status: string;
+  total_quantity: number;
+  inspection_required?: boolean;
+  remarks?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateIncomingNoticeRequest {
+  purchase_order_id?: string;
+  purchase_order_number?: string;
+  supplier_id?: string;
+  supplier_name?: string;
+  warehouse_id?: string;
+  warehouse_name?: string;
+  expected_arrival_date?: string;
+  total_quantity: number;
+  inspection_required?: boolean;
+  remarks?: string;
+}
+
+export interface UpdateIncomingNoticeRequest {
+  status?: string;
+  actual_arrival_date?: string;
+  remarks?: string;
+}
+
 export interface InspectionRecord {
   id: string;
   inspection_id: string;

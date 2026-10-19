@@ -155,7 +155,6 @@ pub fn create_routes() -> Router<ApiState> {
                 .delete(delete_suggestion),
         )
         .route("/mrp/suggestions/{id}/confirm", post(confirm_suggestion))
-        .route("/mrp/material-summary", get(material_requirement_summary))
         .route("/mrp-suggestions", get(list_suggestions))
         .route("/mrp-suggestions/{id}", get(get_suggestion))
         .route(
@@ -889,7 +888,7 @@ pub async fn confirm_suggestion(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["scm:mrp:read"])),
-    path = "/mrp/material-summary",
+    path = "/mrp-suggestions/summary",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")

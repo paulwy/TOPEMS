@@ -384,6 +384,32 @@ describe('SCM incomingInspectionApi', () => {
     await incomingInspectionApi.reject('1', data);
     expect(mockApiClient.post).toHaveBeenCalledWith('/incoming-inspections/1/reject', data);
   });
+
+  it('should call GET /incoming-notices for listNotices', async () => {
+    mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
+    await incomingInspectionApi.listNotices();
+    expect(mockApiClient.get).toHaveBeenCalledWith('/incoming-notices', { params: undefined });
+  });
+
+  it('should call POST /incoming-notices for createNotice', async () => {
+    const data = { purchase_order_id: 'po1', total_quantity: 10 };
+    mockApiClient.post.mockResolvedValue({ success: true, data });
+    await incomingInspectionApi.createNotice(data);
+    expect(mockApiClient.post).toHaveBeenCalledWith('/incoming-notices', data);
+  });
+
+  it('should call GET /incoming-notices/:id for getNotice', async () => {
+    mockApiClient.get.mockResolvedValue({ success: true, data: { id: 'n1' } });
+    await incomingInspectionApi.getNotice('n1');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/incoming-notices/n1');
+  });
+
+  it('should call PUT /incoming-notices/:id for updateNotice', async () => {
+    const data = { status: 'arrived', actual_arrival_date: '2026-10-21' };
+    mockApiClient.put.mockResolvedValue({ success: true, data });
+    await incomingInspectionApi.updateNotice('n1', data);
+    expect(mockApiClient.put).toHaveBeenCalledWith('/incoming-notices/n1', data);
+  });
 });
 
 describe('SCM inspectionRecordApi', () => {
@@ -579,6 +605,25 @@ describe('SCM priceComparisonApi', () => {
     mockApiClient.post.mockResolvedValue({ success: true, data });
     await priceComparisonApi.createQuote(data);
     expect(mockApiClient.post).toHaveBeenCalledWith('/quotes', data);
+  });
+
+  it('should call GET /quotes/:id for getQuote', async () => {
+    mockApiClient.get.mockResolvedValue({ success: true, data: { id: 'q1' } });
+    await priceComparisonApi.getQuote('q1');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/quotes/q1');
+  });
+
+  it('should call PUT /quotes/:id for updateQuote', async () => {
+    const data = { comparison_id: 'comp1', supplier_id: 'sup1', price: 120 };
+    mockApiClient.put.mockResolvedValue({ success: true, data });
+    await priceComparisonApi.updateQuote('q1', data);
+    expect(mockApiClient.put).toHaveBeenCalledWith('/quotes/q1', data);
+  });
+
+  it('should call POST /quotes/:id/submit for submitQuote', async () => {
+    mockApiClient.post.mockResolvedValue({ success: true, data: { id: 'q1' } });
+    await priceComparisonApi.submitQuote('q1');
+    expect(mockApiClient.post).toHaveBeenCalledWith('/quotes/q1/submit');
   });
 });
 

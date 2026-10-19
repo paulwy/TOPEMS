@@ -51,4 +51,19 @@ export const priceComparisonApi = {
   createQuote: async (data: CreateSupplierQuoteRequest): Promise<ApiResponse<SupplierQuote>> => {
     return apiClient.scm.post('/quotes', data);
   },
+
+  getQuote: async (id: string): Promise<ApiResponse<SupplierQuote>> => {
+    return apiClient.scm.get(`/quotes/${id}`);
+  },
+
+  updateQuote: async (
+    id: string,
+    data: CreateSupplierQuoteRequest
+  ): Promise<ApiResponse<SupplierQuote>> => {
+    return apiClient.scm.put(`/quotes/${id}`, data);
+  },
+
+  submitQuote: async (id: string): Promise<ApiResponse<SupplierQuote>> => {
+    return apiClient.scm.post(`/quotes/${id}/submit`);
+  },
 };

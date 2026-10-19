@@ -182,7 +182,6 @@ pub fn create_routes() -> Router<ApiState> {
             get(get_inspection).put(update_inspection),
         )
         .route("/incoming-inspections/{id}/pass", post(inspection_pass))
-        .route("/incoming-inspections/{id}/fail", post(inspection_fail))
         .route("/incoming-inspections/{id}/reject", post(inspection_fail))
         .route(
             "/incoming-inspections/{id}/records",
@@ -1209,7 +1208,7 @@ pub async fn inspection_pass(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["scm:incoming-inspection:write"])),
-    path = "/incoming-inspections/{id}/fail",
+    path = "/incoming-inspections/{id}/reject",
     params(
 ("id" = String, Path, description = "id")
     ),

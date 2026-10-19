@@ -1,11 +1,14 @@
 import apiClient from '../client';
-import type { ApiResponse, PaginatedResponse } from '../client';
+import type { ApiResponse, PaginatedResponse, PaginationParams } from '../client';
 import type {
   IncomingInspection,
   CreateIncomingInspectionRequest,
   UpdateIncomingInspectionRequest,
   IncomingInspectionQueryParams,
   InspectionDisposalRequest,
+  IncomingNotice,
+  CreateIncomingNoticeRequest,
+  UpdateIncomingNoticeRequest,
 } from './types';
 
 export const incomingInspectionApi = {
@@ -41,5 +44,27 @@ export const incomingInspectionApi = {
     data: InspectionDisposalRequest
   ): Promise<ApiResponse<IncomingInspection>> => {
     return apiClient.scm.post(`/incoming-inspections/${id}/reject`, data);
+  },
+
+  // ── 到货通知（/incoming-notices）──
+  listNotices: async (
+    params?: PaginationParams
+  ): Promise<ApiResponse<PaginatedResponse<IncomingNotice>>> => {
+    return apiClient.scm.get('/incoming-notices', { params });
+  },
+
+  createNotice: async (data: CreateIncomingNoticeRequest): Promise<ApiResponse<IncomingNotice>> => {
+    return apiClient.scm.post('/incoming-notices', data);
+  },
+
+  getNotice: async (id: string): Promise<ApiResponse<IncomingNotice>> => {
+    return apiClient.scm.get(`/incoming-notices/${id}`);
+  },
+
+  updateNotice: async (
+    id: string,
+    data: UpdateIncomingNoticeRequest
+  ): Promise<ApiResponse<IncomingNotice>> => {
+    return apiClient.scm.put(`/incoming-notices/${id}`, data);
   },
 };
