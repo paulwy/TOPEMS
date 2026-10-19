@@ -36,7 +36,7 @@ pub struct InboundOrderItemRequest {
     pub expected_quantity: f64,
     pub unit: String,
     pub location_id: Option<Uuid>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<rust_decimal::Decimal>,
     pub remarks: Option<String>,
 }
 
@@ -63,8 +63,8 @@ fn pg_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "location_id": row.try_get::<Option<Uuid>, _>("location_id").ok(),
         "location_code": row.try_get::<Option<String>, _>("location_code").ok(),
         "quality_status": row.try_get::<Option<String>, _>("quality_status").ok(),
-        "unit_price": row.try_get::<Option<f64>, _>("unit_price").ok(),
-        "total_value": row.try_get::<Option<f64>, _>("total_value").ok(),
+        "unit_price": row.try_get::<Option<rust_decimal::Decimal>, _>("unit_price").ok(),
+        "total_value": row.try_get::<Option<rust_decimal::Decimal>, _>("total_value").ok(),
         "remarks": row.try_get::<Option<String>, _>("remarks").ok(),
         "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
         "updated_at": row.try_get::<chrono::NaiveDateTime, _>("updated_at").ok().map(|t| t.to_string()),
@@ -830,7 +830,10 @@ pub async fn create_inbound_order_item(
     let request_data = serde_json::to_value(&req).ok();
     let item_id = Uuid::new_v4();
     let now = Utc::now();
-    let total_value = req.unit_price.map(|p| p * req.expected_quantity);
+    let total_value = req.unit_price.map(|p| {
+        p * rust_decimal::Decimal::from_f64_retain(req.expected_quantity)
+            .unwrap_or(rust_decimal::Decimal::ZERO)
+    });
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -1934,7 +1937,7 @@ mod tests {
             expected_quantity: 100.0,
             unit: "PCS".to_string(),
             location_id: None,
-            unit_price: Some(10.5),
+            unit_price: rust_decimal::Decimal::from_f64_retain(10.5),
             remarks: Some("测试备注".to_string()),
         };
         let json = serde_json::to_value(&item).unwrap();
@@ -1944,7 +1947,7 @@ mod tests {
         assert_eq!(json["material_type"], "raw_material");
         assert_eq!(json["expected_quantity"], 100.0);
         assert_eq!(json["unit"], "PCS");
-        assert_eq!(json["unit_price"], 10.5);
+        assert_eq!(json["unit_price"], "10.5");
     }
 
     #[test]
@@ -1991,7 +1994,7 @@ mod tests {
         assert_eq!(item.material_type.as_deref(), Some("finished_goods"));
         assert_eq!(item.expected_quantity, 200.0);
         assert_eq!(item.unit, "BOX");
-        assert_eq!(item.unit_price, Some(25.0));
+        assert_eq!(item.unit_price, Some(rust_decimal::Decimal::new(25, 0)));
         assert!(item.batch_number.is_none());
         assert!(item.remarks.is_none());
     }

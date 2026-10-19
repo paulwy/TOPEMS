@@ -34,7 +34,7 @@ pub struct OutboundOrderItemRequest {
     pub requested_quantity: f64,
     pub unit: String,
     pub source_location_id: Option<Uuid>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<rust_decimal::Decimal>,
     pub remarks: Option<String>,
 }
 
@@ -744,7 +744,10 @@ pub async fn create_outbound_order_item(
     let request_data = serde_json::to_value(&req).ok();
     let item_id = Uuid::new_v4();
     let now = Utc::now();
-    let total_value = req.unit_price.map(|p| p * req.requested_quantity);
+    let total_value = req.unit_price.map(|p| {
+        p * rust_decimal::Decimal::from_f64_retain(req.requested_quantity)
+            .unwrap_or(rust_decimal::Decimal::ZERO)
+    });
 
     // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -1585,7 +1588,10 @@ pub async fn ship_outbound_order(
                 let warehouse_id = order.warehouse_id;
                 let customer_id = order.customer_id;
                 let shipped_at = order.actual_delivery;
-                let total_qty = order.total_amount.unwrap_or(0.0);
+                let total_qty = order
+                    .total_amount
+                    .map(|v| v.to_string().parse::<f64>().unwrap_or(0.0))
+                    .unwrap_or(0.0);
                 let reference_order_id = Some(order.id);
                 let now_val = Utc::now();
                 tokio::spawn(async move {
@@ -2055,7 +2061,7 @@ mod tests {
             requested_quantity: 100.0,
             unit: "PCS".to_string(),
             source_location_id: None,
-            unit_price: Some(15.5),
+            unit_price: rust_decimal::Decimal::from_f64_retain(15.5),
             remarks: Some("测试备注".to_string()),
         };
         let json = serde_json::to_value(&item).unwrap();
@@ -2065,7 +2071,7 @@ mod tests {
         assert_eq!(json["material_type"], "finished_goods");
         assert_eq!(json["requested_quantity"], 100.0);
         assert_eq!(json["unit"], "PCS");
-        assert_eq!(json["unit_price"], 15.5);
+        assert_eq!(json["unit_price"], "15.5");
     }
 
     #[test]
@@ -2112,7 +2118,7 @@ mod tests {
         assert_eq!(item.material_type.as_deref(), Some("raw_material"));
         assert_eq!(item.requested_quantity, 200.0);
         assert_eq!(item.unit, "BOX");
-        assert_eq!(item.unit_price, Some(25.0));
+        assert_eq!(item.unit_price, Some(rust_decimal::Decimal::new(25, 0)));
         assert!(item.batch_number.is_none());
         assert!(item.remarks.is_none());
     }

@@ -194,7 +194,9 @@ pub async fn create_transfer(
             let mut line_number = 1;
             for item in req.items {
                 let item_id = Uuid::new_v4();
-                let total_amount = item.unit_price.map(|p| p * item.planned_quantity as f64);
+                let total_amount = item
+                    .unit_price
+                    .map(|p| p * rust_decimal::Decimal::from(item.planned_quantity));
 
                 let _ = sqlx::query(
                     only_own_schema_query!("wms", r#"

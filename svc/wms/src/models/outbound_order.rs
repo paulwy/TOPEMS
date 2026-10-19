@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -77,7 +78,7 @@ pub struct OutboundOrder {
     #[sqlx(default)]
     pub total_value: Option<f64>,
     #[sqlx(default)]
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     #[sqlx(default)]
     pub shipping_cost: Option<f64>,
     #[sqlx(default)]
@@ -140,7 +141,7 @@ pub struct CreateOutboundOrderRequest {
     pub customer_id: Option<Uuid>,
     pub order_date: DateTime<Utc>,
     pub expected_delivery: Option<DateTime<Utc>>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub remarks: Option<String>,
 }
 
@@ -150,7 +151,7 @@ pub struct UpdateOutboundOrderRequest {
     pub customer_id: Option<Uuid>,
     pub expected_delivery: Option<DateTime<Utc>>,
     pub actual_delivery: Option<DateTime<Utc>>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub status: Option<String>,
     pub remarks: Option<String>,
 }
@@ -159,6 +160,10 @@ pub struct UpdateOutboundOrderRequest {
 mod tests {
     use super::*;
     use chrono::Utc;
+
+    fn d(v: f64) -> Option<Decimal> {
+        Decimal::from_f64_retain(v)
+    }
 
     fn sample_outbound_order() -> OutboundOrder {
         OutboundOrder {
@@ -199,7 +204,7 @@ mod tests {
             total_weight: None,
             total_volume: None,
             total_value: None,
-            total_amount: Some(2500.0),
+            total_amount: d(2500.0),
             shipping_cost: None,
             priority: Some("normal".into()),
             status: "created".into(),
@@ -274,7 +279,7 @@ mod tests {
             customer_id: Some(Uuid::new_v4()),
             order_date: Utc::now(),
             expected_delivery: Some(Utc::now()),
-            total_amount: Some(800.0),
+            total_amount: d(800.0),
             remarks: Some("new out".into()),
         };
         let v = serde_json::to_value(&req).unwrap();
@@ -324,7 +329,7 @@ mod tests {
             customer_id: Some(Uuid::new_v4()),
             expected_delivery: Some(Utc::now()),
             actual_delivery: Some(Utc::now()),
-            total_amount: Some(3000.0),
+            total_amount: d(3000.0),
             status: Some("shipping".into()),
             remarks: Some("updated".into()),
         };

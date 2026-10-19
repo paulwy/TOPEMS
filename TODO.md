@@ -252,7 +252,19 @@
   - `erp.inventory.unit_price/total_amount`=float8（f64 匹配）；`erp.purchase_orders` 四金额列全 float8（匹配，module 内 `Decimal::from_f64` 仅为下游转换）；`sales_orders` 模型已 Decimal，请求体 f64 经 `calculate_sales_order_amounts`+`dec_owned` 转换层落库（在线安全）。
   - `models/finance.rs` 的 FinancialVoucher/VoucherItem/CollectionRecord/PaymentRecord/VoucherTemplate 均**无 query_as 接线**（预留 DTO），不改；`consolidation.rs` 为内存合并 DTO；`AccountingSubject` 无金额；`asset.rs` 已 Decimal；`production_order` 全为数量。
 - **finance 零改动**：settlement Invoice/InvoiceItem/PaymentRequest/PaymentResult 无 query_as（内存领域模型）；`finance_v58_cash_pools/pool_allocations/pool_transfers/liquidity_targets` 金额列全 float8（匹配）；CreditProfile 无金额；BudgetVariance 已 Decimal（仅 variance_percentage 比率保留）；tax_v56 全 float8（E10）；主链路 E6/E9 已 Decimal。
-- **遗留（下一批）**：wms 20+ 表金额列逐表连库甄别（面最大）；crm/hrm 已在 E8/E9 闭环，仅需抽验。
+- **遗留（下一批）**：wms 动态 query 表（replenishment_orders/items、stock_take_items、purchase_order_snapshots、transfers）金额 bind 逐表连库甄别；crm/hrm 已在 E8/E9 闭环。
+
+### E11-wms 第一批 · 强类型主表 + 出入库明细金额 f64→Decimal（2026-10-20）✅ 完成 · wms 541 passed
+
+> 方法：连库 `information_schema.columns` 核列类型 → 只改 numeric 持久化边界；float8（inbound_orders.total_value）、数量、重量/体积、聚合 SUM、未接线 DTO 保留 f64。
+
+- **Batch**：`batches.unit_price/total_value`=numeric 裸读，模型 + Create/Update `unit_price` → Option<Decimal>；`BatchStatistics.total_value`(SUM 聚合) 保留 f64。
+- **OutboundOrder**：`outbound_orders.total_value`(numeric) 以别名 `total_value AS total_amount` 读/写，模型 `total_amount` + Create/Update 请求体 → Decimal；模型 `total_value/shipping_cost` 未被读写保留 f64；`data_sync` 事件金额由 f64 转换改为直接透传 Decimal。
+- **TransferOrder/Item**：`transfer_orders.total_amount`、`transfer_order_items.unit_price/total_amount`=numeric，模型 + CreateItemRequest.unit_price → Decimal；明细 total_amount 由 `unit_price × quantity` 改 Decimal 乘法；主表/明细读取未实读金额，保持 FromRow 一致。
+- **SerialNumber**：`serial_numbers.unit_price`=numeric，原 `unit_price::float8` 规避（4 处）去除，模型 + Create/Update 请求体 → Decimal。
+- **出入库明细写边界**：`InboundOrderItemRequest/OutboundOrderItemRequest.unit_price` → Decimal，total_value=单价×数量改 Decimal；inbound 明细读通道 `unit_price/total_value` 由裸读 f64 改 Decimal（在线类型安全）。
+- **不改**：`inbound_orders.total_value`=float8（f64 匹配，total_amount 为其别名）；`inventory.total_value` 未接线；`order_item.rs` Inbound/OutboundOrderItem 无 query_as（预留 DTO）；数量/重量/体积保留 f64。
+- **遗留（E11-wms 第二批）**：replenishment_orders/items、stock_take_items、purchase_order_snapshots、transfers 为动态 query，需逐表连库核 numeric 列并改 bind；数量列(numeric)按任务边界保留 f64 不动。
 
 ---
 

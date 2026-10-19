@@ -1,4 +1,5 @@
 use chrono::{DateTime, NaiveDate, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -29,7 +30,7 @@ pub struct SerialNumber {
     pub inbound_order_no: Option<String>,
     pub outbound_order_no: Option<String>,
     pub current_owner: Option<String>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<Decimal>,
     pub remark: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -52,7 +53,7 @@ pub struct CreateSerialNumberRequest {
     pub warranty_start_date: Option<String>,
     pub warranty_end_date: Option<String>,
     pub inbound_order_no: Option<String>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<Decimal>,
     pub remark: Option<String>,
 }
 
@@ -74,7 +75,7 @@ pub struct UpdateSerialNumberRequest {
     pub warranty_end_date: Option<String>,
     pub outbound_order_no: Option<String>,
     pub current_owner: Option<String>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<Decimal>,
     pub remark: Option<String>,
 }
 
@@ -107,6 +108,10 @@ mod tests {
     use super::*;
     use chrono::Utc;
 
+    fn d(v: f64) -> Option<Decimal> {
+        Decimal::from_f64_retain(v)
+    }
+
     fn sample_serial() -> SerialNumber {
         SerialNumber {
             id: Uuid::new_v4(),
@@ -132,7 +137,7 @@ mod tests {
             inbound_order_no: Some("INB-1".into()),
             outbound_order_no: None,
             current_owner: None,
-            unit_price: Some(99.0),
+            unit_price: d(99.0),
             remark: Some("ok".into()),
             created_at: Utc::now(),
             updated_at: Utc::now(),
@@ -203,7 +208,7 @@ mod tests {
             warranty_start_date: None,
             warranty_end_date: None,
             inbound_order_no: None,
-            unit_price: Some(10.0),
+            unit_price: d(10.0),
             remark: None,
         };
         let v = serde_json::to_value(&req).unwrap();

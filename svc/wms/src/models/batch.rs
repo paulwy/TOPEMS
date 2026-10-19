@@ -1,4 +1,5 @@
 use chrono::{DateTime, NaiveDate, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -29,8 +30,8 @@ pub struct Batch {
     pub manufacture_date: Option<DateTime<Utc>>,
     pub shelf_life_days: Option<i32>,
     pub remaining_days: Option<i32>,
-    pub unit_price: Option<f64>,
-    pub total_value: Option<f64>,
+    pub unit_price: Option<Decimal>,
+    pub total_value: Option<Decimal>,
     pub remark: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -53,7 +54,7 @@ pub struct CreateBatchRequest {
     pub quality_status: Option<String>,
     pub manufacture_date: Option<String>,
     pub shelf_life_days: Option<i32>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<Decimal>,
     pub remark: Option<String>,
 }
 
@@ -74,7 +75,7 @@ pub struct UpdateBatchRequest {
     pub status: Option<String>,
     pub manufacture_date: Option<String>,
     pub shelf_life_days: Option<i32>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<Decimal>,
     pub remark: Option<String>,
 }
 
@@ -106,6 +107,10 @@ pub struct BatchStatistics {
 mod tests {
     use super::*;
     use chrono::Utc;
+
+    fn d(v: f64) -> Option<Decimal> {
+        Decimal::from_f64_retain(v)
+    }
 
     fn sample_batch() -> Batch {
         Batch {
@@ -156,8 +161,8 @@ mod tests {
             )),
             shelf_life_days: Some(365),
             remaining_days: Some(180),
-            unit_price: Some(9.99),
-            total_value: Some(4995.0),
+            unit_price: d(9.99),
+            total_value: d(4995.0),
             remark: Some("OK".into()),
             created_at: Utc::now(),
             updated_at: Utc::now(),
@@ -229,7 +234,7 @@ mod tests {
             quality_status: Some("pending".into()),
             manufacture_date: None,
             shelf_life_days: Some(180),
-            unit_price: Some(15.50),
+            unit_price: d(15.50),
             remark: None,
         };
         let v = serde_json::to_value(&req).unwrap();
@@ -310,7 +315,7 @@ mod tests {
             status: Some("inactive".into()),
             manufacture_date: None,
             shelf_life_days: None,
-            unit_price: Some(12.0),
+            unit_price: d(12.0),
             remark: Some("Updated".into()),
         };
         let v = serde_json::to_value(&req).unwrap();

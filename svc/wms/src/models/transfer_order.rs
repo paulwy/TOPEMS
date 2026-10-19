@@ -1,4 +1,5 @@
 use chrono::{DateTime, NaiveDate, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -28,7 +29,7 @@ pub struct TransferOrder {
     #[sqlx(default)]
     pub total_quantity: Option<i64>,
     #[sqlx(default)]
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     #[sqlx(default)]
     pub planned_date: Option<NaiveDate>,
     #[sqlx(default)]
@@ -73,8 +74,8 @@ pub struct TransferOrderItem {
     pub planned_quantity: i64,
     pub shipped_quantity: i64,
     pub received_quantity: i64,
-    pub unit_price: Option<f64>,
-    pub total_amount: Option<f64>,
+    pub unit_price: Option<Decimal>,
+    pub total_amount: Option<Decimal>,
     pub from_location_id: Option<Uuid>,
     pub to_location_id: Option<Uuid>,
     pub status: String,
@@ -105,7 +106,7 @@ pub struct CreateTransferOrderItemRequest {
     pub batch_number: Option<String>,
     pub unit: String,
     pub planned_quantity: i64,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<Decimal>,
     pub from_location_id: Option<Uuid>,
     pub to_location_id: Option<Uuid>,
     pub remarks: Option<String>,
@@ -126,6 +127,10 @@ mod tests {
     use super::*;
     use chrono::Utc;
 
+    fn d(v: f64) -> Option<Decimal> {
+        Decimal::from_f64_retain(v)
+    }
+
     fn sample_transfer_order() -> TransferOrder {
         TransferOrder {
             id: Uuid::new_v4(),
@@ -142,7 +147,7 @@ mod tests {
             to_location_code: Some("B-01".into()),
             status: "pending".into(),
             total_quantity: Some(100),
-            total_amount: Some(5000.0),
+            total_amount: d(5000.0),
             planned_date: NaiveDate::from_ymd_opt(2026, 8, 15),
             actual_date: None,
             transporter: Some("Logistics Co".into()),
@@ -175,8 +180,8 @@ mod tests {
             planned_quantity: 50,
             shipped_quantity: 50,
             received_quantity: 48,
-            unit_price: Some(10.0),
-            total_amount: Some(500.0),
+            unit_price: d(10.0),
+            total_amount: d(500.0),
             from_location_id: Some(Uuid::new_v4()),
             to_location_id: Some(Uuid::new_v4()),
             status: "received".into(),
@@ -284,7 +289,7 @@ mod tests {
                 batch_number: None,
                 unit: "EA".into(),
                 planned_quantity: 10,
-                unit_price: Some(5.0),
+                unit_price: d(5.0),
                 from_location_id: None,
                 to_location_id: None,
                 remarks: None,
@@ -407,7 +412,7 @@ mod tests {
                     batch_number: None,
                     unit: "EA".into(),
                     planned_quantity: 10,
-                    unit_price: Some(5.0),
+                    unit_price: d(5.0),
                     from_location_id: None,
                     to_location_id: None,
                     remarks: None,
@@ -431,7 +436,7 @@ mod tests {
                     batch_number: None,
                     unit: "L".into(),
                     planned_quantity: 100,
-                    unit_price: Some(2.5),
+                    unit_price: d(2.5),
                     from_location_id: None,
                     to_location_id: None,
                     remarks: None,

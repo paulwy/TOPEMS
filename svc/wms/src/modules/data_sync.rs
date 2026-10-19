@@ -4,7 +4,6 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use rust_decimal::prelude::FromPrimitive;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -228,8 +227,9 @@ pub async fn create_shipping_from_outbound_internal(
         outbound_order_number: outbound_order.order_number.clone(),
         customer_id: customer_id.or(outbound_order.customer_id),
         order_date: outbound_order.order_date,
-        // U6-2：f64 -> 事件 Decimal
-        total_amount: rust_decimal::Decimal::from_f64(outbound_order.total_amount.unwrap_or(0.0))
+        // U6-2：持久化金额已是 Decimal，直接透传
+        total_amount: outbound_order
+            .total_amount
             .unwrap_or(rust_decimal::Decimal::ZERO),
         shipping_id,
         shipping_order_number: shipping_order_number.clone(),
