@@ -54,17 +54,12 @@ fn graph_from_row(row: &sqlx::postgres::PgRow) -> LineageGraph {
 }
 const GRAPH_COLS: &str = "id, nodes, edges, version, last_updated";
 
-fn analysis_from_row(row: &sqlx::postgres::PgRow) -> ImpactAnalysisResult {
+fn analysis_from_row(
+    row: &sqlx::postgres::PgRow,
+) -> Result<ImpactAnalysisResult, serde_json::Error> {
     serde_json::from_value(row.get::<serde_json::Value, _>("data"))
-        .unwrap_or_else(|_| panic!("impact analysis data 反序列化失败"))
 }
 const ANALYSIS_COLS: &str = "id, data";
-
-fn simulation_from_row(row: &sqlx::postgres::PgRow) -> ImpactSimulation {
-    serde_json::from_value(row.get::<serde_json::Value, _>("data"))
-        .unwrap_or_else(|_| panic!("impact simulation data 反序列化失败"))
-}
-const SIMULATION_COLS: &str = "id, data";
 
 fn event_from_row(row: &sqlx::postgres::PgRow) -> ChangeEvent {
     ChangeEvent {
@@ -789,15 +784,16 @@ impl ImpactAnalyzer {
     }
 
     async fn get_report(db: &sqlx::PgPool, id: &str) -> Result<ImpactAnalysisResult, TopemsError> {
-        sqlx::query(&format!(
+        let row = sqlx::query(&format!(
             "SELECT {ANALYSIS_COLS} FROM master_data.mdm_impact_analyses WHERE id = $1"
         ))
         .bind(id)
         .fetch_optional(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("查询影响分析失败: {e}")))?
-        .map(|r| analysis_from_row(&r))
-        .ok_or_else(|| TopemsError::ResourceNotFound("未找到影响分析报告".to_string()))
+        .ok_or_else(|| TopemsError::ResourceNotFound("未找到影响分析报告".to_string()))?;
+        analysis_from_row(&row)
+            .map_err(|e| TopemsError::BusinessLogic(format!("影响分析数据反序列化失败: {e}")))
     }
 
     async fn simulate(

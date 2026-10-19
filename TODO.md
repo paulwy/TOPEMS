@@ -27,6 +27,7 @@
 - [x] **P2 · menu 管理页整页 i18n** ✅ 完成（2026-10-19，见下方「批 E2」块）：对应 10-19 重审 NEW-P2-1。`MenuManagementPage` 59 行硬编码中文 → `system.menu_management.*` zh/en 39 键，`window.confirm` 换共享 `ConfirmDialog` + `useConfirmDialog`；tsc/eslint/i18n quality/hardcode 全绿。
 - [x] **P2 · 部署文档/脚本 8099 单上游口径对齐** ✅ 完成（2026-10-19，见下方「批 E3」块）：对应 10-19 重审 H-1/H-2/H-3/H-11。runbook 重写、verify 脚本 map→upstream 校验、deploy/README systemd 主路径、config-consistency 规则 2 改 upstream 8099；shellcheck/config-consistency/独立 source 校验全绿。
 - [x] **P1 · PM 金额 f64→Decimal（同结构体完整集）** ✅ 完成（2026-10-19，见下方「批 E4」块）：对应 10-19 重审 NEW-P1-1。project_expenses.amount、contracts.amount、contract_milestones.payment_amount/payment_percent、contract_payment_schedule.payment_amount/payment_percent 改 `rust_decimal::Decimal`；pm lib 497 passed、workspace check/clippy/fmt 绿。**遗留1连库复现已闭环**（TEMP TABLE 探针实证 Decimal↔numeric 往返、f64 解码 numeric 真实报错）；**遗留2 pm 其余 numeric 列已逐块甄别**：直接 query_as 映射的资源/结算 variance_percent/验收 score/报告取数 4 处改 Decimal，float8 的 EVM 列与内存聚合保留 f64（见「批 E4-遗留2」子块）。
+- [x] **P2 · 请求路径反序列化 panic 改错误返回** ✅ 完成（2026-10-20，见下方「批 E5」块）：对应 10-19 重审 NEW-P2-7。master-data `lineage_v52.rs` 两处反序列化 panic 改 `Result` 传播 `TopemsError::BusinessLogic`，删死函数 `simulation_from_row`；unified-core `business_tools` 宏内守卫 unwrap 改 `if let`；master-data 451 / unified-core 559 passed、check/clippy/fmt 绿。
 
 ---
 
@@ -102,6 +103,16 @@
   - 纯内存计算纯函数（budget variance/utilization、benefit roi/payback、resource_utilization、completion_pct）保留 f64。
 - **验证**：`cargo check -p topems-pm` exit 0（无 warning）；`cargo clippy -p topems-pm --lib -D correctness` exit 0；`cargo fmt -p topems-pm --check` exit 0；`cargo test -p topems-pm --lib` **497 passed / 0 failed**（与基线一致）。前端契约字段本就 `number`，裸 Decimal 序列化为 JSON number，零改动。
 - **遗留登记（非本批）**：`models/report.rs` 响应结构 `CostReportData.budget_total/spent_total/remaining_total/budget_variance` 的 f64 聚合口径（模块如何从 budgets 行汇总填充）未随本批改 Decimal，属响应展示层，后续若做成本报告精算再统一；全 pm 其余 float8/内存面维持现状。
+
+## 批 E5 · 请求路径反序列化 panic 改错误返回（2026-10-20）✅ 完成
+
+> 来源：`artifacts/TOPEMS-重新审计与评估-2026-10-19.md` NEW-P2-7（请求路径反序列化失败直接 panic，应返回 4xx/5xx 错误而非进程崩溃）。范围=审计抽样点名两处，不扩大到全仓良性 fail-fast。
+
+- **改动**：
+  - `svc/master-data/src/modules/lineage_v52.rs`：`analysis_from_row` 由返回值 + `unwrap_or_else(|_| panic!(...))` 改为 `Result<ImpactAnalysisResult, serde_json::Error>`；`get_report` 先 `ok_or_else(ResourceNotFound)` 取 row，再把反序列化错误 `map_err` 成 `TopemsError::BusinessLogic("影响分析数据反序列化失败: ...")`；删除无调用点的死函数 `simulation_from_row` 与 `SIMULATION_COLS` 常量。
+  - `svc/unified-core/src/modules/business_tools/mod.rs`：`define_business_tool` 宏内 `if request.data.is_some() { ...request.data.as_ref().unwrap() }` 改 `if let Some(data) = &request.data`，消除守卫内 unwrap（原逻辑安全，属卫生清理）。
+- **范围边界（刻意不改）**：middleware 固定 URI（`Uri::try_from` 字面量）、固定结构体 serde 序列化的 `unwrap_or_else(panic)` 为编译期已知合法的良性 fail-fast；`shared/util.rs` 测试内序列化断言 panic；生产 `unwrap/expect/panic` 长尾（NEW-P3-7，416/927/61）另行登记，本批不机械清除。
+- **验证**：`cargo check -p topems-master-data -p topems-unified-core` exit 0；`cargo clippy ... -D correctness` exit 0；`cargo fmt --check` 干净；`cargo test --lib` master-data **451 passed / 0 failed**、unified-core **559 passed / 0 failed**。
 
 ---
 

@@ -491,10 +491,8 @@ macro_rules! define_business_tool {
                 // Route operation to service endpoint
                 let path = format!("/api/{}/{}", $service_name, operation);
 
-                let result = if request.data.is_some() {
-                    self.base
-                        .post::<serde_json::Value, _>(&path, request.data.as_ref().unwrap())
-                        .await
+                let result = if let Some(data) = &request.data {
+                    self.base.post::<serde_json::Value, _>(&path, data).await
                 } else {
                     let query: HashMap<String, String> = request
                         .params
