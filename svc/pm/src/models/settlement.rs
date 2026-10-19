@@ -59,7 +59,7 @@ pub struct SettlementItem {
     pub budget_amount: Decimal,
     pub actual_amount: Decimal,
     pub variance_amount: Decimal,
-    pub variance_percent: Option<f64>,
+    pub variance_percent: Option<Decimal>,
     pub description: Option<String>,
     pub expense_ref_id: Option<String>,
     pub contract_ref_id: Option<String>,
@@ -273,7 +273,7 @@ mod tests {
             budget_amount: Decimal::from_str("50000.0").unwrap(),
             actual_amount: Decimal::from_str("48000.0").unwrap(),
             variance_amount: Decimal::from_str("-2000.0").unwrap(),
-            variance_percent: Some(-4.0),
+            variance_percent: Some(Decimal::new(-400, 2)),
             description: Some("d".to_string()),
             expense_ref_id: Some("exp-001".to_string()),
             contract_ref_id: Some("con-001".to_string()),
@@ -323,11 +323,11 @@ mod tests {
     fn test_settlement_item_positive_variance_roundtrip() {
         let mut i = sample_item();
         i.variance_amount = Decimal::from_str("3000.0").unwrap();
-        i.variance_percent = Some(6.0);
+        i.variance_percent = Some(Decimal::new(600, 2));
         let s = serde_json::to_string(&i).unwrap();
         let back: SettlementItem = serde_json::from_str(&s).unwrap();
         assert_eq!(back.variance_amount, Decimal::from_str("3000.0").unwrap());
-        assert_eq!(back.variance_percent, Some(6.0));
+        assert_eq!(back.variance_percent, Some(Decimal::new(600, 2)));
     }
 
     // ---- CreateSettlementItemRequest ----

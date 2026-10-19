@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -55,7 +56,7 @@ pub struct AcceptanceRecord {
     pub acceptance_date: DateTime<Utc>,
     pub status: String,
     pub conclusion: Option<String>,
-    pub score: Option<f64>,
+    pub score: Option<Decimal>,
     pub accepted_by: Option<String>,
     pub attendees: Option<serde_json::Value>,
     pub findings: Option<serde_json::Value>,
@@ -71,7 +72,7 @@ pub struct CreateAcceptanceRecordRequest {
     pub acceptance_date: String,
     pub status: String,
     pub conclusion: Option<String>,
-    pub score: Option<f64>,
+    pub score: Option<Decimal>,
     pub accepted_by: Option<String>,
     pub attendees: Option<serde_json::Value>,
     pub findings: Option<serde_json::Value>,
@@ -83,7 +84,7 @@ pub struct CreateAcceptanceRecordRequest {
 pub struct UpdateAcceptanceRecordRequest {
     pub status: Option<String>,
     pub conclusion: Option<String>,
-    pub score: Option<f64>,
+    pub score: Option<Decimal>,
     pub attendees: Option<serde_json::Value>,
     pub findings: Option<serde_json::Value>,
     pub recommendations: Option<serde_json::Value>,
@@ -302,7 +303,7 @@ mod tests {
             acceptance_date: now(),
             status: "passed".to_string(),
             conclusion: Some("通过".to_string()),
-            score: Some(95.5),
+            score: Some(Decimal::new(9550, 2)),
             accepted_by: Some("manager".to_string()),
             attendees: Some(serde_json::json!(["u1", "u2"])),
             findings: Some(serde_json::json!({"issues": []})),
@@ -353,11 +354,11 @@ mod tests {
     fn test_acceptance_record_failed_status_roundtrip() {
         let mut r = sample_record();
         r.status = "failed".to_string();
-        r.score = Some(40.0);
+        r.score = Some(Decimal::new(4000, 2));
         let s = serde_json::to_string(&r).unwrap();
         let back: AcceptanceRecord = serde_json::from_str(&s).unwrap();
         assert_eq!(back.status, "failed");
-        assert_eq!(back.score, Some(40.0));
+        assert_eq!(back.score, Some(Decimal::new(4000, 2)));
     }
 
     // ---- CreateAcceptanceRecordRequest ----
@@ -369,7 +370,7 @@ mod tests {
             acceptance_date: "2026-08-14".to_string(),
             status: "passed".to_string(),
             conclusion: Some("c".to_string()),
-            score: Some(88.0),
+            score: Some(Decimal::new(8800, 2)),
             accepted_by: Some("u".to_string()),
             attendees: Some(serde_json::json!(["u1"])),
             findings: None,
@@ -425,7 +426,7 @@ mod tests {
         let r = UpdateAcceptanceRecordRequest {
             status: Some("passed".to_string()),
             conclusion: Some("c".to_string()),
-            score: Some(99.0),
+            score: Some(Decimal::new(9900, 2)),
             attendees: Some(serde_json::json!(["u1"])),
             findings: Some(serde_json::json!({"f": 1})),
             recommendations: Some(serde_json::json!({"r": 2})),

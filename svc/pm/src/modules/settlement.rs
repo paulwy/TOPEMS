@@ -5,7 +5,6 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use rust_decimal::prelude::ToPrimitive;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::Claims;
@@ -162,7 +161,7 @@ async fn create_settlement(
     .bind(&req.settlement_name)
     .bind(&req.settlement_type)
     .bind(now)
-    .bind(0.0)
+    .bind(rust_decimal::Decimal::ZERO)
     .bind("CNY")
     .bind(&req.description)
     .bind(parse_date_opt(&req.settlement_period_start))
@@ -364,11 +363,7 @@ async fn create_settlement_item(
     let now = Utc::now();
     let variance_amount = req.actual_amount - req.budget_amount;
     let variance_percent = if req.budget_amount != rust_decimal::Decimal::ZERO {
-        Some(
-            ((variance_amount / req.budget_amount) * rust_decimal::Decimal::from(100))
-                .to_f64()
-                .unwrap_or(0.0),
-        )
+        Some((variance_amount / req.budget_amount) * rust_decimal::Decimal::from(100))
     } else {
         None
     };

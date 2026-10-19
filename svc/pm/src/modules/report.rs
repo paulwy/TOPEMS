@@ -5,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use sqlx::{PgPool, Row};
 use topems_shared_auth::auth::Claims;
 fn get_tenant_id(claims: &Claims) -> Uuid {
@@ -198,7 +199,7 @@ async fn generate_report(
             "project_type": p.get::<String, _>("project_type"),
             "status": p.get::<String, _>("status"),
             "progress": p.get::<i32, _>("progress"),
-            "budget": p.get::<Option<f64>, _>("budget"),
+            "budget": p.get::<Option<Decimal>, _>("budget"),
             "start_date": p.get::<Option<DateTime<Utc>>, _>("start_date"),
             "end_date": p.get::<Option<DateTime<Utc>>, _>("end_date")
         }),
@@ -259,9 +260,9 @@ async fn generate_report(
     let budget_info = match budget_data {
         Ok(bs) => serde_json::json!({
             "budgets": bs.into_iter().map(|b| serde_json::json!({
-                "total_amount": b.get::<f64, _>("total_amount"),
-                "spent_amount": b.get::<f64, _>("spent_amount"),
-                "remaining_amount": b.get::<f64, _>("remaining_amount")
+                "total_amount": b.get::<Decimal, _>("total_amount"),
+                "spent_amount": b.get::<Decimal, _>("spent_amount"),
+                "remaining_amount": b.get::<Decimal, _>("remaining_amount")
             })).collect::<Vec<_>>()
         }),
         Err(_) => serde_json::json!({"budgets": []}),

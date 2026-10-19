@@ -26,7 +26,7 @@
 - [x] **P3 · eslint 回绿（格式 + ignore）** ✅ 完成（2026-10-19，见下方「批 E1」块）：对应 10-19 重审 NEW-P3-1/P3-2。`eslint .` 由 26 errors / 86 warnings → **0 errors / 86 warnings**（exit 0），tsc 0 error；24 处 prettier 格式 `--fix`（零逻辑改动）+ `src/_archive-microfrontend/**` 补入 ignores（2 parser error 消除）；85 处 unused-vars warning 属既有长尾，不在本批。
 - [x] **P2 · menu 管理页整页 i18n** ✅ 完成（2026-10-19，见下方「批 E2」块）：对应 10-19 重审 NEW-P2-1。`MenuManagementPage` 59 行硬编码中文 → `system.menu_management.*` zh/en 39 键，`window.confirm` 换共享 `ConfirmDialog` + `useConfirmDialog`；tsc/eslint/i18n quality/hardcode 全绿。
 - [x] **P2 · 部署文档/脚本 8099 单上游口径对齐** ✅ 完成（2026-10-19，见下方「批 E3」块）：对应 10-19 重审 H-1/H-2/H-3/H-11。runbook 重写、verify 脚本 map→upstream 校验、deploy/README systemd 主路径、config-consistency 规则 2 改 upstream 8099；shellcheck/config-consistency/独立 source 校验全绿。
-- [x] **P1 · PM 金额 f64→Decimal（同结构体完整集）** ✅ 完成（2026-10-19，见下方「批 E4」块）：对应 10-19 重审 NEW-P1-1。project_expenses.amount、contracts.amount、contract_milestones.payment_amount/payment_percent、contract_payment_schedule.payment_amount/payment_percent 改 `rust_decimal::Decimal`；pm lib 497 passed、workspace check/clippy/fmt 绿。**未连库复现**（pm 无连库测试惯例、表 0 行、外键约束），起 dev 栈后对费用/合同金额 CRUD 冒烟；其余 23 个 pm numeric 列（预算/结算/资源/项目）属 P2-1 大工程，未在本批。
+- [x] **P1 · PM 金额 f64→Decimal（同结构体完整集）** ✅ 完成（2026-10-19，见下方「批 E4」块）：对应 10-19 重审 NEW-P1-1。project_expenses.amount、contracts.amount、contract_milestones.payment_amount/payment_percent、contract_payment_schedule.payment_amount/payment_percent 改 `rust_decimal::Decimal`；pm lib 497 passed、workspace check/clippy/fmt 绿。**遗留1连库复现已闭环**（TEMP TABLE 探针实证 Decimal↔numeric 往返、f64 解码 numeric 真实报错）；**遗留2 pm 其余 numeric 列已逐块甄别**：直接 query_as 映射的资源/结算 variance_percent/验收 score/报告取数 4 处改 Decimal，float8 的 EVM 列与内存聚合保留 f64（见「批 E4-遗留2」子块）。
 
 ---
 
@@ -83,7 +83,25 @@
   - pm schema 其余 23 个 numeric 列（budgets/budget_items/settlements/settlement_items/settlement_adjustments/project_resources/projects/project_benefits/acceptance_records.score/pm_budget_items）遍布预算/结算/资源/项目多表，属 P2-1 大工程，未在本批。
 - **前端契约**：rust_decimal 默认 serde 序列化为 JSON number（与 finance F1 同款裸 Decimal），`apps/web/src/api/pm/types.ts` 金额字段本就声明 `number`，无需改前端。
 - **验证**：`cargo check --workspace` exit 0；`cargo clippy -p topems-pm --lib -D correctness` exit 0；`cargo fmt -p topems-pm --check` exit 0；`cargo test -p topems-pm --lib` **497 passed / 0 failed**。
-- **遗留（待外部/起栈）**：**未做连库复现**——pm 无连库测试惯例、`project_expenses` 等表 0 行（空集不触发逐行 Decode）、插行受外键/NOT NULL 约束；类型错配为 sqlx 库行为推断，起 dev 栈后对费用/合同金额 CRUD 做一次冒烟确认。全 pm 23 列 Decimal 化登记为 P2-1 后续批次。
+- **遗留 1（连库复现）✅ 已闭环（2026-10-19）**：用一次性临时探针（建 `TEMP TABLE t_probe(v numeric(15,2))` 解耦外键，跑完即删、不入库）连本地 5432/topems 实证：`Decimal(12345.67)↔numeric` 往返 OK；f64 解码 numeric 真实报 `mismatched types; Rust type f64 (as SQL type FLOAT8) is not compatible with SQL type NUMERIC`，证明旧错配真实、修复必要。探针未提交、勿恢复。
+- **遗留 2（pm 其余 numeric 列逐块甄别 Decimal 化）✅ 本批闭环（2026-10-19，见下方「批 E4-遗留2」子块）**：先连库 `information_schema.columns` 逐列核对 data_type，只改直接 query_as 映射的 DB 金额 numeric 列；float8 列与内存 EVM 聚合/比率保留 f64。
+
+### 批 E4-遗留2 · pm 其余 numeric 列甄别 Decimal 化（2026-10-19）✅ 完成
+
+> 方法：psql 连本地 5432/topems 对 `information_schema.columns` 逐列核对 data_type，避免把 float8 列误改 Decimal、也避免把纯内存计算误改。只改「直接 query_as 映射的 DB 金额 numeric 列」。
+
+- **本批改（直接 DB 金额 numeric 列）**：
+  - `models/project_resource.rs`：`ProjectResource.quantity/cost/actual_hours/actual_cost`、`CreateResourceRequest.actual_hours/actual_cost`、`UpdateResourceRequest.quantity/cost/actual_hours/actual_cost: Option<f64>` → `Option<Decimal>`；`modules/project_resource.rs` INSERT 两处硬编码 `bind(0.0)`（quantity/cost）→ `Decimal::ZERO`。
+  - `models/settlement.rs`：`SettlementItem.variance_percent: Option<f64>` → `Option<Decimal>`；`modules/settlement.rs` 该列计算去掉 `.to_f64().unwrap_or(0.0)` 直接保留 Decimal，INSERT `settlements.amount` 硬编码 `bind(0.0)` → `Decimal::ZERO`，并删失效的 `ToPrimitive` import。
+  - `models/acceptance.rs`：`AcceptanceRecord.score`、`Create/UpdateAcceptanceRecordRequest.score: Option<f64>` → `Option<Decimal>`（DB `acceptance_records.score numeric(5,2)`）；模块 bind 类型随请求体自动匹配。
+  - `modules/report.rs`：生成报告时从 `pm.projects.budget`（numeric）、`pm.budgets.total_amount/spent_amount/remaining_amount`（numeric）取数的 4 处 `get::<f64>` / `get::<Option<f64>>` 错配（原被外层 `Err(_)` 吞成空、静默降级）改 `Decimal` / `Option<Decimal>`。
+- **甄别后刻意保留 f64（不改）**：
+  - `models/project_benefit.rs` 的 planned_cost/actual_cost/planned_value/earned_value/actual_cost_eva/cpi/spi/cv/sv/eac/etc/roi：DB 实测全是 `double precision(float8)`，与模型 f64 匹配，**不错配**；模块内 CPI/SPI/EVM 求和与比率为浮点统计量，保留 f64。
+  - `models/report.rs` 的 `ProgressReportData/CostReportData`（overall_progress/budget_total/spent_total 等）是内存聚合响应结构、非 DB 表行，保留 f64。
+  - `models/contract.rs` `actual_payment_amount` 未被 SELECT/INSERT，保留 f64（同主批）。
+  - 纯内存计算纯函数（budget variance/utilization、benefit roi/payback、resource_utilization、completion_pct）保留 f64。
+- **验证**：`cargo check -p topems-pm` exit 0（无 warning）；`cargo clippy -p topems-pm --lib -D correctness` exit 0；`cargo fmt -p topems-pm --check` exit 0；`cargo test -p topems-pm --lib` **497 passed / 0 failed**（与基线一致）。前端契约字段本就 `number`，裸 Decimal 序列化为 JSON number，零改动。
+- **遗留登记（非本批）**：`models/report.rs` 响应结构 `CostReportData.budget_total/spent_total/remaining_total/budget_variance` 的 f64 聚合口径（模块如何从 budgets 行汇总填充）未随本批改 Decimal，属响应展示层，后续若做成本报告精算再统一；全 pm 其余 float8/内存面维持现状。
 
 ---
 
