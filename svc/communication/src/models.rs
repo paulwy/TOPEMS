@@ -133,6 +133,48 @@ pub struct QuietHoursUpdate {
     pub bypass_priority: Option<i32>,
 }
 
+/// 订阅创建（POST /notification/subscriptions）
+#[derive(Debug, Deserialize)]
+pub struct CreateSubscriptionRequest {
+    pub event_type: String,
+    pub event_category: Option<String>,
+    pub channels: Option<Vec<String>>,
+    pub filter_expression: Option<String>,
+    pub priority: Option<i32>,
+    pub expires_at: Option<String>,
+}
+
+/// 订阅更新（PUT /notification/subscriptions/{id}）
+#[derive(Debug, Deserialize)]
+pub struct UpdateSubscriptionRequest {
+    pub channels: Option<Vec<String>>,
+    pub filter_expression: Option<String>,
+    pub priority: Option<i32>,
+    pub expires_at: Option<String>,
+}
+
+/// 订阅列表查询
+#[derive(Debug, Deserialize)]
+pub struct SubscriptionQuery {
+    pub event_type: Option<String>,
+    pub status: Option<String>,
+    pub channel: Option<String>,
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+}
+
+/// 批量订阅（POST /notification/batch-subscribe）
+#[derive(Debug, Deserialize)]
+pub struct BatchSubscribeRequest {
+    pub subscriptions: Vec<CreateSubscriptionRequest>,
+}
+
+/// 批量退订（DELETE /notification/batch-unsubscribe）
+#[derive(Debug, Deserialize)]
+pub struct BatchUnsubscribeRequest {
+    pub ids: Vec<Uuid>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateTemplateRequest {
     pub name: String,

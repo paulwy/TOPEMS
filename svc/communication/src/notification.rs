@@ -12,11 +12,12 @@ use topems_shared_core::locale::Locale;
 use uuid::Uuid;
 
 use crate::models::{
-    ArchiveConfig, BroadcastNotificationRequest, BulkConditionRequest, BulkIdsRequest,
-    BulkIdsV2Request, BulkTemplateStatusRequest, CategoryPreferenceUpdate, ChannelMetrics,
-    ChannelQuery, CreateChannelRequest, CreateTemplateRequest, GlobalMuteRequest,
-    NotificationChannel, NotificationQuery, PreferencesUpdate, QuietHoursUpdate,
-    SendNotificationRequest, UpdateChannelRequest, UpdateTemplateRequest,
+    ArchiveConfig, BatchSubscribeRequest, BatchUnsubscribeRequest, BroadcastNotificationRequest,
+    BulkConditionRequest, BulkIdsRequest, BulkIdsV2Request, BulkTemplateStatusRequest,
+    CategoryPreferenceUpdate, ChannelMetrics, ChannelQuery, CreateChannelRequest,
+    CreateSubscriptionRequest, CreateTemplateRequest, GlobalMuteRequest, NotificationChannel,
+    NotificationQuery, PreferencesUpdate, QuietHoursUpdate, SendNotificationRequest,
+    SubscriptionQuery, UpdateChannelRequest, UpdateSubscriptionRequest, UpdateTemplateRequest,
 };
 
 /// 通知优先级枚举
@@ -3651,6 +3652,644 @@ pub async fn get_default_preferences(
     Json(serde_json::json!({
         "success": true, "message": "ok", "data": default_preferences(user_id)
     }))
+}
+
+fn subscription_row_to_json(r: &sqlx::postgres::PgRow) -> Result<serde_json::Value, String> {
+    let id: Uuid = r.try_get("id").map_err(|e| format!("bad id: {}", e))?;
+    let user_id: Uuid = r
+        .try_get("user_id")
+        .map_err(|e| format!("bad user_id: {}", e))?;
+    let tenant_id: Option<Uuid> = r
+        .try_get("tenant_id")
+        .map_err(|e| format!("bad tenant_id: {}", e))?;
+    let event_type: String = r
+        .try_get("event_type")
+        .map_err(|e| format!("bad event_type: {}", e))?;
+    let event_category: Option<String> = r
+        .try_get("event_category")
+        .map_err(|e| format!("bad event_category: {}", e))?;
+    let channels: Vec<String> = r
+        .try_get("channels")
+        .map_err(|e| format!("bad channels: {}", e))?;
+    let status: String = r
+        .try_get("status")
+        .map_err(|e| format!("bad status: {}", e))?;
+    let filter_expression: Option<String> = r
+        .try_get("filter_expression")
+        .map_err(|e| format!("bad filter_expression: {}", e))?;
+    let priority: i32 = r
+        .try_get("priority")
+        .map_err(|e| format!("bad priority: {}", e))?;
+    let expires_at: Option<chrono::DateTime<chrono::Utc>> = r
+        .try_get("expires_at")
+        .map_err(|e| format!("bad expires_at: {}", e))?;
+    let created_at: chrono::DateTime<chrono::Utc> = r
+        .try_get("created_at")
+        .map_err(|e| format!("bad created_at: {}", e))?;
+    let updated_at: chrono::DateTime<chrono::Utc> = r
+        .try_get("updated_at")
+        .map_err(|e| format!("bad updated_at: {}", e))?;
+    Ok(serde_json::json!({
+        "id": id.to_string(),
+        "tenant_id": tenant_id.map(|t| t.to_string()),
+        "user_id": user_id.to_string(),
+        "event_type": event_type,
+        "event_category": event_category,
+        "channels": channels,
+        "status": status,
+        "filter_expression": filter_expression,
+        "priority": priority,
+        "expires_at": expires_at.map(|t| t.to_rfc3339()),
+        "created_at": created_at.to_rfc3339(),
+        "updated_at": updated_at.to_rfc3339()
+    }))
+}
+
+/// 订阅列表（`GET /notification/subscriptions`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/subscriptions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn list_subscriptions(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<SubscriptionQuery>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
+    let rows = sqlx::query(
+        "SELECT id, user_id, tenant_id, event_type, event_category, channels, status, \
+         filter_expression, priority, expires_at, created_at, updated_at \
+         FROM core_notification_subscriptions \
+         WHERE user_id = $1 \
+           AND ($2::text IS NULL OR event_type = $2) \
+           AND ($3::text IS NULL OR status = $3) \
+           AND ($4::text IS NULL OR $4 = ANY(channels)) \
+         ORDER BY created_at DESC \
+         LIMIT $5 OFFSET $6",
+    )
+    .bind(user_id)
+    .bind(&query.event_type)
+    .bind(&query.status)
+    .bind(&query.channel)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&pool)
+    .await;
+    let total = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM core_notification_subscriptions \
+         WHERE user_id = $1 \
+           AND ($2::text IS NULL OR event_type = $2) \
+           AND ($3::text IS NULL OR status = $3) \
+           AND ($4::text IS NULL OR $4 = ANY(channels))",
+    )
+    .bind(user_id)
+    .bind(&query.event_type)
+    .bind(&query.status)
+    .bind(&query.channel)
+    .fetch_one(&pool)
+    .await;
+
+    match (rows, total) {
+        (Ok(rows), Ok(total)) => {
+            let items: Vec<serde_json::Value> = rows
+                .iter()
+                .filter_map(|r| subscription_row_to_json(r).ok())
+                .collect();
+            Json(serde_json::json!({
+                "success": true, "message": "ok",
+                "data": { "items": items, "total": total, "page": page, "page_size": page_size }
+            }))
+        }
+        (Err(e), _) | (_, Err(e)) => {
+            tracing::error!("Failed to list subscriptions: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to list subscriptions: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 获取单条订阅（`GET /notification/subscriptions/{id}`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/subscriptions/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn get_subscription(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(uid) => uid,
+        Err(v) => return Json(v),
+    };
+    let row = sqlx::query(
+        "SELECT id, user_id, tenant_id, event_type, event_category, channels, status, \
+         filter_expression, priority, expires_at, created_at, updated_at \
+         FROM core_notification_subscriptions WHERE id = $1 AND user_id = $2",
+    )
+    .bind(id)
+    .bind(user_id)
+    .fetch_optional(&pool)
+    .await;
+    match row {
+        Ok(Some(r)) => match subscription_row_to_json(&r) {
+            Ok(v) => Json(serde_json::json!({ "success": true, "message": "ok", "data": v })),
+            Err(e) => Json(serde_json::json!({ "success": false, "message": e, "data": null })),
+        },
+        Ok(None) => Json(serde_json::json!({
+            "success": false, "message": "订阅不存在", "data": null, "code": 404
+        })),
+        Err(e) => {
+            tracing::error!("Failed to get subscription: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to get subscription: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 创建订阅（`POST /notification/subscriptions`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/subscriptions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn create_subscription(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<CreateSubscriptionRequest>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let channels = req.channels.unwrap_or_else(|| vec!["in_app".to_string()]);
+    let tenant_bind = tenant_bind_for(&claims);
+    let expires = req.expires_at.as_deref().and_then(|s| {
+        chrono::DateTime::parse_from_rfc3339(s)
+            .ok()
+            .map(|d| d.with_timezone(&chrono::Utc))
+    });
+    let row = sqlx::query(
+        "INSERT INTO core_notification_subscriptions \
+         (user_id, tenant_id, event_type, event_category, channels, status, filter_expression, priority, expires_at) \
+         VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8) \
+         RETURNING id, user_id, tenant_id, event_type, event_category, channels, status, \
+         filter_expression, priority, expires_at, created_at, updated_at",
+    )
+    .bind(user_id)
+    .bind(tenant_bind)
+    .bind(&req.event_type)
+    .bind(&req.event_category)
+    .bind(&channels)
+    .bind(&req.filter_expression)
+    .bind(req.priority.unwrap_or(0))
+    .bind(expires)
+    .fetch_optional(&pool)
+    .await;
+    match row {
+        Ok(Some(r)) => match subscription_row_to_json(&r) {
+            Ok(v) => Json(serde_json::json!({ "success": true, "message": "ok", "data": v })),
+            Err(e) => Json(serde_json::json!({ "success": false, "message": e, "data": null })),
+        },
+        Ok(None) => Json(serde_json::json!({
+            "success": false, "message": "创建订阅失败", "data": null
+        })),
+        Err(e) => {
+            tracing::error!("Failed to create subscription: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to create subscription: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 更新订阅（`PUT /notification/subscriptions/{id}`）
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/subscriptions/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn update_subscription(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateSubscriptionRequest>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(uid) => uid,
+        Err(v) => return Json(v),
+    };
+    let expires = req.expires_at.as_deref().and_then(|s| {
+        chrono::DateTime::parse_from_rfc3339(s)
+            .ok()
+            .map(|d| d.with_timezone(&chrono::Utc))
+    });
+    let row = sqlx::query(
+        "UPDATE core_notification_subscriptions SET \
+         channels = COALESCE($1, channels), \
+         filter_expression = COALESCE($2, filter_expression), \
+         priority = COALESCE($3, priority), \
+         expires_at = COALESCE($4, expires_at), \
+         updated_at = NOW() \
+         WHERE id = $5 AND user_id = $6 \
+         RETURNING id, user_id, tenant_id, event_type, event_category, channels, status, \
+         filter_expression, priority, expires_at, created_at, updated_at",
+    )
+    .bind(&req.channels)
+    .bind(&req.filter_expression)
+    .bind(req.priority)
+    .bind(expires)
+    .bind(id)
+    .bind(user_id)
+    .fetch_optional(&pool)
+    .await;
+    match row {
+        Ok(Some(r)) => match subscription_row_to_json(&r) {
+            Ok(v) => Json(serde_json::json!({ "success": true, "message": "ok", "data": v })),
+            Err(e) => Json(serde_json::json!({ "success": false, "message": e, "data": null })),
+        },
+        Ok(None) => Json(serde_json::json!({
+            "success": false, "message": "订阅不存在", "data": null, "code": 404
+        })),
+        Err(e) => {
+            tracing::error!("Failed to update subscription: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to update subscription: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 删除订阅（`DELETE /notification/subscriptions/{id}`）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/subscriptions/{id}",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn delete_subscription(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(uid) => uid,
+        Err(v) => return Json(v),
+    };
+    let result =
+        sqlx::query("DELETE FROM core_notification_subscriptions WHERE id = $1 AND user_id = $2")
+            .bind(id)
+            .bind(user_id)
+            .execute(&pool)
+            .await;
+    match result {
+        Ok(r) => Json(serde_json::json!({
+            "success": true, "message": "ok",
+            "data": { "deleted": r.rows_affected() > 0 }
+        })),
+        Err(e) => {
+            tracing::error!("Failed to delete subscription: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to delete subscription: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 暂停订阅（`POST /notification/subscriptions/{id}/pause`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/subscriptions/{id}/pause",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn pause_subscription(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(uid) => uid,
+        Err(v) => return Json(v),
+    };
+    let row = sqlx::query(
+        "UPDATE core_notification_subscriptions SET status = 'paused', updated_at = NOW() \
+         WHERE id = $1 AND user_id = $2 \
+         RETURNING id, user_id, tenant_id, event_type, event_category, channels, status, \
+         filter_expression, priority, expires_at, created_at, updated_at",
+    )
+    .bind(id)
+    .bind(user_id)
+    .fetch_optional(&pool)
+    .await;
+    match row {
+        Ok(Some(r)) => match subscription_row_to_json(&r) {
+            Ok(v) => Json(serde_json::json!({ "success": true, "message": "ok", "data": v })),
+            Err(e) => Json(serde_json::json!({ "success": false, "message": e, "data": null })),
+        },
+        Ok(None) => Json(serde_json::json!({
+            "success": false, "message": "订阅不存在", "data": null, "code": 404
+        })),
+        Err(e) => {
+            tracing::error!("Failed to pause subscription: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to pause subscription: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 恢复订阅（`POST /notification/subscriptions/{id}/resume`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/subscriptions/{id}/resume",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn resume_subscription(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(uid) => uid,
+        Err(v) => return Json(v),
+    };
+    let row = sqlx::query(
+        "UPDATE core_notification_subscriptions SET status = 'active', updated_at = NOW() \
+         WHERE id = $1 AND user_id = $2 \
+         RETURNING id, user_id, tenant_id, event_type, event_category, channels, status, \
+         filter_expression, priority, expires_at, created_at, updated_at",
+    )
+    .bind(id)
+    .bind(user_id)
+    .fetch_optional(&pool)
+    .await;
+    match row {
+        Ok(Some(r)) => match subscription_row_to_json(&r) {
+            Ok(v) => Json(serde_json::json!({ "success": true, "message": "ok", "data": v })),
+            Err(e) => Json(serde_json::json!({ "success": false, "message": e, "data": null })),
+        },
+        Ok(None) => Json(serde_json::json!({
+            "success": false, "message": "订阅不存在", "data": null, "code": 404
+        })),
+        Err(e) => {
+            tracing::error!("Failed to resume subscription: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to resume subscription: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 我的订阅（`GET /notification/my-subscriptions`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/my-subscriptions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn my_subscriptions(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<SubscriptionQuery>,
+) -> Json<serde_json::Value> {
+    list_subscriptions(State(pool), Extension(claims), Query(query)).await
+}
+
+/// 批量订阅（`POST /notification/batch-subscribe`）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/batch-subscribe",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn batch_subscribe(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<BatchSubscribeRequest>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let tenant_bind = tenant_bind_for(&claims);
+    let mut created = 0;
+    for sub in &req.subscriptions {
+        let channels = sub
+            .channels
+            .clone()
+            .unwrap_or_else(|| vec!["in_app".to_string()]);
+        let expires = sub.expires_at.as_deref().and_then(|s| {
+            chrono::DateTime::parse_from_rfc3339(s)
+                .ok()
+                .map(|d| d.with_timezone(&chrono::Utc))
+        });
+        let result = sqlx::query(
+            "INSERT INTO core_notification_subscriptions \
+             (user_id, tenant_id, event_type, event_category, channels, status, filter_expression, priority, expires_at) \
+             VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8) \
+             ON CONFLICT DO NOTHING",
+        )
+        .bind(user_id)
+        .bind(tenant_bind)
+        .bind(&sub.event_type)
+        .bind(&sub.event_category)
+        .bind(&channels)
+        .bind(&sub.filter_expression)
+        .bind(sub.priority.unwrap_or(0))
+        .bind(expires)
+        .execute(&pool)
+        .await;
+        if let Ok(r) = result {
+            created += i32::try_from(r.rows_affected()).unwrap_or(0);
+        }
+    }
+    Json(serde_json::json!({
+        "success": true, "message": "ok", "data": { "created_count": created }
+    }))
+}
+
+/// 批量退订（`DELETE /notification/batch-unsubscribe`）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/batch-unsubscribe",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn batch_unsubscribe(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<BatchUnsubscribeRequest>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(id) => id,
+        Err(v) => return Json(v),
+    };
+    let result = sqlx::query(
+        "DELETE FROM core_notification_subscriptions WHERE user_id = $1 AND id = ANY($2)",
+    )
+    .bind(user_id)
+    .bind(&req.ids)
+    .execute(&pool)
+    .await;
+    match result {
+        Ok(r) => Json(serde_json::json!({
+            "success": true, "message": "ok",
+            "data": { "cancelled_count": r.rows_affected() }
+        })),
+        Err(e) => {
+            tracing::error!("Failed to batch unsubscribe: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to batch unsubscribe: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 按事件类型退订（`DELETE /notification/subscriptions/event?event_type=...`）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/subscriptions/event",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn unsubscribe_event(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<SubscriptionQuery>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(&claims) {
+        Ok(uid) => uid,
+        Err(v) => return Json(v),
+    };
+    let Some(event_type) = query.event_type else {
+        return Json(serde_json::json!({
+            "success": false, "message": "缺少 event_type 参数", "data": null, "code": 400
+        }));
+    };
+    let result = sqlx::query(
+        "DELETE FROM core_notification_subscriptions WHERE user_id = $1 AND event_type = $2",
+    )
+    .bind(user_id)
+    .bind(&event_type)
+    .execute(&pool)
+    .await;
+    match result {
+        Ok(r) => Json(serde_json::json!({
+            "success": true, "message": "ok",
+            "data": { "deleted": r.rows_affected() > 0 }
+        })),
+        Err(e) => {
+            tracing::error!("Failed to unsubscribe event: {}", e);
+            Json(serde_json::json!({
+                "success": false,
+                "message": format!("Failed to unsubscribe event: {}", e),
+                "data": null
+            }))
+        }
+    }
+}
+
+/// 事件类型枚举（`GET /notification/event-types`）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/event-types",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
+pub async fn list_event_types() -> Json<serde_json::Value> {
+    let types = serde_json::json!([
+        { "event_type": "system", "description": "系统通知", "category": "system" },
+        { "event_type": "workflow", "description": "流程待办", "category": "workflow" },
+        { "event_type": "reminder", "description": "提醒", "category": "reminder" },
+        { "event_type": "alert", "description": "预警", "category": "alert" },
+        { "event_type": "message", "description": "消息", "category": "message" },
+        { "event_type": "task", "description": "任务", "category": "task" },
+        { "event_type": "approval", "description": "审批", "category": "approval" },
+        { "event_type": "comment", "description": "评论", "category": "comment" },
+        { "event_type": "mention", "description": "提及", "category": "mention" },
+        { "event_type": "announcement", "description": "公告", "category": "announcement" }
+    ]);
+    Json(serde_json::json!({ "success": true, "message": "ok", "data": types }))
 }
 
 #[cfg(test)]

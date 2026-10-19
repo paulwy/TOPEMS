@@ -316,6 +316,36 @@ impl CommunicationRealModule {
                     "/preferences/defaults",
                     get(notification::get_default_preferences),
                 )
+                .route("/subscriptions", get(notification::list_subscriptions))
+                .route("/subscriptions", post(notification::create_subscription))
+                .route("/subscriptions/{id}", get(notification::get_subscription))
+                .route(
+                    "/subscriptions/{id}",
+                    put(notification::update_subscription),
+                )
+                .route(
+                    "/subscriptions/{id}",
+                    delete(notification::delete_subscription),
+                )
+                .route(
+                    "/subscriptions/{id}/pause",
+                    post(notification::pause_subscription),
+                )
+                .route(
+                    "/subscriptions/{id}/resume",
+                    post(notification::resume_subscription),
+                )
+                .route("/my-subscriptions", get(notification::my_subscriptions))
+                .route("/batch-subscribe", post(notification::batch_subscribe))
+                .route(
+                    "/batch-unsubscribe",
+                    delete(notification::batch_unsubscribe),
+                )
+                .route(
+                    "/subscriptions/event",
+                    delete(notification::unsubscribe_event),
+                )
+                .route("/event-types", get(notification::list_event_types))
                 .route(
                     "/notifications/bulk-delete",
                     delete(notification::bulk_delete),
