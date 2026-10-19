@@ -1,6 +1,13 @@
+use rust_decimal::Decimal;
 use serde_json::{json, Value};
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
+
+/// 从 JSON 数值解析为 Decimal（仅入参解析，落库保持 Decimal 精度）
+fn decimal_from_value(v: Option<&Value>) -> Option<Decimal> {
+    v.and_then(|v| v.as_f64())
+        .and_then(Decimal::from_f64_retain)
+}
 
 use super::FinanceService;
 use topems_shared_core::error::TopemsError;
@@ -75,7 +82,7 @@ impl FinanceService {
                 let id: Uuid = sqlx::Row::get(row, "id");
                 let payment_no: Option<String> = sqlx::Row::try_get(row, "payment_no").ok();
                 let supplier_name: Option<String> = sqlx::Row::try_get(row, "supplier_name").ok();
-                let amount: Option<f64> = sqlx::Row::try_get(row, "amount").ok();
+                let amount: Option<Decimal> = sqlx::Row::try_get(row, "amount").ok();
                 let status: Option<String> = sqlx::Row::try_get(row, "status").ok();
                 let created_at: Option<chrono::DateTime<chrono::Utc>> =
                     sqlx::Row::try_get(row, "created_at").ok();
@@ -113,7 +120,7 @@ impl FinanceService {
         let id: Uuid = sqlx::Row::get(&row, "id");
         let payment_no: Option<String> = sqlx::Row::try_get(&row, "payment_no").ok();
         let supplier_name: Option<String> = sqlx::Row::try_get(&row, "supplier_name").ok();
-        let amount: Option<f64> = sqlx::Row::try_get(&row, "amount").ok();
+        let amount: Option<Decimal> = sqlx::Row::try_get(&row, "amount").ok();
         let status: Option<String> = sqlx::Row::try_get(&row, "status").ok();
 
         Ok(json!({
@@ -135,13 +142,13 @@ impl FinanceService {
             .get("supplier_name")
             .and_then(|v| v.as_str())
             .unwrap_or("");
-        let amount = req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+        let amount = decimal_from_value(req.get("amount")).unwrap_or(Decimal::ZERO);
         let payment_no = req.get("payment_no").and_then(|v| v.as_str()).unwrap_or("");
 
         let row = sqlx::query(
             only_own_schema_query!("finance", "INSERT INTO erp_payment_records (tenant_id, payment_no, supplier_name, amount, status, created_by)
              VALUES ($1, $2, $3, $4, NULL, $5)
-             RETURNING id, payment_no, supplier_name, amount::float8 AS amount, status::text AS status, created_at"),
+             RETURNING id, payment_no, supplier_name, amount, status::text AS status, created_at"),
         )
         .bind(tenant_id)
         .bind(payment_no)
@@ -154,7 +161,7 @@ impl FinanceService {
         let id: Uuid = sqlx::Row::get(&row, "id");
         let payment_no: String = sqlx::Row::get(&row, "payment_no");
         let supplier_name: String = sqlx::Row::get(&row, "supplier_name");
-        let amount: f64 = sqlx::Row::get(&row, "amount");
+        let amount: Decimal = sqlx::Row::get(&row, "amount");
         let status: Option<String> = sqlx::Row::get(&row, "status");
 
         Ok(json!({
@@ -173,7 +180,7 @@ impl FinanceService {
         req: Value,
     ) -> Result<Value, TopemsError> {
         let supplier_name = req.get("supplier_name").and_then(|v| v.as_str());
-        let amount = req.get("amount").and_then(|v| v.as_f64());
+        let amount = decimal_from_value(req.get("amount"));
         let status = req.get("status").and_then(|v| v.as_str());
 
         let row = sqlx::query(only_own_schema_query!(
@@ -197,7 +204,7 @@ impl FinanceService {
         let id: Uuid = sqlx::Row::get(&row, "id");
         let payment_no: String = sqlx::Row::get(&row, "payment_no");
         let supplier_name: String = sqlx::Row::get(&row, "supplier_name");
-        let amount: f64 = sqlx::Row::get(&row, "amount");
+        let amount: Decimal = sqlx::Row::get(&row, "amount");
         let status: String = sqlx::Row::get(&row, "status");
 
         Ok(json!({

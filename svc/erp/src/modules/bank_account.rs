@@ -10,6 +10,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -47,7 +48,7 @@ pub struct CreateBankAccountRequest {
     pub account_name: String,
     pub branch_name: Option<String>,
     pub currency: Option<String>,
-    pub balance: Option<f64>,
+    pub balance: Option<Decimal>,
     pub is_default: Option<bool>,
     pub status: Option<String>,
 }
@@ -59,7 +60,7 @@ pub struct UpdateBankAccountRequest {
     pub account_name: Option<String>,
     pub branch_name: Option<String>,
     pub currency: Option<String>,
-    pub balance: Option<f64>,
+    pub balance: Option<Decimal>,
     pub is_default: Option<bool>,
     pub status: Option<String>,
 }
@@ -79,7 +80,7 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "account_name": row.get::<String, _>("account_name"),
         "branch_name": row.get::<Option<String>, _>("branch_name"),
         "currency": row.get::<Option<String>, _>("currency"),
-        "balance": row.get::<Option<f64>, _>("balance"),
+        "balance": row.get::<Option<Decimal>, _>("balance"),
         "is_default": row.get::<bool, _>("is_default"),
         "status": row.get::<String, _>("status"),
         "created_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
@@ -229,7 +230,7 @@ pub async fn create_bank_account(
         None => unreachable!("rls txn missing"),
     };
     let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
-    let balance = req.balance.unwrap_or(0.0);
+    let balance = req.balance.unwrap_or(Decimal::ZERO);
     let is_default = req.is_default.unwrap_or(false);
     let status = req.status.unwrap_or_else(|| "active".to_string());
 

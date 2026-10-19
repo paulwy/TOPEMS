@@ -1,6 +1,13 @@
+use rust_decimal::Decimal;
 use serde_json::{json, Value};
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
+
+/// 从 JSON 数值解析为 Decimal（仅入参解析，落库保持 Decimal 精度）
+fn decimal_from_value(v: Option<&Value>) -> Option<Decimal> {
+    v.and_then(|v| v.as_f64())
+        .and_then(Decimal::from_f64_retain)
+}
 
 use super::FinanceService;
 use topems_shared_core::error::TopemsError;
@@ -73,7 +80,7 @@ impl FinanceService {
             .map(|row| {
                 let id: Uuid = sqlx::Row::get(row, "id");
                 let supplier_name: Option<String> = sqlx::Row::try_get(row, "supplier_name").ok();
-                let amount: Option<f64> = sqlx::Row::try_get(row, "amount").ok();
+                let amount: Option<Decimal> = sqlx::Row::try_get(row, "amount").ok();
                 let status: Option<String> = sqlx::Row::try_get(row, "status").ok();
                 let created_at: Option<chrono::DateTime<chrono::Utc>> =
                     sqlx::Row::try_get(row, "created_at").ok();
@@ -111,7 +118,7 @@ impl FinanceService {
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let supplier_name: Option<String> = sqlx::Row::try_get(&row, "supplier_name").ok();
-        let amount: Option<f64> = sqlx::Row::try_get(&row, "amount").ok();
+        let amount: Option<Decimal> = sqlx::Row::try_get(&row, "amount").ok();
         let status: Option<String> = sqlx::Row::try_get(&row, "status").ok();
 
         Ok(json!({
@@ -132,7 +139,7 @@ impl FinanceService {
             .get("supplier_name")
             .and_then(|v| v.as_str())
             .unwrap_or("");
-        let amount = req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+        let amount = decimal_from_value(req.get("amount")).unwrap_or(Decimal::ZERO);
 
         let row = sqlx::query(only_own_schema_query!(
             "finance",
@@ -149,7 +156,7 @@ impl FinanceService {
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let supplier_name: String = sqlx::Row::get(&row, "supplier_name");
-        let amount: f64 = sqlx::Row::get(&row, "amount");
+        let amount: Decimal = sqlx::Row::get(&row, "amount");
         let status: String = sqlx::Row::get(&row, "status");
 
         Ok(json!({
@@ -167,7 +174,7 @@ impl FinanceService {
         req: Value,
     ) -> Result<Value, TopemsError> {
         let supplier_name = req.get("supplier_name").and_then(|v| v.as_str());
-        let amount = req.get("amount").and_then(|v| v.as_f64());
+        let amount = decimal_from_value(req.get("amount"));
         let status = req.get("status").and_then(|v| v.as_str());
 
         let row = sqlx::query(only_own_schema_query!(
@@ -190,7 +197,7 @@ impl FinanceService {
 
         let id: Uuid = sqlx::Row::get(&row, "id");
         let supplier_name: String = sqlx::Row::get(&row, "supplier_name");
-        let amount: f64 = sqlx::Row::get(&row, "amount");
+        let amount: Decimal = sqlx::Row::get(&row, "amount");
         let status: String = sqlx::Row::get(&row, "status");
 
         Ok(json!({
@@ -250,12 +257,12 @@ impl FinanceService {
         .await?;
 
         let mut aging_buckets = Vec::new();
-        let mut total_amount = 0.0_f64;
+        let mut total_amount = Decimal::ZERO;
         let mut total_count = 0_i64;
 
         for row in &rows {
             let bucket: String = sqlx::Row::get(row, "bucket");
-            let amount: f64 = sqlx::Row::try_get(row, "amount").unwrap_or(0.0);
+            let amount: Decimal = sqlx::Row::try_get(row, "amount").unwrap_or(Decimal::ZERO);
             let cnt: i64 = sqlx::Row::try_get(row, "cnt").unwrap_or(0);
             total_amount += amount;
             total_count += cnt;

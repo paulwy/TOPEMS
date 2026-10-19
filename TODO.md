@@ -31,6 +31,7 @@
 - [x] **P2 · sales_invoice/回款金额持久化边界 f64→Decimal** ✅ 完成（2026-10-20，见下方「批 E6」块）：对应 10-19 重审 NEW-P2-2。连库核 `finance.sales_invoices`(amount/tax/total/paid) 与 `finance.erp_collection_records.amount` 均 numeric(18,2)；发票主表四金额 + 回款 Out/Payload + 确认回写主表 paid_amount 链改 `rust_decimal::Decimal`，读 SQL 去 `::float8`；账龄/逾期内存聚合与导出 CSV 保留 f64；finance lib 1087 passed、check/clippy/fmt 绿。
 - [x] **P2 · 其余金额面连库甄别 + 三处金额 Decimal** ✅ 完成（2026-10-20，见下方「批 E7」块）：对应 NEW-P2-2 续。逐模块连库甄别 DB 列类型：v58/v55/openapi/events/财务凭证/合并域(InternalTransaction/ConsolidationReport/Line 早已 Decimal) 均非 numeric 错配，不改；闭环 erp 三处持久化边界——`Material.unit_price`(18,4)、`OpeningBalance.debit/credit_balance`(18,4)、`Customer.credit_limit`(18,2) f64→Decimal；erp lib 902 passed、check/clippy/fmt 绿。
 - [x] **P2 · crm.revenue / hrm.salary·new_salary 金额 Decimal** ✅ 完成（2026-10-20，见下方「批 E8」块）：NEW-P2-2 续，跨 crate 连库甄别后只改强类型 query_as 模型。闭环 `crm.customers.revenue`(18,2) 与 profile DTO、`hrm.contracts.salary`/`contract_renewals.new_salary`(18,2) f64→Decimal；crm lib 504、hrm lib 293 passed，check/clippy/fmt 绿。
+- [x] **P2 · 动态 Value 通道金额 Decimal（finance 收/付/银 + erp 银行账户）** ✅ 完成（2026-10-20，见下方「批 E9」块）：NEW-P2-2 续。hrm 其余工资面甄别全为 BigDecimal/Decimal/内存报表 DTO，零改动；改 finance `collection/payment_record/payable/receivable` 动态 `sqlx::query` 通道金额读/写为 Decimal（含账龄 SUM 聚合）、erp `bank_accounts.balance`(18,4)；finance 1087、erp 902 passed，check/clippy/fmt 绿。
 
 ---
 
@@ -167,6 +168,23 @@
   - hrm：`Contract.salary`、`Create/UpdateContractRequest.salary`、`ContractRenewal.new_salary`、`CreateRenewalRequest.new_salary` 改 `Option<Decimal>`；读 SQL 去 `salary::float8`，new_salary 本就裸 SELECT。
 - **验证**：`cargo check -p topems-crm/topems-hrm --lib/--tests` exit 0；crm lib **504 passed**（2 ignored）、hrm lib **293 passed**；clippy `-D correctness` 无 error；`cargo fmt --check` 干净。
 - **遗留（非本批）**：hrm 其余 numeric 金额列（job_openings.salary_min/max、payroll.base/net_salary、positions.salary_range、recruitment.expected_salary、salary_adjustments.previous/new_salary）逐 struct；finance 动态 Value 通道 collection/payment_record；erp sales_orders/assets/payables/receivables/bank_accounts。
+
+---
+
+## 批 E9 · 动态 Value 通道金额 Decimal（finance 收/付/账龄 + erp 银行账户）（2026-10-20）✅ 完成
+
+> 来源：10-19 重审 NEW-P2-2（续 E8）。按 1→2→3 顺序：① hrm 工资面甄别；② finance 动态 `sqlx::query`+`json!` Value 通道；③ erp 银行账户/订单甄别。只改持久化边界，内存聚合/数量/比率/仿真保留 f64。
+
+- **① hrm 工资面（甄别零改动）**：连库 13 列全 numeric(18,2)，但代码早已精确——`recruitment` salary_min/max、`salary_adjustment` old/new/adjustment_amount、`position` min/max_salary 均 `BigDecimal`；`employee.base/net_salary`、`contract.salary/new_salary`(E8) 为 `Decimal`；`payroll_calc` 内存 BigDecimal 计算；`reports.rs` min/max_salary 为内存报表 DTO（从 DB BigDecimal 读出后转）。**无 f64 错配，不改。**
+- **② finance 动态通道改 Decimal**（表 `finance.erp_collection_records/erp_payment_records/erp_payables/erp_receivables` 全 numeric(18,2)）：
+  - `collection.rs`、`payment_record.rs`：list/get `try_get::<Option<Decimal>>`，create 入参 `decimal_from_value` 解析、去 RETURNING `amount::float8`、`Row::get::<Decimal>`；update bind `Option<Decimal>`。
+  - `payable.rs`、`receivable.rs`：同上 CRUD 边界；账龄 `get_*_aging` 的 DB 端 `SUM(amount)` 返回 numeric，原 `try_get::<f64>` 静默归零，改 `Decimal` 累加 `total_amount`。
+  - 新增模块私有 helper `decimal_from_value(Option<&Value>) -> Option<Decimal>`（仅入参解析，落库 Decimal 精确）。
+- **③ erp 甄别**：
+  - 改：`bank_accounts.balance` numeric(18,4)，动态通道 Create/Update/读改 `Option<Decimal>`，create 默认 `Decimal::ZERO`。
+  - 不改：`sales_orders` 读模型已 Decimal、bind 前有 `dec()/dec_owned()` 转 Decimal；`purchase_orders` 四列 DB=`double precision`（f64 匹配）；`inventory.unit_price/total_amount` DB=double；`Asset.purchase_amount` 早已 Decimal。
+- **验证**：`cargo check -p topems-finance/topems-erp --lib/--tests` exit 0；finance lib **1087 passed**、erp lib **902 passed**；clippy `-D correctness` 无 error；`cargo fmt --check` 干净。
+- **遗留（非本批）**：tax_v56.rs 连库甄别；finance 其余版本化报表/仿真浮点保留 f64；erp/finance 内存聚合 DTO 不改。
 
 ---
 
