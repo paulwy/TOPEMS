@@ -181,10 +181,12 @@ impl PermissionStoreFactory {
             }
             PermissionStoreType::Database => {
                 tracing::info!("Creating database-backed permission store");
-                let pool = pool.expect(
-                    "PostgreSQL connection pool is required for database-backed permission store. \
-                     Set PERMISSION_STORE_TYPE=memory or provide a valid database pool.",
-                );
+                let pool = pool.unwrap_or_else(|| {
+                    panic!(
+                        "PostgreSQL connection pool is required for database-backed permission store. \
+                         Set PERMISSION_STORE_TYPE=memory or provide a valid database pool."
+                    )
+                });
                 let store = DatabasePermissionStore::with_cache_ttl(pool, config.cache_ttl_secs);
                 Arc::new(store)
             }

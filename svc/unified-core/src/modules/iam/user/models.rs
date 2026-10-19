@@ -4,8 +4,11 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 lazy_static! {
-    static ref EMAIL_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-        .expect("invalid EMAIL_REGEX pattern");
+    static ref EMAIL_REGEX: Regex =
+        match Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$") {
+            Ok(re) => re,
+            Err(e) => panic!("invalid EMAIL_REGEX pattern: {e}"),
+        };
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
