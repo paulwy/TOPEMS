@@ -3075,7 +3075,10 @@ fn tenant_bind_for(claims: &Claims) -> Option<Uuid> {
     if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     }
 }
 

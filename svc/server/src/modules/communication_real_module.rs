@@ -285,14 +285,8 @@ impl CommunicationRealModule {
                     "/notification-templates/batch-status",
                     put(notification::batch_update_template_status),
                 )
-                .route(
-                    "/preferences",
-                    get(notification::get_preferences),
-                )
-                .route(
-                    "/preferences",
-                    put(notification::update_preferences),
-                )
+                .route("/preferences", get(notification::get_preferences))
+                .route("/preferences", put(notification::update_preferences))
                 .route(
                     "/preferences/categories",
                     get(notification::get_category_preferences),
@@ -317,10 +311,7 @@ impl CommunicationRealModule {
                     "/preferences/quiet-hours",
                     put(notification::update_quiet_hours),
                 )
-                .route(
-                    "/preferences/reset",
-                    post(notification::reset_preferences),
-                )
+                .route("/preferences/reset", post(notification::reset_preferences))
                 .route(
                     "/preferences/defaults",
                     get(notification::get_default_preferences),
