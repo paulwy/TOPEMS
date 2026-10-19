@@ -703,7 +703,7 @@ async fn create_contract_milestone(
     .bind(&req.name)
     .bind(req.description)
     .bind(parse_date(&req.target_date))
-    .bind(req.payment_amount.unwrap_or(0.0))
+    .bind(req.payment_amount.unwrap_or(rust_decimal::Decimal::ZERO))
     .bind(req.payment_percent)
     .bind(req.project_milestone_id)
     .bind(now)

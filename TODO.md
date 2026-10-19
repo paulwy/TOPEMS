@@ -26,6 +26,7 @@
 - [x] **P3 · eslint 回绿（格式 + ignore）** ✅ 完成（2026-10-19，见下方「批 E1」块）：对应 10-19 重审 NEW-P3-1/P3-2。`eslint .` 由 26 errors / 86 warnings → **0 errors / 86 warnings**（exit 0），tsc 0 error；24 处 prettier 格式 `--fix`（零逻辑改动）+ `src/_archive-microfrontend/**` 补入 ignores（2 parser error 消除）；85 处 unused-vars warning 属既有长尾，不在本批。
 - [x] **P2 · menu 管理页整页 i18n** ✅ 完成（2026-10-19，见下方「批 E2」块）：对应 10-19 重审 NEW-P2-1。`MenuManagementPage` 59 行硬编码中文 → `system.menu_management.*` zh/en 39 键，`window.confirm` 换共享 `ConfirmDialog` + `useConfirmDialog`；tsc/eslint/i18n quality/hardcode 全绿。
 - [x] **P2 · 部署文档/脚本 8099 单上游口径对齐** ✅ 完成（2026-10-19，见下方「批 E3」块）：对应 10-19 重审 H-1/H-2/H-3/H-11。runbook 重写、verify 脚本 map→upstream 校验、deploy/README systemd 主路径、config-consistency 规则 2 改 upstream 8099；shellcheck/config-consistency/独立 source 校验全绿。
+- [x] **P1 · PM 金额 f64→Decimal（同结构体完整集）** ✅ 完成（2026-10-19，见下方「批 E4」块）：对应 10-19 重审 NEW-P1-1。project_expenses.amount、contracts.amount、contract_milestones.payment_amount/payment_percent、contract_payment_schedule.payment_amount/payment_percent 改 `rust_decimal::Decimal`；pm lib 497 passed、workspace check/clippy/fmt 绿。**未连库复现**（pm 无连库测试惯例、表 0 行、外键约束），起 dev 栈后对费用/合同金额 CRUD 冒烟；其余 23 个 pm numeric 列（预算/结算/资源/项目）属 P2-1 大工程，未在本批。
 
 ---
 
@@ -64,6 +65,25 @@
   - `scripts/dev/check-config-consistency.py`（H-11）：规则 2 由「nginx map ↔ services.yaml」改为「dev(`apps/web/nginx.conf`) + 生产(`deploy/nginx/topems.conf`) 两份 conf 的 upstream server_service → 8099、无遗留 map」；删空转的 MERGE_ALIASES/NAME_ALIASES。
 - **验证**：`check-config-consistency.py` exit 0（29 服务 ↔ 38 端口 ↔ upstream 8099 2 份 conf）；负例（端口非 8099 / 残留 map）均被捕获；`check-config-sources.cjs` exit 0（nginx upstream 1）；`shellcheck -S warning` 全量 78 脚本 0 告警。
 - **遗留（不在本批）**：H-4 `health-check.sh` 旧多端口/docker-first/默认口令、H-5 `rollback.sh`/`start-production.sh` 旧 8000 口径待核、H-9 developer 三份标准文档 8000 直连口径待补注；`check-config-sources.cjs` 的 mapBlock 为可选解析（匹配不到即空，不失败），未改；`docs/audit/arch-analysis/ENTRY.md` 为历史分析快照，未改。
+
+---
+
+## 批 E4 · PM 金额 f64→Decimal（同结构体完整集）（2026-10-19）✅ 完成
+
+> 来源：`artifacts/TOPEMS-重新审计与评估-2026-10-19.md` NEW-P1-1（PM 金额 `f64` ↔ `numeric` 类型错配，sqlx 默认不实现 numeric↔f64，在线库取数/绑定可能类型报错）。范围经拍板取「同结构体完整集」：只改审计点名 3 处 + 同一条 SELECT/同结构体内漏网的 numeric f64，不扩到全 pm schema。
+
+- **改动（后端模型 + 请求体，纯类型对齐，无业务逻辑）**：
+  - `models/project_expense.rs`：`ProjectExpense.amount`、`CreateExpenseRequest.amount`、`UpdateExpenseRequest.amount: Option<f64>` → `Decimal`。
+  - `models/contract.rs`：`Contract.amount: Option<f64>`、`Create/UpdateContractRequest.amount` → `Option<Decimal>`；`ContractMilestone.payment_amount`、`payment_percent` 与 `CreateContractMilestoneRequest` 同两字段 → `Decimal/Option<Decimal>`；`ContractPaymentSchedule.payment_amount`、`payment_percent` 与 `CreatePaymentScheduleRequest` 同两字段 → `Decimal/Option<Decimal>`。
+  - `modules/contract.rs`：milestone INSERT 默认值 `unwrap_or(0.0)` → `unwrap_or(Decimal::ZERO)`；其余 bind 点类型随请求体自动匹配，无算术/转换。
+  - 测试字面量改 `Decimal::new(mantissa, scale)` / `Decimal::ZERO`，serde roundtrip 断言不变。
+- **范围边界（刻意不改）**：
+  - `ContractPaymentSchedule.actual_payment_amount: Option<f64>` 未被 SELECT/INSERT（831 行 SELECT 无此列），不参与 DB 映射，保留 f64。
+  - 纯函数 `should_approve_expense(amount, threshold, budget_remaining: f64)` 为内存判定、仅测试调用，按审计「内存计算可保留 f64」不动。
+  - pm schema 其余 23 个 numeric 列（budgets/budget_items/settlements/settlement_items/settlement_adjustments/project_resources/projects/project_benefits/acceptance_records.score/pm_budget_items）遍布预算/结算/资源/项目多表，属 P2-1 大工程，未在本批。
+- **前端契约**：rust_decimal 默认 serde 序列化为 JSON number（与 finance F1 同款裸 Decimal），`apps/web/src/api/pm/types.ts` 金额字段本就声明 `number`，无需改前端。
+- **验证**：`cargo check --workspace` exit 0；`cargo clippy -p topems-pm --lib -D correctness` exit 0；`cargo fmt -p topems-pm --check` exit 0；`cargo test -p topems-pm --lib` **497 passed / 0 failed**。
+- **遗留（待外部/起栈）**：**未做连库复现**——pm 无连库测试惯例、`project_expenses` 等表 0 行（空集不触发逐行 Decode）、插行受外键/NOT NULL 约束；类型错配为 sqlx 库行为推断，起 dev 栈后对费用/合同金额 CRUD 做一次冒烟确认。全 pm 23 列 Decimal 化登记为 P2-1 后续批次。
 
 ---
 

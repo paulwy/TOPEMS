@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -13,7 +14,7 @@ pub struct Contract {
     pub contract_type: String,
     pub party_a: String,
     pub party_b: String,
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     pub currency: String,
     pub sign_date: Option<DateTime<Utc>>,
     pub start_date: Option<DateTime<Utc>>,
@@ -35,7 +36,7 @@ pub struct CreateContractRequest {
     pub contract_type: String,
     pub party_a: String,
     pub party_b: String,
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     pub currency: Option<String>,
     pub sign_date: Option<String>,
     pub start_date: Option<String>,
@@ -48,7 +49,7 @@ pub struct UpdateContractRequest {
     pub contract_name: Option<String>,
     pub party_a: Option<String>,
     pub party_b: Option<String>,
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     pub currency: Option<String>,
     pub sign_date: Option<String>,
     pub start_date: Option<String>,
@@ -64,8 +65,8 @@ pub struct ContractMilestone {
     pub name: String,
     pub description: Option<String>,
     pub target_date: DateTime<Utc>,
-    pub payment_amount: f64,
-    pub payment_percent: Option<f64>,
+    pub payment_amount: Decimal,
+    pub payment_percent: Option<Decimal>,
     pub status: String,
     pub actual_date: Option<DateTime<Utc>>,
     pub payment_status: String,
@@ -78,8 +79,8 @@ pub struct CreateContractMilestoneRequest {
     pub name: String,
     pub description: Option<String>,
     pub target_date: String,
-    pub payment_amount: Option<f64>,
-    pub payment_percent: Option<f64>,
+    pub payment_amount: Option<Decimal>,
+    pub payment_percent: Option<Decimal>,
     pub project_milestone_id: Option<Uuid>,
 }
 
@@ -89,8 +90,8 @@ pub struct ContractPaymentSchedule {
     pub contract_id: Uuid,
     pub payment_number: i32,
     pub payment_name: Option<String>,
-    pub payment_percent: Option<f64>,
-    pub payment_amount: f64,
+    pub payment_percent: Option<Decimal>,
+    pub payment_amount: Decimal,
     pub due_date: DateTime<Utc>,
     pub actual_payment_date: Option<DateTime<Utc>>,
     pub actual_payment_amount: Option<f64>,
@@ -105,8 +106,8 @@ pub struct ContractPaymentSchedule {
 pub struct CreatePaymentScheduleRequest {
     pub payment_number: i32,
     pub payment_name: Option<String>,
-    pub payment_percent: Option<f64>,
-    pub payment_amount: f64,
+    pub payment_percent: Option<Decimal>,
+    pub payment_amount: Decimal,
     pub due_date: String,
 }
 
@@ -155,7 +156,7 @@ mod tests {
             contract_type: "service".to_string(),
             party_a: "甲方公司".to_string(),
             party_b: "乙方公司".to_string(),
-            amount: Some(500_000.0),
+            amount: Some(Decimal::new(50_000_000, 2)),
             currency: "CNY".to_string(),
             sign_date: Some(now()),
             start_date: Some(now()),
@@ -221,10 +222,10 @@ mod tests {
     #[test]
     fn test_contract_amount_negative_roundtrip() {
         let mut c = sample_contract();
-        c.amount = Some(-1.0);
+        c.amount = Some(Decimal::new(-100, 2));
         let s = serde_json::to_string(&c).unwrap();
         let back: Contract = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.amount, Some(-1.0));
+        assert_eq!(back.amount, Some(Decimal::new(-100, 2)));
     }
 
     // ---- CreateContractRequest ----
@@ -238,7 +239,7 @@ mod tests {
             contract_type: "purchase".to_string(),
             party_a: "PA".to_string(),
             party_b: "PB".to_string(),
-            amount: Some(1000.0),
+            amount: Some(Decimal::new(100_000, 2)),
             currency: Some("USD".to_string()),
             sign_date: Some("2024-01-01T00:00:00Z".to_string()),
             start_date: Some("2024-01-02T00:00:00Z".to_string()),
@@ -301,7 +302,7 @@ mod tests {
             contract_name: Some("updated".to_string()),
             party_a: Some("PA2".to_string()),
             party_b: Some("PB2".to_string()),
-            amount: Some(2000.0),
+            amount: Some(Decimal::new(200_000, 2)),
             currency: Some("EUR".to_string()),
             sign_date: Some("2024-03-01T00:00:00Z".to_string()),
             start_date: Some("2024-03-02T00:00:00Z".to_string()),
@@ -325,8 +326,8 @@ mod tests {
             name: "首付款".to_string(),
             description: Some("d".to_string()),
             target_date: now(),
-            payment_amount: 100_000.0,
-            payment_percent: Some(30.0),
+            payment_amount: Decimal::new(10_000_000, 2),
+            payment_percent: Some(Decimal::new(3_000, 2)),
             status: "pending".to_string(),
             actual_date: Some(now()),
             payment_status: "unpaid".to_string(),
@@ -350,7 +351,7 @@ mod tests {
             name: "n".to_string(),
             description: None,
             target_date: now(),
-            payment_amount: 0.0,
+            payment_amount: Decimal::ZERO,
             payment_percent: None,
             status: "pending".to_string(),
             actual_date: None,
@@ -372,8 +373,8 @@ mod tests {
             name: "尾款".to_string(),
             description: Some("d".to_string()),
             target_date: "2024-12-31T00:00:00Z".to_string(),
-            payment_amount: Some(50_000.0),
-            payment_percent: Some(50.0),
+            payment_amount: Some(Decimal::new(5_000_000, 2)),
+            payment_percent: Some(Decimal::new(5_000, 2)),
             project_milestone_id: Some(uid()),
         };
         let s = serde_json::to_string(&r).unwrap();
@@ -406,8 +407,8 @@ mod tests {
             contract_id: uid(),
             payment_number: 1,
             payment_name: Some("第一期".to_string()),
-            payment_percent: Some(30.0),
-            payment_amount: 30_000.0,
+            payment_percent: Some(Decimal::new(3_000, 2)),
+            payment_amount: Decimal::new(3_000_000, 2),
             due_date: now(),
             actual_payment_date: Some(now()),
             actual_payment_amount: Some(30_000.0),
@@ -433,7 +434,7 @@ mod tests {
             payment_number: 2,
             payment_name: None,
             payment_percent: None,
-            payment_amount: 0.0,
+            payment_amount: Decimal::ZERO,
             due_date: now(),
             actual_payment_date: None,
             actual_payment_amount: None,
@@ -456,8 +457,8 @@ mod tests {
         let r = CreatePaymentScheduleRequest {
             payment_number: 3,
             payment_name: Some("第二期".to_string()),
-            payment_percent: Some(40.0),
-            payment_amount: 40_000.0,
+            payment_percent: Some(Decimal::new(4_000, 2)),
+            payment_amount: Decimal::new(4_000_000, 2),
             due_date: "2024-06-30T00:00:00Z".to_string(),
         };
         let s = serde_json::to_string(&r).unwrap();
@@ -472,7 +473,7 @@ mod tests {
             payment_number: 4,
             payment_name: None,
             payment_percent: None,
-            payment_amount: 0.0,
+            payment_amount: Decimal::ZERO,
             due_date: "2024-09-30T00:00:00Z".to_string(),
         };
         let s = serde_json::to_string(&r).unwrap();

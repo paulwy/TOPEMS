@@ -1,4 +1,5 @@
 use chrono::{DateTime, NaiveDate, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -17,7 +18,7 @@ pub struct ProjectExpense {
     pub phase_id: Option<Uuid>,
     pub expense_type: String,
     pub description: Option<String>,
-    pub amount: f64,
+    pub amount: Decimal,
     pub currency: Option<String>,
     pub expense_date: DateTime<Utc>,
     pub approved_date: Option<DateTime<Utc>>,
@@ -38,7 +39,7 @@ pub struct CreateExpenseRequest {
     pub phase_id: Option<Uuid>,
     pub expense_type: String,
     pub description: Option<String>,
-    pub amount: f64,
+    pub amount: Decimal,
     pub currency: Option<String>,
     pub expense_date: NaiveDate,
     pub budget_item_id: Option<Uuid>,
@@ -53,7 +54,7 @@ pub struct CreateExpenseRequest {
 pub struct UpdateExpenseRequest {
     pub expense_type: Option<String>,
     pub description: Option<String>,
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     pub approved_date: Option<NaiveDate>,
     pub status: Option<String>,
     pub approver: Option<String>,
@@ -84,7 +85,7 @@ mod tests {
             phase_id: Some(uid()),
             expense_type: "material".to_string(),
             description: Some("钢材采购".to_string()),
-            amount: 50_000.0,
+            amount: Decimal::new(5_000_000, 2),
             currency: Some("CNY".to_string()),
             expense_date: now(),
             approved_date: Some(now()),
@@ -129,7 +130,7 @@ mod tests {
             phase_id: None,
             expense_type: "labor".to_string(),
             description: None,
-            amount: 0.0,
+            amount: Decimal::ZERO,
             currency: None,
             expense_date: now(),
             approved_date: None,
@@ -162,10 +163,10 @@ mod tests {
     #[test]
     fn test_project_expense_negative_amount_roundtrip() {
         let mut e = sample_expense();
-        e.amount = -100.0;
+        e.amount = Decimal::new(-10_000, 2);
         let s = serde_json::to_string(&e).unwrap();
         let back: ProjectExpense = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.amount, -100.0);
+        assert_eq!(back.amount, Decimal::new(-10_000, 2));
     }
 
     #[test]
@@ -185,7 +186,7 @@ mod tests {
             phase_id: Some(uid()),
             expense_type: "equipment".to_string(),
             description: Some("d".to_string()),
-            amount: 12_345.67,
+            amount: Decimal::new(1_234_567, 2),
             currency: Some("USD".to_string()),
             expense_date: sample_date(),
             budget_item_id: Some(uid()),
@@ -208,7 +209,7 @@ mod tests {
             phase_id: None,
             expense_type: "misc".to_string(),
             description: None,
-            amount: 0.0,
+            amount: Decimal::ZERO,
             currency: None,
             expense_date: sample_date(),
             budget_item_id: None,
@@ -247,7 +248,7 @@ mod tests {
         let r = UpdateExpenseRequest {
             expense_type: Some("travel".to_string()),
             description: Some("d".to_string()),
-            amount: Some(999.99),
+            amount: Some(Decimal::new(9_999, 2)),
             approved_date: Some(sample_date()),
             status: Some("paid".to_string()),
             approver: Some("a".to_string()),
