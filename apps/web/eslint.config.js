@@ -33,6 +33,7 @@ export default [
       'src/design-system/**',
       'src/hooks/bff/**',
       'src/modules/_archive/**',
+      'src/_archive-microfrontend/**',
       'src/api/erp/index.ts',
     ],
   },

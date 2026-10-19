@@ -304,7 +304,10 @@ export function WizardBuilder({
           )}
         </Box>
 
-        {config.showSummaryOnComplete && isLastStep && regularStepFields.length === 0 && stepNestedTables.length === 0 ? (
+        {config.showSummaryOnComplete &&
+        isLastStep &&
+        regularStepFields.length === 0 &&
+        stepNestedTables.length === 0 ? (
           renderSummary()
         ) : (
           <>

@@ -290,18 +290,12 @@ const eightDAdapter: CrudApiAdapter = {
       severity: String(v.severity ?? 'medium'),
       d1Leader: String(v.team_leader ?? ''),
       d1Team: json(v.team_members),
-      d3ContainmentAction: [
-        String(v.d3_effectiveness_check ?? ''),
-        json(v.containment_actions),
-      ]
+      d3ContainmentAction: [String(v.d3_effectiveness_check ?? ''), json(v.containment_actions)]
         .filter(Boolean)
         .join('；'),
       d4RootCause: json(v.root_causes),
       d4CauseAnalysis: json(v.root_cause_tree),
-      d5PermanentAction: [
-        String(v.d5_validation_standard ?? ''),
-        json(v.permanent_actions),
-      ]
+      d5PermanentAction: [String(v.d5_validation_standard ?? ''), json(v.permanent_actions)]
         .filter(Boolean)
         .join('；'),
       d6VerificationResult: [
@@ -335,7 +329,7 @@ const eightDAdapter: CrudApiAdapter = {
     if (!closeRes.success)
       throw new Error(closeRes.message || i18n.t('pages.qms_eight_d_page.8d_19'));
 
-    return (rec as unknown) as Record<string, unknown>;
+    return rec as unknown as Record<string, unknown>;
   },
 
   update: async (id, data) => {

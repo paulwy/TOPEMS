@@ -4,14 +4,16 @@ import type { AuditPlan, AuditTask, AuditFinding } from './types';
 
 export const auditApi = {
   listAuditPlans: async (): Promise<ApiResponse<AuditPlan[]>> => {
-    const response = await apiClient.qms.get<AuditPlan[] | { plans?: AuditPlan[]; list?: AuditPlan[]; items?: AuditPlan[] }>('/audit-plans');
+    const response = await apiClient.qms.get<
+      AuditPlan[] | { plans?: AuditPlan[]; list?: AuditPlan[]; items?: AuditPlan[] }
+    >('/audit-plans');
     const d = response.data as unknown;
     const arr = Array.isArray(d)
       ? (d as AuditPlan[])
-      : (d as { plans?: AuditPlan[]; list?: AuditPlan[]; items?: AuditPlan[] })?.plans
-        ?? (d as { list?: AuditPlan[] })?.list
-        ?? (d as { items?: AuditPlan[] })?.items
-        ?? [];
+      : ((d as { plans?: AuditPlan[]; list?: AuditPlan[]; items?: AuditPlan[] })?.plans ??
+        (d as { list?: AuditPlan[] })?.list ??
+        (d as { items?: AuditPlan[] })?.items ??
+        []);
     return { ...response, data: arr };
   },
 
@@ -21,27 +23,32 @@ export const auditApi = {
 
   listAuditTasks: async (planId?: string): Promise<ApiResponse<AuditTask[]>> => {
     const url = planId ? `/audit-tasks?plan_id=${planId}` : '/audit-tasks';
-    const response = await apiClient.qms.get<AuditTask[] | { tasks?: AuditTask[]; list?: AuditTask[]; items?: AuditTask[] }>(url);
+    const response = await apiClient.qms.get<
+      AuditTask[] | { tasks?: AuditTask[]; list?: AuditTask[]; items?: AuditTask[] }
+    >(url);
     const d = response.data as unknown;
     const arr = Array.isArray(d)
       ? (d as AuditTask[])
-      : (d as { tasks?: AuditTask[]; list?: AuditTask[]; items?: AuditTask[] })?.tasks
-        ?? (d as { list?: AuditTask[] })?.list
-        ?? (d as { items?: AuditTask[] })?.items
-        ?? [];
+      : ((d as { tasks?: AuditTask[]; list?: AuditTask[]; items?: AuditTask[] })?.tasks ??
+        (d as { list?: AuditTask[] })?.list ??
+        (d as { items?: AuditTask[] })?.items ??
+        []);
     return { ...response, data: arr };
   },
 
   listAuditFindings: async (taskId?: string): Promise<ApiResponse<AuditFinding[]>> => {
     const url = taskId ? `/audit-findings?task_id=${taskId}` : '/audit-findings';
-    const response = await apiClient.qms.get<AuditFinding[] | { findings?: AuditFinding[]; list?: AuditFinding[]; items?: AuditFinding[] }>(url);
+    const response = await apiClient.qms.get<
+      AuditFinding[] | { findings?: AuditFinding[]; list?: AuditFinding[]; items?: AuditFinding[] }
+    >(url);
     const d = response.data as unknown;
     const arr = Array.isArray(d)
       ? (d as AuditFinding[])
-      : (d as { findings?: AuditFinding[]; list?: AuditFinding[]; items?: AuditFinding[] })?.findings
-        ?? (d as { list?: AuditFinding[] })?.list
-        ?? (d as { items?: AuditFinding[] })?.items
-        ?? [];
+      : ((d as { findings?: AuditFinding[]; list?: AuditFinding[]; items?: AuditFinding[] })
+          ?.findings ??
+        (d as { list?: AuditFinding[] })?.list ??
+        (d as { items?: AuditFinding[] })?.items ??
+        []);
     return { ...response, data: arr };
   },
 

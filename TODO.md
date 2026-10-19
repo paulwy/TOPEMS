@@ -23,6 +23,19 @@
 - [ ] **需业务/外部 · none 级流量观测立项**（部署期 8099 网关 access log，≥30 天 0 请求）
 - [ ] **需部署主机 · 生产 nginx reload**（verify-nginx-prod.sh 本机 MAP_OK，reload 需目标机）
 - [x] **冻结确认 · ehs occupational_health 桩 / DSH 零消费面** ✅ 完成（2026-10-19）：统一登记 `dsh-zero-consumption-freeze.md`。DSH 18 端点零消费冻结；ehs occupational_health 已挂路由，records 接真 DB、check-plans/check-records/contraindications/statistics 为内存桩，前端封装零页面消费，均不接真不删除，待对应页面开发再接线/接真。
+- [x] **P3 · eslint 回绿（格式 + ignore）** ✅ 完成（2026-10-19，见下方「批 E1」块）：对应 10-19 重审 NEW-P3-1/P3-2。`eslint .` 由 26 errors / 86 warnings → **0 errors / 86 warnings**（exit 0），tsc 0 error；24 处 prettier 格式 `--fix`（零逻辑改动）+ `src/_archive-microfrontend/**` 补入 ignores（2 parser error 消除）；85 处 unused-vars warning 属既有长尾，不在本批。
+
+---
+
+## 批 E1 · eslint 回绿（prettier 格式 + archive ignore）（2026-10-19）✅ 完成
+
+> 来源：`artifacts/TOPEMS-重新审计与评估-2026-10-19.md` NEW-P3-1（24 处 prettier 格式 error）/ NEW-P3-2（eslint ignores 漏配 `src/_archive-microfrontend/**`）。纯卫生批，零业务逻辑改动。
+
+- **改动**：
+  - `eslint.config.js`：ignores 增补 `src/_archive-microfrontend/**`（2 个归档文件 MicroAppRouter.tsx/RemoteLoader.tsx；tsconfig 早已 exclude，补 eslint 对齐，消除 2 处 parser error）。
+  - `eslint --fix` 修 5 文件 24 处 prettier/prettier 格式 error（仅换行/括号/折叠，逻辑逐字不变）：`api/qms/audit.ts`、`api/qms/issue.ts`、`components/templates/WizardBuilder.tsx`、`pages/finance/ConsolidationScopePage/components/ConsolidationScopeTable.tsx`、`pages/qms/QmsEightDPage.tsx`。
+- **验证**：`eslint .` **0 errors / 86 warnings / exit 0**（原 26 errors）；`tsc --noEmit` exit 0；逐文件 diff 复核仅格式重排（`?? []`、filter/join、条件链等逻辑均原样保留）。
+- **遗留（不在本批）**：85 处 `@typescript-eslint/no-unused-vars` warning 为既有长尾，按域另行清理。
 
 ---
 

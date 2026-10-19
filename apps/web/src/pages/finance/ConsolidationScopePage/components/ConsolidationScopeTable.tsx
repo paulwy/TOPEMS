@@ -200,19 +200,11 @@ export function ConsolidationScopeTable({
   ];
 
   if (loading) {
-    return (
-      <div style={styles.centerEmpty}>
-        {t('finance.consolidation_scope_page.loading')}
-      </div>
-    );
+    return <div style={styles.centerEmpty}>{t('finance.consolidation_scope_page.loading')}</div>;
   }
 
   if (!scopes || scopes.length === 0) {
-    return (
-      <div style={styles.centerEmpty}>
-        {t('finance.consolidation_scope_page.no_scopes')}
-      </div>
-    );
+    return <div style={styles.centerEmpty}>{t('finance.consolidation_scope_page.no_scopes')}</div>;
   }
 
   return (
@@ -351,18 +343,12 @@ export function ConsolidationCompanyTable({
   ];
 
   if (loading) {
-    return (
-      <div style={styles.centerEmpty}>
-        {t('finance.consolidation_scope_page.loading')}
-      </div>
-    );
+    return <div style={styles.centerEmpty}>{t('finance.consolidation_scope_page.loading')}</div>;
   }
 
   if (!companies || companies.length === 0) {
     return (
-      <div style={styles.centerEmpty}>
-        {t('finance.consolidation_scope_page.no_companies')}
-      </div>
+      <div style={styles.centerEmpty}>{t('finance.consolidation_scope_page.no_companies')}</div>
     );
   }
 
