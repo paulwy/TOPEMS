@@ -39,7 +39,7 @@
 - **保留 f64（合理，未改）**：增长率/利润率/匹配率/置信度等比率；forecast_v53 预测模型与 risk_v59 风险分（统计/概率量本就用浮点，非金额结算债）；合并报表内存桩（create/update entity、elimination，未接真，另立待接真）。
 - **补单测**：`decimal_growth_rate` 3 例（基期为 0 不除零 / +25% / −20%）。
 - **验证**：`SQLX_OFFLINE=true cargo check -p topems-finance` exit 0；`cargo test -p topems-finance --lib` **1087 passed / 0 failed**；clippy 对本文件 0 warning；cargo fmt 合规。
-- **遗留登记（非本批）**：`get_business_overview` 仍为占位——`total_credit` 误复用 `total_debit`、`net_profit: 0.0` 硬编码，属未接真业务逻辑，待接真时修正；forecast/risk 模型 f64 维持；其余 finance 文件金额写入路径早已 Decimal。
+- **遗留登记（非本批，2026-10-19 复核维持待接真，本地不可闭环）**：`get_business_overview`（`svc/finance/src/modules/financial_reports.rs:2042`，路由 `/reports/business-overview`）仍为占位。复核契约错位：前端 `FinanceReportsPage.tsx:97-121` 只消费 `total_assets/total_liabilities/total_revenue/net_profit` 四张统计卡，而后端 json 返回 `period/voucher_count/total_debit/total_credit(误复用 total_debit)/active_subjects/net_profit(硬编码0.0)`，**前端对后端返回的借贷/科目数零消费**；要满足前端需资产负债表/损益表来源（科目余额、收入费用归集），当前 schema 无该聚合来源，属未接真业务逻辑，待数据源/业务口径到位再修。`total_credit` 独立 SUM 虽可消除"误复用 total_debit"的数值撒谎，但前端零消费、属装饰性改进，按"诚实声明>过度实现、删死代码>装饰抽象"原则不单做；net_profit 不得编造。forecast/risk 模型 f64 维持；其余 finance 文件金额写入路径早已 Decimal。
 
 ---
 
