@@ -29,6 +29,12 @@ import '@/theme/redesign-global.css';
 const QUERY_KEY = ['iam', 'roles'];
 const PERMISSIONS_QUERY_KEY = ['iam', 'role-permissions'];
 
+// L14 B类：文件内同构重复布局等价抽常量，值逐字不变，视觉零差异
+const styles: Record<string, React.CSSProperties> = {
+  columnStack: { display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' },
+  inlineRow: { display: 'flex', alignItems: 'center', gap: 'var(--space-2)' },
+};
+
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   try {
@@ -221,7 +227,7 @@ const RoleManagementPage: React.FC = () => {
         key: 'name',
         header: i18n.t('iam.role_management_page.k19'),
         render: (row) => (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div style={styles.inlineRow}>
             <Shield
               size={16}
               style={{ color: 'var(--accent-primary)' }}
@@ -481,9 +487,9 @@ const RoleDrawer: React.FC<{
         </>
       }
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <div style={styles.columnStack}>
         <Card>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={styles.columnStack}>
             <Input
               label={i18n.t('iam.role_management_page.k41')}
               value={formData.name}
@@ -547,7 +553,7 @@ const PermissionsDrawer: React.FC<{
       }
     >
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={styles.columnStack}>
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
@@ -595,9 +601,7 @@ const PermissionsDrawer: React.FC<{
                       }}
                     >
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
-                        >
+                        <div style={styles.inlineRow}>
                           <span
                             style={{
                               fontWeight: 'var(--font-semibold)',

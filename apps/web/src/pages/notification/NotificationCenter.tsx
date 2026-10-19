@@ -42,6 +42,12 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['notifications', 'list'];
 
+// L14 B类：文件内同构重复布局等价抽常量，值逐字不变，视觉零差异
+const styles: Record<string, React.CSSProperties> = {
+  sectionHeading: { margin: '0 0 var(--space-3) 0', fontSize: 14, fontWeight: 600 },
+  sectionStack: { display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' },
+};
+
 type NotificationFilterType = 'all' | 'unread' | NotificationTypeEnum;
 
 const notificationTypeConfig: Record<
@@ -551,10 +557,10 @@ const NotificationCenter: React.FC = () => {
               borderRadius: 'var(--radius-sm)',
             }}
           >
-            <h4 style={{ margin: '0 0 var(--space-3) 0', fontSize: 14, fontWeight: 600 }}>
+            <h4 style={styles.sectionHeading}>
               {t('notification.notification_center.section_channels')}
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div style={styles.sectionStack}>
               <SettingToggle
                 label={t('notification.notification_center.channel_inapp')}
                 description={t('notification.notification_center.channel_inapp_desc')}
@@ -579,10 +585,10 @@ const NotificationCenter: React.FC = () => {
               borderRadius: 'var(--radius-sm)',
             }}
           >
-            <h4 style={{ margin: '0 0 var(--space-3) 0', fontSize: 14, fontWeight: 600 }}>
+            <h4 style={styles.sectionHeading}>
               {t('notification.notification_center.section_types')}
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div style={styles.sectionStack}>
               <SettingToggle
                 label={t('notification.notification_center.k13')}
                 description={t('notification.notification_center.type_system_desc')}
@@ -613,10 +619,10 @@ const NotificationCenter: React.FC = () => {
               borderRadius: 'var(--radius-sm)',
             }}
           >
-            <h4 style={{ margin: '0 0 var(--space-3) 0', fontSize: 14, fontWeight: 600 }}>
+            <h4 style={styles.sectionHeading}>
               {t('notification.notification_center.section_dnd')}
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div style={styles.sectionStack}>
               <SettingToggle
                 label={t('notification.notification_center.dnd_enable')}
                 description={t('notification.notification_center.dnd_enable_desc')}

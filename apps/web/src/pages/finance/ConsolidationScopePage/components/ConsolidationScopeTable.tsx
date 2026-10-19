@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme, Chip, Button } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -7,6 +8,12 @@ import type { ConsolidationScope, ConsolidationCompany } from '@/types/consolida
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
+
+// L14 B类：文件内同构重复布局等价抽常量，值逐字不变，视觉零差异
+const styles: Record<string, CSSProperties> = {
+  iconRow: { display: 'flex', alignItems: 'center', gap: 8 },
+  centerEmpty: { textAlign: 'center', padding: 16, color: 'text.secondary' },
+};
 
 // Helper to convert tailwind color class to sx
 const getChipSx = (colorClass: string): object => {
@@ -99,7 +106,7 @@ export function ConsolidationScopeTable({
       header: t('finance.consolidation_scope_page.code'),
       accessorKey: 'code',
       cell: ({ row }) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={styles.iconRow}>
           <Network sx={{ width: 16, height: 16, color: 'primary.dark' }} />
           <span style={{ fontFamily: 'monospace', fontSize: 14 }}>{row.getValue('code')}</span>
         </div>
@@ -151,7 +158,7 @@ export function ConsolidationScopeTable({
           color: 'bg-gray-100 text-gray-800',
         };
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={styles.iconRow}>
             <Chip
               size='small'
               sx={{ backgroundColor: 'grey.100', color: 'grey.700' }}
@@ -165,7 +172,7 @@ export function ConsolidationScopeTable({
       id: 'actions',
       header: t('finance.consolidation_scope_page.action'),
       cell: ({ row }) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={styles.iconRow}>
           <Button
             variant='text'
             size='small'
@@ -194,7 +201,7 @@ export function ConsolidationScopeTable({
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: 16, color: 'text.secondary' }}>
+      <div style={styles.centerEmpty}>
         {t('finance.consolidation_scope_page.loading')}
       </div>
     );
@@ -202,7 +209,7 @@ export function ConsolidationScopeTable({
 
   if (!scopes || scopes.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: 16, color: 'text.secondary' }}>
+      <div style={styles.centerEmpty}>
         {t('finance.consolidation_scope_page.no_scopes')}
       </div>
     );
@@ -253,7 +260,7 @@ export function ConsolidationCompanyTable({
       header: t('finance.consolidation_scope_page.code_1'),
       accessorKey: 'company_code',
       cell: ({ row }) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={styles.iconRow}>
           <Building2 sx={{ width: 16, height: 16, color: 'text.disabled' }} />
           <span style={{ fontFamily: 'monospace', fontSize: 14 }}>
             {row.getValue('company_code')}
@@ -266,7 +273,7 @@ export function ConsolidationCompanyTable({
       header: t('finance.consolidation_scope_page.name_1'),
       accessorKey: 'company_name',
       cell: ({ row }) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={styles.iconRow}>
           <span style={{ fontWeight: 500 }}>{row.getValue('company_name')}</span>
           {row.original.is_parent && (
             <Chip
@@ -345,7 +352,7 @@ export function ConsolidationCompanyTable({
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: 16, color: 'text.secondary' }}>
+      <div style={styles.centerEmpty}>
         {t('finance.consolidation_scope_page.loading')}
       </div>
     );
@@ -353,7 +360,7 @@ export function ConsolidationCompanyTable({
 
   if (!companies || companies.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: 16, color: 'text.secondary' }}>
+      <div style={styles.centerEmpty}>
         {t('finance.consolidation_scope_page.no_companies')}
       </div>
     );
