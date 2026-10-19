@@ -195,6 +195,7 @@ export const SCM_PATHS = {
   inventoryTurnover: '/scm/inventory-turnover',
   priceComparison: '/scm/price-comparison',
   purchaseContract: '/scm/purchase-contract',
+  incomingNotices: '/scm/incoming-notices',
   settingSourcingStrategy: '/scm/setting/sourcing-strategy',
   settingQuotaTemplate: '/scm/setting/quota-template',
   settingPurchaseThreshold: '/scm/setting/purchase-threshold',
@@ -420,6 +421,21 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['scm:contract:read'],
+      action: 'read',
+    } satisfies RouteConfigV2<ScmPurchaseContractPageProps>,
+    {
+      path: SCM_PATHS.incomingNotices,
+      element: lazyWithRetry(
+        () => import('@/pages/scm/ScmIncomingNoticePage'),
+        'ScmIncomingNoticePage'
+      ),
+      module: 'scm',
+      code: 'scm-incoming-notices',
+      title: i18n.t('scm.nav.scm-incoming-notices'),
+      titleKey: 'scm.nav.scm-incoming-notices',
+      template: 'list',
+      group: 'process',
+      requiredPermissions: ['scm:purchase_order:read'],
       action: 'read',
     } satisfies RouteConfigV2<ScmPurchaseContractPageProps>,
     {
@@ -666,6 +682,17 @@ export const scmNavConfig: ModuleNavConfig = {
       order: 6,
       group: 'process',
       description: i18n.t('scm.nav.scm-purchase-contract_desc'),
+    },
+    {
+      code: 'scm-incoming-notices',
+      label: i18n.t('scm.nav.scm-incoming-notices'),
+      labelKey: 'scm.nav.scm-incoming-notices',
+      icon: 'Truck',
+      path: SCM_PATHS.incomingNotices,
+      permission: 'scm:purchase_order:read',
+      order: 7,
+      group: 'process',
+      description: i18n.t('scm.nav.scm-incoming-notices_desc'),
     },
     {
       code: 'scm-sourcing-strategy',
