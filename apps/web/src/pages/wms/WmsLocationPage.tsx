@@ -33,7 +33,12 @@ import {
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { WMS_PATHS } from '@/modules/wms/config';
 import { locationApi } from '@/api/wms/location';
-import type { Location as ApiLocation } from '@/api/wms/types';
+import type {
+  Location as ApiLocation,
+  LocationPaginationParams,
+  CreateLocationRequest,
+  UpdateLocationRequest,
+} from '@/api/wms/types';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -69,23 +74,35 @@ interface Location {
 }
 
 // Mock 数据
-// 将 API 返回的 Location 类型映射为页面使用的 Location 类型
-const mapApiLocations = (apiLocations: ApiLocation[]): Location[] => {
+// 将 API 返回的 Location 类型映射为页面使用的 Location 类型。
+// 部分历史接口使用驼峰/复数别名，收窄为可选字段（ApiLocationCompat），避免 `as any`。
+type LocationTab = 'all' | 'available' | 'occupied' | 'locked' | 'maintenance';
+type ApiLocationCompat = ApiLocation & {
+  location_code?: string;
+  location_name?: string;
+  zone?: string;
+  status?: string;
+  occupied?: number;
+  current_sku?: string;
+  current_product?: string;
+  currentSku?: string;
+  currentProduct?: string;
+  remark?: string;
+};
+
+const mapApiLocations = (apiLocations: ApiLocationCompat[]): Location[] => {
   return apiLocations.map((loc, index) => ({
     id: loc.id,
-    code:
-      (loc as any).code ||
-      (loc as any).location_code ||
-      `LOC-${String(index + 1).padStart(3, '0')}`,
-    name: (loc as any).name || (loc as any).location_name || '-',
-    warehouse: (loc as any).warehouse || (loc as any).warehouse_name || '-',
-    zone: (loc as any).zone || '-',
-    status: ((loc as any).status as Location['status']) || 'available',
-    capacity: (loc as any).capacity || 0,
-    occupied: (loc as any).occupied || 0,
-    current_sku: (loc as any).current_sku || (loc as any).currentSku || '-',
-    current_product: (loc as any).current_product || (loc as any).currentProduct || '-',
-    remark: (loc as any).remark || '',
+    code: loc.code || loc.location_code || `LOC-${String(index + 1).padStart(3, '0')}`,
+    name: loc.name || loc.location_name || '-',
+    warehouse: loc.warehouse_name || '-',
+    zone: loc.zone || loc.zone_name || '-',
+    status: (loc.status as Location['status']) || 'available',
+    capacity: loc.capacity || 0,
+    occupied: loc.occupied || loc.occupied_quantity || 0,
+    current_sku: loc.current_sku || loc.currentSku || '-',
+    current_product: loc.current_product || loc.currentProduct || '-',
+    remark: loc.remark || '',
     created_at: loc.created_at || new Date().toISOString(),
   }));
 };
@@ -213,9 +230,7 @@ const WmsLocationPage: React.FC = () => {
     },
   ];
 
-  const [activeTab, setActiveTab] = useState<
-    'all' | 'available' | 'occupied' | 'locked' | 'maintenance'
-  >('all');
+  const [activeTab, setActiveTab] = useState<LocationTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
@@ -239,7 +254,7 @@ const WmsLocationPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: LocationPaginationParams & { search?: string; warehouse?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -259,7 +274,11 @@ const WmsLocationPage: React.FC = () => {
           apiLocations = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData.data as any;
+          const dataObj = resData.data as {
+            list?: ApiLocation[];
+            items?: ApiLocation[];
+            total?: number;
+          };
           apiLocations = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -321,7 +340,7 @@ const WmsLocationPage: React.FC = () => {
           zone: data.zone,
           status: data.status,
           capacity: data.capacity,
-        } as any);
+        } as unknown as CreateLocationRequest);
       } catch (e) {
         console.warn('[WMS Locations] Create API unavailable, using mock create:', e);
       }
@@ -344,7 +363,7 @@ const WmsLocationPage: React.FC = () => {
         await locationApi.update(id, {
           status: data.status,
           capacity: data.capacity,
-        } as any);
+        } as unknown as UpdateLocationRequest);
       } catch (e) {
         console.warn('[WMS Locations] Update API unavailable, using mock update:', e);
       }
@@ -363,7 +382,7 @@ const WmsLocationPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredLocations = locations;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedLocations = filteredLocations;
 
@@ -673,7 +692,7 @@ const WmsLocationPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as LocationTab)}
         />
       </ListPageTemplate>
 
