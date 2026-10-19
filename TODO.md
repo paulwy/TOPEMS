@@ -1069,6 +1069,7 @@
 - **迁移链卫生（commit `37b771972`）**：发现 32 个审计既有未应用 WIP 迁移（RLS 加固批次，属二/三梯队）→ 按"只登记不动"隔离至 `database/migrations-wip/` 并登记清单；双库账本 **315→322 完全一致**、5433 空库守卫 322/322 一次重放、schema-drift 复扫 **0**、checksums 重新生成
 - **git 噪音 + README（commit `d8d577cec`）**：`.cargo/env`、`.superpowers/`（含 server.pid）、`.trae/`、`.workbuddy/` 移出索引保留本地；package.json 失效脚本修正；README 项目结构按实测重写
 - **遗留（已登记）**：FE-02 前端 2 文件（iam/auth.ts、iam/index.ts，删 2 个死写函数）已暂存，两次提交被 `web-contract-smoke` 门拒绝——失败明细 1475/4137 全为 ai/workflow/ticket/wms 模块 route_missing/500（BFF 二进制未更新 + 二/三梯队路由缺口未修，门禁对 api 目录提交系统性变红，与改动无关），未绕过门禁，待路由缺口梯队修复后显式提交或由下一批 web 提交自然带走；部分提交哈希曾被并发 UI 批次 rebase 重写，最终哈希以上述为准（内容已逐项核实）
+  - ✅ 核查（2026-10-19）：`api/iam/auth.ts` 当前全为活端点（login/logout/register/password/sessions/security-settings），`api/iam/index.ts` 仅聚合 re-export（role/permission/userApi），原登记的 2 个死写函数经多轮 web 重构已不可定位、视为由后续线带走，不盲删。
 - **边界**：第二/三梯队（RLS 加固批次 32 文件取回、FE-04~16、bi 组织计数、自助 DDL 入链、timestamptz 统一、优雅停机、前端 client 收敛、TABLE_DEFS 单一事实源、OpenAPI 门禁、迁移目录治理）仅登记未动
 
 ## 🧪 测试覆盖率评估（2026-10-07，三域基线）
@@ -1153,6 +1154,7 @@
 - **✅ 批量修复完成（38 处，19 文件）**：team/process_flow/equipment_oee/process_route/work_report/production_scheduling/production_order/production_record/work_station/material_requirement/wip/quality_traceability/work_order/quality_management{standard,inspection,patrol}/material_bom{bom,return,issue} 全部 `bind(p.clone())` → `bind(p.as_str().unwrap())`；production_process.rs 2 处为 Vec<String>（本无问题，改回）
 - **预存环境问题登记**：mes integration_tests 5 个失败（test_create_production_order_crud/test_production_order_status_transitions/test_production_record_crud/test_tenant_isolation_rls/test_transaction_commit_on_success）——DB 缺 production_order/production_record 表（迁移存在 20260725000000/20261007000003 但 5432 未应用/被删）——与 bind 修复无关（直连 DB 不调 handler）——待 DB 表补齐后复跑
 - **⚠️ 同类缺陷扫描发现：mes 30 处 `for p in &params { bind(p.clone()) }`**（svc/mes/src/modules/ 下 team/quality_management/process_flow/equipment_oee 等 30 文件）——**所有带过滤条件的 list 查询在生产均挂**（JSONB 类型不匹配）——**已登记，待批量修复**（需按各 handler params 实际类型处理：String 用 as_str；数字/日期字段需类型匹配分支，勿盲目 unwrap）
+  - ✅ 核销（2026-10-19 复扫）：上条 38 处批量修复已覆盖该面；当前 `bind(p.clone())` 仅余 production_process.rs:185/216 两处，其 `params` 为 Vec<String>（ILIKE pattern，174 行 push pattern），类型合法非 JSONB 缺陷；audit.rs 为具名字段 bind。无残留待修。
 
 ### ✅ wms 集成测试全量扩展完成（2026-10-07，16 模块 48 用例）
 
