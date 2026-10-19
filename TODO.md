@@ -264,7 +264,7 @@
 - **SerialNumber**：`serial_numbers.unit_price`=numeric，原 `unit_price::float8` 规避（4 处）去除，模型 + Create/Update 请求体 → Decimal。
 - **出入库明细写边界**：`InboundOrderItemRequest/OutboundOrderItemRequest.unit_price` → Decimal，total_value=单价×数量改 Decimal；inbound 明细读通道 `unit_price/total_value` 由裸读 f64 改 Decimal（在线类型安全）。
 - **不改**：`inbound_orders.total_value`=float8（f64 匹配，total_amount 为其别名）；`inventory.total_value` 未接线；`order_item.rs` Inbound/OutboundOrderItem 无 query_as（预留 DTO）；数量/重量/体积保留 f64。
-- **遗留（E11-wms 第二批）**：replenishment_orders/items、stock_take_items、purchase_order_snapshots、transfers 为动态 query，需逐表连库核 numeric 列并改 bind；数量列(numeric)按任务边界保留 f64 不动。
+- **第二批甄别（无强类型改动点）**：`purchase_order_snapshots.total_amount` 已是 Option\<Decimal\> 直接 bind；`stock_take_items.unit_price`、`wms.transfers.total_value` 代码未读写（未接线）；`replenishment_orders/items` 走 serde_json::Value 动态 bind（无强类型请求体，精度债小，登记不扩改）；`inbound_orders.total_value`=float8、`outbound.total_value/shipping_cost` 未读写、`order_item.rs` 无 query_as，均保留 f64。**wms 强类型金额主链路已闭环。**
 
 ---
 
