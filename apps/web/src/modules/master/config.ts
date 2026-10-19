@@ -27,6 +27,7 @@ const MASTER_PATHS = {
   dataAssetCatalog: '/master/data-asset-catalog',
   schemaRegistry: '/master/schema-registry',
   lineageAnalytics: '/master/lineage-analytics',
+  aiGovernance: '/master/ai-governance',
 } as const;
 
 // ---- 路由配置 ----
@@ -75,6 +76,19 @@ const lineageAnalyticsRoute: RouteConfigV2<Record<string, never>> = {
   action: 'read',
 };
 
+const aiGovernanceRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.aiGovernance,
+  element: lazyWithRetry(() => import('@/pages/master/AiGovernancePage'), 'AiGovernancePage'),
+  module: 'master',
+  code: 'master-ai-governance',
+  title: i18n.t('master.aiGovernance'),
+  titleKey: 'master.aiGovernance',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:ai_governance:read'],
+  action: 'read',
+};
+
 export const masterModuleConfig: RouteModuleConfig = {
   code: 'master',
   name: i18n.t('master.moduleName'),
@@ -87,7 +101,7 @@ export const masterModuleConfig: RouteModuleConfig = {
   order: 95,
   description: i18n.t('master.module_desc'),
   permission: 'master:data-asset:read',
-  routes: [dataAssetCatalogRoute, schemaRegistryRoute, lineageAnalyticsRoute],
+  routes: [dataAssetCatalogRoute, schemaRegistryRoute, lineageAnalyticsRoute, aiGovernanceRoute],
 };
 
 // ---- 导航菜单配置 ----
@@ -136,6 +150,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.lineage_analytics.desc'),
+    },
+    {
+      code: 'master-ai-governance',
+      label: i18n.t('master.aiGovernance'),
+      labelKey: 'master.aiGovernance',
+      icon: 'AutoAwesome',
+      path: MASTER_PATHS.aiGovernance,
+      permission: 'master_data:ai_governance:read',
+      order: 3,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.ai_governance.desc'),
     },
   ],
 };
