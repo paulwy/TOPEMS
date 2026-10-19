@@ -17,7 +17,7 @@ pub struct Material {
     pub model: Option<String>,
     pub barcode: Option<String>,
     pub safety_stock: f64,
-    pub unit_price: f64,
+    pub unit_price: Decimal,
     pub tax_rate: f64,
     pub description: Option<String>,
     pub status: String,
@@ -36,7 +36,7 @@ pub struct CreateMaterialRequest {
     pub model: Option<String>,
     pub barcode: Option<String>,
     pub safety_stock: Option<f64>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<Decimal>,
     pub tax_rate: Option<f64>,
     pub description: Option<String>,
     pub status: Option<String>,
@@ -52,7 +52,7 @@ pub struct UpdateMaterialRequest {
     pub model: Option<String>,
     pub barcode: Option<String>,
     pub safety_stock: Option<f64>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<Decimal>,
     pub tax_rate: Option<f64>,
     pub description: Option<String>,
     pub status: Option<String>,
@@ -340,7 +340,7 @@ mod tests {
             model: Some("HRB400".into()),
             barcode: Some("6901234567890".into()),
             safety_stock: 50.5,
-            unit_price: 3800.0,
+            unit_price: Decimal::from(3800u64),
             tax_rate: 0.13,
             description: Some("建筑用钢材".into()),
             status: "active".into(),
@@ -369,7 +369,7 @@ mod tests {
             model: None,
             barcode: None,
             safety_stock: 0.0,
-            unit_price: 0.0,
+            unit_price: Decimal::ZERO,
             tax_rate: 0.0,
             description: None,
             status: "inactive".into(),
@@ -379,7 +379,7 @@ mod tests {
         let s = serde_json::to_string(&m).unwrap();
         let m2: Material = serde_json::from_str(&s).unwrap();
         assert_eq!(m2.safety_stock, 0.0);
-        assert_eq!(m2.unit_price, 0.0);
+        assert_eq!(m2.unit_price, Decimal::ZERO);
     }
 
     #[test]
@@ -395,7 +395,7 @@ mod tests {
             model: None,
             barcode: None,
             safety_stock: -10.0,
-            unit_price: -5.5,
+            unit_price: -Decimal::new(550, 2),
             tax_rate: -0.05,
             description: None,
             status: "active".into(),
@@ -419,7 +419,7 @@ mod tests {
             model: Some("m".into()),
             barcode: Some("bc".into()),
             safety_stock: Some(10.0),
-            unit_price: Some(100.0),
+            unit_price: Some(Decimal::from(100u64)),
             tax_rate: Some(0.06),
             description: Some("d".into()),
             status: Some("active".into()),
@@ -464,7 +464,7 @@ mod tests {
             model: Some("新型号".into()),
             barcode: Some("新条码".into()),
             safety_stock: Some(999.9),
-            unit_price: Some(1234.5),
+            unit_price: Some(Decimal::new(123450, 2)),
             tax_rate: Some(0.25),
             description: Some("新描述".into()),
             status: Some("inactive".into()),
