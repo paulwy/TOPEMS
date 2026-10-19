@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -12,7 +13,7 @@ pub struct SupplierContract {
     pub supplier_name: Option<String>,
     pub title: String,
     pub contract_type: String,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub currency: String,
     pub sign_date: Option<DateTime<Utc>>,
     pub start_date: Option<DateTime<Utc>>,
@@ -31,7 +32,7 @@ pub struct CreateSupplierContractRequest {
     pub supplier_name: Option<String>,
     pub title: String,
     pub contract_type: String,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub currency: String,
     pub sign_date: Option<String>,
     pub start_date: Option<String>,
@@ -47,7 +48,7 @@ pub struct UpdateSupplierContractRequest {
     pub supplier_name: Option<String>,
     pub title: Option<String>,
     pub contract_type: Option<String>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub currency: Option<String>,
     pub sign_date: Option<DateTime<Utc>>,
     pub start_date: Option<DateTime<Utc>>,
@@ -60,6 +61,11 @@ pub struct UpdateSupplierContractRequest {
 mod tests {
     use super::*;
 
+    fn d(v: f64) -> Option<Decimal> {
+        use rust_decimal::prelude::FromPrimitive;
+        Decimal::from_f64_retain(v)
+    }
+
     fn sample_contract() -> SupplierContract {
         SupplierContract {
             id: Uuid::new_v4(),
@@ -69,7 +75,7 @@ mod tests {
             supplier_name: Some("Acme Corp".to_string()),
             title: "Annual Supply Agreement".to_string(),
             contract_type: "framework".to_string(),
-            total_amount: Some(1_000_000.0),
+            total_amount: d(1_000_000.0),
             currency: "CNY".to_string(),
             sign_date: Some(
                 DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z")
@@ -197,7 +203,7 @@ mod tests {
             supplier_name: Some("Beta".to_string()),
             title: "Purchase Agreement".to_string(),
             contract_type: "purchase".to_string(),
-            total_amount: Some(500_000.0),
+            total_amount: d(500_000.0),
             currency: "CNY".to_string(),
             sign_date: Some("2025-01-01T00:00:00Z".to_string()),
             start_date: Some("2025-02-01T00:00:00Z".to_string()),
@@ -276,7 +282,7 @@ mod tests {
             supplier_name: Some("Gamma".to_string()),
             title: Some("Updated Title".to_string()),
             contract_type: Some("framework".to_string()),
-            total_amount: Some(123.45),
+            total_amount: d(123.45),
             currency: Some("EUR".to_string()),
             sign_date: Some(
                 DateTime::parse_from_rfc3339("2025-05-01T00:00:00Z")
@@ -328,14 +334,14 @@ mod tests {
     #[test]
     fn test_contract_total_amount_zero_and_negative() {
         let mut c = sample_contract();
-        c.total_amount = Some(0.0);
+        c.total_amount = Some(Decimal::ZERO);
         let json = serde_json::to_string(&c).unwrap();
         let de: SupplierContract = serde_json::from_str(&json).unwrap();
-        assert_eq!(de.total_amount, Some(0.0));
+        assert_eq!(de.total_amount, Some(Decimal::ZERO));
 
-        c.total_amount = Some(-100.0);
+        c.total_amount = d(-100.0);
         let json = serde_json::to_string(&c).unwrap();
         let de: SupplierContract = serde_json::from_str(&json).unwrap();
-        assert_eq!(de.total_amount, Some(-100.0));
+        assert_eq!(de.total_amount, d(-100.0));
     }
 }

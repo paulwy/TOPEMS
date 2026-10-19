@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -12,7 +13,7 @@ pub struct PurchaseOrder {
     pub order_date: DateTime<Utc>,
     pub expected_date: Option<DateTime<Utc>>,
     pub actual_date: Option<DateTime<Utc>>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub currency: String,
     pub status: String,
     pub remarks: Option<String>,
@@ -26,7 +27,7 @@ pub struct CreatePurchaseOrderRequest {
     pub po_no: String,
     pub supplier_id: String,
     pub expected_date: Option<String>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub currency: String,
     pub status: String,
     pub remarks: Option<String>,
@@ -38,7 +39,7 @@ pub struct UpdatePurchaseOrderRequest {
     pub supplier_id: Option<String>,
     pub expected_date: Option<DateTime<Utc>>,
     pub actual_date: Option<DateTime<Utc>>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub currency: Option<String>,
     pub status: Option<String>,
     pub remarks: Option<String>,
@@ -47,6 +48,11 @@ pub struct UpdatePurchaseOrderRequest {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn d(v: f64) -> Option<Decimal> {
+        use rust_decimal::prelude::FromPrimitive;
+        Decimal::from_f64_retain(v)
+    }
 
     fn sample_po() -> PurchaseOrder {
         PurchaseOrder {
@@ -67,7 +73,7 @@ mod tests {
                     .unwrap()
                     .with_timezone(&Utc),
             ),
-            total_amount: Some(88_888.88),
+            total_amount: d(88_888.88),
             currency: "CNY".to_string(),
             status: "completed".to_string(),
             remarks: Some("Delivered on time".to_string()),
@@ -168,7 +174,7 @@ mod tests {
             po_no: "PO-003".to_string(),
             supplier_id: "00000000-0000-0000-0000-000000000001".to_string(),
             expected_date: Some("2025-04-01T00:00:00Z".to_string()),
-            total_amount: Some(12_345.67),
+            total_amount: d(12_345.67),
             currency: "CNY".to_string(),
             status: "pending".to_string(),
             remarks: Some("rush order".to_string()),
@@ -222,7 +228,7 @@ mod tests {
         let json = r#"{"status": "shipped", "total_amount": 999.0}"#;
         let req: UpdatePurchaseOrderRequest = serde_json::from_str(json).unwrap();
         assert_eq!(req.status.as_deref(), Some("shipped"));
-        assert_eq!(req.total_amount, Some(999.0));
+        assert_eq!(req.total_amount, d(999.0));
     }
 
     #[test]
@@ -240,7 +246,7 @@ mod tests {
                     .unwrap()
                     .with_timezone(&Utc),
             ),
-            total_amount: Some(50_000.0),
+            total_amount: d(50_000.0),
             currency: Some("EUR".to_string()),
             status: Some("completed".to_string()),
             remarks: Some("done".to_string()),
@@ -284,14 +290,14 @@ mod tests {
     #[test]
     fn test_po_total_amount_zero_and_negative() {
         let mut p = sample_po();
-        p.total_amount = Some(0.0);
+        p.total_amount = Some(Decimal::ZERO);
         let json = serde_json::to_string(&p).unwrap();
         let de: PurchaseOrder = serde_json::from_str(&json).unwrap();
-        assert_eq!(de.total_amount, Some(0.0));
+        assert_eq!(de.total_amount, Some(Decimal::ZERO));
 
-        p.total_amount = Some(-1.5);
+        p.total_amount = d(-1.5);
         let json = serde_json::to_string(&p).unwrap();
         let de: PurchaseOrder = serde_json::from_str(&json).unwrap();
-        assert_eq!(de.total_amount, Some(-1.5));
+        assert_eq!(de.total_amount, d(-1.5));
     }
 }

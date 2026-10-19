@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
@@ -232,7 +233,7 @@ pub async fn create_purchase_order(
     }
 
     if let Some(amount) = req.total_amount {
-        if amount < 0.0 {
+        if amount < Decimal::ZERO {
             return Json(ApiResponse::<PurchaseOrder>::error(
                 400,
                 "订单金额不能为负数",
@@ -426,7 +427,7 @@ pub async fn update_purchase_order(
     };
 
     if let Some(amount) = req.total_amount {
-        if amount < 0.0 {
+        if amount < Decimal::ZERO {
             return Json(ApiResponse::<PurchaseOrder>::error(
                 400,
                 "订单金额不能为负数",

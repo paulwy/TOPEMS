@@ -33,6 +33,7 @@
 - [x] **P2 · crm.revenue / hrm.salary·new_salary 金额 Decimal** ✅ 完成（2026-10-20，见下方「批 E8」块）：NEW-P2-2 续，跨 crate 连库甄别后只改强类型 query_as 模型。闭环 `crm.customers.revenue`(18,2) 与 profile DTO、`hrm.contracts.salary`/`contract_renewals.new_salary`(18,2) f64→Decimal；crm lib 504、hrm lib 293 passed，check/clippy/fmt 绿。
 - [x] **P2 · 动态 Value 通道金额 Decimal（finance 收/付/银 + erp 银行账户）** ✅ 完成（2026-10-20，见下方「批 E9」块）：NEW-P2-2 续。hrm 其余工资面甄别全为 BigDecimal/Decimal/内存报表 DTO，零改动；改 finance `collection/payment_record/payable/receivable` 动态 `sqlx::query` 通道金额读/写为 Decimal（含账龄 SUM 聚合）、erp `bank_accounts.balance`(18,4)；finance 1087、erp 902 passed，check/clippy/fmt 绿。
 - [x] **P2 · tax_v56.rs 连库甄别** ✅ 完成（2026-10-20，见下方「批 E10」块）：六张 `finance_v56_tax_*` 表金额/比率/阈值列全为 double precision，模型 f64 匹配，**非错配、零改动**。
+- [x] **P2 · E11 全局收口反查（srm 闭环）** ✅ 部分完成（2026-10-20，见下方「批 E11a」块）：代码侧反查持久化边界 f64 + 连库核类型；闭环 srm `purchase_orders.total_amount`/`supplier_contracts.total_amount`(numeric, 裸读真错配) f64→Decimal，srm lib 559 passed、check/clippy/fmt 绿；scm/pm/mes/erp 残留甄别见 E11a 遗留。
 
 ---
 
@@ -197,6 +198,26 @@
   - `forms.total_tax_amount`、`lines.taxable_amount/tax_rate/tax_amount`、`brackets.threshold_from/to/rate`、`rates.rate`、`plans.projected_savings`、`suggestions.estimated_savings` 全 float8。
 - 模型 `TaxForm/TaxLine/TaxRate/TaxBracket/TaxResult/TaxBreakdown/TaxPlan/TaxSuggestion` 的 f64 与 DB float8 匹配，属版本化模拟模块的既有浮点设计，非精度债；税率/比率/储蓄建议本就该 f64。
 - **改动：无。** 无需重跑测试。登记以避免重复排查。
+
+---
+
+## 批 E11a · srm 采购订单/供应商合同金额 f64→Decimal（2026-10-20）✅ 完成 · 部分
+
+> 来源：E11 全局收口反查（代码侧 grep 持久化边界 f64，再连库核 `information_schema.columns`）。只改持久化真错配，float8/内存/评分保留 f64。
+
+- **连库核 srm schema 金额列**：
+  - `srm.purchase_orders.total_amount` = numeric、`srm.supplier_contracts.total_amount` = numeric（query_as 强类型、**无 `::float8` 规避、裸读 numeric**，在线会类型报错/被吞成 null，真错配）。
+  - `srm.quotations.total_amount` = double precision → `Quotation` f64 匹配，**不改**；`biddings.budget_amount/winner_amount` = float8，不改。
+- **改动（Option<f64>→Option<Decimal>）**：
+  - `models/purchase_order.rs`：`PurchaseOrder.total_amount` 及 Create/Update 请求体；`models/supplier_contract.rs`：`SupplierContract.total_amount` 及 Create/Update 请求体；
+  - module 负校验 `amount < 0.0` → `amount < Decimal::ZERO`（PO「订单金额不能为负数」、Contract「合同金额不能为负数」，各 create/update 两处）；bind/or 取值类型随模型自动对齐，无算术。
+- **测试**：两模型 serde 往返测试 f64 字面量改 `Decimal::from_f64_retain` helper / `Decimal::ZERO`。
+- **验证（-p topems-srm）**：`cargo check --lib --tests` 0 error；`cargo test --lib` **559 passed / 0 failed**；`clippy -D correctness` 0；`cargo fmt --check` 绿。
+- **E11 遗留（逐 crate 续做，均先连库核类型再定）**：
+  - **scm**：`purchase_orders.total_amount`(numeric, 裸读)、`purchase_contracts.total_amount`(numeric, 已 `::float8` 规避属精度债)、`purchase_requisitions.total_amount`(numeric)；明细 `purchase_contract_items.unit_price/amount`、`purchase_items.unit_price/total_price`、`supplier_quotes/quote_items` 待核 SQL 映射；`price_comparison.rs` 评分/比价纯函数 f64 保留。
+  - pm `budgets`/`settlements` 主表模型已是 Decimal（E4-2 落地）；`project_benefit.rs`/`report.rs` 为响应聚合 DTO，待核非落库。
+  - mes `analytics` cost 为 `(String,Option<f64>)` 动态聚合元组，非强类型模型；gis total_distance 是米（非金额）；`erp/consolidation.rs`、`erp/models/finance.rs` 待核 query_as（前者内存合并、后者仅 serde）。
+  - 其余 wms 35、finance 58、erp 35、crm 19、hrm 20 numeric 列多数已 Decimal/动态通道，需代码侧反查收口。
 
 ---
 
