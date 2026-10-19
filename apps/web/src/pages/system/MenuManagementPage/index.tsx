@@ -1,4 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ConfirmDialog } from '@topems/shared-components';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
   Alert,
   Box,
@@ -59,6 +62,8 @@ const MenuManagementPage: React.FC = () => {
   const [menus, setMenus] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const { t } = useTranslation('system');
+  const { confirmOpen, confirmConfig, openConfirm, closeConfirm } = useConfirmDialog();
 
   const [groupDialog, setGroupDialog] = useState<{
     open: boolean;
@@ -82,10 +87,10 @@ const MenuManagementPage: React.FC = () => {
         setGroups(items);
         setSelectedGroupId((prev) => prev || items[0]?.id || '');
       } else {
-        setError(res.message || '加载菜单分组失败');
+        setError(res.message || t('system.menu_management.load_groups_failed'));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载菜单分组失败');
+      setError(e instanceof Error ? e.message : t('system.menu_management.load_groups_failed'));
     } finally {
       setLoading(false);
     }
@@ -102,10 +107,10 @@ const MenuManagementPage: React.FC = () => {
       if (res.success) {
         setMenus(res.data.items || []);
       } else {
-        setError(res.message || '加载菜单项失败');
+        setError(res.message || t('system.menu_management.load_menus_failed'));
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载菜单项失败');
+      setError(e instanceof Error ? e.message : t('system.menu_management.load_menus_failed'));
     } finally {
       setLoading(false);
     }
@@ -137,7 +142,7 @@ const MenuManagementPage: React.FC = () => {
   const submitGroup = async () => {
     const f = groupDialog.form;
     if (!f.name.trim() || !f.code.trim()) {
-      setError('分组名称与编码不能为空');
+      setError(t('system.menu_management.group_name_code_required'));
       return;
     }
     setError('');
@@ -156,19 +161,27 @@ const MenuManagementPage: React.FC = () => {
       setGroupDialog({ open: false, editing: null, form: emptyGroup });
       await fetchGroups();
     } catch (e) {
-      setError(e instanceof Error ? e.message : '保存分组失败');
+      setError(e instanceof Error ? e.message : t('system.menu_management.save_group_failed'));
     }
   };
 
-  const removeGroup = async (g: MenuGroup) => {
-    if (!window.confirm(`确认删除分组「${g.name}」？其下菜单项将一并受影响。`)) return;
-    try {
-      await menuApi.deleteGroup(g.id);
-      if (selectedGroupId === g.id) setSelectedGroupId('');
-      await fetchGroups();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '删除分组失败');
-    }
+  const removeGroup = (g: MenuGroup) => {
+    openConfirm({
+      title: t('system.menu_management.delete_group_title'),
+      message: t('system.menu_management.delete_group_msg', { name: g.name }),
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await menuApi.deleteGroup(g.id);
+          if (selectedGroupId === g.id) setSelectedGroupId('');
+          await fetchGroups();
+        } catch (e) {
+          setError(
+            e instanceof Error ? e.message : t('system.menu_management.delete_group_failed')
+          );
+        }
+      },
+    });
   };
 
   // ===== 菜单项 CRUD =====
@@ -193,11 +206,11 @@ const MenuManagementPage: React.FC = () => {
   const submitMenu = async () => {
     const f = menuDialog.form;
     if (!selectedGroupId) {
-      setError('请先选择菜单分组');
+      setError(t('system.menu_management.select_group_first'));
       return;
     }
     if (!f.name.trim() || !f.code.trim()) {
-      setError('菜单项名称与编码不能为空');
+      setError(t('system.menu_management.menu_name_code_required'));
       return;
     }
     setError('');
@@ -219,18 +232,24 @@ const MenuManagementPage: React.FC = () => {
       setMenuDialog({ open: false, editing: null, form: emptyMenu });
       await fetchMenus(selectedGroupId);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '保存菜单项失败');
+      setError(e instanceof Error ? e.message : t('system.menu_management.save_menu_failed'));
     }
   };
 
-  const removeMenu = async (m: MenuItem) => {
-    if (!window.confirm(`确认删除菜单项「${m.name}」？`)) return;
-    try {
-      await menuApi.deleteMenu(m.id);
-      await fetchMenus(selectedGroupId);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '删除菜单项失败');
-    }
+  const removeMenu = (m: MenuItem) => {
+    openConfirm({
+      title: t('system.menu_management.delete_menu_title'),
+      message: t('system.menu_management.delete_menu_msg', { name: m.name }),
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await menuApi.deleteMenu(m.id);
+          await fetchMenus(selectedGroupId);
+        } catch (e) {
+          setError(e instanceof Error ? e.message : t('system.menu_management.delete_menu_failed'));
+        }
+      },
+    });
   };
 
   return (
@@ -248,13 +267,13 @@ const MenuManagementPage: React.FC = () => {
             variant='h5'
             sx={{ fontWeight: 600 }}
           >
-            菜单管理
+            {t('system.menu_management.title')}
           </Typography>
           <Typography
             variant='body2'
             color='text.secondary'
           >
-            维护菜单分组与菜单项（编码 / 路径 / 排序 / 状态）
+            {t('system.menu_management.subtitle')}
           </Typography>
         </Box>
         <Button
@@ -263,7 +282,7 @@ const MenuManagementPage: React.FC = () => {
           onClick={fetchGroups}
           disabled={loading}
         >
-          刷新
+          {t('system.menu_management.refresh')}
         </Button>
       </Box>
 
@@ -292,7 +311,7 @@ const MenuManagementPage: React.FC = () => {
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              菜单分组（{groups.length}）
+              {t('system.menu_management.groups_title', { count: groups.length })}
             </Typography>
             <Button
               size='small'
@@ -300,16 +319,16 @@ const MenuManagementPage: React.FC = () => {
               startIcon={<Plus size={14} />}
               onClick={openGroupCreate}
             >
-              新增分组
+              {t('system.menu_management.add_group')}
             </Button>
           </Box>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell>名称</TableCell>
-                <TableCell>编码</TableCell>
-                <TableCell>排序</TableCell>
-                <TableCell align='right'>操作</TableCell>
+                <TableCell>{t('system.menu_management.col_name')}</TableCell>
+                <TableCell>{t('system.menu_management.col_code')}</TableCell>
+                <TableCell>{t('system.menu_management.col_sort')}</TableCell>
+                <TableCell align='right'>{t('system.menu_management.col_actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -359,7 +378,7 @@ const MenuManagementPage: React.FC = () => {
                     align='center'
                     sx={{ color: 'text.secondary' }}
                   >
-                    暂无分组，点击「新增分组」创建
+                    {t('system.menu_management.empty_groups')}
                   </TableCell>
                 </TableRow>
               )}
@@ -381,7 +400,7 @@ const MenuManagementPage: React.FC = () => {
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              菜单项（{menus.length}）
+              {t('system.menu_management.menus_title', { count: menus.length })}
             </Typography>
             <Button
               size='small'
@@ -390,18 +409,18 @@ const MenuManagementPage: React.FC = () => {
               onClick={openMenuCreate}
               disabled={!selectedGroupId}
             >
-              新增菜单项
+              {t('system.menu_management.add_menu')}
             </Button>
           </Box>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell>名称</TableCell>
-                <TableCell>编码</TableCell>
-                <TableCell>路径</TableCell>
-                <TableCell>排序</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell align='right'>操作</TableCell>
+                <TableCell>{t('system.menu_management.col_name')}</TableCell>
+                <TableCell>{t('system.menu_management.col_code')}</TableCell>
+                <TableCell>{t('system.menu_management.col_path')}</TableCell>
+                <TableCell>{t('system.menu_management.col_sort')}</TableCell>
+                <TableCell>{t('system.menu_management.col_status')}</TableCell>
+                <TableCell align='right'>{t('system.menu_management.col_actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -422,7 +441,11 @@ const MenuManagementPage: React.FC = () => {
                   <TableCell>{m.sort_order}</TableCell>
                   <TableCell>
                     <Chip
-                      label={m.status === 'active' ? '启用' : '停用'}
+                      label={
+                        m.status === 'active'
+                          ? t('system.menu_management.status_active')
+                          : t('system.menu_management.status_inactive')
+                      }
                       size='small'
                       color={m.status === 'active' ? 'success' : 'default'}
                     />
@@ -450,7 +473,9 @@ const MenuManagementPage: React.FC = () => {
                     align='center'
                     sx={{ color: 'text.secondary' }}
                   >
-                    {selectedGroupId ? '该分组下暂无菜单项' : '请先在左侧选择分组'}
+                    {selectedGroupId
+                      ? t('system.menu_management.empty_menus_in_group')
+                      : t('system.menu_management.empty_menus_select')}
                   </TableCell>
                 </TableRow>
               )}
@@ -466,10 +491,14 @@ const MenuManagementPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{groupDialog.editing ? '编辑分组' : '新增分组'}</DialogTitle>
+        <DialogTitle>
+          {groupDialog.editing
+            ? t('system.menu_management.edit_group')
+            : t('system.menu_management.add_group')}
+        </DialogTitle>
         <DialogContent>
           <TextField
-            label='名称'
+            label={t('system.menu_management.col_name')}
             fullWidth
             margin='dense'
             value={groupDialog.form.name}
@@ -478,7 +507,7 @@ const MenuManagementPage: React.FC = () => {
             }
           />
           <TextField
-            label='编码'
+            label={t('system.menu_management.col_code')}
             fullWidth
             margin='dense'
             value={groupDialog.form.code}
@@ -487,7 +516,7 @@ const MenuManagementPage: React.FC = () => {
             }
           />
           <TextField
-            label='图标'
+            label={t('system.menu_management.field_icon')}
             fullWidth
             margin='dense'
             value={groupDialog.form.icon}
@@ -496,7 +525,7 @@ const MenuManagementPage: React.FC = () => {
             }
           />
           <TextField
-            label='排序'
+            label={t('system.menu_management.col_sort')}
             type='number'
             fullWidth
             margin='dense'
@@ -508,13 +537,13 @@ const MenuManagementPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setGroupDialog({ open: false, editing: null, form: emptyGroup })}>
-            取消
+            {t('system.menu_management.cancel')}
           </Button>
           <Button
             variant='contained'
             onClick={submitGroup}
           >
-            保存
+            {t('system.menu_management.save')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -526,10 +555,14 @@ const MenuManagementPage: React.FC = () => {
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{menuDialog.editing ? '编辑菜单项' : '新增菜单项'}</DialogTitle>
+        <DialogTitle>
+          {menuDialog.editing
+            ? t('system.menu_management.edit_menu')
+            : t('system.menu_management.add_menu')}
+        </DialogTitle>
         <DialogContent>
           <TextField
-            label='名称'
+            label={t('system.menu_management.col_name')}
             fullWidth
             margin='dense'
             value={menuDialog.form.name}
@@ -538,7 +571,7 @@ const MenuManagementPage: React.FC = () => {
             }
           />
           <TextField
-            label='编码'
+            label={t('system.menu_management.col_code')}
             fullWidth
             margin='dense'
             value={menuDialog.form.code}
@@ -547,7 +580,7 @@ const MenuManagementPage: React.FC = () => {
             }
           />
           <TextField
-            label='前端路径'
+            label={t('system.menu_management.field_path')}
             fullWidth
             margin='dense'
             value={menuDialog.form.path}
@@ -556,7 +589,7 @@ const MenuManagementPage: React.FC = () => {
             }
           />
           <TextField
-            label='图标'
+            label={t('system.menu_management.field_icon')}
             fullWidth
             margin='dense'
             value={menuDialog.form.icon}
@@ -565,7 +598,7 @@ const MenuManagementPage: React.FC = () => {
             }
           />
           <TextField
-            label='排序'
+            label={t('system.menu_management.col_sort')}
             type='number'
             fullWidth
             margin='dense'
@@ -578,31 +611,33 @@ const MenuManagementPage: React.FC = () => {
             fullWidth
             margin='dense'
           >
-            <InputLabel>状态</InputLabel>
+            <InputLabel>{t('system.menu_management.col_status')}</InputLabel>
             <Select
-              label='状态'
+              label={t('system.menu_management.col_status')}
               value={menuDialog.form.status}
               onChange={(e) =>
                 setMenuDialog((d) => ({ ...d, form: { ...d.form, status: e.target.value } }))
               }
             >
-              <MuiMenuItem value='active'>启用</MuiMenuItem>
-              <MuiMenuItem value='inactive'>停用</MuiMenuItem>
+              <MuiMenuItem value='active'>{t('system.menu_management.status_active')}</MuiMenuItem>
+              <MuiMenuItem value='inactive'>
+                {t('system.menu_management.status_inactive')}
+              </MuiMenuItem>
             </Select>
           </FormControl>
           <FormControl
             fullWidth
             margin='dense'
           >
-            <InputLabel>父菜单（留空为顶级）</InputLabel>
+            <InputLabel>{t('system.menu_management.parent_menu')}</InputLabel>
             <Select
-              label='父菜单（留空为顶级）'
+              label={t('system.menu_management.parent_menu')}
               value={menuDialog.form.parent_id}
               onChange={(e) =>
                 setMenuDialog((d) => ({ ...d, form: { ...d.form, parent_id: e.target.value } }))
               }
             >
-              <MuiMenuItem value=''>（顶级）</MuiMenuItem>
+              <MuiMenuItem value=''>{t('system.menu_management.top_level')}</MuiMenuItem>
               {menus
                 .filter((m) => m.id !== menuDialog.editing?.id)
                 .map((m) => (
@@ -618,16 +653,28 @@ const MenuManagementPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setMenuDialog({ open: false, editing: null, form: emptyMenu })}>
-            取消
+            {t('system.menu_management.cancel')}
           </Button>
           <Button
             variant='contained'
             onClick={submitMenu}
           >
-            保存
+            {t('system.menu_management.save')}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={closeConfirm}
+        onConfirm={() => {
+          confirmConfig?.onConfirm();
+          closeConfirm();
+        }}
+        title={confirmConfig?.title || ''}
+        message={confirmConfig?.message || ''}
+        danger={confirmConfig?.danger}
+      />
     </Box>
   );
 };

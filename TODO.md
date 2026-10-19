@@ -24,6 +24,7 @@
 - [ ] **需部署主机 · 生产 nginx reload**（verify-nginx-prod.sh 本机 MAP_OK，reload 需目标机）
 - [x] **冻结确认 · ehs occupational_health 桩 / DSH 零消费面** ✅ 完成（2026-10-19）：统一登记 `dsh-zero-consumption-freeze.md`。DSH 18 端点零消费冻结；ehs occupational_health 已挂路由，records 接真 DB、check-plans/check-records/contraindications/statistics 为内存桩，前端封装零页面消费，均不接真不删除，待对应页面开发再接线/接真。
 - [x] **P3 · eslint 回绿（格式 + ignore）** ✅ 完成（2026-10-19，见下方「批 E1」块）：对应 10-19 重审 NEW-P3-1/P3-2。`eslint .` 由 26 errors / 86 warnings → **0 errors / 86 warnings**（exit 0），tsc 0 error；24 处 prettier 格式 `--fix`（零逻辑改动）+ `src/_archive-microfrontend/**` 补入 ignores（2 parser error 消除）；85 处 unused-vars warning 属既有长尾，不在本批。
+- [x] **P2 · menu 管理页整页 i18n** ✅ 完成（2026-10-19，见下方「批 E2」块）：对应 10-19 重审 NEW-P2-1。`MenuManagementPage` 59 行硬编码中文 → `system.menu_management.*` zh/en 39 键，`window.confirm` 换共享 `ConfirmDialog` + `useConfirmDialog`；tsc/eslint/i18n quality/hardcode 全绿。
 
 ---
 
@@ -36,6 +37,17 @@
   - `eslint --fix` 修 5 文件 24 处 prettier/prettier 格式 error（仅换行/括号/折叠，逻辑逐字不变）：`api/qms/audit.ts`、`api/qms/issue.ts`、`components/templates/WizardBuilder.tsx`、`pages/finance/ConsolidationScopePage/components/ConsolidationScopeTable.tsx`、`pages/qms/QmsEightDPage.tsx`。
 - **验证**：`eslint .` **0 errors / 86 warnings / exit 0**（原 26 errors）；`tsc --noEmit` exit 0；逐文件 diff 复核仅格式重排（`?? []`、filter/join、条件链等逻辑均原样保留）。
 - **遗留（不在本批）**：85 处 `@typescript-eslint/no-unused-vars` warning 为既有长尾，按域另行清理。
+
+---
+
+## 批 E2 · MenuManagementPage 整页 i18n（2026-10-19）✅ 完成
+
+> 来源：`artifacts/TOPEMS-重新审计与评估-2026-10-19.md` NEW-P2-1（菜单管理页整页零 i18n，59 行硬编码中文 + `window.confirm`）。
+
+- **改动**：
+  - `pages/system/MenuManagementPage/index.tsx`：接入 `useTranslation('system')`；59 处硬编码中文（页头/副标题/刷新、分组与菜单项标题计数、表头、状态、空态、两个弹窗标题/字段/按钮、全部错误回退文案）抽到 `system.menu_management.*`；两处 `window.confirm`（删分组/删菜单项）换共享 `useConfirmDialog` + `@topems/shared-components` 的 `ConfirmDialog`（danger 红钮，onConfirm 内执行删除，与 MigrationAdminPage 同款）。
+  - `i18n/locales/zh|en/system.json`：新增 39 个 `system.menu_management.*` 键（含 `{{count}}`/`{{name}}` 插值，zh/en 镜像；既有键零改动）。
+- **验证**：`tsc --noEmit` exit 0；页面 `eslint` 0 error（6 处 prettier 已 `--fix`）；`check-i18n.cjs --mode=quality --strict` 7-in-1 PASS；`--mode=hardcode --strict` PASS（本页 0 硬编码；剩余 4 处在既有 qms/QmsEightDPage adapter，不在本批）；JSON 镜像/插值/覆盖经脚本核对。
 
 ---
 
