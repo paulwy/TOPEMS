@@ -52,6 +52,7 @@ export const ADMIN_PATHS = {
   permissionAudit: '/admin/permission-audit',
   monitoringAlert: '/admin/monitoring-alert',
   featureFlag: '/admin/feature-flag',
+  menu: '/admin/menu',
 } as const;
 
 // ---- 第二部分：路由配置（供路由系统使用） ----
@@ -338,6 +339,18 @@ const adminRoutes: RouteConfigV2[] = [
     template: 'settings',
     group: 'setting',
   },
+  {
+    path: ADMIN_PATHS.menu,
+    element: lazyWithRetry(() => import('@/pages/system/MenuManagementPage'), 'MenuManagementPage'),
+    module: 'admin',
+    title: '菜单管理',
+    titleKey: 'admin.nav.admin-menu',
+    code: 'admin-menu',
+    requiredPermissions: ['system:read', 'admin:dashboard:read'],
+    action: 'read',
+    template: 'settings',
+    group: 'setting',
+  },
   monitorRoute,
   {
     path: ADMIN_PATHS.performance,
@@ -572,6 +585,17 @@ export const adminNavConfig: ModuleNavConfig = {
       order: 24,
       group: 'setting',
       description: i18n.t('admin.nav.admin-feature-flag_desc'),
+    },
+    {
+      code: 'admin-menu',
+      label: '菜单管理',
+      labelKey: 'admin.nav.admin-menu',
+      icon: 'Menu',
+      path: ADMIN_PATHS.menu,
+      permission: 'system:read',
+      order: 25,
+      group: 'setting',
+      description: '维护菜单分组与菜单项',
     },
     {
       code: 'admin-monitor',

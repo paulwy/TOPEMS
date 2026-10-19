@@ -7641,6 +7641,8 @@
   "admin.nav.admin-audit-log": "Audit Logs",
   "admin.nav.admin-rate-limit": "Rate Limits",
   "admin.nav.admin-feature-flag": "Feature Flags",
+  "admin.nav.admin-menu": "Menu Management",
+  "admin.nav.admin-menu_desc": "Maintain menu groups and items",
   "admin.nav.admin-monitor": "Monitoring",
   "admin.nav.admin-performance": "Performance",
   "admin.nav.admin-permission-audit": "Permission Audit",

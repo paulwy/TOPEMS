@@ -4827,6 +4827,8 @@
   "admin.nav.admin-rate-limit_desc": "限流配置",
   "admin.nav.admin-feature-flag": "特性开关",
   "admin.nav.admin-feature-flag_desc": "特性开关",
+  "admin.nav.admin-menu": "菜单管理",
+  "admin.nav.admin-menu_desc": "维护菜单分组与菜单项",
   "admin.nav.admin-monitor": "系统监控",
   "admin.nav.admin-monitor_desc": "系统监控",
   "admin.nav.admin-performance": "性能监控",
