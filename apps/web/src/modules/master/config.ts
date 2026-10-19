@@ -28,6 +28,7 @@ const MASTER_PATHS = {
   schemaRegistry: '/master/schema-registry',
   lineageAnalytics: '/master/lineage-analytics',
   aiGovernance: '/master/ai-governance',
+  commercial: '/master/commercial',
 } as const;
 
 // ---- 路由配置 ----
@@ -89,6 +90,22 @@ const aiGovernanceRoute: RouteConfigV2<Record<string, never>> = {
   action: 'read',
 };
 
+const commercialRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.commercial,
+  element: lazyWithRetry(
+    () => import('@/pages/master/CommercialConsolePage'),
+    'CommercialConsolePage'
+  ),
+  module: 'master',
+  code: 'master-commercial',
+  title: i18n.t('master.commercial'),
+  titleKey: 'master.commercial',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:commercial:read'],
+  action: 'read',
+};
+
 export const masterModuleConfig: RouteModuleConfig = {
   code: 'master',
   name: i18n.t('master.moduleName'),
@@ -101,7 +118,13 @@ export const masterModuleConfig: RouteModuleConfig = {
   order: 95,
   description: i18n.t('master.module_desc'),
   permission: 'master:data-asset:read',
-  routes: [dataAssetCatalogRoute, schemaRegistryRoute, lineageAnalyticsRoute, aiGovernanceRoute],
+  routes: [
+    dataAssetCatalogRoute,
+    schemaRegistryRoute,
+    lineageAnalyticsRoute,
+    aiGovernanceRoute,
+    commercialRoute,
+  ],
 };
 
 // ---- 导航菜单配置 ----
@@ -162,6 +185,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.ai_governance.desc'),
+    },
+    {
+      code: 'master-commercial',
+      label: i18n.t('master.commercial'),
+      labelKey: 'master.commercial',
+      icon: 'Storefront',
+      path: MASTER_PATHS.commercial,
+      permission: 'master_data:commercial:read',
+      order: 4,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.commercial.desc'),
     },
   ],
 };
