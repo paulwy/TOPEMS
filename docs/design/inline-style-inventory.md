@@ -86,8 +86,8 @@ B 类等价抽取只覆盖 token 化、同构的 redesign 页。下列页口径�
 | `admin/AccountManagementPage` | designTokens 36（图表配色双轨 `var(--…, designTokens…)`） | **A·图表色板（不动）** | chartPalette 回退体系，属数据可视化契约，禁止盲改 |
 | `admin/TenantBillingPage` | designTokens 2 / ct 1 / opacity 4 | **A·令牌+透明度** | 令牌引用合法，opacity 用于层级弱化，低优先保留 |
 | `admin/DictionaryManagementPage` | theme.palette 6 / ct 6 | **A·合法 MUI 主题路径** | `theme.palette.primary.dark/text.disabled/secondary` 是合法 MUI 主题取值，非硬编码，保留 |
-| `erp/PurchaseOrderPage` | 颜色已 `var(--token)`；裸px字号 11/12/13/14/20/24、固定列宽 150/280/140、图标24、按钮行 `justifyContent:flex-end`×3、`error-500`×2 | **B·半token化，需字号迁移** | 颜色合规；字号应迁 `text-xs/sm`、固定列宽/图标抽局部常量；按钮行可抽 `rowActions`。**改字号属视觉微调，需浏览器视觉核对**，无回归环境前不动 |
-| `admin/TenantManagementPage` | 裸px标题 fontSize12/14、多行 style 对象、ct 3 | **B·半token化，需标题迁移** | 标题字号迁 token、多行对象整体抽常量；需视觉核对 |
+| `erp/PurchaseOrderPage` | ~~裸px字号 11/12/14/20/24~~ ✅ 已迁 token（11→xs/12→sm/14→base/20→xl/24→2xl，px 精确等价）；avatarCircle/heroOrder/heroAmount 抽常量；13px 无档保留；固定列宽/按钮行/控件样式保留 | **B·✅ 字号迁移已完成** | 字号 px 与 token 精确相等故零视觉差异；固定列宽 150/280/140、按钮行、控件内联样式保留 |
+| `admin/TenantManagementPage` | ~~裸px 12/14~~ ✅ 已迁 token（12→sm、5 个同构表单 label 14→base 抽 `formLabel`）；ct 3 保留 | **B·✅ 字号迁移已完成** | 字号精确等价；多行 label 整体抽常量 |
 | `admin/ConfigDebugPage` | dt 2 / ct 8 / 裸px 27 | **C·调试工具页（低优先）** | 配置调试内部工具，随载体迭代，不单独治理 |
 
 **结论**：真正需要后续治理的只有两张半 token 化业务页（PurchaseOrder、TenantManagement），且性质是**字号/尺寸 token 迁移 + 视觉核对**，不是本轮"值逐字不变"的等价抽取；其余均为合法令牌对象、MUI 主题路径或调试载体，保留即可。

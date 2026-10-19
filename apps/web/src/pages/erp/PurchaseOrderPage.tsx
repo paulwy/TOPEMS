@@ -41,6 +41,32 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['erp', 'purchase-orders'];
 
+// 头像/hero 重复样式（字号迁 token，px 精确等价；其余值不变）
+const avatarCircle: React.CSSProperties = {
+  width: 24,
+  height: 24,
+  borderRadius: '50%',
+  backgroundColor: 'var(--accent-primary)',
+  color: 'white',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 'var(--text-xs)',
+  fontWeight: 600,
+};
+const heroOrder: React.CSSProperties = {
+  fontSize: 'var(--text-xl)',
+  fontWeight: 600,
+  color: 'var(--accent-primary)',
+  marginBottom: 4,
+};
+const heroAmount: React.CSSProperties = {
+  marginTop: 'var(--space-4)',
+  fontSize: 'var(--text-2xl)',
+  fontWeight: 700,
+  color: 'var(--text-primary)',
+};
+
 interface PurchaseOrder {
   id: string;
   order_no: string;
@@ -358,7 +384,7 @@ const PurchaseOrderPage: React.FC = () => {
           <div style={{ fontWeight: 600, color: 'var(--accent-primary)', marginBottom: 2 }}>
             {row.order_no}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
             {row.items_count} {t('erp.purchase_order.column.items_count_unit')}
           </div>
         </div>
@@ -372,7 +398,9 @@ const PurchaseOrderPage: React.FC = () => {
           <div style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 2 }}>
             {row.supplier_name}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{row.supplier_code}</div>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+            {row.supplier_code}
+          </div>
         </div>
       ),
     },
@@ -408,22 +436,7 @@ const PurchaseOrderPage: React.FC = () => {
       header: t('erp.purchase_order.column.buyer'),
       render: (row) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <div
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              backgroundColor: 'var(--accent-primary)',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 11,
-              fontWeight: 600,
-            }}
-          >
-            {row.buyer.charAt(0)}
-          </div>
+          <div style={avatarCircle}>{row.buyer.charAt(0)}</div>
           <span style={{ fontSize: 13 }}>{row.buyer}</span>
         </div>
       ),
@@ -440,7 +453,9 @@ const PurchaseOrderPage: React.FC = () => {
       header: t('erp.purchase_order.column.expected_date'),
       sortable: true,
       render: (row) => (
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{row.expected_date}</span>
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+          {row.expected_date}
+        </span>
       ),
     },
     {
@@ -641,17 +656,8 @@ const PurchaseOrderPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 600,
-                      color: 'var(--accent-primary)',
-                      marginBottom: 4,
-                    }}
-                  >
-                    {selectedOrder.order_no}
-                  </div>
-                  <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+                  <div style={heroOrder}>{selectedOrder.order_no}</div>
+                  <div style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>
                     {selectedOrder.supplier_name}
                   </div>
                 </div>
@@ -664,14 +670,7 @@ const PurchaseOrderPage: React.FC = () => {
                   </Tag>
                 </div>
               </div>
-              <div
-                style={{
-                  marginTop: 'var(--space-4)',
-                  fontSize: 24,
-                  fontWeight: 700,
-                  color: 'var(--text-primary)',
-                }}
-              >
+              <div style={heroAmount}>
                 {formatAmount(selectedOrder.total_amount, selectedOrder.currency)}
               </div>
             </Card>
@@ -952,8 +951,12 @@ const PurchaseOrderPage: React.FC = () => {
 // 信息项组件
 const InfoItem: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <div>
-    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>{label}</div>
-    <div style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500 }}>{value}</div>
+    <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginBottom: 4 }}>
+      {label}
+    </div>
+    <div style={{ fontSize: 'var(--text-base)', color: 'var(--text-primary)', fontWeight: 500 }}>
+      {value}
+    </div>
   </div>
 );
 

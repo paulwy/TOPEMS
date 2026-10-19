@@ -34,6 +34,14 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['admin', 'tenants'];
 
+// 表单 label（字号迁 token，px 精确等价；其余值不变）
+const formLabel: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 'var(--space-1)',
+  fontSize: 'var(--text-base)',
+  fontWeight: 500,
+};
+
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
   try {
@@ -163,7 +171,9 @@ const TenantManagementPage: React.FC = () => {
           />
           <div>
             <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{row.name}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{row.code}</div>
+            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+              {row.code}
+            </div>
           </div>
         </div>
       ),
@@ -427,12 +437,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
       <div>
         <label
           htmlFor='tenant-name'
-          style={{
-            display: 'block',
-            marginBottom: 'var(--space-1)',
-            fontSize: 14,
-            fontWeight: 500,
-          }}
+          style={formLabel}
         >
           {t('admin.tenant_management_page.form_name')} *
         </label>
@@ -448,12 +453,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
       <div>
         <label
           htmlFor='tenant-code'
-          style={{
-            display: 'block',
-            marginBottom: 'var(--space-1)',
-            fontSize: 14,
-            fontWeight: 500,
-          }}
+          style={formLabel}
         >
           {t('admin.tenant_management_page.form_code')} *
         </label>
@@ -471,12 +471,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
         <div>
           <label
             htmlFor='tenant-plan'
-            style={{
-              display: 'block',
-              marginBottom: 'var(--space-1)',
-              fontSize: 14,
-              fontWeight: 500,
-            }}
+            style={formLabel}
           >
             {t('admin.tenant_management_page.form_plan')}
           </label>
@@ -494,12 +489,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
         <div>
           <label
             htmlFor='tenant-status'
-            style={{
-              display: 'block',
-              marginBottom: 'var(--space-1)',
-              fontSize: 14,
-              fontWeight: 500,
-            }}
+            style={formLabel}
           >
             {t('admin.tenant_management_page.form_status')}
           </label>
@@ -520,12 +510,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
       <div>
         <label
           htmlFor='tenant-quota'
-          style={{
-            display: 'block',
-            marginBottom: 'var(--space-1)',
-            fontSize: 14,
-            fontWeight: 500,
-          }}
+          style={formLabel}
         >
           {t('admin.tenant_management_page.form_quota')}
         </label>
