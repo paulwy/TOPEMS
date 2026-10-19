@@ -59,24 +59,43 @@ interface InventoryItem {
 }
 
 // Mock 数据
-// 将 API 返回的 Inventory 类型映射为页面使用的 InventoryItem 类型
-const mapApiInventory = (apiItems: ApiInventory[]): InventoryItem[] => {
+// 将 API 返回的 Inventory 类型映射为页面使用的 InventoryItem 类型。
+// 部分历史接口使用驼峰别名，收窄为可选字段（ApiInventoryCompat），避免 `as any`。
+type InventoryTab = 'all' | 'in_stock' | 'low_stock' | 'out_of_stock';
+type ApiInventoryCompat = ApiInventory & {
+  sku_code?: string;
+  product_name?: string;
+  sku?: string;
+  category?: string;
+  warehouse?: string;
+  quantity?: number;
+  safety_stock?: number;
+  unit?: string;
+  unit_price?: number;
+  total_value?: number;
+  last_restock?: string;
+  productName?: string;
+  safetyStock?: number;
+  unitPrice?: number;
+  value?: number;
+  lastRestock?: string;
+  status?: string;
+};
+
+const mapApiInventory = (apiItems: ApiInventoryCompat[]): InventoryItem[] => {
   return apiItems.map((item, index) => ({
     id: item.id,
-    sku: (item as any).sku || (item as any).sku_code || `SKU-${String(index + 1).padStart(3, '0')}`,
-    product_name: (item as any).product_name || (item as any).productName || '-',
-    category: (item as any).category || '-',
-    warehouse: (item as any).warehouse || '-',
-    quantity: (item as any).quantity || 0,
-    safety_stock: (item as any).safety_stock || (item as any).safetyStock || 0,
-    unit: (item as any).unit || '-',
-    unit_price: (item as any).unit_price || (item as any).unitPrice || 0,
-    total_value:
-      (item as any).total_value ||
-      (item as any).value ||
-      ((item as any).quantity || 0) * ((item as any).unit_price || 0),
-    status: ((item as any).status as InventoryItem['status']) || 'in_stock',
-    last_restock: (item as any).last_restock || (item as any).lastRestock || '-',
+    sku: item.sku || item.sku_code || `SKU-${String(index + 1).padStart(3, '0')}`,
+    product_name: item.product_name || item.productName || '-',
+    category: item.category || '-',
+    warehouse: item.warehouse || '-',
+    quantity: item.quantity || 0,
+    safety_stock: item.safety_stock || item.safetyStock || 0,
+    unit: item.unit || '-',
+    unit_price: item.unit_price || item.unitPrice || 0,
+    total_value: item.total_value || item.value || (item.quantity || 0) * (item.unit_price || 0),
+    status: (item.status as InventoryItem['status']) || 'in_stock',
+    last_restock: item.last_restock || item.lastRestock || '-',
   }));
 };
 
@@ -188,9 +207,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
     [t]
   );
 
-  const [activeTab, setActiveTab] = useState<'all' | 'in_stock' | 'low_stock' | 'out_of_stock'>(
-    'all'
-  );
+  const [activeTab, setActiveTab] = useState<InventoryTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
@@ -534,7 +551,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as InventoryTab)}
         />
       </ListPageTemplate>
 

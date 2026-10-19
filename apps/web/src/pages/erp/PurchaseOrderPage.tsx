@@ -139,9 +139,8 @@ const PurchaseOrderPage: React.FC = () => {
     [t]
   );
 
-  const [activeTab, setActiveTab] = useState<
-    'all' | 'pending_approval' | 'approved' | 'ordered' | 'received'
-  >('all');
+  type PurchaseTab = 'all' | 'pending_approval' | 'approved' | 'ordered' | 'received';
+  const [activeTab, setActiveTab] = useState<PurchaseTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
@@ -612,7 +611,7 @@ const PurchaseOrderPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as PurchaseTab)}
         />
       </ListPageTemplate>
 

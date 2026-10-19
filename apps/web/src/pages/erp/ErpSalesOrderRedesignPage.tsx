@@ -31,7 +31,11 @@ import {
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { useTranslation } from 'react-i18next';
 import { salesOrderApi } from '@/api/erp/core/salesOrder';
-import type { SalesOrder as ApiSalesOrder } from '@/api/erp/core/types';
+import type {
+  SalesOrder as ApiSalesOrder,
+  CreateSalesOrderRequest,
+  UpdateSalesOrderRequest,
+} from '@/api/erp/core/types';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -74,24 +78,43 @@ interface SalesOrder {
   created_at: string;
 }
 
-// 将 API 返回的 SalesOrder 类型映射为页面使用的 SalesOrder 类型
-const mapApiSalesOrders = (apiOrders: ApiSalesOrder[]): SalesOrder[] => {
+// 将 API 返回的 SalesOrder 类型映射为页面使用的 SalesOrder 类型。
+// 部分历史接口使用驼峰别名，收窄为可选字段（ApiSalesOrderCompat），避免 `as any`。
+type SalesOrderTab = 'all' | 'confirmed' | 'shipped' | 'delivered';
+type ApiSalesOrderCompat = ApiSalesOrder & {
+  order_no?: string;
+  orderNo?: string;
+  customerName?: string;
+  product_name?: string;
+  productName?: string;
+  product?: string;
+  quantity?: number;
+  unit_price?: number;
+  total_amount?: number;
+  unitPrice?: number;
+  amount?: number;
+  status?: string;
+  order_date?: string;
+  delivery_date?: string;
+  orderDate?: string;
+  deliveryDate?: string;
+  salesperson?: string;
+  salesPerson?: string;
+};
+
+const mapApiSalesOrders = (apiOrders: ApiSalesOrderCompat[]): SalesOrder[] => {
   return apiOrders.map((o, index) => ({
     id: o.id,
-    order_no:
-      (o as any).order_no || (o as any).orderNo || `SO2026${String(index + 1).padStart(5, '0')}`,
-    customer_name: (o as any).customer_name || (o as any).customerName || '-',
-    product_name: (o as any).product_name || (o as any).productName || (o as any).product || '-',
-    quantity: (o as any).quantity || 0,
-    unit_price: (o as any).unit_price || (o as any).unitPrice || 0,
-    total_amount:
-      (o as any).total_amount ||
-      (o as any).amount ||
-      ((o as any).quantity || 0) * ((o as any).unit_price || 0),
-    status: ((o as any).status as SalesOrder['status']) || 'draft',
-    order_date: (o as any).order_date || (o as any).orderDate || '-',
-    delivery_date: (o as any).delivery_date || (o as any).deliveryDate || '-',
-    salesperson: (o as any).salesperson || (o as any).salesPerson || '-',
+    order_no: o.order_no || o.orderNo || `SO2026${String(index + 1).padStart(5, '0')}`,
+    customer_name: o.customer_name || o.customerName || '-',
+    product_name: o.product_name || o.productName || o.product || '-',
+    quantity: o.quantity || 0,
+    unit_price: o.unit_price || o.unitPrice || 0,
+    total_amount: o.total_amount || o.amount || (o.quantity || 0) * (o.unit_price || 0),
+    status: (o.status as SalesOrder['status']) || 'draft',
+    order_date: o.order_date || o.orderDate || '-',
+    delivery_date: o.delivery_date || o.deliveryDate || '-',
+    salesperson: o.salesperson || o.salesPerson || '-',
     created_at: o.created_at || new Date().toISOString(),
   }));
 };
@@ -208,7 +231,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
     [t]
   );
 
-  const [activeTab, setActiveTab] = useState<'all' | 'confirmed' | 'shipped' | 'delivered'>('all');
+  const [activeTab, setActiveTab] = useState<SalesOrderTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -232,7 +255,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; status?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -253,7 +276,12 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
           apiOrders = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData.data as any;
+          const dataObj = resData.data as {
+            orders?: ApiSalesOrder[];
+            items?: ApiSalesOrder[];
+            list?: ApiSalesOrder[];
+            total?: number;
+          };
           apiOrders = Array.isArray(resData.data)
             ? resData.data
             : dataObj.orders || dataObj.items || [];
@@ -314,14 +342,14 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
     mutationFn: async (data: Partial<SalesOrder>) => {
       try {
         await salesOrderApi.create({
-          order_no: (data as any).order_no,
+          order_no: data.order_no,
           customer_name: data.customer_name,
           total_amount: data.total_amount,
           status: data.status,
           order_date: data.order_date,
           delivery_date: data.delivery_date,
-          salesperson: (data as any).salesperson,
-        } as any);
+          salesperson: data.salesperson,
+        } as unknown as CreateSalesOrderRequest);
       } catch (e) {
         console.warn('[ERP Sales Orders] Create API unavailable, using mock create:', e);
       }
@@ -346,7 +374,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
           total_amount: data.total_amount,
           status: data.status,
           delivery_date: data.delivery_date,
-        } as any);
+        } as unknown as UpdateSalesOrderRequest);
       } catch (e) {
         console.warn('[ERP Sales Orders] Update API unavailable, using mock update:', e);
       }
@@ -365,7 +393,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredOrders = orders;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedOrders = filteredOrders;
 
@@ -647,7 +675,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as SalesOrderTab)}
         />
       </ListPageTemplate>
 
