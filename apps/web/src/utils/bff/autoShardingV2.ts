@@ -100,7 +100,7 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
 
 // ============ 工具函数 ============
 
-function calculateBackoffDelay(attempt: number, config: RetryConfig): number {
+export function calculateBackoffDelay(attempt: number, config: RetryConfig): number {
   const delay = Math.min(
     config.initialDelayMs * Math.pow(config.backoffFactor, attempt),
     config.maxDelayMs
