@@ -28,10 +28,10 @@ vi.mock('react-i18next', () => {
       i18nMap[k] = v as string;
     }
   }
-  const t = (key: string, options?: any) => {
+  const t = (key: string, options?: Record<string, unknown>) => {
     let base = (i18nMap[key] ?? key) as string;
     if (typeof options === 'object' && options !== null) {
-      const idx = (options as any).index ?? (options as any).index_1;
+      const idx = options.index ?? options.index_1;
       if (typeof idx === 'number' && (key.includes('period') || String(base).includes('期'))) {
         return `第 ${idx} 期`;
       }
@@ -39,7 +39,7 @@ vi.mock('react-i18next', () => {
       if (i18nMap[key] === undefined) {
         const keys = Object.keys(options);
         if (keys.length === 1) {
-          const v = (options as any)[keys[0]];
+          const v = options[keys[0]];
           if (
             typeof v === 'number' &&
             v >= 1 &&
@@ -81,7 +81,7 @@ vi.mock('react-i18next', () => {
       if (!didReplace) {
         const keys = Object.keys(options);
         if (keys.length === 1) {
-          base = `${base} ${String((options as any)[keys[0]])}`;
+          base = `${base} ${String(options[keys[0]])}`;
         } else {
           base = `${base}:${JSON.stringify(options)}`;
         }
@@ -97,7 +97,7 @@ vi.mock('react-i18next', () => {
   return {
     useTranslation: () => ({ t, i18n: { language: 'zh' } }),
     initReactI18next: { type: '3rdParty', init: () => {} },
-    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: React.ReactNode }) =>
       i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
   };
 });
@@ -118,10 +118,10 @@ vi.mock('@/i18n', () => {
       i18nMap[k] = v as string;
     }
   }
-  const t = (key: string, options?: any) => {
+  const t = (key: string, options?: Record<string, unknown>) => {
     let base = (i18nMap[key] ?? key) as string;
     if (typeof options === 'object' && options !== null) {
-      const idx = (options as any).index ?? (options as any).index_1;
+      const idx = options.index ?? options.index_1;
       if (typeof idx === 'number' && (key.includes('period') || String(base).includes('期'))) {
         return `第 ${idx} 期`;
       }
@@ -129,7 +129,7 @@ vi.mock('@/i18n', () => {
       if (i18nMap[key] === undefined) {
         const keys = Object.keys(options);
         if (keys.length === 1) {
-          const v = (options as any)[keys[0]];
+          const v = options[keys[0]];
           if (
             typeof v === 'number' &&
             v >= 1 &&
@@ -171,7 +171,7 @@ vi.mock('@/i18n', () => {
       if (!didReplace) {
         const keys = Object.keys(options);
         if (keys.length === 1) {
-          base = `${base} ${String((options as any)[keys[0]])}`;
+          base = `${base} ${String(options[keys[0]])}`;
         } else {
           base = `${base}:${JSON.stringify(options)}`;
         }
