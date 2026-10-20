@@ -79,22 +79,43 @@ interface Employee {
 }
 
 // 将 API 返回的 Employee 类型映射为页面使用的 Employee 类型
-const mapApiEmployees = (apiEmployees: ApiEmployee[]): Employee[] => {
+// 兼容后端字段名差异（主字段 + 可选别名），避免在映射内反复 as any
+type RawApiEmployee = {
+  id: string;
+  emp_no?: string;
+  employee_no?: string;
+  name?: string;
+  employee_name?: string;
+  department?: string;
+  position?: string;
+  level?: string;
+  status?: string;
+  phone?: string;
+  mobile?: string;
+  email?: string;
+  join_date?: string;
+  hire_date?: string;
+  salary?: number;
+  manager?: string;
+  leader?: string;
+  created_at?: string;
+};
+
+const mapApiEmployees = (apiEmployees: RawApiEmployee[]): Employee[] => {
   return apiEmployees.map((e, index) => ({
     id: e.id,
-    emp_no:
-      (e as any).emp_no || (e as any).employee_no || `EMP${String(index + 1).padStart(3, '0')}`,
-    name: (e as any).name || (e as any).employee_name || '-',
-    department: (e as any).department || '-',
-    position: (e as any).position || '-',
-    level: ((e as any).level as Employee['level']) || 'P5',
-    status: ((e as any).status as Employee['status']) || 'active',
-    phone: (e as any).phone || (e as any).mobile || '-',
-    email: (e as any).email || '-',
-    join_date: (e as any).join_date || (e as any).hire_date || '-',
-    salary: (e as any).salary || 0,
-    manager: (e as any).manager || (e as any).leader || '-',
-    created_at: e.created_at,
+    emp_no: e.emp_no || e.employee_no || `EMP${String(index + 1).padStart(3, '0')}`,
+    name: e.name || e.employee_name || '-',
+    department: e.department || '-',
+    position: e.position || '-',
+    level: (e.level as Employee['level']) || 'P5',
+    status: (e.status as Employee['status']) || 'active',
+    phone: e.phone || e.mobile || '-',
+    email: e.email || '-',
+    join_date: e.join_date || e.hire_date || '-',
+    salary: e.salary || 0,
+    manager: e.manager || e.leader || '-',
+    created_at: e.created_at ?? '-',
   }));
 };
 
@@ -660,7 +681,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as 'all' | 'active' | 'probation' | 'leave')}
         />
       </ListPageTemplate>
 

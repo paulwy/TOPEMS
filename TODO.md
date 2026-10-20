@@ -418,6 +418,12 @@
 - **仍留待**：CrudPage 适配器泛型与 rows 回调、SystemSettings `newSettings as any`/`updateField(value:any)`、Tenant 两处，需对齐模型；AmapLayer 高德实例、client.ts、`__tests__` mock 为有意保留。
 - **门禁**：`tsc --noEmit` exit 0；5 个改动文件定点 eslint 0 error。
 
+### no-explicit-any 第六批 · hrm 员工页兼容层类型化 + tab 断言（2026-10-20）✅
+
+- **本批净降 17 处**：`HrmEmployeeRedesignPage.tsx` 列表映射兼容层 11 个 `(e as any)`（字段别名 emp_no/employee_no、name/employee_name、phone/mobile、join_date/hire_date、manager/leader）改为局部 `RawApiEmployee` 宽松输入类型承载主字段+可选别名，不再反复断言；activeTab `as any` → `as 'all'|'active'|'probation'|'leave'`。
+- **仍留待（需追溯 API 响应/请求类型）**：同页 `params:any` 查询参数、`resData.data as any`、两处 mutation 对象 `as any`、`(data as any)?.total` 取总数，共 5 处 warning。
+- **门禁**：`tsc --noEmit` exit 0；该文件定点 eslint 0 error（剩 5 处 warning 即上述留待项）。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成
