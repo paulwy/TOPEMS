@@ -432,10 +432,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     }
 
     // Insert default admin user
-    // 从环境变量读取初始密码，未设置时回退到默认值 admin123
+    // 从环境变量读取初始密码，未设置时回退到默认值 admin123（弱口令，仅首启）。
+    // 新播种的 admin 带 must_change_password=true，登录后须改密；生产务必显式设置
+    // ADMIN_INITIAL_PASSWORD 或首启后立即改密。
     let admin_password =
         std::env::var("ADMIN_INITIAL_PASSWORD").unwrap_or_else(|_| "admin123".to_string());
-    tracing::warn!("⚠️ 使用默认管理员密码，请在首次登录后立即修改！");
+    if std::env::var("ADMIN_INITIAL_PASSWORD").is_err() {
+        tracing::warn!("⚠️ 未设置 ADMIN_INITIAL_PASSWORD，使用弱默认口令 admin123；新 admin 已标记 must_change_password，请首登立即改密！");
+    } else {
+        tracing::info!("已通过 ADMIN_INITIAL_PASSWORD 设置初始管理员口令；新 admin 标记 must_change_password。");
+    }
     let admin_password_hash = match bcrypt::hash(&admin_password, bcrypt::DEFAULT_COST) {
         Ok(h) => h,
         Err(e) => {
@@ -447,8 +453,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     };
     sqlx::query(
         r#"
-        INSERT INTO iam.users (username, email, password_hash, full_name, is_superuser)
-        VALUES ('admin', 'admin@topems.com', $1, '系统管理员', true)
+        INSERT INTO iam.users (username, email, password_hash, full_name, is_superuser, must_change_password)
+        VALUES ('admin', 'admin@topems.com', $1, '系统管理员', true, true)
         ON CONFLICT (username) DO NOTHING
         "#,
     )

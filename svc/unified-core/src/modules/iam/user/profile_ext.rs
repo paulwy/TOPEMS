@@ -467,12 +467,13 @@ pub async fn change_my_password(
         }
     };
 
-    let result =
-        sqlx::query("UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
-            .bind(hashed_password)
-            .bind(user_id)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        "UPDATE iam.users SET password_hash = $1, must_change_password = false, password_changed_at = NOW(), updated_at = NOW() WHERE id = $2",
+    )
+    .bind(hashed_password)
+    .bind(user_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => {

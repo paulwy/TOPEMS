@@ -80,6 +80,7 @@ struct UserRow {
     roles: Option<Vec<String>>,
     permissions: Option<Vec<String>>,
     created_at: Option<chrono::DateTime<chrono::Utc>>,
+    must_change_password: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -103,6 +104,7 @@ struct UserInfo {
     created_at: Option<String>,
     roles: Vec<String>,
     permissions: Vec<String>,
+    must_change_password: bool,
 }
 
 #[utoipa::path(
@@ -182,7 +184,8 @@ pub async fn login(
           (u.status = 'active') AS is_active, u.is_superuser,
           COALESCE(u.roles, '{}') AS roles,
           COALESCE(u.permissions, '{}') AS permissions,
-          u.created_at AS created_at
+          u.created_at AS created_at,
+          COALESCE(u.must_change_password, false) AS must_change_password
         FROM iam.users u
         WHERE (u.username = $1 OR u.email = $1) AND u.deleted_at IS NULL
         "#,
@@ -419,6 +422,7 @@ pub async fn login(
             created_at: user.created_at.map(|t| t.to_string()),
             roles: user_roles,
             permissions: user_permissions,
+            must_change_password: user.must_change_password,
         },
     };
 
@@ -1126,7 +1130,8 @@ pub async fn forgot_password(
           (u.status = 'active') AS is_active, u.is_superuser,
           COALESCE(u.roles, '{}') AS roles,
           COALESCE(u.permissions, '{}') AS permissions,
-          u.created_at AS created_at
+          u.created_at AS created_at,
+          COALESCE(u.must_change_password, false) AS must_change_password
         FROM iam.users u
         WHERE u.email = $1 AND u.status = 'active' AND u.deleted_at IS NULL
         "#,
@@ -1733,6 +1738,7 @@ mod tests {
                 created_at: Some("2024-01-01".to_string()),
                 roles: vec!["user".to_string()],
                 permissions: vec!["iam:read".to_string()],
+                must_change_password: false,
             },
         };
         let json =
