@@ -277,7 +277,7 @@ pub async fn create_plan(
         format!(
             "EP-{}-{}",
             now,
-            &uuid::Uuid::new_v4().simple().to_string()[..6].to_uppercase()
+            uuid::Uuid::new_v4().simple().to_string()[..6].to_uppercase()
         )
     });
     let status = req.status.clone().unwrap_or_else(|| "planned".to_string());

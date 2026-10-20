@@ -4385,7 +4385,6 @@ pub async fn carry_forward_opening_balance(
         .and_then(|v| v.as_str())
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let now = Utc::now();
     let res = sqlx::query(only_own_schema_query!(
         "erp",
         r#"INSERT INTO erp.opening_balances
@@ -4532,7 +4531,7 @@ pub async fn list_expense_approvals(
     ))
     .bind(&search)
     .bind(&status_filter)
-    .bind(&tenant_id)
+    .bind(tenant_id)
     .bind(i64::try_from(page_size).unwrap_or(i64::MAX))
     .bind(i64::try_from(offset).unwrap_or(i64::MAX))
     .fetch_all(&state.pool)
@@ -4644,15 +4643,15 @@ pub async fn create_expense_approval(
         )
     )
     .bind(&expense_no)
-    .bind(&employee_id)
+    .bind(employee_id)
     .bind(&employee_name)
     .bind(&department)
-    .bind(&expense_date)
+    .bind(expense_date)
     .bind(&expense_type)
-    .bind(&total_amount)
+    .bind(total_amount)
     .bind(&status)
     .bind(&description)
-    .bind(&tenant_id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 

@@ -313,6 +313,16 @@
 - **DatasetPage.tsx 两处漏网中文补 i18n**（该页已有 68 处 `i18n.t()`）：:861「共 {total} 行，执行 {execution_time} ms」→ `bi.dataset_page.query_rows_summary`（插值 total/execution_time）；:897「查询失败或无结果」→ `bi.dataset_page.query_empty`；zh/en `bi.json` 镜像补键。
 - **门禁**：`tsc --noEmit` exit 0；两文件 eslint 0 error（any warning 为既有）；i18n quality 7-in-1 PASS、hardcode strict PASS（剩余 4 处 QmsEightDPage 为提交后端的记录内容文本，N8 信息项不动）。
 
+### P3-9 · clippy 风格 warning 清理（redundant closure / format! 引用 / needless_borrow）（2026-10-20）✅
+
+> 来源：10-19 重审 NEW-P3-9（shard-A P3-4 段）。纯风格等价改写，零行为变化。
+
+- **ehs（4 处）**：`emergency_plan.rs:280` format! 参数去冗余 `&`；`environmental_compliance.rs:1476` `.map(|r| monitor_record_from_row(r))` → `.map(monitor_record_from_row)`、`:1762` `.map(|r| incident_from_row(r))` → `.map(incident_from_row)`；`health.rs:154` `.map(|r| health_record_from_row(r))` → `.map(health_record_from_row)`。
+- **finance（5 处）**：`modules/mod.rs` 删除未使用的 `let now = Utc::now();`（SQL 用 NOW()）；5 处 needless_borrow（`list_expense_approvals` 的 `&tenant_id`、`create_expense_approval` 的 `&employee_id`/`&expense_date`/`&total_amount`/`&tenant_id`）由 `cargo clippy --fix -p topems-finance --lib` 自动去 `&`，逐行 git diff 核对为纯去引用、变量后续未复用。
+- **migration-sdk**：单独 `clippy -p topems-migration-sdk --lib --tests` 复跑 0 warning（审计口径 1 处已在历史提交消失；全量输出的 1 处为缓存重复计数，不复现，不改）。
+- **门禁**：`cargo check --workspace --lib --tests` exit 0；全量 `clippy -- -D correctness` exit 0；`cargo fmt --check` 绿；ehs 231 / finance 1087 单测全 0 failed。
+- **未纳入本批（另案登记）**：`ehs/hazardous_material.rs:1001` 的 `items_after_test_module`（test 模块置于文件中段的结构 lint，非审计列的 closure/borrow 类，移动有可见性风险，留待结构整理批）。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

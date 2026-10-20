@@ -151,7 +151,7 @@ pub async fn list_records(
         }
     };
 
-    let records: Vec<HealthRecord> = rows.iter().map(|r| health_record_from_row(r)).collect();
+    let records: Vec<HealthRecord> = rows.iter().map(health_record_from_row).collect();
     Json(ApiResponse::success(records, "获取健康监测记录列表成功"))
 }
 

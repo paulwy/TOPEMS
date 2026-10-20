@@ -1472,8 +1472,7 @@ pub async fn list_monitor_records(
             return Json(ApiResponse::error(500, "获取环境监测记录列表失败"));
         }
     };
-    let records: Vec<EnvironmentMonitor> =
-        rows.iter().map(|r| monitor_record_from_row(r)).collect();
+    let records: Vec<EnvironmentMonitor> = rows.iter().map(monitor_record_from_row).collect();
     Json(ApiResponse::success(records, "获取环境监测记录列表成功"))
 }
 #[utoipa::path(
@@ -1759,7 +1758,7 @@ pub async fn list_incidents(
             return Json(ApiResponse::error(500, "获取环境事件列表失败"));
         }
     };
-    let records: Vec<EnvironmentIncident> = rows.iter().map(|r| incident_from_row(r)).collect();
+    let records: Vec<EnvironmentIncident> = rows.iter().map(incident_from_row).collect();
     Json(ApiResponse::success(records, "获取环境事件列表成功"))
 }
 #[utoipa::path(
