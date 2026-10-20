@@ -274,7 +274,7 @@ const TenantManagementPage: React.FC = () => {
               />
               <Select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
+                onChange={(e) => setStatusFilter(e.target.value as 'all' | TenantStatus)}
                 options={[
                   { value: 'all', label: t('admin.tenant_management_page.filter_status_all') },
                   { value: 'active', label: t('admin.tenant_management_page.status_active') },

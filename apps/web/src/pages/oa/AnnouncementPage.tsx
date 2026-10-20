@@ -449,7 +449,7 @@ const AnnouncementPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as 'all' | 'published' | 'draft')}
         />
       </ListPageTemplate>
 
@@ -661,7 +661,12 @@ const AnnouncementPage: React.FC = () => {
               <Select
                 id='announcement-priority'
                 value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    priority: e.target.value as 'high' | 'normal' | 'low',
+                  })
+                }
                 options={[
                   { value: 'high', label: t('oa.announcement_page.k18') },
                   { value: 'normal', label: t('oa.announcement_page.k19') },

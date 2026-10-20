@@ -398,6 +398,12 @@
 - **本批净降 7 处**：`pages/shared/DashboardPage.tsx` 新增 `ModuleItem / AlertItem / TaskItem` 三个局部接口，给 modules/alerts/tasks 三个 `useMemo` 标注返回泛型，删除 6 处 `map/filter` 回调 `: any` 注解（类型由 useMemo 推断）；`icon: any` → `LucideIcon`（精确支持 `<Icon size={20}/>`），模块状态复用 `StatusLightState`。
 - **门禁**：`tsc --noEmit` exit 0；该文件定点 eslint 0 error，无 any 残留。
 
+### no-explicit-any 第三批 · 联合枚举断言去 any（2026-10-20）✅
+
+- **本批净降 3 处**：`AnnouncementPage.tsx` tab 切换 `id as any` → `as 'all'|'published'|'draft'`、priority `e.target.value as any` → `as 'high'|'normal'|'low'`；`TenantManagementPage.tsx` statusFilter `e.target.value as any` → `as 'all'|TenantStatus`。
+- **留待下批（需追溯 API/state 类型，不强行断言）**：AnnouncementPage `(a:any)` 列表映射、`mutationFn:(data:any)`；Tenant `formData as any` 创建提交、`handleChange(value:any)`。
+- **门禁**：`tsc --noEmit` exit 0；两文件定点 eslint 0 error（剩 4 处 warning 即上述留待项）。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成
