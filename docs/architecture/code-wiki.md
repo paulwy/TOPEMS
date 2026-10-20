@@ -1,6 +1,8 @@
 # TOPEMS Code Wiki
 
 > **版本**: v8.0 / V203 | **最后更新**: 2026-08-13 | **文档版本**: v5.0 (V203 后端覆盖率冲刺 18 crate × 1439+ tests · 导航 100% 闭环 · Code Wiki 结构刷新)
+>
+> ⚠️ **台账校准（2026-10-20）**：本 wiki 服务/覆盖率台账停留在 V203（2026-08-13），滞后于后续合并/拆分（feedback→ticket、report→analytics、monitor V68.1 独立 8095、billing/lowcode 归档）。服务清单与端口以 `config/services.yaml` + 各 `svc/*/src/main.rs` 为权威源，本文历史覆盖率快照仅作参考。
 
 ---
 
@@ -144,10 +146,11 @@
 │  │ search    │  │communication │  │ master-data  │ 独立扩展服务   │
 │  │ (8082)    │  │(mail/im/noti)│  │   (8090)     │               │
 │  └───────────┘  └──────────────┘  └──────────────┘               │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐             │
-│  │ billing  │ │ ticket   │ │ feedback │ │ lowcode  │ 扩展服务     │
-│  │ (8085)   │ │ (8086)   │ │ (8087)   │ │ (8088)   │             │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘             │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────────────┐         │
+│  │ ticket   │ │monitor   │ │ plugin-registry(8096) /   │ 扩展服务 │
+│  │ (8086)   │ │ (8095)   │ │ tms(8073) / server(8099) │         │
+│  └──────────┘ └──────────┘ └──────────────────────────┘         │
+│  [归档] billing(8085) / feedback(8087→ticket) / lowcode(8088)    │
 └──────────────────────────────┬───────────────────────────────────┘
                                │ REST / gRPC / EventBus
 ┌──────────────────────────────▼───────────────────────────────────┐
@@ -234,7 +237,7 @@ Cargo.toml (Workspace Root)
 
 | 模式 | 说明 | 服务清单（数量） |
 |------|------|-----------------|
-| **A. 标准 build_application** | 无自定义 state，纯路由注册 | feedback, search, ticket, lowcode, communication, billing, master-data, hrm, finance, wms (10个) |
+| **A. 标准 build_application** | 无自定义 state，纯路由注册 | 实测（2026-10-02 ENTRY-05）：communication, search, ticket, master-data（历史 V203 清单中的 feedback/lowcode/billing 已归档/合并，勿照抄） |
 | **B. Stateful + build_application** | 自定义 AppState（DB/Service 实例），标准中间件链 | qms, ehs, pdm, lims, erp, crm, srm, scm, mes, pm, rd (11个) |
 | **C. Application 重建** | 自定义 router/port/name，WS 或后台任务，特殊中间件顺序 | analytics, unified-core, integration, gis, portal, ai, mobile (7个) |
 
@@ -512,8 +515,8 @@ const mutation = useMutation({
 权威来源：[config/ports.env](../../config/ports.env) → 同步到 [apps/web/src/config/ports.ts](../../apps/web/src/config/ports.ts)
 
 - **BACKEND_PORTS**: 后端服务端口（80xx）
-  - 核心虚拟服务：core/iam/doc/file/flow/monitor → 8000
-  - 扩展服务：search(8082), communication(8084), billing(8085), ticket(8086), feedback(8087), lowcode(8088), master-data(8090)
+  - 核心虚拟服务：core/iam/doc/file/flow → 8000（monitor 已独立为 8095）
+  - 扩展服务：search(8082), communication(8084), ticket(8086), master-data(8090), monitor(8095), plugin-registry(8096), tms(8073), server 单体(8099)；billing(8085)/feedback(8087)/lowcode(8088) 已归档/合并
   - 业务服务分段：8010-8053
 - **MF_PORTS**: Module Federation 前端 Dev Server 端口（3001-3019，共19个模块）
 
@@ -590,17 +593,21 @@ const mutation = useMutation({
 
 **⚠️ 硬约束**：Monitor 必须有公开的健康检查端点 `/api/monitor/health`（无需认证），返回服务健康状态数组。
 
-### 6.2 扩展服务（独立进程 8082-8090）
+### 6.2 扩展/平台服务（独立进程 8073-8099，以 services.yaml 为准）
 
 | 服务 | 端口 | 路径 | 职责 |
 |------|------|------|------|
 | **Search** | 8082 | `/api/search` | 全文搜索（跨模块统一搜索） |
 | **Communication** | 8084 | `/api/communication` | 邮件(SMTP)/站内通知/IM API |
-| **Billing** | 8085 | `/api/billing` | 计费/账单/发票/支付/退款/税务 |
-| **Ticket** | 8086 | `/api/ticket` | 工单/评论/SLA/工作流（工单 SLA Phase V16.1） |
-| **Feedback** | 8087 | `/api/feedback` | 用户反馈/SLA/批量处理 |
-| **Lowcode** | 8088 | `/api/lowcode` | 低代码平台（后端占位，功能待立项） |
+| **Ticket** | 8086 | `/api/ticket` | 工单/评论/SLA/工作流（原 feedback 已并入；工单 SLA Phase V16.1） |
+| **Monitor** | 8095 | `/api/monitor` | 系统监控（V68.1 自 core 迁出独立） |
+| **Plugin-Registry** | 8096 | `/api/plugins` | 插件注册表 |
+| **TMS** | 8073 | `/api/tms` | 运输管理 |
+| **Server（单体）** | 8099 | `/api/*` | 模块化单体统一入口（本地默认/nginx 单上游） |
 | **Master-Data** | 8090 | `/api/master-data` | 主数据管理（物料/客户/供应商编码治理） |
+| ~~Billing~~ | ~~8085~~ | — | 已归档（`svc/_archive/`，目录不存在） |
+| ~~Feedback~~ | ~~8087~~ | — | 已并入 ticket，目录不存在 |
+| ~~Lowcode~~ | ~~8088~~ | — | 已归档（空壳移除，目录不存在） |
 
 ### 6.3 经营管理服务（8010-8019）
 
@@ -999,7 +1006,7 @@ pnpm --filter topems-portal dev              # Host Shell:3000
 
 ### 10.2 新增后端服务步骤
 
-1. **复制模板**: 参考 `svc/feedback/`（A 模式，最简）或 `svc/ai/`（C 模式，完整）
+1. **复制模板**: 参考 `svc/ticket/`（标准 build_application 模式，最简；`svc/feedback/` 已并入 ticket，目录不存在）或 `svc/ai/`（C 模式，完整）
 2. **注册到 Workspace**: `Cargo.toml` 的 `[workspace.members]` 追加路径
 3. **端口分配**: 修改 `config/ports.env` + `config/services.yaml` + `apps/web/src/config/ports.ts`，运行 `scripts/sync-ports.sh`
 4. **ServiceConfig**: `main.rs` 中设置 name/port/env_var/api_prefix/search_path
@@ -1083,10 +1090,10 @@ pnpm --filter topems-portal dev              # Host Shell:3000
 | R2 | svc/communication | 104 | 64.31% | 52.85% | 20 | `validate_email` / `render_template` / `haversine_distance` |
 | R3 | svc/master-data | 131 | 35.91% | 24.89% | 16 | `calculate_quality_score` / `compare_versions` / `validate_field_type` |
 | R3 | svc/ticket | 64 | 62.52% | 65.49% | 10 | `is_sla_breached` / `sla_compliance_rate` / `derive_priority` |
-| R3 | svc/billing | 135 | 98.25% | 93.71% | 23 | `calculate_invoice_total` / `calculate_late_fee` / `calculate_proration` |
+| ~~R3 svc/billing~~（已归档，目录不存在，历史快照） | — | — | — | — | — | 历史覆盖率，勿照抄 |
 | R3 | svc/search | 73 | 88.69% | 87.88% | 11 | `calculate_relevance` / `highlight_term` / `extract_snippet` |
-| R4 | svc/lowcode | 57 | 90.34% | 56.92% | 10 | `evaluate_simple_expression` / `validate_json_schema` / `calculate_component_depth` |
-| R4 | svc/feedback | 72 | 97.59% | 92.39% | 12 | `classify_feedback_category` / `sentiment_from_rating` / `feedback_priority` |
+| ~~R4 svc/lowcode~~（已归档，目录不存在，历史快照） | — | — | — | — | — | 历史覆盖率，勿照抄 |
+| ~~R4 svc/feedback~~（已并入 ticket，目录不存在，历史快照） | — | — | — | — | — | 历史覆盖率，勿照抄 |
 | R4 | svc/plugin-registry | 138 | 81.40% | 68.16% | 19 | `parse_plugin_version` / `calculate_upgrade_path` / `has_circular_dependency` |
 | R4 | svc/pm | 119 | 12.11% | 19.06% | 19 | `calculate_budget_variance` / `calculate_cpi` / `calculate_spi` / `calculate_roi` |
 | **合计** | **14 crate** | **1439** | **全部 > 10%** ✅ | | **247** | |
@@ -1124,7 +1131,8 @@ cargo clippy --workspace -- -D warnings        # 严格检查（V60 已零警告
 # 单 crate 覆盖率报告
 LLVM_COV=/opt/homebrew/opt/llvm/bin/llvm-cov \
 LLVM_PROFDATA=/opt/homebrew/opt/llvm/bin/llvm-profdata \
-CARGO_INCREMENTAL=0 cargo llvm-cov --package topems-billing --lib --summary-only
+# 历史示例（topems-billing 已归档，包不存在；改用现存 crate 名）
+CARGO_INCREMENTAL=0 cargo llvm-cov --package topems-ticket --lib --summary-only
 
 # 全量覆盖率基线（fast mode: 24 core svc crate）
 bash scripts/ci/coverage-baseline.sh
@@ -1299,7 +1307,7 @@ Day 5  上午: V82-2 + V83-1 + V83-2 回归验证（全量 typecheck/test/pre-co
 | svc/config-center | etcd + unified-core 配置管理 | 功能整合（`svc/config-center` 目录已不存在） |
 | svc/shared | lib/topems_shared* | 功能下沉到共享 crate |
 | svc/user-service | unified-core/modules/iam/user | 2026-07 迁移（原端口 8060 与 BI 冲突） |
-| svc/monitor | unified-core/modules/monitor | 2026-07 迁移 · `/api/core/monitor/*` |
+| svc/monitor | （先迁入 core，V68.1 A2.1 重建为独立服务 8095） | `/api/monitor/*`，独立进程，不再是 core 虚拟模块 |
 | svc/doc | unified-core/modules/doc | 2026-07 迁移 · `/api/core/doc/*` |
 
 ### B2. 服务发现与配置收敛（对齐 D5 决策 2026-10-02）

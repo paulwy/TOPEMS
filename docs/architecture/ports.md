@@ -10,22 +10,22 @@
 
 | 段位区间 | 服务分组 | 说明 |
 |----------|----------|------|
-| 8000 | 核心平台服务 | unified-core（统一承载 IAM/Doc/Flow/File/Comm/Notification/Monitor） |
+| 8000 | 核心平台服务 | unified-core（IAM/Doc/Flow/File；Comm/Notification/Monitor 已独立迁出） |
 | 8010-8019 | 经营管理 | ERP / Finance / AI |
 | 8020-8029 | 协同办公 | HRM / PM / CRM |
 | 8030-8039 | 生产制造 | MES / PDM |
 | 8040-8049 | 供应链 | SCM / WMS / SRM |
 | 8050-8059 | 质量/研发 | QMS / LIMS / EHS / RD |
-| 8060-8069 | 数据分析与门户 | BI(Aanalytics) / Report / Portal |
-| 8070-8079 | 基础设施服务 | Mobile / GIS / Integration |
-| 8080-8089 | 平台服务 | Search / Comm / Billing / Ticket / Feedback / Lowcode |
-| 8090+ | 数据服务 | Master Data |
+| 8060-8069 | 数据分析与门户 | BI(analytics，含原 Report) / Portal |
+| 8070-8079 | 基础设施服务 | Mobile / GIS / Integration / TMS(8073) |
+| 8080-8089 | 平台服务 | Search / Communication / Ticket（Billing/Feedback/Lowcode 已归档） |
+| 8090+ | 数据/平台服务 | Master Data(8090) / Monitor(8095) / Plugin-Registry(8096) / Server 单体(8099) |
 
 ## 标准端口表（28 服务）
 
 | # | 服务名称 | 端口 | 环境变量 | API 前缀 | 分组 | main.rs 源 |
 |---|----------|------|----------|----------|------|------------|
-| 1 | unified-core | 8000 | `CORE_PORT` | `/api/iam/*`, `/api/doc/*`, `/api/flow/*`, `/api/file/*`, `/api/mail/*`, `/api/comm/*`, `/api/notification/*`, `/api/core/monitor/*` | 核心 | `svc/unified-core/src/main.rs` |
+| 1 | unified-core | 8000 | `CORE_PORT` | `/api/core/iam/*`, `/api/core/doc/*`, `/api/core/flow/*`, `/api/file/*` | 核心 | `svc/unified-core/src/main.rs` |
 | 2 | erp | 8010 | `ERP_PORT` | `/api/erp/*` | 经营管理 | `svc/erp/src/main.rs` |
 | 3 | finance | 8011 | `FINANCE_PORT` | `/api/finance/*` | 经营管理 | `svc/finance/src/main.rs` |
 | 4 | ai | 8013 | `AI_PORT` | `/api/ai/*` | 经营管理 | `svc/ai/src/main.rs` |
@@ -41,19 +41,22 @@
 | 14 | lims | 8051 | `LIMS_PORT` | `/api/lims/*` | 质量/研发 | `svc/lims/src/main.rs` |
 | 15 | ehs | 8052 | `EHS_PORT` | `/api/ehs/*` | 质量/研发 | `svc/ehs/src/main.rs` |
 | 16 | rd | 8053 | `RD_PORT` | `/api/rd/*` | 质量/研发 | `svc/rd/src/main.rs` |
-| 17 | analytics (bi) | 8060 | `BI_PORT` | `/api/bi/*` | 数据分析 | `svc/analytics/src/main.rs` |
-| 18 | report | 8061 | `REPORT_PORT` | `/api/report/*` | 数据分析 | 整合入 analytics |
-| 19 | portal | 8063 | `PORTAL_PORT` | `/api/portal/*` | 门户 | `svc/portal/src/main.rs` |
-| 20 | mobile | 8070 | `MOBILE_PORT` | `/api/mobile/*` | 基础设施 | `svc/mobile/src/main.rs` |
-| 21 | gis | 8071 | `GIS_PORT` | `/api/gis/*` | 基础设施 | `svc/gis/src/main.rs` |
-| 22 | integration | 8072 | `INTEGRATION_PORT` | `/api/integration/*` | 基础设施 | `svc/integration/src/main.rs` |
+| 17 | analytics (bi) | 8060 | `BI_PORT` | `/api/bi/*`（原 report 已并入，无独立 report 服务/8061） | 数据分析 | `svc/analytics/src/main.rs` |
+| 18 | portal | 8063 | `PORTAL_PORT` | `/api/portal/*`（legacy `/api/v1/portal`） | 门户 | `svc/portal/src/main.rs` |
+| 19 | mobile | 8070 | `MOBILE_PORT` | `/api/mobile/*`（legacy `/api/v1/mobile`） | 基础设施 | `svc/mobile/src/main.rs` |
+| 20 | gis | 8071 | `GIS_PORT` | `/api/gis/*` | 基础设施 | `svc/gis/src/main.rs` |
+| 21 | integration | 8072 | `INTEGRATION_PORT` | `/api/integration/*`（legacy `/api/v1/integration`） | 基础设施 | `svc/integration/src/main.rs` |
+| 22 | tms | 8073 | `TMS_PORT` | `/api/tms/*` | 物流 | `svc/tms/src/main.rs` |
 | 23 | search | 8082 | `SEARCH_PORT` | `/api/search/*` | 平台服务 | `svc/search/src/main.rs` |
-| 24 | communication | 8084 | `COMM_PORT` | `/api/comm/*` | 平台服务 | `svc/communication/src/main.rs` |
-| 25 | billing | 8085 | `BILLING_PORT` | `/api/billing/*` | 平台服务 | `svc/billing/src/main.rs` |
-| 26 | ticket | 8086 | `TICKET_PORT` | `/api/ticket/*` | 平台服务 | `svc/ticket/src/main.rs` |
-| 27 | feedback | 8087 | `FEEDBACK_PORT` | `/api/feedback/*` | 平台服务 | `svc/feedback/src/main.rs` |
-| 28 | lowcode | 8088 | `LOWCODE_PORT` | `/api/lowcode/*` | 平台服务 | `svc/lowcode/src/main.rs` |
-| 29 | master-data | 8090 | `MASTER_DATA_PORT` | `/api/master-data/*` | 数据服务 | `svc/master-data/src/main.rs` |
+| 24 | communication | 8084 | `COMM_PORT` | `/api/communication/*`（legacy `/api/core/comm`、`/api/core/notification`） | 平台服务 | `svc/communication/src/main.rs` |
+| 25 | ticket | 8086 | `TICKET_PORT` | `/api/ticket/*`（原 feedback 已并入） | 平台服务 | `svc/ticket/src/main.rs` |
+| 26 | monitor | 8095 | `MONITOR_PORT` | `/api/monitor/*`（V68.1 自 core 迁出独立） | 核心 | `svc/monitor/src/main.rs` |
+| 27 | plugin-registry | 8096 | `PLUGIN_REGISTRY_PORT` | `/api/plugins/*` | 核心 | `svc/plugin-registry/src/main.rs` |
+| 28 | master-data | 8090 | `MASTER_DATA_PORT` | `/api/master-data/*` | 数据服务 | `svc/master-data/src/main.rs` |
+| 29 | server（模块化单体） | 8099 | `SERVER_PORT` | `/api/*`（本地默认统一入口，nginx 单上游） | 核心 | `svc/server/src/main.rs` |
+| — | ~~billing~~ | 8085 | `BILLING_PORT`（停用） | — | 已归档（`svc/_archive/`，无此目录） | — |
+| — | ~~feedback~~ | 8087 | `FEEDBACK_PORT`（停用） | — | 已并入 ticket（无此目录） | — |
+| — | ~~lowcode~~ | 8088 | `LOWCODE_PORT`（已注释） | — | 已归档（空壳移除，无此目录） | — |
 
 ## 抽查验证记录
 
