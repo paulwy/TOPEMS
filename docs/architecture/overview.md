@@ -203,7 +203,7 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 | integration | 8072 | Infra | 集成服务（Webhook/Scheduler） | /api/integration/ | ✅ 已实现 | **C**（后台调度器） |
 | **主数据 & 扩展服务 (8082-8090)** | | | | | | |
 | search | 8082 | Extension | 全文搜索服务 | /api/search/ | ✅ 已实现 | **A** |
-| communication | 8084 | Extension | 通讯服务（邮件/通知/IM） | /api/comm/ | ✅ 已实现 | **A** |
+| communication | 8084 | Extension | 通讯服务（邮件/通知/IM） | /api/communication/（legacy /api/core/comm） | ✅ 已实现 | **A** |
 | ~~billing~~ | 8085 | Extension | 计费服务（已归档，`svc/_archive/`，代码无此服务） | — | 📦 已归档 | — |
 | ticket | 8086 | Extension | 工单服务（原 feedback 反馈已并入 ticket） | /api/ticket/ | ✅ 已实现 | **A** |
 | ~~feedback~~ | 8087 | Extension | 反馈服务（已并入 ticket，目录不存在） | — | 📦 已合并 | — |

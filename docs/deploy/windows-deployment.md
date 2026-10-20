@@ -123,8 +123,8 @@ sudo bash scripts/deploy/rollback.sh   # PGPORT 默认 5432，直连 WSL 内 PG
 # 查询 WSL IP
 wsl -d Ubuntu -- hostname -I   # 例 172.23.x.x
 
-# Windows 侧端口转发（API 端口假设 8080；按实际服务端口调整）
-netsh interface portproxy add v4tov4 listenport=8080 listenaddress=0.0.0.0 connectport=8080 connectaddress=<WSL_IP>
+# Windows 侧端口转发（示例取本地单体入口 8099；按实际服务端口调整，8080 仅 docker/saas 网关）
+netsh interface portproxy add v4tov4 listenport=8099 listenaddress=0.0.0.0 connectport=8099 connectaddress=<WSL_IP>
 netsh interface portproxy show all
 ```
 
