@@ -51,7 +51,7 @@ const priorityOptions = Object.entries(PRIORITY_LABELS).map(([value, label]) => 
   label,
 }));
 
-const workflowApprovalSchema: EntitySchema = {
+export const workflowApprovalSchema: EntitySchema = {
   entity: 'workflow-approval',
   title: i18n.t('shared.approval.k7'),
   description: i18n.t('shared.approval.k8'),

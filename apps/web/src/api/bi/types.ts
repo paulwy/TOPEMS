@@ -292,20 +292,6 @@ export interface ReportSchedule {
   updated_at: string;
 }
 
-interface ReportExportJob {
-  id: string;
-  report_id: string;
-  format: 'pdf' | 'excel' | 'csv' | 'word';
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  file_url?: string;
-  file_name?: string;
-  file_size?: number;
-  error_message?: string;
-  created_by?: string;
-  created_at: string;
-  completed_at?: string;
-}
-
 export interface DrillDownConfig {
   enabled: boolean;
   levels: Array<{

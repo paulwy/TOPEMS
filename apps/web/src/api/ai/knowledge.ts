@@ -39,18 +39,6 @@ export interface KnowledgeDocument {
   updated_at: string;
 }
 
-interface KnowledgeChunk {
-  id: string;
-  tenant_id: string;
-  document_id: string;
-  kb_id: string;
-  chunk_index: number;
-  content: string;
-  token_count?: number | null;
-  metadata: Record<string, unknown>;
-  created_at: string;
-}
-
 interface QaHistory {
   id: string;
   tenant_id: string;

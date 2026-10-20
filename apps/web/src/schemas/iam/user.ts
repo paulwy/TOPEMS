@@ -30,7 +30,7 @@ async function loadRoles(): Promise<{ value: string; label: string }[]> {
 /**
  * 用户管理 Schema
  */
-const userSchema: EntitySchema = {
+export const userSchema: EntitySchema = {
   entity: 'user',
   title: i18n.t('shared.user.k1'),
   description: i18n.t('shared.user.k2'),

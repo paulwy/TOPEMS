@@ -378,13 +378,6 @@ export interface PrintBarcodeRequest {
   template?: string;
 }
 
-interface ScanBarcodeResult {
-  barcode: string;
-  sample?: Sample;
-  lifecycle_events?: LifecycleEvent[];
-  traceability?: SampleTraceability;
-}
-
 /** 对齐后端 POST /barcodes/scan 返回的 BarcodeScanRecord */
 export interface BarcodeScanRecord {
   id: string;

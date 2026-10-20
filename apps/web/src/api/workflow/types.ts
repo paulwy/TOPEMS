@@ -661,21 +661,6 @@ export interface WorkflowCategory {
 
 // ==================== 流程实例扩展类型 ====================
 
-interface WorkflowInstanceDetail {
-  instance: WorkflowInstance;
-  workflow?: Workflow;
-  tasks?: ApprovalTask[];
-  history?: WorkflowHistory[];
-  form_data?: Record<string, unknown>;
-  current_node_info?: {
-    node_id: string;
-    node_name: string;
-    assignees?: { id: string; name: string }[];
-    status: string;
-    arrived_at?: string;
-  };
-}
-
 // ==================== 委托/代理相关类型 ====================
 
 export interface WorkflowDelegate {
@@ -726,16 +711,3 @@ export interface WorkflowRule {
 }
 
 // ==================== 流程变量相关类型 ====================
-
-interface WorkflowVariable {
-  id: string;
-  workflow_instance_id: string;
-  key: string;
-  value: unknown;
-  value_type: 'string' | 'number' | 'boolean' | 'object' | 'array' | 'date';
-  scope: 'global' | 'local';
-  task_id?: string;
-  node_id?: string;
-  created_at: string;
-  updated_at: string;
-}

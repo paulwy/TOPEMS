@@ -169,26 +169,6 @@ export interface VoucherItemRequest {
   contract_id?: string;
 }
 
-interface CreateFinancialVoucherRequest {
-  voucher_number: string;
-  voucher_date: string;
-  period: string;
-  attachment_count?: number;
-  summary?: string;
-  maker_id?: string;
-  maker_name?: string;
-  project_id?: string;
-  contract_id?: string;
-  items: VoucherItemRequest[];
-}
-
-interface VoucherImportResult {
-  success_count: number;
-  failed_count: number;
-  errors: string[];
-  imported_vouchers: FinancialVoucher[];
-}
-
 export interface BalanceItem {
   code: string;
   name: string;
@@ -380,31 +360,6 @@ export interface BankAccount {
   status: string;
   created_at: string;
   updated_at: string;
-}
-
-interface BankTransaction {
-  id: string;
-  account_id: string;
-  transaction_date: string;
-  transaction_type: string;
-  amount: number;
-  balance_after: number;
-  description?: string;
-  counterparty_account?: string;
-  counterparty_name?: string;
-  voucher_id?: string;
-  created_at: string;
-}
-
-interface CreateBankTransactionRequest {
-  account_id: string;
-  transaction_date: string;
-  transaction_type: string;
-  amount: number;
-  description?: string;
-  counterparty_account?: string;
-  counterparty_name?: string;
-  voucher_id?: string;
 }
 
 export interface Announcement {

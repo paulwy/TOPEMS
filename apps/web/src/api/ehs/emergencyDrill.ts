@@ -135,19 +135,6 @@ interface CreateDrillPlanRequest {
   related_plan_id?: string;
 }
 
-interface UpdateDrillPlanRequest {
-  title?: string;
-  description?: string;
-  drill_type?: string;
-  plan_date?: string;
-  location?: string;
-  participants?: number;
-  estimated_duration?: number;
-  content?: string;
-  organizer?: string;
-  status?: string;
-}
-
 export interface CreateDrillRecordRequest {
   plan_id?: string;
   title: string;

@@ -7,7 +7,6 @@ export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type RiskCategory =
   'credit' | 'market' | 'liquidity' | 'operational' | 'compliance' | 'fraud';
 export type Regulation = 'sox' | 'gdpr' | 'pci_dss' | 'hipaa' | 'internal';
-type ReviewSeverity = 'low' | 'medium' | 'high' | 'critical';
 export interface RiskIndicator {
   id: string;
   category: string;

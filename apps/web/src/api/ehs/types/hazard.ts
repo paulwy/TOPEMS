@@ -107,13 +107,6 @@ export interface Risk {
   updated_at: string;
 }
 
-interface RiskLevelMatrix {
-  likelihood: 'high' | 'medium' | 'low';
-  severity: 'high' | 'medium' | 'low';
-  risklevel: 'high' | 'medium' | 'low' | 'extreme';
-  risk_score: number;
-}
-
 export interface RiskControlMeasure {
   id: string;
   risk_id: string;

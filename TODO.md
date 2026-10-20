@@ -370,6 +370,21 @@
 - **登记保留（不删）**：`schemas/iam/role.ts`、`schemas/iam/user.ts`、`schemas/workflow/approval.ts` 三份未挂载的完整实体 CRUD 配置资产，删除需重写，待对应页面启用时接入，warning 保留。
 - **门禁**：`tsc --noEmit` exit 0；改动文件定点 eslint 0 error；全量 eslint unused-vars 62→55、errors=0。
 
+### P3-3 第三批 · 孤立局部类型删除 + 组件剥离 props 重命名 + schema 改 export（2026-10-20）✅ 收尾
+
+> 续前两批，把剩余 unused-vars 清到 0。孤立局部类型按花括号平衡脚本删除，活类型/export 契约不动。
+
+- **净降**：unused-vars 55→**0**（本批净降 55），errors=0；三批累计 **86→0**。剩余 423 条 warning 全部为 `no-explicit-any`（另一类型债，不在 P3-3 范围）。
+- **删除孤立局部 interface/type（全仓+文件内零引用，非 export）**：
+  - `pm/types.ts` 12 个（ProjectExpense/ProjectApproval/BenefitAnalysis/ContractTemplate/RiskEvent/Defect/AcceptancePlan/AcceptanceItem/AcceptanceRecord/SettlementItem/SettlementAdjustment/ProjectDocument）；
+  - `qms/types.ts` 12 个（AuditPlan/CreateAuditPlan* /AuditTask/AuditFinding/Apqp* 系列）；
+  - `mes/types.ts` 7 个（ApprovalDecisionRequest/Oee/Delivery/QualityPareto/Mtbf/EnergyCost/CapacityUtilization）；
+  - `erp/types.ts` 4 个（CreateFinancialVoucherRequest/VoucherImportResult/BankTransaction/CreateBankTransactionRequest）；
+  - 单点：`ai/knowledge.ts` KnowledgeChunk、`bi/types.ts` ReportExportJob、`ehs/emergencyDrill.ts` UpdateDrillPlanRequest、`ehs/types/hazard.ts` RiskLevelMatrix、`lims/types.ts` ScanBarcodeResult、`workflow/types.ts` WorkflowInstanceDetail/WorkflowVariable、`finance/riskV54.ts` ReviewSeverity（与导出 RiskLevel 重复的单行 type）。
+- **组件剥离层 props 重命名解构（保留阻止透传 DOM 行为，`_` 前缀豁免）**：`KanbanPageTemplate` 6 个（onCardDelete/onCardEdit/onCardArchive/filterConfig/filters/onFilterChange）、`DetailPageTemplate` onDownload、`WizardPageTemplate` showStepNumbers、`Grid` item。
+- **3 份未挂载实体 schema 改 `export` 保留资产**：`schemas/iam/role.ts` roleSchema、`schemas/iam/user.ts` userSchema、`schemas/workflow/approval.ts` workflowApprovalSchema（经各自 index `export *` 导出，待对应页面启用时接入，不删）。
+- **门禁**：`tsc --noEmit` exit 0；改动文件定点 eslint 0 error；全量 eslint unused-vars=0、errors=0。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

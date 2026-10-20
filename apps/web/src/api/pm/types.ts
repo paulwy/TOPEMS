@@ -128,31 +128,6 @@ export interface ProjectResource {
   updated_at: string;
 }
 
-interface ProjectExpense {
-  id: string;
-  project_id: string;
-  phase_id?: string;
-  expense_type: string;
-  category?: string;
-  subcategory?: string;
-  description?: string;
-  amount: number;
-  currency?: string;
-  incurred_date: string;
-  reported_date?: string;
-  paid_date?: string;
-  budgetitem_id?: string;
-  resource_id?: string;
-  expense_ref_id?: string;
-  status?: string;
-  approval_workflow_id?: string;
-  attachment_ids?: string[];
-  created_by?: string;
-  approved_by?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface ProjectBenefit {
   id: string;
   project_id: string;
@@ -174,19 +149,6 @@ export interface ProjectBenefit {
   roi: number;
   notes?: string;
   created_by?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ProjectApproval {
-  id: string;
-  project_id: string;
-  status: string;
-  current_step: number;
-  total_steps: number;
-  approvals: Record<string, unknown>;
-  comments?: string;
-  created_by: string;
   created_at: string;
   updated_at: string;
 }
@@ -245,38 +207,6 @@ export interface ProjectGanttResponse {
   phases: GanttPhase[];
   milestones: GanttMilestone[];
   resources: GanttResource[];
-}
-
-interface BenefitAnalysis {
-  summary: {
-    total_planned_cost: number;
-    total_actual_cost: number;
-    total_planned_value: number;
-    total_earned_value: number;
-    period_count: number;
-  };
-  eva: {
-    cpi: number;
-    spi: number;
-    cv: number;
-    sv: number;
-    eac: number;
-    etc: number;
-    roi: number;
-  };
-  trend: {
-    cpi_status: string;
-    spi_status: string;
-    cost_status: string;
-  };
-  details: Array<{
-    period_type: string;
-    period_date: string;
-    cpi: number;
-    spi: number;
-    cv: number;
-    sv: number;
-  }>;
 }
 
 export interface ApprovalRequest {
@@ -340,18 +270,6 @@ export interface ContractPaymentSchedule {
   updated_at: string;
 }
 
-interface ContractTemplate {
-  id: string;
-  name: string;
-  contract_type: string;
-  description?: string;
-  content: Record<string, unknown>;
-  isactive: boolean;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface Budget {
   id: string;
   project_id: string;
@@ -409,16 +327,6 @@ interface ProjectRisk {
   updated_at: string;
 }
 
-interface RiskEvent {
-  id: string;
-  risk_id: string;
-  event_type: string;
-  event_description?: string;
-  occurred_at: string;
-  reported_by?: string;
-  created_at: string;
-}
-
 export interface QualityCheck {
   id: string;
   project_id: string;
@@ -441,74 +349,6 @@ export interface QualityCheck {
   updated_at: string;
 }
 
-interface Defect {
-  id: string;
-  project_id: string;
-  check_id?: string;
-  defect_code?: string;
-  defect_name: string;
-  defect_description?: string;
-  severity: string;
-  priority: string;
-  status?: string;
-  assignee?: string;
-  due_date?: string;
-  resolution?: string;
-  resolved_at?: string;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface AcceptancePlan {
-  id: string;
-  project_id: string;
-  plan_code?: string;
-  plan_name: string;
-  acceptance_type: string;
-  milestone_id?: string;
-  phase_id?: string;
-  acceptance_criteria?: string;
-  expected_date?: string;
-  status?: string;
-  participants?: Record<string, unknown>;
-  documents_required?: Record<string, unknown>;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface AcceptanceItem {
-  id: string;
-  plan_id: string;
-  item_code?: string;
-  item_name: string;
-  item_description?: string;
-  required_standard?: string;
-  actual_result?: string;
-  is_passed?: boolean;
-  comments?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface AcceptanceRecord {
-  id: string;
-  project_id: string;
-  plan_id: string;
-  acceptance_date: string;
-  status: string;
-  conclusion?: string;
-  score?: number;
-  accepted_by?: string;
-  attendees?: Record<string, unknown>;
-  findings?: Record<string, unknown>;
-  recommendations?: Record<string, unknown>;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface Settlement {
   id: string;
   project_id: string;
@@ -526,54 +366,6 @@ export interface Settlement {
   created_by?: string;
   approved_by?: string;
   approved_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface SettlementItem {
-  id: string;
-  settlement_id: string;
-  item_code?: string;
-  item_name: string;
-  category?: string;
-  budget_amount: number;
-  actual_amount: number;
-  variance_amount: number;
-  variance_percent?: number;
-  description?: string;
-  expense_ref_id?: string;
-  contract_ref_id?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface SettlementAdjustment {
-  id: string;
-  settlement_id: string;
-  adjustment_type: string;
-  adjustment_code?: string;
-  description?: string;
-  amount: number;
-  reason?: string;
-  supporting_documents?: Record<string, unknown>;
-  created_by?: string;
-  created_at: string;
-}
-
-interface ProjectDocument {
-  id: string;
-  project_id: string;
-  document_code?: string;
-  document_name: string;
-  document_type: string;
-  file_path: string;
-  filesize: number;
-  file_hash?: string;
-  version: number;
-  status?: string;
-  description?: string;
-  tags?: string[];
-  created_by?: string;
   created_at: string;
   updated_at: string;
 }
