@@ -84,6 +84,29 @@ describe('HRM Setup API Tests', () => {
       expect(apiClient.hrm.post).toHaveBeenCalledWith('/setup/admin', data);
     });
 
+    it('setupAdminUser should pass through IAM username and user_id (方案B 回绑)', async () => {
+      const { hrmSetupApi } = await import('../hrm/hrmSetup');
+      const { apiClient } = await import('../client');
+      (apiClient.hrm.post as vi.Mock).mockResolvedValue({ data: {} });
+      const data = {
+        name: '管理员',
+        employee_number: 'EMP-001',
+        username: 'admin_root',
+        user_id: 'iam-user-123',
+        email: 'admin@example.com',
+        password: 'password123',
+      };
+      await hrmSetupApi.setupAdminUser(data);
+      expect(apiClient.hrm.post).toHaveBeenCalledWith('/setup/admin', {
+        name: '管理员',
+        employee_number: 'EMP-001',
+        username: 'admin_root',
+        user_id: 'iam-user-123',
+        email: 'admin@example.com',
+        password: 'password123',
+      });
+    });
+
     it('completeInitialization should call POST /setup/complete', async () => {
       const { hrmSetupApi } = await import('../hrm/hrmSetup');
       const { apiClient } = await import('../client');

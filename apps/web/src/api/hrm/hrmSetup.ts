@@ -1,21 +1,25 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
-interface StepStatusInfo {
+// ============ GET /setup/progress ============
+
+export interface StepStatusInfo {
   name: string;
   order: number;
   status: string;
   is_current: boolean;
 }
 
-interface InitProgressResponse {
+export interface InitProgressResponse {
   is_completed: boolean;
   current_step: number;
   steps: StepStatusInfo[];
   org_id?: string | null;
 }
 
-interface CompanyInfoRequest {
+// ============ POST /setup/company ============
+
+export interface CompanyInfoRequest {
   name: string;
   short_name?: string;
   registration_number?: string;
@@ -27,12 +31,14 @@ interface CompanyInfoRequest {
   description?: string;
 }
 
-interface CompanyInfoResponse {
+export interface CompanyInfoResponse {
   org_id: string;
   name: string;
 }
 
-interface DepartmentBatchItem {
+// ============ POST /setup/departments ============
+
+export interface DepartmentBatchItem {
   name: string;
   code?: string;
   parent_id?: string;
@@ -40,22 +46,24 @@ interface DepartmentBatchItem {
   description?: string;
 }
 
-interface DepartmentsBatchRequest {
+export interface DepartmentsBatchRequest {
   departments: DepartmentBatchItem[];
 }
 
-interface DepartmentResult {
+export interface DepartmentResult {
   id: string;
   name: string;
   code?: string;
 }
 
-interface DepartmentsBatchResponse {
+export interface DepartmentsBatchResponse {
   created_count: number;
   departments: DepartmentResult[];
 }
 
-interface PositionBatchItem {
+// ============ POST /setup/positions ============
+
+export interface PositionBatchItem {
   name: string;
   code?: string;
   department_id?: string;
@@ -63,24 +71,30 @@ interface PositionBatchItem {
   description?: string;
 }
 
-interface PositionsBatchRequest {
+export interface PositionsBatchRequest {
   positions: PositionBatchItem[];
 }
 
-interface PositionResult {
+export interface PositionResult {
   id: string;
   name: string;
   code?: string;
 }
 
-interface PositionsBatchResponse {
+export interface PositionsBatchResponse {
   created_count: number;
   positions: PositionResult[];
 }
 
-interface AdminUserRequest {
+// ============ POST /setup/admin（方案B：先经 IAM 建号，再回绑 user_id）============
+
+export interface AdminUserRequest {
   name: string;
   employee_number: string;
+  /** 可登录用户名（可选）。缺省后端回退 employee_number；3-20 位字母/数字/下划线。 */
+  username?: string;
+  /** IAM 建号成功后返回的 user_id，用于把员工档案绑定到既有 IAM 账号。 */
+  user_id?: string;
   gender?: string;
   birth_date?: string;
   id_card_number?: string;
@@ -92,21 +106,27 @@ interface AdminUserRequest {
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
   address?: string;
+  /** 后端契约要求必传（hrm 不落哈希，仅随建档记录）。 */
   password: string;
 }
 
-interface AdminUserResponse {
+export interface AdminUserResponse {
   employee_id: string;
   employee_number: string;
   name: string;
+  username?: string;
+  user_id?: string | null;
+  bound?: boolean;
   message: string;
 }
 
-interface CompleteInitRequest {
+// ============ POST /setup/complete ============
+
+export interface CompleteInitRequest {
   confirm: boolean;
 }
 
-interface CompleteInitResponse {
+export interface CompleteInitResponse {
   is_completed: boolean;
   completed_at: string;
 }

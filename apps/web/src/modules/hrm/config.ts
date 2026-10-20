@@ -7,6 +7,7 @@ import i18n from '@/i18n';
 // 组件中应引用 HRM_PATHS.xxx，而非硬编码字符串
 export const HRM_PATHS = {
   root: '/hrm',
+  setup: '/hrm/setup',
   dashboard: '/hrm/dashboard',
   employees: '/hrm/employees',
   employeeCreate: '/hrm/employees/create',
@@ -553,6 +554,10 @@ interface TrainingPlanPageProps {
 
   redirectOnSave?: string;
 }
+interface HrmSetupWizardPageProps {
+  /** 初始化向导为自驱动页面，无外部注入 Props */
+}
+
 // ---- 路由配置（供路由系统使用） ----
 export const hrmModuleConfig: RouteModuleConfig = {
   code: 'hrm',
@@ -567,6 +572,22 @@ export const hrmModuleConfig: RouteModuleConfig = {
   description: i18n.t('hrm.nav.module_name_desc'),
   permission: 'hrm:module:read',
   routes: [
+    {
+      path: HRM_PATHS.setup,
+      element: lazyWithRetry(
+        () => import('@/pages/hrm/setup/HrmSetupWizardPage'),
+        'HrmSetupWizardPage'
+      ),
+      module: 'hrm',
+      code: 'hrm-setup',
+      title: i18n.t('hrm.nav.hrm-setup'),
+      titleKey: 'hrm.nav.hrm-setup',
+      template: 'wizard',
+      group: 'setting',
+      // 初始化向导是建号前的引导流程：不挂业务权限码/模块门，仅要求已登录，
+      // 避免新库尚无 hrm 权限时页面被 ModuleGate 拦截不可达
+      requiredPermissions: [],
+    } as RouteConfigV2<HrmSetupWizardPageProps>,
     {
       path: HRM_PATHS.dashboard,
       element: lazyWithRetry(() => import('@/pages/hrm/DashboardPage'), 'HrmDashboardPage'),
@@ -1082,6 +1103,17 @@ export const hrmNavConfig: ModuleNavConfig = {
       order: 2,
       group: 'analytics',
       description: i18n.t('hrm.nav.hrm-overview_desc'),
+    },
+    {
+      code: 'hrm-setup',
+      label: i18n.t('hrm.nav.hrm-setup'),
+      labelKey: 'hrm.nav.hrm-setup',
+      icon: 'Settings',
+      path: HRM_PATHS.setup,
+      order: 0,
+      group: 'setting',
+      showInTabs: false,
+      description: i18n.t('hrm.nav.hrm-setup_desc'),
     },
     {
       code: 'hrm-attendance-rule',
