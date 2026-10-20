@@ -154,6 +154,20 @@ pub async fn get_init_progress(
 
     match steps {
         Ok(steps) => {
+            // P0-2：新库/未播种空集按「未开始」处理——禁止空表 all()=true 误判完成，
+            // 禁止 current_step 兜底 5；返回空 steps、current_step=1、未完成。
+            if steps.is_empty() {
+                return Json(ApiResponse::success(
+                    InitProgressResponse {
+                        is_completed: false,
+                        current_step: 1,
+                        steps: vec![],
+                        org_id: None,
+                    },
+                    "获取初始化进度成功",
+                ));
+            }
+
             let is_completed = steps.iter().all(|s| s.status == "completed");
             let current_step = steps
                 .iter()
@@ -236,24 +250,37 @@ pub async fn setup_company_info(
         )));
     }
 
-    // 更新公司信息
+    // P0-2：无则 INSERT、有则 UPDATE 的 upsert（新库 companies 为空，原 UPDATE
+    // fetch_one 失败会 500）。列名以 live DDL 为准：联系邮箱是 contact_email，
+    // 不是旧 SQL 里的 email（该列不存在）。可选字段沿用 COALESCE 语义：
+    // 仅在本次传入时覆盖，未传保留原值。
     let result = sqlx::query_as::<_, Company>(only_own_schema_query!(
         "hrm",
         r#"
-        UPDATE hrm.companies SET
-            name = $2,
-            short_name = COALESCE($3, short_name),
-            registration_number = COALESCE($4, registration_number),
-            tax_number = COALESCE($5, tax_number),
-            address = COALESCE($6, address),
-            contact_phone = COALESCE($7, contact_phone),
-            email = COALESCE($8, email),
-            website = COALESCE($9, website),
-            description = COALESCE($10, description),
-            updated_at = $11
-        WHERE id = $1 AND ($12::uuid IS NULL OR tenant_id = $12::uuid)
-        RETURNING id, tenant_id, name, short_name, registration_number, tax_number, address,
-                   contact_phone, email, website, description, status, created_at, updated_at
+        INSERT INTO hrm.companies (
+            id, tenant_id, organization_id, name, short_name, registration_number,
+            tax_number, address, contact_phone, contact_email, website, description,
+            status, created_at, updated_at
+        ) VALUES (
+            $1,
+            COALESCE($12::uuid, '00000000-0000-0000-0000-000000000001'::uuid),
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+            'active', $11, $11
+        )
+        ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            short_name = COALESCE(EXCLUDED.short_name, companies.short_name),
+            registration_number = COALESCE(EXCLUDED.registration_number, companies.registration_number),
+            tax_number = COALESCE(EXCLUDED.tax_number, companies.tax_number),
+            address = COALESCE(EXCLUDED.address, companies.address),
+            contact_phone = COALESCE(EXCLUDED.contact_phone, companies.contact_phone),
+            contact_email = COALESCE(EXCLUDED.contact_email, companies.contact_email),
+            website = COALESCE(EXCLUDED.website, companies.website),
+            description = COALESCE(EXCLUDED.description, companies.description),
+            updated_at = EXCLUDED.updated_at
+        RETURNING id, tenant_id, organization_id, name, short_name, registration_number,
+                  tax_number, address, contact_phone, contact_email, website, description,
+                  status, created_at, updated_at
         "#
     ))
     .bind(org_id)
@@ -311,13 +338,13 @@ pub async fn setup_company_info(
             }
             Json(ApiResponse::success(
                 serde_json::json!({ "org_id": company.id, "name": company.name }),
-                "公司信息更新成功",
+                "公司信息保存成功",
             ))
         }
         Err(e) => {
-            tracing::error!("更新公司信息失败: {}", e);
+            tracing::error!("保存公司信息失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(
-                "更新公司信息失败".to_string(),
+                "保存公司信息失败".to_string(),
             )))
         }
     }
@@ -328,13 +355,14 @@ pub async fn setup_company_info(
 pub struct Company {
     pub id: Uuid,
     pub tenant_id: Uuid,
+    pub organization_id: Option<Uuid>,
     pub name: String,
     pub short_name: Option<String>,
     pub registration_number: Option<String>,
     pub tax_number: Option<String>,
     pub address: Option<String>,
     pub contact_phone: Option<String>,
-    pub email: Option<String>,
+    pub contact_email: Option<String>,
     pub website: Option<String>,
     pub description: Option<String>,
     pub status: String,
