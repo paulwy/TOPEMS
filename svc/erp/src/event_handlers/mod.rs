@@ -372,7 +372,7 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
-        let order: Option<(Option<f64>, Option<uuid::Uuid>, Option<String>, Option<chrono::DateTime<chrono::Utc>>)> = sqlx::query_as(
+        let order: Option<(Option<rust_decimal::Decimal>, Option<uuid::Uuid>, Option<String>, Option<chrono::DateTime<chrono::Utc>>)> = sqlx::query_as(
             r#"SELECT total_amount, customer_id, customer_name, order_date FROM erp.sales_orders WHERE id = $1"#,
         )
         .bind(payload.order_id)
@@ -381,7 +381,7 @@ impl ErpEventHandlers {
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询销售订单失败: {}", e)))?;
 
         if let Some((amount, customer_id, customer_name, order_date)) = order {
-            let amount = amount.unwrap_or(0.0);
+            let amount = amount.unwrap_or(rust_decimal::Decimal::ZERO);
             let receivable_no = format!("REC-{}", payload.order_no);
             let now = chrono::Utc::now();
             let period = order_date
