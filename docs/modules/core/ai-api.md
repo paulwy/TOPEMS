@@ -6,7 +6,9 @@ TOPEMS DSH（Data-Driven Service Hub）AI 中间层提供统一的 AI 能力接�
 
 ## 基础信息
 
-- **Base URL**: `http://localhost:8080/api/ai`
+- **Base URL（本地独立 AI 服务）**: `http://localhost:8013/api/ai`
+- **Base URL（模块化单体）**: `http://localhost:8099/api/ai`
+- **8080 说明**: `:8080` 仅为 docker/saas Traefik 网关（`config/services.yaml:18`），非本地直连端口，本地勿用 8080。
 - **认证方式**: Bearer Token / API Key
 - **响应格式**: JSON
 
@@ -372,22 +374,22 @@ GET /dsh/agent/performance/tools/{tool_name}
 
 ```bash
 # 同步执行
-curl -X POST http://localhost:8080/api/ai/dsh/agent/execute \
+curl -X POST http://localhost:8013/api/ai/dsh/agent/execute \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{"query": "搜索客户信息"}'
 
 # 流式执行
-curl -X POST http://localhost:8080/api/ai/dsh/agent/stream \
+curl -X POST http://localhost:8013/api/ai/dsh/agent/stream \
   -H "Content-Type: application/json" \
   -H "Accept: text/event-stream" \
   -d '{"query": "搜索客户信息"}'
 
 # 获取性能指标
-curl http://localhost:8080/api/ai/dsh/agent/performance/metrics
+curl http://localhost:8013/api/ai/dsh/agent/performance/metrics
 
 # 导出 Prometheus 指标
-curl http://localhost:8080/api/ai/dsh/agent/performance/prometheus
+curl http://localhost:8013/api/ai/dsh/agent/performance/prometheus
 ```
 
 ### Python 示例
@@ -397,7 +399,7 @@ import requests
 
 # 同步执行
 response = requests.post(
-    "http://localhost:8080/api/ai/dsh/agent/execute",
+    "http://localhost:8013/api/ai/dsh/agent/execute",
     json={"query": "搜索客户信息", "session_id": "my-session"},
     headers={"Authorization": "Bearer YOUR_TOKEN"}
 )
@@ -407,7 +409,7 @@ print(result["data"]["answer"])
 # 流式执行
 import json
 response = requests.post(
-    "http://localhost:8080/api/ai/dsh/agent/stream",
+    "http://localhost:8013/api/ai/dsh/agent/stream",
     json={"query": "搜索客户信息"},
     stream=True
 )

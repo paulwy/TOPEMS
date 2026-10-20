@@ -154,42 +154,45 @@ interface AnalysisResult {
 
 ## 3. API接口文档
 
-### 3.1 仪表板接口
+> 口径校准（2026-10-20）：analytics 服务前缀为 `/api/bi`（无 `/api/v1/bi` 业务前缀，legacy `/api/v1/bi` 仅别名）；下表以 `svc/analytics/src/routes.rs` / `main.rs` 实测为准，未挂载接口标注 RC4a gap。
+
+### 3.1 仪表板接口（已挂载，单数 `/dashboard`）
 
 | 接口 | 方法 | 路径 |
 |------|------|------|
-| 获取仪表板列表 | GET | `/api/v1/bi/dashboards` |
-| 创建仪表板 | POST | `/api/v1/bi/dashboards` |
-| 获取仪表板详情 | GET | `/api/v1/bi/dashboards/:id` |
-| 更新仪表板 | PUT | `/api/v1/bi/dashboards/:id` |
+| 获取仪表板列表 | GET | `/api/bi/dashboard` |
+| 创建仪表板 | POST | `/api/bi/dashboard` |
+| 获取仪表板详情 | GET | `/api/bi/dashboard/:id` |
+| 更新仪表板 | PUT | `/api/bi/dashboard/:id` |
+| 删除仪表板 | DELETE | `/api/bi/dashboard/:id` |
 
-### 3.2 报表管理接口
+### 3.2 报表管理接口（report 模块并入 analytics）
 
 | 接口 | 方法 | 路径 |
 |------|------|------|
-| 获取报表列表 | GET | `/api/v1/bi/reports` |
-| 创建报表 | POST | `/api/v1/bi/reports` |
-| 生成报表 | GET | `/api/v1/bi/reports/:id/generate` |
-| 订阅报表 | POST | `/api/v1/bi/reports/:id/subscribe` |
+| 获取报表列表 | GET | `/api/bi/reports` |
+| 创建报表 | POST | `/api/bi/reports` |
+| 生成报表 | GET | `/api/bi/reports/:id/export`（导出；`:id/generate` 未挂载，RC4a gap） |
+| 订阅报表 | POST | 未挂载（RC4a gap） |
 
 ### 3.3 数据分析接口
 
 | 接口 | 方法 | 路径 |
 |------|------|------|
-| 创建分析 | POST | `/api/v1/bi/analysis` |
-| 执行分析 | GET | `/api/v1/bi/analysis/:id/execute` |
-| 获取分析结果 | GET | `/api/v1/bi/analysis/:id/result` |
+| 获取分析列表 | GET | `/api/bi/analysis` |
+| 创建分析 | POST | `/api/bi/analysis` |
+| 执行分析 / 获取结果 | — | `/analysis/:id/execute`、`/analysis/:id/result` 未挂载（RC4a gap；另有 `/comparison-analysis/:id/run`、`/comparison-analysis/:id/result`） |
 
-### 3.4 数据源接口
+### 3.4 数据源接口（未挂载，RC4a gap）
 
 | 接口 | 方法 | 路径 |
 |------|------|------|
-| 获取数据源列表 | GET | `/api/v1/bi/datasources` |
-| 创建数据源 | POST | `/api/v1/bi/datasources` |
-| 测试连接 | POST | `/api/v1/bi/datasources/:id/test` |
+| 获取数据源列表 | GET | `/api/bi/datasources`（未挂载） |
+| 创建数据源 | POST | `/api/bi/datasources`（未挂载） |
+| 测试连接 | POST | `/api/bi/datasources/:id/test`（未挂载） |
 
 ---
 
 **文档版本**: v1.0.0  
-**最后更新**: 2024-06-11  
+**最后更新**: 2024-06-11（2026-10-20 按 analytics 实测校准前缀与已挂载路由，其余未挂载项标注 gap）  
 **作者**: TOPEMS开发团队
