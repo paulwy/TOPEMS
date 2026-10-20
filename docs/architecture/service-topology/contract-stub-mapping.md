@@ -1,6 +1,7 @@
 # 契约兜底（contract_stubs）→ 上游实现映射台账（B4 / F4）
 
-> 生成：2026-10-19 · 来源：`svc/unified-core/src/routes/contract_stubs.rs`（125 条 `.route`）
+> 生成：2026-10-19（2026-10-20 修订 §4.19/§5）· 来源：`svc/unified-core/src/routes/contract_stubs.rs`
+> **计数口径（防对账歧义）**：旧基线 125 为原始 `.route(` 注册数；现存活 **78** 为 `.route(` 注册数口径；按「方法-端点对」计为 **82**（help 等链式 `get().post()` 同一 path 注册多方法，故方法对多于 route 注册数）。后续对账须注明用哪种口径。
 > 挂载：`svc/unified-core/src/routes/mod.rs:187` `.merge(contract_stub_routes())`，位于 core 受保护路由轨，实际前缀 `/api/core/*`（双轨 `/api/v1/core/*`）。
 > 口径：本文档为**纯文档台账，不改任何代码**；用于后续逐条对接/挂载/存废决策。端点最终存废与 BE-08（349 条 API 存废待业务勾选）同源，需业务确认后再动。
 
@@ -284,13 +285,13 @@
 
 - 现状：iam/auth 已有 password-policy；2FA、租户级 api-keys、会话管理、IP 白名单 0 命中。
 
-### 4.19 system/api-keys（2）🟢 冗余
+### 4.19 system/api-keys（2）🔴 待上游新建（非冗余，不可删）
 | 方法 | 路径 | 兜底 | 状态 |
 |---|---|---|---|
-| GET | `/system/api-keys/{id}` | 列表空壳 | 🟢 |
-| PUT | `/system/api-keys/{id}` | 成功回执 | 🟢 |
+| GET | `/system/api-keys/{id}` | 列表空壳（占位详情） | 🔴 |
+| PUT | `/system/api-keys/{id}` | 成功回执 | 🔴 |
 
-- 现状：core `settings.rs:43` 已挂 `/system/api-keys/{id}`（含 PUT/DELETE），本组兜底冗余，可直接移除。
+- 现状（2026-10-20 实测纠正原 🟢 判断）：core `routes/settings.rs:14-49` 真实仅挂 GET 列表 `/system/api-keys`（`list_api_keys`）、POST 创建 `/system/api-keys`（`create_api_key`）、DELETE `/system/api-keys/{id}`（`delete_api_key`）；`modules/settings/api_keys.rs` 也只实现这三个 handler，**无 GET 详情、无 PUT 更新**。本组两条 stub 是未实现占位而非冗余，删除会裸 404；待产品排期补 get/update 后替换，不可「直接移除」。
 
 ### 4.20 wms-approval（原 12）✅ 第二批已对接并删除
 
@@ -314,7 +315,7 @@
 
 ## 5. 处置优先级建议
 
-1. **第一批·零成本移除冗余（🟢 已存在且前端已改指/可转发）**：system/api-keys(2)、wms-approval(12)、help(7)、copilot(8)、forms(7)、dict(1)、search 已存在部分(2)、governance dashboard/score(2)、tenant/webhooks(5)、tenant/billing 已挂项 —— 合计约 46 条，对接/转发后即可删兜底，不新建能力。
+1. **第一批·零成本移除冗余（🟢 已存在且前端已改指/可转发）**：wms-approval(12，已删)、help(7)、copilot(8)、forms(7)、dict(1，已对接)、search 已存在部分(2)、governance dashboard/score(2)、tenant/webhooks(5)、tenant/billing 已挂项 —— 对接/转发后即可删兜底，不新建能力。（注：system/api-keys(2) 经 2026-10-20 实测为 🔴 待新建，已移出本批，见 §4.19。）
 2. **第二批·挂已有 handler（🟡）**：tenant/features(4)、tenant/analytics 复用项、tenant/billing 订阅、tenant/security password-policy —— 把 core 已写函数挂到正确路由替换兜底。
 3. **第三批·产品排期新建（🔴）**：documents 通用库、comments、favorites、tenant settings/branding/domains/email/integrations、tenant/security 2FA/api-keys/sessions/ip-whitelist、billing 支付/绑卡、governance 其余指标 —— 先定产品是否做，不做则随 BE-08 勾选删除。
 4. **存废同源**：所有 ⚪/🔴 端点最终是否保留，与 BE-08「349 条 API 存废待业务勾选」一并决策，避免重复评估。
@@ -323,4 +324,4 @@
 
 - 本台账由 `contract_stubs.rs` 机器提取（方法/路径/兜底 handler）+ 人工上游探测（全仓 grep 独立 svc 与 core handler）生成；状态为探测时点结论，对接前需逐条复核真实路由前缀。
 - 兜底的意义是「禁止裸 404」，在真实实现就位前不得删除，否则前端已调端点会 404 并被契约 smoke 判 route_missing。
-- 不在本台账：各 svc 自身的 `contract_fallback.rs` / 域内占位兜底（如 mobile、master-data、mes、ehs、hrm 等），属各自域，另案。
+- 不在本台账：各 svc 自身的 `contract_fallback.rs` / 域内占位兜底（mobile 134 条、master-data mdm-v66 43 处，以及 mes、ehs、hrm 等），属各自域，已另建分域互补册 [`contract-fallback-domains.md`](./contract-fallback-domains.md)，与本主台账不重复评估。

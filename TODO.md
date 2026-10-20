@@ -332,6 +332,15 @@
 - **未纳入（待核实）**：H-5 `rollback.sh:289`/`start-production.sh` 的 8000 旧端口与 `topems-unified-core` 二进制名需对照现行 BFF（topems-server:8099）运行进程核实，属外部；H-9 developer 三份标准文档的 8000 直连为 dev/历史 nginx 样例语境，待核实后再补 8099 注，本批不擅改。
 - **门禁**：纯 .ps1 改动，不触发 cargo/tsc/i18n 门禁；本机无 pwsh，人工核对 4 个 if 块语法正确、其余行未动。
 
+### P3-5 · F4 分域兜底台账 + 修台账自相矛盾/口径补注（2026-10-20）✅
+
+> 来源：10-19 重审 NEW-P3-5（shard-D N1/N2/N3）。纯文档，不改任何代码。
+
+- **N1 分域台账（新建）**：`docs/architecture/service-topology/contract-fallback-domains.md`，登记主台账 §6「另案」两套域内兜底，与 core 互补、不重复评估：① mobile embedded BFF `contract_fallback.rs` **134 条** `.route`（挂 `server/mobile_real_module.rs:75`，:8099，三类轻量占位）；② master-data `mod.rs` 内联 **43 处** `contract_fallbacks::`（mdm-v66 预埋零消费 + 静态提取伪动态段，ok31/list9/array5）。附现场 grep 对账命令与快照日期。
+- **N2 修自相矛盾**：主台账 §4.19 system/api-keys(2) 原标 🟢「冗余可直接移除」，与 §0/§3 已纠正的 🔴 冲突；实测 `routes/settings.rs` 仅挂 GET 列表/POST 创建/DELETE {id}，`api_keys.rs` 无 GET 详情、无 PUT 更新，两条 stub 是未实现占位而非冗余 → §4.19 改 🔴、§5「第一批零成本移除」清单剔除该项，避免后续误删致裸 404。
+- **N3 口径补注**：主台账头部补注两种对账口径——`.route(` 注册现 **78**、方法-端点对 **82**（链式 get().post() 同 path 多方法），旧 125 为原始基线，后续对账须注明口径。
+- **门禁**：纯 md；计数现场复核（core 78 / 82、mobile 134、master-data 43）一致；无代码改动故无 cargo/tsc 门禁。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成
