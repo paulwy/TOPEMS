@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.5（P0 全闭环：P0-1/P0-2/P0-3 + P0-4 字典补缺与 JWT 角色权展开） |
+| 版本 | v1.6（P0 全闭环；P1-5 自服务端点移出管理权限层，登录即可访问） |
 | 最近更新 | 2026-10-21 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
@@ -47,7 +47,7 @@
 |---|---|---|---|---|---|
 | 0.1 | 建库、跑迁移链（sqlx-cli / `scripts/migrate.sh`），建 `core_users` 等基表 | `database/migrations/001_iam.sql:1`（`CREATE TABLE core_users`）；迁移扫描 `scripts/migrate.sh:72,255` | —（运维步骤） | 表结构就绪 | 已具备（运维） |
 | 0.2 | 启动 unified-core，启动自举创建默认超管 | `svc/unified-core/src/main.rs:317`（`try_init("iam", …)`）；`modules/iam/mod.rs:434-457` 插 `admin/admin123`、`:460-469` 绑 superadmin | 登录页 `pages/shared/LoginPage.tsx:67-107`；路由 `/login`（`routes/auth.ts:13-22`） | 可登录超管 | 已具备（见 §4 风险） |
-| 0.3 | 用 admin 登录，**立即修改默认密码** | 改密走 IAM 用户管理/自身改密；注意 `/users/me`、自身改密可能被 `admin:iam:write` 拦（见 P1-6） | `UserManagementPage` → `/iam/user`（`modules/iam/config.ts:52-63`） | 安全口令 | 部分 |
+| 0.3 | 用 admin 登录，**立即修改默认密码** | 自身改密 `POST /iam/users/me/password`，P1-5（`62cf693a8`）后仅需登录即可访问，不再被 `admin:iam:write` 拦；改他人密码仍需管理权限 | 自身改密入口（P1-5 已放开）；`UserManagementPage` → `/iam/user`（`modules/iam/config.ts:52-63`） | 安全口令 | 已具备（自身改密；首启强制改密机制仍缺，见 §4 风险） |
 | 0.4 | 确认服务健康、菜单可渲染 | 各服务 `/health`；菜单前端硬编码 `GlobalLayoutV3.tsx:59,871-880`（非后端 `/api/menu`） | 侧边栏 `GlobalLayoutV3` | 进入主界面 | 已具备 |
 
 ### 阶段 1　组织底座（公司 → 部门 → 岗位 → 员工）
@@ -272,7 +272,7 @@
 | P1-2 | 部门/岗位后端无 handler 级 `check_permission`，仅全局 `hrm:admin` | 粒度粗，无法按部门/岗位授权 | 补 DepartmentRead/Write、PositionRead/Write 权限校验（对齐 company/employee） | `department.rs`、`position.rs` grep check_permission=0 |
 | P1-3 | 自助注册开放无开关，注册账号无角色/权限/租户，注册后不可用 | 任意人可注册僵尸账号，安全与数据风险 | 加 `REGISTER_ENABLED` 开关；注册流绑定最小角色/租户或改纯管理员建号 | `auth.rs:466-622,588-602`；svc 内无 REGISTER 开关 |
 | P1-4 | 前端权限守卫几乎未落地：35 个 config.ts 0 声明权限，PermissionGate 仅 1 处使用，菜单不过滤 | 无权限用户仍见全部入口，"可见但进不去" | 补模块权限声明、路由 requiredPermissions、菜单/按钮守卫（前端为体验层，后端为硬防线） | `modules/*/config.ts`；`PermissionGate.tsx` 1 处；`ModuleTabs.tsx:555`；`GlobalLayoutV3.tsx:59` |
-| P1-5 | `/users/me`、自身改密被 `iam:read`/`admin:iam:write` 保护 | 普通用户可能 403 拿不到自身信息/改密 | 将自服务端点移出管理权限层，改为登录即可访问 | `routes/iam.rs:107-110,194-197` |
+| **P1-5** ✅ 闭环 | ~~`/users/me`、自身改密被 `iam:read`/`admin:iam:write` 保护，普通用户 403~~ | 已闭环：自服务端点拆入独立 `me` 路由组，仅由全局 `auth_middleware` 校验登录（无 token→401），不再叠加管理权限层；管理类增删改/角色/权限仍守 `iam:read`/`admin:iam:write`/`admin:iam:delete` | 9 个自服务端点（GET/PUT `/users/me`、自身权限、自身偏好、改密、头像、自身权限校验、`/permissions/my-permissions`）身份一律取 `Claims.sub`，不接受 body/路径指定他人 | `routes/iam.rs`（`me` 路由组）；全局 `auth_middleware`（shared-auth） |
 | P1-6 | MES 缺车间/产线/工作中心表与路由，工位 `workshop_id` 悬空；缺班次/工作日历 | 无法做真实排产与产能建模，APS 基础数据不成立 | 补车间/产线/班次/日历实体 CRUD 与前端页，回填工位外键 | 全库无 workshop/production_line/shift/calendar 建表；`work_station.rs:30-43` |
 | P1-7 | QMS 缺结构化检验项/检验方案/抽样方案；LIMS 缺检验项目(analyte) | 检验只能填自由文本，无法标准化质检 | 补 inspection_item/sampling_plan/analyte 表与 CRUD + 前端方案配置页 | 无 checklist/inspection_item/sampling_plan 表；analyte 无表 |
 | P1-8 | 多表缺租户隔离：`erp.bank_accounts`、`gis.geofences`、`rs.material_tests`、`bi.analytics_datasets` 无 tenant_id；`pm.projects` 列表不过滤；wms/mes 部分 organization_id 写死公共 UUID | 多租户下数据串读 | 补 tenant_id 列与查询过滤，移除写死 UUID | `bank_account.rs`；DDL `20261007000009:1282`；`material.rs:307-313`；`dataset.rs:90-95`；`project.rs:188` |
@@ -362,5 +362,6 @@
 | 2026-10-20 | v1.3 | `b052ac1cf` | **P0-4 第一批（非破坏）**：迁移 `20261020000024` 补齐 23 个中间件已挂载但字典缺失的权限码（仅字典、不绑角色）；三套方言对照清单 + 命名口径；JWT 登录/`/users/me` 角色权 JOIN 展开未落地，附待决策草案 |
 | 2026-10-21 | v1.4 | `4ac94af80` | **P0-1**：5 步初始化向导页（公司→部门批量→岗位批量→管理员→完成）接六方法，路由 `/hrm/setup` + 设置组导航 + lazyWithRetry，zh/en 93 键，落地页非阻塞提醒横幅；管理员步先 `userApi.createUser` 建号再回绑 |
 | 2026-10-21 | v1.5 | `e810fc787` | **P0-4 第二批·JWT 展开**：登录签发与 `/users/me`、`my-permissions` 非超管改 JOIN 规范化授权表（`resolve_user_grants`），与刷新换发对齐；超管 `['*']`/全量目录不变；反范式列与 C 方言目录保留；lib 536 测试绿 |
+| 2026-10-21 | v1.6 | `62cf693a8` | **P1-5**：9 个自服务端点（GET/PUT `/users/me`、自身权限、自身偏好、改密、头像、自身权限校验、`/permissions/my-permissions`）拆入独立 `me` 路由组，仅由全局 `auth_middleware` 校验登录（无 token→401），不再要求 `iam:read`/`admin:iam:write`；管理类增删改/角色/权限/岗位仍守原权限层；身份一律取 `Claims.sub`，不接受 body/路径指定他人；pre-commit 全绿，lib 536 测试通过 |
 
 > 后续每次闭环/修订在此追加一行；完成 P0/P1 后同步把 §3 对应行状态改为已具备并勾选 TODO.md。

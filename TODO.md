@@ -18,7 +18,7 @@
 - [ ] **P1-2 · 部门/岗位后端无 handler 级权限校验**（仅全局 `hrm:admin`），补 DepartmentRead/Write、PositionRead/Write。
 - [ ] **P1-3 · 自助注册开放无开关**，注册账号无角色/权限/租户不可用；加 `REGISTER_ENABLED` 开关并绑最小角色/租户或改纯管理员建号。
 - [ ] **P1-4 · 前端权限守卫几乎未落地**：35 个 config.ts 0 声明权限、菜单不过滤；补模块权限声明/路由 requiredPermissions/菜单按钮守卫。
-- [ ] **P1-5 · `/users/me`、自身改密被管理权限保护**，普通用户可能 403；自服务端点改登录即可访问。
+- [x] **P1-5 · `/users/me`、自身改密被管理权限保护**，普通用户可能 403；自服务端点改登录即可访问（`62cf693a8`，拆入 `me` 路由组仅校验登录）。
 - [ ] **P1-6 · MES 缺车间/产线/工作中心/班次/工作日历**，工位 `workshop_id` 悬空；补实体 CRUD + 前端页并回填外键。
 - [ ] **P1-7 · QMS 缺结构化检验项/检验方案/抽样方案，LIMS 缺检验项目(analyte)**；补表与 CRUD + 方案配置页。
 - [ ] **P1-8 · 多表缺租户隔离**：erp.bank_accounts、gis.geofences、rs.material_tests、bi.analytics_datasets 无 tenant_id；pm.projects 列表不过滤；wms/mes 部分 organization_id 写死公共 UUID。
