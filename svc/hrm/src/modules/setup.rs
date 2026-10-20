@@ -87,6 +87,11 @@ pub struct PositionsBatchRequest {
 pub struct AdminUserRequest {
     pub name: String,
     pub employee_number: String,
+    /// 可登录用户名（可选）。缺省时回退 employee_number；规则与 IAM 一致：
+    /// 3-20 位字母/数字/下划线（见 setup_admin_user 内校验）。
+    pub username: Option<String>,
+    /// 可选：前端先调 IAM 建号端点拿到的 user_id，随本请求回绑到员工档案。
+    pub user_id: Option<Uuid>,
     pub gender: Option<String>,
     pub birth_date: Option<String>,
     pub id_card_number: Option<String>,
@@ -620,12 +625,34 @@ pub struct Position {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
+// P0-3 方案选择：采用【方案B：跨服务走既有 IAM 建号端点，hrm 只建员工并回绑 user_id】。
+//
+// 为何不选方案A（hrm 同库直写 iam.users/core_users/core_user_roles）：
+// 1. 登录源唯一是 iam.users（auth.rs login 只查 iam.users；core_sessions/refresh_tokens
+//    的 user_id 外键也指向 iam.users.id），而 public.core_users 与 iam.users 是两张不同步
+//    的表（id 空间 overlap=0）；core_user_roles.user_id 外键引用 core_users(id)，
+//    hrm 无法在同一 RLS 事务内同时保证三表一致，强写会制造孤儿/错位角色行。
+// 2. core_users/core_roles 带 RLS 租户策略，角色目录（core_roles）归 unified-core 所有，
+//    测试库无 admin/superadmin 角色；由 hrm 直写用户表/建角色会绕过 IAM 的去重、审计、
+//    邮箱校验与角色目录管理，破坏建号权威边界（权威在 unified-core）。
+// 3. 因此本接口只负责 hrm.employees 建档与 user_id 回绑；账号开通由前端向导串联既有
+//    IAM 端点完成（见成功响应 message 与下方「前端衔接」注释）。
+//
+// 前端衔接（方案B）：
+//   1. 收集管理员姓名/员工编号/用户名/邮箱/密码；
+//   2. 先调 unified-core 既有建号端点 POST /api/core/iam/users（或公开注册端点
+//      /api/core/iam/auth/register），传 username/email/password/full_name，
+//      拿到返回的 data.id（IAM user_id）；
+//   3. 再调 POST /api/hrm/setup/admin，带上 user_id 完成员工档案与账号绑定；
+//      本接口不保存密码、不写 iam.users，密码哈希由 IAM 端点负责。
 #[utoipa::path(
     post,
     security(("bearerAuth" = [])),
     path = "/setup/admin",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
+        (status = 400, description = "Validation failed"),
+        (status = 409, description = "Username or employee number already exists"),
         (status = 500, description = "Internal server error")
     ),
     tag = "setup"
@@ -668,6 +695,80 @@ pub async fn setup_admin_user(
         )));
     }
 
+    // 解析可登录用户名：缺省回退 employee_number；格式规则对齐 IAM register
+    // （3-20 位字母/数字/下划线）。回退值若含中文/连字符等非法字符，要求显式传 username。
+    let username = req
+        .username
+        .clone()
+        .unwrap_or_else(|| req.employee_number.clone());
+    let username = username.trim().to_string();
+    let username_valid = username.len() >= 3
+        && username.len() <= 20
+        && username
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_');
+    if !username_valid {
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "用户名必须为3-20个字符，只允许字母、数字和下划线；未传 username 时回退员工编号，员工编号不符合规则时请显式提供 username".to_string(),
+        )));
+    }
+
+    // 邮箱格式轻校验（权威校验在 IAM 建号端点；此处提前给出 400 而非落到 500）
+    if let Some(email) = &req.email {
+        let email = email.trim();
+        if !email.contains('@') || !email.contains('.') {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "邮箱格式不正确".to_string(),
+            )));
+        }
+    }
+
+    // 只读预检 iam.users 的用户名/邮箱占用（跨 schema 只读，第三参数显式白名单 "iam"）。
+    // 权威去重仍由 IAM 建号端点负责；预检本身失败仅告警放行，绝不阻断本事务。
+    let email_norm = req.email.as_ref().map(|e| e.trim().to_string());
+    let precheck: Result<Option<i64>, sqlx::Error> =
+        sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "hrm",
+            r#"
+            SELECT COUNT(*) FROM iam.users
+            WHERE deleted_at IS NULL
+              AND (username = $1 OR ($2::text IS NOT NULL AND email = $2))
+            "#,
+            "iam"
+        ))
+        .bind(&username)
+        .bind(&email_norm)
+        .fetch_optional(&mut **txn)
+        .await;
+    match precheck {
+        Ok(Some(n)) if n > 0 => {
+            // 区分冲突类型给出友好 409（只读预检已命中即提前拒绝）；
+            // 二次诊断查询本身失败时回退通用冲突文案，不误判为另一种冲突。
+            let name_taken = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
+                "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND username = $1",
+                "iam"
+            ))
+            .bind(&username)
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten();
+            let message = match name_taken {
+                Some(c) if c > 0 => "用户名已存在".to_string(),
+                Some(_) => "邮箱已被占用".to_string(),
+                None => "用户名或邮箱已被占用".to_string(),
+            };
+            return Json(ApiResponse::from(TopemsError::ResourceAlreadyExists(
+                message,
+            )));
+        }
+        Ok(_) => {}
+        Err(e) => {
+            tracing::warn!("iam.users 占用预检失败（放行，由 IAM 端点权威去重）: {}", e);
+        }
+    }
+
     // 创建员工
     let employee_id = Uuid::new_v4();
     let hire_date = if let Some(hd) = &req.hire_date {
@@ -683,8 +784,9 @@ pub async fn setup_admin_user(
             employee_number, name, gender, birth_date, hire_date,
             id_card_number, email, phone,
             emergency_contact_name, emergency_contact_phone, address,
+            user_id,
             status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11, $12, $13, $14, $15, $16, 'active', $17, $18)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11, $12, $13, $14, $15, $16, $17, 'active', $18, $19)
         RETURNING id, tenant_id, organization_id AS org_id, department_id, position_id,
                   employee_number, name, status, created_at, updated_at
         "#),
@@ -705,6 +807,7 @@ pub async fn setup_admin_user(
     .bind(&req.emergency_contact_name)
     .bind(&req.emergency_contact_phone)
     .bind(&req.address)
+    .bind(req.user_id)
     .bind(now)
     .bind(now)
     .fetch_one(&mut **txn)
@@ -712,10 +815,8 @@ pub async fn setup_admin_user(
 
     match result {
         Ok(employee) => {
-            // 注意：密码应该通过单独的认证服务处理，这里仅记录
-            // 实际密码设置应由 IAM 服务完成
-
-            // 更新初始化状态
+            // 方案B：hrm 不落密码哈希、不写 iam.users；账号开通由前端串联 IAM 建号端点。
+            // 此处仅更新本服务的初始化步骤状态。
             let _ = sqlx::query(only_own_schema_query!(
                 "hrm",
                 r#"
@@ -739,17 +840,37 @@ pub async fn setup_admin_user(
                 }
             }
 
+            let bound = req.user_id.is_some();
+            let message = if bound {
+                "管理员员工档案已创建并关联 IAM 账号，可使用该账号登录".to_string()
+            } else {
+                "员工档案已创建；账号由统一认证服务开通：请先调用 IAM 建号端点（POST /api/core/iam/users，传 username/email/password/full_name），再将返回的 user_id 回传本接口完成绑定".to_string()
+            };
             Json(ApiResponse::success(
                 serde_json::json!({
                     "employee_id": employee.id,
                     "employee_number": employee.employee_number,
                     "name": employee.name,
-                    "message": "管理员账户创建成功，请前往认证服务设置密码"
+                    "username": username,
+                    "user_id": req.user_id,
+                    "bound": bound,
+                    "message": message
                 }),
-                "管理员账户创建成功",
+                "管理员员工档案创建成功",
             ))
         }
         Err(e) => {
+            // 员工编号唯一冲突（部分唯一索引 idx_employees_employee_number_unique）→ 友好 409，绝不 500
+            let duplicate_employee_number = e
+                .as_database_error()
+                .and_then(|db| db.code())
+                .map(|c| c == "23505")
+                .unwrap_or(false);
+            if duplicate_employee_number {
+                return Json(ApiResponse::from(TopemsError::ResourceAlreadyExists(
+                    "员工编号已存在".to_string(),
+                )));
+            }
             tracing::error!("创建管理员账户失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(
                 "创建管理员账户失败".to_string(),
