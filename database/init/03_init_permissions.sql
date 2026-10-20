@@ -4,6 +4,14 @@
 -- 说明: 完整的权限系统初始化，包括所有模块权限、角色和On-Premise模式配置
 -- 适用: 首次部署或全新安装
 -- ============================================================
+--
+-- ⚠️ 已废弃 / 未接入（P2-9，2026-10-21）：
+-- 本脚本不在 sqlx 迁移链（database/migrations/）与任何部署/CI 流程中，不会自动执行；
+-- 面向旧 core_users 表，与现行 iam.users 权威源不一致。请勿对生产库手动执行。
+-- 默认超管由服务启动自举（modules/iam/mod.rs init_database）创建，初始口令由
+-- ADMIN_INITIAL_PASSWORD 提供，首登强制改密。脚本内原 admin/admin123 弱口令播种
+-- 已停用（见第七部分注释块），避免误跑在生产造出弱口令账号。
+-- ============================================================
 
 -- ============================================================
 -- 第一部分：租户表（On-Premise 模式）
@@ -418,25 +426,26 @@ ON CONFLICT DO NOTHING;
 -- 第七部分：创建默认管理员用户
 -- ============================================================
 
--- 注意：密码是 'admin123' 的 bcrypt 哈希值
--- 生产环境请使用更强的密码
-INSERT INTO core_users (username, email, password_hash, full_name, is_superuser, tenant_id)
-VALUES (
-    'admin',
-    'admin@topems.local',
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.TH2wTw7P6OqE1.',
-    '系统管理员',
-    TRUE,
-    '00000000-0000-0000-0000-000000000001'
-)
-ON CONFLICT (username) DO NOTHING;
-
--- 关联管理员到超级管理员角色
-INSERT INTO core_user_roles (user_id, role_id)
-SELECT u.id, r.id
-FROM core_users u, core_roles r
-WHERE u.username = 'admin' AND r.name = 'superadmin'
-ON CONFLICT DO NOTHING;
+-- P2-9：停用 admin/admin123 弱口令播种。本脚本未接入部署链，且权威超管由服务启动
+-- 自举创建（ADMIN_INITIAL_PASSWORD + 首登强制改密）。以下弱口令账号与其角色绑定不再执行，
+-- 仅保留历史注释，切勿取消注释对生产库执行。
+-- INSERT INTO core_users (username, email, password_hash, full_name, is_superuser, tenant_id)
+-- VALUES (
+--     'admin',
+--     'admin@topems.local',
+--     '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.TH2wTw7P6OqE1.',
+--     '系统管理员',
+--     TRUE,
+--     '00000000-0000-0000-0000-000000000001'
+-- )
+-- ON CONFLICT (username) DO NOTHING;
+--
+-- -- 关联管理员到超级管理员角色
+-- INSERT INTO core_user_roles (user_id, role_id)
+-- SELECT u.id, r.id
+-- FROM core_users u, core_roles r
+-- WHERE u.username = 'admin' AND r.name = 'superadmin'
+-- ON CONFLICT DO NOTHING;
 
 -- ============================================================
 -- 第八部分：显示初始化结果

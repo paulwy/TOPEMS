@@ -1,6 +1,8 @@
 # TOPEMS 数据库重建指南
 
 > **⚠️ 档案说明（2026-09-08）**：本文件为早期设计档案。其中 `shared` schema 设计（06 脚本及"业务 schema → public → shared"SEARCH_PATH 策略）**已废弃**——shared schema 已清理、SEARCH_PATH 统一为 `{svc}, public`（全服务）；`plugin_*` schema 表述同样过时（实际业务 schema 为各服务真实 schema）。重建请以 `database/migrations/` 迁移体系为准。
+>
+> **⚠️ P2-9（2026-10-21）**：`03_init_permissions.sql` 未接入迁移链/CI，面向旧 `core_users`，其中 admin/admin123 弱口令播种已停用；默认超管由服务启动自举创建（`ADMIN_INITIAL_PASSWORD` + 首登强制改密）。下文手动 `\i 03_init_permissions.sql` 与 `admin123` 口令仅为历史档案，勿对生产执行。
 
 ## 概述
 

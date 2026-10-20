@@ -2,6 +2,8 @@
 --
 -- 用于准备权限测试所需的测试账号和数据
 --
+-- ⚠️ 仅本地/CI 测试库使用，账号口令为 admin123 测试夹具，严禁对生产环境执行（P2-9）。
+--
 -- 运行方式:
 -- psql -U topems -d topems -f database/test/iam_test_data.sql
 
