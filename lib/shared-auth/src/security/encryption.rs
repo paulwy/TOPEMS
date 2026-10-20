@@ -888,15 +888,27 @@ mod tests {
     #[test]
     fn test_key_not_found() -> EncryptionResult<()> {
         let key_manager = KeyManager::new(&test_key());
-        let service = FieldEncryptionService::new(key_manager);
 
-        let mut field = service.encrypt("test")?;
+        // KeyManager 层：注册表缺失版本号时明确返回 KeyNotFound(999)
+        assert!(matches!(
+            key_manager.get_key(999),
+            Err(EncryptionError::KeyNotFound(999))
+        ));
+
+        // decrypt 层：未知版本号回退当前密钥尝试。用 v1 密钥加密、当前切到 v2，
+        // 回退到 v2 后 GCM tag 校验失败 → DecryptionFailed，不再直接抛 KeyNotFound。
+        let mut key_manager = KeyManager::new(&[0x01u8; 32]);
+        key_manager.add_key(2, &[0x02u8; 32]);
+        key_manager.set_current_version(1)?;
+        let service_v1 = FieldEncryptionService::new(key_manager.clone());
+        let mut field = service_v1.encrypt("secret")?;
+        key_manager.set_current_version(2)?;
+        let service_v2 = FieldEncryptionService::new(key_manager);
         field.key_version = 999;
 
-        let result = service.decrypt(&field);
-        match result {
-            Err(EncryptionError::KeyNotFound(v)) => assert_eq!(v, 999),
-            _ => panic!("Expected KeyNotFound error"),
+        match service_v2.decrypt(&field) {
+            Err(EncryptionError::DecryptionFailed(_)) => {}
+            other => panic!("Expected DecryptionFailed after fallback, got {:?}", other),
         }
         Ok(())
     }
