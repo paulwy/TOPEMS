@@ -323,6 +323,15 @@
 - **门禁**：`cargo check --workspace --lib --tests` exit 0；全量 `clippy -- -D correctness` exit 0；`cargo fmt --check` 绿；ehs 231 / finance 1087 单测全 0 failed。
 - **未纳入本批（另案登记）**：`ehs/hazardous_material.rs:1001` 的 `items_after_test_module`（test 模块置于文件中段的结构 lint，非审计列的 closure/borrow 类，移动有可见性风险，留待结构整理批）。
 
+### P3-8 · H-6：Windows 辅助脚本默认密钥改 env 可覆盖（2026-10-20）✅
+
+> 来源：10-19 重审 NEW-P3-8（shard-C H-6）。本地 Windows 辅助脚本，非生产、非真实密钥。
+
+- **问题**：`scripts/windows/ports.ps1:80-83` 直接硬编码 dev 默认 `DATABASE_URL`/`REDIS_URL`/`JWT_SECRET`/`REFRESH_SECRET` 字面量，外部已设同名环境变量也会被覆盖。
+- **改动**：4 项改为 `if ([string]::IsNullOrEmpty($env:X)) { $env:X = "<dev 默认>" }`——外部已设则沿用、未设才落 dev 开箱默认；与 `.env.example` 口径对齐（代码 `shared-auth` 读 `JWT_REFRESH_SECRET` 回退 `REFRESH_SECRET`，命名兼容无需改）。
+- **未纳入（待核实）**：H-5 `rollback.sh:289`/`start-production.sh` 的 8000 旧端口与 `topems-unified-core` 二进制名需对照现行 BFF（topems-server:8099）运行进程核实，属外部；H-9 developer 三份标准文档的 8000 直连为 dev/历史 nginx 样例语境，待核实后再补 8099 注，本批不擅改。
+- **门禁**：纯 .ps1 改动，不触发 cargo/tsc/i18n 门禁；本机无 pwsh，人工核对 4 个 if 块语法正确、其余行未动。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

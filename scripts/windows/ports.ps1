@@ -77,10 +77,11 @@ $script:WEB_PORT = 3000
 # ================================================
 # 环境变量配置
 # ================================================
-$env:DATABASE_URL = "postgres://topems:topems_secret@localhost:5432/topems"
-$env:REDIS_URL = "redis://:topems_redis_secret@localhost:6379"
-$env:JWT_SECRET = "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256"
-$env:REFRESH_SECRET = "topems-refresh-secret-key-must-be-at-least-32-characters-long"
+# 以下默认值仅用于本机 dev 开箱；外部已设置同名环境变量时沿用，不覆盖（与 .env.example 对齐）
+if ([string]::IsNullOrEmpty($env:DATABASE_URL)) { $env:DATABASE_URL = "postgres://topems:topems_secret@localhost:5432/topems" }
+if ([string]::IsNullOrEmpty($env:REDIS_URL)) { $env:REDIS_URL = "redis://:topems_redis_secret@localhost:6379" }
+if ([string]::IsNullOrEmpty($env:JWT_SECRET)) { $env:JWT_SECRET = "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256" }
+if ([string]::IsNullOrEmpty($env:REFRESH_SECRET)) { $env:REFRESH_SECRET = "topems-refresh-secret-key-must-be-at-least-32-characters-long" }
 $env:CORS_ORIGINS = "http://localhost:3000,http://localhost:8000"
 $env:OLLAMA_BASE_URL = "http://localhost:11434/v1"
 $env:OLLAMA_URL = "http://localhost:11434"
