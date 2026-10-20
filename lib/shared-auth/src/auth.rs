@@ -685,13 +685,25 @@ pub async fn auth_middleware(
 
     let (mut parts, body) = req.into_parts();
 
-    let dev_mode_requested = std::env::var("DEVELOPMENT_MODE").unwrap_or_default() == "true";
-    let profile = std::env::var("PROFILE").unwrap_or_default();
-    let is_prod_profile = profile == "prod" || profile == "production";
+    let dev_mode_requested = std::env::var("DEVELOPMENT_MODE")
+        .map(|v| v.eq_ignore_ascii_case("true") || v == "1")
+        .unwrap_or(false);
+    // S3(P2-6)：生产判定同时识别 PROFILE / RUST_ENV / ENV，避免仅设 RUST_ENV=production
+    // 时 DEVELOPMENT_MODE 伪造超管旁路仍生效。
+    let is_prod_profile = ["PROFILE", "RUST_ENV", "ENV"].iter().any(|k| {
+        std::env::var(k)
+            .map(|v| {
+                let v = v.to_lowercase();
+                v == "prod" || v == "production"
+            })
+            .unwrap_or(false)
+    });
     let development_mode = dev_mode_requested && !is_prod_profile;
 
     if development_mode {
-        tracing::warn!("开发模式已启用 - 仅用于本地开发环境");
+        tracing::warn!(
+            "⚠️ DEVELOPMENT_MODE 开发旁路已启用：伪造 superuser 放行全部请求，严禁用于任何非本地环境！"
+        );
         let claims = Claims {
             sub: "00000000-0000-0000-0000-000000000001".to_string(),
             username: "dev_user".to_string(),
@@ -718,8 +730,7 @@ pub async fn auth_middleware(
         return next.run(req).await;
     } else if dev_mode_requested && is_prod_profile {
         tracing::warn!(
-            "DEVELOPMENT_MODE=true is ignored in production (PROFILE={}) - authentication required",
-            profile
+            "DEVELOPMENT_MODE 在生产环境（PROFILE/RUST_ENV/ENV=prod|production）被忽略，仍要求真实认证"
         );
     }
 
