@@ -531,9 +531,6 @@ impl LineageTracker {
 
     async fn export_graph(db: &sqlx::PgPool, format: &str) -> Result<String, TopemsError> {
         let graph = Self::get_graph(db).await;
-        if graph.nodes.is_empty() && graph.edges.is_empty() {
-            return Err(TopemsError::BusinessLogic("没有可用的血缘图谱".to_string()));
-        }
 
         match format {
             "dot" => {

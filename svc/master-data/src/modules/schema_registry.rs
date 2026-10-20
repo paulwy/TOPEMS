@@ -217,7 +217,7 @@ pub async fn get_schema(
     Path(id): Path<Uuid>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let schema =
-        sqlx::query_as::<_, SchemaDefinition>("id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry WHERE id = $1")
+        sqlx::query_as::<_, SchemaDefinition>("SELECT id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry WHERE id = $1")
             .bind(id)
             .fetch_optional(&state.db)
             .await
@@ -234,10 +234,12 @@ pub async fn get_schema(
             "code": 200,
             "data": s,
         }))),
-        None => Err((
-            StatusCode::NOT_FOUND,
-            Json(json!({ "success": false, "message": "Schema not found" })),
-        )),
+        None => Ok(Json(json!({
+            "success": true,
+            "code": 200,
+            "data": None::<Value>,
+            "message": "Schema not found",
+        }))),
     }
 }
 
@@ -357,10 +359,12 @@ pub async fn update_schema(
             "code": 200,
             "data": s,
         }))),
-        None => Err((
-            StatusCode::NOT_FOUND,
-            Json(json!({ "success": false, "message": "Schema not found" })),
-        )),
+        None => Ok(Json(json!({
+            "success": true,
+            "code": 200,
+            "data": None::<Value>,
+            "message": "Schema not found",
+        }))),
     }
 }
 
@@ -388,10 +392,12 @@ pub async fn delete_schema(
         })?;
 
     if result.rows_affected() == 0 {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(json!({ "success": false, "message": "Schema not found" })),
-        ));
+        return Ok(Json(json!({
+            "success": true,
+            "code": 200,
+            "data": { "deleted": false },
+            "message": "Schema not found",
+        })));
     }
 
     Ok(Json(json!({
@@ -417,7 +423,18 @@ pub async fn create_data(
     Path(id): Path<Uuid>,
     Json(data): Json<Value>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let schema = get_schema_def(&state.db, id).await?;
+    let schema = match get_schema_def(&state.db, id).await {
+        Ok(s) => s,
+        Err((StatusCode::NOT_FOUND, _)) => {
+            return Ok(Json(json!({
+                "success": true,
+                "code": 200,
+                "data": null,
+                "message": "Schema not found",
+            })));
+        }
+        Err(e) => return Err(e),
+    };
     let record_id = Uuid::new_v4();
 
     // 使用 JSONB 存储动态数据
@@ -469,7 +486,27 @@ pub async fn list_data(
     Path(id): Path<Uuid>,
     Query(q): Query<ListDataQuery>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let schema = get_schema_def(&state.db, id).await?;
+    let schema = match get_schema_def(&state.db, id).await {
+        Ok(s) => s,
+        Err((StatusCode::NOT_FOUND, _)) => {
+            let page = q.page.unwrap_or(1).max(1);
+            let page_size = q.page_size.unwrap_or(20).min(100);
+            return Ok(Json(json!({
+                "success": true,
+                "code": 200,
+                "data": {
+                    "items": [],
+                    "total": 0,
+                    "page": page,
+                    "page_size": page_size,
+                    "total_pages": 0,
+                    "schema": null,
+                },
+                "message": "Schema not found",
+            })));
+        }
+        Err(e) => return Err(e),
+    };
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -586,10 +623,12 @@ pub async fn get_data(
                 "updated_at": updated_at,
             }
         }))),
-        None => Err((
-            StatusCode::NOT_FOUND,
-            Json(json!({ "success": false, "message": "Record not found" })),
-        )),
+        None => Ok(Json(json!({
+            "success": true,
+            "code": 200,
+            "data": None::<Value>,
+            "message": "Record not found",
+        }))),
     }
 }
 
@@ -630,10 +669,12 @@ pub async fn update_data(
     })?;
 
     if result.rows_affected() == 0 {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(json!({ "success": false, "message": "Record not found" })),
-        ));
+        return Ok(Json(json!({
+            "success": true,
+            "code": 200,
+            "data": { "updated": false },
+            "message": "Record not found",
+        })));
     }
 
     Ok(Json(json!({
@@ -675,10 +716,12 @@ pub async fn delete_data(
         })?;
 
     if result.rows_affected() == 0 {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(json!({ "success": false, "message": "Record not found" })),
-        ));
+        return Ok(Json(json!({
+            "success": true,
+            "code": 200,
+            "data": { "deleted": false },
+            "message": "Record not found",
+        })));
     }
 
     Ok(Json(json!({
@@ -694,7 +737,7 @@ async fn get_schema_def(
     pool: &PgPool,
     id: Uuid,
 ) -> Result<SchemaDefinition, (StatusCode, Json<Value>)> {
-    sqlx::query_as::<_, SchemaDefinition>("id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry WHERE id = $1")
+    sqlx::query_as::<_, SchemaDefinition>("SELECT id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry WHERE id = $1")
         .bind(id)
         .fetch_optional(pool)
         .await

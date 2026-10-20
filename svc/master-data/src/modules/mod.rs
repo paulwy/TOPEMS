@@ -451,6 +451,9 @@ pub fn create_routes() -> Router<AppState> {
                     "/governance/entity/{id}",
                     get(ai_governance_v59::get_entity_suggestions),
                 )
+                // 前端按 /governance/entity/{entityType}/{entityId} 两段调用，
+                // 实体类型维度建议待落地，先挂空列表兜底避免裸 404。
+                .route("/governance/entity/{a}/{b}", get(contract_fallbacks::list))
                 .route(
                     "/governance/apply/{id}",
                     post(ai_governance_v59::apply_suggestion),
@@ -558,6 +561,8 @@ pub fn create_routes() -> Router<AppState> {
                     get(metadata_v60::get_lineage_dashboard),
                 )
                 .route("/lineage/export", get(metadata_v60::export_lineage))
+                // 静态提取折叠出 /lineage/export/{id} 尾段，兜底避免裸 404。
+                .route("/lineage/export/{tail}", get(contract_fallbacks::ok))
                 // --- 生命周期管理 ---
                 .route(
                     "/lifecycle/{id}/stage",
@@ -573,6 +578,8 @@ pub fn create_routes() -> Router<AppState> {
                 )
                 .route("/lifecycle/policy", post(metadata_v60::create_policy))
                 .route("/lifecycle/policies", get(metadata_v60::get_policies))
+                // 单条策略查询尾段待落地，先挂空列表兜底避免裸 404。
+                .route("/lifecycle/policies/{id}", get(contract_fallbacks::list))
                 .route(
                     "/lifecycle/auto-transition",
                     post(metadata_v60::auto_transition),

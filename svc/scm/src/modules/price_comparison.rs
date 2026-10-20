@@ -381,8 +381,8 @@ pub async fn list_quotes(
     let result = sqlx::query_as::<_, QuoteListRecord>(only_own_schema_query!(
         "scm",
         r#"
-        SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount,, 
-               q.currency, q.delivery_days, q.valid_until, q.payment_terms, q.status, q.remarks, 
+        SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount,
+               q.currency, q.delivery_days, q.valid_until, q.payment_terms, q.status, q.remarks,
                q.created_at, q.updated_at,
                CASE WHEN $6='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as supplier_name
         FROM scm.supplier_quotes q
@@ -534,7 +534,7 @@ pub async fn get_quote(
     let result = sqlx::query_as::<_, QuoteListRecord>(only_own_schema_query!(
         "scm",
         r#"
-        SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount,,
+        SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount,
                q.currency, q.delivery_days, q.valid_until, q.payment_terms, q.status, q.remarks,
                q.created_at, q.updated_at,
                CASE WHEN $3='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as supplier_name
