@@ -492,6 +492,20 @@ pub async fn register(
 
     tracing::info!("IAM auth register called with username: {}", username);
 
+    // P1-3(S1)：自助注册默认关闭。仅当 REGISTER_ENABLED=true/1 时开放；开放时账号落
+    // status='pending'，须管理员激活并分配角色/租户后方可登录（登录仅放行 status='active'），
+    // 避免开放注册产生无角色/无租户的可登录僵尸账号。
+    let register_enabled = std::env::var("REGISTER_ENABLED")
+        .map(|v| v.eq_ignore_ascii_case("true") || v == "1")
+        .unwrap_or(false);
+    if !register_enabled {
+        tracing::warn!("自助注册已关闭，拒绝注册尝试: {}", username);
+        return Json(topems_shared_core::response::error_value(
+            403,
+            "自助注册未开放，请联系管理员创建账号",
+        ));
+    }
+
     // 验证必填字段
     if username.is_empty() || email.is_empty() || password.is_empty() {
         return Json(topems_shared_core::response::error_value(
@@ -593,7 +607,7 @@ pub async fn register(
     let write_core = sqlx::query(
         r#"
         INSERT INTO iam.users (id, username, email, password_hash, full_name, full_name_en, status, is_superuser, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'active', false, NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', false, NOW())
         ON CONFLICT (username) DO NOTHING
         "#,
     )
@@ -610,11 +624,12 @@ pub async fn register(
             tracing::info!("用户注册成功: {}", username);
             Json(serde_json::json!({
                 "success": true,
-                "message": "注册成功",
+                "message": "注册成功，待管理员审核激活并分配角色后可登录",
                 "data": {
                     "user_id": user_id.to_string(),
                     "username": username,
-                    "email": email
+                    "email": email,
+                    "status": "pending"
                 },
                 "code": 0
             }))
