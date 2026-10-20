@@ -163,7 +163,7 @@ const AnnouncementPage: React.FC = () => {
     queryFn: async () => {
       try {
         const response = await announcementApi.list({ page: 1, pageSize: 50 });
-        if (response.success && response.data) {
+        if (response.success && Array.isArray(response.data?.items)) {
           return response.data.items.map((a: any) => ({
             id: a.id,
             title: a.title,

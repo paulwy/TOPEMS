@@ -6117,6 +6117,8 @@
   "bi.data_analysis_page.detail_tab": "Label",
   "bi.dataset_page.confirm": "Confirm",
   "bi.dataset_page.search": "Search",
+  "bi.dataset_page.query_rows_summary": "Total {{total}} rows, executed in {{execution_time}} ms",
+  "bi.dataset_page.query_empty": "Query failed or no results",
   "bi.dataset_page.edit": "Edit",
   "bi.dataset_page.edit_1": "Edit",
   "bi.dataset_page.view": "View",

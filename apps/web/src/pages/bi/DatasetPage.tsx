@@ -858,7 +858,10 @@ const DatasetPage = () => {
                 color='text.secondary'
                 sx={{ mb: 1, display: 'block' }}
               >
-                共 {queryResult.total} 行，执行 {queryResult.execution_time ?? '-'} ms
+                {i18n.t('bi.dataset_page.query_rows_summary', {
+                  total: queryResult.total,
+                  execution_time: queryResult.execution_time ?? '-',
+                })}
               </Typography>
               <TableContainer
                 component={Paper}
@@ -894,7 +897,7 @@ const DatasetPage = () => {
               variant='body2'
               color='text.secondary'
             >
-              查询失败或无结果
+              {i18n.t('bi.dataset_page.query_empty')}
             </Typography>
           )}
         </Box>

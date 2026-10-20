@@ -305,6 +305,14 @@
 - **保留（合理，未改）**：① `svc/erp/src/services/erp_adapter/{kingdee,yonyou,sap}_adapter.rs` 用 `reqwest::blocking::Client`（同步阻塞适配，类型不同不可换异步单例）；② finance reconciliation 自定义 10s builder 成功路径保留，仅失败兜底改共享 client；③ `ai/dsh/alerting/mod.rs:460` 纯注释；④ tests/ 目录与内联 `#[cfg(test)]` 夹具内的 `Client::new()` 属测试夹具，本批未收。
 - **门禁**：shared-core 791 passed；`cargo check --workspace --lib --tests` exit 0；`clippy -D correctness` exit 0；`cargo fmt --check` 绿；抽测 unified-core 536 / integration 182 / portal 582 / ai 983 / finance 1087 / mobile 250 / communication 211 / rd 155 / analytics 192 / pm 497 全 0 failed（其余 crate 由 push 钩子全量 cargo-test-workspace 覆盖）。
 
+### P3-4 · AnnouncementPage 软守卫 + DatasetPage 漏网 i18n（2026-10-20）✅
+
+> 来源：10-19 重审 NEW-P3-4（shard-B N2/N3）。纯前端卫生，零业务逻辑改动。
+
+- **AnnouncementPage.tsx:167 软守卫**：原 `if (response.success && response.data) { return response.data.items.map(...) }` 仅判 data 存在、未判 items 为数组，后端返回 `{success:true,data:{}}` 时 `.map` 抛错；改 `Array.isArray(response.data?.items)`，非数组落入既有 mock 兜底。
+- **DatasetPage.tsx 两处漏网中文补 i18n**（该页已有 68 处 `i18n.t()`）：:861「共 {total} 行，执行 {execution_time} ms」→ `bi.dataset_page.query_rows_summary`（插值 total/execution_time）；:897「查询失败或无结果」→ `bi.dataset_page.query_empty`；zh/en `bi.json` 镜像补键。
+- **门禁**：`tsc --noEmit` exit 0；两文件 eslint 0 error（any warning 为既有）；i18n quality 7-in-1 PASS、hardcode strict PASS（剩余 4 处 QmsEightDPage 为提交后端的记录内容文本，N8 信息项不动）。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

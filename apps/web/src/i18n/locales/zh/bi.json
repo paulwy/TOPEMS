@@ -1251,6 +1251,8 @@
   "bi.data_analysis_page.detail_tab": "明细",
   "bi.dataset_page.confirm": "确认",
   "bi.dataset_page.search": "搜索",
+  "bi.dataset_page.query_rows_summary": "共 {{total}} 行，执行 {{execution_time}} ms",
+  "bi.dataset_page.query_empty": "查询失败或无结果",
   "bi.dataset_page.edit": "编辑",
   "bi.dataset_page.edit_1": "编辑",
   "bi.dataset_page.view": "查看",
