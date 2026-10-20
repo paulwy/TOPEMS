@@ -21,6 +21,7 @@ import {
 } from '@/components/redesign';
 import type { DataTableColumn, Toast, UploadFile } from '@/components/redesign';
 import { announcementApi } from '@/api/erp/core';
+import type { CreateAnnouncementRequest } from '@/api/erp/core/announcement';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -164,7 +165,7 @@ const AnnouncementPage: React.FC = () => {
       try {
         const response = await announcementApi.list({ page: 1, pageSize: 50 });
         if (response.success && Array.isArray(response.data?.items)) {
-          return response.data.items.map((a: any) => ({
+          return response.data.items.map((a) => ({
             id: a.id,
             title: a.title,
             content: a.content,
@@ -182,7 +183,7 @@ const AnnouncementPage: React.FC = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => announcementApi.create(data),
+    mutationFn: (data: CreateAnnouncementRequest) => announcementApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       pushToast('success', t('oa.announcement_page.k45'));

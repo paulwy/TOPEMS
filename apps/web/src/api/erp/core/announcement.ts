@@ -20,7 +20,7 @@ interface AnnouncementListResponse {
   total: number;
 }
 
-interface CreateAnnouncementRequest {
+export interface CreateAnnouncementRequest {
   title: string;
   content: string;
   priority?: 'low' | 'normal' | 'high' | 'urgent';

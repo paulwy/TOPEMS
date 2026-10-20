@@ -404,6 +404,13 @@
 - **留待下批（需追溯 API/state 类型，不强行断言）**：AnnouncementPage `(a:any)` 列表映射、`mutationFn:(data:any)`；Tenant `formData as any` 创建提交、`handleChange(value:any)`。
 - **门禁**：`tsc --noEmit` exit 0；两文件定点 eslint 0 error（剩 4 处 warning 即上述留待项）。
 
+### no-explicit-any 第四批 · Announcement API 映射与请求类型化（2026-10-20）✅
+
+- **本批净降 2 处**：`AnnouncementPage.tsx` 列表映射 `(a:any)` 删注解（由 `announcementApi.list` 返回类型推断）；`mutationFn:(data:any)` → `data: CreateAnnouncementRequest`。
+- **配套**：`api/erp/core/announcement.ts` 将 `CreateAnnouncementRequest` 补 `export`（原为模块私有，供页面引用）。
+- **仍留待**：Tenant `formData as any`（表单模型 ≠ CreateTenantRequest）、`handleChange(value:any)` 表单通用赋值，需对齐表单/API 模型后再收。
+- **门禁**：`tsc --noEmit` exit 0；改动文件定点 eslint 0 error。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成
