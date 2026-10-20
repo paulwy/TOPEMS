@@ -211,6 +211,64 @@
 | **P0-3** | **`setup/admin` 不产生可登录账号**：仅写 `hrm.employees`，密码不哈希不落库、不写 `iam.users`、不绑 user_id、不建角色 | 向导"管理员步"产出的人无法登录，与"初始化管理员"预期脱节，闭环断在账号 | 该步改为调用 IAM 建号（写 `iam.users` + 绑 user_id 到员工 + 授初始角色），或明确改走 IAM 用户创建并在向导内衔接 | `setup.rs:679-717,747`；对比登录只查 `iam.users` `auth.rs:180` |
 | **P0-4** | **权限 scope 三套方言互不匹配**：种子 `finance:voucher:read`、静态 `iam:users_read`、中间件 `system:read`/`admin:iam:write` 几乎不相交；登录 JWT 不 JOIN 展开角色权限 | 普通角色即便绑了种子权限也过不了中间件（403），授权体系形同虚设 | 统一 scope 命名规范并让种子 code 与 `require_permission` 对齐；签发 JWT 或 `/users/me` 时 JOIN 展开角色权限 | `20260724000004:62`；`shared-auth/auth.rs:297`；`routes/iam.rs:107,194,218`；`auth.rs:183-184`；`user/batch.rs:28-92` |
 
+#### P0-4 批次落地记录（2026-10-20，非破坏·第一批：仅字典补缺，JWT 展开未落地）
+
+> 本批严格非破坏：未改任何已挂载端点的 200/403 行为，未删除/重命名任何被保护的 code，未新增任何角色授权。
+
+**① 三套方言现状（全仓盘点结论）**
+
+| 方言 | 形态 | 来源 | 用途 | 本批处理 |
+|---|---|---|---|---|
+| A 细粒度种子 | `module:resource:action`（3 段冒号，末段 read/create/update/delete/approve） | `database/migrations/20260724000004_seed_module_permissions.sql`、`20260908000014_sync_frontend_permission_codes.sql`、`database/init/03_init_permissions.sql` | `core_permissions` 字典 + 角色绑定 | 保持不动 |
+| B 路由中间件挂载码 | 模块伞码 `<mod>:admin`、管理前缀 `admin:<domain>:<action>`、少量 3 段细粒度 | `require_permission("…")` 实际挂载（`lib/shared-auth/src/middleware/permission.rs:16`、`svc/unified-core/src/middleware/permission.rs:55`） | 运行时硬防线 `claims.has_permission` 精确串匹配 | **补齐其中字典缺失项（见②）** |
+| C 内存目录下划线码 | `iam:users_read`（冒号 + 下划线动作） | `lib/shared-auth/src/auth.rs:297-498 get_permissions()`；被 `profile.rs:197-212`、`profile_ext.rs:66-81` 硬编码返回 | `/users/me`、`my-permissions` 响应目录；被单测锁定 | **不动**（改名会让 `auth.rs` 单测变红，属后续独立迁移） |
+
+**② 中间件挂载码 × 种子字典对照（50 个非测试挂载码）**
+
+- **字典已存在（27，无需处理）**：`admin:plugin:read/write`、`ai:dashboard:read/admin`、`crm:admin`、`ehs:admin`、`erp:admin`、`file:read/write/delete`、`finance:admin`、`finance:settlement:approve`、`gis:admin`、`hrm:admin`、`iam:read`、`integration:admin`、`mes:admin`、`plugin:dashboard:read`、`pm:admin`、`qms:admin`、`scm:admin`、`system:audit`、`system:migration`、`system:read`、`wms:admin`、`workflow:read/write`。
+- **字典原本缺失、本批由迁移 `20261020000024_iam_seed_missing_gate_permissions.sql` 补齐（23，仅字典、不绑角色）**：
+  - 模块伞码 `<mod>:admin`（13）：`analytics:admin`、`communication:admin`、`lims:admin`、`master-data:admin`、`mobile:admin`、`monitor:admin`、`pdm:admin`、`portal:admin`、`rd:admin`、`search:admin`、`srm:admin`、`ticket:admin`、`tms:admin`；
+  - 订阅（2）：`subscription:admin`、`subscription:read`；
+  - 系统/IAM 管理域（5）：`system:write`、`admin:iam:write`、`admin:iam:delete`、`admin:iam:tenant:write`、`iam:tenant:read`；
+  - 细粒度补缺（3）：`ai:dashboard:write`、`finance:settlement:read`、`finance:settlement:write`。
+- **孤儿（种子有、中间件从不检查）**：20260724/20260908 里大量 `finance:voucher:*`、`mes:*`、`hrm:employee:*` 等细粒度码没有任何 `require_permission` 挂载，属"字典先于网关"，保留不删（角色绑定仍可能用于前端/未来细粒度网关）。
+
+**③ 命名口径约定（本批立规，不在本批改名）**
+
+- 规范细粒度码 = `module:resource:action`（小写蛇形、冒号分隔、末段 `read/write/delete/approve/admin`），与占字典绝大多数的 A 方言一致；
+- `<module>:admin` 为历史模块级管理伞码，作为兼容字典条目保留，不重命名为 3 段；
+- `admin:<domain>:<action>` 管理前缀码与 20260908000014 已登记的 `admin:*` 同形；
+- C 方言下划线码（`iam:users_read`）为待迁移遗留，禁止新代码再新增。
+
+**④ JWT 登录签发 / `/users/me` 角色权限 JOIN 展开 —— 待 MainAgent 决策，本批未落地**
+
+> 未落地原因：该改动会改变每次登录签发的 access_token 授权集合与 `/users/me` 响应体，属"有效授权变更"，可能把现有集成测试（`svc/unified-core/tests/iam_permission_tests.rs` 等 `test_employee` 的 403 断言）与前端 auth-store 契约翻转，超出非破坏批次边界，需 MainAgent 连同角色绑定/种子策略统一决策。
+
+*现状证据（两路不一致）：*
+
+| 签发/读取点 | 文件:行 | 权限来源 | 是否 JOIN 规范化角色表 |
+|---|---|---|---|
+| 登录签发 access_token | `svc/unified-core/src/modules/iam/auth.rs:178-188`（查询）、`:268-273`（组装）、`:299-318`（Claims）、`:320`（encode） | 仅读 `iam.users` 上的反范式列 `COALESCE(u.roles,'{}')` / `COALESCE(u.permissions,'{}')`（`:183-184`） | **否**（不查 `core_user_roles/core_role_permissions`） |
+| 刷新换发 access_token | `auth.rs:675-685`（JOIN）、`:736-746`、`:768-787`、`:789`（encode） | 已 JOIN `core_user_roles → core_roles`（roles）、`core_user_roles → core_role_permissions → core_permissions`（permissions） | **是**（与登录不一致：登录后空权，刷新后才有角色权） |
+| GET `/users/me` | `modules/iam/user/profile.rs:197-212` | 非超管硬编码 7 个 C 方言码，超管返回 `get_permissions()` 全量 | **否** |
+| GET `/iam/permissions/my-permissions` | `modules/iam/user/profile_ext.rs:60-81` | 非超管硬编码 7 个 C 方言码 | **否** |
+
+*待实施方案草案（决策后执行）：*
+
+1. **统一单一授权源（先决策）**：明确以规范化表 `core_user_roles → core_role_permissions → core_permissions` 为准，还是保留 `iam.users.roles/permissions` 反范式列并做双写同步；两套并存是登录/刷新不一致的根因。
+2. **登录签发点改 JOIN**（`auth.rs:178-188` 的 `UserRow` 查询）：仿 `:677-681` 增加两个相关子查询——
+   - roles：`COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur JOIN public.core_roles r ON r.id=ur.role_id WHERE ur.user_id=u.id), '{}')`；
+   - permissions：`COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur JOIN public.core_role_permissions rp ON rp.role_id=ur.role_id JOIN public.core_permissions p ON p.id=rp.permission_id WHERE ur.user_id=u.id), '{}')`；
+   - 并决定是否与 `u.permissions` 反范式列取并集（UNIQUE）。
+3. **`/users/me` 与 `my-permissions` 改实时查询**：`profile.rs:197-212`、`profile_ext.rs:66-81` 去掉硬编码 C 方言清单，改为同一 JOIN（或直接回传 access_token 内 `claims.permissions`，避免二次查库）。
+4. **涉及文件清单**：`svc/unified-core/src/modules/iam/auth.rs`（登录查询/Claims）、`modules/iam/user/profile.rs`、`modules/iam/user/profile_ext.rs`；必要时 `lib/shared-auth/src/auth.rs get_permissions()`（C 方言目录）做别名映射；不改中间件判定逻辑（`has_permission` 精确匹配已正确）。
+5. **灰度/回归验证步骤**：
+   - 先在隔离测试库造 1 个非超管用户 + 1 个角色 + 经 `core_role_permissions` 绑 1 个已种子码，分别走 login 与 refresh，断言两路 access_token 的 `permissions` 集合一致；
+   - 跑 `cargo test -p topems-unified-core`（含 `tests/iam_permission_tests.rs`、`file_permission_tests.rs` 等）与 `cargo test -p topems-shared-auth`，确认既有 200/403 断言不变（仅当测试用户未被新 JOIN 授予额外码时保持 403）；
+   - 前端 auth-store 对 `/users/me` 响应 `permissions` 形状做契约比对，避免硬编码 C 方言码失效；
+   - 灰度：先让 login 只对 `is_superuser` 以外并集补充角色权、不删除 `u.permissions`，观察一轮后再决定是否废弃反范式列；
+   - 回滚：改动集中在查询与响应组装，保留旧查询分支可开关回退；本批字典补缺迁移无需回滚（ON CONFLICT 幂等、未绑角色）。
+
 ### P1 —— 明显短板
 
 | # | 缺口 | 影响 | 建议做法 | 证据 |
@@ -304,5 +362,6 @@
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
 | 2026-10-20 | v1.0 | 待补 | 首次成稿：分阶段启用路线图、能力盘点表、P0/P1/P2 缺口清单、首次可登录性结论（admin/admin123 启动自举） |
+| 2026-10-20 | v1.1 | 待补 | P0-4 非破坏第一批：新增迁移 `20261020000024` 补齐 23 个中间件已挂载但字典缺失的权限码（仅字典、不绑角色）；新增三套方言对照清单与命名口径；JWT 登录/`/users/me` 角色权限 JOIN 展开未落地，附待 MainAgent 决策的实施方案草案 |
 
 > 后续每次闭环/修订在此追加一行；完成 P0/P1 后同步把 §3 对应行状态改为已具备并勾选 TODO.md。

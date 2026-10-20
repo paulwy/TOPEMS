@@ -13,6 +13,19 @@ fn extract_claims(req: &Request<Body>) -> Option<Claims> {
     req.extensions().get::<Claims>().cloned()
 }
 
+/// 路由层权限硬防线：要求 JWT Claims 精确包含 `permission` 码，否则 403。
+///
+/// # 权限码命名口径（P0-4 对齐约定，仅立规，不回改历史码）
+/// - 规范细粒度码：`module:resource:action`（小写蛇形、冒号分隔，末段 ∈
+///   `read/write/delete/approve/admin`），与 `core_permissions` 种子字典主流一致；
+/// - `<module>:admin` 为历史模块级管理伞码，作为兼容条目保留，**不要**改名；
+/// - `admin:<domain>:<action>` 为管理域前缀码，与既有 `admin:*` 系列同形；
+/// - `iam:users_read` 这类"冒号+下划线动作"的内存目录码属遗留方言，禁止新增。
+///
+/// 非破坏约束：本函数只做精确串匹配，不做前缀/通配展开；新增被保护端点时，
+/// 所用 code 必须已存在于 `core_permissions` 种子（字典补缺走幂等迁移，见
+/// `database/migrations/20261020000024_iam_seed_missing_gate_permissions.sql`），
+/// 但**不得**在此重命名已挂载的历史 code（会直接把现有 200 翻成 403）。
 pub fn require_permission(
     permission: &'static str,
 ) -> impl Fn(
