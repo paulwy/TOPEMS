@@ -126,9 +126,18 @@ export interface CompleteInitRequest {
   confirm: boolean;
 }
 
+export interface CompleteInitSummary {
+  company_count: number;
+  department_count: number;
+  position_count: number;
+}
+
 export interface CompleteInitResponse {
   is_completed: boolean;
   completed_at: string;
+  /** 管理员员工档案是否已绑定 IAM 账号；false 时需先开通账号并分配默认角色/权限。 */
+  admin_bound?: boolean;
+  summary?: CompleteInitSummary;
 }
 
 export const hrmSetupApi = {
