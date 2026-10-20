@@ -93,7 +93,7 @@ lsof -i :8013
 lsof -ti :8000 | xargs kill -9
 
 # 3. 批量清理 TOPEMS 端口
-for port in 8000 8010 8011 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8063 8070 8071 8072; do
+for port in 8000 8010 8011 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8063 8070 8071 8072 8073 8082 8084 8086 8090 8095 8096 8099; do
   lsof -ti:$port 2>/dev/null | xargs kill -9 2>/dev/null
 done
 
@@ -290,8 +290,8 @@ pnpm dev
 # 2. 检查 Vite 代理配置
 cat apps/web/vite.config.ts | grep proxy
 
-# 3. 直接访问后端 API
-curl http://localhost:8000/api/iam/auth/login
+# 3. 直接访问后端 API（单体 8099；独立 core 为 8000）
+curl http://localhost:8099/api/core/iam/auth/login
 
 # 4. 检查特定服务的 API
 curl http://localhost:8010/api/erp/assets?page=1&pagesize=20
@@ -327,8 +327,8 @@ cat apps/web/vite.config.ts | grep -A5 "hrm"
 # 1. 检查 unified-core 是否运行
 ./scripts/topems.sh status iam
 
-# 2. 检查注册接口
-curl -s -X POST "http://localhost:8000/api/core/plugin/dev/plugins/test/register" \
+# 2. 检查插件注册接口（plugin-registry 8096，/api/plugin/dev/plugins）
+curl -s -X POST "http://localhost:8096/api/plugin/dev/plugins" \
   -H "Content-Type: application/json" \
   -d '{"code":"test","name":"Test","description":"Test","version":"0.1.0","runtime_url":"http://localhost:9999","permissions":[]}'
 
@@ -438,7 +438,7 @@ export RUST_BACKTRACE=1
 # 1. 清除浏览器缓存和 localStorage
 
 # 2. 重新登录获取新 Token
-curl -X POST http://localhost:8000/api/iam/auth/login \
+curl -X POST http://localhost:8099/api/core/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}'
 
@@ -462,7 +462,7 @@ cat .env | grep JWT_SECRET
 # refresh_token 默认 7 天过期
 
 # 2. 重新登录
-curl -X POST http://localhost:8000/api/iam/auth/login \
+curl -X POST http://localhost:8099/api/core/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}'
 

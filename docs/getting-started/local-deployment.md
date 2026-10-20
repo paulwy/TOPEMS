@@ -124,7 +124,7 @@ pnpm dev
 启动完成后访问：
 
 - **Web 门户**: http://localhost:3000
-- **API 网关**: http://localhost:8000
+- **API 入口（单体）**: http://localhost:8099（独立模式 http://localhost:8000）
 - **默认账号**: admin / admin123
 
 ## 服务管理
@@ -198,8 +198,8 @@ pnpm test             # 运行测试
 **验证注册结果**：
 
 ```bash
-# 查看已注册插件列表
-curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
+# 查看已注册插件列表（单体 8099 /api/plugins/info；独立模式走各服务）
+curl -s http://localhost:8099/api/plugins/info | python3 -m json.tool
 ```
 
 **服务自动恢复**：
@@ -217,8 +217,11 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 | 3001 | Core Module (前端微模块) | apps/core |
 | 5432 | PostgreSQL | 本地 |
 | 6379 | Redis | 本地 |
-| 8000 | Unified Core (IAM + Doc + Flow + File + Monitor + AI) | svc/unified-core |
+| 8099 | Server 模块化单体（本地默认统一入口） | svc/server |
+| 8000 | Unified Core (IAM + Doc + Flow + File，独立模式) | svc/unified-core |
 | 8010 | ERP | svc/erp |
+| 8011 | Finance | svc/finance |
+| 8013 | AI | svc/ai |
 | 8020 | HRM | svc/hrm |
 | 8023 | PM | svc/pm |
 | 8029 | CRM | svc/crm |
@@ -231,13 +234,18 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 | 8051 | LIMS | svc/lims |
 | 8052 | EHS | svc/ehs |
 | 8053 | RD | svc/rd |
-| 8060 | BI | svc/bi |
-| 8061 | Report | svc/report |
+| 8060 | Analytics/BI（报表模块已并入，无独立 report/8061） | svc/analytics |
 | 8063 | Portal | svc/portal |
-| 8013 | AI | svc/ai |
 | 8070 | Mobile | svc/mobile |
 | 8071 | GIS | svc/gis |
 | 8072 | Integration | svc/integration |
+| 8073 | TMS | svc/tms |
+| 8082 | Search | svc/search |
+| 8084 | Communication（邮件/IM/通知） | svc/communication |
+| 8086 | Ticket（原 feedback 并入） | svc/ticket |
+| 8090 | Master-Data | svc/master-data |
+| 8095 | Monitor（V68.1 独立） | svc/monitor |
+| 8096 | Plugin-Registry | svc/plugin-registry |
 
 ## 日志
 
@@ -346,7 +354,7 @@ Docker 部署**仍然受支持**，但仅作为可选方案。Docker 相关文�
 lsof -i :8000
 
 # 清理 TOPEMS 端口
-for port in 3000 3001 8000 8010 8011 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8063 8070 8071 8072; do
+for port in 3000 3001 8000 8010 8011 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8063 8070 8071 8072 8073 8082 8084 8086 8090 8095 8096 8099; do
   lsof -ti:$port 2>/dev/null | xargs kill -9 2>/dev/null
 done
 ```

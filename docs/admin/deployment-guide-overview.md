@@ -31,14 +31,15 @@ TOPEMS 共包含 **20 个服务**，端口分配遵循统一规范：
 
 | 业务域 | 段位 | 服务 | 端口 |
 |--------|------|------|------|
-| 核心服务 | 8000-8009 | unified-core（IAM + Doc + Flow + File + Monitor + AI） | 8000 |
+| 核心服务 | 8000-8009 | unified-core（IAM + Doc + Flow + File；Monitor 已独立 8095、AI 独立 8013、邮件/IM/通知归 communication 8084） | 8000 |
 | 经营管理 | 8010-8019 | erp(8010), finance(8011), ai(8013) | - |
 | 协同办公 | 8020-8029 | hrm(8020), pm(8023), crm(8029) | - |
 | 生产制造 | 8030-8039 | mes(8030), pdm(8031) | - |
 | 供应链 | 8040-8049 | scm(8040), wms(8041), srm(8042) | - |
 | 质量/研发 | 8050-8059 | qms(8050), lims(8051), ehs(8052), rd(8053) | - |
-| 数据分析 | 8060-8069 | bi(8060), report(8061), portal(8063) | - |
-| 基础设施 | 8070-8079 | mobile(8070), gis(8071), integration(8072) | - |
+| 数据分析 | 8060-8069 | analytics/bi(8060，报表模块已并入，无独立 report/8061), portal(8063) | - |
+| 基础设施 | 8070-8079 | mobile(8070), gis(8071), integration(8072), tms(8073) | - |
+| 扩展/平台 | 8082-8099 | search(8082), communication(8084), ticket(8086), master-data(8090), monitor(8095), plugin-registry(8096), server 单体(8099) | - |
 
 ## 部署方式
 
@@ -341,16 +342,16 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
-    # 核心服务 API
-    location /api/iam/ {
-        proxy_pass http://unified-core/api/iam/;
+    # 核心服务 API（iam/doc 均挂在 /api/core 前缀下）
+    location /api/core/iam/ {
+        proxy_pass http://unified-core/api/core/iam/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
 
-    location /api/doc/ {
-        proxy_pass http://unified-core/api/doc/;
+    location /api/core/doc/ {
+        proxy_pass http://unified-core/api/core/doc/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -529,8 +530,11 @@ cargo build --release --workspace
 
 | 服务名称 | 端口 | 协议 | 说明 |
 |----------|------|------|------|
-| unified-core | 8000 | HTTP | 统一核心服务（含IAM/Doc/Flow/File/Mail/IM/Notification） |
+| unified-core | 8000 | HTTP | 统一核心服务（IAM/Doc/Flow/File；独立模式） |
+| server（模块化单体） | 8099 | HTTP | 本地默认统一入口（内嵌服务适配器，生产 nginx 单上游） |
 | erp | 8010 | HTTP | 企业资源计划 |
+| finance | 8011 | HTTP | 财务 |
+| ai | 8013 | HTTP | AI 智能服务 |
 | hrm | 8020 | HTTP | 人力资源管理 |
 | pm | 8023 | HTTP | 项目管理 |
 | crm | 8029 | HTTP | 客户关系管理 |
@@ -543,13 +547,18 @@ cargo build --release --workspace
 | lims | 8051 | HTTP | 实验室信息管理 |
 | ehs | 8052 | HTTP | 环境健康安全 |
 | rd | 8053 | HTTP | 研发管理 |
-| bi | 8060 | HTTP | 商业智能 |
-| report | 8061 | HTTP | 报表服务 |
+| analytics/bi | 8060 | HTTP | 商业智能（报表模块已并入，无独立 report/8061） |
 | portal | 8063 | HTTP | 企业门户 |
-| ai | 8013 AI 智能服务 |
 | mobile | 8070 | HTTP | 移动服务 |
 | gis | 8071 | HTTP | 地理信息服务 |
 | integration | 8072 | HTTP | 集成服务 |
+| tms | 8073 | HTTP | 运输管理 |
+| search | 8082 | HTTP | 全文搜索 |
+| communication | 8084 | HTTP | 通讯服务（邮件/IM/通知） |
+| ticket | 8086 | HTTP | 工单（原 feedback 已并入） |
+| master-data | 8090 | HTTP | 主数据 |
+| monitor | 8095 | HTTP | 监控（V68.1 自 unified-core 迁出） |
+| plugin-registry | 8096 | HTTP | 插件注册中心 |
 | frontend | 3000 | HTTP | 前端应用 |
 | postgresql | 5432 | TCP | 数据库 |
 | redis | 6379 | TCP | 缓存/向量 |

@@ -183,7 +183,7 @@ rate_limiting:
   
   # 特定接口
   endpoints:
-    "/api/iam/auth/login":
+    "/api/core/iam/auth/login":
       requests_per_minute: 5
       block_duration: 300  # 5 分钟
     "/api/ai/chat":
@@ -307,7 +307,7 @@ COPY --chown=topems:topems . /app
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s \
-  CMD curl -f http://localhost:8000/health || exit 1
+  CMD curl -f http://localhost:8099/health || exit 1
 ```
 
 #### 镜像扫描
@@ -335,7 +335,7 @@ ufw allow 80/tcp
 ufw allow 443/tcp
 
 # 服务端口（仅内网）
-ufw allow from 10.0.0.0/8 to any port 8000:8079
+ufw allow from 10.0.0.0/8 to any port 8000:8099
 ```
 
 #### Nginx 安全配置

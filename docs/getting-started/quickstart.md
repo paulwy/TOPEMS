@@ -36,13 +36,13 @@ pnpm dev
 1. 检查环境依赖
 2. 启动本地 PostgreSQL 和 Redis（macOS 通过 Homebrew）
 3. 创建数据库（如不存在）
-4. 启动后端 unified-core（端口 8000）
+4. 启动后端（推荐模块化单体 topems-server 端口 8099；独立模式下 unified-core 为 8000）
 5. 启动 topems-core 微前端（端口 3001）
 6. 启动 topems-portal 主前端（端口 3000）
 
 启动完成后访问：
 - **Web 门户**: http://localhost:3000
-- **API 网关**: http://localhost:8000
+- **API 入口（单体）**: http://localhost:8099（独立模式为 http://localhost:8000）
 - **默认账号**: admin / admin123
 
 ## 快速启动
@@ -166,8 +166,8 @@ pnpm dev:core
 |------|-----|
 | 前端 | http://localhost:3000 |
 | Core 微前端 | http://localhost:3001 |
-| API 网关 | http://localhost:8000 |
-| 健康检查 | http://localhost:8000/health |
+| API 入口（单体） | http://localhost:8099（独立模式 8000） |
+| 健康检查 | http://localhost:8099/health |
 
 **默认账号**：
 - 用户名：`admin`
@@ -180,8 +180,8 @@ pnpm dev:core
 ### 1. 健康检查
 
 ```bash
-# 核心服务
-curl http://localhost:8000/health
+# 单体入口健康检查（独立模式为 8000）
+curl http://localhost:8099/health
 
 # AI 服务（如已启动）
 curl http://localhost:8013/health
@@ -195,8 +195,8 @@ curl http://localhost:8020/health
 服务启动后会自动向 unified-core 注册，验证注册是否成功：
 
 ```bash
-# 查看已注册插件列表
-curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
+# 查看已注册插件列表（单体 8099 /api/plugins/info；独立模式走各服务）
+curl -s http://localhost:8099/api/plugins/info | python3 -m json.tool
 
 # 预期输出（部分）
 # {
@@ -221,15 +221,15 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 ### 3. API 测试
 
 ```bash
-# 登录获取 Token
-TOKEN=$(curl -s -X POST http://localhost:8000/api/iam/auth/login \
+# 登录获取 Token（单体 8099；独立 core 为 8000，路径 /api/core/iam/auth/login）
+TOKEN=$(curl -s -X POST http://localhost:8099/api/core/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}' \
   | jq -r '.data.token')
 
 # 获取当前用户
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8000/api/iam/users/me
+  http://localhost:8099/api/core/iam/users/me
 
 # 获取员工列表（如 HRM 已启动）
 curl -H "Authorization: Bearer $TOKEN" \
@@ -245,8 +245,8 @@ ollama serve
 # 拉取模型
 ollama pull qwen2.5:7b-instruct
 
-# 智能对话
-curl -X POST http://localhost:8000/api/core/ai/chat \
+# 智能对话（单体经 8099 /api/ai/chat；独立 AI 服务为 8013 /api/ai/chat）
+curl -X POST http://localhost:8099/api/ai/chat \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"message":"你好，TOPEMS"}'
@@ -329,7 +329,7 @@ A: 清理端口后重试：
 
 ```bash
 # 清理所有 TOPEMS 端口
-for port in 3000 3001 8000 8010 8011 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8061 8063 8070 8071 8072; do
+for port in 3000 3001 8000 8010 8011 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 8051 8052 8053 8060 8063 8070 8071 8072 8073 8082 8084 8086 8090 8095 8096 8099; do
   lsof -ti:$port 2>/dev/null | xargs kill -9 2>/dev/null
 done
 
