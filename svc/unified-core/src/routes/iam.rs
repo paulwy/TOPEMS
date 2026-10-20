@@ -10,15 +10,8 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
         .route("/health", get(modules::iam::permission::health))
         .route("/users", get(modules::iam::user::list_users))
         .route("/users/{id}", get(modules::iam::user::get_user))
-        .route("/users/me", get(modules::iam::user::get_current_user))
-        .route(
-            "/users/me/permissions",
-            get(modules::iam::user::get_my_permissions),
-        )
-        .route(
-            "/users/me/preferences",
-            get(modules::iam::user::get_preferences),
-        )
+        // 自服务 GET（/users/me、自身权限、自身偏好）已拆到 `me` 路由组，仅需登录，
+        // 不再要求 iam:read；管理类用户/角色/权限查询仍在本层（iam:read）。
         .route(
             "/users/{user_id}/permissions",
             get(modules::iam::user::get_user_permissions),
@@ -78,10 +71,7 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             "/permissions/verify-multiple",
             post(modules::iam::permission_verify::verify_multiple_permissions),
         )
-        .route(
-            "/permissions/my-permissions",
-            get(modules::iam::permission_verify::get_my_permissions),
-        )
+        // 自身权限目录 GET /permissions/my-permissions 拆到 `me` 组（登录即可）。
         .route(
             "/users/{user_id}/positions",
             get(modules::iam::user_position::get_user_positions),
@@ -112,23 +102,8 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
     let write = Router::new()
         .route("/users", post(modules::iam::user::create_user))
         .route("/users/{id}", put(modules::iam::user::update_user))
-        .route("/users/me", put(modules::iam::user::update_current_user))
-        .route(
-            "/users/me/permissions/check",
-            post(modules::iam::user::check_my_permission),
-        )
-        .route(
-            "/users/me/password",
-            post(modules::iam::user::change_my_password),
-        )
-        .route(
-            "/users/me/avatar",
-            post(modules::iam::user::update_my_avatar),
-        )
-        .route(
-            "/users/me/preferences",
-            put(modules::iam::user::update_preferences),
-        )
+        // 自服务写（自身资料、改密、头像、偏好、自身权限校验）已拆到 `me` 路由组，
+        // 仅需登录，不再要求 admin:iam:write；管理类建号/改他人/批量/角色权限仍在本层。
         .route(
             "/users/batch-delete",
             post(modules::iam::user::batch_delete_users),
@@ -220,5 +195,41 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             require_permission("admin:iam:delete"),
         ));
 
-    Router::new().nest("/iam", read.merge(write).merge(delete_routes))
+    // P1-5 自服务路由组：只操作「当前登录人自己」（身份一律取自 Claims.sub，不接受
+    // body/路径指定他人）。全局 auth_middleware 已校验登录并注入 Claims，故此处不再叠加
+    // iam:read / admin:iam:write 管理权限层——普通登录用户即可访问；未带有效 token 由
+    // auth_middleware 返回 401。管理类端点（增删改他人、角色/权限/岗位管理）仍在 read/write/delete 层。
+    let me = Router::new()
+        .route("/users/me", get(modules::iam::user::get_current_user))
+        .route(
+            "/users/me/permissions",
+            get(modules::iam::user::get_my_permissions),
+        )
+        .route(
+            "/users/me/preferences",
+            get(modules::iam::user::get_preferences),
+        )
+        .route(
+            "/permissions/my-permissions",
+            get(modules::iam::permission_verify::get_my_permissions),
+        )
+        .route("/users/me", put(modules::iam::user::update_current_user))
+        .route(
+            "/users/me/permissions/check",
+            post(modules::iam::user::check_my_permission),
+        )
+        .route(
+            "/users/me/password",
+            post(modules::iam::user::change_my_password),
+        )
+        .route(
+            "/users/me/avatar",
+            post(modules::iam::user::update_my_avatar),
+        )
+        .route(
+            "/users/me/preferences",
+            put(modules::iam::user::update_preferences),
+        );
+
+    Router::new().nest("/iam", read.merge(me).merge(write).merge(delete_routes))
 }
