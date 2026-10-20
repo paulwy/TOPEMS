@@ -20,7 +20,7 @@ const logError = (message: string, ...args: unknown[]) => {
   console.error(message, ...args);
 };
 
-export function lazyWithRetry<T extends ComponentType<any>>(
+export function lazyWithRetry<T extends ComponentType<Record<string, unknown>>>(
   factory: () => Promise<{ default: T }>,
   moduleName?: string
 ): LazyExoticComponent<T> {
@@ -50,7 +50,7 @@ export function lazyWithRetry<T extends ComponentType<any>>(
 }
 
 export const createSafeLazy = () => {
-  return <T extends ComponentType<any>>(
+  return <T extends ComponentType<Record<string, unknown>>>(
     factory: () => Promise<{ default: T }>,
     moduleName?: string
   ): LazyExoticComponent<T> => {
@@ -69,7 +69,7 @@ export const createSafeLazy = () => {
 
 export interface RouteConfig {
   path: string;
-  element: ReactElement | LazyExoticComponent<ComponentType<any>>;
+  element: ReactElement | LazyExoticComponent<ComponentType<Record<string, unknown>>>;
   requiredPermissions?: string[];
   module?: string;
   action?: 'read' | 'write' | 'update' | 'delete' | 'admin';

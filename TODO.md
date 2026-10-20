@@ -385,6 +385,14 @@
 - **3 份未挂载实体 schema 改 `export` 保留资产**：`schemas/iam/role.ts` roleSchema、`schemas/iam/user.ts` userSchema、`schemas/workflow/approval.ts` workflowApprovalSchema（经各自 index `export *` 导出，待对应页面启用时接入，不删）。
 - **门禁**：`tsc --noEmit` exit 0；改动文件定点 eslint 0 error；全量 eslint unused-vars=0、errors=0。
 
+### no-explicit-any 第一批 · 懒加载组件泛型约束去 any（2026-10-20）✅
+
+> 来源：10-19 重审 shard-B `@typescript-eslint/no-explicit-any` 基线 421（warn，`eslint.config.js` 122）。按风险分批：先收不改变返回契约的泛型约束，页面断言/map 回调 any 与测试 mock any 留后续批次。
+
+- **本批净降 7 处**：`utils/lazyImport.ts` 4 处 `ComponentType<any>`、`routes/utils.ts` 3 处 `ComponentType<any>` → `ComponentType<Record<string, unknown>>`（仅收紧泛型约束，返回 `LazyExoticComponent<T>` 契约不变）。
+- **主动回退/保留**：`api/client.ts` 5 个 axios 方法的 `T=any / D=any` 默认值不改 unknown——实测改 unknown 会让所有未显式传泛型的调用方返回 `ApiResponse<unknown>`，与已标注的具体返回类型连锁不兼容（addressbook/bi/dataset 等多处 TS2322），成本远大于收益，保留宽松默认。
+- **门禁**：`tsc --noEmit` exit 0；两文件定点 eslint 0 error。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

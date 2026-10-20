@@ -11,7 +11,7 @@ const logger = createLogger('lazyImport');
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
-interface LazyImportOptions<T extends ComponentType<any>> {
+interface LazyImportOptions<T extends ComponentType<Record<string, unknown>>> {
   factory: () => Promise<{ default: T }>;
   moduleName?: string;
   maxRetries?: number;
@@ -21,16 +21,16 @@ interface LazyImportOptions<T extends ComponentType<any>> {
   fallback?: ComponentType;
 }
 
-export function lazyImport<T extends ComponentType<any>>(
+export function lazyImport<T extends ComponentType<Record<string, unknown>>>(
   options: LazyImportOptions<T>
 ): LazyExoticComponent<T>;
 
-export function lazyImport<T extends ComponentType<any>>(
+export function lazyImport<T extends ComponentType<Record<string, unknown>>>(
   factory: () => Promise<{ default: T }>,
   moduleName?: string
 ): LazyExoticComponent<T>;
 
-export function lazyImport<T extends ComponentType<any>>(
+export function lazyImport<T extends ComponentType<Record<string, unknown>>>(
   factoryOrOptions: (() => Promise<{ default: T }>) | LazyImportOptions<T>,
   moduleName?: string
 ): LazyExoticComponent<T> {
