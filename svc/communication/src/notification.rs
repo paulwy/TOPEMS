@@ -2981,6 +2981,7 @@ pub async fn bulk_unarchive(
 }
 
 /// 模板批量状态更新（`PUT /notification-templates/batch-status`，载荷 `{ ids, status }`）
+// gate: admin-only
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["communication:notification:admin"])),

@@ -651,6 +651,7 @@ fn investigation_from_row(r: &sqlx::postgres::PgRow) -> Investigation {
     request_body = UpdateInvestigationRequest,
     responses((status = 200, description = "OK")),
 )]
+// gate: admin-only
 pub async fn update_investigation(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -892,6 +893,7 @@ pub async fn close_accident(
 
     responses((status = 200, description = "OK")),
 )]
+// gate: admin-only
 pub async fn complete_investigation(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
