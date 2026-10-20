@@ -4,6 +4,7 @@ export { apqpSchema, apqpWizard } from './apqp';
 export { fmeaSchema } from './fmea';
 export { spcSchema } from './spc';
 export { nonconformanceSchema } from './nonconformance';
+export { correctiveActionSchema } from './correctiveAction';
 export { qualityIssueSchema, auditPlanSchema } from './qualityControl';
 export { inspectionSchema } from './inspection';
 export { auditSchema } from './audit';

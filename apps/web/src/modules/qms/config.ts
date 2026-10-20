@@ -11,6 +11,7 @@ export const QMS_PATHS = {
   inspection: '/qms/inspection',
   qualityControl: '/qms/quality-control',
   nonconformance: '/qms/nonconformance',
+  correctiveActions: '/qms/corrective-actions',
   auditManagement: '/qms/audit-management',
   standards: '/qms/standards',
   standardDetail: '/qms/standards/:id',
@@ -138,6 +139,20 @@ interface QmsNonconformancePageProps {
   /** 排序方向 */
 
   sortOrder?: 'asc' | 'desc';
+}
+
+interface QmsCorrectiveActionPageProps {
+  /** 分页：当前页码 */
+  page?: number;
+
+  /** 分页：每页大小 */
+  pageSize?: number;
+
+  /** 过滤器：前端宽松 Record<string, unknown> */
+  filters?: Record<string, unknown>;
+
+  /** 关键字搜索（顶部搜索框） */
+  searchKeyword?: string;
 }
 
 interface QmsAuditManagementPageProps {
@@ -608,6 +623,21 @@ export const qmsModuleConfig: RouteModuleConfig = {
       action: 'read',
     } as RouteConfigV2<QmsNonconformancePageProps>,
     {
+      path: QMS_PATHS.correctiveActions,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/QmsCorrectiveActionPage'),
+        'QmsCorrectiveActionPage'
+      ),
+      module: 'qms',
+      code: 'qms-corrective-actions',
+      title: i18n.t('qms.nav.qms-corrective-actions'),
+      titleKey: 'qms.nav.qms-corrective-actions',
+      template: 'list',
+      group: 'business',
+      requiredPermissions: ['qms:action:read', 'qms:dashboard:read'],
+      action: 'read',
+    } as RouteConfigV2<QmsCorrectiveActionPageProps>,
+    {
       path: QMS_PATHS.auditManagement,
       element: lazyWithRetry(
         () => import('@/pages/qms/QmsAuditManagementPage'),
@@ -950,6 +980,17 @@ export const qmsNavConfig: ModuleNavConfig = {
       order: 3,
       group: 'business',
       description: i18n.t('qms.nav.qms-nonconformance_desc'),
+    },
+    {
+      code: 'qms-corrective-actions',
+      label: i18n.t('qms.nav.qms-corrective-actions'),
+      labelKey: 'qms.nav.qms-corrective-actions',
+      icon: 'Wrench',
+      path: QMS_PATHS.correctiveActions,
+      permission: 'qms:action:read',
+      order: 3,
+      group: 'business',
+      description: i18n.t('qms.nav.qms-corrective-actions_desc'),
     },
     {
       code: 'qms-standards',
