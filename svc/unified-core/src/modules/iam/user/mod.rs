@@ -10,6 +10,7 @@ pub(crate) mod roles;
 mod status;
 mod validation;
 
+pub(crate) use models::resolve_user_grants;
 pub use models::ListUsersParams;
 
 pub use crud::{create_user, delete_user, get_user, list_users, update_user};

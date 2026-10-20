@@ -3,7 +3,7 @@ use axum::Extension;
 use axum::{extract::State, Json};
 use topems_shared_auth::auth::Claims;
 
-use super::models::{UserResponse, UserRow};
+use super::models::{resolve_user_grants, UserResponse, UserRow};
 
 /// D2 U2 环3（决策 C）：用户偏好主数据本地化到 unified-core IAM 域（`core.user_preferences`）。
 ///
@@ -188,27 +188,18 @@ pub async fn get_current_user(
 
     match user {
         Some(u) => {
-            let roles = if u.is_superuser {
-                vec!["admin".to_string(), "user".to_string()]
+            // P0-4：超管返回全量目录（保持原行为）；非超管改为实时 JOIN 规范化授权表，
+            // 不再硬编码 7 个 C 方言码。
+            let (roles, permissions) = if u.is_superuser {
+                (
+                    vec!["admin".to_string(), "user".to_string()],
+                    topems_shared_auth::auth::get_permissions()
+                        .iter()
+                        .map(|p| p.id.clone())
+                        .collect(),
+                )
             } else {
-                vec!["user".to_string()]
-            };
-
-            let permissions = if u.is_superuser {
-                topems_shared_auth::auth::get_permissions()
-                    .iter()
-                    .map(|p| p.id.clone())
-                    .collect()
-            } else {
-                vec![
-                    "iam:users_read".to_string(),
-                    "iam:roles_read".to_string(),
-                    "iam:permissions_read".to_string(),
-                    "iam:audit_read".to_string(),
-                    "iam:system_read".to_string(),
-                    "iam:dictionaries_read".to_string(),
-                    "iam:plugins_read".to_string(),
-                ]
+                resolve_user_grants(&state.pool, u.id).await
             };
 
             let user_response = UserResponse {

@@ -5,7 +5,7 @@ use axum::{extract::State, Json};
 use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
-use super::models::{is_valid_email, record_audit_log, UserResponse, UserRow};
+use super::models::{is_valid_email, record_audit_log, resolve_user_grants, UserResponse, UserRow};
 
 /// GET /users/me/permissions — 返回当前用户权限（与已有 /permissions/my-permissions 不同路径）
 #[utoipa::path(
@@ -57,27 +57,18 @@ pub async fn get_my_permissions(
         }
     };
 
-    let role_names: Vec<String> = if u.is_superuser {
-        vec!["admin".to_string(), "user".to_string()]
+    // P0-4：超管返回全量目录（保持原行为）；非超管改为实时 JOIN 规范化授权表，
+    // 不再硬编码 7 个 C 方言码。
+    let (role_names, permission_codes): (Vec<String>, Vec<String>) = if u.is_superuser {
+        (
+            vec!["admin".to_string(), "user".to_string()],
+            topems_shared_auth::auth::get_permissions()
+                .iter()
+                .map(|p| p.id.clone())
+                .collect(),
+        )
     } else {
-        vec!["user".to_string()]
-    };
-
-    let permission_codes: Vec<String> = if u.is_superuser {
-        topems_shared_auth::auth::get_permissions()
-            .iter()
-            .map(|p| p.id.clone())
-            .collect()
-    } else {
-        vec![
-            "iam:users_read".to_string(),
-            "iam:roles_read".to_string(),
-            "iam:permissions_read".to_string(),
-            "iam:audit_read".to_string(),
-            "iam:system_read".to_string(),
-            "iam:dictionaries_read".to_string(),
-            "iam:plugins_read".to_string(),
-        ]
+        resolve_user_grants(&state.pool, u.id).await
     };
 
     let user_response = UserResponse {

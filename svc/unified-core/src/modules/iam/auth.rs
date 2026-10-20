@@ -265,11 +265,16 @@ pub async fn login(
 
     let jwt_expire_minutes = state.auth_state.token_expiry_hours * 60;
 
-    let user_roles = user.roles.clone().unwrap_or_default();
-    let user_permissions = if user.is_superuser {
-        vec!["*".to_string()]
+    // P0-4：非超管登录签发改从规范化授权表实时解析（core_user_roles → core_roles /
+    // core_role_permissions → core_permissions），与刷新换发同构，消除"登录空权、刷新才有"
+    // 的不一致；超管保持原行为（roles 取反范式列、permissions = ["*"] 短路）。
+    let (user_roles, user_permissions) = if user.is_superuser {
+        (
+            user.roles.clone().unwrap_or_default(),
+            vec!["*".to_string()],
+        )
     } else {
-        user.permissions.clone().unwrap_or_default()
+        crate::modules::iam::user::resolve_user_grants(&state.pool, user.id).await
     };
 
     // 查询用户所属租户，未关联时 fallback 到默认租户
