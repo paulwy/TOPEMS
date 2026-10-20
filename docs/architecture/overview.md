@@ -119,10 +119,12 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 │  QMS(8050) │ LIMS(8051)│ EHS(8052) │ RD(8053)             │
 │  BI(8060)  │ Portal(8063)                                    │
 │  Mobile(8070) │ GIS(8071) │ Integration(8072)              │
-│  Search(8082) │ Comm(8084) │ Billing(8085) │ Ticket(8086)  │
-│  Feedback(8087) │ Lowcode(8088) │ Master-Data(8090)        │
+│  Search(8082) │ Comm(8084) │ Ticket(8086) │ Master-Data(8090) │
+│  TMS(8073) │ Monitor(8095) │ Plugin-Registry(8096)           │
+│  [归档] Billing(8085) / Feedback(8087→ticket) / Lowcode(8088)  │
 │                                                              │
-│  合计 1 核心服务 unified-core(8000) + 27 业务服务 = 28 服务   │
+│  模块化单体统一入口 svc/server :8099（本地默认形态）           │
+│  合计 1 核心服务 unified-core(8000) + 业务服务（V71 快照 27） │
 └─────────────────────────────┬───────────────────────────────┘
                               │
 ┌─────────────────────────────┴───────────────────────────────┐
@@ -167,7 +169,7 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 | 服务 | 端口 | 业务域 | 说明 | API 前缀 | 状态 | **V2 模式** |
 |------|------|--------|------|----------|------|-------------|
 | **核心服务** | | | | | | |
-| unified-core | 8000 | Core | 含 IAM/Doc/Flow/File/Communication/Monitor | /api/core/iam/, /api/core/doc/... | ✅ 核心 | **C**（Application 重建） |
+| unified-core | 8000 | Core | 承载 IAM/Doc/Flow/File（Communication/Monitor 已独立迁出） | /api/core/iam/, /api/core/doc/... | ✅ 核心 | **C**（Application 重建） |
 | **经营管理 (8010-8019)** | | | | | | |
 | erp | 8010 | ERP | 企业资源计划 | /api/erp/ | ✅ 已实现 | **B**（stateful + build_application） |
 | finance | 8011 | ERP | 财务管理服务 | /api/finance/ | ✅ 已实现 | **A**（标准 build_application） |
@@ -189,7 +191,11 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 | ehs | 8052 | QA/R&D | 环境健康安全 | /api/ehs/ | ✅ 已实现 | **B** |
 | rd | 8053 | QA/R&D | 研发管理 | /api/rd/ | ✅ 已实现 | **B** |
 | **数据分析 (8060-8069)** | | | | | | |
-| bi (analytics) | 8060 | BI | 商业智能（含报表服务） | /api/bi/, /api/report/ | ✅ 已实现 | **C**（自定义 Prometheus） |
+| bi (analytics) | 8060 | BI | 商业智能（原 report 报表已并入，无独立 report 服务） | /api/bi/ | ✅ 已实现 | **C**（自定义 Prometheus） |
+| monitor | 8095 | Core | 系统监控（V68.1 自 unified-core 迁出独立） | /api/monitor/ | ✅ 已实现 | 独立服务 |
+| plugin-registry | 8096 | Core | 插件注册表 | /api/plugins/* | ✅ 已实现 | 独立服务 |
+| tms | 8073 | Infra | 运输管理 | /api/tms/ | ✅ 已实现 | 独立服务 |
+| server（模块化单体） | 8099 | Core | 本地默认统一入口（内嵌约 30 服务适配器，生产 nginx 单上游） | /api/* | ✅ 已实现 | C |
 | portal | 8063 | BI | 企业门户（GraphQL/WS/事件总线模拟器） | /api/portal/ | ✅ 已实现 | **C**（GraphQL + CookieManager） |
 | **基础设施 (8070-8079)** | | | | | | |
 | mobile | 8070 | Infra | 移动服务（6+ 服务客户端） | /api/mobile/ | ✅ 已实现 | **B**（8字段 AppState） |
@@ -198,10 +204,10 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 | **主数据 & 扩展服务 (8082-8090)** | | | | | | |
 | search | 8082 | Extension | 全文搜索服务 | /api/search/ | ✅ 已实现 | **A** |
 | communication | 8084 | Extension | 通讯服务（邮件/通知/IM） | /api/comm/ | ✅ 已实现 | **A** |
-| billing | 8085 | Extension | 计费服务 | /api/billing/ | ✅ 已实现 | **A** |
-| ticket | 8086 | Extension | 工单服务 | /api/ticket/ | ✅ 已实现 | **A** |
-| feedback | 8087 | Extension | 反馈服务 | /api/feedback/ | ✅ 已实现 | **A** |
-| lowcode | 8088 | Extension | 低代码引擎（占位） | /api/lowcode/ | ✅ 已实现 | **A** |
+| ~~billing~~ | 8085 | Extension | 计费服务（已归档，`svc/_archive/`，代码无此服务） | — | 📦 已归档 | — |
+| ticket | 8086 | Extension | 工单服务（原 feedback 反馈已并入 ticket） | /api/ticket/ | ✅ 已实现 | **A** |
+| ~~feedback~~ | 8087 | Extension | 反馈服务（已并入 ticket，目录不存在） | — | 📦 已合并 | — |
+| ~~lowcode~~ | 8088 | Extension | 低代码引擎（空壳已移除，目录不存在） | — | 📦 已归档 | — |
 | master-data | 8090 | MasterData | 主数据管理 | /api/master-data/ | ✅ 已实现 | **A** |
 
 > **状态说明**: ✅ 已实现 | 🔶 部分实现 | 📋 规划中
@@ -217,14 +223,12 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 
 | 模块 | URL 前缀 | 功能 |
 |------|----------|------|
-| iam | /api/iam/ | 身份认证、用户管理、权限管理、RBAC |
-| doc | /api/doc/ | 文档管理、知识库、全文检索 |
-| flow | /api/flow/ | 工作流引擎、流程定义与执行 |
-| file | /api/file/ | 文件存储、上传下载、预览 |
-| mail | /api/mail/ | 邮件发送、模板管理 |
-| im | /api/comm/ | 即时通讯、消息收发 |
-| notification | /api/notification/ | 通知服务、消息推送 |
-| monitor | /api/core/monitor/ | 系统监控、健康检查、指标采集 |
+| iam | /api/core/iam/ | 身份认证、用户管理、权限管理、RBAC（unified-core 8000） |
+| doc | /api/core/doc/ | 文档管理、知识库、全文检索（unified-core 8000） |
+| flow | /api/core/flow/ | 工作流引擎、流程定义与执行（unified-core 8000） |
+| file | /api/file/ | 文件存储、上传下载、预览（unified-core 8000） |
+| mail / im / notification | （已独立为 communication 8084，/api/communication/；legacy /api/core/comm、/api/core/notification） | 邮件、即时通讯、通知推送 |
+| monitor | /api/monitor/（独立服务 8095，V68.1 迁出） | 系统监控、健康检查、指标采集 |
 
 ### 核心基础设施组件
 
@@ -371,7 +375,7 @@ V13.0 声称移除了 unified-core 中的业务模块残留：
 
 > 📐 **对齐 D1 决策（2026-10-02）——上述「已移除」为文档层面完成、代码层面未完成**：
 > - 实测（对齐代码现状 2026-10-02）：**23 个业务镜像模块仍 `pub mod` 活跃导出**（`svc/unified-core/src/modules/mod.rs:36-81`）；独立模式（`embed_mode=false`）连续 merge **24 个业务只读投影路由**（`routes/mod.rs:267-313`，全 GET 列表，如 `/api/crm/customers`、`/api/finance/receivables`）；投影跨 schema 直读业务表 **180 处**（如 `modules/erp/handlers.rs:38` 读 `erp.purchase_orders`）。
-> - **生产无入向流量**：nginx 已把业务前缀全部转发到各独立服务（`deploy/nginx/topems.conf:122-128`），:8000 的业务投影当前无前端/服务间/脚本调用，嵌入模式（`svc/server` :8099）下投影不挂载。
+> - **生产无入向流量**：P0-3 双轨合一后 nginx 只保留唯一上游 `server_service → localhost:8099`（`deploy/nginx/topems.conf:82-86`），`location /api/` 直代 BFF（`:136-139`）；原 per-service 前缀 map 已移除（`:88-91` 注释「P0-3 已移除」），并不存在「按业务前缀转发各独立服务」的规则（`:122-128` 实为静态资源 `try_files`/`/assets/` 块）。:8000 的业务投影当前无前端/服务间/脚本调用，嵌入模式（`svc/server` :8099）下投影不挂载。
 > - **目标终态 = 灰度下架（D1 选项 C）**：分批停挂路由 → 删除镜像模块目录与跨读代码 → 撤销 `scripts/schema_boundary.json` 中 unified-core 对业务 schema 的 allow。终态 unified-core 只保留平台核心域（iam/doc/flow/file/tenant/plugin/audit/communication/monitor + public 共享层）。
 > - 原「unified-core 现仅保留核心模块：iam、doc、flow、file、mail、im、notification、plugin、search、communication」为**目标态描述**，当前代码仍含 23 业务镜像模块；灰度下架由阶段 2 U1 执行。
 
