@@ -7,10 +7,10 @@
 
 ### P0 · 阻断首次启用闭环
 
-- [ ] **P0-1 · 前端初始化向导整体缺失**：6 个 `/api/hrm/setup/*` 端点仅 api 壳无页面/路由/菜单/登录跳转。基于 `api/hrm/hrmSetup.ts` 实现多步向导页，登录后按 `GET /setup/progress` 的 `is_completed` 决定跳向导或主页。
-- [ ] **P0-2 · 向导新库不自洽**：`initialization_status` 步骤行只 UPDATE 不 INSERT、无种子；`/setup/company` 是 `UPDATE id=0001`，新库无行可改 500。需幂等插入步骤行+默认公司行，公司步改"无则 INSERT 有则 UPDATE"，progress 空集按未开始。
-- [ ] **P0-3 · `setup/admin` 不产生可登录账号**：只写 `hrm.employees`，密码不哈希、不写 `iam.users`、不绑 user_id/角色。改为衔接 IAM 建号（写 `iam.users` + 绑 user_id + 授初始角色）。
-- [ ] **P0-4 · 权限 scope 三套方言互不匹配**（`finance:voucher:read` / `iam:users_read` / `system:read`+`admin:iam:write`），JWT 不展开角色权限。统一命名规范、种子 code 与 `require_permission` 对齐，签发/`/users/me` 时 JOIN 展开角色权限。
+- [x] **P0-1 · 前端初始化向导整体缺失** ✅ 完成（`4ac94af80`）：基于 `api/hrm/hrmSetup.ts` 实现 5 步向导页（公司信息→部门批量→岗位批量→管理员账号→确认完成），路由 `/hrm/setup` + 设置组导航 + lazyWithRetry，zh/en 93 键；落地页非阻塞提醒横幅按 `is_completed` 引导；tsc/eslint/hrm-setup vitest 绿。
+- [x] **P0-2 · 向导新库不自洽** ✅ 完成（`33479ed7d`）：幂等迁移 `20261020000025` 为默认组织播种 5 条 pending 步骤行；公司步 UPDATE→upsert（纠正错列 `email`→`contact_email`）；`get_init_progress` 空集按未开始（is_completed=false/current_step=1/steps=[]）；hrm 293 测试绿、迁移幂等。
+- [x] **P0-3 · `setup/admin` 产生可登录账号** ✅ 完成（`9d33f86b8`，方案B）：hrm 不直写 iam（`iam.users` 与 `core_users` 不同步、建号权威在 unified-core）；`/setup/admin` 建员工档案并接受可选 `user_id` 回绑，新增 `username`（3-20 位字母数字下划线）与 iam.users 用户名/邮箱占用预检，冲突友好 409 不 500；前端向导先调 `POST /api/core/iam/users` 建号拿 `data.id` 再回绑。
+- [x] **P0-4 · 权限 scope 方言对齐（非破坏第一批）** ✅ 第一批完成（`b052ac1cf`）：幂等迁移 `20261020000024` 补齐 23 个中间件已挂载但字典缺失的权限码（仅字典、不绑角色、零授权变化），立命名口径；**登录 JWT/`/users/me` 角色权 JOIN 展开未落地**（避免翻转既有 403 断言，待 MainAgent 决策，方案草案见活文档 §3 P0-4）。
 
 ### P1 · 明显短板
 

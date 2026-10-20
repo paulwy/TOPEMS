@@ -4,8 +4,8 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.0 |
-| 最近更新 | 2026-10-20 |
+| 版本 | v1.4（P0-1/P0-2/P0-3 闭环，P0-4 第一批非破坏落地） |
+| 最近更新 | 2026-10-21 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
 | 仓库 | `/Users/xingzhai/TOPEMS`（Rust 多服务 monolith + `apps/web` React，分支 main） |
@@ -54,17 +54,17 @@
 
 | # | 操作动作 | 后端路由/文件证据 | 前端页面/路由证据 | 预期产出 | 状态 |
 |---|---|---|---|---|---|
-| 1.1 | **（官方向导·公司步）** 录入公司名称/地址/税号等 | `POST /api/hrm/setup/company`，`setup.rs:206-319`（实为 UPDATE 预置公司行 id=0001，`:235-267`） | api 壳 `api/hrm/hrmSetup.ts:119`，**无页面调用** | 公司信息落 `hrm.companies` | 部分（前端缺失；新库 UPDATE 无行可改，见 P0-2） |
+| 1.1 | **（官方向导·公司步）** 录入公司名称/地址/税号等 | `POST /api/hrm/setup/company`，P0-2 已改 upsert（`33479ed7d`，新库无行可 INSERT） | 向导页 `HrmSetupWizardPage.tsx` 公司步（`4ac94af80`），接 `hrmSetup.setupCompanyInfo` | 公司信息落 `hrm.companies` | **已具备**（P0-1 接线 + P0-2 upsert 自洽） |
 | 1.1′ | **（可走通的替代路径）** 用公司 CRUD 录入/维护公司 | `GET/POST/PUT/DELETE /api/hrm/companies`，`company.rs:44,159,268,323,467`，含 CompanyRead/Write 权限 | `/hrm/company` → `HrmCompanyPage.tsx:59-92`，`modules/hrm/config.ts:706-716` | `hrm.companies` 记录 | 已具备 |
-| 1.2 | **（向导·部门步）** 批量录入部门 | `POST /api/hrm/setup/departments`，`setup.rs:350-468`（批量 INSERT `hrm.departments`，`:395-413`，批次重名校验 `:378-383`） | api 壳 `hrmSetup.ts:123`，**无页面调用** | 部门树 | 部分（前端缺失） |
+| 1.2 | **（向导·部门步）** 批量录入部门 | `POST /api/hrm/setup/departments`，`setup.rs:350-468`（批量 INSERT `hrm.departments`，`:395-413`，批次重名校验 `:378-383`） | api 壳 `hrmSetup.ts:123`，**无页面调用** | 部门树 | **已具备**（P0-1 向导批量步 `4ac94af80` 接 `setupDepartments`） |
 | 1.2′ | **（替代路径）** 部门 CRUD | `GET/POST/PUT/DELETE /api/hrm/departments`，`department.rs:61,151,262,315,452`；`organization_id` NOT NULL，`org_id→companies` FK | `/hrm/departments` → `HrmDepartmentPage.tsx:49-92`；组织树 `/hrm/organization` → `HrmOrganizationPage.tsx:9` | 部门层级 | 已具备（权限仅全局 `hrm:admin`，见 P1-5） |
-| 1.3 | **（向导·岗位步）** 批量录入岗位 | `POST /api/hrm/setup/positions`，`setup.rs:496-605`（INSERT `hrm.positions`，`:533-551`；**无批次重名校验** `:517-530`） | api 壳 `hrmSetup.ts:129`，**无页面调用** | 岗位字典 | 部分（前端缺失） |
+| 1.3 | **（向导·岗位步）** 批量录入岗位 | `POST /api/hrm/setup/positions`，`setup.rs:496-605`（INSERT `hrm.positions`，`:533-551`；**无批次重名校验** `:517-530`） | api 壳 `hrmSetup.ts:129`，**无页面调用** | 岗位字典 | **已具备**（P0-1 向导批量步 `4ac94af80` 接 `setupPositions`） |
 | 1.3′ | **（替代路径）** 岗位 CRUD | `GET/POST/PUT/DELETE /api/hrm/positions`，`position.rs:110,205,327,376,460`；`department_id` **无 DB 外键** | `/hrm/positions` → `HrmPositionPage.tsx:12`（adapter 接 positionApi） | 岗位字典 | 已具备（无 FK、无 handler 权限） |
-| 1.4 | **（向导·管理员步）** 填管理员姓名/工号/密码 | `POST /api/hrm/setup/admin`，`setup.rs:633-759`；**仅 INSERT `hrm.employees`，密码不哈希不落库、不写 `iam.users`、不绑 user_id**（`:679-717,747`） | api 壳 `hrmSetup.ts:133`，**无页面调用** | 仅一条员工档案，**不可登录** | 部分（链路断裂，P0-3） |
+| 1.4 | **（向导·管理员步）** 填管理员姓名/工号/用户名/邮箱/密码 | `POST /api/hrm/setup/admin`，P0-3（`9d33f86b8`，方案B）：建 `hrm.employees` 并接受可选 `user_id` 回绑；不直写 iam，iam.users 与 core_users 不同步、建号权威在 unified-core | 向导页管理员步先调 `POST /api/core/iam/users`（`userApi.createUser`）建号拿 `data.id`，再回传 `user_id` 调 `/setup/admin` 绑定（`4ac94af80`） | 员工档案 + 可登录 IAM 账号绑定 | **已具备**（P0-3 方案B + P0-1 串联；角色授权由 IAM 建号端点负责） |
 | 1.5 | 录入员工档案（正式员工 CRUD） | `GET/POST/PUT/DELETE /api/hrm/employees`，`employee.rs:100,345,159,500,648`；含 details/export；`user_id` 可空绑 IAM 账号 | `/hrm/employees` → `HrmEmployeePage/index.tsx:42-81`；创建页 `HrmEmployeeCreatePage.tsx:79`（**无密码字段、不调 register**） | 员工名册 | 已具备（员工↔登录账号需另在 IAM 建号绑定） |
-| 1.6 | **（向导·完成步）** 确认初始化完成 | `POST /api/hrm/setup/complete`，`setup.rs:786-879`；**仅把 completion 步标 completed，不建角色/不绑权限/不改租户状态**（`:841-854`） | api 壳 `hrmSetup.ts:137`，**无页面调用** | 状态标记，无授权结果 | 部分（空动作，P1-4） |
+| 1.6 | **（向导·完成步）** 确认初始化完成 | `POST /api/hrm/setup/complete`，`setup.rs:786-879`；**仅把 completion 步标 completed，不建角色/不绑权限/不改租户状态**（`:841-854`） | api 壳 `hrmSetup.ts:137`，**无页面调用** | 状态标记，无授权结果 | 部分（前端 P0-1 已接 `completeInitialization`；后端仍空动作，不建角色/绑权限，见 P1-1） |
 
-> 向导进度存储：`hrm.initialization_status`（建表 `20260725000000_business_base_tables.sql:756-763`）；但代码只 UPDATE 步骤行、从不 INSERT，迁移也无步骤行种子（`setup.rs` 全段；见 P0-2）。
+> 向导进度存储：`hrm.initialization_status`（建表 `20260725000000_business_base_tables.sql:756-763`）。P0-2（`33479ed7d`）新增幂等迁移 `20261020000025` 为默认组织 0001 播种 5 条 pending 步骤行，`get_init_progress` 空集按未开始处理。
 
 ### 阶段 2　账号与权限（IAM）
 
@@ -174,7 +174,7 @@
 | 岗位 CRUD | 有（无 FK/无 handler 权限） | 有 | 已具备 | `position.rs:110,205,327,376,460`；`HrmPositionPage.tsx:12` |
 | 员工 CRUD | 有（不建登录账号） | 有 | 已具备 | `employee.rs:100,345,159,500,648`；`HrmEmployeePage/index.tsx:42-81` |
 | HRM 内角色 | **空桩不落库** | 无 | 缺失 | `roles.rs:32-84` |
-| 初始化向导 6 步 | 有（裸接口） | api 壳，无页面 | 部分 | `setup.rs:111-116,128-879`；`hrmSetup.ts:114-142`，无消费方 |
+| 初始化向导 6 步 | 有 | 有（5 步向导页） | 已具备 | 后端 `setup.rs`；向导页 `pages/hrm/setup/HrmSetupWizardPage.tsx`（`4ac94af80`）；建号走 IAM `POST /api/core/iam/users` 后回绑（P0-3 `9d33f86b8`） |
 | SCM 供应商/准入/比价 | 有 | 有 | 已具备 | `supplier.rs:126-131`；`modules/scm/config.ts:277-411` |
 | SRM 全量主数据/流程 | 有 | 有 | 已具备 | `modules/srm/config.ts:131-320` |
 | MES 设备/工位/工艺/班组/BOM | 有 | 有 | 已具备（隔离弱） | `equipment.rs:35-55`；`work_station.rs:30-43`；`process_route.rs:30-50`；`team.rs:44-55` |
@@ -206,10 +206,10 @@
 
 | # | 缺口 | 影响 | 建议做法 | 证据 |
 |---|---|---|---|---|
-| **P0-1** | **前端初始化向导整体缺失**：6 个 setup 端点仅 api 壳 + 单测，无页面/路由/菜单/登录后网关跳转 | 用户无法通过 UI 走完公司→部门→岗位→管理员→完成；官方启用闭环断裂 | 基于现有 `hrmSetup.ts` 六方法实现多步向导页；登录后按 `GET /setup/progress` 的 `is_completed` 决定跳转向导或主页 | `hrmSetup.ts:114-142`；消费方零命中；`modules/hrm/config.ts` 无 setup 路由 |
-| **P0-2** | **向导在新库不自洽**：① 代码只 UPDATE `initialization_status` 步骤行、从不 INSERT，迁移也无步骤行种子 → 空表 `all()=true` 误判已完成、current_step 兜底 5；② `/setup/company` 是 `UPDATE hrm.companies WHERE id=0001`，迁移不预置公司行 → 新库 fetch_one 失败 500 | 即便接了 UI，全新环境走向导必在公司步报错、进度语义失真 | 迁移/启动自举幂等插入 5 条步骤行 + 1 条默认公司行；公司步改为"无则 INSERT、有则 UPDATE"；progress 空集按"未开始"处理 | `setup.rs:138-157,235-249`；建表 `20260725000000_business_base_tables.sql:756-763`；无 INSERT 步骤行/公司行 |
-| **P0-3** | **`setup/admin` 不产生可登录账号**：仅写 `hrm.employees`，密码不哈希不落库、不写 `iam.users`、不绑 user_id、不建角色 | 向导"管理员步"产出的人无法登录，与"初始化管理员"预期脱节，闭环断在账号 | 该步改为调用 IAM 建号（写 `iam.users` + 绑 user_id 到员工 + 授初始角色），或明确改走 IAM 用户创建并在向导内衔接 | `setup.rs:679-717,747`；对比登录只查 `iam.users` `auth.rs:180` |
-| **P0-4** | **权限 scope 三套方言互不匹配**：种子 `finance:voucher:read`、静态 `iam:users_read`、中间件 `system:read`/`admin:iam:write` 几乎不相交；登录 JWT 不 JOIN 展开角色权限 | 普通角色即便绑了种子权限也过不了中间件（403），授权体系形同虚设 | 统一 scope 命名规范并让种子 code 与 `require_permission` 对齐；签发 JWT 或 `/users/me` 时 JOIN 展开角色权限 | `20260724000004:62`；`shared-auth/auth.rs:297`；`routes/iam.rs:107,194,218`；`auth.rs:183-184`；`user/batch.rs:28-92` |
+| **P0-1** ✅ 已闭环 `4ac94af80` | ~~前端初始化向导整体缺失~~：已实现 5 步向导页并接六方法 | 闭环 | 5 步向导（公司→部门→岗位→管理员→完成）+ 路由 `/hrm/setup` + 设置组导航 + 落地页非阻塞引导 | `pages/hrm/setup/HrmSetupWizardPage.tsx`；`modules/hrm/config.ts` 注册；`hrmSetup.ts` 六方法 |
+| **P0-2** ✅ 已闭环 `33479ed7d` | ~~向导在新库不自洽~~：① 迁移 `20261020000025` 幂等播种 5 条 pending 步骤行；② 公司步 UPDATE→upsert（纠正错列 `email`→`contact_email`）；③ progress 空集按未开始 | 闭环 | 新库干净重放不 500、进度语义正确 | `setup.rs`；迁移 `20261020000025_hrm_seed_default_org_init_status.sql` |
+| **P0-3** ✅ 已闭环 `9d33f86b8`（方案B） | ~~`setup/admin` 不产生可登录账号~~：采用方案B——hrm 建员工档案并回绑 `user_id`，建号由前端串联既有 IAM `POST /api/core/iam/users`（bcrypt/去重/角色归 IAM）；不直写 iam（`iam.users` 与 `core_users` 不同步、权威在 unified-core） | 闭环（边界内） | 管理员步产出可登录账号并绑定员工；username/email 冲突友好 409 不 500 | `setup.rs`（P0-3 注释记录方案选择）；前端 `HrmSetupWizardPage.tsx` 管理员步 |
+| **P0-4** ◐ 第一批闭环 `b052ac1cf`（JWT 展开待决策） | 权限 scope 三套方言：第一批非破坏补齐 23 个中间件已挂载但字典缺失的码、立命名口径；**登录 JWT/`/users/me` 角色权 JOIN 展开未落地**（避免翻转既有 403 断言） | 部分闭环 | 字典与运行时挂载码对齐；JWT 展开 + 角色绑定待 MainAgent 决策（草案见下方 P0-4 批次记录④） | 迁移 `20261020000024`；`lib/shared-auth/src/middleware/permission.rs`；草案见本条目下方 |
 
 #### P0-4 批次落地记录（2026-10-20，非破坏·第一批：仅字典补缺，JWT 展开未落地）
 
@@ -361,7 +361,10 @@
 
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
-| 2026-10-20 | v1.0 | 待补 | 首次成稿：分阶段启用路线图、能力盘点表、P0/P1/P2 缺口清单、首次可登录性结论（admin/admin123 启动自举） |
-| 2026-10-20 | v1.1 | 待补 | P0-4 非破坏第一批：新增迁移 `20261020000024` 补齐 23 个中间件已挂载但字典缺失的权限码（仅字典、不绑角色）；新增三套方言对照清单与命名口径；JWT 登录/`/users/me` 角色权限 JOIN 展开未落地，附待 MainAgent 决策的实施方案草案 |
+| 2026-10-20 | v1.0 | a5b8da944 | 首次成稿：分阶段启用路线图、能力盘点表、P0/P1/P2 缺口清单、首次可登录性结论（admin/admin123 启动自举） |
+| 2026-10-20 | v1.1 | `9d33f86b8` | **P0-3**：`setup/admin` 方案B——建员工档案并接受可选 `user_id` 回绑，新增 `username` 校验与 iam.users 用户名/邮箱占用预检（冲突 409 不 500）；不直写 iam，建号由前端串联 IAM `POST /api/core/iam/users` |
+| 2026-10-20 | v1.2 | `33479ed7d` | **P0-2**：幂等迁移 `20261020000025` 播种 5 条 pending 步骤行；公司步 UPDATE→upsert（纠正错列 `email`→`contact_email`）；`get_init_progress` 空集按未开始 |
+| 2026-10-20 | v1.3 | `b052ac1cf` | **P0-4 第一批（非破坏）**：迁移 `20261020000024` 补齐 23 个中间件已挂载但字典缺失的权限码（仅字典、不绑角色）；三套方言对照清单 + 命名口径；JWT 登录/`/users/me` 角色权 JOIN 展开未落地，附待决策草案 |
+| 2026-10-21 | v1.4 | `4ac94af80` | **P0-1**：5 步初始化向导页（公司→部门批量→岗位批量→管理员→完成）接六方法，路由 `/hrm/setup` + 设置组导航 + lazyWithRetry，zh/en 93 键，落地页非阻塞提醒横幅；管理员步先 `userApi.createUser` 建号再回绑 |
 
 > 后续每次闭环/修订在此追加一行；完成 P0/P1 后同步把 §3 对应行状态改为已具备并勾选 TODO.md。
