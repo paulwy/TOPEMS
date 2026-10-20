@@ -1341,6 +1341,32 @@ minify: 'esbuild',
     // 每种语言独立 chunk（~3.5MB → 各自独立加载），不再有 7.1MB 聚合 chunk。
     // 阈值保持 1500（Vite 默认），任何超限 chunk 均为真实需要关注的拆分机会。
     chunkSizeWarningLimit: 1500,
+    // V83-202610: 首屏 preload 收敛（UI 审计 §5 路由级懒加载待办延伸）。
+    // rolldown 会把「入口可达的动态 import 图」也写入 HTML modulepreload：
+    // 实测 74 个 preload（3.4MB raw / 1.0MB gz）中 40+ 个为 config-* 模块路由配置
+    // （537KB raw / 165KB gz），登录页（/login）完全不消费；markdown/exceljs 等
+    // 大 vendor 虽已退出首屏（MarkdownPreview lazy + exceljs 动态 import），
+    // 但 config-* 等可达动态 chunk 仍被全量预取。
+    // resolveDependencies 仅裁剪 HTML preload 链接（运行时 import 图不受影响，
+    // 登录后 loadModuleConfig/getAllRoutes 仍会按需下载），功能零风险。
+    modulePreload: {
+      polyfill: true,
+      resolveDependencies: (_filename, deps, _context) =>
+        deps.filter((dep) => {
+          const name = dep.split('/').pop() || '';
+          // 模块路由/菜单配置：登录页不需要，登录后按需加载
+          if (name.startsWith('config-')) return false;
+          // 非登录首屏大 vendor / 业务页面 chunk（业务页面按需消费）
+          if (
+            /^(markdown-vendor|exceljs-vendor|office-vendor|mui-x|recharts-|r3f-vendor|leaflet-vendor|amap-vendor|dev-tools|admin-|hrm-|finance-)/.test(
+              name
+            )
+          ) {
+            return false;
+          }
+          return true;
+        }),
+    },
     reportCompressedSize: false,
     rollupOptions: {
       // V84: 正式开启 tree-shaking（原 treeshake:false 为 React19+Rolldown
