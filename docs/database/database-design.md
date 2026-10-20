@@ -11,12 +11,13 @@
 | 项目 | 说明 |
 |------|------|
 | 数据库类型 | 关系型数据库 |
-| 支持数据库 | MySQL 8.0+ / PostgreSQL 14+ |
-| 默认数据库 | MySQL 8.0 |
-| 字符集 | utf8mb4 / UTF-8 |
-| 排序规则 | utf8mb4_unicode_ci |
-| 存储引擎 | InnoDB |
+| 默认数据库 | **PostgreSQL 18**（`pgvector/pgvector:pg18`，`deploy/docker/docker-compose.yml:37`；全栈 PG，仓库无 MySQL 部署） |
+| 连接串 | `postgres://...@localhost:5432/topems`（`.env.example:13`） |
+| 扩展 | pgvector（向量检索）、uuid-ossp |
+| 架构 | 按 schema 隔离（public / iam / erp / hrm / ai …） |
 | 连接池 | SQLx 连接池，默认 10 连接 |
+
+> ⚠️ 历史口径：本文早期版本以 MySQL 8.0 / InnoDB / utf8mb4 为默认，已作废；现行迁移（`database/migrations/`，434+ .sql）全部为 PG 语法（uuid / timestamptz / JSONB / pgvector），以迁移文件为权威源。
 
 ### 1.2 命名规范
 
@@ -170,7 +171,11 @@
 
 ## 3. AI 相关表结构
 
-### 3.1 AI 会话表（ai_sessions）
+> ⚠️ **历史设计稿，未落地（2026-10-20 实测）**：本节 `ai_sessions` / `ai_messages` / `ai_call_logs` / `content_audit_logs` 四张表在 `database/migrations/` 与 `svc/ai/src` 中均零命中，从未建表，下列 MySQL 型（VARCHAR/ENUM/DATETIME）列定义仅为早期设计稿，勿据此建表。
+>
+> **实际 ai schema 表（以 `database/migrations/` + `svc/ai/src` FROM 子句实测为准）**：`ai.usage_logs`、`ai.model_usage_stats`、`ai.qa_history`、`ai.documents`、`ai.document_chunks`、`ai.analysis_results`、`ai.ai_models`、`ai.ai_prompt_templates`、`ai.ai_settings`、`ai.user_profiles`、`ai.vectors`。
+
+### 3.1 AI 会话表（ai_sessions）——历史设计稿，未落地
 
 | 字段名 | 类型 | 长度 | 允许空 | 默认值 | 说明 |
 |--------|------|------|--------|--------|------|
@@ -193,7 +198,7 @@
 - `idx_ai_sessions_last_message_at` (last_message_at)
 - `idx_ai_sessions_user_module` (user_id, module)
 
-### 3.2 AI 消息表（ai_messages）
+### 3.2 AI 消息表（ai_messages）——历史设计稿，未落地
 
 | 字段名 | 类型 | 长度 | 允许空 | 默认值 | 说明 |
 |--------|------|------|--------|--------|------|
@@ -221,7 +226,7 @@
 - `idx_ai_messages_created_at` (created_at)
 - `idx_ai_messages_session_created` (session_id, created_at)
 
-### 3.3 AI 调用日志表（ai_call_logs）
+### 3.3 AI 调用日志表（ai_call_logs）——历史设计稿，未落地
 
 | 字段名 | 类型 | 长度 | 允许空 | 默认值 | 说明 |
 |--------|------|------|--------|--------|------|
@@ -254,7 +259,7 @@
 - `idx_ai_call_logs_created_at` (created_at)
 - `idx_ai_call_logs_user_created` (user_id, created_at)
 
-### 3.4 内容审核记录表（content_audit_logs）
+### 3.4 内容审核记录表（content_audit_logs）——历史设计稿，未落地
 
 | 字段名 | 类型 | 长度 | 允许空 | 默认值 | 说明 |
 |--------|------|------|--------|--------|------|
