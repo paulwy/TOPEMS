@@ -153,28 +153,55 @@ pub async fn create_action(
     let issue_id = req.issue_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
 
-    let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_corrective_actions (tenant_id, action_no, issue_id, title, description, root_cause, action_type, status, priority, assignee, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11) RETURNING id::TEXT, tenant_id::TEXT, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date, completed_at, created_by, created_at, updated_at"#)).bind(tenant_id).bind(action_no).bind(issue_id).bind(req.title).bind(req.description).bind(req.root_cause).bind(req.action_type).bind(priority).bind(req.assignee).bind(req.target_date).bind(req.created_by)
-    .fetch_one(&state.pool)
+    // 先校验后写入：标题为空直接拒绝，不落任何数据。
+    if req.title.trim().is_empty() {
+        return Json(ApiResponse::error(400, "措施标题不能为空"));
+    }
+
+    // 事务化：主记录与明细项同进同出，任何一步失败整体回滚，
+    // 禁止"响应失败但行已 INSERT"的半落库（N8）。
+    let mut txn = match state.pool.begin().await {
+        Ok(txn) => txn,
+        Err(e) => {
+            tracing::error!("开启创建事务失败: {}", e);
+            return Json(ApiResponse::error(500, "整改措施创建失败"));
+        }
+    };
+
+    let insert_result = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_corrective_actions (tenant_id, action_no, issue_id, title, description, root_cause, action_type, status, priority, assignee, target_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11) RETURNING id::TEXT, tenant_id::TEXT, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date, completed_at, created_by, created_at, updated_at"#)).bind(tenant_id).bind(action_no).bind(issue_id).bind(req.title).bind(req.description).bind(req.root_cause).bind(req.action_type).bind(priority).bind(req.assignee).bind(req.target_date).bind(req.created_by)
+    .fetch_one(&mut *txn)
     .await;
 
-    match action {
-        Ok(data) => {
-            if let Some(items) = req.items {
-                if let Ok(action_id) = Uuid::parse_str(&data.id) {
-                    for item in items {
-                        let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_corrective_action_items (tenant_id, action_id, item_name, responsible, due_date, remark) VALUES ($1, $2, $3, $4, $5, $6)"#)).bind(tenant_id).bind(action_id).bind(item.item_name).bind(item.responsible).bind(item.due_date).bind(item.remark)
-                        .execute(&state.pool)
-                        .await;
-                    }
-                }
-            }
-            Json(ApiResponse::success(data, "整改措施创建成功"))
-        }
+    let action = match insert_result {
+        Ok(data) => data,
         Err(e) => {
             tracing::error!("Failed to create action: {}", e);
-            Json(ApiResponse::error(500, "整改措施创建失败"))
+            let _ = txn.rollback().await;
+            return Json(ApiResponse::error(500, "整改措施创建失败"));
+        }
+    };
+
+    if let Some(items) = req.items {
+        if let Ok(action_id) = Uuid::parse_str(&action.id) {
+            for item in items {
+                let item_result = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_corrective_action_items (tenant_id, action_id, item_name, responsible, due_date, remark) VALUES ($1, $2, $3, $4, $5, $6)"#)).bind(tenant_id).bind(action_id).bind(item.item_name).bind(item.responsible).bind(item.due_date).bind(item.remark)
+                .execute(&mut *txn)
+                .await;
+                if let Err(e) = item_result {
+                    tracing::error!("写入措施明细失败，整体回滚: {}", e);
+                    let _ = txn.rollback().await;
+                    return Json(ApiResponse::error(500, "整改措施创建失败"));
+                }
+            }
         }
     }
+
+    if let Err(e) = txn.commit().await {
+        tracing::error!("提交创建事务失败: {}", e);
+        return Json(ApiResponse::error(500, "整改措施创建失败"));
+    }
+
+    Json(ApiResponse::success(action, "整改措施创建成功"))
 }
 
 #[utoipa::path(

@@ -9,6 +9,7 @@ use crate::shared::AppState;
 use topems_shared_core::response::ApiResponse;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::resolve_create_tenant;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::locale::Locale;
 use topems_shared_event::event::{
@@ -225,16 +226,13 @@ pub async fn create_material(
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateMaterialRequest>,
 ) -> Json<ApiResponse<Material>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
+    let tenant_opt = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    // MDM 事件载荷需要 Uuid 类型，公共行（超管）沿用 nil 仅用于事件，不落库
+    let tenant_id = tenant_opt.unwrap_or(uuid::Uuid::nil());
 
     if req.material_no.is_empty() {
         return Json(ApiResponse::error(400, "物料编号不能为空"));

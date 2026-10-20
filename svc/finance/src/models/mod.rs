@@ -936,7 +936,8 @@ pub struct VoucherExportRow {
 pub struct Payment {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub voucher_id: Uuid,
+    /// 历史/兜底行可能没有关联凭证，读模型容错为 Option，避免列表解码 unexpected null 直接 500。
+    pub voucher_id: Option<Uuid>,
     pub payment_no: String,
     pub supplier_id: Option<Uuid>,
     pub supplier_name: Option<String>,
@@ -954,7 +955,8 @@ pub struct Payment {
     pub executed_at: Option<DateTime<Utc>>,
     pub remark: Option<String>,
     pub attachment_url: Option<String>,
-    pub created_by: Option<Uuid>,
+    /// 列已由迁移 20261020000004 对齐为 VARCHAR(100)，存操作者用户名文本，按 Option<String> 解码。
+    pub created_by: Option<String>,
     pub approved_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -1028,7 +1030,8 @@ pub struct PaymentResponse {
     pub status: VoucherStatus,
     pub remark: Option<String>,
     pub items: Vec<PaymentItem>,
-    pub voucher_id: Uuid,
+    /// 与读模型一致：兜底/历史行可能无关联凭证，故为 Option。
+    pub voucher_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
 

@@ -26,7 +26,9 @@ pub struct ListActionsResponse {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct CorrectiveAction {
     pub id: String,
-    pub tenant_id: String,
+    /// tenant_id 列可空（迁移 20260725000000 建表即无 NOT NULL，历史/兜底行可能为 NULL），
+    /// 读模型按 Option<String> 容错，避免列表/详情解码 unexpected null。
+    pub tenant_id: Option<String>,
     pub action_no: String,
     pub issue_id: Option<String>,
     pub title: String,
@@ -36,8 +38,13 @@ pub struct CorrectiveAction {
     pub status: Option<String>,
     pub priority: Option<String>,
     pub assignee: Option<String>,
-    pub target_date: Option<DateTime<Utc>>,
-    pub completed_at: Option<DateTime<Utc>>,
+    /// DB 列 qms.qa_corrective_actions.target_date 为 text（迁移 20260918000075 由 timestamptz 对齐为 text），
+    /// 创建/更新请求均按 Option<String> 传入，读模型同样按 String 解码，避免 TIMESTAMPTZ vs TEXT 类型不匹配。
+    pub target_date: Option<String>,
+    /// completed_at 列同为 text（迁移 20260918000075 将 timestamptz 对齐为 text），
+    /// complete_action 的 RETURNING 按 text 返回，故读模型按 Option<String> 解码，
+    /// 与 target_date 同口径，避免 TIMESTAMPTZ vs TEXT 类型不匹配及 NULL 解码崩溃。
+    pub completed_at: Option<String>,
     pub created_by: Option<String>,
     pub created_at: Option<DateTime<Utc>>,
     pub updated_at: Option<DateTime<Utc>>,
@@ -46,7 +53,8 @@ pub struct CorrectiveAction {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ActionItem {
     pub id: String,
-    pub tenant_id: String,
+    /// tenant_id 列可空（迁移 20260725000000 建表即无 NOT NULL），读模型 Option 容错 NULL 行。
+    pub tenant_id: Option<String>,
     pub action_id: String,
     pub item_name: String,
     pub responsible: Option<String>,
@@ -131,7 +139,7 @@ mod tests {
     fn test_corrective_action() {
         roundtrip(&CorrectiveAction {
             id: "id".to_string(),
-            tenant_id: "t".to_string(),
+            tenant_id: Some("t".to_string()),
             action_no: "CA001".to_string(),
             issue_id: None,
             title: "x".to_string(),
@@ -153,7 +161,7 @@ mod tests {
     fn test_action_item() {
         roundtrip(&ActionItem {
             id: "id".to_string(),
-            tenant_id: "t".to_string(),
+            tenant_id: Some("t".to_string()),
             action_id: "a".to_string(),
             item_name: "n".to_string(),
             responsible: None,
@@ -214,7 +222,7 @@ mod tests {
     fn test_corrective_action_clone_and_debug() {
         let a = CorrectiveAction {
             id: "a1".to_string(),
-            tenant_id: "t1".to_string(),
+            tenant_id: Some("t1".to_string()),
             action_no: "CA-001".to_string(),
             issue_id: Some("i1".to_string()),
             title: "Fix scratch issue".to_string(),
@@ -224,7 +232,7 @@ mod tests {
             status: Some("in_progress".to_string()),
             priority: Some("high".to_string()),
             assignee: Some("eng1".to_string()),
-            target_date: DateTime::from_timestamp(1704067200, 0),
+            target_date: Some("2025-01-01".to_string()),
             completed_at: None,
             created_by: Some("u1".to_string()),
             created_at: DateTime::from_timestamp(1704067200, 0),
@@ -254,7 +262,7 @@ mod tests {
     fn test_action_item_all_fields_some() {
         roundtrip(&ActionItem {
             id: "id".to_string(),
-            tenant_id: "t".to_string(),
+            tenant_id: Some("t".to_string()),
             action_id: "a".to_string(),
             item_name: "task 1".to_string(),
             responsible: Some("resp".to_string()),

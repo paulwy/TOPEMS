@@ -172,7 +172,12 @@ impl FieldEncryptionService {
     }
 
     pub fn decrypt(&self, field: &EncryptedField) -> EncryptionResult<String> {
-        let key = self.key_manager.get_key(field.key_version)?;
+        // key_version 兼容：注册表里缺该版本时回退当前密钥尝试解密（GCM tag 校验
+        // 失败仍会 DecryptionFailed），避免旧密文因版本号漂移直接 KeyNotFound。
+        let key = match self.key_manager.get_key(field.key_version) {
+            Ok(k) => k,
+            Err(_) => self.key_manager.current_key()?,
+        };
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
 
         let nonce_bytes = STANDARD

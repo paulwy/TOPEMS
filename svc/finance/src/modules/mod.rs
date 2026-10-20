@@ -969,7 +969,16 @@ pub async fn submit_payment_handler(
         Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
-    match service.submit_voucher(tenant_id, payment.voucher_id).await {
+    let voucher_id = match payment.voucher_id {
+        Some(v) => v,
+        None => {
+            return Json(crate::shared::err_resp(TopemsError::ValidationFailed(
+                "付款单未关联凭证".to_string(),
+            )))
+        }
+    };
+
+    match service.submit_voucher(tenant_id, voucher_id).await {
         Ok(_) => match service.get_payment(tenant_id, payment_id).await {
             Ok(p) => Json(ApiResponse::success(p, "提交成功")),
             Err(e) => Json(crate::shared::err_resp(e)),
@@ -992,8 +1001,17 @@ pub async fn approve_payment_handler(
         Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
+    let voucher_id = match payment.voucher_id {
+        Some(v) => v,
+        None => {
+            return Json(crate::shared::err_resp(TopemsError::ValidationFailed(
+                "付款单未关联凭证".to_string(),
+            )))
+        }
+    };
+
     match service
-        .approve_voucher(tenant_id, payment.voucher_id, &approved_by)
+        .approve_voucher(tenant_id, voucher_id, &approved_by)
         .await
     {
         Ok(_) => match service.get_payment(tenant_id, payment_id).await {
@@ -1018,8 +1036,17 @@ pub async fn reject_payment_handler(
         Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
+    let voucher_id = match payment.voucher_id {
+        Some(v) => v,
+        None => {
+            return Json(crate::shared::err_resp(TopemsError::ValidationFailed(
+                "付款单未关联凭证".to_string(),
+            )))
+        }
+    };
+
     match service
-        .reject_voucher(tenant_id, payment.voucher_id, &rejected_by)
+        .reject_voucher(tenant_id, voucher_id, &rejected_by)
         .await
     {
         Ok(_) => match service.get_payment(tenant_id, payment_id).await {

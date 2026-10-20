@@ -15,6 +15,7 @@ use uuid::Uuid;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::resolve_create_tenant;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
@@ -227,26 +228,21 @@ pub async fn create_tender(
         ));
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
+    let tenant_opt = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let tender_no = format!("TN-{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
 
     let result = sqlx::query_as::<_, Tender>(
         only_own_schema_query!("srm", r#"
         INSERT INTO srm.tenders (tenant_id, tender_no, title, description, type, budget, start_date, end_date, status, created_by)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9)
-        RETURNING id, tenant_id, tender_no, title, description, type, budget, status, start_date, end_date, created_by, created_at, updated_at
+        RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, tender_no, title, description, type, budget, status, start_date, end_date, created_by, created_at, updated_at
         "#, "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(tender_no)
     .bind(title)
     .bind(description)

@@ -114,11 +114,11 @@ async fn handle_erp_production_order_dispatched(
 
     sqlx::query(
         r#"INSERT INTO production_orders (
-               order_number, product_name, product_code, quantity,
+               order_number, order_no, product_name, product_code, quantity,
                status, source_order_id, source_order_number,
                planned_start_date, planned_end_date, workshop_id, notes,
                created_at, updated_at, tenant_id
-           ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11, $12)"#,
+           ) VALUES ($1, $1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11, $12)"#,
     )
     .bind(&order_no)
     .bind(payload.product_name.unwrap_or_default())

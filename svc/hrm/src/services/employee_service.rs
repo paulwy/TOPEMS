@@ -99,7 +99,9 @@ impl EmployeeService {
                 .unwrap_or(0);
 
                 for emp in employees.iter_mut() {
-                    let _ = emp.decrypt_fields(&self.encryption);
+                    if let Err(e) = emp.decrypt_fields(&self.encryption) {
+                        tracing::warn!(employee_id = %emp.id, "员工敏感字段解密部分失败: {}", e);
+                    }
                 }
 
                 ApiResponse::success(

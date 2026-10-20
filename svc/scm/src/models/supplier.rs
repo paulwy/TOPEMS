@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Supplier {
     pub id: Uuid,
+    pub supplier_no: Option<String>,
     pub name: String,
     pub short_name: Option<String>,
     pub contact_name: Option<String>,
@@ -22,6 +23,9 @@ pub struct Supplier {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateSupplierRequest {
     pub name: String,
+    /// 供应商编码：兼容前端/API 以 `code` 提交（S3），统一落库为 supplier_no
+    #[serde(alias = "code", default)]
+    pub supplier_no: Option<String>,
     pub name_en: Option<String>,
     pub short_name: Option<String>,
     pub contact_name: Option<String>,
@@ -64,6 +68,7 @@ mod tests {
     fn test_supplier_serde_roundtrip_full() {
         let supplier = Supplier {
             id: fixed_uuid(),
+            supplier_no: None,
             name: "Acme 供应商".to_string(),
             short_name: Some("ACME".to_string()),
             contact_name: Some("张三".to_string()),
@@ -96,6 +101,7 @@ mod tests {
     fn test_supplier_serde_roundtrip_minimal() {
         let supplier = Supplier {
             id: fixed_uuid(),
+            supplier_no: None,
             name: "Min Supplier".to_string(),
             short_name: None,
             contact_name: None,
@@ -120,6 +126,7 @@ mod tests {
     fn test_supplier_status_field_preserved() {
         let supplier = Supplier {
             id: fixed_uuid(),
+            supplier_no: None,
             name: "S".to_string(),
             short_name: None,
             contact_name: None,
@@ -141,6 +148,7 @@ mod tests {
     fn test_create_supplier_request_serde_roundtrip() {
         let req = CreateSupplierRequest {
             name: "NewCo".to_string(),
+            supplier_no: None,
             name_en: None,
             short_name: Some("NC".to_string()),
             contact_name: Some("李四".to_string()),
@@ -161,6 +169,7 @@ mod tests {
     fn test_create_supplier_request_serde_minimal() {
         let req = CreateSupplierRequest {
             name: "Bare".to_string(),
+            supplier_no: None,
             name_en: None,
             short_name: None,
             contact_name: None,

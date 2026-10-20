@@ -38,7 +38,10 @@ impl FinanceService {
             payment.supplier_name.as_deref().unwrap_or("")
         );
 
-        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        let voucher_id = payment
+            .voucher_id
+            .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
+        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
         if voucher.status != VoucherStatus::Draft {
             tracing::warn!(
                 "付款单状态校验失败, 当前状态={}, 期望状态=Draft",
@@ -140,13 +143,13 @@ impl FinanceService {
 
         tracing::info!(
             "开始提交凭证, voucher_id={}, payment_id={}",
-            payment.voucher_id,
+            voucher_id,
             payment_id
         );
-        self.submit_voucher(tenant_id, payment.voucher_id).await?;
+        self.submit_voucher(tenant_id, voucher_id).await?;
         tracing::info!(
             "凭证提交成功, voucher_id={}, payment_id={}",
-            payment.voucher_id,
+            voucher_id,
             payment_id
         );
 
@@ -209,7 +212,10 @@ impl FinanceService {
             payment.supplier_name.as_deref().unwrap_or("")
         );
 
-        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        let voucher_id = payment
+            .voucher_id
+            .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
+        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
         if voucher.status != VoucherStatus::Submitted {
             tracing::warn!(
                 "付款单状态校验失败, 当前状态={}, 期望状态=Submitted",
@@ -322,15 +328,15 @@ impl FinanceService {
         if workflow_approved {
             tracing::info!(
                 "开始审批凭证, voucher_id={}, payment_id={}, approved_by={}",
-                payment.voucher_id,
+                voucher_id,
                 payment_id,
                 approved_by
             );
-            self.approve_voucher(tenant_id, payment.voucher_id, approved_by)
+            self.approve_voucher(tenant_id, voucher_id, approved_by)
                 .await?;
             tracing::info!(
                 "凭证审批成功, voucher_id={}, payment_id={}",
-                payment.voucher_id,
+                voucher_id,
                 payment_id
             );
 
@@ -396,7 +402,10 @@ impl FinanceService {
             payment.supplier_name.as_deref().unwrap_or("")
         );
 
-        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        let voucher_id = payment
+            .voucher_id
+            .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
+        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
         if voucher.status != VoucherStatus::Submitted {
             tracing::warn!(
                 "付款单状态校验失败, 当前状态={}, 期望状态=Submitted",
@@ -484,15 +493,15 @@ impl FinanceService {
 
         tracing::info!(
             "开始拒绝凭证, voucher_id={}, payment_id={}, rejected_by={}",
-            payment.voucher_id,
+            voucher_id,
             payment_id,
             rejected_by
         );
-        self.reject_voucher(tenant_id, payment.voucher_id, rejected_by)
+        self.reject_voucher(tenant_id, voucher_id, rejected_by)
             .await?;
         tracing::info!(
             "凭证拒绝成功, voucher_id={}, payment_id={}",
-            payment.voucher_id,
+            voucher_id,
             payment_id
         );
 
@@ -522,7 +531,10 @@ impl FinanceService {
         .fetch_one(&self.db_pool)
         .await?;
 
-        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        let voucher_id = payment
+            .voucher_id
+            .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
+        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
         if voucher.status != VoucherStatus::Approved {
             return Err(TopemsError::ValidationFailed(
                 "仅已审批状态的付款单可执行付款".to_string(),

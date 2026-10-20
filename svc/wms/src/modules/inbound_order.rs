@@ -139,6 +139,15 @@ pub async fn list_inbound_orders(
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
+    // 显式租户过滤：超管→None（全部），普通用户→claims.tenant_id，RLS 之外双保险
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
@@ -151,7 +160,7 @@ pub async fn list_inbound_orders(
                customer_id, customer_name, customer_order_number,
                order_date,
                expected_arrival_date, actual_arrival_date, received_date,
-               expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+               expected_arrival_date AS expected_arrival, expected_arrival_date AS expected_date, actual_arrival_date AS actual_arrival,
                carrier, carrier_code, vehicle_number, driver_name, driver_phone,
                total_items, total_quantity, received_quantity, rejected_quantity,
                total_weight, total_volume, total_value, total_value AS total_amount,
@@ -163,6 +172,7 @@ pub async fn list_inbound_orders(
         FROM wms.inbound_orders
         WHERE ($1::text IS NULL OR order_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
@@ -172,6 +182,7 @@ pub async fn list_inbound_orders(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_filter)
     .fetch_all(&mut **txn)
     .await;
 
@@ -183,11 +194,13 @@ pub async fn list_inbound_orders(
                 SELECT COUNT(*) FROM wms.inbound_orders
                 WHERE ($1::text IS NULL OR order_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
                   AND deleted_at IS NULL
                 "#
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(tenant_filter)
             .fetch_one(&mut **txn)
             .await;
 
@@ -269,7 +282,7 @@ pub async fn create_inbound_order(
                   customer_id, customer_name, customer_order_number,
                   order_date,
                   expected_arrival_date, actual_arrival_date, received_date,
-                  expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+                  expected_arrival_date AS expected_arrival, expected_arrival_date AS expected_date, actual_arrival_date AS actual_arrival,
                   carrier, carrier_code, vehicle_number, driver_name, driver_phone,
                   total_items, total_quantity, received_quantity, rejected_quantity,
                   total_weight, total_volume, total_value, total_value AS total_amount,
@@ -426,7 +439,7 @@ pub async fn get_inbound_order(
                customer_id, customer_name, customer_order_number,
                order_date,
                expected_arrival_date, actual_arrival_date, received_date,
-               expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+               expected_arrival_date AS expected_arrival, expected_arrival_date AS expected_date, actual_arrival_date AS actual_arrival,
                carrier, carrier_code, vehicle_number, driver_name, driver_phone,
                total_items, total_quantity, received_quantity, rejected_quantity,
                total_weight, total_volume, total_value, total_value AS total_amount,
@@ -498,7 +511,7 @@ pub async fn update_inbound_order(
                customer_id, customer_name, customer_order_number,
                order_date,
                expected_arrival_date, actual_arrival_date, received_date,
-               expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+               expected_arrival_date AS expected_arrival, expected_arrival_date AS expected_date, actual_arrival_date AS actual_arrival,
                carrier, carrier_code, vehicle_number, driver_name, driver_phone,
                total_items, total_quantity, received_quantity, rejected_quantity,
                total_weight, total_volume, total_value, total_value AS total_amount,
@@ -560,7 +573,7 @@ pub async fn update_inbound_order(
                   customer_id, customer_name, customer_order_number,
                   order_date,
                   expected_arrival_date, actual_arrival_date, received_date,
-                  expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+                  expected_arrival_date AS expected_arrival, expected_arrival_date AS expected_date, actual_arrival_date AS actual_arrival,
                   carrier, carrier_code, vehicle_number, driver_name, driver_phone,
                   total_items, total_quantity, received_quantity, rejected_quantity,
                   total_weight, total_volume, total_value, total_value AS total_amount,
@@ -1176,7 +1189,7 @@ pub async fn confirm_inbound_order(
                   customer_id, customer_name, customer_order_number,
                   order_date,
                   expected_arrival_date, actual_arrival_date, received_date,
-                  expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+                  expected_arrival_date AS expected_arrival, expected_arrival_date AS expected_date, actual_arrival_date AS actual_arrival,
                   carrier, carrier_code, vehicle_number, driver_name, driver_phone,
                   total_items, total_quantity, received_quantity, rejected_quantity,
                   total_weight, total_volume, total_value, total_value AS total_amount,
@@ -1429,7 +1442,7 @@ pub async fn receive_inbound_order(
                customer_id, customer_name, customer_order_number,
                order_date,
                expected_arrival_date, actual_arrival_date, received_date,
-               expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+               expected_arrival_date AS expected_arrival, expected_arrival_date AS expected_date, actual_arrival_date AS actual_arrival,
                carrier, carrier_code, vehicle_number, driver_name, driver_phone,
                total_items, total_quantity, received_quantity, rejected_quantity,
                total_weight, total_volume, total_value, total_value AS total_amount,
@@ -1597,7 +1610,7 @@ pub async fn complete_inbound_order(
                   customer_id, customer_name, customer_order_number,
                   order_date,
                   expected_arrival_date, actual_arrival_date, received_date,
-                  expected_arrival_date AS expected_arrival, actual_arrival_date AS actual_arrival,
+                  expected_arrival_date AS expected_arrival, expected_arrival_date AS expected_date, actual_arrival_date AS actual_arrival,
                   carrier, carrier_code, vehicle_number, driver_name, driver_phone,
                   total_items, total_quantity, received_quantity, rejected_quantity,
                   total_weight, total_volume, total_value, total_value AS total_amount,

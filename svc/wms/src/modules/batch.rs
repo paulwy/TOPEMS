@@ -61,7 +61,7 @@ pub async fn list_batches(
 
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
           AND ($2::text IS NULL OR sku ILIKE $2)
           AND ($3::text IS NULL OR batch_no ILIKE $3)
@@ -155,6 +155,16 @@ pub async fn create_batch(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.batches (
@@ -163,8 +173,13 @@ pub async fn create_batch(
             production_date, expiry_date, receipt_date, quality_status, status,
             manufacture_date, shelf_life_days, unit_price, remark, created_at, updated_at,
             tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
-        RETURNING *
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::timestamptz, $13::timestamptz, $14::timestamptz, $15, $16, $17::timestamptz, $18, $19, $20, $21, $22, $23)
+        RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id,
+                  batch_no, sku, material_name, specification, unit, quantity, available_quantity,
+                  warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name,
+                  production_date, expiry_date, receipt_date, quality_status, status,
+                  manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark,
+                  created_at, updated_at
         "#),
     )
     .bind(id)
@@ -173,6 +188,8 @@ pub async fn create_batch(
     .bind(&req.material_name)
     .bind(&req.specification)
     .bind(&req.unit)
+    .bind(req.quantity)
+    // available_quantity：请求模型无该字段，创建时默认等于 quantity（全额可用）
     .bind(req.quantity)
     .bind(req.warehouse_id)
     .bind(req.location_id)
@@ -188,7 +205,7 @@ pub async fn create_batch(
     .bind(&req.remark)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -248,7 +265,7 @@ pub async fn get_batch(
     };
 
     let result = sqlx::query_as::<_, Batch>(
-        only_own_schema_query!("wms", "SELECT id, tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("wms", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(batch_id)
     .fetch_optional(&mut **txn)
@@ -561,7 +578,7 @@ pub async fn get_expiring_soon(
 
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND remaining_days <= $1 AND remaining_days > 0
           AND (warehouse_id = $2 OR $2 IS NULL)
         ORDER BY remaining_days ASC
@@ -615,7 +632,7 @@ pub async fn get_expired(
 
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND remaining_days <= 0
           AND (warehouse_id = $1::uuid OR $1 IS NULL)
         ORDER BY remaining_days ASC
