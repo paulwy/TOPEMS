@@ -23,8 +23,8 @@
 | 端 | 规范 env 键 | 取值语义 | 开发默认（不配时） | 指向 |
 |---|---|---|---|---|
 | web | `VITE_API_BASE_URL` | API 根路径（同源相对） | `/api` | vite dev proxy 转发到 `BACKEND_PORTS.core`（独立 8000）或单体 8099 |
-| mobile | `EXPO_PUBLIC_API_URL` | 后端**来源**（协议+主机+端口，不含 path） | `http://localhost:8000`（端内再拼 `/api/mobile`） | unified-core 独立进程 8000 |
-| desktop | `VITE_API_URL` | 后端**来源**（协议+主机+端口） | `http://localhost:8000` | unified-core 独立进程 8000 |
+| mobile | `EXPO_PUBLIC_API_URL` | 后端**来源**（协议+主机+端口，不含 path） | `http://localhost:8099`（端内再拼 `/api/mobile`；P0-3 双轨合一后默认单体 BFF） | topems-server 单体 8099 |
+| desktop | `VITE_API_URL` | 后端**来源**（协议+主机+端口） | `http://localhost:8099` | topems-server 单体 8099 |
 
 补充约定：
 
@@ -47,12 +47,12 @@
 | 独立进程（unified-core:8000） | 默认 `/api`（proxy→8000） | `http://localhost:8000` | `http://localhost:8000` |
 | 模块化单体（topems-server:8099） | `VITE_MONOLITH=1`（proxy→8099） | `http://localhost:8099` | `http://localhost:8099` |
 
-## 4. 本次落地改动
+## 4. 落地改动（含 P0-3 双轨合一回写）
 
-- `apps/mobile/src/utils/api-url.ts`：不配 env 时的 fallback 由 `http://localhost:8070`
-  改为 `http://localhost:8000`（8070 不在端口表，与同仓 `test-backend.ts` 的 8000 不一致）。
-- `apps/desktop/src/api/client.ts`：fallback 由 `http://localhost:8080` 改为
-  `http://localhost:8000`（8080 不在端口表）。
+- `apps/mobile/src/utils/api-url.ts:13`：不配 env 时 fallback 现为 `http://localhost:8099`
+  （P0-3 双轨合一，默认指向单体 BFF；历史上曾由 8070→8000，现统一为 8099）。
+- `apps/desktop/src/api/client.ts:34`：fallback 现为 `http://localhost:8099`
+  （历史上曾由 8080→8000，现统一为 8099；8080 仅 docker/saas 网关，非本地直连）。
 - `apps/web/.env.example`：更正注释示例（原 `http://localhost:8080/api` 为表外端口），
   说明 web 相对路径默认值与直连取值，并指向本文档。
 

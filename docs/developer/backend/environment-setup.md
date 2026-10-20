@@ -118,8 +118,8 @@ CREATE DATABASE topems_test;
 ### 3. 数据库迁移
 
 ```bash
-# 运行数据库迁移
-cargo run --bin topems-unified-core -- --migrate
+# 运行数据库迁移（sqlx-cli，统一入口；unified-core 不解析 --migrate 旗标）
+./scripts/migrate.sh run
 
 # 或使用脚本
 ./scripts/topems.sh db migrate
@@ -196,17 +196,22 @@ RUST_LOG=debug
 ### 手动启动服务
 
 ```bash
+# 推荐（默认本地形态）：模块化单体 topems-server :8099，单进程承载全部模块
+# 详见 docs/developer/monolith.md
+cargo run --bin topems-server          # 监听 8099，前端 VITE_MONOLITH=1 代理至此
+
+# —— 以下为多独立进程备选形态 ——
 # 终端 1: 启动统一核心服务 (IAM, DOC, FILE 等)
 cd svc/unified-core
 cargo run
 
-# 终端 2: 启动 HRM 服务
-cd svc/hrm-service
-cargo run -- --port 8020
+# 终端 2: 启动 HRM 服务（目录为 svc/hrm，非 svc/hrm-service）
+cd svc/hrm
+cargo run
 
-# 终端 3: 启动 AI 服务
-cd svc/ai-service
-cargo run -- --port 8013
+# 终端 3: 启动 AI 服务（目录为 svc/ai，非 svc/ai-service）
+cd svc/ai
+cargo run
 ```
 
 ### 启动顺序
@@ -215,9 +220,10 @@ cargo run -- --port 8013
 |------|------|------|------|
 | 1 | PostgreSQL | 5432 | - |
 | 2 | Redis | 6379 | - |
-| 3 | Unified Core | 8000 | PostgreSQL, Redis |
-| 4 | HRM Service | 8020 | Unified Core |
-| 5 | AI Service | 8013 | Unified Core |
+| 3 | topems-server（模块化单体，推荐默认） | 8099 | PostgreSQL, Redis |
+| 备选 | Unified Core（独立模式） | 8000 | PostgreSQL, Redis |
+| 备选 | HRM Service | 8020 | Unified Core |
+| 备选 | AI Service | 8013 | Unified Core |
 
 ---
 
@@ -238,23 +244,20 @@ pnpm dev
 ### 2. 访问前端
 
 - 开发服务器地址: http://localhost:3000
-- API 代理配置: 自动代理到 http://localhost:8000
+- API 代理配置: 单体模式（`VITE_MONOLITH=1`）代理到 `http://localhost:8099`（topems-server）；独立模式按 `ports.ts` 各服务端口分别代理（见 `vite.config.ts` 的 `buildServiceProxies()`）
 
 ### 3. Vite 代理配置
 
-在 `apps/web/vite.config.ts` 中配置：
+单体模式（推荐）在 `apps/web/vite.config.ts` 中，`VITE_MONOLITH=1` 时所有 `/api` 汇聚到 `http://localhost:8099`：
 
 ```typescript
-export default defineConfig({
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-    },
+// VITE_MONOLITH=1：MONO_TARGET = http://localhost:8099
+proxy: {
+  '/api': {
+    target: 'http://localhost:8099',
+    changeOrigin: true,
   },
-});
+}
 ```
 
 ---
@@ -264,20 +267,19 @@ export default defineConfig({
 ### 1. 健康检查
 
 ```bash
-# 检查核心服务
-curl http://localhost:8000/health
+# 检查单体入口（推荐）
+curl http://localhost:8099/health
 
-# 检查 HRM 服务
-curl http://localhost:8020/health
-
-# 检查 AI 服务
-curl http://localhost:8013/health
+# 独立模式下检查各服务
+curl http://localhost:8000/health      # unified-core
+curl http://localhost:8020/health      # hrm
+curl http://localhost:8013/health      # ai
 ```
 
 ### 2. 登录测试
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/auth/login \
+curl -X POST http://localhost:8099/api/core/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "admin",
