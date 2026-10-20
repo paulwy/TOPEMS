@@ -5,13 +5,14 @@
 //! to align with the frontend `apps/web/src/api/bi.ts` definitions.
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use std::time::Duration;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginatedResponse;
 use tracing::{info, warn};
 
@@ -232,6 +233,7 @@ async fn test_connection_result(
 )]
 pub async fn list_datasources(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<ListDatasourceQuery>,
 ) -> Json<serde_json::Value> {
     info!("Listing datasources");
@@ -244,6 +246,34 @@ pub async fn list_datasources(
     let search_pattern = format!("%{}%", search);
     let source_type = query.source_type.unwrap_or_default();
     let status = query.status.unwrap_or_default();
+
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 SELECT 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）；
+    // 只读事务，结束后直接 drop（回滚），不提交。
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(tenant_id.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to set RLS context: {}", e),
+        ));
+    }
 
     let rows = match sqlx::query!(
         r#"
@@ -263,7 +293,7 @@ pub async fn list_datasources(
         page_size,
         offset,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut *tx)
     .await
     {
         Ok(rows) => rows,
@@ -287,7 +317,7 @@ pub async fn list_datasources(
         source_type,
         status,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await
     {
         Ok(c) => c,
@@ -345,6 +375,7 @@ pub async fn list_datasources(
 )]
 pub async fn create_datasource(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDatasourceRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating datasource: {}", req.name);
@@ -353,6 +384,33 @@ pub async fn create_datasource(
     let now = Utc::now();
     let status = req.status.unwrap_or_else(|| "inactive".to_string());
     let is_enabled = req.is_enabled.unwrap_or(true);
+
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 INSERT 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(tenant_id.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to set RLS context: {}", e),
+        ));
+    }
 
     let result = sqlx::query!(
         r#"
@@ -383,39 +441,51 @@ pub async fn create_datasource(
         req.query_template,
         now,
         now,
-        Uuid::nil(),
+        tenant_id,
     )
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
-    match result {
-        Ok(r) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Create datasource",
-                            "data": row_to_response(
-                                r.id,
-                                r.name,
-                                r.source_type,
-                                r.status,
-                                r.host,
-                                r.database,
-                                r.port,
-                                r.username,
-                                r.connection_string,
-        r.last_sync,
-                                r.data_volume,
-                                r.sync_frequency,
-                                r.description,
-                                r.is_enabled,
-        r.created_at,
-        r.updated_at,
-                            )
-                        })),
-        Err(e) => Json(topems_shared_core::response::error_value(
-            500,
-            &format!("Failed to create datasource: {}", e),
-        )),
-    }
+    let row = match result {
+        Ok(r) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit create datasource: {}", e),
+                ));
+            }
+            r
+        }
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to create datasource: {}", e),
+            ));
+        }
+    };
+
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Create datasource",
+        "data": row_to_response(
+            row.id,
+            row.name,
+            row.source_type,
+            row.status,
+            row.host,
+            row.database,
+            row.port,
+            row.username,
+            row.connection_string,
+            row.last_sync,
+            row.data_volume,
+            row.sync_frequency,
+            row.description,
+            row.is_enabled,
+            row.created_at,
+            row.updated_at,
+        )
+    }))
 }
 
 /// Get a single datasource by id.
@@ -428,9 +498,38 @@ pub async fn create_datasource(
 )]
 pub async fn get_datasource(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting datasource: {}", id);
+
+    // RLS 连接级隔离：事务内设置租户上下文，确保 SELECT 与 set_config 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）；
+    // 只读事务，结束后直接 drop（回滚），不提交。
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(tenant_id.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to set RLS context: {}", e),
+        ));
+    }
 
     let row = match sqlx::query!(
         r#"
@@ -442,7 +541,7 @@ pub async fn get_datasource(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -500,12 +599,40 @@ pub async fn get_datasource(
 )]
 pub async fn update_datasource(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDatasourceRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating datasource: {}", id);
 
     let now = Utc::now();
+
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 UPDATE 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(tenant_id.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to set RLS context: {}", e),
+        ));
+    }
 
     let result = sqlx::query!(
         r#"
@@ -551,32 +678,40 @@ pub async fn update_datasource(
         now,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match result {
-        Ok(Some(r)) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Update datasource",
-                            "data": row_to_response(
-                                r.id,
-                                r.name,
-                                r.source_type,
-                                r.status,
-                                r.host,
-                                r.database,
-                                r.port,
-                                r.username,
-                                r.connection_string,
-        r.last_sync,
-                                r.data_volume,
-                                r.sync_frequency,
-                                r.description,
-                                r.is_enabled,
-        r.created_at,
-        r.updated_at,
-                            )
-                        })),
+        Ok(Some(r)) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit update datasource: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                                "success": true,
+                                "message": "Update datasource",
+                                "data": row_to_response(
+                                    r.id,
+                                    r.name,
+                                    r.source_type,
+                                    r.status,
+                                    r.host,
+                                    r.database,
+                                    r.port,
+                                    r.username,
+                                    r.connection_string,
+            r.last_sync,
+                                    r.data_volume,
+                                    r.sync_frequency,
+                                    r.description,
+                                    r.is_enabled,
+                                    r.created_at,
+                                    r.updated_at,
+                                )
+                            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Datasource not found",
@@ -603,9 +738,37 @@ pub async fn update_datasource(
 )]
 pub async fn delete_datasource(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting datasource: {}", id);
+
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与软删 UPDATE 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(tenant_id.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to set RLS context: {}", e),
+        ));
+    }
 
     let result = sqlx::query!(
         r#"
@@ -615,14 +778,22 @@ pub async fn delete_datasource(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     match result {
-        Ok(Some(_)) => Json(serde_json::json!({
-            "success": true,
-            "message": "Delete datasource"
-        })),
+        Ok(Some(_)) => {
+            if let Err(e) = tx.commit().await {
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("Failed to commit delete datasource: {}", e),
+                ));
+            }
+            Json(serde_json::json!({
+                "success": true,
+                "message": "Delete datasource"
+            }))
+        }
         Ok(None) => Json(topems_shared_core::response::error_value(
             404,
             "Datasource not found",
@@ -653,11 +824,39 @@ pub async fn delete_datasource(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn test_datasource(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Testing datasource connection: {}", id);
 
     let started = std::time::Instant::now();
+
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 SELECT/UPDATE 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(tenant_id.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to set RLS context: {}", e),
+        ));
+    }
 
     let row = match sqlx::query!(
         r#"
@@ -668,7 +867,7 @@ pub async fn test_datasource(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -717,10 +916,17 @@ pub async fn test_datasource(
         new_status,
         id,
     )
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await
     {
         warn!("Failed to update status after test: {}", e);
+    }
+
+    if let Err(e) = tx.commit().await {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to commit test datasource: {}", e),
+        ));
     }
 
     Json(serde_json::json!({
@@ -750,12 +956,40 @@ pub async fn test_datasource(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn refresh_datasource(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Refreshing datasource: {}", id);
 
     let started = std::time::Instant::now();
     let now = Utc::now();
+
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 SELECT/UPDATE 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("Failed to begin RLS txn: {}", e),
+            ));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(tenant_id.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to set RLS context: {}", e),
+        ));
+    }
 
     let row = match sqlx::query!(
         r#"
@@ -765,7 +999,7 @@ pub async fn refresh_datasource(
         "#,
         id,
     )
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     {
         Ok(row) => row,
@@ -805,12 +1039,19 @@ pub async fn refresh_datasource(
         records_processed,
         id,
     )
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await
     {
         return Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to update refresh state: {}", e),
+        ));
+    }
+
+    if let Err(e) = tx.commit().await {
+        return Json(topems_shared_core::response::error_value(
+            500,
+            &format!("Failed to commit refresh datasource: {}", e),
         ));
     }
 

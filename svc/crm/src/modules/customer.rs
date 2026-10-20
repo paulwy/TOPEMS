@@ -14,6 +14,7 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::resolve_create_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{ApiResponse, ListResponse};
@@ -252,16 +253,13 @@ pub async fn create_customer(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    // 普通用户必须携带可解析 claims.tenant_id（crm.customers.tenant_id NOT NULL，
+    // 超管回退 nil），缺失/非法直接 400，禁止静默落全零导致 RLS 不可见
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(Some(t)) => t,
+        Ok(None) => uuid::Uuid::nil(),
+        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     // 归属人缺省取当前登录用户（claims.sub → user_id），前端可不传 owner_id
     let owner_id = req.owner_id.or_else(|| claims.user_id().ok());
 
@@ -287,7 +285,8 @@ pub async fn create_customer(
     .bind("none")
     .bind(now)
     .bind(now)
-    .bind(tenant_opt)
+    // organization_id：CreateCustomerRequest 无该字段，落 NULL（勿误绑 tenant_id）
+    .bind(Option::<uuid::Uuid>::None)
     .bind(&req.name_en)
     .bind(req.code.as_deref())
     .bind(req.email.as_deref())

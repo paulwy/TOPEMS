@@ -1,7 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppShell } from '../components/redesign/layout/AppShell';
 import type { NavItem } from '../components/redesign/layout/SideRail';
+import {
+  useUnreadNotificationCount,
+  useSetUnreadNotificationCount,
+} from '@/store/notificationBadgeStore';
+import { getUnreadCount } from '@/api/notification';
 import {
   AlertTriangle,
   BarChart3,
@@ -9,11 +14,14 @@ import {
   Box,
   Boxes,
   ClipboardList,
+  Beaker,
   Clock,
   Cpu,
   DollarSign,
   Factory,
   FileText,
+  FlaskConical,
+  Handshake,
   Home,
   Layers,
   Mail,
@@ -137,7 +145,8 @@ const navItems: NavItem[] = [
         icon: BarChart3,
         path: '/erp/financial-report',
       },
-      { id: 'erp-hr', label: 'shared.sidebar.erp_hr', icon: Users, path: '/hrm/dashboard' },
+      // 观察项：ERP 下曾误挂"人力资源"子项（指向 /hrm/dashboard，与主菜单 HRM 重复），已移除，
+      // 人力资源统一由顶层 hrm 菜单承载。
     ],
   },
   {
@@ -193,6 +202,39 @@ const navItems: NavItem[] = [
         label: 'shared.sidebar.scm_price_comparison',
         icon: TrendingUp,
         path: '/scm/price-comparison',
+      },
+    ],
+  },
+  // S8: 补 SRM 模块入口（与 SCM 采购区分：供应商关系/招标寻源/合同协同）
+  {
+    id: 'srm',
+    label: 'shared.config.srm_name',
+    icon: Handshake,
+    path: '/srm/dashboard',
+    children: [
+      {
+        id: 'srm-dashboard',
+        label: 'shared.sidebar.srm_dashboard',
+        icon: BarChart3,
+        path: '/srm/dashboard',
+      },
+      {
+        id: 'srm-supplier',
+        label: 'shared.sidebar.srm_supplier',
+        icon: Users,
+        path: '/srm/supplier',
+      },
+      {
+        id: 'srm-bidding',
+        label: 'shared.sidebar.srm_bidding',
+        icon: FileText,
+        path: '/srm/bidding',
+      },
+      {
+        id: 'srm-contract',
+        label: 'shared.sidebar.srm_contract',
+        icon: ShoppingCart,
+        path: '/srm/contract',
       },
     ],
   },
@@ -267,6 +309,72 @@ const navItems: NavItem[] = [
       },
     ],
   },
+  // S8: 补 EHS 模块入口（URL 直达此前已 200，菜单未注册）
+  {
+    id: 'ehs',
+    label: 'shared.config.ehs_name',
+    icon: ShieldCheck,
+    path: '/ehs/dashboard',
+    children: [
+      {
+        id: 'ehs-dashboard',
+        label: 'shared.sidebar.ehs_dashboard',
+        icon: BarChart3,
+        path: '/ehs/dashboard',
+      },
+      {
+        id: 'ehs-accident',
+        label: 'shared.sidebar.ehs_accident',
+        icon: AlertTriangle,
+        path: '/ehs/accident',
+      },
+      {
+        id: 'ehs-hazard',
+        label: 'shared.sidebar.ehs_hazard',
+        icon: ShieldCheck,
+        path: '/ehs/hazard',
+      },
+      {
+        id: 'ehs-training',
+        label: 'shared.sidebar.ehs_training',
+        icon: BookOpen,
+        path: '/ehs/training',
+      },
+    ],
+  },
+  // S8: 补 LIMS 模块入口
+  {
+    id: 'lims',
+    label: 'shared.config.lims_name',
+    icon: FlaskConical,
+    path: '/lims/dashboard',
+    children: [
+      {
+        id: 'lims-dashboard',
+        label: 'shared.sidebar.lims_dashboard',
+        icon: BarChart3,
+        path: '/lims/dashboard',
+      },
+      {
+        id: 'lims-sample',
+        label: 'shared.sidebar.lims_sample',
+        icon: Package,
+        path: '/lims/sample',
+      },
+      {
+        id: 'lims-task',
+        label: 'shared.sidebar.lims_task',
+        icon: ClipboardList,
+        path: '/lims/task',
+      },
+      {
+        id: 'lims-instrument',
+        label: 'shared.sidebar.lims_instrument',
+        icon: Cpu,
+        path: '/lims/instrument',
+      },
+    ],
+  },
   {
     id: 'wms',
     label: 'shared.sidebar.wms',
@@ -302,6 +410,39 @@ const navItems: NavItem[] = [
         label: 'shared.sidebar.wms_transfer',
         icon: Truck,
         path: '/wms/transfer',
+      },
+    ],
+  },
+  // S8: 补 TMS 模块入口
+  {
+    id: 'tms',
+    label: 'shared.config.tms_name',
+    icon: Truck,
+    path: '/tms/dashboard',
+    children: [
+      {
+        id: 'tms-dashboard',
+        label: 'shared.sidebar.tms_dashboard',
+        icon: BarChart3,
+        path: '/tms/dashboard',
+      },
+      {
+        id: 'tms-shipments',
+        label: 'shared.sidebar.tms_shipments',
+        icon: Truck,
+        path: '/tms/shipments',
+      },
+      {
+        id: 'tms-routes',
+        label: 'shared.sidebar.tms_routes',
+        icon: Map,
+        path: '/tms/routes',
+      },
+      {
+        id: 'tms-vehicles',
+        label: 'shared.sidebar.tms_vehicles',
+        icon: Box,
+        path: '/tms/vehicles',
       },
     ],
   },
@@ -398,7 +539,7 @@ const navItems: NavItem[] = [
     id: 'im',
     label: 'shared.sidebar.im',
     icon: MessageSquare,
-    badge: 3,
+    // P5: 徽标由未读数 store 动态注入，无未读时不渲染（不再硬编码残留数字 3）
     path: '/im/dashboard',
     children: [
       {
@@ -592,6 +733,39 @@ const navItems: NavItem[] = [
       },
     ],
   },
+  // S8: 补 RD（研发管理）模块入口
+  {
+    id: 'rd',
+    label: 'shared.config.rd_name',
+    icon: Beaker,
+    path: '/rd/dashboard',
+    children: [
+      {
+        id: 'rd-dashboard',
+        label: 'shared.sidebar.rd_dashboard',
+        icon: BarChart3,
+        path: '/rd/dashboard',
+      },
+      {
+        id: 'rd-project',
+        label: 'shared.sidebar.rd_project',
+        icon: ClipboardList,
+        path: '/rd/project',
+      },
+      {
+        id: 'rd-experiment',
+        label: 'shared.sidebar.rd_experiment',
+        icon: FlaskConical,
+        path: '/rd/experiment',
+      },
+      {
+        id: 'rd-formula',
+        label: 'shared.sidebar.rd_formula',
+        icon: Beaker,
+        path: '/rd/formula',
+      },
+    ],
+  },
   {
     id: 'asset',
     label: 'shared.sidebar.asset',
@@ -670,6 +844,38 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   const location = useLocation();
   const navigate = useNavigate();
 
+  // P5: 未读数轮询写入 store，消息中心徽标实时跟随；无未读时徽标自动隐藏
+  const unreadCount = useUnreadNotificationCount();
+  const setUnread = useSetUnreadNotificationCount();
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const res = await getUnreadCount();
+        if (!cancelled && res.success) {
+          setUnread(typeof res.data === 'number' ? res.data : Number(res.data) || 0);
+        }
+      } catch {
+        // 接口不可用时保持当前值，不打断渲染
+      }
+    };
+    refresh();
+    const timer = setInterval(refresh, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [setUnread]);
+
+  // 将未读数注入消息中心菜单项徽标，0/undefined 时不展示
+  const items = useMemo<NavItem[]>(
+    () =>
+      navItems.map((item) =>
+        item.id === 'im' ? { ...item, badge: unreadCount > 0 ? unreadCount : undefined } : item
+      ),
+    [unreadCount]
+  );
+
   // 根据当前路径计算激活的导航项（支持子菜单）
   const activeId = useMemo(() => {
     // 扁平化所有菜单项（包括子菜单）
@@ -736,7 +942,7 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   return (
     <AppShell
       title='TOPEMS'
-      items={navItems}
+      items={items}
       activeId={activeId}
       onItemClick={handleItemClick}
       footerItems={footerItems}

@@ -146,7 +146,7 @@ impl FinanceService {
             status: voucher.status,
             remark: payment.remark,
             items,
-            voucher_id: voucher.id,
+            voucher_id: Some(voucher.id),
             created_at: payment.created_at,
         })
     }
@@ -163,7 +163,20 @@ impl FinanceService {
                 .fetch_one(&self.db_pool)
                 .await?;
 
-        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        let voucher = match payment.voucher_id {
+            Some(vid) => match self.get_voucher(tenant_id, vid).await {
+                Ok(v) => Some(v),
+                Err(e) => {
+                    tracing::warn!("付款单 {} 关联凭证读取失败，按草稿降级: {}", payment.id, e);
+                    None
+                }
+            },
+            None => None,
+        };
+        let voucher_status = voucher
+            .as_ref()
+            .map(|v| v.status.clone())
+            .unwrap_or(VoucherStatus::Draft);
 
         let items: Vec<PaymentItem> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
@@ -186,7 +199,7 @@ impl FinanceService {
             bank_transaction_no: payment.bank_transaction_no,
             executed_by: payment.executed_by,
             executed_at: payment.executed_at,
-            status: voucher.status,
+            status: voucher_status,
             remark: payment.remark,
             items,
             voucher_id: payment.voucher_id,
@@ -220,7 +233,20 @@ impl FinanceService {
 
         let mut results = Vec::new();
         for payment in payments {
-            let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+            let voucher = match payment.voucher_id {
+                Some(vid) => match self.get_voucher(tenant_id, vid).await {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        tracing::warn!("付款单 {} 关联凭证读取失败，按草稿降级: {}", payment.id, e);
+                        None
+                    }
+                },
+                None => None,
+            };
+            let voucher_status = voucher
+                .as_ref()
+                .map(|v| v.status.clone())
+                .unwrap_or(VoucherStatus::Draft);
             results.push(PaymentResponse {
                 id: payment.id,
                 payment_no: payment.payment_no,
@@ -234,7 +260,7 @@ impl FinanceService {
                 bank_transaction_no: payment.bank_transaction_no,
                 executed_by: payment.executed_by,
                 executed_at: payment.executed_at,
-                status: voucher.status,
+                status: voucher_status,
                 remark: payment.remark,
                 items: vec![],
                 voucher_id: payment.voucher_id,
@@ -257,7 +283,20 @@ impl FinanceService {
                 .fetch_one(&self.db_pool)
                 .await?;
 
-        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        let voucher = match payment.voucher_id {
+            Some(vid) => match self.get_voucher(tenant_id, vid).await {
+                Ok(v) => Some(v),
+                Err(e) => {
+                    tracing::warn!("付款单 {} 关联凭证读取失败，按草稿降级: {}", payment.id, e);
+                    None
+                }
+            },
+            None => None,
+        };
+        let voucher_status = voucher
+            .as_ref()
+            .map(|v| v.status.clone())
+            .unwrap_or(VoucherStatus::Draft);
 
         let items: Vec<PaymentItem> = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, write_off_amount, write_off_status, write_off_date, write_off_by, remaining_amount, remark, created_at FROM core_finance_payment_items WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND payment_id = $2 ORDER BY line_no"),
@@ -280,7 +319,7 @@ impl FinanceService {
             bank_transaction_no: payment.bank_transaction_no,
             executed_by: payment.executed_by,
             executed_at: payment.executed_at,
-            status: voucher.status,
+            status: voucher_status,
             remark: payment.remark,
             items,
             voucher_id: payment.voucher_id,
@@ -308,7 +347,10 @@ impl FinanceService {
                 .fetch_one(&self.db_pool)
                 .await?;
 
-        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        let voucher_id = payment
+            .voucher_id
+            .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
+        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
         if voucher.status != VoucherStatus::Draft {
             return Err(TopemsError::ValidationFailed(
                 "仅草稿状态的付款单可编辑".to_string(),
@@ -321,7 +363,7 @@ impl FinanceService {
             "finance",
             "DELETE FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2"
         ))
-        .bind(payment.voucher_id)
+        .bind(voucher_id)
         .bind(tenant_id)
         .execute(&mut *tx)
         .await?;
@@ -360,7 +402,7 @@ impl FinanceService {
         self.update_voucher_lines_with_tx(
             &mut tx,
             tenant_id,
-            payment.voucher_id,
+            voucher_id,
             voucher_lines,
             updated_by,
             locale,
@@ -429,7 +471,10 @@ impl FinanceService {
                 .fetch_one(&self.db_pool)
                 .await?;
 
-        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        let voucher_id = payment
+            .voucher_id
+            .ok_or_else(|| TopemsError::ValidationFailed("付款单未关联凭证".to_string()))?;
+        let voucher = self.get_voucher(tenant_id, voucher_id).await?;
         if voucher.status != VoucherStatus::Draft {
             return Err(TopemsError::ValidationFailed(
                 "仅草稿状态的付款单可删除".to_string(),
@@ -510,13 +555,17 @@ impl FinanceService {
         for payment in rows {
             total_amount += payment.total_amount;
 
-            let voucher = match self.get_voucher(tenant_id, payment.voucher_id).await {
+            let Some(voucher_id) = payment.voucher_id else {
+                tracing::warn!("付款单未关联凭证，跳过导出, payment_id={}", payment.id);
+                continue;
+            };
+            let voucher = match self.get_voucher(tenant_id, voucher_id).await {
                 Ok(v) => v,
                 Err(_) => {
                     tracing::warn!(
                         "无法获取付款单关联凭证, payment_id={}, voucher_id={}",
                         payment.id,
-                        payment.voucher_id
+                        voucher_id
                     );
                     continue;
                 }

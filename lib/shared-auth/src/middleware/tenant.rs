@@ -51,6 +51,23 @@ pub fn get_tenant_id_from_claims(claims: &Claims) -> Uuid {
         .unwrap_or_default()
 }
 
+/// 解析创建行要落库的 tenant_id：
+/// - 超管（`is_superuser`）→ `Ok(None)`，落公共行（`tenant_id = NULL`）；
+/// - 普通用户 → 必须携带可解析的 `claims.tenant_id`，缺失或非法返回
+///   `Err((400, 说明))`，由调用方直接回 400，禁止静默落全零 UUID
+///   （全零行在 RLS 租户过滤下对本租户不可见）。
+pub fn resolve_create_tenant(claims: &Claims) -> Result<Option<Uuid>, (u16, String)> {
+    if claims.is_superuser {
+        return Ok(None);
+    }
+    match claims.tenant_id.as_deref() {
+        None => Err((400, "缺少租户ID".to_string())),
+        Some(raw) => Uuid::parse_str(raw)
+            .map(Some)
+            .map_err(|_| (400, "无效的租户ID".to_string())),
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct TenantDataAccess {
     pub tenant_id: Uuid,

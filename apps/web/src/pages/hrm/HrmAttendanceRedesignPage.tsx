@@ -289,6 +289,8 @@ const HrmAttendanceRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<AttendanceRecord>) => {
+      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
+      let apiFailed = false;
       try {
         await attendanceApi.create({
           employee_id: data.emp_no,
@@ -301,14 +303,21 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         } as any);
       } catch (e) {
         console.warn('[HRM Attendance] Create API unavailable, using mock create:', e);
+        apiFailed = true;
+        setIsMockData(true);
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return data;
+      return { data, apiFailed };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('hrm.attendance_redesign_page.k62'));
+      if (result.apiFailed) {
+        // 降级 mock：明确告知未写入数据库，禁止静默假成功
+        pushToast('warning', t('hrm.attendance_redesign_page.mock_create_fallback'));
+      } else {
+        pushToast('success', t('hrm.attendance_redesign_page.k62'));
+      }
     },
     onError: () => {
       pushToast('error', t('hrm.attendance_redesign_page.k63'));
@@ -317,6 +326,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<AttendanceRecord> }) => {
+      let apiFailed = false;
       try {
         await attendanceApi.update(id, {
           check_in: data.check_in,
@@ -325,14 +335,19 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         } as any);
       } catch (e) {
         console.warn('[HRM Attendance] Update API unavailable, using mock update:', e);
+        apiFailed = true;
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data };
+      return { id, data, apiFailed };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('hrm.attendance_redesign_page.k64'));
+      if (result.apiFailed) {
+        pushToast('warning', t('hrm.attendance_redesign_page.mock_update_fallback'));
+      } else {
+        pushToast('success', t('hrm.attendance_redesign_page.k64'));
+      }
     },
     onError: () => {
       pushToast('error', t('hrm.attendance_redesign_page.k65'));

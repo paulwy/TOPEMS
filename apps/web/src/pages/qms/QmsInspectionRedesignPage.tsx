@@ -350,6 +350,8 @@ const QmsInspectionPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Inspection>) => {
+      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
+      let apiFailed = false;
       try {
         await inspectionApi.createCheck({
           inspection_type: data.inspection_type ?? 'incoming',
@@ -360,14 +362,24 @@ const QmsInspectionPage: React.FC = () => {
         } as CreateQualityCheckRequest);
       } catch (e) {
         console.warn('[QMS Inspections] Create API unavailable, using mock create:', e);
+        apiFailed = true;
+        setIsMockData(true);
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return data;
+      return { data, apiFailed };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('qms.inspection_redesign.toast_create_success'));
+      if (result.apiFailed) {
+        // 降级 mock：明确告知未写入数据库，禁止静默假成功
+        pushToast(
+          'warning',
+          t('qms.inspection_redesign.mock_create_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
+        );
+      } else {
+        pushToast('success', t('qms.inspection_redesign.toast_create_success'));
+      }
     },
     onError: () => {
       pushToast('error', t('qms.inspection_redesign.toast_create_fail'));
@@ -376,6 +388,7 @@ const QmsInspectionPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Inspection> }) => {
+      let apiFailed = false;
       try {
         await inspectionApi.updateCheck(id, {
           inspection_type: data.inspection_type,
@@ -385,14 +398,22 @@ const QmsInspectionPage: React.FC = () => {
         } as CreateQualityCheckRequest);
       } catch (e) {
         console.warn('[QMS Inspections] Update API unavailable, using mock update:', e);
+        apiFailed = true;
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data };
+      return { id, data, apiFailed };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('qms.inspection_redesign.toast_update_success'));
+      if (result.apiFailed) {
+        pushToast(
+          'warning',
+          t('qms.inspection_redesign.mock_update_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
+        );
+      } else {
+        pushToast('success', t('qms.inspection_redesign.toast_update_success'));
+      }
     },
     onError: () => {
       pushToast('error', t('qms.inspection_redesign.toast_update_fail'));

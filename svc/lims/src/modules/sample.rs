@@ -143,6 +143,26 @@ pub async fn list_samples(
         }
     }
 
+    // RLS 连接级隔离：事务内设置租户上下文，确保 SELECT 与 set_config 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）；
+    // 只读事务，结束后直接 drop（回滚），不提交。
+    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin tx for list_samples: {}", e);
+            return Json(ApiResponse::error(500, "获取样品列表失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for list_samples: {}", e);
+        return Json(ApiResponse::error(500, "获取样品列表失败"));
+    }
+
     let sql = match (query.status.as_ref(), query.sample_no.as_ref(), query.sample_name.as_ref()) {
         (Some(_), Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_no LIKE $3 AND sample_name LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
         (Some(_), Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_no LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
@@ -209,7 +229,7 @@ pub async fn list_samples(
         }
     }
 
-    let samples = query_builder.fetch_all(&state.pool).await.map(|rows| {
+    let samples = query_builder.fetch_all(&mut *tx).await.map(|rows| {
         rows.into_iter()
             .map(|row| Sample {
                 id: row.get("id"),
@@ -266,6 +286,24 @@ pub async fn register_sample(
     );
     let tenant_id = ctx.tenant_id;
 
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 INSERT 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin tx for register_sample: {}", e);
+            return Json(ApiResponse::error(500, "样品登记失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(tenant_id.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for register_sample: {}", e);
+        return Json(ApiResponse::error(500, "样品登记失败"));
+    }
+
     let row = sqlx::query(
         "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'received') RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
     )
@@ -276,46 +314,54 @@ pub async fn register_sample(
     .bind(&req.source)
     .bind(req.quantity)
     .bind(&req.unit)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
-    match row {
+    let row = match row {
         Ok(r) => {
-            let sample = Sample {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                sample_no: r.get("sample_no"),
-                sample_name: r.get("sample_name"),
-                sample_type: r.get("sample_type"),
-                source: r.get("source"),
-                quantity: r.get("quantity"),
-                unit: r.get("unit"),
-                status: r.get("status"),
-                received_at: r.get("received_at"),
-                expired_at: r.get("expired_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            };
-            // 新样品入库，列表缓存失效（pattern 广播）
-            if let Some(publisher) = &state.event_publisher {
-                let publisher = publisher.clone();
-                let tenant = ctx.tenant_id.to_string();
-                tokio::spawn(async move {
-                    let _ = publisher
-                        .publish_cache_invalidated(
-                            &format!("lims:sample:list:{}:*", tenant),
-                            "pattern",
-                            Some("sample_registered"),
-                        )
-                        .await;
-                });
+            if let Err(e) = tx.commit().await {
+                tracing::error!("Failed to commit tx for register_sample: {}", e);
+                return Json(ApiResponse::error(500, "样品登记失败"));
             }
-            Json(ApiResponse::success(sample, "样品登记成功"))
+            r
         }
         Err(e) => {
             tracing::error!("Failed to create sample: {}", e);
-            Json(ApiResponse::error(500, "样品登记失败"))
+            return Json(ApiResponse::error(500, "样品登记失败"));
         }
+    };
+
+    {
+        let sample = Sample {
+            id: row.get("id"),
+            tenant_id: row.get("tenant_id"),
+            sample_no: row.get("sample_no"),
+            sample_name: row.get("sample_name"),
+            sample_type: row.get("sample_type"),
+            source: row.get("source"),
+            quantity: row.get("quantity"),
+            unit: row.get("unit"),
+            status: row.get("status"),
+            received_at: row.get("received_at"),
+            expired_at: row.get("expired_at"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        };
+        // 新样品入库，列表缓存失效（pattern 广播）
+        if let Some(publisher) = &state.event_publisher {
+            let publisher = publisher.clone();
+            let tenant = ctx.tenant_id.to_string();
+            tokio::spawn(async move {
+                let _ = publisher
+                    .publish_cache_invalidated(
+                        &format!("lims:sample:list:{}:*", tenant),
+                        "pattern",
+                        Some("sample_registered"),
+                    )
+                    .await;
+            });
+        }
+        Json(ApiResponse::success(sample, "样品登记成功"))
     }
 }
 
@@ -358,12 +404,32 @@ pub async fn get_sample(
         }
     }
 
+    // RLS 连接级隔离：事务内设置租户上下文，确保 SELECT 与 set_config 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）；
+    // 只读事务，结束后直接 drop（回滚），不提交。
+    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin tx for get_sample: {}", e);
+            return Json(ApiResponse::error(500, "获取样品失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for get_sample: {}", e);
+        return Json(ApiResponse::error(500, "获取样品失败"));
+    }
+
     let row = sqlx::query(
         "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match row {
@@ -415,6 +481,25 @@ pub async fn update_sample(
         Some(ctx.tenant_id)
     };
 
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 UPDATE 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
+    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin tx for update_sample: {}", e);
+            return Json(ApiResponse::error(500, "样品更新失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for update_sample: {}", e);
+        return Json(ApiResponse::error(500, "样品更新失败"));
+    }
+
     let row = sqlx::query(
         "UPDATE public.qa_lab_samples SET sample_name = COALESCE($3, sample_name), sample_type = COALESCE($4, sample_type), source = COALESCE($5, source), quantity = COALESCE($6, quantity), unit = COALESCE($7, unit), status = COALESCE($8, status), expired_at = COALESCE($9::timestamp, expired_at), updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
     )
@@ -427,55 +512,61 @@ pub async fn update_sample(
     .bind(&req.unit)
     .bind(&req.status)
     .bind(&req.expired_at)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
-    match row {
+    let row = match row {
         Ok(r) => {
-            let sample = Sample {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                sample_no: r.get("sample_no"),
-                sample_name: r.get("sample_name"),
-                sample_type: r.get("sample_type"),
-                source: r.get("source"),
-                quantity: r.get("quantity"),
-                unit: r.get("unit"),
-                status: r.get("status"),
-                received_at: r.get("received_at"),
-                expired_at: r.get("expired_at"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            };
-            // 失效详情缓存并广播列表失效
-            let detail_key = sample_detail_key(&tenant_id, &id.to_string());
-            state.sample_cache.remove(&detail_key).await;
-            if let Some(publisher) = &state.event_publisher {
-                let publisher = publisher.clone();
-                let key = detail_key.clone();
-                let tenant = ctx.tenant_id.to_string();
-                tokio::spawn(async move {
-                    let _ = publisher
-                        .publish_cache_invalidated(&key, "specific", Some("sample_updated"))
-                        .await;
-                    let _ = publisher
-                        .publish_cache_invalidated(
-                            &format!("lims:sample:list:{}:*", tenant),
-                            "pattern",
-                            Some("sample_updated"),
-                        )
-                        .await;
-                });
+            if let Err(e) = tx.commit().await {
+                tracing::error!("Failed to commit tx for update_sample: {}", e);
+                return Json(ApiResponse::error(500, "样品更新失败"));
             }
-            Json(ApiResponse::success(sample, "样品更新成功"))
+            r
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => return Json(ApiResponse::error(404, "记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to update sample: {}", e);
-            Json(ApiResponse::error(500, "样品更新失败"))
+            return Json(ApiResponse::error(500, "样品更新失败"));
         }
+    };
+
+    let sample = Sample {
+        id: row.get("id"),
+        tenant_id: row.get("tenant_id"),
+        sample_no: row.get("sample_no"),
+        sample_name: row.get("sample_name"),
+        sample_type: row.get("sample_type"),
+        source: row.get("source"),
+        quantity: row.get("quantity"),
+        unit: row.get("unit"),
+        status: row.get("status"),
+        received_at: row.get("received_at"),
+        expired_at: row.get("expired_at"),
+        created_at: row.get("created_at"),
+        updated_at: row.get("updated_at"),
+    };
+    // 失效详情缓存并广播列表失效
+    let detail_key = sample_detail_key(&tenant_id, &id.to_string());
+    state.sample_cache.remove(&detail_key).await;
+    if let Some(publisher) = &state.event_publisher {
+        let publisher = publisher.clone();
+        let key = detail_key.clone();
+        let tenant = ctx.tenant_id.to_string();
+        tokio::spawn(async move {
+            let _ = publisher
+                .publish_cache_invalidated(&key, "specific", Some("sample_updated"))
+                .await;
+            let _ = publisher
+                .publish_cache_invalidated(
+                    &format!("lims:sample:list:{}:*", tenant),
+                    "pattern",
+                    Some("sample_updated"),
+                )
+                .await;
+        });
     }
+    Json(ApiResponse::success(sample, "样品更新成功"))
 }
 
 pub async fn delete_sample(
@@ -494,16 +585,39 @@ pub async fn delete_sample(
         Some(ctx.tenant_id)
     };
 
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与软删 UPDATE 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
+    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin tx for delete_sample: {}", e);
+            return Json(ApiResponse::error(500, "样品删除失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for delete_sample: {}", e);
+        return Json(ApiResponse::error(500, "样品删除失败"));
+    }
+
     let result = sqlx::query(
         "UPDATE public.qa_lab_samples SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut *tx)
     .await;
 
     match result {
         Ok(_) => {
+            if let Err(e) = tx.commit().await {
+                tracing::error!("Failed to commit tx for delete_sample: {}", e);
+                return Json(ApiResponse::error(500, "样品删除失败"));
+            }
             // 失效详情缓存并广播列表失效
             let detail_key = sample_detail_key(&tenant_id, &id.to_string());
             state.sample_cache.remove(&detail_key).await;
@@ -674,11 +788,33 @@ pub async fn record_lifecycle_event(
         Some(ctx.tenant_id)
     };
 
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 INSERT/UPDATE 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
+    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin tx for record_lifecycle_event: {}", e);
+            return Json(ApiResponse::error(500, "记录生命周期事件失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!(
+            "Failed to set RLS context for record_lifecycle_event: {}",
+            e
+        );
+        return Json(ApiResponse::error(500, "记录生命周期事件失败"));
+    }
+
     let sample_row =
         sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2")
             .bind(sample_id)
             .bind(tenant_id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut *tx)
             .await;
 
     let sample_no = match sample_row {
@@ -716,7 +852,7 @@ pub async fn record_lifecycle_event(
     .bind(&req.operator)
     .bind(&req.notes)
     .bind(&req.location)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match row {
@@ -727,8 +863,13 @@ pub async fn record_lifecycle_event(
             .bind(sample_id)
             .bind(&req.lifecycle_stage)
             .bind(tenant_id)
-            .execute(&state.pool)
+            .execute(&mut *tx)
             .await;
+
+            if let Err(e) = tx.commit().await {
+                tracing::error!("Failed to commit tx for record_lifecycle_event: {}", e);
+                return Json(ApiResponse::error(500, "记录生命周期事件失败"));
+            }
 
             Json(ApiResponse::success(
                 SampleLifecycleRecord {
@@ -790,12 +931,34 @@ pub async fn transition_sample_stage(
         return Json(ApiResponse::error(400, "无效的目标阶段"));
     }
 
+    // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 INSERT/UPDATE 同连接
+    // （tenant_middleware 在 pool 连接上设置的 GUC 不保证与本查询取到同一连接）
+    let rls_tenant = tenant_id.unwrap_or_else(Uuid::nil);
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to begin tx for transition_sample_stage: {}", e);
+            return Json(ApiResponse::error(500, "样品阶段转换失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!(
+            "Failed to set RLS context for transition_sample_stage: {}",
+            e
+        );
+        return Json(ApiResponse::error(500, "样品阶段转换失败"));
+    }
+
     let current_row = sqlx::query(
         "SELECT sample_no, status FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
     )
     .bind(sample_uuid)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await;
 
     let (sample_no, current_stage) = match current_row {
@@ -837,7 +1000,7 @@ pub async fn transition_sample_stage(
     .bind(operator)
     .bind(notes)
     .bind(location)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut *tx)
     .await;
 
     match row {
@@ -848,8 +1011,13 @@ pub async fn transition_sample_stage(
             .bind(sample_uuid)
             .bind(&to_stage)
             .bind(tenant_id)
-            .execute(&state.pool)
+            .execute(&mut *tx)
             .await;
+
+            if let Err(e) = tx.commit().await {
+                tracing::error!("Failed to commit tx for transition_sample_stage: {}", e);
+                return Json(ApiResponse::error(500, "样品阶段转换失败"));
+            }
 
             Json(ApiResponse::success(
                 SampleLifecycleRecord {

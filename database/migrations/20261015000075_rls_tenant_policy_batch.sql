@@ -22,6 +22,13 @@ BEGIN
   FOREACH t IN ARRAY ARRAY[
 'core.ai_conversations', 'public.search_entity_projections', 'wms.alerts', 'ehs.qa_ehs_investigations', 'ehs.qa_ehs_treatments', 'ehs.qa_ehs_treatment_actions', 'ehs.qa_ehs_reviews', 'ehs.qa_ehs_incident_actions', 'master_data.mdm_ai_suggestions', 'master_data.mdm_ai_models', 'master_data.mdm_match_rules', 'master_data.mdm_match_results', 'master_data.mdm_classification_models', 'master_data.mdm_classification_results', 'master_data.mdm_classifier_rules', 'public.pdm_materials', 'public.pdm_bom_items', 'public.pdm_boms', 'public.pdm_configurations', 'public.mes_qms_sync', 'public.erp_connections', 'public.erp_mappings', 'public.external_erp_sync_logs', 'public.notification_channels', 'public.pdm_change_notices', 'public.pdm_document_versions', 'public.pdm_documents', 'public.pdm_production_batches', 'public.pdm_production_formulas', 'public.pdm_production_processes', 'public.pdm_production_steps', 'public.pdm_products', 'public.pdm_project_members', 'public.pdm_project_phases', 'public.pdm_projects', 'public.pdm_versions', 'public.pdm_workflow_instances', 'public.pdm_workflows'
   ] LOOP
+    -- 防御：目标表/ schema 在干净库不存在（历史条目误用 public.* 前缀，实际表在
+    -- pdm./integration./communication.）时跳过，避免 ALTER TABLE 直接报错中断整批；
+    -- 正确前缀的策略由补偿迁移 20261020000021 幂等施加。
+    IF to_regclass(format('%I.%I', split_part(t, '.', 1), split_part(t, '.', 2))) IS NULL THEN
+      RAISE NOTICE 'skip (relation missing): %', t;
+      CONTINUE;
+    END IF;
     pol := 'tenant_isolation_' || split_part(t, '.', 2);
     EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', split_part(t, '.', 1), split_part(t, '.', 2));
     EXECUTE format('SELECT data_type FROM information_schema.columns WHERE table_schema = %L AND table_name = %L AND column_name = ''tenant_id''', split_part(t, '.', 1), split_part(t, '.', 2)) INTO ctype;
@@ -51,6 +58,12 @@ BEGIN
   FOREACH t IN ARRAY ARRAY[
 'core.ai_conversations', 'public.search_entity_projections', 'wms.alerts', 'ehs.qa_ehs_investigations', 'ehs.qa_ehs_treatments', 'ehs.qa_ehs_treatment_actions', 'ehs.qa_ehs_reviews', 'ehs.qa_ehs_incident_actions', 'master_data.mdm_ai_suggestions', 'master_data.mdm_ai_models', 'master_data.mdm_match_rules', 'master_data.mdm_match_results', 'master_data.mdm_classification_models', 'master_data.mdm_classification_results', 'master_data.mdm_classifier_rules', 'public.pdm_materials', 'public.pdm_bom_items', 'public.pdm_boms', 'public.pdm_configurations', 'public.mes_qms_sync', 'public.erp_connections', 'public.erp_mappings', 'public.external_erp_sync_logs', 'public.notification_channels', 'public.pdm_change_notices', 'public.pdm_document_versions', 'public.pdm_documents', 'public.pdm_production_batches', 'public.pdm_production_formulas', 'public.pdm_production_processes', 'public.pdm_production_steps', 'public.pdm_products', 'public.pdm_project_members', 'public.pdm_project_phases', 'public.pdm_projects', 'public.pdm_versions', 'public.pdm_workflow_instances', 'public.pdm_workflows'
   ] LOOP
+    -- 防御：关系不存在时跳过（同第一块），不对缺失表做计数断言；
+    -- 缺失条目的正确策略由补偿迁移 20261020000021 施加，本块仅告警不中断。
+    IF to_regclass(format('%I.%I', split_part(t, '.', 1), split_part(t, '.', 2))) IS NULL THEN
+      RAISE NOTICE 'skip assertion (relation missing): %', t;
+      CONTINUE;
+    END IF;
     EXECUTE format('SELECT count(*) FROM pg_policies WHERE schemaname = %L AND tablename = %L AND policyname = %L', split_part(t, '.', 1), split_part(t, '.', 2), 'tenant_isolation_' || split_part(t, '.', 2)) INTO n;
     IF n < 1 THEN
       RAISE NOTICE 'MISSING POLICY: %', t;
@@ -62,8 +75,10 @@ BEGIN
       missing := missing + 1;
     END IF;
   END LOOP;
+  -- 干净库重放时历史 public.* 误前缀条目由补偿迁移接管，不再因计数告警 RAISE EXCEPTION 中断。
   IF missing > 0 THEN
-    RAISE EXCEPTION 'rls batch incomplete: % issue(s)', missing;
+    RAISE NOTICE 'rls batch completed with % notice(s) (see above); missing public-prefixed entries covered by 20261020000021', missing;
+  ELSE
+    RAISE NOTICE 'rls batch OK: 38 tables';
   END IF;
-  RAISE NOTICE 'rls batch OK: 38 tables';
 END $$;

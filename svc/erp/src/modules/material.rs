@@ -12,6 +12,7 @@ use super::ApiState;
 use crate::models::material::{CreateMaterialRequest, Material, UpdateMaterialRequest};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::resolve_create_tenant;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
@@ -258,8 +259,14 @@ pub async fn create_material(
         return e;
     }
 
+    // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+    };
+
     let result = sqlx::query_as::<_, Material>(
-        only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at"),
     )
     .bind(body.code)
     .bind(body.name)
@@ -274,6 +281,7 @@ pub async fn create_material(
     .bind(body.tax_rate.unwrap_or(0.0))
     .bind(body.description)
     .bind(body.status.unwrap_or_else(|| "active".to_string()))
+    .bind(tenant_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -458,6 +466,12 @@ pub async fn import_materials(
         return e;
     }
 
+    // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+    };
+
     let mut succeeded = 0i64;
     let mut failed = 0i64;
     for item in &body {
@@ -466,7 +480,7 @@ pub async fn import_materials(
             continue;
         }
         let result = sqlx::query(
-            only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) ON CONFLICT (code) DO NOTHING"),
+            only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) ON CONFLICT (code) DO NOTHING"),
         )
         .bind(&item.code)
         .bind(&item.name)
@@ -481,6 +495,7 @@ pub async fn import_materials(
         .bind(item.tax_rate.unwrap_or(0.0))
         .bind(&item.description)
         .bind(item.status.as_deref().unwrap_or("active"))
+        .bind(tenant_id)
         .execute(&mut **txn)
         .await;
         match result {

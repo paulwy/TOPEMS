@@ -1706,6 +1706,7 @@
   "mes.production_order_management_page.completed_4": "完成",
   "mes.production_order_management_page.order_1": "下达",
   "mes.production_order_management_page.order_status": "订单状态已更新",
+  "mes.production_order_management_page.order_status_updated": "订单状态已更新为「{{status}}」",
   "mes.production_order_management_page.production_1": "开始生产",
   "mes.production_order_management_page.update_3": "操作失败",
   "mes.production_order_management_page.update_4": "更新成功",

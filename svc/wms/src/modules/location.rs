@@ -98,7 +98,7 @@ pub async fn list_locations(
 
     let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         FROM wms.locations
         WHERE ($1::text IS NULL OR location_name ILIKE $1 OR location_code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -298,7 +298,7 @@ pub async fn get_location(
 
     let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         FROM wms.locations WHERE id = $1
         "#),
     )
@@ -372,7 +372,7 @@ pub async fn update_location(
 
     let existing = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at FROM wms.locations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at FROM wms.locations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#),
     )
     .bind(location_id)
@@ -412,7 +412,7 @@ pub async fn update_location(
             warehouse_id = $2, location_code = $3, location_name = $4, location_type = $5, capacity = $6, 
             status = $7, updated_at = $8
         WHERE id = $1 AND ($9::uuid IS NULL OR tenant_id = $9::uuid)
-        RETURNING id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
+        RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         "#),
     )
     .bind(location_id)

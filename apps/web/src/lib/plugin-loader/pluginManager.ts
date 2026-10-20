@@ -128,6 +128,9 @@ export class PluginManager {
   private navigationConfigCache: Map<string, NavItemConfig[]> = new Map();
   private navConfigLastFetch: number = 0;
   private readonly NAV_CONFIG_TTL = 5 * 60 * 1000; // 5分钟缓存
+  // N5: 后端尚未提供 /api/plugin/navigation-config 路由，首访 404 后禁用该请求，
+  // 避免每个模块同步时重复发起恒 404 请求并刷控制台；走本地硬编码 fallback。
+  private navConfigEndpointAvailable = true;
 
   private constructor() {
     this.emitter = new TypedEventEmitter();
@@ -545,6 +548,11 @@ export class PluginManager {
       return;
     }
 
+    if (!this.navConfigEndpointAvailable) {
+      // N5: 已知后端未实现该端点（首访 404），直接走本地 fallback，不再发请求
+      return;
+    }
+
     try {
       // V64: 统一使用 /api/plugin（去除已废弃的 /v1/ 前缀）
       // 必须用带认证拦截器的 pluginAxios（fetch 无 Authorization 头会 401）
@@ -568,6 +576,15 @@ export class PluginManager {
         );
       }
     } catch (error) {
+      const err = error as { response?: { status?: number } };
+      if (err?.response?.status === 404) {
+        // N5: 端点不存在，禁用后续请求并静默降级到本地硬编码导航，避免恒 404 控制台噪音
+        this.navConfigEndpointAvailable = false;
+        apiLogger.debug(
+          '[PluginManager] navigation-config endpoint unavailable (404), using local fallback'
+        );
+        return;
+      }
       apiLogger.warn('[PluginManager] Failed to fetch navigation config, using fallback:', error);
     }
   }

@@ -29,7 +29,9 @@ import type { Equipment, MaintenanceEquipmentRequest } from '@/api/mes';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
-const apiAdapter = createCrudPageAdapter(mesApi.equipment);
+// 后端列表响应为 { equipments, total }（非默认 items/materials/data），需显式声明 itemsField，
+// 否则 reactQuery 解析后 items 恒为空（S7）。
+const apiAdapter = createCrudPageAdapter(mesApi.equipment, { itemsField: 'equipments' });
 export default function EquipmentManagementPage() {
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();

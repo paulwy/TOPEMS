@@ -25,7 +25,7 @@ pub use auth::{
 pub use middleware::{
     department_middleware, get_tenant_id, get_tenant_id_from_claims, require_department,
     require_module_active, require_module_permission, require_permission, require_role,
-    require_tenant_status, tenant_middleware,
+    require_tenant_status, resolve_create_tenant, tenant_middleware,
 };
 pub use permission::{
     check_any_module_permission, check_module_permission, check_resource_permission,

@@ -119,9 +119,14 @@ pub async fn list_expenses(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_expense(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<Value>,
 ) -> Json<ApiResponse<Value>> {
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+    };
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let expense_number = req
@@ -137,7 +142,7 @@ pub async fn create_expense(
         r#"INSERT INTO expenses (id, expense_number, applicant_name, department_id, expense_type,
                                   amount, description, expense_date, receipt_count, status,
                                   created_at, updated_at, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12)
            RETURNING id, expense_number, applicant_name, department_id, expense_type, amount,
                      description, expense_date, receipt_count, status, approver_id, approved_at,
                      reimbursed_at, created_at, updated_at"#
@@ -170,6 +175,7 @@ pub async fn create_expense(
     )
     .bind(now)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -421,12 +427,44 @@ pub async fn list_budgets(
     }
 }
 
+/// 解析创建行的 tenant_id：
+/// - 超管（is_superuser）→ None，落公共行（tenant_id = NULL）；
+/// - 普通用户 → 必须携带可解析的 claims.tenant_id；缺失或非法直接 400，
+///   禁止静默落 nil UUID（全零行在 RLS 租户过滤下不可见）。
+fn resolve_create_tenant(claims: &Claims) -> Result<Option<Uuid>, (u16, String)> {
+    if claims.is_superuser {
+        return Ok(None);
+    }
+    match claims.tenant_id.as_deref() {
+        None => Err((400, "缺少租户ID".to_string())),
+        Some(raw) => Uuid::parse_str(raw)
+            .map(Some)
+            .map_err(|_| (400, "无效的租户ID".to_string())),
+    }
+}
+
+/// 金额字段双兼容：JSON 字符串（"888888.00"）与 JSON 数值（888888）都接受，
+/// 统一转为 Decimal；解析失败回退 None（调用方按 0 处理）。
+fn json_amount_to_decimal(v: &Value) -> Option<rust_decimal::Decimal> {
+    v.as_str()
+        .and_then(|s| rust_decimal::Decimal::from_str(s).ok())
+        .or_else(|| {
+            v.as_f64()
+                .and_then(|f| rust_decimal::Decimal::from_str(&f.to_string()).ok())
+        })
+}
+
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_budget(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<Value>,
 ) -> Json<ApiResponse<Value>> {
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+    };
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let fiscal_year: i32 = req
@@ -437,16 +475,11 @@ pub async fn create_budget(
                 .or_else(|| v.as_str().and_then(|s| s.parse::<i32>().ok()))
         })
         .unwrap_or(0);
-    // 优先读 total_budget；前端旧字段 total_amount 作为回退，避免金额丢失
+    // 优先读 total_budget（字符串/数值双兼容）；前端旧字段 total_amount 作为回退，避免金额丢失
     let total_budget: rust_decimal::Decimal = req
         .get("total_budget")
-        .and_then(|v| v.as_str())
-        .and_then(|s| rust_decimal::Decimal::from_str(s).ok())
-        .or_else(|| {
-            req.get("total_amount")
-                .and_then(|v| v.as_f64())
-                .and_then(|f| rust_decimal::Decimal::from_str(&f.to_string()).ok())
-        })
+        .and_then(json_amount_to_decimal)
+        .or_else(|| req.get("total_amount").and_then(json_amount_to_decimal))
         .unwrap_or_default();
     let used_amount = rust_decimal::Decimal::ZERO;
     let remaining_amount = total_budget - used_amount;
@@ -467,11 +500,7 @@ pub async fn create_budget(
                      created_at, updated_at, deleted_at"#
     ))
     .bind(id)
-    .bind(
-        req.get("tenant_id")
-            .and_then(|v| v.as_str())
-            .and_then(|s| Uuid::parse_str(s).ok()),
-    )
+    .bind(tenant_id)
     .bind(
         req.get("department_id")
             .and_then(|v| v.as_str())
@@ -734,9 +763,14 @@ pub async fn list_receivables(
 
 pub async fn create_receivable(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<Value>,
 ) -> Json<ApiResponse<Value>> {
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+    };
+
     let id = Uuid::new_v4();
     let now = Utc::now();
     let invoice_number = req
@@ -752,7 +786,7 @@ pub async fn create_receivable(
         r#"INSERT INTO receivables (id, invoice_number, customer_name, project_id, contract_id,
                                     project_name, amount, invoice_date, due_date, status,
                                     received_amount, payment_schedule, created_at, updated_at, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11, $12)
            RETURNING id, invoice_number, customer_name, project_id, contract_id, project_name,
                      amount, invoice_date, due_date, status, received_amount, payment_schedule,
                      created_at, updated_at"#
@@ -788,6 +822,7 @@ pub async fn create_receivable(
     }))
     .bind(now)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 

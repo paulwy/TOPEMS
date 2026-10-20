@@ -9,6 +9,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::resolve_create_tenant;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::commit_retry;
 
@@ -313,16 +314,13 @@ pub async fn report_accident(
     _headers: HeaderMap,
     Json(req): Json<CreateAccidentRequest>,
 ) -> Json<ApiResponse<Accident>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
+    let tenant_opt = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    // 响应结构体需要 Uuid，公共行（超管）沿用 nil 仅用于序列化，不落库
+    let tenant_id = tenant_opt.unwrap_or(Uuid::nil());
     tracing::debug!("Reporting accident: {:?}", req);
     let accident_no = format!(
         "ACC-{}",
@@ -371,7 +369,7 @@ pub async fn report_accident(
     .bind(accident.economic_loss)
     .bind(&accident.status)
     .bind(&accident.reported_by)
-    .bind(tenant_id);
+    .bind(tenant_opt);
     if let Err(e) = insert.execute(&state.pool).await {
         tracing::error!("Failed to insert accident: {}", e);
         return Json(ApiResponse::error(500, "事故上报失败"));

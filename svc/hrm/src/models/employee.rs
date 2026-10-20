@@ -5,7 +5,9 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use topems_shared_auth::security::{DataMasking, EncryptionResult, FieldEncryptionService};
+use topems_shared_auth::security::{
+    DataMasking, EncryptionError, EncryptionResult, FieldEncryptionService,
+};
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 #[schema(example = json!({
@@ -113,25 +115,45 @@ impl Employee {
     }
 
     pub fn decrypt_fields(&mut self, service: &FieldEncryptionService) -> EncryptionResult<()> {
+        // 逐字段独立解密：单个字段失败不得中断后续字段，否则 id_card 解密失败会
+        // 导致 phone/email/address 仍以密文 JSON 原样返回（S4）。
+        let mut last_err: Option<EncryptionError> = None;
+
         if let Some(id_card) = &self.id_card_number {
             if id_card.starts_with('{') {
-                self.id_card_number = Some(service.decrypt_string(id_card)?);
+                match service.decrypt_string(id_card) {
+                    Ok(v) => self.id_card_number = Some(v),
+                    Err(e) => last_err = Some(e),
+                }
             }
         }
         if let Some(phone) = &self.phone {
             if phone.starts_with('{') {
-                self.phone = Some(service.decrypt_string(phone)?);
+                match service.decrypt_string(phone) {
+                    Ok(v) => self.phone = Some(v),
+                    Err(e) => last_err = Some(e),
+                }
             }
         }
         if let Some(email) = &self.email {
             if email.starts_with('{') {
-                self.email = Some(service.decrypt_string(email)?);
+                match service.decrypt_string(email) {
+                    Ok(v) => self.email = Some(v),
+                    Err(e) => last_err = Some(e),
+                }
             }
         }
         if let Some(addr) = &self.address {
             if addr.starts_with('{') {
-                self.address = Some(service.decrypt_string(addr)?);
+                match service.decrypt_string(addr) {
+                    Ok(v) => self.address = Some(v),
+                    Err(e) => last_err = Some(e),
+                }
             }
+        }
+
+        if let Some(e) = last_err {
+            return Err(e);
         }
         Ok(())
     }

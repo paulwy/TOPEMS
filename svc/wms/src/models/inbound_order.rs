@@ -30,6 +30,8 @@ pub struct InboundOrder {
     pub received_date: Option<DateTime<Utc>>,
     pub expected_arrival: Option<DateTime<Utc>>,
     pub actual_arrival: Option<DateTime<Utc>>,
+    /// 前端列表列名约定为 expected_date，别名对齐（S5）
+    pub expected_date: Option<DateTime<Utc>>,
     pub carrier: Option<String>,
     pub carrier_code: Option<String>,
     pub vehicle_number: Option<String>,
@@ -74,6 +76,8 @@ pub struct CreateInboundOrderRequest {
     pub supplier_id: Option<Uuid>,
     /// 单据日期；缺省时由 handler 取当前时间（C2 契约对齐：前端 schema 无 order_date 必填）
     pub order_date: Option<DateTime<Utc>>,
+    /// 前端表单以 expected_date 提交，serde alias 兼容两种键（S5）
+    #[serde(alias = "expected_date")]
     pub expected_arrival: Option<DateTime<Utc>>,
     pub total_amount: Option<f64>,
     pub remarks: Option<String>,
@@ -83,6 +87,7 @@ pub struct CreateInboundOrderRequest {
 pub struct UpdateInboundOrderRequest {
     pub warehouse_id: Option<Uuid>,
     pub supplier_id: Option<Uuid>,
+    #[serde(alias = "expected_date")]
     pub expected_arrival: Option<DateTime<Utc>>,
     pub actual_arrival: Option<DateTime<Utc>>,
     pub total_amount: Option<f64>,
@@ -120,6 +125,7 @@ mod tests {
             actual_arrival_date: None,
             received_date: None,
             expected_arrival: Some(Utc::now()),
+            expected_date: Some(Utc::now()),
             actual_arrival: None,
             carrier: None,
             carrier_code: None,

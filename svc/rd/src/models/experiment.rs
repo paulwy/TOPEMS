@@ -10,22 +10,28 @@ pub struct Experiment {
     pub tenant_id: Uuid,
     pub name: String,
     pub code: String,
-    pub project_id: Uuid,
+    /// project_id 列可空（迁移 20260918000078 建表无 NOT NULL，历史/兜底行可能为 NULL），
+    /// 读模型按 Option<Uuid> 容错，避免列表/详情解码 unexpected null。
+    pub project_id: Option<Uuid>,
     pub formula_id: Option<Uuid>,
     pub experiment_type: String,
     pub phase: String,
     pub status: String,
     pub objective: String,
     pub method: String,
-    pub results: serde_json::Value,
+    /// results 列可空（历史 psql 兜底行可能为 NULL），读模型按 Option 容错，避免列表解码 unexpected null。
+    pub results: Option<serde_json::Value>,
     pub conclusions: Option<String>,
-    pub experimenter: String,
+    /// experimenter 列可空（迁移 20260918000078 建表无 NOT NULL），读模型 Option<String> 容错 NULL 行。
+    pub experimenter: Option<String>,
     pub batch_number: Option<String>,
     pub scale: Option<f64>,
     pub scale_unit: Option<String>,
-    pub started_at: DateTime<Utc>,
+    /// started_at 列可空（迁移 20260918000078 建表无 NOT NULL），读模型 Option<DateTime<Utc>> 容错 NULL 行。
+    pub started_at: Option<DateTime<Utc>>,
     pub completed_at: Option<DateTime<Utc>>,
-    pub created_by: String,
+    /// 列可空；迁移对齐为 varchar 后按用户名文本存储，读模型 Option 容错历史 NULL 行。
+    pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -101,22 +107,22 @@ mod tests {
             tenant_id: Uuid::nil(),
             name: "实验A".to_string(),
             code: "EXP-001".to_string(),
-            project_id: Uuid::nil(),
+            project_id: Some(Uuid::nil()),
             formula_id: Some(Uuid::nil()),
             experiment_type: "synthesis".to_string(),
             phase: "testing".to_string(),
             status: "planned".to_string(),
             objective: "验证配方".to_string(),
             method: "对照实验".to_string(),
-            results: serde_json::json!({"yield": 0.95}),
+            results: Some(serde_json::json!({"yield": 0.95})),
             conclusions: Some("达标".to_string()),
-            experimenter: "张三".to_string(),
+            experimenter: Some("张三".to_string()),
             batch_number: Some("B-001".to_string()),
             scale: Some(1.5),
             scale_unit: Some("kg".to_string()),
-            started_at: now(),
+            started_at: Some(now()),
             completed_at: None,
-            created_by: "admin".to_string(),
+            created_by: Some("admin".to_string()),
             created_at: now(),
             updated_at: now(),
         }
@@ -130,7 +136,7 @@ mod tests {
         let json2 = serde_json::to_string(&back).unwrap();
         assert_eq!(json, json2);
         assert_eq!(back.code, "EXP-001");
-        assert_eq!(back.results, serde_json::json!({"yield": 0.95}));
+        assert_eq!(back.results, Some(serde_json::json!({"yield": 0.95})));
     }
 
     #[test]

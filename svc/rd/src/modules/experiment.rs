@@ -408,7 +408,10 @@ pub async fn update_experiment(
 
     let name = req.name.unwrap_or(existing.name);
     let status = req.status.unwrap_or(existing.status);
-    let results = req.results.unwrap_or(existing.results);
+    let results = req
+        .results
+        .or(existing.results)
+        .unwrap_or(serde_json::json!({}));
     let conclusions = req.conclusions.or(existing.conclusions);
     let completed_at = req.completed_at.or(existing.completed_at);
     let batch_number = req.batch_number.or(existing.batch_number);

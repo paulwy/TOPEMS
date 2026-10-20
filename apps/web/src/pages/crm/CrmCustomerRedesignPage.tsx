@@ -81,6 +81,7 @@ interface Customer {
   industry: string;
   level: 'A' | 'B' | 'C' | 'D';
   status: 'active' | 'inactive' | 'potential';
+  customer_type?: string;
   contact_person: string;
   contact_phone: string;
   email: string;
@@ -101,6 +102,7 @@ const mapApiCustomers = (apiCustomers: ApiCustomer[]): Customer[] => {
     industry: c.industry || '-',
     level: (c.rating as Customer['level']) || 'C',
     status: (c.status as Customer['status']) || 'potential',
+    customer_type: c.customer_type,
     contact_person: c.notes?.split('\n')[0] || '-',
     contact_phone: c.phone || '-',
     email: c.email || '-',
@@ -342,10 +344,14 @@ const CrmCustomerRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Customer>) => {
+      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
+      let apiFailed = false;
       try {
         await customerApi.create({
           name: data.customer_name || '',
           code: data.customer_no,
+          // 后端 CreateCustomerRequest.customer_type 为必填 String，缺省给合理默认值 enterprise
+          customer_type: data.customer_type || 'enterprise',
           phone: data.contact_phone,
           email: data.email,
           address: data.address,
@@ -355,14 +361,25 @@ const CrmCustomerRedesignPage: React.FC = () => {
         } as any);
       } catch (e) {
         console.warn('[CRM Customers] Create API unavailable, using mock create:', e);
+        apiFailed = true;
+        // 进入本地演示态，列表顶部展示 mock_banner
+        setIsMockData(true);
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return data;
+      return { data, apiFailed };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('crm.customer_list_page.toast_create_success'));
+      if (result.apiFailed) {
+        // 降级 mock：明确告知未写入数据库，禁止静默假成功
+        pushToast(
+          'warning',
+          t('crm.customer_list_page.mock_create_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
+        );
+      } else {
+        pushToast('success', t('crm.customer_list_page.toast_create_success'));
+      }
     },
     onError: () => {
       pushToast('error', t('crm.customer_list_page.toast_create_fail'));
@@ -374,6 +391,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
       try {
         await customerApi.update(id, {
           name: data.customer_name,
+          customer_type: data.customer_type,
           phone: data.contact_phone,
           email: data.email,
           address: data.address,
@@ -838,6 +856,9 @@ const CrmCustomerRedesignPage: React.FC = () => {
                   level:
                     ((document.getElementById('field-3') as HTMLSelectElement)
                       ?.value as Customer['level']) || 'C',
+                  customer_type:
+                    (document.getElementById('field-8') as HTMLSelectElement)?.value ||
+                    'enterprise',
                   status: 'active',
                 };
                 if (selectedCustomer) {
@@ -897,6 +918,23 @@ const CrmCustomerRedesignPage: React.FC = () => {
                   { value: 'B', label: t('crm.customer_list_page.level_b') },
                   { value: 'C', label: t('crm.customer_list_page.level_c') },
                   { value: 'D', label: t('crm.customer_list_page.level_d') },
+                ]}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor='field-8'
+                style={sectionTitle}
+              >
+                {t('crm.customerCreate.field_type')}
+              </label>
+              <Select
+                id='field-8'
+                defaultValue={selectedCustomer?.customer_type || 'enterprise'}
+                options={[
+                  { value: 'enterprise', label: t('crm.customerCreate.type_enterprise') },
+                  { value: 'personal', label: t('crm.customerCreate.type_personal') },
+                  { value: 'government', label: t('crm.customerCreate.type_government') },
                 ]}
               />
             </div>

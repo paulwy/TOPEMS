@@ -10,6 +10,7 @@ use axum::{
 };
 use chrono::Utc;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::resolve_create_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::{PaginatedResponse, PaginationParams};
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -142,13 +143,18 @@ pub async fn create_asset(
             "资产编号不能为空".to_string(),
         )));
     }
+    // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
+    let tenant_id = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let result = sqlx::query_as::<_, Asset>(
         only_own_schema_query!("erp", "
         INSERT INTO erp.assets (id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                                  serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'in_use', $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'in_use', $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
         RETURNING id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                   serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
         "),
@@ -173,6 +179,7 @@ pub async fn create_asset(
     .bind(&req.specifications)
     .bind(&req.image_url)
     .bind(&req.department)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
     let (response, status, error_msg) = match &result {

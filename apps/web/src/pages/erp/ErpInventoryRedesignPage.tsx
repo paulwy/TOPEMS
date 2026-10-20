@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   TrendingDown,
   Warehouse,
+  Plus,
 } from 'lucide-react';
 
 import {
@@ -24,9 +25,11 @@ import {
   Tabs,
 } from '@/components/redesign';
 import type { DataTableColumn } from '@/components/redesign';
+import { Modal } from '@/components/redesign/overlay/Modal';
 import { useTranslation } from 'react-i18next';
 import { inventoryApi } from '@/api/erp/core/inventory';
-import type { Inventory as ApiInventory } from '@/api/erp/core/types';
+import type { Inventory as ApiInventory, CreateInventoryRequest } from '@/api/erp/core/types';
+import { useNotificationStore } from '@/store/notificationStore';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -99,10 +102,38 @@ const mapApiInventory = (apiItems: ApiInventoryCompat[]): InventoryItem[] => {
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockInventory
+// N2: 不再内置本地种子假数据；API 不可用或返回空时渲染空列表，并提示接口状态。
 
 const ErpInventoryRedesignPage: React.FC = () => {
   const { t } = useTranslation();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    material_code: '',
+    material_name: '',
+    specification: '',
+    unit: '',
+    warehouse_name: '',
+    quantity: 0,
+    safety_stock: 0,
+    unit_cost: 0,
+    batch_number: '',
+  });
+
+  const resetForm = () => {
+    setForm({
+      material_code: '',
+      material_name: '',
+      specification: '',
+      unit: '',
+      warehouse_name: '',
+      quantity: 0,
+      safety_stock: 0,
+      unit_cost: 0,
+      batch_number: '',
+    });
+  };
 
   // 金额格式化（含"万"单位，需 t() 取数，故置于组件内）
   const formatAmount = (value: number) => {
@@ -111,79 +142,6 @@ const ErpInventoryRedesignPage: React.FC = () => {
     }
     return `¥${value.toLocaleString('zh-CN')}`;
   };
-
-  const mockInventory: InventoryItem[] = [
-    {
-      id: '1',
-      sku: 'SM-750W-001',
-      product_name: t('erp.demo.inv_product_servo'),
-      category: t('erp.demo.inv_cat_motor'),
-      warehouse: t('erp.erp_inventory_redesign.warehouse.east'),
-      quantity: 150,
-      safety_stock: 50,
-      unit: t('erp.demo.unit_piece'),
-      unit_price: 3500,
-      total_value: 525000,
-      status: 'in_stock',
-      last_restock: '2026-09-10',
-    },
-    {
-      id: '2',
-      sku: 'CX-200-PLC',
-      product_name: t('erp.demo.inv_product_plc'),
-      category: t('erp.demo.inv_cat_controller'),
-      warehouse: t('erp.erp_inventory_redesign.warehouse.east'),
-      quantity: 200,
-      safety_stock: 100,
-      unit: t('erp.demo.unit_piece'),
-      unit_price: 1200,
-      total_value: 240000,
-      status: 'in_stock',
-      last_restock: '2026-09-08',
-    },
-    {
-      id: '3',
-      sku: 'MV-200-CAM',
-      product_name: t('erp.demo.inv_product_camera'),
-      category: t('erp.demo.inv_cat_vision'),
-      warehouse: t('erp.erp_inventory_redesign.warehouse.south'),
-      quantity: 25,
-      safety_stock: 30,
-      unit: t('erp.demo.unit_piece'),
-      unit_price: 5800,
-      total_value: 145000,
-      status: 'low_stock',
-      last_restock: '2026-09-05',
-    },
-    {
-      id: '4',
-      sku: 'VF-5.5KW',
-      product_name: t('erp.demo.inv_product_inverter'),
-      category: t('erp.demo.inv_cat_drive'),
-      warehouse: t('erp.erp_inventory_redesign.warehouse.south'),
-      quantity: 0,
-      safety_stock: 20,
-      unit: t('erp.demo.unit_piece'),
-      unit_price: 4200,
-      total_value: 0,
-      status: 'out_of_stock',
-      last_restock: '2026-08-20',
-    },
-    {
-      id: '5',
-      sku: 'HMI-7INCH',
-      product_name: t('erp.demo.inv_product_hmi'),
-      category: t('erp.demo.inv_cat_hmi'),
-      warehouse: t('erp.erp_inventory_redesign.warehouse.north'),
-      quantity: 500,
-      safety_stock: 100,
-      unit: t('erp.demo.unit_piece'),
-      unit_price: 2800,
-      total_value: 1400000,
-      status: 'overstock',
-      last_restock: '2026-09-01',
-    },
-  ];
 
   const statusConfig = useMemo(
     () => ({
@@ -225,8 +183,8 @@ const ErpInventoryRedesignPage: React.FC = () => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [QUERY_KEY],
     queryFn: async () => {
+      // N2: 只展示真实接口数据；不再回退本地种子假数据
       try {
-        // 尝试调用真实 API
         const res = await inventoryApi.list({ page: 1, pageSize: 100 });
         const resData = res as unknown as {
           data?: { items?: ApiInventory[]; list?: ApiInventory[] } | ApiInventory[];
@@ -239,15 +197,60 @@ const ErpInventoryRedesignPage: React.FC = () => {
             ? resData.data
             : resData.data.items || resData.data.list || [];
         }
-        if (apiItems.length > 0) {
-          return { items: mapApiInventory(apiItems), total: apiItems.length };
-        }
+        return { items: mapApiInventory(apiItems), total: apiItems.length };
       } catch (e) {
-        console.warn('[ERP Inventory] API unavailable, using mock data:', e);
+        console.warn('[ERP Inventory] API unavailable, showing empty list:', e);
+        return { items: [], total: 0 };
       }
-      return { items: mockInventory, total: mockInventory.length };
     },
   });
+
+  const handleCreate = async () => {
+    if (!form.material_code.trim() || !form.material_name.trim()) {
+      addNotification({
+        type: 'error',
+        title: t('erp.erp_inventory_redesign.modal.title'),
+        message: t('erp.erp_inventory_redesign.modal.required'),
+      });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const payload: CreateInventoryRequest = {
+        material_id: '',
+        material_code: form.material_code.trim(),
+        material_name: form.material_name.trim(),
+        specification: form.specification.trim() || undefined,
+        unit: form.unit.trim() || undefined,
+        warehouse_id: '',
+        warehouse_name: form.warehouse_name.trim() || '',
+        quantity: Number(form.quantity) || 0,
+        safety_stock: Number(form.safety_stock) || undefined,
+        unit_cost: Number(form.unit_cost) || undefined,
+        batch_number: form.batch_number.trim() || undefined,
+      };
+      await inventoryApi.create(payload);
+      addNotification({
+        type: 'success',
+        title: t('erp.erp_inventory_redesign.modal.title'),
+        message: t('erp.erp_inventory_redesign.modal.success'),
+      });
+      setCreateOpen(false);
+      resetForm();
+      refetch();
+    } catch (e) {
+      addNotification({
+        type: 'error',
+        title: t('erp.erp_inventory_redesign.modal.title'),
+        message: (e as { message?: string }).message || t('erp.erp_inventory_redesign.modal.title'),
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const setField = (key: keyof typeof form, value: string) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   const items = data?.items || [];
 
@@ -497,6 +500,13 @@ const ErpInventoryRedesignPage: React.FC = () => {
             </div>
             <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
               <Button
+                variant='primary'
+                leftIcon={<Plus size={16} />}
+                onClick={() => setCreateOpen(true)}
+              >
+                {t('erp.erp_inventory_redesign.button.create')}
+              </Button>
+              <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
                 onClick={() => refetch()}
@@ -712,6 +722,87 @@ const ErpInventoryRedesignPage: React.FC = () => {
           </div>
         )}
       </Drawer>
+
+      {/* N2: 新建库存记录入口（提交走真实 inventoryApi.create，成功后刷新列表） */}
+      <Modal
+        open={createOpen}
+        onClose={() => {
+          setCreateOpen(false);
+          resetForm();
+        }}
+        title={t('erp.erp_inventory_redesign.modal.title')}
+        size='lg'
+        footer={
+          <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+            <Button
+              variant='ghost'
+              onClick={() => {
+                setCreateOpen(false);
+                resetForm();
+              }}
+            >
+              {t('erp.erp_inventory_redesign.modal.cancel')}
+            </Button>
+            <Button
+              variant='primary'
+              disabled={submitting}
+              onClick={handleCreate}
+            >
+              {t('erp.erp_inventory_redesign.modal.submit')}
+            </Button>
+          </div>
+        }
+      >
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 'var(--space-3)',
+          }}
+        >
+          {(
+            [
+              ['material_code', t('erp.erp_inventory_redesign.modal.field.material_code')],
+              ['material_name', t('erp.erp_inventory_redesign.modal.field.material_name')],
+              ['specification', t('erp.erp_inventory_redesign.modal.field.specification')],
+              ['unit', t('erp.erp_inventory_redesign.modal.field.unit')],
+              ['warehouse_name', t('erp.erp_inventory_redesign.modal.field.warehouse_name')],
+              ['batch_number', t('erp.erp_inventory_redesign.modal.field.batch_number')],
+            ] as const
+          ).map(([key, label]) => (
+            <label
+              key={key}
+              style={{ display: 'flex', flexDirection: 'column', gap: 4 }}
+            >
+              <span style={detailLabel}>{label}</span>
+              <Input
+                value={String(form[key])}
+                onChange={(e) => setField(key, e.target.value)}
+              />
+            </label>
+          ))}
+          {(
+            [
+              ['quantity', t('erp.erp_inventory_redesign.modal.field.quantity')],
+              ['safety_stock', t('erp.erp_inventory_redesign.modal.field.safety_stock')],
+              ['unit_cost', t('erp.erp_inventory_redesign.modal.field.unit_cost')],
+            ] as const
+          ).map(([key, label]) => (
+            <label
+              key={key}
+              style={{ display: 'flex', flexDirection: 'column', gap: 4 }}
+            >
+              <span style={detailLabel}>{label}</span>
+              <Input
+                type='number'
+                min={0}
+                value={String(form[key])}
+                onChange={(e) => setField(key, e.target.value)}
+              />
+            </label>
+          ))}
+        </div>
+      </Modal>
     </>
   );
 };
