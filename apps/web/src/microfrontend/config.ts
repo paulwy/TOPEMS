@@ -294,12 +294,3 @@ export function getEnabledModules(userPermissions: string[]): RemoteModuleConfig
     return userPermissions.includes(m.permission);
   });
 }
-
-/**
- * 按预加载策略分组
- */
-function getModulesByPreloadStrategy(
-  strategy: RemoteModuleConfig['preload']
-): RemoteModuleConfig[] {
-  return REMOTE_MODULES.filter((m) => m.preload === strategy);
-}

@@ -1,7 +1,7 @@
 import type { AITemplate } from '@/types/ai';
 import i18n from '@/i18n';
 
-function getAITemplates(): Record<string, AITemplate> {
+export function getAITemplates(): Record<string, AITemplate> {
   return {
     'meeting-minutes': {
       id: 'meeting-minutes',
@@ -455,8 +455,4 @@ function getAITemplates(): Record<string, AITemplate> {
 `,
     },
   };
-}
-
-function getAITemplatesList(): AITemplate[] {
-  return Object.values(getAITemplates());
 }

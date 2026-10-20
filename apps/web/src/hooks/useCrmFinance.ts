@@ -119,18 +119,6 @@ export function useIssueSalesInvoice() {
 }
 
 /**
- * 取消销售发票
- */
-function useCancelSalesInvoice() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ invoiceId, reason }: { invoiceId: string; reason: string }) =>
-      crmFinanceApi.cancelSalesInvoice(invoiceId, reason),
-    onSuccess: () => invalidateCrmFinance(queryClient),
-  });
-}
-
-/**
  * 红冲销售发票
  */
 export function useRedFlushSalesInvoice() {
@@ -179,32 +167,9 @@ export function useConfirmCollection() {
   });
 }
 
-/**
- * 批量确认收款
- */
-function useBatchConfirmCollections() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (recordIds: string[]) => crmFinanceApi.batchConfirmCollections(recordIds),
-    onSuccess: () => invalidateCrmFinance(queryClient),
-  });
-}
-
 // ============================================
 // 六、应收报表 Hooks
 // ============================================
-
-/**
- * 客户应收账款汇总
- */
-function useReceivableSummary(customerId?: string) {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE, 'summary', customerId],
-    queryFn: () => crmFinanceApi.getReceivableSummary(customerId),
-    enabled: true,
-    staleTime: 2 * 60 * 1000,
-  });
-}
 
 /**
  * 销售发票导出（blob 下载）

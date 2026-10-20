@@ -450,8 +450,6 @@ export const createSchedule = (data: unknown) =>
 export const updateSchedule = (id: string, data: unknown) =>
   reportApi.updateSchedule(id, data as UpdateScheduleRequest);
 export const deleteSchedule = (id: string) => reportApi.deleteSchedule(id);
-const runSchedule = (id: string) => reportApi.executeSchedule(id);
-const toggleSchedule = (id: string, _enabled: boolean) => reportApi.executeSchedule(id);
 
 export const reportCrudApi = {
   list: fetchReports,

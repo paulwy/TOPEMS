@@ -23,8 +23,6 @@ import {
   Tooltip,
   Divider,
   TextField,
-  Switch,
-  FormControlLabel,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';

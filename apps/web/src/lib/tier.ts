@@ -338,41 +338,10 @@ const MODULE_MAP: Map<string, ModuleFeature> = new Map(
 );
 
 /**
- * 从字符串解析层级
- */
-function parsePlanTier(s: string | null | undefined): PlanTier {
-  if (!s) return PlanTier.BASIC;
-  switch (s.toLowerCase()) {
-    case 'free':
-      return PlanTier.FREE;
-    case 'basic':
-      return PlanTier.BASIC;
-    case 'advanced':
-      return PlanTier.ADVANCED;
-    default:
-      return PlanTier.BASIC;
-  }
-}
-
-/**
  * 当前层级是否包含目标层级（当前层级 >= 目标层级）
  */
 function tierIncludes(current: PlanTier, target: PlanTier): boolean {
   return TIER_LEVEL[current] >= TIER_LEVEL[target];
-}
-
-/**
- * 获取指定层级可用的模块
- */
-function getModulesForTier(tier: PlanTier): ModuleFeature[] {
-  return TIER_FEATURE_MATRIX.filter((m) => tierIncludes(tier, m.minTier));
-}
-
-/**
- * 获取指定层级不可用的模块
- */
-function getModulesNotForTier(tier: PlanTier): ModuleFeature[] {
-  return TIER_FEATURE_MATRIX.filter((m) => !tierIncludes(tier, m.minTier));
 }
 
 /**
@@ -385,24 +354,6 @@ function isModuleAvailable(module: string, tier: PlanTier): boolean {
     return true;
   }
   return tierIncludes(tier, feature.minTier);
-}
-
-/**
- * 检查路径是否属于可用模块
- *
- * 路径格式：/{module}/...
- */
-function isPathAvailable(path: string, tier: PlanTier): boolean {
-  // 提取路径中的模块名（第一段）
-  const match = path.match(/^\/([^/]+)/);
-  if (!match) return true;
-
-  const module = match[1];
-  // 特殊路径不进行 tier 检查
-  const bypassModules = ['login', 'dashboard', 'admin', 'settings', 'profile', '403', '404'];
-  if (bypassModules.includes(module)) return true;
-
-  return isModuleAvailable(module, tier);
 }
 
 /**
@@ -419,26 +370,4 @@ export function filterModulesByTier<T extends { module?: string; path?: string }
       : (item.module ?? item.path?.match(/^\/([^/]+)/)?.[1] ?? '');
     return isModuleAvailable(module, tier);
   });
-}
-
-/**
- * 获取层级统计
- */
-function getTierStats(): Record<PlanTier, number> {
-  const stats: Record<PlanTier, number> = {
-    [PlanTier.FREE]: 0,
-    [PlanTier.BASIC]: 0,
-    [PlanTier.ADVANCED]: 0,
-  };
-  for (const m of TIER_FEATURE_MATRIX) {
-    stats[m.minTier]++;
-  }
-  return stats;
-}
-
-/**
- * 获取模块的最低层级要求
- */
-function getModuleMinTier(module: string): PlanTier | null {
-  return MODULE_MAP.get(module)?.minTier ?? null;
 }

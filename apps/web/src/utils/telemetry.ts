@@ -268,19 +268,6 @@ export async function traceAsync<T>(
   }
 }
 
-function traceSync<T>(name: string, fn: () => T, attributes?: Record<string, unknown>): T {
-  const span = startSpan(name, attributes);
-
-  try {
-    const result = fn();
-    endSpan(span);
-    return result;
-  } catch (error) {
-    endSpan(span, error as Error);
-    throw error;
-  }
-}
-
 export function injectTraceContext(): Record<string, string> {
   const headers: Record<string, string> = {};
   propagation.inject(context.active(), {
@@ -313,20 +300,6 @@ export function getPerformanceMetrics(): PerformanceMetrics | null {
     firstContentfulPaint:
       (navEntry as unknown as { firstContentfulPaint?: number }).firstContentfulPaint || 0,
   };
-}
-
-function measurePerformance<T>(name: string, fn: () => T): T {
-  const start = performance.now();
-  try {
-    const result = fn();
-    const duration = performance.now() - start;
-    logger.info(`[Performance] ${name}: ${duration.toFixed(2)}ms`);
-    return result;
-  } catch (error) {
-    const duration = performance.now() - start;
-    logger.error(`[Performance] ${name} failed after ${duration.toFixed(2)}ms`, error);
-    throw error;
-  }
 }
 
 export async function measurePerformanceAsync<T>(name: string, fn: () => Promise<T>): Promise<T> {

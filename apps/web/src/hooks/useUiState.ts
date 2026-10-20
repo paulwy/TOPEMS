@@ -11,33 +11,6 @@ import { useState, useCallback } from 'react';
 export type SortOrder = 'asc' | 'desc' | undefined;
 
 /**
- * 加载状态管理
- */
-function useLoading(initialState: boolean = false) {
-  const [loading, setLoading] = useState(initialState);
-
-  const startLoading = useCallback(() => {
-    setLoading(true);
-  }, []);
-
-  const stopLoading = useCallback(() => {
-    setLoading(false);
-  }, []);
-
-  const withLoading = useCallback(async <T>(promise: Promise<T>): Promise<T> => {
-    setLoading(true);
-    try {
-      const result = await promise;
-      return result;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  return { loading, setLoading, startLoading, stopLoading, withLoading };
-}
-
-/**
  * 消息提示状态管理
  */
 export interface ToastMessage {

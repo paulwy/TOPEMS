@@ -94,21 +94,6 @@ export const prefetchIntelligent = (): void => {
   registration.active.postMessage({ type: 'PREFETCH_INTELLIGENT' });
 };
 
-/**
- * 预缓存微前端远程模块入口
- * 在用户认证后调用，提前缓存所有远程入口 JS 文件
- */
-const prefetchRemoteEntries = (entryUrls: string[]): void => {
-  if (!registration?.active) return;
-  // V64 防御：过滤空 entry（static 模式下所有 entry 为空），避免给 SW 发无意义消息
-  const valid = entryUrls.filter((u) => typeof u === 'string' && u.trim() !== '');
-  if (valid.length === 0) return;
-  registration.active.postMessage({
-    type: 'PREFETCH_REMOTE_ENTRIES',
-    payload: valid,
-  });
-};
-
 // V24.0 模块 D: 自定义安装提示（PWA install prompt）
 
 // V24.0 模块 D: 检测是否以 PWA 模式运行

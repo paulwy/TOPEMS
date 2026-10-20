@@ -341,6 +341,25 @@
 - **N3 口径补注**：主台账头部补注两种对账口径——`.route(` 注册现 **78**、方法-端点对 **82**（链式 get().post() 同 path 多方法），旧 125 为原始基线，后续对账须注明口径。
 - **门禁**：纯 md；计数现场复核（core 78 / 82、mobile 134、master-data 43）一致；无代码改动故无 cargo/tsc 门禁。
 
+### P3-3 第一批 · unused-vars 零引用死代码清理（2026-10-20）✅
+
+> 来源：10-19 重审 NEW-P3-3（shard-B：86 处 `@typescript-eslint/no-unused-vars`）。只删全仓零引用的局部死函数/死常量/死导入，不改行为；全仓引用计数先分「零引用可删 / 调用方在用的组件 API 保留」。
+
+- **基线**：全量 eslint 实测 unused-vars **86**（另 421 处 no-explicit-any 属另一类型债，本批不动）。本批后 **62**（净降 24），eslint error=0。
+- **删除的零引用死代码**：
+  - `api/report/index.ts`：删局部 `runSchedule`/`toggleSchedule`（executeSchedule 的未用包装）。
+  - `lib/tier.ts`：删 `parsePlanTier`/`getModulesForTier`/`getModulesNotForTier`/`isPathAvailable`/`getTierStats`/`getModuleMinTier`；保留被导出 `filterModulesByTier` 内部使用的 `tierIncludes`/`isModuleAvailable`。
+  - `utils/telemetry.ts`：删 `traceSync`/`measurePerformance`；保留导出的 `injectTraceContext`/`getPerformanceMetrics`/`measurePerformanceAsync`。
+  - `lib/pwa.ts`：删局部 `prefetchRemoteEntries`。
+  - `microfrontend/config.ts`：删局部 `getModulesByPreloadStrategy`。
+  - `hooks/useCrmFinance.ts`：删非导出 `useCancelSalesInvoice`/`useBatchConfirmCollections`/`useReceivableSummary`。
+  - `hooks/useUiState.ts`：删非导出 `useLoading`。
+  - `hooks/useCode.ts`：删零引用 `CodeGenerator` 类 + `CODE_RULES` 表 + `getCodeRuleForEntity`（连带空节标题一并清）。
+  - `layouts/constants.ts`：整文件零引用死定义（`L1_BUSINESS_DOMAINS`/`L2_TO_L1_MAP`/`L2_MODULE_ORDER`）删除。
+  - `pages/master/SchemaRegistryPage.tsx`：删未用导入 `Switch`/`FormControlLabel`。
+- **保留未删（下批甄别，非死代码）**：`config/ai-templates.ts` 的 `getAITemplatesList` 删后将 `getAITemplates` 改 `export` 保留为内容预留；pm/qms/mes/erp 等 types.ts 的 API interface（契约预留，删有信息损失）、模板组件 props（onDownload/filters/filterConfig 等调用方在用）、`Grid.tsx` 的 `item` 高频解构参数，均不在本批删。
+- **门禁**：`tsc --noEmit` exit 0；改动文件定点 eslint 0 error；全量 eslint unused-vars 86→62、errors=0。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成
