@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
+  type LucideIcon,
   Activity,
   AlertTriangle,
   Box,
@@ -39,7 +40,7 @@ import {
   Tabs,
   Tag,
 } from '@/components/redesign';
-import type { DateRange } from '@/components/redesign';
+import type { DateRange, StatusLightState } from '@/components/redesign';
 import { getDashboard } from '@/api/bff';
 import { mesAnalyticsApi } from '@/api/mes/analytics';
 import apiClient from '@/api/client';
@@ -50,15 +51,31 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['dashboard', 'overview'];
 
-// 默认模块状态（API 无数据时的兜底）
-const getDefaultModules = (): Array<{
+interface ModuleItem {
   id: string;
   name: string;
   desc: string;
-  icon: any;
-  status: 'running' | 'warning' | 'idle' | 'error';
+  icon: LucideIcon;
+  status: StatusLightState;
   stat: string;
-}> => [
+}
+
+interface AlertItem {
+  id: string;
+  level: 'error' | 'warning' | 'info';
+  message: string;
+  time: string;
+}
+
+interface TaskItem {
+  id: string;
+  title: string;
+  priority: 'high' | 'medium' | 'low';
+  due: string;
+}
+
+// 默认模块状态（API 无数据时的兜底）
+const getDefaultModules = (): ModuleItem[] => [
   {
     id: 'mes',
     name: i18n.t('dashboard.dash_mes_name'),
@@ -251,9 +268,9 @@ const DashboardPage: React.FC = () => {
   });
 
   // 从 BFF 真实返回（stats/todos/services）派生页面数据，无数据时回退默认
-  const modules = useMemo(() => {
+  const modules = useMemo<ModuleItem[]>(() => {
     if (!data?.services || data.services.length === 0) return getDefaultModules();
-    const knownMeta: Record<string, { name: string; desc: string; icon: typeof Box }> = {
+    const knownMeta: Record<string, { name: string; desc: string; icon: LucideIcon }> = {
       mes: {
         name: i18n.t('dashboard.dash_mes_name'),
         desc: i18n.t('dashboard.dash_mes_desc'),
@@ -317,14 +334,9 @@ const DashboardPage: React.FC = () => {
     });
   }, [data]);
 
-  const alerts = useMemo(() => {
+  const alerts = useMemo<AlertItem[]>(() => {
     if (!data?.stats) return [];
-    const list: Array<{
-      id: string;
-      level: 'error' | 'warning' | 'info';
-      message: string;
-      time: string;
-    }> = [];
+    const list: AlertItem[] = [];
     const entries = Object.entries(data.stats);
     for (const [svc, st] of entries) {
       if (st.total > 0 && st.active < st.total) {
@@ -343,7 +355,7 @@ const DashboardPage: React.FC = () => {
     return list;
   }, [data]);
 
-  const tasks = useMemo(() => {
+  const tasks = useMemo<TaskItem[]>(() => {
     if (!data?.todos || data.todos.length === 0) return [];
     return data.todos.slice(0, 5).map((t) => ({
       id: t.id,
@@ -366,7 +378,7 @@ const DashboardPage: React.FC = () => {
     };
   }, [data, oeeQuery.data, ordersQuery.data, deliveryQuery.data, qualityQuery.data]);
 
-  const filteredModules = modules.filter((m: any) =>
+  const filteredModules = modules.filter((m) =>
     m.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -441,7 +453,7 @@ const DashboardPage: React.FC = () => {
                 gap: 'var(--space-3)',
               }}
             >
-              {modules.map((module: any) => {
+              {modules.map((module) => {
                 const Icon = module.icon || Box;
                 return (
                   <div
@@ -510,7 +522,7 @@ const DashboardPage: React.FC = () => {
             }
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              {alerts.map((alert: any) => (
+              {alerts.map((alert) => (
                 <div
                   key={alert.id}
                   style={{
@@ -562,7 +574,7 @@ const DashboardPage: React.FC = () => {
             }
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              {tasks.map((task: any) => (
+              {tasks.map((task) => (
                 <div
                   key={task.id}
                   style={{
@@ -690,7 +702,7 @@ const DashboardPage: React.FC = () => {
             gap: 'var(--space-3)',
           }}
         >
-          {filteredModules.map((module: any) => {
+          {filteredModules.map((module) => {
             const Icon = module.icon || Box;
             return (
               <div
@@ -766,7 +778,7 @@ const DashboardPage: React.FC = () => {
         />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          {alerts.map((alert: any) => (
+          {alerts.map((alert) => (
             <div
               key={alert.id}
               style={{

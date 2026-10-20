@@ -393,6 +393,11 @@
 - **主动回退/保留**：`api/client.ts` 5 个 axios 方法的 `T=any / D=any` 默认值不改 unknown——实测改 unknown 会让所有未显式传泛型的调用方返回 `ApiResponse<unknown>`，与已标注的具体返回类型连锁不兼容（addressbook/bi/dataset 等多处 TS2322），成本远大于收益，保留宽松默认。
 - **门禁**：`tsc --noEmit` exit 0；两文件定点 eslint 0 error。
 
+### no-explicit-any 第二批 · DashboardPage 列表项类型化（2026-10-20）✅
+
+- **本批净降 7 处**：`pages/shared/DashboardPage.tsx` 新增 `ModuleItem / AlertItem / TaskItem` 三个局部接口，给 modules/alerts/tasks 三个 `useMemo` 标注返回泛型，删除 6 处 `map/filter` 回调 `: any` 注解（类型由 useMemo 推断）；`icon: any` → `LucideIcon`（精确支持 `<Icon size={20}/>`），模块状态复用 `StatusLightState`。
+- **门禁**：`tsc --noEmit` exit 0；该文件定点 eslint 0 error，无 any 残留。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成
