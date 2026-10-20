@@ -12,11 +12,11 @@
     "parameters": {
       "Left": [
         "Uuid",
-        "Text",
+        "Varchar",
         "Uuid",
         "Uuid",
-        "Text",
-        "Text",
+        "Varchar",
+        "Varchar",
         "Timestamptz",
         "Timestamptz",
         "Uuid"
