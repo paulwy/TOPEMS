@@ -420,6 +420,11 @@ pub async fn setup_departments(
                 "部门名称不能为空".to_string(),
             )));
         }
+        if name.chars().count() > 255 {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "部门名称不能超过255个字符".to_string(),
+            )));
+        }
         let key = name.to_lowercase();
         if !seen_names.insert(key) {
             return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
@@ -432,6 +437,11 @@ pub async fn setup_departments(
             .map(str::trim)
             .filter(|c| !c.is_empty())
         {
+            if code.chars().count() > 50 {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "部门编码不能超过50个字符".to_string(),
+                )));
+            }
             let ckey = code.to_lowercase();
             if !seen_codes.insert(ckey) {
                 return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
@@ -611,6 +621,11 @@ pub async fn setup_positions(
                 "职位名称不能为空".to_string(),
             )));
         }
+        if name.chars().count() > 255 {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "职位名称不能超过255个字符".to_string(),
+            )));
+        }
         let key = name.to_lowercase();
         if !seen_names.insert(key) {
             return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
@@ -618,6 +633,11 @@ pub async fn setup_positions(
             ))));
         }
         if let Some(code) = pos.code.as_deref().map(str::trim).filter(|c| !c.is_empty()) {
+            if code.chars().count() > 50 {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "职位编码不能超过50个字符".to_string(),
+                )));
+            }
             let ckey = code.to_lowercase();
             if !seen_codes.insert(ckey) {
                 return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
