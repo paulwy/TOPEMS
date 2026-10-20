@@ -1,6 +1,34 @@
 
 ---
 
+## 系统启用与查漏补缺（活文档 · 2026-10-20）📌
+
+> 活文档：[`docs/onboarding/system-onboarding-and-gap-tracker.md`](docs/onboarding/system-onboarding-and-gap-tracker.md)（分阶段启用路线图 + 能力盘点 + P0/P1/P2 缺口，闭环一项勾一项并回写活文档状态/变更日志）。首次可登录：启动自举 `admin/admin123`（`ADMIN_INITIAL_PASSWORD` 可覆盖），非迁移种子，首启须立即改密。
+
+### P0 · 阻断首次启用闭环
+
+- [ ] **P0-1 · 前端初始化向导整体缺失**：6 个 `/api/hrm/setup/*` 端点仅 api 壳无页面/路由/菜单/登录跳转。基于 `api/hrm/hrmSetup.ts` 实现多步向导页，登录后按 `GET /setup/progress` 的 `is_completed` 决定跳向导或主页。
+- [ ] **P0-2 · 向导新库不自洽**：`initialization_status` 步骤行只 UPDATE 不 INSERT、无种子；`/setup/company` 是 `UPDATE id=0001`，新库无行可改 500。需幂等插入步骤行+默认公司行，公司步改"无则 INSERT 有则 UPDATE"，progress 空集按未开始。
+- [ ] **P0-3 · `setup/admin` 不产生可登录账号**：只写 `hrm.employees`，密码不哈希、不写 `iam.users`、不绑 user_id/角色。改为衔接 IAM 建号（写 `iam.users` + 绑 user_id + 授初始角色）。
+- [ ] **P0-4 · 权限 scope 三套方言互不匹配**（`finance:voucher:read` / `iam:users_read` / `system:read`+`admin:iam:write`），JWT 不展开角色权限。统一命名规范、种子 code 与 `require_permission` 对齐，签发/`/users/me` 时 JOIN 展开角色权限。
+
+### P1 · 明显短板
+
+- [ ] **P1-1 · `setup/complete` 空动作**：不建默认角色/不绑权限/不改租户状态；complete 时落默认角色权限与租户初始化标记。
+- [ ] **P1-2 · 部门/岗位后端无 handler 级权限校验**（仅全局 `hrm:admin`），补 DepartmentRead/Write、PositionRead/Write。
+- [ ] **P1-3 · 自助注册开放无开关**，注册账号无角色/权限/租户不可用；加 `REGISTER_ENABLED` 开关并绑最小角色/租户或改纯管理员建号。
+- [ ] **P1-4 · 前端权限守卫几乎未落地**：35 个 config.ts 0 声明权限、菜单不过滤；补模块权限声明/路由 requiredPermissions/菜单按钮守卫。
+- [ ] **P1-5 · `/users/me`、自身改密被管理权限保护**，普通用户可能 403；自服务端点改登录即可访问。
+- [ ] **P1-6 · MES 缺车间/产线/工作中心/班次/工作日历**，工位 `workshop_id` 悬空；补实体 CRUD + 前端页并回填外键。
+- [ ] **P1-7 · QMS 缺结构化检验项/检验方案/抽样方案，LIMS 缺检验项目(analyte)**；补表与 CRUD + 方案配置页。
+- [ ] **P1-8 · 多表缺租户隔离**：erp.bank_accounts、gis.geofences、rs.material_tests、bi.analytics_datasets 无 tenant_id；pm.projects 列表不过滤；wms/mes 部分 organization_id 写死公共 UUID。
+- [ ] **P1-9 · 后端有前端缺的管理页**：MES 产能日历、LIMS 方法分类、CRM 标签、财务会计期间/辅助核算创建、ERP 字典、EHS 危险源列表、GIS 设备注册。
+- [ ] **P1-10 · 财务两套科目表并存、会计期间无管理页、税率硬编码、无币种主表**；统一科目体系，补期间/税率/币种主数据页。
+
+> P2 增强/一致性/技术债（空态 CTA、向导租户归属、批量事务、岗位 FK、路由清理、DEV 旁路、菜单种子、新租户补播、孤儿脚本、技术债、公共主数据域）见活文档 §3 P2 表，按需认领。
+
+---
+
 ## 下一步工作规划（2026-10-18）📌 待办，源自 5 方向全面评估报告 artifacts/TOPEMS-下一步工作规划报告-2026-10-18.md
 
 > 5 方向评估产出（TODO 全库核查 / 前端测试覆盖 / 布局 / UI / DSH 差距），按优先级分批推进。当前 HEAD==origin==153da334e2。

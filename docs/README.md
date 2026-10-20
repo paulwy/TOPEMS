@@ -22,6 +22,7 @@ TOPEMS（Total Operations & Production Enterprise Management System）是面向�
 | 目录 | 说明 | 关键文档 |
 |------|------|----------|
 | [getting-started/](./getting-started/) | 快速上手 | [quickstart.md](./getting-started/quickstart.md)、[local-deployment.md](./getting-started/local-deployment.md)、[environment-config.md](./getting-started/environment-config.md) |
+| [onboarding/](./onboarding/) | **首次启用与查漏补缺（活文档）** | [system-onboarding-and-gap-tracker.md](./onboarding/system-onboarding-and-gap-tracker.md)：公司/部门/人员/权限/模块主数据启用路线图 + P0/P1/P2 缺口清单，随迭代持续维护 |
 
 ### 开发者
 
