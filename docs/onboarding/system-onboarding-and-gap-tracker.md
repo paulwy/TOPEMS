@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.6（P0 全闭环；P1-5 自服务端点移出管理权限层，登录即可访问） |
+| 版本 | v1.7（S 安全收口批：P1-3 注册开关、首启改密旗标、DEV 旁路、孤儿弱口令脚本；P2-2 并入 F） |
 | 最近更新 | 2026-10-21 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
@@ -270,7 +270,7 @@
 |---|---|---|---|---|
 | P1-1 | `setup/complete` 空动作：不建默认角色、不绑权限、不改租户状态 | "系统已准备就绪"无授权结果支撑 | complete 时落默认角色/权限/租户初始化标记 | `setup.rs:841-854` |
 | P1-2 | 部门/岗位后端无 handler 级 `check_permission`，仅全局 `hrm:admin` | 粒度粗，无法按部门/岗位授权 | 补 DepartmentRead/Write、PositionRead/Write 权限校验（对齐 company/employee） | `department.rs`、`position.rs` grep check_permission=0 |
-| P1-3 | 自助注册开放无开关，注册账号无角色/权限/租户，注册后不可用 | 任意人可注册僵尸账号，安全与数据风险 | 加 `REGISTER_ENABLED` 开关；注册流绑定最小角色/租户或改纯管理员建号 | `auth.rs:466-622,588-602`；svc 内无 REGISTER 开关 |
+| **P1-3** ✅ 闭环（S1 `cc16d41d8`） | ~~自助注册开放无开关，注册账号无角色/权限/租户，注册后不可用~~ | 已闭环：`REGISTER_ENABLED` 默认关（403），开启时新账号落 `status=pending` 待管理员激活并分配角色/租户，登录仅放行 active；`.env.example` 已声明 | 开关默认关；开放时 pending 待激活，不产生可登录僵尸账号 | `auth.rs register`；`.env.example REGISTER_ENABLED` |
 | P1-4 | 前端权限守卫几乎未落地：35 个 config.ts 0 声明权限，PermissionGate 仅 1 处使用，菜单不过滤 | 无权限用户仍见全部入口，"可见但进不去" | 补模块权限声明、路由 requiredPermissions、菜单/按钮守卫（前端为体验层，后端为硬防线） | `modules/*/config.ts`；`PermissionGate.tsx` 1 处；`ModuleTabs.tsx:555`；`GlobalLayoutV3.tsx:59` |
 | **P1-5** ✅ 闭环 | ~~`/users/me`、自身改密被 `iam:read`/`admin:iam:write` 保护，普通用户 403~~ | 已闭环：自服务端点拆入独立 `me` 路由组，仅由全局 `auth_middleware` 校验登录（无 token→401），不再叠加管理权限层；管理类增删改/角色/权限仍守 `iam:read`/`admin:iam:write`/`admin:iam:delete` | 9 个自服务端点（GET/PUT `/users/me`、自身权限、自身偏好、改密、头像、自身权限校验、`/permissions/my-permissions`）身份一律取 `Claims.sub`，不接受 body/路径指定他人 | `routes/iam.rs`（`me` 路由组）；全局 `auth_middleware`（shared-auth） |
 | P1-6 | MES 缺车间/产线/工作中心表与路由，工位 `workshop_id` 悬空；缺班次/工作日历 | 无法做真实排产与产能建模，APS 基础数据不成立 | 补车间/产线/班次/日历实体 CRUD 与前端页，回填工位外键 | 全库无 workshop/production_line/shift/calendar 建表；`work_station.rs:30-43` |
@@ -284,14 +284,14 @@
 | # | 缺口 | 影响 | 建议做法 | 证据 |
 |---|---|---|---|---|
 | P2-1 | 无首次引导/空态 CTA：登录固定落 `/dashboard`，落地页硬编码 mock，无"先录公司/人员"提示 | 新用户无方向 | 空组织时展示初始化 checklist 引导 | `LoginPage.tsx:84-90`；`HybridDashboard.tsx:14-46` |
-| P2-2 | 向导写死 `DEFAULT_ORG_ID=0001`，不读 JWT tenant/org | 多租户写错归属 | 改从 Claims/上下文取 org/tenant | `setup.rs:119` |
+| P2-2（并入 F 批） | 向导写死 `DEFAULT_ORG_ID=0001`，不读 JWT tenant/org；迁移期不知租户，进度行按默认 org 播种 | 多租户写错归属 | 与 P1-1 租户初始化模型统一：首启建租户后按 Claims.tenant_id 落进度行/公司归属，不单独半改 | `svc/hrm/setup.rs:124,141,235…`；迁移 `20261020000025` |
 | P2-3 | 批量步部分失败不回滚，成功/失败混杂提交 | 数据不一致 | 整批事务或逐行回滚 + 明确错误回报 | `setup.rs:415-428,553-560` |
 | P2-4 | 岗位→部门无 DB 外键；岗位步无批次重名校验；positions 孤儿可静默存在 | 脏数据 | 补 FK、补重名校验 | `position.rs`；`setup.rs:517-530` vs `:378-383` |
 | P2-5 | 路由遗留错配：`routes/common.ts` 10 处重复注册（且 requiredPermissions 置空）、9 处孤儿路由、`/settings` 死链、`BackupPage` 无引用 | 可达性混乱、权限被置空覆盖 | 清理 common.ts，统一以模块 config 为准 | `common.ts:44-191`；`GlobalLayoutV3.tsx:935`；`BackupPage.tsx` |
-| P2-6 | `DEVELOPMENT_MODE=true` 伪造超管旁路未在 `.env.example` 声明 | 误用风险 | 文档显式标注 + 启动醒目告警，prod 强制关闭（已有 prod 忽略） | `shared-auth/auth.rs:688-718,719-724` |
+| **P2-6** ✅ 闭环（S3 `e1980e95d`） | ~~`DEVELOPMENT_MODE=true` 伪造超管旁路未声明、prod 判定只看 PROFILE~~ | 已闭环：prod 判定覆盖 `PROFILE/RUST_ENV/ENV=prod|production`（补 RUST_ENV/ENV，避免只设 RUST_ENV 时旁路生效）；强化告警；`.env.example` 显式声明默认 false | 生产三环境变量任一为 prod 即忽略旁路，仍要求真实 JWT | `shared-auth/auth.rs` dev gate；`.env.example DEVELOPMENT_MODE` |
 | P2-7 | 菜单种子 tenant_id=全 0 与默认租户 0001 错位；DB 菜单非前端主驱动 | 菜单种子不生效（现状靠硬编码兜住） | 统一租户命名空间或改公共共享菜单策略 | `20260724000005_seed_module_menus.sql:6,20` |
 | P2-8 | 财务默认科目/期间种子只覆盖迁移时已存在租户，新建租户不补 | 新租户缺基础科目 | 配合首启租户建立后补播，或提供按需播种 API | `20261020000005:60-82` |
-| P2-9 | 孤儿脚本 `database/init/03_init_permissions.sql`（含 admin/admin123、superadmin）未接入任何部署/CI；测试账号在 `database/test/iam_test_data.sql` | 误导、弱口令风险 | 明确去留：纳入幂等首启种子或从交付物移除，勿带 admin123 上生产 | `03_init_permissions.sql:325-327,423-432`；`iam_test_data.sql` |
+| **P2-9** ✅ 闭环（S4 `f23f543db`） | ~~孤儿脚本含 admin/admin123 未接入部署/CI，误导弱口令~~ | 已闭环：脚本头部标注"未接入/勿对生产执行"，admin 弱口令播种与角色绑定停用（注释）；测试夹具 `iam_test_data.sql` 标注仅测试库；权威超管走启动自举 + ADMIN_INITIAL_PASSWORD + 首登改密 | 不删除历史脚本但移除弱口令可执行性，README 同步告警 | `database/init/03_init_permissions.sql`；`database/init/README.md`；`database/test/iam_test_data.sql` |
 | P2-10 | 技术债：HRM `roles.rs` 空桩；`LoginFormV2` 遗留模拟登录分支；`authStore` 旧版；OpenAPI 双 ApiDoc 块不一致 | 维护成本/误用 | 删除或标注废弃，统一 ApiDoc | `roles.rs:32-84`；`LoginFormV2.tsx:68-93`；`openapi.rs:72-73 vs 173-178` |
 | P2-11 | 全栈缺统一物料目录/UOM/税率表/币种/样品等公共主数据；PM 项目类型模板空桩；PDM 无独立图纸实体 | 跨模块主数据各自为政 | 规划 master-data 公共主数据域承接 | 见 §3 各"缺失"行；`project_type_config.rs:12-17` |
 
@@ -318,8 +318,8 @@
 ### 4.3 必须注意的前提与风险（非"开箱无忧"）
 
 1. **依赖先跑迁移**：`init_database` 内 `core_user_roles` 外键引用 `core_users`（`mod.rs:79`），该表由迁移 `001_iam.sql:1` 创建；未跑迁移时 `try_init` 吞错（`main.rs:305-313` 仅 warn），admin 插入可能被跳过。
-2. **`ADMIN_INITIAL_PASSWORD` 未在 `.env.example`/`config/` 声明**，运维不易发现可覆盖默认弱口令。
-3. **默认 `admin123` 为弱口令**，必须首启立即修改；代码自身也打印"⚠️ 使用默认管理员密码，请在首次登录后立即修改"（`mod.rs:438`），但**无强制改密机制**。
+2. **`ADMIN_INITIAL_PASSWORD`**：S2（`7aff8b852`）已在 `.env.example` 声明，未设置回退 admin123 并打印区分告警。
+3. **默认 `admin123` 为弱口令**：S2 后新播种 admin 带 `must_change_password=true`，登录下发该旗标、自身改密即清除；**后端硬拦截（未改密禁止访问其他接口）仍缺**，前端强制跳转属 P1-4，暂为软提示。
 4. **迁移链 SQL 本身不造用户**：`database/migrations/` 内无 `INSERT INTO iam.users`；`admin/admin123` 另存在于未自动挂载的孤儿脚本 `database/init/03_init_permissions.sql:423-432` 与测试数据 `database/test/iam_test_data.sql`，二者都不在 sqlx 迁移链，**不能依赖它们**。
 5. **后端已实现 `POST /tenant/onboard`（建租户+超管原子事务，`tenant/handlers.rs:424-530`）但未挂路由、前端无页**——这是替代"启动自举"的更规范首启方案，见 P0-1/P0-3 建议。
 
@@ -363,5 +363,6 @@
 | 2026-10-21 | v1.4 | `4ac94af80` | **P0-1**：5 步初始化向导页（公司→部门批量→岗位批量→管理员→完成）接六方法，路由 `/hrm/setup` + 设置组导航 + lazyWithRetry，zh/en 93 键，落地页非阻塞提醒横幅；管理员步先 `userApi.createUser` 建号再回绑 |
 | 2026-10-21 | v1.5 | `e810fc787` | **P0-4 第二批·JWT 展开**：登录签发与 `/users/me`、`my-permissions` 非超管改 JOIN 规范化授权表（`resolve_user_grants`），与刷新换发对齐；超管 `['*']`/全量目录不变；反范式列与 C 方言目录保留；lib 536 测试绿 |
 | 2026-10-21 | v1.6 | `62cf693a8` | **P1-5**：9 个自服务端点（GET/PUT `/users/me`、自身权限、自身偏好、改密、头像、自身权限校验、`/permissions/my-permissions`）拆入独立 `me` 路由组，仅由全局 `auth_middleware` 校验登录（无 token→401），不再要求 `iam:read`/`admin:iam:write`；管理类增删改/角色/权限/岗位仍守原权限层；身份一律取 `Claims.sub`，不接受 body/路径指定他人；pre-commit 全绿，lib 536 测试通过 |
+| 2026-10-21 | v1.7 | `cc16d41d8`/`7aff8b852`/`e1980e95d`/`f23f543db` | **S 安全收口批**：S1/P1-3 `REGISTER_ENABLED` 默认关、开放时新账号 pending 待激活；S2 首启 admin `must_change_password`、登录下发旗标、自身改密清除 + `ADMIN_INITIAL_PASSWORD` 声明（后端硬拦截/前端跳转留 P1-4）；S3/P2-6 DEV 旁路 prod 判定覆盖 RUST_ENV/ENV 并强化告警；S4/P2-9 停用孤儿脚本 admin123 播种并标注；P2-2 向导租户归属并入 F 批随 P1-1 统一 |
 
 > 后续每次闭环/修订在此追加一行；完成 P0/P1 后同步把 §3 对应行状态改为已具备并勾选 TODO.md。
