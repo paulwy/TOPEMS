@@ -11,9 +11,24 @@ use axum::{
     Router,
 };
 use chrono::Utc;
+use rust_decimal::Decimal;
 use serde_json::{json, Value};
 use sqlx::Row;
 use uuid::Uuid;
+
+/// 从 JSON 请求体解析金额为 Decimal：优先字符串精确解析，回退数值 f64 保留；缺省 ZERO。
+/// 落库保持 numeric 精度，避免 f64 尾差。
+fn amount_decimal(req: &Value, key: &str) -> Decimal {
+    req.get(key)
+        .and_then(|v| v.as_str())
+        .and_then(|s| Decimal::from_str(s).ok())
+        .or_else(|| {
+            req.get(key)
+                .and_then(|v| v.as_f64())
+                .and_then(Decimal::from_f64_retain)
+        })
+        .unwrap_or(Decimal::ZERO)
+}
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
@@ -136,7 +151,7 @@ pub async fn create_expense(
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
     .bind(req.get("expense_type").and_then(|v| v.as_str()))
-    .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
+    .bind(amount_decimal(&req, "amount"))
     .bind(req.get("description").and_then(|v| v.as_str()))
     .bind(
         req.get("expense_date")
@@ -244,7 +259,7 @@ pub async fn update_expense(
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
     .bind(req.get("expense_type").and_then(|v| v.as_str()))
-    .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
+    .bind(amount_decimal(&req, "amount"))
     .bind(req.get("description").and_then(|v| v.as_str()))
     .bind(
         req.get("expense_date")
@@ -756,7 +771,7 @@ pub async fn create_receivable(
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
     .bind(req.get("project_name").and_then(|v| v.as_str()))
-    .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
+    .bind(amount_decimal(&req, "amount"))
     .bind(
         req.get("invoice_date")
             .and_then(|v| v.as_str())
@@ -856,7 +871,7 @@ pub async fn update_receivable(
     .bind(id)
     .bind(req.get("customer_name").and_then(|v| v.as_str()))
     .bind(req.get("project_name").and_then(|v| v.as_str()))
-    .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
+    .bind(amount_decimal(&req, "amount"))
     .bind(
         req.get("invoice_date")
             .and_then(|v| v.as_str())
@@ -876,11 +891,7 @@ pub async fn update_receivable(
             .and_then(|v| v.as_str())
             .unwrap_or("unpaid"),
     )
-    .bind(
-        req.get("received_amount")
-            .and_then(|v| v.as_f64())
-            .unwrap_or(0.0),
-    )
+    .bind(amount_decimal(&req, "received_amount"))
     .bind(req.get("payment_schedule"))
     .bind(now)
     .fetch_one(&state.pool)
@@ -1050,7 +1061,7 @@ pub async fn create_payable(
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
     .bind(req.get("category").and_then(|v| v.as_str()))
-    .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
+    .bind(amount_decimal(&req, "amount"))
     .bind(
         req.get("invoice_date")
             .and_then(|v| v.as_str())
@@ -1150,7 +1161,7 @@ pub async fn update_payable(
     .bind(id)
     .bind(req.get("supplier_name").and_then(|v| v.as_str()))
     .bind(req.get("category").and_then(|v| v.as_str()))
-    .bind(req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0))
+    .bind(amount_decimal(&req, "amount"))
     .bind(
         req.get("invoice_date")
             .and_then(|v| v.as_str())
@@ -1170,11 +1181,7 @@ pub async fn update_payable(
             .and_then(|v| v.as_str())
             .unwrap_or("unpaid"),
     )
-    .bind(
-        req.get("paid_amount")
-            .and_then(|v| v.as_f64())
-            .unwrap_or(0.0),
-    )
+    .bind(amount_decimal(&req, "paid_amount"))
     .bind(req.get("payment_schedule"))
     .bind(now)
     .fetch_one(&state.pool)
@@ -1237,7 +1244,7 @@ fn row_to_expense_json(row: &sqlx::postgres::PgRow) -> Value {
         "department_id": row.try_get::<Option<Uuid>, _>("department_id").ok().flatten(),
         "expense_type": row.try_get::<Option<String>, _>("expense_type").ok().flatten(),
         "category": row.try_get::<Option<String>, _>("expense_type").ok().flatten(), // 双兼容：前端 category ← 后端 expense_type
-        "amount": row.try_get::<f64, _>("amount").ok(),
+        "amount": row.try_get::<Decimal, _>("amount").ok(),
         "description": row.try_get::<Option<String>, _>("description").ok().flatten(),
         "expense_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("expense_date").ok().flatten(),
         "receipt_count": row.try_get::<Option<i32>, _>("receipt_count").ok().flatten(),
@@ -1292,11 +1299,11 @@ fn row_to_receivable_json(row: &sqlx::postgres::PgRow) -> Value {
         "project_id": row.try_get::<Option<Uuid>, _>("project_id").ok().flatten(),
         "contract_id": row.try_get::<Option<Uuid>, _>("contract_id").ok().flatten(),
         "project_name": row.try_get::<Option<String>, _>("project_name").ok().flatten(),
-        "amount": row.try_get::<f64, _>("amount").ok(),
+        "amount": row.try_get::<Decimal, _>("amount").ok(),
         "invoice_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("invoice_date").ok().flatten(),
         "due_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("due_date").ok().flatten(),
         "status": row.try_get::<String, _>("status").ok(),
-        "received_amount": row.try_get::<f64, _>("received_amount").ok(),
+        "received_amount": row.try_get::<Decimal, _>("received_amount").ok(),
         "payment_schedule": row.try_get::<Option<Value>, _>("payment_schedule").ok().flatten(),
         "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
         "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
@@ -1311,11 +1318,11 @@ fn row_to_payable_json(row: &sqlx::postgres::PgRow) -> Value {
         "project_id": row.try_get::<Option<Uuid>, _>("project_id").ok().flatten(),
         "contract_id": row.try_get::<Option<Uuid>, _>("contract_id").ok().flatten(),
         "category": row.try_get::<Option<String>, _>("category").ok().flatten(),
-        "amount": row.try_get::<f64, _>("amount").ok(),
+        "amount": row.try_get::<Decimal, _>("amount").ok(),
         "invoice_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("invoice_date").ok().flatten(),
         "due_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("due_date").ok().flatten(),
         "status": row.try_get::<String, _>("status").ok(),
-        "paid_amount": row.try_get::<f64, _>("paid_amount").ok(),
+        "paid_amount": row.try_get::<Decimal, _>("paid_amount").ok(),
         "payment_schedule": row.try_get::<Option<Value>, _>("payment_schedule").ok().flatten(),
         "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
         "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),

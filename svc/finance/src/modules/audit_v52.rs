@@ -25,6 +25,7 @@ use axum::{
     Router,
 };
 use chrono::{DateTime, Duration, Timelike, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
@@ -596,7 +597,7 @@ impl AutoAuditEngine {
             .and_then(|v| v.as_f64())
             .unwrap_or(0.01);
 
-        let rows: Vec<(Uuid, String, f64, f64)> = sqlx::query_as(only_own_schema_query!(
+        let rows: Vec<(Uuid, String, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT v.id, v.voucher_no, v.total_amount,
                       COALESCE(SUM(vl.amount), 0) as line_total
@@ -759,7 +760,7 @@ impl AutoAuditEngine {
             .and_then(|v| v.as_f64())
             .unwrap_or(10000.0);
 
-        let rows: Vec<(Uuid, String, f64)> = sqlx::query_as(only_own_schema_query!(
+        let rows: Vec<(Uuid, String, Decimal)> = sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, voucher_no, total_amount
                FROM finance.core_finance_vouchers

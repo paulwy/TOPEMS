@@ -3539,8 +3539,8 @@ pub async fn get_voucher_entries(
                         "account_code": r.try_get::<String, _>("account_code").ok(),
                         "account_name": r.try_get::<String, _>("account_name").ok(),
                         "description": r.try_get::<String, _>("description").ok(),
-                        "debit": r.try_get::<f64, _>("debit").ok(),
-                        "credit": r.try_get::<f64, _>("credit").ok(),
+                        "debit": r.try_get::<Decimal, _>("debit").ok(),
+                        "credit": r.try_get::<Decimal, _>("credit").ok(),
                     })
                 })
                 .collect();
@@ -3577,8 +3577,8 @@ pub async fn get_voucher_items(
                         "account_code": r.try_get::<String, _>("account_code").ok(),
                         "account_name": r.try_get::<String, _>("account_name").ok(),
                         "description": r.try_get::<String, _>("description").ok(),
-                        "debit": r.try_get::<f64, _>("debit").ok(),
-                        "credit": r.try_get::<f64, _>("credit").ok(),
+                        "debit": r.try_get::<Decimal, _>("debit").ok(),
+                        "credit": r.try_get::<Decimal, _>("credit").ok(),
                     })
                 })
                 .collect();

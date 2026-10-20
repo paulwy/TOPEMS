@@ -456,7 +456,7 @@ async fn resolve_source_amounts(
     };
 
     // 事件驱动：从 Finance 本地快照表读取，替代跨 Schema 直查 plugin_erp
-    let snapshot_rows: Vec<(Uuid, Option<f64>)> = sqlx::query_as::<_, (Uuid, Option<f64>)>(
+    let snapshot_rows: Vec<(Uuid, Option<Decimal>)> = sqlx::query_as::<_, (Uuid, Option<Decimal>)>(
         only_own_schema_query!("finance", r#"SELECT source_id, payable_amount FROM finance.source_amount_snapshots
            WHERE source_type = $1 AND source_id = ANY($2)"#),
     )
@@ -478,8 +478,8 @@ async fn resolve_source_amounts(
     .unwrap_or_default();
 
     // payment/pay 类型特殊处理：查 payment_records 表（同 Schema，安全）
-    let amount_f64s: Vec<(Uuid, Option<f64>)> = if snapshot_type == "payment" {
-        let r1 = sqlx::query_as::<_, (Uuid, Option<f64>)>(only_own_schema_query!(
+    let amount_f64s: Vec<(Uuid, Option<Decimal>)> = if snapshot_type == "payment" {
+        let r1 = sqlx::query_as::<_, (Uuid, Option<Decimal>)>(only_own_schema_query!(
             "finance",
             r#"SELECT id, total_amount FROM finance.core_finance_payments
                WHERE tenant_id = $1 AND id = ANY($2)"#
@@ -490,7 +490,7 @@ async fn resolve_source_amounts(
         .await;
         match r1 {
             Ok(rows) if !rows.is_empty() => rows,
-            _ => sqlx::query_as::<_, (Uuid, Option<f64>)>(only_own_schema_query!(
+            _ => sqlx::query_as::<_, (Uuid, Option<Decimal>)>(only_own_schema_query!(
                 "finance",
                 r#"SELECT id, total_amount FROM finance.core_finance_payments
                    WHERE tenant_id = $1 AND id = ANY($2)"#
@@ -517,12 +517,9 @@ async fn resolve_source_amounts(
             Some(s) => s,
             None => continue,
         };
+        // DB 直接读出 Decimal，非负直接采用，缺省/负值回退默认
         let dec = match amount_opt {
-            Some(v) if v.is_finite() && v >= 0.0 => {
-                // f64 → Decimal：round 到 2 位，避免 0.1+0.2=0.300000004 类浮点问题
-                let scaled = (v * 100.0).round() as i128;
-                Decimal::from_i128_with_scale(scaled, SCALE)
-            }
+            Some(v) if !v.is_sign_negative() => v,
             _ => default,
         };
         out.insert(sid, dec);
