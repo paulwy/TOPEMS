@@ -10,7 +10,7 @@
 - [x] **P0-1 · 前端初始化向导整体缺失** ✅ 完成（`4ac94af80`）：基于 `api/hrm/hrmSetup.ts` 实现 5 步向导页（公司信息→部门批量→岗位批量→管理员账号→确认完成），路由 `/hrm/setup` + 设置组导航 + lazyWithRetry，zh/en 93 键；落地页非阻塞提醒横幅按 `is_completed` 引导；tsc/eslint/hrm-setup vitest 绿。
 - [x] **P0-2 · 向导新库不自洽** ✅ 完成（`33479ed7d`）：幂等迁移 `20261020000025` 为默认组织播种 5 条 pending 步骤行；公司步 UPDATE→upsert（纠正错列 `email`→`contact_email`）；`get_init_progress` 空集按未开始（is_completed=false/current_step=1/steps=[]）；hrm 293 测试绿、迁移幂等。
 - [x] **P0-3 · `setup/admin` 产生可登录账号** ✅ 完成（`9d33f86b8`，方案B）：hrm 不直写 iam（`iam.users` 与 `core_users` 不同步、建号权威在 unified-core）；`/setup/admin` 建员工档案并接受可选 `user_id` 回绑，新增 `username`（3-20 位字母数字下划线）与 iam.users 用户名/邮箱占用预检，冲突友好 409 不 500；前端向导先调 `POST /api/core/iam/users` 建号拿 `data.id` 再回绑。
-- [x] **P0-4 · 权限 scope 方言对齐（非破坏第一批）** ✅ 第一批完成（`b052ac1cf`）：幂等迁移 `20261020000024` 补齐 23 个中间件已挂载但字典缺失的权限码（仅字典、不绑角色、零授权变化），立命名口径；**登录 JWT/`/users/me` 角色权 JOIN 展开未落地**（避免翻转既有 403 断言，待 MainAgent 决策，方案草案见活文档 §3 P0-4）。
+- [x] **P0-4 · 权限 scope 方言对齐 + JWT 角色权展开** ✅ 闭环：第一批字典补缺（`b052ac1cf`，迁移 `20261020000024` 补 23 码、不绑角色）；第二批 JWT/me 展开（`e810fc787`）：登录签发与 `/users/me`、`/permissions/my-permissions` 非超管改从 `core_user_roles→core_roles/core_role_permissions→core_permissions` 实时 JOIN，与刷新换发对齐，超管保持 `['*']`/全量目录；反范式列与 C 方言目录保留不删，中间件判定逻辑不变。
 
 ### P1 · 明显短板
 

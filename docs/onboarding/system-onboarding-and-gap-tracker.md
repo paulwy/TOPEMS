@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.4（P0-1/P0-2/P0-3 闭环，P0-4 第一批非破坏落地） |
+| 版本 | v1.5（P0 全闭环：P0-1/P0-2/P0-3 + P0-4 字典补缺与 JWT 角色权展开） |
 | 最近更新 | 2026-10-21 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
@@ -209,9 +209,9 @@
 | **P0-1** ✅ 已闭环 `4ac94af80` | ~~前端初始化向导整体缺失~~：已实现 5 步向导页并接六方法 | 闭环 | 5 步向导（公司→部门→岗位→管理员→完成）+ 路由 `/hrm/setup` + 设置组导航 + 落地页非阻塞引导 | `pages/hrm/setup/HrmSetupWizardPage.tsx`；`modules/hrm/config.ts` 注册；`hrmSetup.ts` 六方法 |
 | **P0-2** ✅ 已闭环 `33479ed7d` | ~~向导在新库不自洽~~：① 迁移 `20261020000025` 幂等播种 5 条 pending 步骤行；② 公司步 UPDATE→upsert（纠正错列 `email`→`contact_email`）；③ progress 空集按未开始 | 闭环 | 新库干净重放不 500、进度语义正确 | `setup.rs`；迁移 `20261020000025_hrm_seed_default_org_init_status.sql` |
 | **P0-3** ✅ 已闭环 `9d33f86b8`（方案B） | ~~`setup/admin` 不产生可登录账号~~：采用方案B——hrm 建员工档案并回绑 `user_id`，建号由前端串联既有 IAM `POST /api/core/iam/users`（bcrypt/去重/角色归 IAM）；不直写 iam（`iam.users` 与 `core_users` 不同步、权威在 unified-core） | 闭环（边界内） | 管理员步产出可登录账号并绑定员工；username/email 冲突友好 409 不 500 | `setup.rs`（P0-3 注释记录方案选择）；前端 `HrmSetupWizardPage.tsx` 管理员步 |
-| **P0-4** ◐ 第一批闭环 `b052ac1cf`（JWT 展开待决策） | 权限 scope 三套方言：第一批非破坏补齐 23 个中间件已挂载但字典缺失的码、立命名口径；**登录 JWT/`/users/me` 角色权 JOIN 展开未落地**（避免翻转既有 403 断言） | 部分闭环 | 字典与运行时挂载码对齐；JWT 展开 + 角色绑定待 MainAgent 决策（草案见下方 P0-4 批次记录④） | 迁移 `20261020000024`；`lib/shared-auth/src/middleware/permission.rs`；草案见本条目下方 |
+| **P0-4** ✅ 闭环（字典补缺 `b052ac1cf` + JWT 展开 `e810fc787`） | 权限 scope 三套方言：第一批非破坏补齐 23 个中间件已挂载但字典缺失的码、立命名口径；第二批登录 JWT/`/users/me`/`my-permissions` 非超管改 JOIN 规范化授权表，与刷新换发对齐 | 已闭环 | 登录/刷新/me 三路授权源统一为 `core_user_roles→core_roles/core_role_permissions→core_permissions`；超管短路不变；反范式列与 C 方言目录保留待后续迁移 | 迁移 `20261020000024`；`auth.rs` 登录签发；`user/models.rs resolve_user_grants`；`user/profile.rs`、`user/profile_ext.rs` |
 
-#### P0-4 批次落地记录（2026-10-20，非破坏·第一批：仅字典补缺，JWT 展开未落地）
+#### P0-4 批次落地记录（第一批 2026-10-20 字典补缺；第二批 2026-10-21 JWT 展开，见④）
 
 > 本批严格非破坏：未改任何已挂载端点的 200/403 行为，未删除/重命名任何被保护的 code，未新增任何角色授权。
 
@@ -240,34 +240,29 @@
 - `admin:<domain>:<action>` 管理前缀码与 20260908000014 已登记的 `admin:*` 同形；
 - C 方言下划线码（`iam:users_read`）为待迁移遗留，禁止新代码再新增。
 
-**④ JWT 登录签发 / `/users/me` 角色权限 JOIN 展开 —— 待 MainAgent 决策，本批未落地**
+**④ JWT 登录签发 / `/users/me` 角色权限 JOIN 展开 —— ✅ 已落地（`e810fc787`，2026-10-21）**
 
-> 未落地原因：该改动会改变每次登录签发的 access_token 授权集合与 `/users/me` 响应体，属"有效授权变更"，可能把现有集成测试（`svc/unified-core/tests/iam_permission_tests.rs` 等 `test_employee` 的 403 断言）与前端 auth-store 契约翻转，超出非破坏批次边界，需 MainAgent 连同角色绑定/种子策略统一决策。
+*决策（单一授权源）：* 以规范化表 `core_user_roles → core_roles`（角色名）、`core_user_roles → core_role_permissions → core_permissions`（权限码）为授权权威源，与既有刷新换发完全同构；**不**与 `iam.users.roles/permissions` 反范式列取并集（刷新本就只读规范化表，并集反而再次制造两路差异）。反范式列保留不删、不写，留待后续独立迁移清理；C 方言内存目录（`get_permissions()`）与单测锁定不动。
 
-*现状证据（两路不一致）：*
+*落地内容：*
 
-| 签发/读取点 | 文件:行 | 权限来源 | 是否 JOIN 规范化角色表 |
-|---|---|---|---|
-| 登录签发 access_token | `svc/unified-core/src/modules/iam/auth.rs:178-188`（查询）、`:268-273`（组装）、`:299-318`（Claims）、`:320`（encode） | 仅读 `iam.users` 上的反范式列 `COALESCE(u.roles,'{}')` / `COALESCE(u.permissions,'{}')`（`:183-184`） | **否**（不查 `core_user_roles/core_role_permissions`） |
-| 刷新换发 access_token | `auth.rs:675-685`（JOIN）、`:736-746`、`:768-787`、`:789`（encode） | 已 JOIN `core_user_roles → core_roles`（roles）、`core_user_roles → core_role_permissions → core_permissions`（permissions） | **是**（与登录不一致：登录后空权，刷新后才有角色权） |
-| GET `/users/me` | `modules/iam/user/profile.rs:197-212` | 非超管硬编码 7 个 C 方言码，超管返回 `get_permissions()` 全量 | **否** |
-| GET `/iam/permissions/my-permissions` | `modules/iam/user/profile_ext.rs:60-81` | 非超管硬编码 7 个 C 方言码 | **否** |
+| 签发/读取点 | 改动 | 超管行为 |
+|---|---|---|
+| 登录签发 access_token（`auth.rs`） | 非超管改调 `resolve_user_grants` 实时 JOIN 组装 claims.roles/permissions；原 `UserRow` 查询保持不变（命中离线缓存） | 保持 `permissions=["*"]` 短路、roles 取反范式列，不变 |
+| GET `/users/me`（`user/profile.rs`） | 非超管去硬编码 7 个 C 方言码，改 `resolve_user_grants` | 仍返回 `get_permissions()` 全量目录，不变 |
+| GET `/iam/permissions/my-permissions`（`user/profile_ext.rs`） | 同上，去硬编码 | 同上，不变 |
+| 新增 `user/models.rs::resolve_user_grants` | 运行时纯查询（非 sqlx 编译期宏，不依赖离线缓存），roles 空集回退 `["user"]`，permissions 允许空 | — |
 
-*待实施方案草案（决策后执行）：*
+*关键设计取舍：*
+- 采用运行时 `sqlx::query`（非 `query!`/`query_scalar!` 宏），因为本地 `topems_test` 未全量迁移（缺 `tool_permissions` 等表），无法整库 `sqlx prepare`；纯查询绕过编译期校验且与刷新换发写法一致。
+- 不改中间件 `has_permission` 精确匹配、不新增任何角色绑定（`core_role_permissions` 零写入），因此未被规范化授权的用户权限集不变，不主动放宽既有 403。
 
-1. **统一单一授权源（先决策）**：明确以规范化表 `core_user_roles → core_role_permissions → core_permissions` 为准，还是保留 `iam.users.roles/permissions` 反范式列并做双写同步；两套并存是登录/刷新不一致的根因。
-2. **登录签发点改 JOIN**（`auth.rs:178-188` 的 `UserRow` 查询）：仿 `:677-681` 增加两个相关子查询——
-   - roles：`COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur JOIN public.core_roles r ON r.id=ur.role_id WHERE ur.user_id=u.id), '{}')`；
-   - permissions：`COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur JOIN public.core_role_permissions rp ON rp.role_id=ur.role_id JOIN public.core_permissions p ON p.id=rp.permission_id WHERE ur.user_id=u.id), '{}')`；
-   - 并决定是否与 `u.permissions` 反范式列取并集（UNIQUE）。
-3. **`/users/me` 与 `my-permissions` 改实时查询**：`profile.rs:197-212`、`profile_ext.rs:66-81` 去掉硬编码 C 方言清单，改为同一 JOIN（或直接回传 access_token 内 `claims.permissions`，避免二次查库）。
-4. **涉及文件清单**：`svc/unified-core/src/modules/iam/auth.rs`（登录查询/Claims）、`modules/iam/user/profile.rs`、`modules/iam/user/profile_ext.rs`；必要时 `lib/shared-auth/src/auth.rs get_permissions()`（C 方言目录）做别名映射；不改中间件判定逻辑（`has_permission` 精确匹配已正确）。
-5. **灰度/回归验证步骤**：
-   - 先在隔离测试库造 1 个非超管用户 + 1 个角色 + 经 `core_role_permissions` 绑 1 个已种子码，分别走 login 与 refresh，断言两路 access_token 的 `permissions` 集合一致；
-   - 跑 `cargo test -p topems-unified-core`（含 `tests/iam_permission_tests.rs`、`file_permission_tests.rs` 等）与 `cargo test -p topems-shared-auth`，确认既有 200/403 断言不变（仅当测试用户未被新 JOIN 授予额外码时保持 403）；
-   - 前端 auth-store 对 `/users/me` 响应 `permissions` 形状做契约比对，避免硬编码 C 方言码失效；
-   - 灰度：先让 login 只对 `is_superuser` 以外并集补充角色权、不删除 `u.permissions`，观察一轮后再决定是否废弃反范式列；
-   - 回滚：改动集中在查询与响应组装，保留旧查询分支可开关回退；本批字典补缺迁移无需回滚（ON CONFLICT 幂等、未绑角色）。
+*验证：* `SQLX_OFFLINE=true cargo check/clippy/test -p topems-unified-core --lib` 全绿（536 passed）；两段 JOIN 在 `topems_test` 只读执行返回 `{}` 无列/关系错误；前端 `permissions: string[]` 形状未变。
+
+*遗留（不属本闭环）：*
+1. 集成 e2e（`tests/iam_permission_tests.rs` 等 403 断言）需在已迁移 + 起服务的隔离环境跑一遍确认，本地 `topems_test` 缺表未执行；
+2. 反范式列 `iam.users.roles/permissions` 与 C 方言 `iam:users_read` 目录的废弃/改名另立独立迁移；
+3. 角色→权限的实际绑定策略（哪些角色拿哪些码）属授权配置，不在代码改动内，由管理员在角色管理页落。
 
 ### P1 —— 明显短板
 
@@ -366,5 +361,6 @@
 | 2026-10-20 | v1.2 | `33479ed7d` | **P0-2**：幂等迁移 `20261020000025` 播种 5 条 pending 步骤行；公司步 UPDATE→upsert（纠正错列 `email`→`contact_email`）；`get_init_progress` 空集按未开始 |
 | 2026-10-20 | v1.3 | `b052ac1cf` | **P0-4 第一批（非破坏）**：迁移 `20261020000024` 补齐 23 个中间件已挂载但字典缺失的权限码（仅字典、不绑角色）；三套方言对照清单 + 命名口径；JWT 登录/`/users/me` 角色权 JOIN 展开未落地，附待决策草案 |
 | 2026-10-21 | v1.4 | `4ac94af80` | **P0-1**：5 步初始化向导页（公司→部门批量→岗位批量→管理员→完成）接六方法，路由 `/hrm/setup` + 设置组导航 + lazyWithRetry，zh/en 93 键，落地页非阻塞提醒横幅；管理员步先 `userApi.createUser` 建号再回绑 |
+| 2026-10-21 | v1.5 | `e810fc787` | **P0-4 第二批·JWT 展开**：登录签发与 `/users/me`、`my-permissions` 非超管改 JOIN 规范化授权表（`resolve_user_grants`），与刷新换发对齐；超管 `['*']`/全量目录不变；反范式列与 C 方言目录保留；lib 536 测试绿 |
 
 > 后续每次闭环/修订在此追加一行；完成 P0/P1 后同步把 §3 对应行状态改为已具备并勾选 TODO.md。
