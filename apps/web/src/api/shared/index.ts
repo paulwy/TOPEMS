@@ -14,12 +14,6 @@ export interface Attachment {
   entity_id?: string;
 }
 
-interface UploadAttachmentRequest {
-  file: File;
-  entity_type?: string;
-  entity_id?: string;
-}
-
 export const attachmentApi = {
   async upload(
     file: File,

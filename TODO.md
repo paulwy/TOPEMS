@@ -360,6 +360,16 @@
 - **保留未删（下批甄别，非死代码）**：`config/ai-templates.ts` 的 `getAITemplatesList` 删后将 `getAITemplates` 改 `export` 保留为内容预留；pm/qms/mes/erp 等 types.ts 的 API interface（契约预留，删有信息损失）、模板组件 props（onDownload/filters/filterConfig 等调用方在用）、`Grid.tsx` 的 `item` 高频解构参数，均不在本批删。
 - **门禁**：`tsc --noEmit` exit 0；改动文件定点 eslint 0 error；全量 eslint unused-vars 86→62、errors=0。
 
+### P3-3 第二批 · 未用占位函数/别名/局部类型清理（2026-10-20）✅
+
+> 续第一批，继续只删零引用死代码或按 `_`/export 约定消 warning，不改行为。
+
+- **净降**：unused-vars 62→**55**（净降 7），errors=0。
+- **删除**：`api/ai/businessCopilot.ts` 未实现 SSE 占位 `streamMessage`（返回 null 的死 stub）；`api/plugin/index.ts` 未用别名 `getMarketplaceSummary`；`hooks/useAnalyticsData.ts` 局部 `AnalyticsPageState`；`api/shared/index.ts` 局部 `UploadAttachmentRequest`；`api/qms/spc.ts` 未使用的 type import `CreateSpcDataPointRequestBackend`（类型定义留在 types.ts）。
+- **保留预留**：`hooks/foundation/useWebVitals.ts` 的 `useWebVitals` 改 `export`（外部仅取 `WebVitalsMetrics` 类型，hook 未调用，预留）；`CommercialConsolePage` 只写不读的 `slaConfigs` 改 `_slaConfigs`（setter 调用保留）。
+- **登记保留（不删）**：`schemas/iam/role.ts`、`schemas/iam/user.ts`、`schemas/workflow/approval.ts` 三份未挂载的完整实体 CRUD 配置资产，删除需重写，待对应页面启用时接入，warning 保留。
+- **门禁**：`tsc --noEmit` exit 0；改动文件定点 eslint 0 error；全量 eslint unused-vars 62→55、errors=0。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

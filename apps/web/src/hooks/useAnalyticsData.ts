@@ -71,16 +71,6 @@ export function useAnalyticsData<TData>({
 }
 
 /**
- * 分析页面通用状态
- */
-interface AnalyticsPageState {
-  startDate: string;
-  endDate: string;
-  groupBy: 'month' | 'week' | 'day';
-  warehouseId?: string;
-}
-
-/**
  * 默认日期范围（最近 90 天）
  */
 export function getDefaultDateRange(): { startDate: string; endDate: string } {

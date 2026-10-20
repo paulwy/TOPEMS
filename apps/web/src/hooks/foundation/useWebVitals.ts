@@ -72,7 +72,7 @@ function observeType(
  * }
  * ```
  */
-function useWebVitals(onReport?: WebVitalsCallback) {
+export function useWebVitals(onReport?: WebVitalsCallback) {
   const metricsRef = useRef<WebVitalsMetrics>({});
 
   useEffect(() => {

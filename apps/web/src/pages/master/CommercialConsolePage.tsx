@@ -84,7 +84,7 @@ const CommercialConsolePage: React.FC = () => {
   });
 
   // SLA
-  const [slaConfigs, setSlaConfigs] = useState<SLAConfig[]>([]);
+  const [_slaConfigs, setSlaConfigs] = useState<SLAConfig[]>([]);
   const [slaStatus, setSlaStatus] = useState<SLAMeasurement[]>([]);
   const [incidents, setIncidents] = useState<SLAIncident[]>([]);
   const [slaForm, setSlaForm] = useState({

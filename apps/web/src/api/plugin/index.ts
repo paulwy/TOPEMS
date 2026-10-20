@@ -12,7 +12,6 @@ export { fetchAllPluginInfo, checkAllPluginsHealth } from './registry';
 
 export { pluginApi } from './plugin';
 
-const getMarketplaceSummary = marketplaceApi.getSummary;
 export const listPlugins = marketplaceApi.listPlugins;
 export const getPlugin = marketplaceApi.getPlugin;
 export const getPluginVersions = marketplaceApi.getVersions;

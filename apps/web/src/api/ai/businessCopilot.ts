@@ -301,14 +301,3 @@ export async function setContextData(
   // 后端已实现（2026-10-06）：PUT /dsh/copilot/sessions/{session_id}/context
   return apiClient.ai.put(`/dsh/copilot/sessions/${session_id}/context`, { key, value });
 }
-
-/**
- * 流式发送消息（SSE）
- * 返回一个 ReadableStream，调用方需要自行处理 SSE 事件
- */
-function streamMessage(_request: CopilotRequest): ReadableStream<Uint8Array> | null {
-  // 实际实现中使用 fetch + ReadableStream
-  // 这里返回 null 作为占位，实际使用时需要根据 apiClient 的流式支持实现
-  console.warn('streamMessage 需要根据 apiClient 的流式支持实现');
-  return null;
-}

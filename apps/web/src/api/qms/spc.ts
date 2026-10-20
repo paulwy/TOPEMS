@@ -7,7 +7,6 @@ import type {
   UpdateSpcChartRequestBackend,
   SpcDataPoint,
   SpcDataPointBackend,
-  CreateSpcDataPointRequestBackend,
   ControlLimitsResult,
   ControlLimitsResultBackend,
 } from './types';
