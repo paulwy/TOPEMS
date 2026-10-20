@@ -38,10 +38,23 @@ const ProductionOrderManagementPage: React.FC = () => {
             throw new Error(i18n.t('mes.production_order_management_page.k0'));
         }
         if (response.success && response.data) {
+          // P5: 状态码 → 标签映射，避免通知消息渲染原始状态码/英文裸值且引号截断
+          const statusLabelMap: Record<string, string> = {
+            pending: i18n.t('mes.production_order.k23'),
+            released: i18n.t('mes.production_order.k24'),
+            in_progress: i18n.t('mes.production_order.k25'),
+            completed: i18n.t('mes.production_order.k26'),
+            cancelled: i18n.t('mes.production_order.k27'),
+            paused: i18n.t('mes.production_order.k28'),
+          };
+          const rawStatus = response.data.status || action;
+          const statusLabel = statusLabelMap[rawStatus] || rawStatus;
           addNotification({
             type: 'success',
             title: i18n.t('mes.production_order_management_page.update_4'),
-            message: `${i18n.t('pages.production_order_management_page.k0')}${response.data.status}"`,
+            message: i18n.t('mes.production_order_management_page.order_status_updated', {
+              status: statusLabel,
+            }),
           });
           queryClient.invalidateQueries({
             queryKey: QUERY_KEYS.AD_HOC.MES_PRODUCTION_ORDERS_BASE,

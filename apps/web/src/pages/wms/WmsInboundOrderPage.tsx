@@ -327,6 +327,8 @@ const WmsInboundOrderPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<InboundOrder>) => {
+      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
+      let apiFailed = false;
       try {
         await inboundOrderApi.create({
           order_no: data.order_no,
@@ -338,14 +340,24 @@ const WmsInboundOrderPage: React.FC = () => {
         } as unknown as CreateInboundOrderRequest);
       } catch (e) {
         console.warn('[WMS Inbound Orders] Create API unavailable, using mock create:', e);
+        apiFailed = true;
+        setIsMockData(true);
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return data;
+      return { data, apiFailed };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('wms.inbound_order_page.toast_create_success'));
+      if (result.apiFailed) {
+        // 降级 mock：明确告知未写入数据库，禁止静默假成功
+        pushToast(
+          'warning',
+          t('wms.inbound_order_page.mock_create_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
+        );
+      } else {
+        pushToast('success', t('wms.inbound_order_page.toast_create_success'));
+      }
     },
     onError: () => {
       pushToast('error', t('wms.inbound_order_page.toast_create_error'));
@@ -354,6 +366,7 @@ const WmsInboundOrderPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<InboundOrder> }) => {
+      let apiFailed = false;
       try {
         await inboundOrderApi.update(id, {
           status: data.status,
@@ -361,14 +374,22 @@ const WmsInboundOrderPage: React.FC = () => {
         } as unknown as UpdateInboundOrderRequest);
       } catch (e) {
         console.warn('[WMS Inbound Orders] Update API unavailable, using mock update:', e);
+        apiFailed = true;
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data };
+      return { id, data, apiFailed };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('wms.inbound_order_page.toast_update_success'));
+      if (result.apiFailed) {
+        pushToast(
+          'warning',
+          t('wms.inbound_order_page.mock_update_fallback', '⚠️ 已降级为本地模拟数据，未写入数据库')
+        );
+      } else {
+        pushToast('success', t('wms.inbound_order_page.toast_update_success'));
+      }
     },
     onError: () => {
       pushToast('error', t('wms.inbound_order_page.toast_update_error'));

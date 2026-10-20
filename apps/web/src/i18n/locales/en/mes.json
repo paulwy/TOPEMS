@@ -3102,6 +3102,7 @@
   "mes.production_order_management_page.completed_4": "Complete",
   "mes.production_order_management_page.order_1": "Release",
   "mes.production_order_management_page.order_status": "Order status updated",
+  "mes.production_order_management_page.order_status_updated": "Order status updated to {{status}}",
   "mes.production_order_management_page.production_1": "Start Production",
   "mes.production_order_management_page.update_3": "Operation failed",
   "mes.production_order_management_page.update_4": "Updated successfully",

@@ -166,12 +166,14 @@ export const getBudgetSchema = (): EntitySchema => ({
         loader: loadDepartments,
       },
       renderCell: (row: Record<string, unknown>) => {
-        const deptId = String(row.department_id || '');
-        return React.createElement(
-          'span',
-          { style: { fontWeight: 500 } },
-          (row._department_name as string) || deptId || '-'
-        );
+        // 空值兜底：department_id / _department_name 均缺失时渲染 '-'，避免空值裸渲染告警
+        const deptName = row._department_name as string | null | undefined;
+        const deptId =
+          row.department_id === null || row.department_id === undefined
+            ? ''
+            : String(row.department_id);
+        const text = (deptName && deptName !== '-') || deptId || '-';
+        return React.createElement('span', { style: { fontWeight: 500 } }, text);
       },
     },
     {
@@ -205,8 +207,14 @@ export const getBudgetSchema = (): EntitySchema => ({
       type: 'text',
       defaultValue: new Date().getFullYear().toString(),
       listWidth: 100,
-      renderCell: (row: Record<string, unknown>) =>
-        React.createElement('span', null, `${row.fiscal_year ?? ''}${i18n.t('shared.budget.k1')}`),
+      renderCell: (row: Record<string, unknown>) => {
+        // 空值兜底：fiscal_year 缺失时渲染 '-'，避免只渲染"年"后缀
+        const fy = row.fiscal_year;
+        if (fy === null || fy === undefined || fy === '') {
+          return React.createElement('span', null, '-');
+        }
+        return React.createElement('span', null, `${fy}${i18n.t('shared.budget.k1')}`);
+      },
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {

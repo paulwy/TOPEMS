@@ -340,6 +340,8 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<SalesOrder>) => {
+      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
+      let apiFailed = false;
       try {
         await salesOrderApi.create({
           order_no: data.order_no,
@@ -352,14 +354,27 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         } as unknown as CreateSalesOrderRequest);
       } catch (e) {
         console.warn('[ERP Sales Orders] Create API unavailable, using mock create:', e);
+        apiFailed = true;
+        setIsMockData(true);
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return data;
+      return { data, apiFailed };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('erp.erp_sales_order_redesign.toast.create_success'));
+      if (result.apiFailed) {
+        // 降级 mock：明确告知未写入数据库，禁止静默假成功
+        pushToast(
+          'warning',
+          t(
+            'erp.erp_sales_order_redesign.toast.mock_create_fallback',
+            '⚠️ 已降级为本地模拟数据，未写入数据库'
+          )
+        );
+      } else {
+        pushToast('success', t('erp.erp_sales_order_redesign.toast.create_success'));
+      }
     },
     onError: () => {
       pushToast('error', t('erp.erp_sales_order_redesign.toast.create_failed'));
@@ -368,6 +383,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<SalesOrder> }) => {
+      let apiFailed = false;
       try {
         await salesOrderApi.update(id, {
           customer_name: data.customer_name,
@@ -377,14 +393,25 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         } as unknown as UpdateSalesOrderRequest);
       } catch (e) {
         console.warn('[ERP Sales Orders] Update API unavailable, using mock update:', e);
+        apiFailed = true;
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data };
+      return { id, data, apiFailed };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('erp.erp_sales_order_redesign.toast.update_success'));
+      if (result.apiFailed) {
+        pushToast(
+          'warning',
+          t(
+            'erp.erp_sales_order_redesign.toast.mock_update_fallback',
+            '⚠️ 已降级为本地模拟数据，未写入数据库'
+          )
+        );
+      } else {
+        pushToast('success', t('erp.erp_sales_order_redesign.toast.update_success'));
+      }
     },
     onError: () => {
       pushToast('error', t('erp.erp_sales_order_redesign.toast.update_failed'));

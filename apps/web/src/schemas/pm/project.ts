@@ -24,11 +24,25 @@ const STATUS_LABEL_MAP: Record<string, string> = {
 
 const PROJECT_TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'research', label: i18n.t('shared.project.k6') },
+  { value: 'internal', label: i18n.t('shared.project.k41') },
+  { value: 'external', label: i18n.t('shared.project.k42') },
   { value: 'production', label: i18n.t('shared.project.k7') },
   { value: 'construction', label: i18n.t('shared.project.k8') },
   { value: 'design', label: i18n.t('shared.project.k9') },
   { value: 'service', label: i18n.t('shared.project.k10') },
 ];
+
+// 列表类型标签映射（含后端可能返回的内部/外部类型），未知值回退原值，避免渲染英文裸值
+const PROJECT_TYPE_LABEL_MAP: Record<string, string> = Object.fromEntries(
+  PROJECT_TYPE_OPTIONS.map((opt) => [opt.value, opt.label])
+);
+
+const formatDateCell = (value: unknown): string => {
+  if (value === null || value === undefined || value === '') return '-';
+  const d = new Date(value as string);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString('zh-CN');
+};
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: 'draft', label: i18n.t('shared.project.k11') },
@@ -82,6 +96,11 @@ export const projectSchema: EntitySchema = {
       defaultValue: 'research',
       options: { type: 'static', options: PROJECT_TYPE_OPTIONS },
       listWidth: 100,
+      renderCell: (row: Record<string, unknown>) => {
+        const value = String(row.project_type ?? '');
+        if (!value) return '-';
+        return PROJECT_TYPE_LABEL_MAP[value] || value;
+      },
       validation: [{ type: 'maxLength', value: 50 }],
     },
     {
@@ -150,12 +169,14 @@ export const projectSchema: EntitySchema = {
       label: i18n.t('shared.project.k26'),
       type: 'date',
       listWidth: 150,
+      renderCell: (row: Record<string, unknown>) => formatDateCell(row.start_date),
     },
     {
       name: 'end_date',
       label: i18n.t('shared.project.k27'),
       type: 'date',
       listWidth: 150,
+      renderCell: (row: Record<string, unknown>) => formatDateCell(row.end_date),
     },
     {
       name: 'description',

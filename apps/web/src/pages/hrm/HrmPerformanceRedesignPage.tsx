@@ -304,6 +304,8 @@ const HrmPerformanceRedesignPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<PerformanceReview>) => {
+      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
+      let apiFailed = false;
       try {
         await performanceReviewApi.create({
           employee_id: data.review_no,
@@ -316,14 +318,21 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         } as any);
       } catch (e) {
         console.warn('[HRM Performance] Create API unavailable, using mock create:', e);
+        apiFailed = true;
+        setIsMockData(true);
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return data;
+      return { data, apiFailed };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('hrm.performance_redesign_page.k61'));
+      if (result.apiFailed) {
+        // 降级 mock：明确告知未写入数据库，禁止静默假成功
+        pushToast('warning', t('hrm.performance_redesign_page.mock_create_fallback'));
+      } else {
+        pushToast('success', t('hrm.performance_redesign_page.k61'));
+      }
     },
     onError: () => {
       pushToast('error', t('hrm.performance_redesign_page.k62'));
@@ -332,6 +341,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<PerformanceReview> }) => {
+      let apiFailed = false;
       try {
         await performanceReviewApi.update(id, {
           overall_rating: data.rating,
@@ -341,14 +351,19 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         } as any);
       } catch (e) {
         console.warn('[HRM Performance] Update API unavailable, using mock update:', e);
+        apiFailed = true;
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data };
+      return { id, data, apiFailed };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('hrm.performance_redesign_page.k63'));
+      if (result.apiFailed) {
+        pushToast('warning', t('hrm.performance_redesign_page.mock_update_fallback'));
+      } else {
+        pushToast('success', t('hrm.performance_redesign_page.k63'));
+      }
     },
     onError: () => {
       pushToast('error', t('hrm.performance_redesign_page.k64'));

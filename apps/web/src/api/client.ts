@@ -21,6 +21,7 @@ import {
 } from '@/components/security';
 import { injectTraceContext } from '@/utils/telemetry';
 import { serializeParams } from '@topems/api-client';
+import { cleanEmptyOptionalFields } from '@/utils/payloadCleaner';
 import { getCurrentTraceId, getCurrentSpanId, startTrace } from '@/utils/tracing';
 
 import { handleApiError, type AppError } from '../utils/errors';
@@ -291,6 +292,31 @@ const buildNotificationGraceFallback = (
   };
 };
 
+/**
+ * 从 422 响应体提取可读校验错误信息。
+ * 兼容：纯文本（axum 默认 "Failed to deserialize the JSON body: ..."）、
+ * { message } / { error } / { detail } / { errors: [{ msg }] } 等常见形状。
+ */
+function extractValidationMessage(data: unknown): string | undefined {
+  if (typeof data === 'string') {
+    const trimmed = data.trim();
+    return trimmed || undefined;
+  }
+  if (data && typeof data === 'object') {
+    const obj = data as Record<string, unknown>;
+    if (typeof obj.message === 'string' && obj.message.trim()) return obj.message.trim();
+    if (typeof obj.error === 'string' && obj.error.trim()) return obj.error.trim();
+    if (typeof obj.detail === 'string' && obj.detail.trim()) return obj.detail.trim();
+    const errors = obj.errors;
+    if (Array.isArray(errors) && errors.length > 0) {
+      const first = errors[0] as { msg?: string; message?: string } | undefined;
+      const msg = first?.msg || first?.message;
+      if (typeof msg === 'string' && msg.trim()) return msg.trim();
+    }
+  }
+  return undefined;
+}
+
 interface CreateAxiosClientOptions {
   baseURL: string;
   timeout?: number;
@@ -386,6 +412,23 @@ const createAxiosClient = ({
           ? 'zh-CN'
           : 'zh-CN';
       requestConfig.headers['Accept-Language'] = normalizedLang;
+
+      // S1 全站修复：写操作（POST/PUT/PATCH）请求体统一清洗空串外键/日期字段。
+      // 后端 Option<Uuid>/Option<DateTime> 收到 "" 会 serde 反序列化失败 → 422；
+      // 这里把未选择的外键/日期空串从 payload 中删除（undefined），避免整包 422。
+      // 仅处理普通 JSON 对象；FormData/URLSearchParams/原始字符串等原样透传。
+      const method = (requestConfig.method || '').toUpperCase();
+      const bodyData = requestConfig.data;
+      if (
+        (method === 'POST' || method === 'PUT' || method === 'PATCH') &&
+        bodyData !== null &&
+        typeof bodyData === 'object' &&
+        !(bodyData instanceof FormData) &&
+        !(bodyData instanceof URLSearchParams) &&
+        !ArrayBuffer.isView(bodyData)
+      ) {
+        requestConfig.data = cleanEmptyOptionalFields(bodyData);
+      }
 
       // Notification 只读接口（GET /notifications/*）在缺 token 时本地短路返回空数据：
       // - 不发网络请求，避免触发后端 401；
@@ -592,6 +635,18 @@ const createAxiosClient = ({
           handleAuthError();
         }
         return Promise.reject(error);
+      }
+
+      // S1 加固：422（请求体校验/反序列化失败，如空串 UUID、缺必填字段）给出可读错误，
+      // 不再只抛 "Request failed with status code 422"。提取后端明细写入 error.message，
+      // 供通用 CrudPage 等 onError 通知直接展示。
+      if (error.response?.status === 422) {
+        const detail = extractValidationMessage(error.response.data);
+        if (detail) {
+          (error as unknown as { originalMessage?: string }).originalMessage = error.message;
+          error.message = detail;
+        }
+        apiLogger.warn(`[API 422] ${fullUrl} validation failed: ${detail || error.message}`);
       }
 
       const startTime = Number(error.config?.headers?.['X-Request-Start']) || Date.now();

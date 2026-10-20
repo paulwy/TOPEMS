@@ -53,12 +53,33 @@ export const handleApiError = (error: unknown): AppError => {
   }
 
   const axiosError = error as {
-    response?: { status: number; data?: { message?: string } };
+    response?: { status: number; data?: unknown };
   };
 
   if (axiosError.response) {
     const { status } = axiosError.response;
-    const message = axiosError.response.data?.message || 'Unknown error';
+    // 422 兼容多种响应体形状：纯文本（axum 反序列化错误）、{ message } / { error } / { detail } / { errors:[{msg}] }
+    const data = axiosError.response.data as
+      | string
+      | {
+          message?: string;
+          error?: string;
+          detail?: string;
+          errors?: Array<{ msg?: string; message?: string }>;
+        }
+      | undefined;
+    let message: string;
+    if (typeof data === 'string') {
+      message = data.trim() || 'Unknown error';
+    } else {
+      message =
+        data?.message ||
+        data?.error ||
+        data?.detail ||
+        data?.errors?.[0]?.msg ||
+        data?.errors?.[0]?.message ||
+        'Unknown error';
+    }
 
     switch (status) {
       case 401:
@@ -71,6 +92,8 @@ export const handleApiError = (error: unknown): AppError => {
       case 404:
         return { code: ErrorCode.NOT_FOUND, message: i18n.t('shared.errors.k2') };
       case 400:
+      case 422:
+        // 422 = 请求体校验/反序列化失败（空串 UUID、缺必填字段等），直接展示后端明细，不静默吞掉
         return { code: ErrorCode.VALIDATION, message };
       case 500:
         return { code: ErrorCode.SERVER, message: i18n.t('shared.errors.k3') };

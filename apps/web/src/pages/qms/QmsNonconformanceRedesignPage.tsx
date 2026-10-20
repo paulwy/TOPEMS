@@ -401,6 +401,8 @@ const QmsNonconformancePage: React.FC = () => {
         description: data.description || '',
         created_at: now,
       };
+      // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
+      let apiFailed = false;
       try {
         // 字段对齐 CreateQualityIssueRequest（适配器映射 source=category、assigned_to=assignee）
         await issueApi.createIssue({
@@ -414,19 +416,32 @@ const QmsNonconformancePage: React.FC = () => {
         } as unknown as CreateQualityIssueRequest);
       } catch (e) {
         console.warn('[QMS Nonconformance] Create API unavailable, using mock create:', e);
+        apiFailed = true;
+        setIsMockData(true);
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return record;
+      return { record, apiFailed };
     },
-    onSuccess: (record: Nonconformance) => {
-      // 无论 API 成败，新建记录真实加入列表（本地合并，不受 query 缓存/refetch 覆盖）
+    onSuccess: ({ record, apiFailed }) => {
+      // S1：无论 API 成败，本地记录都合并入列（既有 mock 结构保留）；但失败时给警示而非成功
       setLocallyCreated((prev) => [record, ...prev]);
       setCurrentPage(1);
       setSearchQuery('');
       setDebouncedSearch('');
       setSeverityFilter('all');
       setCreateModalOpen(false);
-      pushToast('success', t('qms.nonconformance_redesign.toast_create_success'));
+      if (apiFailed) {
+        // 降级 mock：明确告知未写入数据库，禁止静默假成功
+        pushToast(
+          'warning',
+          t(
+            'qms.nonconformance_redesign.mock_create_fallback',
+            '⚠️ 已降级为本地模拟数据，未写入数据库'
+          )
+        );
+      } else {
+        pushToast('success', t('qms.nonconformance_redesign.toast_create_success'));
+      }
     },
     onError: () => {
       pushToast('error', t('qms.nonconformance_redesign.toast_create_fail'));
@@ -435,6 +450,7 @@ const QmsNonconformancePage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Nonconformance> }) => {
+      let apiFailed = false;
       try {
         // 字段对齐 CreateQualityIssueRequest（updateIssue 适配器取 title/description/severity/status/assigned_to）
         await issueApi.updateIssue(id, {
@@ -446,11 +462,12 @@ const QmsNonconformancePage: React.FC = () => {
         } as unknown as CreateQualityIssueRequest);
       } catch (e) {
         console.warn('[QMS Nonconformance] Update API unavailable, using mock update:', e);
+        apiFailed = true;
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return { id, data };
+      return { id, data, apiFailed };
     },
-    onSuccess: ({ id, data }: { id: string; data: Partial<Nonconformance> }) => {
+    onSuccess: ({ id, data, apiFailed }) => {
       // 本地替换该记录（API 失败时表单变更即时可见，不被 mock 覆盖）
       queryClient.setQueriesData(
         { queryKey: QUERY_KEY },
@@ -464,7 +481,17 @@ const QmsNonconformancePage: React.FC = () => {
       );
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
-      pushToast('success', t('qms.nonconformance_redesign.toast_update_success'));
+      if (apiFailed) {
+        pushToast(
+          'warning',
+          t(
+            'qms.nonconformance_redesign.mock_update_fallback',
+            '⚠️ 已降级为本地模拟数据，未写入数据库'
+          )
+        );
+      } else {
+        pushToast('success', t('qms.nonconformance_redesign.toast_update_success'));
+      }
     },
     onError: () => {
       pushToast('error', t('qms.nonconformance_redesign.toast_update_fail'));
