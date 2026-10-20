@@ -6,8 +6,8 @@
 
 The Integration service provides external system integration capabilities for the TOPEMS platform, including webhook management, API connectors, data synchronization, and third-party system integration.
 
-**Service Name**: `integration`  
-**Base Path**: `/api/integration/v1`  
+**Service Name**: `integration`（端口 8072）  
+**Base Path**: `/api/integration`（legacy 别名 `/api/v1/integration`；不存在 `/api/integration` 后缀形式）  
 **Authentication**: Bearer Token (JWT) | API Key  
 **Tenant Isolation**: Multi-tenant support with `tenant_id` header
 
@@ -20,7 +20,7 @@ The Integration service provides external system integration capabilities for th
 #### 2.1.1 Create Webhook
 
 ```
-POST /api/integration/v1/webhooks
+POST /api/integration/webhooks
 ```
 
 **Description**: Create a new webhook endpoint
@@ -60,7 +60,7 @@ POST /api/integration/v1/webhooks
 #### 2.1.2 List Webhooks
 
 ```
-GET /api/integration/v1/webhooks
+GET /api/integration/webhooks
 ```
 
 **Description**: Get list of webhooks
@@ -103,7 +103,7 @@ GET /api/integration/v1/webhooks
 #### 2.1.3 Get Webhook
 
 ```
-GET /api/integration/v1/webhooks/{id}
+GET /api/integration/webhooks/{id}
 ```
 
 **Description**: Get webhook details
@@ -130,7 +130,7 @@ GET /api/integration/v1/webhooks/{id}
 #### 2.1.4 Update Webhook
 
 ```
-PUT /api/integration/v1/webhooks/{id}
+PUT /api/integration/webhooks/{id}
 ```
 
 **Description**: Update webhook configuration
@@ -163,7 +163,7 @@ PUT /api/integration/v1/webhooks/{id}
 #### 2.1.5 Delete Webhook
 
 ```
-DELETE /api/integration/v1/webhooks/{id}
+DELETE /api/integration/webhooks/{id}
 ```
 
 **Description**: Delete webhook
@@ -180,7 +180,7 @@ DELETE /api/integration/v1/webhooks/{id}
 #### 2.1.6 Test Webhook
 
 ```
-POST /api/integration/v1/webhooks/{id}/test
+POST /api/integration/webhooks/{id}/test
 ```
 
 **Description**: Send a test event to the webhook
@@ -213,7 +213,7 @@ POST /api/integration/v1/webhooks/{id}/test
 #### 2.1.7 Get Webhook Delivery Logs
 
 ```
-GET /api/integration/v1/webhooks/{id}/logs
+GET /api/integration/webhooks/{id}/logs
 ```
 
 **Description**: Get webhook delivery logs
@@ -257,7 +257,7 @@ GET /api/integration/v1/webhooks/{id}/logs
 #### 2.2.1 Create API Key
 
 ```
-POST /api/integration/v1/api-keys
+POST /api/integration/api-keys
 ```
 
 **Description**: Create an API key for external integration
@@ -292,7 +292,7 @@ POST /api/integration/v1/api-keys
 #### 2.2.2 List API Keys
 
 ```
-GET /api/integration/v1/api-keys
+GET /api/integration/api-keys
 ```
 
 **Description**: Get list of API keys
@@ -319,7 +319,7 @@ GET /api/integration/v1/api-keys
 #### 2.2.3 Revoke API Key
 
 ```
-POST /api/integration/v1/api-keys/{id}/revoke
+POST /api/integration/api-keys/{id}/revoke
 ```
 
 **Description**: Revoke an API key
@@ -342,7 +342,7 @@ POST /api/integration/v1/api-keys/{id}/revoke
 #### 2.3.1 List Available Connectors
 
 ```
-GET /api/integration/v1/connectors/available
+GET /api/integration/connectors/available
 ```
 
 **Description**: Get list of available connectors
@@ -392,7 +392,7 @@ GET /api/integration/v1/connectors/available
 #### 2.3.2 Create Connector Instance
 
 ```
-POST /api/integration/v1/connectors
+POST /api/integration/connectors
 ```
 
 **Description**: Create a connector instance
@@ -430,7 +430,7 @@ POST /api/integration/v1/connectors
 #### 2.3.3 Test Connector
 
 ```
-POST /api/integration/v1/connectors/{id}/test
+POST /api/integration/connectors/{id}/test
 ```
 
 **Description**: Test connector connection
@@ -456,7 +456,7 @@ POST /api/integration/v1/connectors/{id}/test
 #### 2.4.1 Create Sync Task
 
 ```
-POST /api/integration/v1/sync/tasks
+POST /api/integration/sync/tasks
 ```
 
 **Description**: Create a data synchronization task
@@ -501,7 +501,7 @@ POST /api/integration/v1/sync/tasks
 #### 2.4.2 Run Sync Task
 
 ```
-POST /api/integration/v1/sync/tasks/{id}/run
+POST /api/integration/sync/tasks/{id}/run
 ```
 
 **Description**: Manually run a sync task
@@ -522,7 +522,7 @@ POST /api/integration/v1/sync/tasks/{id}/run
 #### 2.4.3 Get Sync Task Status
 
 ```
-GET /api/integration/v1/sync/tasks/{id}/status
+GET /api/integration/sync/tasks/{id}/status
 ```
 
 **Description**: Get sync task status and history
@@ -563,7 +563,7 @@ GET /api/integration/v1/sync/tasks/{id}/status
 #### 2.5.1 List Available Events
 
 ```
-GET /api/integration/v1/events
+GET /api/integration/events
 ```
 
 **Description**: Get list of available events for webhooks

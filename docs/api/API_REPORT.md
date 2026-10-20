@@ -1,12 +1,13 @@
 # TOPEMS 报表系统 API
 
-**服务**: report-service
-**端口**: 待定
+**服务**: analytics（报表功能已并入 analytics/bi 服务，无独立 report-service）
+**端口**: 8060
 **版本**: v2
 
 ---
 
-> **API 路径**: `/api/report/` (例如 `/api/report/reports`)
+> **API 路径**: `/api/bi/`（报表模块路由挂在 `/api/bi` 之下，例如 `/api/bi/reports`、`/api/bi/templates`）
+> 旧独立 report-service 已下线；legacy 别名 `/api/v1/bi` 保留。
 
 ## 1. 概述
 
@@ -16,14 +17,14 @@
 
 | 功能 | 端点 | 方法 |
 |------|------|------|
-| 报表列表 | /api/report/reports | GET |
-| 报表详情 | /api/report/reports/{id} | GET |
-| 创建报表 | /api/report/reports | POST |
-| 删除报表 | /api/report/reports/{id} | DELETE |
-| 导出报表 | /api/report/reports/{id}/export | POST |
-| 报表模板列表 | /api/report/templates | GET |
-| 创建报表模板 | /api/report/templates | POST |
-| 报表类型列表 | /api/report/report-types | GET |
+| 报表列表 | /api/bi/reports | GET |
+| 报表详情 | /api/bi/reports/{id} | GET |
+| 创建报表 | /api/bi/reports | POST |
+| 删除报表 | /api/bi/reports/{id} | DELETE |
+| 导出报表 | /api/bi/reports/{id}/export | POST |
+| 报表模板列表 | /api/bi/templates | GET |
+| 创建报表模板 | /api/bi/templates | POST |
+| 报表类型列表 | /api/report/report-types（未落地，RC4a gap，暂未挂载） | GET |
 | 健康检查 | /health | GET |
 
 ### 1.2 数据模型
@@ -99,7 +100,7 @@
   "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "row_count": 15,
   "report_type": "rs_project_progress",
-  "download_url": "/api/report/reports/report-001/download/report_2026-05-22.xlsx"
+  "download_url": "/api/bi/reports/report-001/download/report_2026-05-22.xlsx"
 }
 ```
 
@@ -138,7 +139,7 @@
 
 ### 3.1 获取报表列表
 
-**端点**: `GET /api/report/reports`
+**端点**: `GET /api/bi/reports`
 
 **描述**: 获取所有已生成的报表
 
@@ -154,7 +155,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8011/api/report/reports?page=1&page_size=20&report_type=rs_project_progress" \
+curl -X GET "http://localhost:8060/api/bi/reports?page=1&page_size=20&report_type=rs_project_progress" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -195,7 +196,7 @@ curl -X GET "http://localhost:8011/api/report/reports?page=1&page_size=20&report
 
 ### 3.2 获取报表详情
 
-**端点**: `GET /api/report/reports/{id}`
+**端点**: `GET /api/bi/reports/{id}`
 
 **描述**: 获取指定报表的详细信息，包括数据内容
 
@@ -209,7 +210,7 @@ curl -X GET "http://localhost:8011/api/report/reports?page=1&page_size=20&report
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8011/api/report/reports/report-001 \
+curl -X GET http://localhost:8060/api/bi/reports/report-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -267,7 +268,7 @@ curl -X GET http://localhost:8011/api/report/reports/report-001 \
 
 ### 3.3 创建报表
 
-**端点**: `POST /api/report/reports`
+**端点**: `POST /api/bi/reports`
 
 **描述**: 创建新的报表
 
@@ -318,7 +319,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8011/api/report/reports \
+curl -X POST http://localhost:8060/api/bi/reports \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -374,7 +375,7 @@ curl -X POST http://localhost:8011/api/report/reports \
 
 ### 3.4 删除报表
 
-**端点**: `DELETE /api/report/reports/{id}`
+**端点**: `DELETE /api/bi/reports/{id}`
 
 **描述**: 删除指定报表
 
@@ -390,7 +391,7 @@ curl -X POST http://localhost:8011/api/report/reports \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8011/api/report/reports/report-001 \
+curl -X DELETE http://localhost:8060/api/bi/reports/report-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -410,7 +411,7 @@ curl -X DELETE http://localhost:8011/api/report/reports/report-001 \
 
 ### 4.1 导出报表
 
-**端点**: `POST /api/report/reports/{id}/export`
+**端点**: `POST /api/bi/reports/{id}/export`
 
 **描述**: 导出报表为指定格式
 
@@ -446,7 +447,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8011/api/report/reports/report-001/export \
+curl -X POST http://localhost:8060/api/bi/reports/report-001/export \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -466,7 +467,7 @@ curl -X POST http://localhost:8011/api/report/reports/report-001/export \
     "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "row_count": 15,
     "report_type": "rs_project_progress",
-    "download_url": "/api/report/reports/report-001/download/项目进度_2026年5月.xlsx"
+    "download_url": "/api/bi/reports/report-001/download/项目进度_2026年5月.xlsx"
   },
   "error": null
 }
@@ -478,7 +479,7 @@ curl -X POST http://localhost:8011/api/report/reports/report-001/export \
 
 ### 5.1 获取报表模板列表
 
-**端点**: `GET /api/report/templates`
+**端点**: `GET /api/bi/templates`
 
 **描述**: 获取所有报表模板
 
@@ -493,7 +494,7 @@ curl -X POST http://localhost:8011/api/report/reports/report-001/export \
 
 ### 5.2 创建报表模板
 
-**端点**: `POST /api/report/templates`
+**端点**: `POST /api/bi/templates`
 
 **描述**: 创建新的报表模板
 
@@ -527,21 +528,24 @@ Authorization: Bearer {token}
 
 ---
 
-## 6. 报表类型接口
+## 6. 报表类型接口（未落地，RC4a gap）
 
-### 6.1 获取报表类型列表
+> **状态**: 该接口（`/api/report/report-types`）在 analytics 服务中尚未挂载，属 RC4a 待补 gap，以下示例为历史设计稿，当前不可调用。
 
-**端点**: `GET /api/report/report-types`
+### 6.1 获取报表类型列表（设计稿，未实现）
 
-**描述**: 获取所有可用的报表类型
+**端点**: `GET /api/report/report-types`（未挂载）
+
+**描述**: 获取所有可用的报表类型（设计目标）
 
 **认证**: 需要
 
-**请求示例**:
+**历史请求示例（不可调用）**:
 
 ```bash
-curl -X GET http://localhost:8011/api/report/report-types \
-  -H "Authorization: Bearer {token}"
+# 未落地，请勿调用；RC4a gap
+# curl -X GET http://localhost:8060/api/report/report-types \
+#   -H "Authorization: Bearer {token}"
 ```
 
 **成功响应** (200 OK):
@@ -630,7 +634,7 @@ curl -X GET http://localhost:8011/api/report/report-types \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8011/health
+curl -X GET http://localhost:8060/health
 ```
 
 **成功响应** (200 OK):

@@ -12,13 +12,13 @@ Core 组是 TOPEMS 模块化单体的核心模块组，包含 7 个核心模块�
 
 | 模块 | 说明 | 路由前缀 |
 |------|------|----------|
-| unified-core | 统一核心服务（IAM, Doc, Flow, File, Monitor 等虚拟服务） | `/api/core` |
-| monitor | 监控模块（7 个子模块） | `/api/monitor` |
-| plugin-registry | 插件注册表（52 个 handler） | `/api/plugin-registry` |
-| search | 搜索模块（3 个 handler） | `/api/search` |
-| communication | 通信模块（notification 25 个 + im/mail 16 个，总计 44 个 handler） | `/api/communication` |
-| integration | 集成模块（完整路由接入） | `/api/integration` |
-| mobile | 移动端模块（3 个 handler） | `/api/mobile` |
+| unified-core | 统一核心服务（IAM, Doc, Flow, File 等虚拟服务，端口 8000；单体 8099） | `/api/core` |
+| monitor | 监控模块（独立服务 8095，V68.1 自 core 迁出） | `/api/monitor` |
+| plugin-registry | 插件注册表（独立服务 8096） | `/api/plugins/*` |
+| search | 搜索模块（独立服务 8082） | `/api/search` |
+| communication | 通信模块（独立服务 8084，notification 25 个 + im/mail 16 个，总计 44 个 handler） | `/api/communication` |
+| integration | 集成模块（独立服务 8072） | `/api/integration` |
+| mobile | 移动端模块（独立服务 8070） | `/api/mobile` |
 
 ---
 
@@ -27,7 +27,8 @@ Core 组是 TOPEMS 模块化单体的核心模块组，包含 7 个核心模块�
 ### 基础 URL
 
 ```
-http://localhost:8000/api/{module}/...
+# unified-core（IAM/Doc/Flow/File）：http://localhost:8000（单体 8099）
+# monitor 8095 / communication 8084 / plugin-registry 8096 / search 8082 / integration 8072 / mobile 8070 各为独立服务端口
 ```
 
 ### 认证方式

@@ -10,9 +10,10 @@
 
 | 环境 | URL |
 |------|-----|
-| 开发环境 | `http://localhost:8013/api/v1` |
-| 测试环境 | `https://staging.topems.com/api/v1` |
-| 生产环境 | `https://api.topems.com/api/v1` |
+| 开发环境（模块化单体，默认） | `http://localhost:8099`（登录/核心/业务经单体统一入口；登录路径 `/api/core/iam/auth/login`） |
+| 开发环境（AI 服务专属） | `http://localhost:8013`（仅 AI `/api/ai/*`，8013 不是通用 API 基址） |
+| 测试环境 | `https://staging.topems.com`（经网关，按服务前缀路由） |
+| 生产环境 | `https://api.topems.com`（nginx 单上游 8099） |
 
 ### 认证方式
 
@@ -857,28 +858,28 @@ Content-Type: application/json
 ### 12.1 cURL 示例
 
 ```bash
-# 登录获取 Token
-curl -X POST http://localhost:8013/api/v1/auth/login \
+# 登录获取 Token（core/iam，单体 8099；独立 core 为 8000）
+curl -X POST http://localhost:8099/api/core/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"your-password"}'
 
-# 发送 AI 对话
-curl -X POST http://localhost:8013/api/v1/ai/chat \
+# 发送 AI 对话（AI 专属端口 8013，前缀 /api/ai）
+curl -X POST http://localhost:8013/api/ai/chat \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-token>" \
   -d '{"message":"帮我查询采购订单","module":"erp"}'
 
-# 获取用户列表
-curl -X GET "http://localhost:8013/api/v1/users?page=1&page_size=20" \
+# 获取当前用户信息
+curl -X GET http://localhost:8099/api/core/iam/users/me \
   -H "Authorization: Bearer <your-token>"
 ```
 
 ### 12.2 JavaScript 示例
 
 ```javascript
-// 登录
+// 登录（core/iam，经前端代理走单体 8099）
 async function login(username, password) {
-  const response = await fetch('/api/v1/auth/login', {
+  const response = await fetch('/api/core/iam/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
@@ -886,9 +887,9 @@ async function login(username, password) {
   return response.json();
 }
 
-// 发送 AI 对话
+// 发送 AI 对话（直连 AI 服务 8013，前缀 /api/ai）
 async function sendChatMessage(token, message, module = 'general') {
-  const response = await fetch('/api/v1/ai/chat', {
+  const response = await fetch('http://localhost:8013/api/ai/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -899,9 +900,9 @@ async function sendChatMessage(token, message, module = 'general') {
   return response.json();
 }
 
-// 获取业务模块列表
-async function getModules(token) {
-  const response = await fetch('/api/v1/copilot/modules', {
+// 获取当前用户信息
+async function getCurrentUser(token) {
+  const response = await fetch('/api/core/iam/users/me', {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   return response.json();
@@ -913,11 +914,12 @@ async function getModules(token) {
 ```python
 import requests
 
-BASE_URL = 'http://localhost:8013/api/v1'
+CORE_BASE = 'http://localhost:8099'   # 单体/核心（登录、/api/core/iam/*）
+AI_BASE = 'http://localhost:8013'     # AI 专属（/api/ai/*）
 
 def login(username, password):
     response = requests.post(
-        f'{BASE_URL}/auth/login',
+        f'{CORE_BASE}/api/core/iam/auth/login',
         json={'username': username, 'password': password}
     )
     return response.json()
@@ -928,19 +930,17 @@ def send_chat_message(token, message, module='general'):
         'Authorization': f'Bearer {token}'
     }
     response = requests.post(
-        f'{BASE_URL}/ai/chat',
+        f'{AI_BASE}/api/ai/chat',
         headers=headers,
         json={'message': message, 'module': module}
     )
     return response.json()
 
-def get_user_list(token, page=1, page_size=20):
+def get_current_user(token):
     headers = {'Authorization': f'Bearer {token}'}
-    params = {'page': page, 'page_size': page_size}
     response = requests.get(
-        f'{BASE_URL}/users',
-        headers=headers,
-        params=params
+        f'{CORE_BASE}/api/core/iam/users/me',
+        headers=headers
     )
     return response.json()
 ```

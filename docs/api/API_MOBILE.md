@@ -6,8 +6,8 @@
 
 The Mobile service provides mobile-optimized API endpoints for the TOPEMS platform, enabling native mobile applications to access core business functions with simplified responses and offline support.
 
-**Service Name**: `mobile`  
-**Base Path**: `/api/mobile/v1`  
+**Service Name**: `mobile`（端口 8070）  
+**Base Path**: `/api/mobile`（legacy 别名 `/api/v1/mobile`；不存在 `/api/mobile` 后缀形式）  
 **Authentication**: Bearer Token (JWT) | Mobile Token  
 **Tenant Isolation**: Multi-tenant support with `tenant_id` header
 
@@ -20,7 +20,7 @@ The Mobile service provides mobile-optimized API endpoints for the TOPEMS platfo
 #### 2.1.1 Mobile Login
 
 ```
-POST /api/mobile/v1/auth/login
+POST /api/mobile/auth/login
 ```
 
 **Description**: Authenticate mobile user
@@ -58,7 +58,7 @@ POST /api/mobile/v1/auth/login
 #### 2.1.2 Refresh Token
 
 ```
-POST /api/mobile/v1/auth/refresh
+POST /api/mobile/auth/refresh
 ```
 
 **Description**: Refresh access token
@@ -88,7 +88,7 @@ POST /api/mobile/v1/auth/refresh
 #### 2.2.1 Check In
 
 ```
-POST /api/mobile/v1/attendance/check-in
+POST /api/mobile/attendance/check-in
 ```
 
 **Description**: Record attendance check-in
@@ -120,7 +120,7 @@ POST /api/mobile/v1/attendance/check-in
 #### 2.2.2 Check Out
 
 ```
-POST /api/mobile/v1/attendance/check-out
+POST /api/mobile/attendance/check-out
 ```
 
 **Description**: Record attendance check-out
@@ -153,7 +153,7 @@ POST /api/mobile/v1/attendance/check-out
 #### 2.2.3 Get Attendance History
 
 ```
-GET /api/mobile/v1/attendance/history
+GET /api/mobile/attendance/history
 ```
 
 **Description**: Get attendance records for a period
@@ -195,7 +195,7 @@ GET /api/mobile/v1/attendance/history
 #### 2.3.1 Get Inventory List
 
 ```
-GET /api/mobile/v1/inventory
+GET /api/mobile/inventory
 ```
 
 **Description**: Get inventory items for mobile
@@ -239,7 +239,7 @@ GET /api/mobile/v1/inventory
 #### 2.3.2 Scan Inventory
 
 ```
-POST /api/mobile/v1/inventory/scan
+POST /api/mobile/inventory/scan
 ```
 
 **Description**: Scan barcode/QR code to update inventory
@@ -274,7 +274,7 @@ POST /api/mobile/v1/inventory/scan
 #### 2.4.1 Get Production Orders
 
 ```
-GET /api/mobile/v1/production/orders
+GET /api/mobile/production/orders
 ```
 
 **Description**: Get production orders for mobile
@@ -316,7 +316,7 @@ GET /api/mobile/v1/production/orders
 #### 2.4.2 Update Production Progress
 
 ```
-POST /api/mobile/v1/production/orders/{id}/progress
+POST /api/mobile/production/orders/{id}/progress
 ```
 
 **Description**: Update production order progress
@@ -356,7 +356,7 @@ POST /api/mobile/v1/production/orders/{id}/progress
 #### 2.5.1 Get Notifications
 
 ```
-GET /api/mobile/v1/notifications
+GET /api/mobile/notifications
 ```
 
 **Description**: Get user notifications
@@ -399,7 +399,7 @@ GET /api/mobile/v1/notifications
 #### 2.5.2 Mark as Read
 
 ```
-POST /api/mobile/v1/notifications/{id}/read
+POST /api/mobile/notifications/{id}/read
 ```
 
 **Description**: Mark notification as read
@@ -426,7 +426,7 @@ POST /api/mobile/v1/notifications/{id}/read
 #### 2.6.1 Get Pending Approvals
 
 ```
-GET /api/mobile/v1/approvals/pending
+GET /api/mobile/approvals/pending
 ```
 
 **Description**: Get pending approval tasks
@@ -456,7 +456,7 @@ GET /api/mobile/v1/approvals/pending
 #### 2.6.2 Approve Task
 
 ```
-POST /api/mobile/v1/approvals/{id}/approve
+POST /api/mobile/approvals/{id}/approve
 ```
 
 **Description**: Approve an approval task
@@ -489,7 +489,7 @@ POST /api/mobile/v1/approvals/{id}/approve
 #### 2.6.3 Reject Task
 
 ```
-POST /api/mobile/v1/approvals/{id}/reject
+POST /api/mobile/approvals/{id}/reject
 ```
 
 **Description**: Reject an approval task
@@ -519,7 +519,7 @@ POST /api/mobile/v1/approvals/{id}/reject
 #### 2.7.1 Get Sync Data
 
 ```
-GET /api/mobile/v1/offline/sync
+GET /api/mobile/offline/sync
 ```
 
 **Description**: Get data for offline synchronization
@@ -550,7 +550,7 @@ GET /api/mobile/v1/offline/sync
 #### 2.7.2 Upload Offline Data
 
 ```
-POST /api/mobile/v1/offline/upload
+POST /api/mobile/offline/upload
 ```
 
 **Description**: Upload locally saved data when back online
@@ -585,7 +585,7 @@ POST /api/mobile/v1/offline/upload
 #### 2.8.1 Get User Profile
 
 ```
-GET /api/mobile/v1/user/profile
+GET /api/mobile/user/profile
 ```
 
 **Description**: Get current user profile
@@ -613,7 +613,7 @@ GET /api/mobile/v1/user/profile
 #### 2.8.2 Update User Profile
 
 ```
-PUT /api/mobile/v1/user/profile
+PUT /api/mobile/user/profile
 ```
 
 **Description**: Update user profile
@@ -644,7 +644,7 @@ PUT /api/mobile/v1/user/profile
 #### 2.8.3 Change Password
 
 ```
-POST /api/mobile/v1/user/change-password
+POST /api/mobile/user/change-password
 ```
 
 **Description**: Change user password
@@ -669,7 +669,7 @@ POST /api/mobile/v1/user/change-password
 #### 2.8.4 Get User by ID
 
 ```
-GET /api/mobile/v1/user/{id}
+GET /api/mobile/user/{id}
 ```
 
 **Description**: Get user by ID
@@ -695,7 +695,7 @@ GET /api/mobile/v1/user/{id}
 #### 2.8.5 Get Users
 
 ```
-GET /api/mobile/v1/user
+GET /api/mobile/user
 ```
 
 **Description**: Get users with pagination
@@ -726,7 +726,7 @@ GET /api/mobile/v1/user
 #### 2.9.1 Get Tasks
 
 ```
-GET /api/mobile/v1/task
+GET /api/mobile/task
 ```
 
 **Description**: Get tasks with filters
@@ -767,7 +767,7 @@ GET /api/mobile/v1/task
 #### 2.9.2 Create Task
 
 ```
-POST /api/mobile/v1/task
+POST /api/mobile/task
 ```
 
 **Description**: Create a new task
@@ -802,7 +802,7 @@ POST /api/mobile/v1/task
 #### 2.9.3 Update Task
 
 ```
-PUT /api/mobile/v1/task/{id}
+PUT /api/mobile/task/{id}
 ```
 
 **Description**: Update task
@@ -832,7 +832,7 @@ PUT /api/mobile/v1/task/{id}
 #### 2.9.4 Complete Task
 
 ```
-POST /api/mobile/v1/task/{id}/complete
+POST /api/mobile/task/{id}/complete
 ```
 
 **Description**: Mark task as completed
@@ -853,7 +853,7 @@ POST /api/mobile/v1/task/{id}/complete
 #### 2.9.5 Get My Tasks
 
 ```
-GET /api/mobile/v1/task/my
+GET /api/mobile/task/my
 ```
 
 **Description**: Get tasks assigned to current user
@@ -880,7 +880,7 @@ GET /api/mobile/v1/task/my
 #### 2.9.6 Get Pending Tasks
 
 ```
-GET /api/mobile/v1/task/pending
+GET /api/mobile/task/pending
 ```
 
 **Description**: Get all pending tasks
@@ -897,7 +897,7 @@ GET /api/mobile/v1/task/pending
 #### 2.9.7 Get Overdue Tasks
 
 ```
-GET /api/mobile/v1/task/overdue
+GET /api/mobile/task/overdue
 ```
 
 **Description**: Get all overdue tasks
@@ -914,7 +914,7 @@ GET /api/mobile/v1/task/overdue
 #### 2.9.8 Batch Update Status
 
 ```
-POST /api/mobile/v1/task/batch/status
+POST /api/mobile/task/batch/status
 ```
 
 **Description**: Batch update task status
@@ -944,7 +944,7 @@ POST /api/mobile/v1/task/batch/status
 #### 2.10.1 Get Events
 
 ```
-GET /api/mobile/v1/schedule/events
+GET /api/mobile/schedule/events
 ```
 
 **Description**: Get events with filters
@@ -983,7 +983,7 @@ GET /api/mobile/v1/schedule/events
 #### 2.10.2 Create Event
 
 ```
-POST /api/mobile/v1/schedule/events
+POST /api/mobile/schedule/events
 ```
 
 **Description**: Create a new event
@@ -1016,7 +1016,7 @@ POST /api/mobile/v1/schedule/events
 #### 2.10.3 Get Today Events
 
 ```
-GET /api/mobile/v1/schedule/events/today
+GET /api/mobile/schedule/events/today
 ```
 
 **Description**: Get today's events
@@ -1033,7 +1033,7 @@ GET /api/mobile/v1/schedule/events/today
 #### 2.10.4 Get Week Events
 
 ```
-GET /api/mobile/v1/schedule/events/week
+GET /api/mobile/schedule/events/week
 ```
 
 **Description**: Get week's events
@@ -1050,7 +1050,7 @@ GET /api/mobile/v1/schedule/events/week
 #### 2.10.5 Get Month Events
 
 ```
-GET /api/mobile/v1/schedule/events/month?year=2026&month=4
+GET /api/mobile/schedule/events/month?year=2026&month=4
 ```
 
 **Description**: Get month's events
@@ -1073,7 +1073,7 @@ GET /api/mobile/v1/schedule/events/month?year=2026&month=4
 #### 2.10.6 Update Event Status
 
 ```
-PUT /api/mobile/v1/schedule/events/{id}/status
+PUT /api/mobile/schedule/events/{id}/status
 ```
 
 **Description**: Update event status
@@ -1102,7 +1102,7 @@ PUT /api/mobile/v1/schedule/events/{id}/status
 #### 2.11.1 Register Device
 
 ```
-POST /api/mobile/v1/device/register
+POST /api/mobile/device/register
 ```
 
 **Description**: Register mobile device
@@ -1135,7 +1135,7 @@ POST /api/mobile/v1/device/register
 #### 2.11.2 Get My Devices
 
 ```
-GET /api/mobile/v1/device/my
+GET /api/mobile/device/my
 ```
 
 **Description**: Get user's devices
@@ -1152,7 +1152,7 @@ GET /api/mobile/v1/device/my
 #### 2.11.3 Set Active Device
 
 ```
-POST /api/mobile/v1/device/{id}/activate
+POST /api/mobile/device/{id}/activate
 ```
 
 **Description**: Set device as active
@@ -1172,7 +1172,7 @@ POST /api/mobile/v1/device/{id}/activate
 #### 2.11.4 Disable Device
 
 ```
-POST /api/mobile/v1/device/{id}/disable
+POST /api/mobile/device/{id}/disable
 ```
 
 **Description**: Disable device
@@ -1192,7 +1192,7 @@ POST /api/mobile/v1/device/{id}/disable
 #### 2.11.5 Get Device Stats
 
 ```
-GET /api/mobile/v1/device/stats
+GET /api/mobile/device/stats
 ```
 
 **Description**: Get device statistics
@@ -1216,7 +1216,7 @@ GET /api/mobile/v1/device/stats
 #### 2.12.1 Get Dashboard Stats
 
 ```
-GET /api/mobile/v1/dashboard/stats
+GET /api/mobile/dashboard/stats
 ```
 
 **Description**: Get dashboard statistics
@@ -1242,7 +1242,7 @@ GET /api/mobile/v1/dashboard/stats
 #### 2.12.2 Get Quick Actions
 
 ```
-GET /api/mobile/v1/dashboard/quick-actions
+GET /api/mobile/dashboard/quick-actions
 ```
 
 **Description**: Get quick actions
@@ -1267,7 +1267,7 @@ GET /api/mobile/v1/dashboard/quick-actions
 #### 2.12.3 Get Recent Activities
 
 ```
-GET /api/mobile/v1/dashboard/activities?limit=10
+GET /api/mobile/dashboard/activities?limit=10
 ```
 
 **Description**: Get recent activities
@@ -1297,7 +1297,7 @@ GET /api/mobile/v1/dashboard/activities?limit=10
 #### 2.12.4 Get KPIs
 
 ```
-GET /api/mobile/v1/dashboard/kpis?period=today
+GET /api/mobile/dashboard/kpis?period=today
 ```
 
 **Description**: Get KPIs by period
@@ -1328,7 +1328,7 @@ GET /api/mobile/v1/dashboard/kpis?period=today
 #### 2.12.5 Get Charts
 
 ```
-GET /api/mobile/v1/dashboard/charts?chart_type=tasks&period=week
+GET /api/mobile/dashboard/charts?chart_type=tasks&period=week
 ```
 
 **Description**: Get chart data
@@ -1360,7 +1360,7 @@ GET /api/mobile/v1/dashboard/charts?chart_type=tasks&period=week
 #### 2.12.6 Get Alerts
 
 ```
-GET /api/mobile/v1/dashboard/alerts
+GET /api/mobile/dashboard/alerts
 ```
 
 **Description**: Get dashboard alerts
@@ -1386,7 +1386,7 @@ GET /api/mobile/v1/dashboard/alerts
 #### 2.12.7 Get Announcements
 
 ```
-GET /api/mobile/v1/dashboard/announcements
+GET /api/mobile/dashboard/announcements
 ```
 
 **Description**: Get announcements

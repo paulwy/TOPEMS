@@ -6,8 +6,8 @@
 
 The Document service provides document management capabilities for the TOPEMS platform, including file upload, storage, version control, and document workflow management.
 
-**Service Name**: `doc`  
-**Base Path**: `/api/doc/v1`  
+**Service Name**: `doc`（文档路由由 unified-core 承载，无独立进程）  
+**Base Path**: `/api/core/doc`  
 **Authentication**: Bearer Token (JWT)  
 **Tenant Isolation**: Multi-tenant support with `tenant_id` header
 
@@ -20,7 +20,7 @@ The Document service provides document management capabilities for the TOPEMS pl
 #### 2.1.1 Upload Document
 
 ```
-POST /api/doc/v1/documents/upload
+POST /api/core/doc/documents/upload
 ```
 
 **Description**: Upload a document
@@ -64,7 +64,7 @@ POST /api/doc/v1/documents/upload
 #### 2.1.2 List Documents
 
 ```
-GET /api/doc/v1/documents
+GET /api/core/doc/documents
 ```
 
 **Description**: Get document list
@@ -108,7 +108,7 @@ GET /api/doc/v1/documents
 #### 2.1.3 Get Document
 
 ```
-GET /api/doc/v1/documents/{id}
+GET /api/core/doc/documents/{id}
 ```
 
 **Description**: Get document details
@@ -144,7 +144,7 @@ GET /api/doc/v1/documents/{id}
 #### 2.1.4 Download Document
 
 ```
-GET /api/doc/v1/documents/{id}/download
+GET /api/core/doc/documents/{id}/download
 ```
 
 **Description**: Download document file
@@ -159,7 +159,7 @@ GET /api/doc/v1/documents/{id}/download
 #### 2.1.5 Update Document
 
 ```
-PUT /api/doc/v1/documents/{id}
+PUT /api/core/doc/documents/{id}
 ```
 
 **Description**: Update document metadata
@@ -192,7 +192,7 @@ PUT /api/doc/v1/documents/{id}
 #### 2.1.6 Delete Document
 
 ```
-DELETE /api/doc/v1/documents/{id}
+DELETE /api/core/doc/documents/{id}
 ```
 
 **Description**: Delete document
@@ -211,7 +211,7 @@ DELETE /api/doc/v1/documents/{id}
 #### 2.2.1 Upload New Version
 
 ```
-POST /api/doc/v1/documents/{id}/versions/upload
+POST /api/core/doc/documents/{id}/versions/upload
 ```
 
 **Description**: Upload a new version of a document
@@ -247,7 +247,7 @@ POST /api/doc/v1/documents/{id}/versions/upload
 #### 2.2.2 Get Version History
 
 ```
-GET /api/doc/v1/documents/{id}/versions
+GET /api/core/doc/documents/{id}/versions
 ```
 
 **Description**: Get document version history
@@ -283,7 +283,7 @@ GET /api/doc/v1/documents/{id}/versions
 #### 2.2.3 Restore Version
 
 ```
-POST /api/doc/v1/documents/{id}/versions/{version_id}/restore
+POST /api/core/doc/documents/{id}/versions/{version_id}/restore
 ```
 
 **Description**: Restore a previous version
@@ -305,7 +305,7 @@ POST /api/doc/v1/documents/{id}/versions/{version_id}/restore
 #### 2.3.1 Get Categories
 
 ```
-GET /api/doc/v1/categories
+GET /api/core/doc/categories
 ```
 
 **Description**: Get document categories
@@ -341,7 +341,7 @@ GET /api/doc/v1/categories
 #### 2.3.2 Create Category
 
 ```
-POST /api/doc/v1/categories
+POST /api/core/doc/categories
 ```
 
 **Description**: Create document category
@@ -374,7 +374,7 @@ POST /api/doc/v1/categories
 #### 2.4.1 Submit for Review
 
 ```
-POST /api/doc/v1/documents/{id}/submit-review
+POST /api/core/doc/documents/{id}/submit-review
 ```
 
 **Description**: Submit document for review
@@ -404,7 +404,7 @@ POST /api/doc/v1/documents/{id}/submit-review
 #### 2.4.2 Review Document
 
 ```
-POST /api/doc/v1/documents/{id}/review
+POST /api/core/doc/documents/{id}/review
 ```
 
 **Description**: Review a document

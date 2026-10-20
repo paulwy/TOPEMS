@@ -6,8 +6,8 @@
 
 The Portal service provides user portal capabilities for the TOPEMS platform, including dashboard customization, widget management, and personalized user experience.
 
-**Service Name**: `portal`  
-**Base Path**: `/api/portal/v1`  
+**Service Name**: `portal`（端口 8063）  
+**Base Path**: `/api/portal`（legacy 别名 `/api/v1/portal`；不存在 `/api/portal` 后缀形式）  
 **Authentication**: Bearer Token (JWT)  
 **Tenant Isolation**: Multi-tenant support with `tenant_id` header
 
@@ -20,7 +20,7 @@ The Portal service provides user portal capabilities for the TOPEMS platform, in
 #### 2.1.1 Get User Dashboard
 
 ```
-GET /api/portal/v1/dashboard
+GET /api/portal/dashboard
 ```
 
 **Description**: Get user's personalized dashboard
@@ -59,7 +59,7 @@ GET /api/portal/v1/dashboard
 #### 2.1.2 Update Dashboard Layout
 
 ```
-PUT /api/portal/v1/dashboard
+PUT /api/portal/dashboard
 ```
 
 **Description**: Update dashboard layout and widgets
@@ -99,7 +99,7 @@ PUT /api/portal/v1/dashboard
 #### 2.2.1 Get Available Widgets
 
 ```
-GET /api/portal/v1/widgets/available
+GET /api/portal/widgets/available
 ```
 
 **Description**: Get list of available widget types
@@ -152,7 +152,7 @@ GET /api/portal/v1/widgets/available
 #### 2.2.2 Add Widget
 
 ```
-POST /api/portal/v1/widgets
+POST /api/portal/widgets
 ```
 
 **Description**: Add a widget to dashboard
@@ -185,7 +185,7 @@ POST /api/portal/v1/widgets
 #### 2.2.3 Update Widget
 
 ```
-PUT /api/portal/v1/widgets/{id}
+PUT /api/portal/widgets/{id}
 ```
 
 **Description**: Update widget configuration
@@ -216,7 +216,7 @@ PUT /api/portal/v1/widgets/{id}
 #### 2.2.4 Remove Widget
 
 ```
-DELETE /api/portal/v1/widgets/{id}
+DELETE /api/portal/widgets/{id}
 ```
 
 **Description**: Remove widget from dashboard
@@ -235,7 +235,7 @@ DELETE /api/portal/v1/widgets/{id}
 #### 2.3.1 Get Quick Actions
 
 ```
-GET /api/portal/v1/quick-actions
+GET /api/portal/quick-actions
 ```
 
 **Description**: Get user's quick actions
@@ -274,7 +274,7 @@ GET /api/portal/v1/quick-actions
 #### 2.3.2 Update Quick Actions
 
 ```
-PUT /api/portal/v1/quick-actions
+PUT /api/portal/quick-actions
 ```
 
 **Description**: Update user's quick actions
@@ -305,7 +305,7 @@ PUT /api/portal/v1/quick-actions
 #### 2.4.1 Get Recent Activities
 
 ```
-GET /api/portal/v1/activities
+GET /api/portal/activities
 ```
 
 **Description**: Get user's recent activities
@@ -348,7 +348,7 @@ GET /api/portal/v1/activities
 #### 2.5.1 Get User Preferences
 
 ```
-GET /api/portal/v1/preferences
+GET /api/portal/preferences
 ```
 
 **Description**: Get user preferences
@@ -376,7 +376,7 @@ GET /api/portal/v1/preferences
 #### 2.5.2 Update User Preferences
 
 ```
-PUT /api/portal/v1/preferences
+PUT /api/portal/preferences
 ```
 
 **Description**: Update user preferences
@@ -415,7 +415,7 @@ PUT /api/portal/v1/preferences
 #### 2.6.1 Get Announcements
 
 ```
-GET /api/portal/v1/announcements
+GET /api/portal/announcements
 ```
 
 **Description**: Get system announcements
@@ -443,7 +443,7 @@ GET /api/portal/v1/announcements
 #### 2.6.2 Mark as Read
 
 ```
-POST /api/portal/v1/announcements/{id}/read
+POST /api/portal/announcements/{id}/read
 ```
 
 **Description**: Mark announcement as read

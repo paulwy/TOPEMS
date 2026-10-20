@@ -21,9 +21,9 @@ http://localhost/api/{service}/...
 
 或直接访问服务：
 ```
-http://localhost:8000/api/iam/...  # 核心服务
-http://localhost:8010/api/erp/...   # ERP 服务
-http://localhost:8013/api/ai/...    # AI 服务
+http://localhost:8000/api/core/iam/...  # 核心服务（unified-core）
+http://localhost:8010/api/erp/...        # ERP 服务
+http://localhost:8013/api/ai/...         # AI 服务（8013 为 AI 专属端口）
 ```
 
 ### 认证方式
@@ -124,7 +124,8 @@ GET /health/details
 | 服务 | 端口 | API 前缀 | 说明 | 状态 |
 |------|------|----------|------|------|
 | **核心服务 (统一承载)** |
-| unified-core | 8000 | /api/iam/, /api/doc/, /api/flow/, /api/file/, /api/mail/, /api/comm/, /api/notification/, /api/core/monitor/ | 核心平台 | ✅ |
+| unified-core | 8000 | /api/core/iam/, /api/core/doc/, /api/core/flow/, /api/file/, /api/mail/, /api/core/comm/（含 legacy /api/core/notification/） | 核心平台 | ✅ |
+| monitor | 8095 | /api/monitor/ | 系统监控（V68.1 自 core 迁出独立） | ✅ |
 | **经营管理 (8010-8019)** |
 | erp | 8010 | /api/erp/ | 企业资源计划 | ✅ |
 | **协同办公 (8020-8029)** |
@@ -144,10 +145,9 @@ GET /health/details
 | ehs | 8052 | /api/ehs/ | 环境健康安全 | ✅ |
 | rd | 8053 | /api/rd/ | 研发管理 | ✅ |
 | **数据分析 (8060-8069)** |
-| bi | 8060 | /api/bi/ | 商业智能 | ✅ |
-| report | 8061 | /api/report/ | 报表服务 | ✅ |
+| bi（analytics，含原 report 报表） | 8060 | /api/bi/ | 商业智能/报表 | ✅ |
 | portal | 8063 | /api/portal/ | 企业门户 | ✅ |
-| ai | 8013 AI 智能服务 | ✅ |
+| ai | 8013 | /api/ai/ | AI 智能服务（专属端口） | ✅ |
 | **基础设施 (8070-8079)** |
 | mobile | 8070 | /api/mobile/ | 移动服务 | ✅ |
 | gis | 8071 | /api/gis/ | 地理信息服务 | ✅ |
@@ -155,42 +155,42 @@ GET /health/details
 
 ## 核心服务 API
 
-### IAM 认证服务 (/api/iam/)
+### IAM 认证服务 (/api/core/iam/，由 unified-core 8000 承载)
 
 | 方法 | 路径 | 说明 | 需要认证 |
 |------|------|------|----------|
-| POST | /api/iam/auth/login | 用户登录 | ❌ |
-| POST | /api/iam/auth/logout | 用户登出 | ✅ |
-| POST | /api/iam/auth/refresh | 刷新 Token | ✅ |
-| GET | /api/iam/users/me | 获取当前用户 | ✅ |
-| GET | /api/iam/users | 获取用户列表 | ✅ |
-| POST | /api/iam/users | 创建用户 | ✅ |
-| GET | /api/iam/users/{id} | 获取用户详情 | ✅ |
-| PUT | /api/iam/users/{id} | 更新用户 | ✅ |
-| DELETE | /api/iam/users/{id} | 删除用户 | ✅ |
-| GET | /api/iam/roles | 获取角色列表 | ✅ |
-| POST | /api/iam/roles | 创建角色 | ✅ |
-| GET | /api/iam/permissions | 获取权限列表 | ✅ |
+| POST | /api/core/iam/auth/login | 用户登录 | ❌ |
+| POST | /api/core/iam/auth/logout | 用户登出 | ✅ |
+| POST | /api/core/iam/auth/refresh | 刷新 Token | ✅ |
+| GET | /api/core/iam/users/me | 获取当前用户 | ✅ |
+| GET | /api/core/iam/users | 获取用户列表 | ✅ |
+| POST | /api/core/iam/users | 创建用户 | ✅ |
+| GET | /api/core/iam/users/{id} | 获取用户详情 | ✅ |
+| PUT | /api/core/iam/users/{id} | 更新用户 | ✅ |
+| DELETE | /api/core/iam/users/{id} | 删除用户 | ✅ |
+| GET | /api/core/iam/roles | 获取角色列表 | ✅ |
+| POST | /api/core/iam/roles | 创建角色 | ✅ |
+| GET | /api/core/iam/permissions | 获取权限列表 | ✅ |
 
-### 工作流服务 (/api/flow/)
-
-| 方法 | 路径 | 说明 | 需要认证 |
-|------|------|------|----------|
-| GET | /api/flow/processes | 获取流程列表 | ✅ |
-| POST | /api/flow/processes | 创建流程定义 | ✅ |
-| GET | /api/flow/processes/{id} | 获取流程详情 | ✅ |
-| POST | /api/flow/instances | 创建流程实例 | ✅ |
-| GET | /api/flow/instances | 获取实例列表 | ✅ |
-| POST | /api/flow/tasks/{id}/complete | 完成任务 | ✅ |
-
-### 通知服务 (/api/notification/)
+### 工作流服务 (/api/core/flow/，由 unified-core 8000 承载)
 
 | 方法 | 路径 | 说明 | 需要认证 |
 |------|------|------|----------|
-| GET | /api/notification/messages | 获取消息列表 | ✅ |
-| POST | /api/notification/messages | 发送消息 | ✅ |
-| PUT | /api/notification/messages/{id}/read | 标记已读 | ✅ |
-| DELETE | /api/notification/messages/{id} | 删除消息 | ✅ |
+| GET | /api/core/flow/workflows | 获取流程列表 | ✅ |
+| POST | /api/core/flow/workflows | 创建流程定义 | ✅ |
+| GET | /api/core/flow/workflows/{id} | 获取流程详情 | ✅ |
+| POST | /api/core/flow/instances | 创建流程实例 | ✅ |
+| GET | /api/core/flow/instances | 获取实例列表 | ✅ |
+| POST | /api/core/flow/tasks/{id}/complete | 完成任务 | ✅ |
+
+### 通知服务（并入 communication 8084，/api/communication/notification/；legacy /api/core/notification/）
+
+| 方法 | 路径 | 说明 | 需要认证 |
+|------|------|------|----------|
+| GET | /api/communication/notification/notifications | 获取通知列表 | ✅ |
+| GET | /api/communication/notification/notifications/unread | 获取未读通知 | ✅ |
+| PUT | /api/communication/notification/notifications/{id} | 标记已读 | ✅ |
+| DELETE | /api/communication/notification/notifications/{id} | 删除通知 | ✅ |
 
 ## 业务服务 API
 
@@ -260,7 +260,7 @@ GET /health/details
 ### 1. 登录获取 Token
 
 ```bash
-curl -X POST http://localhost:8000/api/iam/auth/login \
+curl -X POST http://localhost:8000/api/core/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}'
 ```
@@ -286,7 +286,7 @@ curl -X POST http://localhost:8000/api/iam/auth/login \
 
 ```bash
 # 获取当前用户信息
-curl -X GET http://localhost:8000/api/iam/users/me \
+curl -X GET http://localhost:8000/api/core/iam/users/me \
   -H "Authorization: Bearer {token}"
 
 # 获取员工列表
@@ -316,19 +316,19 @@ curl http://localhost:8013/health
 
 ```bash
 # 设置变量
-TOKEN=$(curl -s -X POST http://localhost:8000/api/iam/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:8000/api/core/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}' | jq -r '.data.token')
 
 # 使用变量
-curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/iam/users/me
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/core/iam/users/me
 ```
 
 ### JavaScript 示例
 
 ```javascript
 async function login(username, password) {
-  const response = await fetch('http://localhost:8000/api/iam/auth/login', {
+  const response = await fetch('http://localhost:8000/api/core/iam/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })

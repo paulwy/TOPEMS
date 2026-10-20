@@ -90,7 +90,7 @@
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8058/api/rd/projects?page=1&page_size=20&status=active" \
+curl -X GET "http://localhost:8053/api/rd/projects?page=1&page_size=20&status=active" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -142,7 +142,7 @@ curl -X GET "http://localhost:8058/api/rd/projects?page=1&page_size=20&status=ac
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8058/api/rd/projects/550e8400-e29b-41d4-a716-446655440000 \
+curl -X GET http://localhost:8053/api/rd/projects/550e8400-e29b-41d4-a716-446655440000 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -218,7 +218,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8058/api/rd/projects \
+curl -X POST http://localhost:8053/api/rd/projects \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -298,7 +298,7 @@ curl -X POST http://localhost:8058/api/rd/projects \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8058/api/rd/projects/550e8400-e29b-41d4-a716-446655440000 \
+curl -X PUT http://localhost:8053/api/rd/projects/550e8400-e29b-41d4-a716-446655440000 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -345,7 +345,7 @@ curl -X PUT http://localhost:8058/api/rd/projects/550e8400-e29b-41d4-a716-446655
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8058/api/rd/projects/550e8400-e29b-41d4-a716-446655440000 \
+curl -X DELETE http://localhost:8053/api/rd/projects/550e8400-e29b-41d4-a716-446655440000 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -396,7 +396,7 @@ curl -X DELETE http://localhost:8058/api/rd/projects/550e8400-e29b-41d4-a716-446
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8058/api/rd/experiments?page=1&page_size=20&status=completed" \
+curl -X GET "http://localhost:8053/api/rd/experiments?page=1&page_size=20&status=completed" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -456,7 +456,7 @@ curl -X GET "http://localhost:8058/api/rd/experiments?page=1&page_size=20&status
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8058/api/rd/experiments/exp-001 \
+curl -X GET http://localhost:8053/api/rd/experiments/exp-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -528,7 +528,7 @@ Authorization: Bearer {token}
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8058/api/rd/experiments \
+curl -X POST http://localhost:8053/api/rd/experiments \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -608,7 +608,7 @@ curl -X POST http://localhost:8058/api/rd/experiments \
 **请求示例**:
 
 ```bash
-curl -X PUT http://localhost:8058/api/rd/experiments/exp-003 \
+curl -X PUT http://localhost:8053/api/rd/experiments/exp-003 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -662,7 +662,7 @@ curl -X PUT http://localhost:8058/api/rd/experiments/exp-003 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8058/api/rd/experiments/exp-003 \
+curl -X DELETE http://localhost:8053/api/rd/experiments/exp-003 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -699,7 +699,7 @@ curl -X DELETE http://localhost:8058/api/rd/experiments/exp-003 \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8058/api/rd/experiments/project/550e8400-e29b-41d4-a716-446655440000?status=completed" \
+curl -X GET "http://localhost:8053/api/rd/experiments/project/550e8400-e29b-41d4-a716-446655440000?status=completed" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -738,7 +738,7 @@ curl -X GET "http://localhost:8058/api/rd/experiments/project/550e8400-e29b-41d4
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8058/health
+curl -X GET http://localhost:8053/health
 ```
 
 **成功响应** (200 OK):

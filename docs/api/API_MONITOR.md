@@ -2,11 +2,11 @@
 
 **版本**: v2
 **更新日期**: 2026-08-14
-**服务地址**: `http://localhost:8000`（unified-core 统一核心服务）
+**服务地址**: `http://localhost:8095`（独立 monitor 服务，V68.1 自 unified-core 迁出）
 
 ---
 
-> **API 路径**: `/api/core/monitor/`
+> **API 路径**: `/api/monitor/`
 
 ## 目录
 
@@ -81,7 +81,7 @@ GET /health/details
 ### 2.3 检查所有服务
 
 ```
-GET /api/core/monitor/health/all
+GET /api/monitor/health/all
 ```
 
 **响应示例**：
@@ -104,7 +104,7 @@ GET /api/core/monitor/health/all
 ### 3.1 获取系统指标
 
 ```
-GET /api/core/monitor/metrics/system
+GET /api/monitor/metrics/system
 ```
 
 **响应示例**：
@@ -124,7 +124,7 @@ GET /api/core/monitor/metrics/system
 ### 3.2 获取 API 指标
 
 ```
-GET /api/core/monitor/metrics/api?service=erp&period=24h
+GET /api/monitor/metrics/api?service=erp&period=24h
 ```
 
 **响应示例**：
@@ -147,7 +147,7 @@ GET /api/core/monitor/metrics/api?service=erp&period=24h
 ### 3.3 获取数据库指标
 
 ```
-GET /api/core/monitor/metrics/database
+GET /api/monitor/metrics/database
 ```
 
 **响应示例**：
@@ -168,7 +168,7 @@ GET /api/core/monitor/metrics/database
 ### 3.4 获取指标趋势
 
 ```
-GET /api/core/monitor/metrics/trend?metric=cpu&start_time=2026-08-14T00:00:00Z&end_time=2026-08-14T12:00:00Z
+GET /api/monitor/metrics/trend?metric=cpu&start_time=2026-08-14T00:00:00Z&end_time=2026-08-14T12:00:00Z
 ```
 
 ---
@@ -178,7 +178,7 @@ GET /api/core/monitor/metrics/trend?metric=cpu&start_time=2026-08-14T00:00:00Z&e
 ### 4.1 获取告警列表
 
 ```
-GET /api/core/monitor/alerts?page=1&page_size=20&status=active&severity=critical
+GET /api/monitor/alerts?page=1&page_size=20&status=active&severity=critical
 ```
 
 **查询参数**：
@@ -217,13 +217,13 @@ GET /api/core/monitor/alerts?page=1&page_size=20&status=active&severity=critical
 ### 4.2 获取告警详情
 
 ```
-GET /api/core/monitor/alerts/{id}
+GET /api/monitor/alerts/{id}
 ```
 
 ### 4.3 确认告警
 
 ```
-POST /api/core/monitor/alerts/{id}/acknowledge
+POST /api/monitor/alerts/{id}/acknowledge
 ```
 
 **请求体**：
@@ -238,7 +238,7 @@ POST /api/core/monitor/alerts/{id}/acknowledge
 ### 4.4 解决告警
 
 ```
-POST /api/core/monitor/alerts/{id}/resolve
+POST /api/monitor/alerts/{id}/resolve
 ```
 
 **请求体**：
@@ -253,13 +253,13 @@ POST /api/core/monitor/alerts/{id}/resolve
 ### 4.5 获取告警规则
 
 ```
-GET /api/core/monitor/alerts/rules
+GET /api/monitor/alerts/rules
 ```
 
 ### 4.6 创建告警规则
 
 ```
-POST /api/core/monitor/alerts/rules
+POST /api/monitor/alerts/rules
 ```
 
 **请求体**：
@@ -284,7 +284,7 @@ POST /api/core/monitor/alerts/rules
 ### 5.1 获取服务列表
 
 ```
-GET /api/core/monitor/services?page=1&page_size=20&status=healthy
+GET /api/monitor/services?page=1&page_size=20&status=healthy
 ```
 
 **响应示例**：
@@ -312,13 +312,13 @@ GET /api/core/monitor/services?page=1&page_size=20&status=healthy
 ### 5.2 获取服务详情
 
 ```
-GET /api/core/monitor/services/{name}
+GET /api/monitor/services/{name}
 ```
 
 ### 5.3 手动检查服务
 
 ```
-POST /api/core/monitor/services/{name}/check
+POST /api/monitor/services/{name}/check
 ```
 
 ---
@@ -328,7 +328,7 @@ POST /api/core/monitor/services/{name}/check
 ### 6.1 获取性能概览
 
 ```
-GET /api/core/monitor/performance/overview
+GET /api/monitor/performance/overview
 ```
 
 **响应示例**：
@@ -348,7 +348,7 @@ GET /api/core/monitor/performance/overview
 ### 6.2 获取慢查询
 
 ```
-GET /api/core/monitor/performance/slow-queries?page=1&page_size=20
+GET /api/monitor/performance/slow-queries?page=1&page_size=20
 ```
 
 **响应示例**：
@@ -378,7 +378,7 @@ GET /api/core/monitor/performance/slow-queries?page=1&page_size=20
 ### 7.1 查询日志
 
 ```
-GET /api/core/monitor/logs?page=1&page_size=100&service=erp&level=error&start_time=2026-08-14T00:00:00Z
+GET /api/monitor/logs?page=1&page_size=100&service=erp&level=error&start_time=2026-08-14T00:00:00Z
 ```
 
 **响应示例**：
@@ -404,7 +404,7 @@ GET /api/core/monitor/logs?page=1&page_size=100&service=erp&level=error&start_ti
 ### 7.2 搜索日志
 
 ```
-POST /api/core/monitor/logs/search
+POST /api/monitor/logs/search
 ```
 
 **请求体**：

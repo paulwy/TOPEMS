@@ -35,7 +35,7 @@
     "details": "提供的用户名或密码不正确，请检查后重试",
     "timestamp": "2026-08-28T10:30:00Z",
     "request_id": "req_abc123def456",
-    "path": "/api/core/auth/v1/login",
+    "path": "/api/core/iam/auth/login",
     "method": "POST"
   }
 }
@@ -65,7 +65,7 @@
     "details": "请检查以下字段",
     "timestamp": "2026-08-28T10:30:00Z",
     "request_id": "req_abc123def456",
-    "path": "/api/core/erp/v1/orders",
+    "path": "/api/erp/orders",
     "method": "POST",
     "fields": [
       {
@@ -353,7 +353,7 @@
 
 ```bash
 # 查看完整的错误响应
-curl -v -X POST http://localhost:8000/api/core/auth/v1/login \
+curl -v -X POST http://localhost:8000/api/core/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"wrong"}'
 ```
@@ -419,15 +419,15 @@ curl http://localhost:11434/api/tags
 **解决方法：**
 ```bash
 # 1. 确认 Token 已添加到请求头
-curl -H "Authorization: Bearer <your-token>" http://localhost:8000/api/core/erp/v1/orders
+curl -H "Authorization: Bearer <your-token>" http://localhost:8010/api/erp/orders
 
 # 2. 重新登录获取新 Token
-curl -X POST http://localhost:8000/api/core/auth/v1/login \
+curl -X POST http://localhost:8000/api/core/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}'
 
 # 3. 使用 Refresh Token 刷新
-curl -X POST http://localhost:8000/api/core/auth/v1/refresh \
+curl -X POST http://localhost:8000/api/core/iam/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refresh_token":"<your-refresh-token>"}'
 ```

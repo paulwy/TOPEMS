@@ -6,7 +6,8 @@
 
 ---
 
-> **API 路径**: `/api/iam/` (例如 `/api/iam/auth/login`)
+> **API 路径**: `/api/core/iam/` (例如 `/api/core/iam/auth/login`)
+> 认证/授权路由由 unified-core（端口 8000）承载，挂载于 `/api/core` 前缀之下。
 
 ## 1. 概述
 
@@ -16,13 +17,13 @@
 
 | 功能 | 端点 | 方法 |
 |------|------|------|
-| 用户注册 | /api/iam/auth/register | POST |
-| 用户登录 | /api/iam/auth/login | POST |
-| 用户登出 | /api/iam/auth/logout | POST |
-| 刷新 Token | /api/iam/auth/refresh | POST |
-| 获取当前用户 | /api/iam/users/me | GET |
-| 获取我的权限 | /api/iam/users/me/permissions | GET |
-| 检查权限 | /api/iam/users/me/permissions/check | POST |
+| 用户注册 | /api/core/iam/auth/register | POST |
+| 用户登录 | /api/core/iam/auth/login | POST |
+| 用户登出 | /api/core/iam/auth/logout | POST |
+| 刷新 Token | /api/core/iam/auth/refresh | POST |
+| 获取当前用户 | /api/core/iam/users/me | GET |
+| 获取我的权限 | /api/core/iam/users/me/permissions | GET |
+| 检查权限 | /api/core/iam/users/me/permissions/check | POST |
 
 ### 1.2 数据模型
 
@@ -83,7 +84,7 @@
 
 ### 2.1 用户注册
 
-**端点**: `POST /api/iam/auth/register`
+**端点**: `POST /api/core/iam/auth/register`
 
 **描述**: 创建新用户账号
 
@@ -110,7 +111,7 @@ Content-Type: application/json
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8000/api/iam/auth/register \
+curl -X POST http://localhost:8000/api/core/iam/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "username": "newuser",
@@ -161,7 +162,7 @@ curl -X POST http://localhost:8000/api/iam/auth/register \
 
 ### 2.2 用户登录
 
-**端点**: `POST /api/iam/auth/login`
+**端点**: `POST /api/core/iam/auth/login`
 
 **描述**: 用户登录系统，获取认证令牌
 
@@ -186,7 +187,7 @@ Content-Type: application/json
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8000/api/iam/auth/login \
+curl -X POST http://localhost:8000/api/core/iam/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "username": "testuser",
@@ -239,7 +240,7 @@ curl -X POST http://localhost:8000/api/iam/auth/login \
 
 ### 2.3 用户登出
 
-**端点**: `POST /api/iam/auth/logout`
+**端点**: `POST /api/core/iam/auth/logout`
 
 **描述**: 用户登出，使当前 Token 失效
 
@@ -248,7 +249,7 @@ curl -X POST http://localhost:8000/api/iam/auth/login \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8000/api/iam/auth/logout \
+curl -X POST http://localhost:8000/api/core/iam/auth/logout \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -268,7 +269,7 @@ curl -X POST http://localhost:8000/api/iam/auth/logout \
 
 ### 2.4 刷新 Token
 
-**端点**: `POST /api/iam/auth/refresh`
+**端点**: `POST /api/core/iam/auth/refresh`
 
 **描述**: 使用 refresh_token 获取新的 access_token
 
@@ -282,7 +283,7 @@ curl -X POST http://localhost:8000/api/iam/auth/logout \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8000/api/iam/auth/refresh \
+curl -X POST http://localhost:8000/api/core/iam/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"token": "refresh_token_here"}'
 ```
@@ -312,7 +313,7 @@ curl -X POST http://localhost:8000/api/iam/auth/refresh \
 
 ### 3.1 获取当前用户
 
-**端点**: `GET /api/iam/users/me`
+**端点**: `GET /api/core/iam/users/me`
 
 **描述**: 获取当前登录用户的信息
 
@@ -321,7 +322,7 @@ curl -X POST http://localhost:8000/api/iam/auth/refresh \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8000/api/iam/users/me \
+curl -X GET http://localhost:8000/api/core/iam/users/me \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -353,7 +354,7 @@ curl -X GET http://localhost:8000/api/iam/users/me \
 
 ### 3.2 获取我的权限
 
-**端点**: `GET /api/iam/users/me/permissions`
+**端点**: `GET /api/core/iam/users/me/permissions`
 
 **描述**: 获取当前用户的完整权限信息
 
@@ -362,7 +363,7 @@ curl -X GET http://localhost:8000/api/iam/users/me \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8000/api/iam/users/me/permissions \
+curl -X GET http://localhost:8000/api/core/iam/users/me/permissions \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -417,7 +418,7 @@ curl -X GET http://localhost:8000/api/iam/users/me/permissions \
 
 ### 3.3 检查权限
 
-**端点**: `POST /api/iam/users/me/permissions/check`
+**端点**: `POST /api/core/iam/users/me/permissions/check`
 
 **描述**: 检查当前用户是否具有指定权限
 
@@ -437,7 +438,7 @@ curl -X GET http://localhost:8000/api/iam/users/me/permissions \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8000/api/iam/users/me/permissions/check \
+curl -X POST http://localhost:8000/api/core/iam/users/me/permissions/check \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{"permission": "rs:project:create"}'
@@ -466,7 +467,7 @@ curl -X POST http://localhost:8000/api/iam/users/me/permissions/check \
 
 ### 4.1 获取角色列表
 
-**端点**: `GET /api/iam/roles`
+**端点**: `GET /api/core/iam/roles`
 
 **描述**: 获取所有角色
 
@@ -475,7 +476,7 @@ curl -X POST http://localhost:8000/api/iam/users/me/permissions/check \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8000/api/iam/roles \
+curl -X GET http://localhost:8000/api/core/iam/roles \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -506,7 +507,7 @@ curl -X GET http://localhost:8000/api/iam/roles \
 
 ### 4.2 获取角色详情
 
-**端点**: `GET /api/iam/roles/{id}`
+**端点**: `GET /api/core/iam/roles/{id}`
 
 **描述**: 获取指定角色的详细信息
 
@@ -520,7 +521,7 @@ curl -X GET http://localhost:8000/api/iam/roles \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8000/api/iam/roles/role-001 \
+curl -X GET http://localhost:8000/api/core/iam/roles/role-001 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -543,7 +544,7 @@ curl -X GET http://localhost:8000/api/iam/roles/role-001 \
 
 ### 4.3 创建角色
 
-**端点**: `POST /api/iam/roles`
+**端点**: `POST /api/core/iam/roles`
 
 **描述**: 创建新角色
 
@@ -565,7 +566,7 @@ curl -X GET http://localhost:8000/api/iam/roles/role-001 \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8000/api/iam/roles \
+curl -X POST http://localhost:8000/api/core/iam/roles \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -593,7 +594,7 @@ curl -X POST http://localhost:8000/api/iam/roles \
 
 ### 4.4 删除角色
 
-**端点**: `DELETE /api/iam/roles/{id}`
+**端点**: `DELETE /api/core/iam/roles/{id}`
 
 **描述**: 删除指定角色
 
@@ -602,7 +603,7 @@ curl -X POST http://localhost:8000/api/iam/roles \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8000/api/iam/roles/role-003 \
+curl -X DELETE http://localhost:8000/api/core/iam/roles/role-003 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -620,7 +621,7 @@ curl -X DELETE http://localhost:8000/api/iam/roles/role-003 \
 
 ### 4.5 获取角色权限
 
-**端点**: `GET /api/iam/roles/{roleId}/permissions`
+**端点**: `GET /api/core/iam/roles/{roleId}/permissions`
 
 **描述**: 获取指定角色的所有权限
 
@@ -629,7 +630,7 @@ curl -X DELETE http://localhost:8000/api/iam/roles/role-003 \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8000/api/iam/roles/role-001/permissions \
+curl -X GET http://localhost:8000/api/core/iam/roles/role-001/permissions \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -654,7 +655,7 @@ curl -X GET http://localhost:8000/api/iam/roles/role-001/permissions \
 
 ### 4.6 添加角色权限
 
-**端点**: `POST /api/iam/roles/{roleId}/permissions/{permissionId}`
+**端点**: `POST /api/core/iam/roles/{roleId}/permissions/{permissionId}`
 
 **描述**: 为角色添加权限
 
@@ -663,7 +664,7 @@ curl -X GET http://localhost:8000/api/iam/roles/role-001/permissions \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8000/api/iam/roles/role-001/permissions/perm-002 \
+curl -X POST http://localhost:8000/api/core/iam/roles/role-001/permissions/perm-002 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -681,7 +682,7 @@ curl -X POST http://localhost:8000/api/iam/roles/role-001/permissions/perm-002 \
 
 ### 4.7 移除角色权限
 
-**端点**: `DELETE /api/iam/roles/{roleId}/permissions/{permissionId}`
+**端点**: `DELETE /api/core/iam/roles/{roleId}/permissions/{permissionId}`
 
 **描述**: 从角色移除权限
 
@@ -690,7 +691,7 @@ curl -X POST http://localhost:8000/api/iam/roles/role-001/permissions/perm-002 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8000/api/iam/roles/role-001/permissions/perm-002 \
+curl -X DELETE http://localhost:8000/api/core/iam/roles/role-001/permissions/perm-002 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -710,7 +711,7 @@ curl -X DELETE http://localhost:8000/api/iam/roles/role-001/permissions/perm-002
 
 ### 5.1 获取权限列表
 
-**端点**: `GET /api/iam/permissions`
+**端点**: `GET /api/core/iam/permissions`
 
 **描述**: 获取所有权限
 
@@ -719,7 +720,7 @@ curl -X DELETE http://localhost:8000/api/iam/roles/role-001/permissions/perm-002
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8000/api/iam/permissions \
+curl -X GET http://localhost:8000/api/core/iam/permissions \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -752,7 +753,7 @@ curl -X GET http://localhost:8000/api/iam/permissions \
 
 ### 6.1 获取用户权限
 
-**端点**: `GET /api/iam/users/{userId}/permissions`
+**端点**: `GET /api/core/iam/users/{userId}/permissions`
 
 **描述**: 获取指定用户的完整权限信息
 
@@ -761,7 +762,7 @@ curl -X GET http://localhost:8000/api/iam/permissions \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8000/api/iam/users/user-001/permissions \
+curl -X GET http://localhost:8000/api/core/iam/users/user-001/permissions \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -769,7 +770,7 @@ curl -X GET http://localhost:8000/api/iam/users/user-001/permissions \
 
 ### 6.2 获取用户角色
 
-**端点**: `GET /api/iam/users/{userId}/roles`
+**端点**: `GET /api/core/iam/users/{userId}/roles`
 
 **描述**: 获取指定用户的角色列表
 
@@ -778,7 +779,7 @@ curl -X GET http://localhost:8000/api/iam/users/user-001/permissions \
 **请求示例**:
 
 ```bash
-curl -X GET http://localhost:8000/api/iam/users/user-001/roles \
+curl -X GET http://localhost:8000/api/core/iam/users/user-001/roles \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -786,7 +787,7 @@ curl -X GET http://localhost:8000/api/iam/users/user-001/roles \
 
 ### 6.3 添加用户角色
 
-**端点**: `POST /api/iam/users/{userId}/roles/{roleId}`
+**端点**: `POST /api/core/iam/users/{userId}/roles/{roleId}`
 
 **描述**: 为用户添加角色
 
@@ -795,7 +796,7 @@ curl -X GET http://localhost:8000/api/iam/users/user-001/roles \
 **请求示例**:
 
 ```bash
-curl -X POST http://localhost:8000/api/iam/users/user-001/roles/role-002 \
+curl -X POST http://localhost:8000/api/core/iam/users/user-001/roles/role-002 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -813,7 +814,7 @@ curl -X POST http://localhost:8000/api/iam/users/user-001/roles/role-002 \
 
 ### 6.4 移除用户角色
 
-**端点**: `DELETE /api/iam/users/{userId}/roles/{roleId}`
+**端点**: `DELETE /api/core/iam/users/{userId}/roles/{roleId}`
 
 **描述**: 从用户移除角色
 
@@ -822,7 +823,7 @@ curl -X POST http://localhost:8000/api/iam/users/user-001/roles/role-002 \
 **请求示例**:
 
 ```bash
-curl -X DELETE http://localhost:8000/api/iam/users/user-001/roles/role-002 \
+curl -X DELETE http://localhost:8000/api/core/iam/users/user-001/roles/role-002 \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -832,7 +833,7 @@ curl -X DELETE http://localhost:8000/api/iam/users/user-001/roles/role-002 \
 
 ### 7.1 获取访问日志列表
 
-**端点**: `GET /api/iam/access-logs`
+**端点**: `GET /api/core/iam/access-logs`
 
 **描述**: 获取系统访问日志
 
@@ -847,7 +848,7 @@ curl -X DELETE http://localhost:8000/api/iam/users/user-001/roles/role-002 \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8000/api/iam/access-logs?limit=20&offset=0" \
+curl -X GET "http://localhost:8000/api/core/iam/access-logs?limit=20&offset=0" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -877,7 +878,7 @@ curl -X GET "http://localhost:8000/api/iam/access-logs?limit=20&offset=0" \
 
 ### 7.2 获取用户访问日志
 
-**端点**: `GET /api/iam/access-logs/user/{userId}`
+**端点**: `GET /api/core/iam/access-logs/user/{userId}`
 
 **描述**: 获取指定用户的访问日志
 
@@ -886,7 +887,7 @@ curl -X GET "http://localhost:8000/api/iam/access-logs?limit=20&offset=0" \
 **请求示例**:
 
 ```bash
-curl -X GET "http://localhost:8000/api/iam/access-logs/user/user-001?limit=20" \
+curl -X GET "http://localhost:8000/api/core/iam/access-logs/user/user-001?limit=20" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -894,7 +895,7 @@ curl -X GET "http://localhost:8000/api/iam/access-logs/user/user-001?limit=20" \
 
 ### 7.3 创建访问日志
 
-**端点**: `POST /api/iam/access-logs`
+**端点**: `POST /api/core/iam/access-logs`
 
 **描述**: 记录访问日志（通常由系统自动调用）
 

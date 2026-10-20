@@ -6,10 +6,12 @@
 
 The Analytics service provides comprehensive business intelligence and data analytics capabilities for the TOPEMS platform. It aggregates data from various modules and provides insights, reports, and dashboards.
 
-**Service Name**: `analytics`  
-**Base Path**: `/api/analytics/v1`  
+**Service Name**: `analytics`（端口 8060）  
+**Base Path**: `/api/bi`（legacy 别名 `/api/v1/bi`；仓库内不存在 `/api/analytics` 前缀）  
 **Authentication**: Bearer Token (JWT)  
 **Tenant Isolation**: Multi-tenant support with `tenant_id` header
+
+> **口径说明**: 本文档下文 `/api/bi/...` 为当前挂载前缀；其中 2.1/2.2 节的 `dashboard/overview`、`reports/sales|inventory|purchase`、各模块 `*/dashboard` 为 v1 时代设计稿路径，当前 analytics 服务未挂载，属 RC4a gap，请勿直接调用。
 
 ---
 
@@ -20,7 +22,7 @@ The Analytics service provides comprehensive business intelligence and data anal
 #### 2.1.1 Get Overall Dashboard Statistics
 
 ```
-GET /api/analytics/v1/dashboard/overview
+GET /api/bi/dashboard/overview
 ```
 
 **Description**: Get overall dashboard statistics including key metrics and KPIs
@@ -56,7 +58,7 @@ GET /api/analytics/v1/dashboard/overview
 #### 2.1.2 Get Module Analytics
 
 ```
-GET /api/analytics/v1/dashboard/module/{module_code}
+GET /api/bi/dashboard/module/{module_code}
 ```
 
 **Description**: Get analytics data for a specific module
@@ -96,7 +98,7 @@ GET /api/analytics/v1/dashboard/module/{module_code}
 #### 2.2.1 Get Sales Analytics
 
 ```
-GET /api/analytics/v1/reports/sales
+GET /api/bi/reports/sales
 ```
 
 **Description**: Get sales analytics and trends
@@ -134,7 +136,7 @@ GET /api/analytics/v1/reports/sales
 #### 2.2.2 Get Inventory Analytics
 
 ```
-GET /api/analytics/v1/reports/inventory
+GET /api/bi/reports/inventory
 ```
 
 **Description**: Get inventory analytics
@@ -162,7 +164,7 @@ GET /api/analytics/v1/reports/inventory
 #### 2.2.3 Get Purchase Analytics
 
 ```
-GET /api/analytics/v1/reports/purchase
+GET /api/bi/reports/purchase
 ```
 
 **Description**: Get purchase order analytics
@@ -191,7 +193,7 @@ GET /api/analytics/v1/reports/purchase
 #### 2.3.1 Get Quality Dashboard
 
 ```
-GET /api/analytics/v1/quality/dashboard
+GET /api/bi/quality/dashboard
 ```
 
 **Description**: Get quality management analytics dashboard
@@ -223,7 +225,7 @@ GET /api/analytics/v1/quality/dashboard
 #### 2.4.1 Get EHS Dashboard
 
 ```
-GET /api/analytics/v1/ehs/dashboard
+GET /api/bi/ehs/dashboard
 ```
 
 **Description**: Get EHS (Environment, Health, Safety) analytics dashboard
@@ -257,7 +259,7 @@ GET /api/analytics/v1/ehs/dashboard
 #### 2.5.1 Get LIMS Dashboard
 
 ```
-GET /api/analytics/v1/lims/dashboard
+GET /api/bi/lims/dashboard
 ```
 
 **Description**: Get LIMS (Laboratory Information Management System) analytics
@@ -289,7 +291,7 @@ GET /api/analytics/v1/lims/dashboard
 #### 2.6.1 Get Resource Analytics
 
 ```
-GET /api/analytics/v1/rs/dashboard
+GET /api/bi/rs/dashboard
 ```
 
 **Description**: Get resource scheduling analytics
@@ -319,7 +321,7 @@ GET /api/analytics/v1/rs/dashboard
 #### 2.7.1 Get Supplier Analytics
 
 ```
-GET /api/analytics/v1/srm/dashboard
+GET /api/bi/srm/dashboard
 ```
 
 **Description**: Get supplier relationship management analytics
@@ -351,7 +353,7 @@ GET /api/analytics/v1/srm/dashboard
 #### 2.8.1 Get Product Analytics
 
 ```
-GET /api/analytics/v1/pdm/dashboard
+GET /api/bi/pdm/dashboard
 ```
 
 **Description**: Get product data management analytics
