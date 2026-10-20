@@ -287,6 +287,18 @@
 - **本批新修 · H-8**：`docs/project/roadmap.md` 归档横幅真相源由已归档的 `docs/project/TODO.md` 改指根 `TODO.md`。
 - **本批新修 · H-4**：`scripts/dev/health-check.sh`（LEGACY-DEV 本地独立进程探测）去硬编码 `admin/admin123`，改读 `TOPEMS_DEV_USER/TOPEMS_DEV_PASSWORD` 环境变量、未设置则跳过登录；加遗留标注（生产用 verify-nginx-prod.sh）。shellcheck 绿。
 - **登记待核实（不擅改）**：H-5 `rollback.sh:289`/`start-production.sh` 旧 8000/`topems-unified-core`，需对照生产 systemd（topems-server.service=8099 BFF / topems-unified-core.service 并存）核实后再统一；H-9 developer 三文档 8000 为 dev 独立进程语境（api-base 已双标注 8000/8099），不影响生产；H-10 `.env.example` 样例口令附警示，保留。
+
+### 审计报告 P2 技术小批执行（2026-10-20 拍板）✅ 15 提交已推送
+
+> 范围：主审计报告 §5-P2 六组（docs 批量订正 / .env.example 补登 / sqlx prepare / migrations-wip README / E11 长尾 + expense.amount / BE-09 方案评估）。基线 567b302188，全部显式路径 add，lefthook 26 门禁逐提交通过。
+
+- **P2-1 docs 批量订正（34 处 + 自认过时 10 处 + 清单外同类 5 文件）**：`f0dbd86999`（docs/api 23 文件端口/归属：HRM8020/FINANCE8011/SRM8042/LIMS8051/QMS8050/PDM8031/RD8053、AUTH→/api/core/iam、MONITOR8095、NOTIFICATION→communication8084、REPORT→analytics8060 /api/bi、ANALYTICS=/api/bi、WORKFLOW=/api/core/flow、DOC=/api/core/doc、PORTAL/MOBILE/INTEGRATION 去 v1 后缀）· `c5accec70f`（overview 台账：billing8085/feedback8087/lowcode8088 归档、补 monitor8095/plugin-registry8096/tms8073/server8099、nginx 单上游 8099）· `6a75ff3038`（ports.md 补 4 端口 + code-wiki svc/feedback→svc/ticket、monitor 台账回写）· `6d8fc3555a`（database-design 默认库 MySQL→PostgreSQL18、四张 AI 表标历史设计稿）· `721890c1cd`（environment-setup svc/hrm·svc/ai、--migrate→scripts/migrate.sh、8099 单体默认；api-base-url fallback 8000→8099）· `d67f9988ed`（ai-api 本地 8013/单体 8099；bi-module /api/bi/dashboard 单数）· `16bd330e18`（docs/api "v1 过渡中"banner 改现行前缀 + HRM 健康/指标路径）· `d87c565886`（database.md 迁移计数 435/437、api-gateway 8080 限定、windows portproxy 8099）· `c88ca4729e`（清单外同类：admin×2/getting-started×2/security）。残留 grep：8060/8012/8011/api/iam/auth/login/svc/hrm-service/MySQL 默认口径/✅billing8085 目标域全 0。
+- **P2-2 .env.example 补登**：`af57be0402`。35 个漂移键占位空值补登（.env 特有 10 + production 特有 26 去重 MONITOR_PORT）+ BILLING/FEEDBACK_PORT 废弃标注 + PLUGIN_REGISTRATION_TOKEN 处置提示；**未写真实值**。
+- **P2-3 sqlx prepare**：`c4555ea267`（**计划外必要修复**：origin/main 既有 wms 编译回归 6 处——batch.rs BigDecimal→f64 聚合 DTO 缺转换、discrepancy.rs String 误用 as_deref；修后 wms 541 passed）+ `20e11625e2`（cargo sqlx prepare --workspace 全量重生成：删 4 旧查询缓存/刷 11；sqlx-cache-freshness 门禁 27 crate 离线 check 全 OK；SQLX_OFFLINE check wms/unified-core 绿）。
+- **P2-4 migrations-wip README**：`2d3e8fee98`。按实际 6 SQL 现状回写（逐文件状态表 + gis 与活动链 20261006000001 重复草稿 diff=0 标注 + 处置约定），不再按"32 文件"描述。
+- **P2-5 E11 长尾 + expense.amount**：`c71246163b`（finance 6 处金额列 f64→Decimal：expenses.amount/receivables/payables/voucher_lines debit·credit/audit_v52 凭证头分录合计/voucher_template 快照·付款单；**1087 passed**）+ `955c3cf9f7`（erp event_handlers/mod.rs:375 `sales_orders.total_amount` Option<f64>→Option<Decimal>，解码失败静默 0.0 修复；**902 passed**）。**甄别零改动登记**：wms 35 numeric 列（数量/重量/未接线/动态 JSON bind）、erp 其余（purchase_orders total_amount=float8 匹配）、pm project_benefit/report 聚合 DTO、sales_invoice ::float8 动态读、SUM/AVG 仪表盘、评分/比率。
+- **P2-6 BE-09 方案评估（未改契约）**：产物 `artifacts/audit/BE-09-P2方案评估-2026-10-20.md`。Budget 三案（后端补列 A / 前端收敛 B / 现状 C）与 DataAsset 四案（adapter A / 页面收敛 B / V66 真实现 C / 冻结 D），推荐各取 B（页面收敛到实有字段，零造假）；7 字段与 status/sensitivity 口径待用户拍板；PLUGIN_REGISTRATION_TOKEN 建议本地 `openssl rand -hex 32` 生成配置（未擅自生成）。
+- **遗留未做**：WIP 目录清理（.stash-backup/.backups/tmp/logs）待授权另批；主审计报告 §7 已补"P2 执行结果"小节。
 - **长尾不排硬期**：NEW-P2-3（F10 ApiResponse::error 生产 3497 处宏收敛）。NEW-P2-4（F11 裸 Client::new）已在本批闭环（见下）；NEW-P2-5（F7 etcd/consul/dns 2243 行未启用）已物理删除（见下）。
 
 ### P2-5 · F7 三套未启用服务发现物理删除（2026-10-20，用户拍板删除）✅
