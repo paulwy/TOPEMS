@@ -54,14 +54,14 @@ export enum FrameworkType {
 
 /** 统一属性格式 */
 export interface UnifiedProps {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /** 统一事件格式 */
 export interface UnifiedEvents {
   /** 事件名 -> 回调函数 */
 
-  [eventName: string]: (...args: any[]) => void;
+  [eventName: string]: (...args: unknown[]) => void;
 }
 
 /** 框架适配器接口 */

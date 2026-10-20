@@ -485,7 +485,9 @@ const WorkflowApprovalsPage: React.FC = () => {
               />
               <Select
                 value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value as any)}
+                onChange={(e) =>
+                  setPriorityFilter(e.target.value as 'all' | 'high' | 'medium' | 'low')
+                }
                 options={[
                   { value: 'all', label: t('workflow.approvals_page.filter_priority_all') },
                   { value: 'high', label: t('workflow.approvals_page.priority_high') },

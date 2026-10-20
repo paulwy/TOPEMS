@@ -6,7 +6,7 @@ interface LazyOptions {
   fallback?: React.ReactNode;
 }
 
-export function createSafeLazy<T extends ComponentType<any>>(
+export function createSafeLazy<T extends ComponentType<Record<string, unknown>>>(
   importFn: () => Promise<{ default: T }>,
   options: LazyOptions = {}
 ): LazyExoticComponent<T> {
@@ -27,7 +27,7 @@ export function createSafeLazy<T extends ComponentType<any>>(
   return LazyComponent;
 }
 
-export function lazyWithPreload<T extends ComponentType<any>>(
+export function lazyWithPreload<T extends ComponentType<Record<string, unknown>>>(
   importFn: () => Promise<{ default: T }>,
   options: LazyOptions = {}
 ): {

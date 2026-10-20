@@ -336,7 +336,7 @@ const NotificationCenter: React.FC = () => {
           <Tabs
             tabs={tabsWithBadge}
             activeTab={activeFilter}
-            onChange={(id) => setActiveFilter(id as any)}
+            onChange={(id) => setActiveFilter(id as NotificationFilterType)}
           />
 
           <div

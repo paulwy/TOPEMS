@@ -411,6 +411,13 @@
 - **仍留待**：Tenant `formData as any`（表单模型 ≠ CreateTenantRequest）、`handleChange(value:any)` 表单通用赋值，需对齐表单/API 模型后再收。
 - **门禁**：`tsc --noEmit` exit 0；改动文件定点 eslint 0 error。
 
+### no-explicit-any 第五批 · 懒加载约束/索引签名/三处联合断言（2026-10-20）✅
+
+- **本批净降 7 处**：`utils/createSafeLazy.ts` 2 处 `ComponentType<any>` → `ComponentType<Record<string,unknown>>`；`microfrontend/runtime/cross-framework.ts` UnifiedProps 索引 `any`→`unknown`、UnifiedEvents `(...args:any[])`→`(...args:unknown[])`；三处 tab/filter 联合断言去 `as any`：MesWorkOrder activeTab、NotificationCenter activeFilter(`NotificationFilterType`)、WorkflowApprovals priorityFilter。
+- **实测回退（泛型默认/函数参数改 unknown 触发逆变或返回不兼容，保留 any）**：eventBus `EventHandler<T=any>`、routes/v2 `P=any`、crudPageAdapter `list(params?:any)`、LazyChart `tooltipFormatter` 返回——改 unknown 分别报 EventHandler/组件 props 逆变、PaginationParams 逆变、formatter 返回类型不兼容，均还原。
+- **仍留待**：CrudPage 适配器泛型与 rows 回调、SystemSettings `newSettings as any`/`updateField(value:any)`、Tenant 两处，需对齐模型；AmapLayer 高德实例、client.ts、`__tests__` mock 为有意保留。
+- **门禁**：`tsc --noEmit` exit 0；5 个改动文件定点 eslint 0 error。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

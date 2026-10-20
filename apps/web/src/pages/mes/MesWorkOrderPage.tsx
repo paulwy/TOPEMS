@@ -652,7 +652,7 @@ const MesWorkOrderPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as 'all' | 'pending' | 'in_progress' | 'completed')}
         />
       </ListPageTemplate>
 
