@@ -6,6 +6,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use std::collections::HashSet;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
@@ -407,23 +408,70 @@ pub async fn setup_departments(
         )));
     }
 
-    // 验证名称不重复
-    let names: Vec<&String> = req.departments.iter().map(|d| &d.name).collect();
-    if names.len() != names.iter().collect::<std::collections::HashSet<_>>().len() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "部门名称不能重复".to_string(),
+    // P2-3/P2-4：整批预校验（空名、批次内重名/重码、库内同名），全部通过才写库；
+    // 任一失败或 DB 错误都不 commit，请求结束 txn drop 自动回滚整批，杜绝部分成功混杂。
+    let mut seen_names: HashSet<String> = HashSet::new();
+    let mut seen_codes: HashSet<String> = HashSet::new();
+    let mut requested_names: Vec<String> = Vec::new();
+    for dept in &req.departments {
+        let name = dept.name.trim().to_string();
+        if name.is_empty() {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "部门名称不能为空".to_string(),
+            )));
+        }
+        let key = name.to_lowercase();
+        if !seen_names.insert(key) {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "部门名称重复：{name}"
+            ))));
+        }
+        if let Some(code) = dept
+            .code
+            .as_deref()
+            .map(str::trim)
+            .filter(|c| !c.is_empty())
+        {
+            let ckey = code.to_lowercase();
+            if !seen_codes.insert(ckey) {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "部门编码重复：{code}"
+                ))));
+            }
+        }
+        requested_names.push(name);
+    }
+
+    // 库内同名（租户范围，软删除外）提前拦截，避免重复落库。
+    let dup_dept: Option<String> = sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "hrm",
+        r#"
+        SELECT LOWER(name) FROM hrm.departments
+        WHERE deleted_at IS NULL
+          AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+          AND LOWER(name) = ANY($2::text[])
+        LIMIT 1
+        "#
+    ))
+    .bind(tenant_filter)
+    .bind(
+        requested_names
+            .iter()
+            .map(|n| n.to_lowercase())
+            .collect::<Vec<_>>(),
+    )
+    .fetch_optional(&mut **txn)
+    .await
+    .ok()
+    .flatten();
+    if let Some(dup) = dup_dept {
+        return Json(ApiResponse::from(TopemsError::ResourceAlreadyExists(
+            format!("部门已存在：{dup}"),
         )));
     }
 
     let mut created_depts = Vec::new();
-    let mut errors: Vec<String> = Vec::new();
-
     for dept in req.departments {
-        if dept.name.trim().is_empty() {
-            errors.push("部门名称不能为空".to_string());
-            continue;
-        }
-
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Department>(
             only_own_schema_query!("hrm", r#"
@@ -448,16 +496,13 @@ pub async fn setup_departments(
         match result {
             Ok(d) => created_depts.push(d),
             Err(e) => {
-                tracing::error!("创建部门失败: {}", e);
-                errors.push(format!("创建部门 '{}' 失败", dept.name));
+                tracing::error!("创建部门失败，整批回滚: {}", e);
+                // 不 commit：请求结束 txn drop 自动回滚整批，绝不部分提交。
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "创建部门失败，整批已回滚".to_string(),
+                )));
             }
         }
-    }
-
-    if created_depts.is_empty() {
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "创建部门失败".to_string(),
-        )));
     }
 
     // 更新初始化状态
@@ -553,15 +598,95 @@ pub async fn setup_positions(
         )));
     }
 
-    let mut created_positions = Vec::new();
-    let mut errors: Vec<String> = Vec::new();
-
-    for pos in req.positions {
-        if pos.name.trim().is_empty() {
-            errors.push("职位名称不能为空".to_string());
-            continue;
+    // P2-3/P2-4：整批预校验（空名、批次内重名/重码、库内同名、部门归属存在性），
+    // 全部通过才写库；任一失败或 DB 错误都不 commit，txn drop 自动回滚整批。
+    let mut seen_names: HashSet<String> = HashSet::new();
+    let mut seen_codes: HashSet<String> = HashSet::new();
+    let mut requested_names: Vec<String> = Vec::new();
+    let mut dept_ids: HashSet<Uuid> = HashSet::new();
+    for pos in &req.positions {
+        let name = pos.name.trim().to_string();
+        if name.is_empty() {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "职位名称不能为空".to_string(),
+            )));
         }
+        let key = name.to_lowercase();
+        if !seen_names.insert(key) {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "职位名称重复：{name}"
+            ))));
+        }
+        if let Some(code) = pos.code.as_deref().map(str::trim).filter(|c| !c.is_empty()) {
+            let ckey = code.to_lowercase();
+            if !seen_codes.insert(ckey) {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "职位编码重复：{code}"
+                ))));
+            }
+        }
+        requested_names.push(name);
+        if let Some(did) = pos.department_id {
+            dept_ids.insert(did);
+        }
+    }
 
+    // P2-4：岗位引用的部门必须存在且属本租户，杜绝孤儿岗位（应用层外键防护）。
+    if !dept_ids.is_empty() {
+        let found: i64 = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "hrm",
+            r#"
+            SELECT COUNT(*) FROM hrm.departments
+            WHERE deleted_at IS NULL
+              AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+              AND id = ANY($2::uuid[])
+            "#
+        ))
+        .bind(tenant_filter)
+        .bind(dept_ids.iter().copied().collect::<Vec<_>>())
+        .fetch_optional(&mut **txn)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(0);
+        let expected: i64 = i64::try_from(dept_ids.len()).unwrap_or(i64::MAX);
+        if found != expected {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "引用的部门不存在或已删除".to_string(),
+            )));
+        }
+    }
+
+    // 库内同名（租户范围，软删除外）提前拦截。
+    let dup_pos: Option<String> = sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "hrm",
+        r#"
+        SELECT LOWER(name) FROM hrm.positions
+        WHERE deleted_at IS NULL
+          AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+          AND LOWER(name) = ANY($2::text[])
+        LIMIT 1
+        "#
+    ))
+    .bind(tenant_filter)
+    .bind(
+        requested_names
+            .iter()
+            .map(|n| n.to_lowercase())
+            .collect::<Vec<_>>(),
+    )
+    .fetch_optional(&mut **txn)
+    .await
+    .ok()
+    .flatten();
+    if let Some(dup) = dup_pos {
+        return Json(ApiResponse::from(TopemsError::ResourceAlreadyExists(
+            format!("职位已存在：{dup}"),
+        )));
+    }
+
+    let mut created_positions = Vec::new();
+    for pos in req.positions {
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Position>(
             only_own_schema_query!("hrm", r#"
@@ -586,16 +711,13 @@ pub async fn setup_positions(
         match result {
             Ok(p) => created_positions.push(p),
             Err(e) => {
-                tracing::error!("创建职位失败: {}", e);
-                errors.push(format!("创建职位 '{}' 失败", pos.name));
+                tracing::error!("创建职位失败，整批回滚: {}", e);
+                // 不 commit：请求结束 txn drop 自动回滚整批，绝不部分提交。
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "创建职位失败，整批已回滚".to_string(),
+                )));
             }
         }
-    }
-
-    if created_positions.is_empty() {
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "创建职位失败".to_string(),
-        )));
     }
 
     // 更新初始化状态
@@ -986,7 +1108,9 @@ pub async fn complete_initialization(
                 )));
             }
 
-            // 更新完成状态
+            // P1-1：落租户初始化标记。completion 行即首启闭环标记，进度读取据此判定
+            // is_completed。默认角色/权限由 IAM 建号端点分配（方案B，hrm 不跨服务直写
+            // core_user_roles，避免孤儿/错位角色行），此处只做结果核验与汇总。
             let _ = sqlx::query(only_own_schema_query!(
                 "hrm",
                 r#"
@@ -1002,6 +1126,62 @@ pub async fn complete_initialization(
             .execute(&mut **txn)
             .await;
 
+            // 首启结果汇总（租户范围），供前端确认；admin 未绑定 IAM 账号仅告警不阻断。
+            let company_count: i64 = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
+                r#"
+                SELECT COUNT(*) FROM hrm.companies
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+                "#
+            ))
+            .bind(tenant_filter)
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten()
+            .unwrap_or(0);
+            let department_count: i64 = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
+                r#"
+                SELECT COUNT(*) FROM hrm.departments
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+                "#
+            ))
+            .bind(tenant_filter)
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten()
+            .unwrap_or(0);
+            let position_count: i64 = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
+                r#"
+                SELECT COUNT(*) FROM hrm.positions
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+                "#
+            ))
+            .bind(tenant_filter)
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten()
+            .unwrap_or(0);
+            let admin_bound: i64 = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
+                r#"
+                SELECT COUNT(*) FROM hrm.employees
+                WHERE deleted_at IS NULL AND user_id IS NOT NULL
+                  AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
+                "#
+            ))
+            .bind(tenant_filter)
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten()
+            .unwrap_or(0);
+            let admin_bound = admin_bound > 0;
+
             // 4.4 修复：提交 RLS 事务（否则请求结束自动回滚）。
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
@@ -1010,12 +1190,23 @@ pub async fn complete_initialization(
                 }
             }
 
+            let message = if admin_bound {
+                "初始化完成！系统已准备就绪。".to_string()
+            } else {
+                "初始化已完成；管理员员工档案尚未绑定 IAM 账号：请先在统一认证开通账号并分配默认角色/权限，再用该账号登录。".to_string()
+            };
             Json(ApiResponse::success(
                 serde_json::json!({
                     "is_completed": true,
-                    "completed_at": now
+                    "completed_at": now,
+                    "admin_bound": admin_bound,
+                    "summary": {
+                        "company_count": company_count,
+                        "department_count": department_count,
+                        "position_count": position_count
+                    }
                 }),
-                "初始化完成！系统已准备就绪。",
+                &message,
             ))
         }
         Err(e) => {
