@@ -67,8 +67,24 @@ const RsReportPage: React.FC = () => {
   const reportQuery = useQuery<RsReportData>({
     queryKey: QUERY_KEYS.AD_HOC.RD_REPORT_SUMMARY_BASE,
     queryFn: async () => {
-      const response = await apiClient.rd.get<RsReportData>('/reports/projects/summary');
-      if (response.success && response.data) return response.data;
+      const response = await apiClient.rd.get<Record<string, unknown>>('/reports/projects/summary');
+      // 后端契约：扁平 snake_case 项目汇总（total_projects/active_projects/...），
+      // 无 experiments/formulas 汇总端点 → 映射 projects 段，其余保持默认展示值。
+      // 结构不符时整体回退默认数据，避免 data.projects undefined 崩溃。
+      const d = response.success ? response.data : undefined;
+      if (d && typeof d.total_projects === 'number') {
+        return {
+          projects: {
+            total: d.total_projects,
+            active: d.active_projects ?? 0,
+            completed: d.completed_projects ?? 0,
+            cancelled: d.delayed_projects ?? 0,
+          },
+          experiments: defaultReportData.experiments,
+          formulas: defaultReportData.formulas,
+          monthlyProgress: defaultReportData.monthlyProgress,
+        } as RsReportData;
+      }
       return defaultReportData;
     },
     staleTime: 5 * 60 * 1000,
