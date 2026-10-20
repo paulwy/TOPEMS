@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.7（S 安全收口批：P1-3 注册开关、首启改密旗标、DEV 旁路、孤儿弱口令脚本；P2-2 并入 F） |
+| 版本 | v1.8（F 批后端首启闭环：P1-1 complete 标记+核验、P2-3 整批回滚、P2-4 岗位重名校验/部门归属；本地待验未推送） |
 | 最近更新 | 2026-10-21 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
@@ -268,7 +268,7 @@
 
 | # | 缺口 | 影响 | 建议做法 | 证据 |
 |---|---|---|---|---|
-| P1-1 | `setup/complete` 空动作：不建默认角色、不绑权限、不改租户状态 | "系统已准备就绪"无授权结果支撑 | complete 时落默认角色/权限/租户初始化标记 | `setup.rs:841-854` |
+| **P1-1** ✅ 后端闭环（F1，本地待验） | ~~`setup/complete` 空动作：不建默认角色、不绑权限、不改租户状态~~ | 已闭环（边界内）：complete 落 `completion` 初始化标记、汇总公司/部门/岗位数并核验 admin 是否绑定 IAM 账号，未绑定则告警提示先开通账号并分配默认角色/权限；**角色/权限不由 hrm 跨服务直写**（方案B，避免 core_user_roles 孤儿/错位行），默认角色/权限由 IAM 建号端点分配 | complete 写初始化标记 + 结果核验汇总；授权归属 IAM，hrm 不越界写角色目录 | `hrm/setup.rs complete_initialization` |
 | P1-2 | 部门/岗位后端无 handler 级 `check_permission`，仅全局 `hrm:admin` | 粒度粗，无法按部门/岗位授权 | 补 DepartmentRead/Write、PositionRead/Write 权限校验（对齐 company/employee） | `department.rs`、`position.rs` grep check_permission=0 |
 | **P1-3** ✅ 闭环（S1 `cc16d41d8`） | ~~自助注册开放无开关，注册账号无角色/权限/租户，注册后不可用~~ | 已闭环：`REGISTER_ENABLED` 默认关（403），开启时新账号落 `status=pending` 待管理员激活并分配角色/租户，登录仅放行 active；`.env.example` 已声明 | 开关默认关；开放时 pending 待激活，不产生可登录僵尸账号 | `auth.rs register`；`.env.example REGISTER_ENABLED` |
 | P1-4 | 前端权限守卫几乎未落地：35 个 config.ts 0 声明权限，PermissionGate 仅 1 处使用，菜单不过滤 | 无权限用户仍见全部入口，"可见但进不去" | 补模块权限声明、路由 requiredPermissions、菜单/按钮守卫（前端为体验层，后端为硬防线） | `modules/*/config.ts`；`PermissionGate.tsx` 1 处；`ModuleTabs.tsx:555`；`GlobalLayoutV3.tsx:59` |
@@ -285,8 +285,8 @@
 |---|---|---|---|---|
 | P2-1 | 无首次引导/空态 CTA：登录固定落 `/dashboard`，落地页硬编码 mock，无"先录公司/人员"提示 | 新用户无方向 | 空组织时展示初始化 checklist 引导 | `LoginPage.tsx:84-90`；`HybridDashboard.tsx:14-46` |
 | P2-2（并入 F 批） | 向导写死 `DEFAULT_ORG_ID=0001`，不读 JWT tenant/org；迁移期不知租户，进度行按默认 org 播种 | 多租户写错归属 | 与 P1-1 租户初始化模型统一：首启建租户后按 Claims.tenant_id 落进度行/公司归属，不单独半改 | `svc/hrm/setup.rs:124,141,235…`；迁移 `20261020000025` |
-| P2-3 | 批量步部分失败不回滚，成功/失败混杂提交 | 数据不一致 | 整批事务或逐行回滚 + 明确错误回报 | `setup.rs:415-428,553-560` |
-| P2-4 | 岗位→部门无 DB 外键；岗位步无批次重名校验；positions 孤儿可静默存在 | 脏数据 | 补 FK、补重名校验 | `position.rs`；`setup.rs:517-530` vs `:378-383` |
+| **P2-3** ✅ 闭环（F2，本地待验） | ~~批量步部分失败不回滚，成功/失败混杂提交~~ | 已闭环：部门/岗位步先整批前置校验（空名、批次内重名/重码、库内同名、岗位部门存在性），全部通过才写库；任一 DB 错误不 commit，txn drop 自动回滚整批，杜绝部分成功混杂 | 全量前置校验 + 全成功才提交，失败整批回滚并明确报错 | `hrm/setup.rs setup_departments/setup_positions` |
+| **P2-4** ✅ 应用层闭环（F2，本地待验；DB FK 另立） | ~~岗位→部门无 DB 外键；岗位步无批次重名校验；positions 孤儿可静默存在~~ | 已闭环（应用层）：岗位步补批次内重名/重码校验、库内同名拦截、`department_id` 必须存在且属本租户（应用层孤儿防护）；**硬 DB 外键未加**（存量库可能已有孤儿，直接加 FK 会锁表/失败，另立迁移并先清孤儿） | 应用层重名校验 + 部门归属存在性；DB FK 待清孤儿后单独迁移 | `hrm/setup.rs setup_positions`；`position.rs` |
 | P2-5 | 路由遗留错配：`routes/common.ts` 10 处重复注册（且 requiredPermissions 置空）、9 处孤儿路由、`/settings` 死链、`BackupPage` 无引用 | 可达性混乱、权限被置空覆盖 | 清理 common.ts，统一以模块 config 为准 | `common.ts:44-191`；`GlobalLayoutV3.tsx:935`；`BackupPage.tsx` |
 | **P2-6** ✅ 闭环（S3 `e1980e95d`） | ~~`DEVELOPMENT_MODE=true` 伪造超管旁路未声明、prod 判定只看 PROFILE~~ | 已闭环：prod 判定覆盖 `PROFILE/RUST_ENV/ENV=prod|production`（补 RUST_ENV/ENV，避免只设 RUST_ENV 时旁路生效）；强化告警；`.env.example` 显式声明默认 false | 生产三环境变量任一为 prod 即忽略旁路，仍要求真实 JWT | `shared-auth/auth.rs` dev gate；`.env.example DEVELOPMENT_MODE` |
 | P2-7 | 菜单种子 tenant_id=全 0 与默认租户 0001 错位；DB 菜单非前端主驱动 | 菜单种子不生效（现状靠硬编码兜住） | 统一租户命名空间或改公共共享菜单策略 | `20260724000005_seed_module_menus.sql:6,20` |
@@ -364,5 +364,6 @@
 | 2026-10-21 | v1.5 | `e810fc787` | **P0-4 第二批·JWT 展开**：登录签发与 `/users/me`、`my-permissions` 非超管改 JOIN 规范化授权表（`resolve_user_grants`），与刷新换发对齐；超管 `['*']`/全量目录不变；反范式列与 C 方言目录保留；lib 536 测试绿 |
 | 2026-10-21 | v1.6 | `62cf693a8` | **P1-5**：9 个自服务端点（GET/PUT `/users/me`、自身权限、自身偏好、改密、头像、自身权限校验、`/permissions/my-permissions`）拆入独立 `me` 路由组，仅由全局 `auth_middleware` 校验登录（无 token→401），不再要求 `iam:read`/`admin:iam:write`；管理类增删改/角色/权限/岗位仍守原权限层；身份一律取 `Claims.sub`，不接受 body/路径指定他人；pre-commit 全绿，lib 536 测试通过 |
 | 2026-10-21 | v1.7 | `cc16d41d8`/`7aff8b852`/`e1980e95d`/`f23f543db` | **S 安全收口批**：S1/P1-3 `REGISTER_ENABLED` 默认关、开放时新账号 pending 待激活；S2 首启 admin `must_change_password`、登录下发旗标、自身改密清除 + `ADMIN_INITIAL_PASSWORD` 声明（后端硬拦截/前端跳转留 P1-4）；S3/P2-6 DEV 旁路 prod 判定覆盖 RUST_ENV/ENV 并强化告警；S4/P2-9 停用孤儿脚本 admin123 播种并标注；P2-2 向导租户归属并入 F 批随 P1-1 统一 |
+| 2026-10-21 | v1.8 | 本地待验（未推送） | **F 批后端首启闭环（1–2）**：P1-1 `setup/complete` 落 completion 初始化标记、汇总公司/部门/岗位数并核验 admin 是否绑定 IAM 账号，未绑定告警；角色/权限归 IAM 建号端点，hrm 不跨服务直写；P2-3 部门/岗位批量步前置全量校验、全成功才提交，DB 错误整批回滚；P2-4 岗位步补批次重名/重码、库内同名、部门归属存在性校验（应用层孤儿防护），硬 DB FK 待清孤儿后另立迁移；hrm check/clippy/test 293 passed、fmt 绿 |
 
 > 后续每次闭环/修订在此追加一行；完成 P0/P1 后同步把 §3 对应行状态改为已具备并勾选 TODO.md。
