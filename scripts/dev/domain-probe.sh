@@ -47,14 +47,26 @@ FAIL=0
 
 run_probe() {
   python3 - "$REPO" "$BASE" "$TOKEN" "$CURL_TIMEOUT" "$1" <<'PYEOF'
-import re, pathlib, sys, urllib.request, urllib.error
+import re, pathlib, sys, urllib.request, urllib.error, json
 repo, base, token, timeout, domain = sys.argv[1], sys.argv[2], sys.argv[3], float(sys.argv[4]), sys.argv[5]
 def probe(p):
     req = urllib.request.Request(base + p, headers={'Authorization': 'Bearer ' + token})
     # 瞬时抖动消噪：ERR/5xx 重试 1 次再判定（全量扫描时长内偶发超时不误拦）
+    # 盲区补强：HTTP 200 但 body code>=500（业务级错误被包装，如 ehs 缺表时
+    # CoreResponse::error(500) 外层 HTTP 200）同样计 5xx——读 body 解析 JSON code
     for _ in range(2):
         try:
-            return urllib.request.urlopen(req, timeout=timeout).status
+            r = urllib.request.urlopen(req, timeout=timeout)
+            if r.status >= 500:
+                continue
+            try:
+                body = r.read(512).decode('utf-8', 'ignore')
+                code = json.loads(body).get('code')
+                if isinstance(code, int) and code >= 500:
+                    return f'{r.status}+body{code}'
+            except Exception:
+                pass
+            return r.status
         except urllib.error.HTTPError as e:
             if e.code >= 500:
                 continue
