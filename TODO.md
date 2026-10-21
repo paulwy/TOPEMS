@@ -109,7 +109,7 @@
 
 > 排期：`docs/quality/mdm-p3-ui-roadmap-2026-10-20.md`；契约依据：`docs/quality/master-data-contract-review-2026-10-20.md` B1-B4。四批代码均于 2026-10-20 落地（早于排期文档状态记录），后续补验证与状态回写（roadmap/活文档 v1.10）。
 
-- **批次 1 schema-registry**（`883e70146` + `f122d1b98`/`8ab52a995` 修复 + `4bf7e049c` 冒烟清零）：后端 `/schema-registry` 10 路由挂载，前端 wrapper 10 方法 + SchemaRegistryPage（列表/新建/编辑/动态数据 CRUD）+ 路由/菜单/i18n 38 key；typecheck/eslint 绿。**2026-10-22 环境核销**：本机主库实跑 500（`public.schema_registry` 影子表缺失，迁移链台账 0 条未应用 `20261005000001`）→ 补建函数 + 影子表，10 端点全链实跑 200/201，门禁默认 0 / strict 226 / 实跑 0 真 404（详见活文档 v1.22）。
+- **批次 1 schema-registry**（`883e70146` + `f122d1b98`/`8ab52a995` 修复 + `4bf7e049c` 冒烟清零）：后端 `/schema-registry` 10 路由挂载，前端 wrapper 10 方法 + SchemaRegistryPage（列表/新建/编辑/动态数据 CRUD）+ 路由/菜单/i18n 38 key；typecheck/eslint 绿。**2026-10-22 环境核销**：本机主库实跑 500（`public.schema_registry` 影子表缺失，迁移链台账 0 条未应用 `20261005000001`）→ 补建函数 + 影子表，10 端点全链实跑 200/201，门禁默认 0 / strict 226 / 实跑 0 真 404（详见活文档 v1.22）。**2026-10-22 core 插件域收口（活文档 v1.23）**：heartbeat WARN `core.core_plugin_instances` 缺表 → 主库补建 core schema 14 表（dump 权威 topems_test 对齐）+ 固化 `database/init/07_core_schema.sql` + `scripts/dev/ensure-core-schema.sh`（guard 幂等）→ BFF 重启（SEARCH_PATH 加 core）后 heartbeat 归零、/api/plugins/health 200。
 - **批次 2 lineage-v52**（`b3620e9c6`）：后端 15 路由（register/graph/upstream/downstream/export/delete/impact×4/propagate/rules×2/log/rollback），前端 LineageAnalyticsPage（926 行，v60 血缘图底座 + 影响分析/传播/回滚）+ i18n 66 key。
 - **批次 3 mdm-v59 AI 治理**（`378f18467`）：后端 23 路由（governance/matching/classifier），前端 AiGovernancePage（1036 行，Tabs 三子视图：治理建议/匹配裁决/分类管理）+ i18n 68 key。
 - **批次 4 mdm-v55 商业化**（`6beaaab27`）：后端 `/mdm-v55` 路由，前端 CommercialConsolePage（1056 行，4 tab：产品/订阅/账单/SLA）+ i18n 全。
