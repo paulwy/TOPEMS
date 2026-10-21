@@ -259,7 +259,12 @@ const WmsInboundOrderPage: React.FC = () => {
         const res = await inboundOrderApi.list(params);
         const resData = res as unknown as {
           data?:
-            | { list?: ApiInboundOrder[]; items?: ApiInboundOrder[]; total?: number }
+            | {
+                list?: ApiInboundOrder[];
+                items?: ApiInboundOrder[];
+                orders?: ApiInboundOrder[];
+                total?: number;
+              }
             | ApiInboundOrder[];
         };
         let apiOrders: ApiInboundOrder[] = [];
@@ -271,11 +276,13 @@ const WmsInboundOrderPage: React.FC = () => {
           const dataObj = resData.data as {
             list?: ApiInboundOrder[];
             items?: ApiInboundOrder[];
+            orders?: ApiInboundOrder[];
             total?: number;
           };
+          // 后端 GET /api/wms/inbound-orders 实际返回 data.orders
           apiOrders = Array.isArray(resData.data)
             ? resData.data
-            : dataObj.list || dataObj.items || [];
+            : dataObj.list || dataObj.items || dataObj.orders || [];
           total = dataObj.total || apiOrders.length;
         }
         if (Array.isArray(apiOrders)) {
