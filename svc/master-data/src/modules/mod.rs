@@ -25,6 +25,8 @@ pub mod semantic_v57;
 pub mod versioning_v54;
 // V68.1 A2.3: dict 模块从 unified-core 合并到主数据服务
 pub mod dict;
+// P2-11: 公共主数据域（物料目录 / UOM / 样品）
+pub mod master_data;
 
 /// B10：把 10 个 MDM 模块的内存集合快照全部回写库（幂等 upsert）。
 /// 与 main.rs 后台 3s flush 的调用面一致；各模块内部按 initialized 门控，
@@ -711,6 +713,40 @@ pub fn create_routes() -> Router<AppState> {
                 .route("/dashboard/recent", get(contract_fallbacks::array))
                 .route("/dashboard/recent/{id}", get(contract_fallbacks::array))
                 .route("/dashboard/orphans", get(contract_fallbacks::array)),
+        )
+        .nest(
+            "/master-data",
+            Router::new()
+                .route(
+                    "/materials",
+                    get(master_data::list_materials).post(master_data::create_material),
+                )
+                .route(
+                    "/materials/{id}",
+                    get(master_data::get_material)
+                        .put(master_data::update_material)
+                        .delete(master_data::delete_material),
+                )
+                .route(
+                    "/uoms",
+                    get(master_data::list_uoms).post(master_data::create_uom),
+                )
+                .route(
+                    "/uoms/{id}",
+                    get(master_data::get_uom)
+                        .put(master_data::update_uom)
+                        .delete(master_data::delete_uom),
+                )
+                .route(
+                    "/samples",
+                    get(master_data::list_samples).post(master_data::create_sample),
+                )
+                .route(
+                    "/samples/{id}",
+                    get(master_data::get_sample)
+                        .put(master_data::update_sample)
+                        .delete(master_data::delete_sample),
+                ),
         )
         // B10：写请求后同步落库中间件（必须位于所有路由注册之后才生效）
         .layer(axum::middleware::from_fn(flush_on_write))

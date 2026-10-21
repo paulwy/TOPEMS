@@ -1,6 +1,6 @@
 //! Auto-generated schema defense for the master-data service.
 //!
-//! Service: master-data | Schema: public | Tables: 4
+//! Service: master-data | Schema: public | Tables: 7
 //!
 //! 开发规范：新增列必须两处同步（详见 docs/development/backend/database-development.md）
 //!   (1) 服务的 CREATE TABLE IF NOT EXISTS xxx ( ... ) 文本里加列
@@ -13,7 +13,7 @@ use sqlx::PgPool;
 pub const SERVICE_SCHEMA: &str = "master_data";
 pub const SERVICE_TAG: &str = "master-data";
 
-/// master-data 4 张表的列定义单一事实源。不含 PRIMARY KEY 的 id 列（verify 阶段自动拼 "id"）。
+/// master-data 7 张表的列定义单一事实源。不含 PRIMARY KEY 的 id 列（verify 阶段自动拼 "id"）。
 pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "core_dict_types",
@@ -65,6 +65,59 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("data_json", "JSONB NOT NULL"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    (
+        "materials",
+        &[
+            ("tenant_id", "UUID"),
+            ("material_code", "VARCHAR(64) NOT NULL"),
+            ("material_name", "VARCHAR(200) NOT NULL"),
+            ("name_en", "VARCHAR(200)"),
+            ("material_type", "VARCHAR(64)"),
+            ("specification", "VARCHAR(256)"),
+            ("unit", "VARCHAR(32)"),
+            ("uom_id", "UUID"),
+            ("status", "VARCHAR(32) NOT NULL DEFAULT 'active'"),
+            ("description", "TEXT"),
+            ("created_by", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    (
+        "uoms",
+        &[
+            ("tenant_id", "UUID"),
+            ("uom_code", "VARCHAR(32) NOT NULL"),
+            ("uom_name", "VARCHAR(100) NOT NULL"),
+            ("name_en", "VARCHAR(100)"),
+            ("uom_type", "VARCHAR(64)"),
+            ("category", "VARCHAR(64)"),
+            ("status", "VARCHAR(32) NOT NULL DEFAULT 'active'"),
+            ("description", "TEXT"),
+            ("created_by", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    (
+        "samples",
+        &[
+            ("tenant_id", "UUID"),
+            ("sample_code", "VARCHAR(64) NOT NULL"),
+            ("sample_name", "VARCHAR(200) NOT NULL"),
+            ("name_en", "VARCHAR(200)"),
+            ("sample_type", "VARCHAR(64)"),
+            ("source", "VARCHAR(128)"),
+            ("status", "VARCHAR(32) NOT NULL DEFAULT 'active'"),
+            ("description", "TEXT"),
+            ("created_by", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
 ];

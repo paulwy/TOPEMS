@@ -29,6 +29,7 @@ const MASTER_PATHS = {
   lineageAnalytics: '/master/lineage-analytics',
   aiGovernance: '/master/ai-governance',
   commercial: '/master/commercial',
+  publicMasterData: '/master/public-master-data',
 } as const;
 
 // ---- 路由配置 ----
@@ -105,6 +106,21 @@ const commercialRoute: RouteConfigV2<Record<string, never>> = {
   requiredPermissions: ['master_data:commercial:read'],
   action: 'read',
 };
+const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.publicMasterData,
+  element: lazyWithRetry(
+    () => import('@/pages/master/PublicMasterDataPage'),
+    'PublicMasterDataPage'
+  ),
+  module: 'master',
+  code: 'master-public-master-data',
+  title: i18n.t('master.publicMasterData'),
+  titleKey: 'master.publicMasterData',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master:data-asset:read'],
+  action: 'read',
+};
 
 export const masterModuleConfig: RouteModuleConfig = {
   code: 'master',
@@ -124,6 +140,7 @@ export const masterModuleConfig: RouteModuleConfig = {
     lineageAnalyticsRoute,
     aiGovernanceRoute,
     commercialRoute,
+    publicMasterDataRoute,
   ],
 };
 
@@ -197,6 +214,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.commercial.desc'),
+    },
+    {
+      code: 'master-public-master-data',
+      label: i18n.t('master.publicMasterData'),
+      labelKey: 'master.publicMasterData',
+      icon: 'Boxes',
+      path: MASTER_PATHS.publicMasterData,
+      permission: 'master:data-asset:read',
+      order: 5,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.public_master_data.desc'),
     },
   ],
 };
