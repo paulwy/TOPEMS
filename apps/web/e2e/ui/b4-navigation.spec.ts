@@ -101,8 +101,14 @@ test.describe('B4 导航链路', () => {
 
     // 6. 顶栏搜索入口存在
     await check('顶栏搜索入口', async () => {
+      // 桌面端：按钮含「搜索」文字；移动端（≤640px）文字按设计折叠为纯图标按钮
+      // （.desktop-only 隐藏，aria-label 仍含「搜索」），两者均为有效搜索入口。
       const text = await header.innerText().catch(() => '');
-      return text.includes('搜索');
+      if (text.includes('搜索')) return true;
+      const btn = page.locator('[data-testid="topbar-command-palette"]');
+      if ((await btn.count()) === 0) return false;
+      const aria = await btn.first().getAttribute('aria-label').catch(() => '');
+      return (await btn.first().isVisible()) && !!aria && aria.includes('搜索');
     });
 
     await context.close();

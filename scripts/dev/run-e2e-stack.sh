@@ -49,10 +49,10 @@ seed_e2e_account() {
   if [ -z "${pw:-}" ]; then warn "未取到 DATABASE_URL，跳过 test_admin 种子"; return 0; fi
   info "种子 e2e 账号 test_admin（复制 admin 凭据哈希）..."
   PGPASSWORD="$pw" psql -h "${host:-127.0.0.1}" -U topems_app -d "${db:-topems}" -q -c \
-    "INSERT INTO iam.users (username,email,password_hash,full_name,role_id,status,email_verified)
-     SELECT 'test_admin','test_admin@test.local',password_hash,'E2E 管理员',role_id,'active',true
+    "INSERT INTO iam.users (username,email,password_hash,full_name,role_id,status,email_verified,is_superuser)
+     SELECT 'test_admin','test_admin@test.local',password_hash,'E2E 管理员',role_id,'active',true,true
      FROM iam.users WHERE username='admin'
-     ON CONFLICT (username) DO UPDATE SET password_hash=(SELECT password_hash FROM iam.users WHERE username='admin'), status='active';" \
+     ON CONFLICT (username) DO UPDATE SET password_hash=(SELECT password_hash FROM iam.users WHERE username='admin'), status='active', is_superuser=true;" \
     >/dev/null 2>&1 && ok "test_admin 就绪" || warn "test_admin 种子失败（可能表不存在）——smoke 将走 admin"
 }
 
