@@ -372,6 +372,8 @@
 
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
+| 2026-10-22 | v1.33 | 探活全量口径 + plugin statistics 契约修复 | **① domain-probe 门禁改为全量口径（27 域 ~3100 path，含已核销 master-data/analytics/ai/plugin-registry/unified-core/server）**：默认 SKIP=""；`--include-verified` 保留为空别名、新增 `--skip-verified` 反向参数（旧 22 域口径）；probe 加重试（ERR/5xx 重试 1 次消瞬时误报）；失败时输出 5xx 明细（此前被 grep -v 吞掉无法定位，脚本缺陷顺手修）；lefthook pre-push domain-probe 条目加 timeout: 900s。**② 全量口径首扫暴露被跳过掩盖的隐藏缺陷**：`/api/plugin/reviews/statistics` 真 500——`get_review_statistics` 声明 `Path(plugin_code)` 但路由 `/api/plugin/reviews/statistics` 无 path 参数 → axum 运行时「Wrong number of path arguments」→ 移除多余 extractor，修复后 200。**③ 实测**：BFF 重建重启 + 重签 token → statistics 200；全量 27 域复扫 **DOMAIN_PROBE_OK 0 个 5xx**；真实 push pre-push 全链（7 门禁）通过。登记提交 `9c5289dd9` |
+
 | 2026-10-22 | v1.32 | 门禁（探活入 pre-push） | **domain-probe 并入 pre-push 自动门禁**：① `scripts/dev/domain-probe.sh` 加 BFF 存活探测（/health 200 才严格扫 22 域 5xx；离线输出 `DOMAIN_PROBE_SKIP_WARN` exit 0 不阻断——CI/无运行态可推，部署机启动后手动复核）；② lefthook.yml pre-push 新增 [Gate DP] `domain-probe` 条目（与 contract-gate 静态挂载互补，覆盖缺表/缺列/死锁等运行态缺陷）；③ 实测：离线 BASE=9999 → SKIP_WARN、在线 erp 344 path 0 5xx；真实 push pre-push 全链（7 门禁）通过 |
 
 | 2026-10-22 | v1.30 | 本地未推送（TODO 核销 + 活文档状态收口） | **遗留排查收口（2026-10-22）**：① §2 能力盘点表滞后标注同步——1.6（P0-1/P1-1 已闭环：complete 落标记+汇总+admin 绑定核验）、2.1（P1-3 已闭环：`REGISTER_ENABLED` 默认关、开放时 pending 待激活）、2.2/2.3（P0-4 已闭环：权限字典补 23 码、方言对齐）、2.4（P0-4 已闭环：登录 JWT/me 实时 JOIN 规范化授权表展开）五处"部分"更新为"已具备"；② TODO.md 核销过时条目 TRAE 并行线（`svc/erp`、`svc/search` 工作区干净，`navigation-menu-demo.design/` 已不存在）；③ 核实其余遗留均为外部/生产机依赖（8 项生产任务已建执行清单 `docs/deploy/production-execution-checklist.md`；`get_business_overview` 占位前端零消费待业务口径；contract-stub 🔴67 条待产品排期；unused-vars 长尾 85 处；E11c wms/scm 动态金额 bind 登记边缘），本地可闭环项归零 |
