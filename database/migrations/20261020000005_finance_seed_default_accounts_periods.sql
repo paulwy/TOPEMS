@@ -55,6 +55,16 @@ BEGIN
     DELETE FROM seed_tenant_ids a USING seed_tenant_ids b
     WHERE a.ctid < b.ctid AND a.tenant_id = b.tenant_id;
 
+    -- 仅保留 FK 目标 public.core_tenants 中确实存在的租户：
+    -- iam/flow 注册表与 public 主表漂移时（历史环境常见），
+    -- 直接播种会触发 core_finance_* 的 tenant_id 外键违约
+    IF to_regclass('public.core_tenants') IS NOT NULL THEN
+        DELETE FROM seed_tenant_ids s
+        WHERE NOT EXISTS (
+            SELECT 1 FROM public.core_tenants t WHERE t.id = s.tenant_id
+        );
+    END IF;
+
     FOR t IN SELECT tenant_id FROM seed_tenant_ids LOOP
         -- 默认科目（缺失才插，不覆盖既有自定义科目）
         INSERT INTO finance.core_finance_accounts

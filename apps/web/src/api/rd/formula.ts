@@ -12,7 +12,9 @@ export const formulaApi = {
   listFormulas: async (params?: {
     project_id?: string;
     status?: string;
-  }): Promise<ApiResponse<Formula[]>> => {
+  }): Promise<
+    ApiResponse<{ items: Formula[]; total: number; page: number; page_size: number }>
+  > => {
     let url = '/formulas';
     if (params) {
       const searchParams = new URLSearchParams();

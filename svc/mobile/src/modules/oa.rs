@@ -11,8 +11,10 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
-fn tenant_id() -> String {
-    "default".to_string()
+/// 默认租户：mobile.oa_* 的 tenant_id 列已是 uuid，绑 String 会报
+/// `operator does not exist: uuid = text`，故统一用默认租户 UUID。
+fn tenant_id() -> Uuid {
+    Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap_or(Uuid::nil())
 }
 
 // ===== 模型 =====
@@ -20,7 +22,7 @@ fn tenant_id() -> String {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct OaMeeting {
     pub id: Uuid,
-    pub tenant_id: String,
+    pub tenant_id: Uuid,
     pub title: String,
     pub description: Option<String>,
     pub r#type: String,
@@ -60,7 +62,7 @@ pub struct MeetingQuery {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct OaCalendarEvent {
     pub id: Uuid,
-    pub tenant_id: String,
+    pub tenant_id: Uuid,
     pub title: String,
     pub description: Option<String>,
     pub r#type: String,
@@ -99,7 +101,7 @@ pub struct CalendarEventQuery {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct OaTask {
     pub id: Uuid,
-    pub tenant_id: String,
+    pub tenant_id: Uuid,
     pub title: String,
     pub description: Option<String>,
     pub priority: String,
@@ -140,7 +142,7 @@ pub struct OaTaskQuery {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct OaAnnouncement {
     pub id: Uuid,
-    pub tenant_id: String,
+    pub tenant_id: Uuid,
     pub title: String,
     pub content: String,
     pub priority: String,

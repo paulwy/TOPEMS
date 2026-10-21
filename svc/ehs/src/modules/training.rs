@@ -984,10 +984,12 @@ pub async fn create_training_plan(
         .get("description")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
+    // training_type 列为 NOT NULL：请求未提供时回落 "general"
     let training_type = req
         .get("training_type")
         .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| "general".to_string());
     let instructor = req
         .get("trainer")
         .and_then(|v| v.as_str())

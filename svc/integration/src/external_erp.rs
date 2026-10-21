@@ -14,6 +14,16 @@ use crate::models::{AppState, ErpConnection, ErpMapping};
 
 const TENANT_ID: &str = "default";
 
+/// 写入路径租户：claims 无租户（超管）时回落 nil UUID（tenant_id 列 NOT NULL，
+/// 直接绑 NULL 会触发非空约束 → 500）
+fn tenant_uuid(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 // ===== 同步日志模型 =====
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -141,7 +151,7 @@ pub async fn create_connection(
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(id)
-    .bind(&claims.tenant_id)
+    .bind(tenant_uuid(&claims))
     .bind(&name)
     .bind(&r#type)
     .bind(&api_url)
@@ -414,7 +424,7 @@ async fn create_entity_mapping(
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(mapping_id)
-    .bind(&claims.tenant_id)
+    .bind(tenant_uuid(&claims))
     .bind(uuid)
     .bind(&entity)
     .bind(mapping_id.to_string())
@@ -476,7 +486,7 @@ pub async fn batch_entity_mappings(
              VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,'bidirectional',TRUE,0,NOW(),NOW())"
         ))
         .bind(mapping_id)
-        .bind(&claims.tenant_id)
+        .bind(tenant_uuid(&claims))
         .bind(uuid)
         .bind(&entity)
         .bind(mapping_id.to_string())
@@ -743,7 +753,7 @@ pub async fn sync_entity(
          VALUES ($1,$2::uuid,$3,$4,$5,'running',NOW(),NOW())"
     ))
     .bind(task_id)
-    .bind(&claims.tenant_id)
+    .bind(tenant_uuid(&claims))
     .bind(connection_id)
     .bind(&entity)
     .bind(&direction)
@@ -1225,7 +1235,7 @@ pub async fn create_company_mapping(
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(mapping_id)
-    .bind(&claims.tenant_id)
+    .bind(tenant_uuid(&claims))
     .bind(conn_uuid)
     .bind(mapping_id.to_string())
     .bind(&local_code)

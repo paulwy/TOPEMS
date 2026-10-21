@@ -5,7 +5,7 @@ import { FormPageTemplate, type FormSection } from '@/components/templates/FormP
 import { PageContainer } from '@/components/common';
 import { rdApi, formulaApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
-import type { CreateExperimentRequest, UpdateExperimentRequest } from '@/api/rd';
+import type { CreateExperimentRequest, UpdateExperimentRequest, Formula } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
@@ -51,7 +51,12 @@ const RsExperimentCreatePage: React.FC = () => {
       if (!response.success || !response.data) {
         throw new Error(response.message || i18n.t('rd.rs_experiment_create_page.k11'));
       }
-      return response.data || [];
+      // 后端列表返回分页对象 { items: [...] }，需归一为数组（兼容直接返回数组的情况）
+      const data = response.data as unknown;
+      if (Array.isArray(data)) {
+        return data as Formula[];
+      }
+      return ((data as { items?: Formula[] }).items ?? []) as Formula[];
     },
 
     staleTime: CACHE_DURATIONS.MEDIUM,

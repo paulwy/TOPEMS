@@ -899,14 +899,13 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
               case 'number':
                 return (
+                  // 保持字符串值：各页面 schema 均为 z.string()（提交前自行 parseFloat），
+                  // 若强转 Number 会导致 zod 校验报 "expected string, received number"
                   <TextField
                     {...commonProps}
                     {...controllerField}
                     type='number'
                     required={isRequired}
-                    onChange={(e) =>
-                      controllerField.onChange(e.target.value === '' ? '' : Number(e.target.value))
-                    }
                   />
                 );
 
@@ -1491,8 +1490,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           </Alert>
         )}
 
-        {/* 表单 */}
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
+        {/* 表单（noValidate：禁用浏览器原生校验气泡，统一走 RHF/zod 内联错误） */}
+        <form
+          noValidate
+          onSubmit={handleSubmit(handleFormSubmit)}
+        >
           {sections.map(renderSection)}
           {renderFooter()}
         </form>

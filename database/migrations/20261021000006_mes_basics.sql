@@ -66,7 +66,7 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'fk_work_stations_workshop'
     ) THEN
-        ALTER TABLE work_stations
+        ALTER TABLE mes.work_stations
             ADD CONSTRAINT fk_work_stations_workshop
             FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE SET NULL;
     END IF;
@@ -74,7 +74,7 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'fk_production_orders_workshop'
     ) THEN
-        ALTER TABLE production_orders
+        ALTER TABLE mes.production_orders
             ADD CONSTRAINT fk_production_orders_workshop
             FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE SET NULL;
     END IF;

@@ -516,6 +516,22 @@ pub async fn submit_drill_evaluation(
     };
     let tenant_id = tenant_opt.unwrap_or_else(Uuid::nil);
 
+    // drill_id 有外键指向 ehs.qa_ehs_drill_records：先校验存在性，避免直接 INSERT 触发 500 外键违约
+    match sqlx::query_scalar::<_, Uuid>(
+        "SELECT id FROM ehs.qa_ehs_drill_records WHERE id = $1::uuid AND deleted_at IS NULL",
+    )
+    .bind(&id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(_)) => {}
+        Ok(None) => return Json(ApiResponse::error(404, "演练记录不存在")),
+        Err(e) => {
+            tracing::error!("Failed to check drill record: {}", e);
+            return Json(ApiResponse::error(500, "提交演练评估失败"));
+        }
+    }
+
     let result = sqlx::query(
         r#"
         INSERT INTO ehs.qa_ehs_drill_evaluations (

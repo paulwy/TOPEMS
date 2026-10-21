@@ -53,16 +53,24 @@ async function collectErrors(page: any): Promise<Array<{ label: string; message:
   });
 }
 
-/** 通用填充：给可见的空输入框填自动化测试值 */
+/** 通用填充：给可见的空输入框填自动化测试值（文本带唯一后缀，避免唯一键冲突导致重跑失败） */
 async function fillInputs(page: any): Promise<number> {
   const handles = await page.locator('form input:not([type=hidden]):not([disabled])').all();
+  const uniq = Date.now().toString().slice(-8);
   let filled = 0;
   for (const h of handles) {
     const type = (await h.getAttribute('type')) || 'text';
-    if (!['text', 'email', 'number', 'tel', ''].includes(type)) continue;
+    if (!['text', 'email', 'number', 'tel', 'url', ''].includes(type)) continue;
     if (await h.inputValue().catch(() => '')) continue;
+    const name = ((await h.getAttribute('name')) || '').toLowerCase();
     const value =
-      type === 'email' ? `auto_test_${Date.now()}@example.com` : type === 'number' ? '1' : '自动化测试';
+      type === 'email'
+        ? `auto_test_${uniq}@example.com`
+        : type === 'number'
+          ? '1'
+          : type === 'url' || name.includes('website') || name.includes('url')
+            ? 'https://example.com'
+            : `自动化测试${uniq}`;
     await h.fill(value).then(() => filled++).catch(() => undefined);
   }
   const areas = await page.locator('form textarea:not([disabled])').all();
@@ -94,7 +102,12 @@ test.describe('C2-C4 录入页模拟提交 smoke', () => {
       page.on('pageerror', onErr);
 
       await page.goto(route, { waitUntil: 'domcontentloaded' }).catch(() => undefined);
-      await page.waitForTimeout(1200);
+      // 懒加载 chunk 在 dev 模式首次访问需编译，固定短等待会误判 no-form-rendered；
+      // 改为显式等待表单出现（超时再判定）
+      await page
+        .waitForSelector('form button[type="submit"]', { timeout: 20000 })
+        .catch(() => undefined);
+      await page.waitForTimeout(500);
 
       const submit = page.locator('form button[type="submit"]').first();
       const hasForm = (await submit.count()) > 0;
@@ -102,10 +115,19 @@ test.describe('C2-C4 录入页模拟提交 smoke', () => {
       if (!hasForm) {
         row.outcome = 'no-form-rendered';
         row.pageErrors = pageErrors;
+        // 记录页面正文摘要，便于区分 403/白屏/编译未完成
+        row.bodySnippet = ((await page.locator('body').innerText().catch(() => '')) || '')
+          .replace(/\s+/g, ' ')
+          .slice(0, 200);
         report.push(row);
         page.off('pageerror', onErr);
         continue;
       }
+
+      // 提交按钮在 select 选项查询 pending 期间为 disabled（loading 属性），
+      // 必须等其启用再点击，否则空提交点击是 no-op，C3 指标失真
+      await expect(submit).toBeEnabled({ timeout: 20000 }).catch(() => undefined);
+      row.submitEnabled = await submit.isEnabled().catch(() => false);
 
       // C3：空表单提交 → 期望被校验拦截
       await submit.click().catch(() => undefined);
@@ -117,6 +139,7 @@ test.describe('C2-C4 录入页模拟提交 smoke', () => {
       // C2：通用填充后再提交
       row.fieldsFilled = await fillInputs(page);
       const urlBefore = new URL(page.url()).pathname;
+      await expect(submit).toBeEnabled({ timeout: 10000 }).catch(() => undefined);
       await submit.click().catch(() => undefined);
       await page.waitForTimeout(2500);
 

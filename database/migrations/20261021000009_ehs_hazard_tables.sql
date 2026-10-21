@@ -58,24 +58,41 @@ CREATE TABLE IF NOT EXISTS ehs.hazard_control_measures (
 );
 
 -- EHS 危险源（旧模型视图，兼容 hazard.rs list 旧路径）
-CREATE OR REPLACE VIEW ehs.qa_ehs_hazards AS
-    SELECT
-        id,
-        hazard_no,
-        title,
-        NULL::text AS title_en,
-        description,
-        category,
-        level,
-        source,
-        location,
-        reported_by,
-        reported_at,
-        status,
-        inspection_id,
-        created_at,
-        updated_at
-    FROM public.qa_ehs_hazards;
+-- 历史环境中 ehs.qa_ehs_hazards 是独立表（且有 4 张修正/验证/评估/措施表的外键引用），
+-- 无法直接替换为视图：此处先把存量行幂等搬到主表 public.qa_ehs_hazards 保证新旧路径同源，
+-- 仅在目标不存在或已是视图时才创建/替换视图，避免整条迁移失败或破坏外键
+DO $$
+BEGIN
+    IF to_regclass('ehs.qa_ehs_hazards') IS NOT NULL
+       AND (SELECT relkind FROM pg_class WHERE oid = to_regclass('ehs.qa_ehs_hazards')) = 'r' THEN
+        EXECUTE $ins$
+            INSERT INTO public.qa_ehs_hazards
+                (id, hazard_no, title, description, category, level, source, location,
+                 reported_by, reported_at, status, inspection_id, created_at, updated_at,
+                 tenant_id, deleted_at)
+            SELECT id, hazard_no, title, description, category, level, source, location,
+                   reported_by, reported_at, status, inspection_id, created_at, updated_at,
+                   tenant_id, deleted_at
+            FROM ehs.qa_ehs_hazards
+            ON CONFLICT (id) DO NOTHING
+        $ins$;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF to_regclass('ehs.qa_ehs_hazards') IS NULL
+       OR (SELECT relkind FROM pg_class WHERE oid = to_regclass('ehs.qa_ehs_hazards')) = 'v' THEN
+        EXECUTE $view$
+            CREATE OR REPLACE VIEW ehs.qa_ehs_hazards AS
+            SELECT
+                id, hazard_no, title, NULL::text AS title_en, description, category,
+                level, source, location, reported_by, reported_at, status, inspection_id,
+                created_at, updated_at
+            FROM public.qa_ehs_hazards
+        $view$;
+    END IF;
+END $$;
 
 -- CRM 标签补 name_en（tag.rs 契约）
 ALTER TABLE crm.tags ADD COLUMN IF NOT EXISTS name_en VARCHAR(128);

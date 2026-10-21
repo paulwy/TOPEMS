@@ -13,8 +13,21 @@ use crate::models::{
     TestConnectionResponse, UpdateErpConnectionRequest,
 };
 
-fn tenant_id(_state: &AppState) -> String {
-    "default".to_string()
+/// 读取路径租户过滤：超管返回 None（不过滤），普通用户返回其租户 UUID
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
+}
+
+/// 写入路径租户：解析失败回落 nil UUID（tenant_id 列 NOT NULL）
+fn tenant_for_write(claims: &Claims) -> Uuid {
+    tenant_filter(claims).unwrap_or(Uuid::nil())
 }
 
 #[utoipa::path(
@@ -30,16 +43,13 @@ pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ErpConnection>>> {
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
+    let tid = tenant_filter(&claims);
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
+         created_at, updated_at FROM erp_connections \
+         WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -67,16 +77,13 @@ pub async fn get_connection(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ErpConnection>> {
-    let tid: Option<&str> = if claims.is_superuser {
-        None
-    } else {
-        Some(claims.tenant_id.as_deref().unwrap_or("default"))
-    };
+    let tid = tenant_filter(&claims);
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id::text = $2)"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
+         created_at, updated_at FROM erp_connections \
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
     .bind(tid)
@@ -100,9 +107,10 @@ pub async fn get_connection(
 )]
 pub async fn create_connection(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateErpConnectionRequest>,
 ) -> Json<ApiResponse<ErpConnection>> {
-    let tid = tenant_id(&state);
+    let tid = tenant_for_write(&claims);
     let id = Uuid::new_v4();
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
@@ -111,7 +119,7 @@ pub async fn create_connection(
           sync_direction, sync_mode, sync_interval, status, isactive, created_at, updated_at) \
          VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,'inactive',TRUE,NOW(),NOW()) \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(id)
@@ -147,10 +155,11 @@ pub async fn create_connection(
 )]
 pub async fn update_connection(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateErpConnectionRequest>,
 ) -> Json<ApiResponse<ErpConnection>> {
-    let tid = tenant_id(&state);
+    let tid = tenant_filter(&claims);
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "UPDATE erp_connections SET \
@@ -165,9 +174,9 @@ pub async fn update_connection(
          isactive = COALESCE($9, isactive), \
          status = COALESCE($10, status), \
          updated_at = NOW() \
-         WHERE id = $11 AND tenant_id::text = $12 \
+         WHERE id = $11 AND ($12::uuid IS NULL OR tenant_id = $12::uuid) \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(req.name)
@@ -202,12 +211,13 @@ pub async fn update_connection(
 )]
 pub async fn delete_connection(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let tid = tenant_id(&state);
+    let tid = tenant_filter(&claims);
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_connections WHERE id = $1 AND tenant_id::text = $2"
+        "DELETE FROM erp_connections WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
     .bind(&tid)

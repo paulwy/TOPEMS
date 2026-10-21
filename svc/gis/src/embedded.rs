@@ -206,16 +206,7 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             "/ws/gis/device/{device_code}",
             get(modules::websocket::websocket_device_handler),
         )
-        .route("/ws/gis", get(modules::websocket::websocket_handler))
-        // Geofence public endpoints
-        .route(
-            "/fences",
-            axum::routing::get(modules::geofence::list_geofences),
-        )
-        .route(
-            "/fences/{id}",
-            axum::routing::get(modules::geofence::get_geofence),
-        );
+        .route("/ws/gis", get(modules::websocket::websocket_handler));
 
     // Protected API (auth + rate limit)
     let protected_api = Router::new()
@@ -408,18 +399,18 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             "/devices/{id}/history",
             axum::routing::get(modules::device::get_device_history),
         )
-        // Geofence protected write endpoints
+        // Geofence endpoints：读接口依赖 Claims 扩展（租户过滤），必须与写接口一样走鉴权链，
+        // 否则 axum 报 "Missing request extension: Claims" → 500
         .route(
             "/fences",
-            axum::routing::post(modules::geofence::create_geofence),
+            axum::routing::get(modules::geofence::list_geofences)
+                .post(modules::geofence::create_geofence),
         )
         .route(
             "/fences/{id}",
-            axum::routing::put(modules::geofence::update_geofence),
-        )
-        .route(
-            "/fences/{id}",
-            axum::routing::delete(modules::geofence::delete_geofence),
+            axum::routing::get(modules::geofence::get_geofence)
+                .put(modules::geofence::update_geofence)
+                .delete(modules::geofence::delete_geofence),
         )
         .layer(axum::middleware::from_fn(require_permission("gis:admin")))
         .layer(axum::middleware::from_fn_with_state(

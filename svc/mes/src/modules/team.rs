@@ -22,7 +22,7 @@ struct TeamRow {
     team_name: String,
     team_type: Option<String>,
     work_station_id: Option<Uuid>,
-    leader_id: Option<String>,
+    leader_id: Option<Uuid>,
     leader_name: Option<String>,
     member_count: Option<i32>,
     status: Option<String>,
@@ -510,6 +510,11 @@ pub async fn update_team(
         .work_station_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
+    // leader_id 列为 uuid：必须按 Uuid 绑定，直接绑 String 会推断为 text 导致 COALESCE 类型不匹配
+    let leader_id: Option<Uuid> = req
+        .leader_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let result = sqlx::query_as::<_, TeamRow>(
         r#"
@@ -533,7 +538,7 @@ pub async fn update_team(
     .bind(req.team_name)
     .bind(req.team_type)
     .bind(work_station_id)
-    .bind(req.leader_id)
+    .bind(leader_id)
     .bind(req.leader_name)
     .bind(req.status)
     .bind(req.description)

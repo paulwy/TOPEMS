@@ -1,5 +1,6 @@
 // 2026-08-07: 部分报表和模型 struct 仅 serde 使用，保留 crate 级 allow
 #![allow(dead_code)]
+pub mod accounting_subjects;
 pub mod audit_v52;
 pub mod bootstrap;
 pub mod compliance_v51;
@@ -4558,7 +4559,7 @@ pub async fn list_expense_approvals(
         r#"SELECT id, expense_no, employee_id, employee_name, department, expense_date,
                   expense_type, total_amount, status, description, approver_id, approver_name,
                   approval_note, created_at, updated_at
-           FROM expense_approvals
+           FROM finance.expense_approvals
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR expense_no ILIKE $1 OR employee_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
@@ -4596,7 +4597,7 @@ pub async fn list_expense_approvals(
             }).collect();
             let total: i64 = sqlx::query_scalar(only_own_schema_query!(
                 "finance",
-                r#"SELECT COUNT(*) FROM expense_approvals WHERE deleted_at IS NULL"#
+                r#"SELECT COUNT(*) FROM finance.expense_approvals WHERE deleted_at IS NULL"#
             ))
             .fetch_one(&state.pool)
             .await
@@ -4672,7 +4673,7 @@ pub async fn create_expense_approval(
     let result = sqlx::query(
         only_own_schema_query!(
             "finance",
-            r#"INSERT INTO expense_approvals (expense_no, employee_id, employee_name, department, expense_date,
+            r#"INSERT INTO finance.expense_approvals (expense_no, employee_id, employee_name, department, expense_date,
                    expense_type, total_amount, status, description, tenant_id)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                RETURNING id, created_at"#
@@ -4726,7 +4727,7 @@ pub async fn get_expense_approval(
         r#"SELECT id, expense_no, employee_id, employee_name, department, expense_date,
                       expense_type, total_amount, status, description, approver_id, approver_name,
                       approval_note, created_at, updated_at
-               FROM expense_approvals
+               FROM finance.expense_approvals
                WHERE id = $1 AND deleted_at IS NULL
                  AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
@@ -4936,6 +4937,10 @@ pub fn create_routes() -> Router<AppState> {
         .merge(forecasting::create_routes())
         .merge(bootstrap::create_routes())
         .merge(financial_reports::create_routes())
+        // 科目 CRUD：前端凭证/科目管理页仍依赖 /accounting-subjects（线C1 曾下线，
+        // 但 VoucherCreatePage / FinanceVoucherPage / AccountingManagementPage 仍在调用），
+        // 表 finance.accounting_subjects 仍然存在，故恢复挂载以闭合 web 契约。
+        .merge(accounting_subjects::create_routes())
         .merge(currencies::create_routes())
         .nest("/cqrs", cqrs_routes::cqrs_routes())
         .merge(event_routes::event_routes())

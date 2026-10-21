@@ -6,11 +6,10 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
-use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
 
@@ -26,9 +25,9 @@ struct FlowStepRow {
     sequence: i32,
     work_station_id: Option<Uuid>,
     equipment_ids: Option<Vec<Uuid>>,
-    standard_time: Option<i32>,
-    wait_time: Option<i32>,
-    transfer_time: Option<i32>,
+    standard_time: Option<f64>,
+    wait_time: Option<f64>,
+    transfer_time: Option<String>,
     quality_check_required: Option<bool>,
     description: Option<String>,
     created_at: Option<DateTime<Utc>>,
@@ -761,26 +760,11 @@ pub async fn add_flow_step(
         .work_station_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
-    let standard_time = body
-        .standard_time
-        .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let wait_time = body
-        .wait_time
-        .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            .ok()
-            .or_else(|| {
-                DateTime::parse_from_rfc3339(s)
-                    .ok()
-                    .map(|dt| dt.naive_utc())
-            })
-            .or_else(|| {
-                s.parse::<chrono::NaiveDate>()
-                    .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0))
-            })
-    });
+    // standard_time / wait_time 列为 float8，直接绑 f64
+    let standard_time = body.standard_time;
+    let wait_time = body.wait_time;
+    // transfer_time 列为 text，原样绑定
+    let transfer_time = body.transfer_time.as_deref();
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
         ids.into_iter()
             .filter_map(|id| Uuid::parse_str(&id).ok())
@@ -805,9 +789,7 @@ pub async fn add_flow_step(
         process_uuid,
         body.sequence,
         work_station_uuid,
-        equipment_ids
-            .as_ref()
-            .map(|ids| serde_json::to_string(ids).unwrap_or_default()),
+        equipment_ids.as_deref(),
         standard_time,
         wait_time,
         transfer_time,
@@ -906,12 +888,9 @@ pub async fn update_flow_step(
         .work_station_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
-    let standard_time = body
-        .standard_time
-        .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let wait_time = body
-        .wait_time
-        .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
+    // standard_time / wait_time 列为 float8，直接绑 f64
+    let standard_time = body.standard_time;
+    let wait_time = body.wait_time;
     // transfer_time 列为 text，直接绑字符串
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
         ids.into_iter()
@@ -924,11 +903,11 @@ pub async fn update_flow_step(
         UPDATE process_flow_steps
         SET
             sequence = COALESCE($1, sequence),
-            work_station_id = COALESCE($2, work_station_id),
-            equipment_ids = COALESCE($3, equipment_ids),
-            standard_time = COALESCE(CAST($4 AS INTEGER), standard_time),
-            wait_time = COALESCE(CAST($5 AS INTEGER), wait_time),
-            transfer_time = COALESCE(NULLIF($6, '')::integer, transfer_time),
+            work_station_id = COALESCE($2::uuid, work_station_id),
+            equipment_ids = COALESCE($3::uuid[], equipment_ids),
+            standard_time = COALESCE($4::float8, standard_time),
+            wait_time = COALESCE($5::float8, wait_time),
+            transfer_time = COALESCE(NULLIF($6, ''), transfer_time),
             quality_check_required = COALESCE($7, quality_check_required),
             description = COALESCE($8, description)
         WHERE id = $9
