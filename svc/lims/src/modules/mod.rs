@@ -1,3 +1,4 @@
+pub mod analyte;
 pub mod audit;
 pub mod dashboard;
 pub mod data_sync;
@@ -35,6 +36,7 @@ pub fn create_api_routes() -> Router<AppState> {
         .merge(data_sync::create_routes())
         .merge(sample_barcode::create_routes())
         .merge(test_method::create_routes())
+        .merge(analyte::create_routes())
         .merge(proficiency_testing::create_routes())
         .merge(uncertainty::create_routes())
         .merge(instrument_data::create_routes())

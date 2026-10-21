@@ -14,6 +14,7 @@ export const QMS_PATHS = {
   correctiveActions: '/qms/corrective-actions',
   auditManagement: '/qms/audit-management',
   standards: '/qms/standards',
+  inspectionStandard: '/qms/inspection-standard',
   standardDetail: '/qms/standards/:id',
   apqp: '/qms/apqp',
   fmea: '/qms/fmea',
@@ -40,6 +41,11 @@ export const QMS_PATHS = {
 // 命名规则：<DisplayName> + 'Props'，严格 1:1 对应 lazyWithRetry 第 2 参数 DisplayName
 // 字段策略：template 通用字段（list/pageSize/filters · form/mode/initialValues · detail/id · etc.）+ PATH 动态段参数（:id → id?）
 // 深层字段（filters/initialValues）先宽松 Record<string, unknown>，V257 P1-1 tsc 后细化
+
+interface InspectionStandardPageProps {
+  /** 激活 Tab：items | plans | samplingPlans */
+  activeTab?: string;
+}
 
 interface QmsDashboardPageProps {
   /** 统计指标列表（可选）*/
@@ -568,6 +574,21 @@ export const qmsModuleConfig: RouteModuleConfig = {
   description: i18n.t('qms.nav.module_name_desc'),
   permission: 'qms:dashboard:read',
   routes: [
+    {
+      path: QMS_PATHS.inspectionStandard,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/InspectionStandardPage'),
+        'InspectionStandardPage'
+      ),
+      module: 'qms',
+      code: 'qms-inspection-standard',
+      title: i18n.t('qms.nav.qms-inspection-standard'),
+      titleKey: 'qms.nav.qms-inspection-standard',
+      template: 'list',
+      group: 'master',
+      requiredPermissions: ['qms:standard:read'],
+      action: 'read',
+    } as unknown as RouteConfigV2<InspectionStandardPageProps>,
     {
       path: QMS_PATHS.dashboard,
       element: lazyWithRetry(() => import('@/pages/qms/QmsDashboardPage'), 'QmsDashboardPage'),
@@ -1125,6 +1146,17 @@ export const qmsNavConfig: ModuleNavConfig = {
       order: 7,
       group: 'analytics',
       description: i18n.t('qms.nav.qms-fmea-risk-matrix_desc'),
+    },
+    {
+      code: 'qms-inspection-standard',
+      label: i18n.t('qms.nav.qms-inspection-standard'),
+      labelKey: 'qms.nav.qms-inspection-standard',
+      icon: 'ClipboardList',
+      path: QMS_PATHS.inspectionStandard,
+      permission: 'qms:standard:read',
+      order: 9,
+      group: 'master',
+      description: i18n.t('qms.nav.qms-inspection-standard_desc'),
     },
     {
       code: 'qms-audit-compliance',

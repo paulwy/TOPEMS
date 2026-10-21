@@ -5,6 +5,7 @@ pub mod dashboard;
 pub mod data_sync;
 pub mod eight_d;
 pub mod fmea;
+pub mod inspection_standard;
 pub mod qms_plugin;
 pub mod quality_cost;
 pub mod quality_dashboard;
@@ -22,6 +23,7 @@ use topems_shared_boundary::only_own_schema_query;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .merge(quality_standard::create_routes())
+        .merge(inspection_standard::create_routes())
         .merge(quality_inspection::create_routes())
         .merge(quality_issue::create_routes())
         .merge(dashboard::create_routes())

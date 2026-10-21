@@ -6,6 +6,11 @@ import i18n from '@/i18n';
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 LIMS_PATHS.xxx，而非硬编码字符串
 /** LimsSamplePage 路由 Props · 模板=list */
+interface AnalytePageProps {
+  /** 检验项目编码 */
+  analyteCode?: string;
+}
+
 interface LimsSamplePageProps {
   /** 分页页码，默认 1 */
   page?: number;
@@ -173,6 +178,7 @@ export const LIMS_PATHS = {
   sampleReceive: '/lims/sample-receive',
   task: '/lims/task',
   taskDetail: '/lims/task-detail',
+  analytes: '/lims/analytes',
   inspectionTask: '/lims/inspection-task',
   process: '/lims/process',
   instrument: '/lims/instrument',
@@ -202,6 +208,18 @@ export const limsModuleConfig: RouteModuleConfig = {
   description: i18n.t('lims.nav.module_name_desc'),
   permission: 'lims:dashboard:read',
   routes: [
+    {
+      path: LIMS_PATHS.analytes,
+      element: lazyWithRetry(() => import('@/pages/lims/AnalytePage'), 'AnalytePage'),
+      module: 'lims',
+      title: i18n.t('lims.nav.lims-analytes'),
+      titleKey: 'lims.nav.lims-analytes',
+      code: 'lims-analytes',
+      requiredPermissions: ['lims:test-method:read', 'lims:dashboard:read'],
+      action: 'read',
+      template: 'list',
+      group: 'master',
+    } satisfies RouteConfigV2<AnalytePageProps>,
     {
       path: LIMS_PATHS.sample,
       element: lazyWithRetry(() => import('@/pages/lims/LimsSamplePage'), 'LimsSamplePage'),
