@@ -20,6 +20,8 @@ pub enum HrmPermission {
     EmployeeWrite,
     DepartmentRead,
     DepartmentWrite,
+    PositionRead,
+    PositionWrite,
     PayrollRead,
     PayrollWrite,
     PerformanceRead,
@@ -58,6 +60,12 @@ impl HrmPermission {
                 SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)
             }
             HrmPermission::DepartmentWrite => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Write)
+            }
+            HrmPermission::PositionRead => {
+                SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)
+            }
+            HrmPermission::PositionWrite => {
                 SharedModulePermission::new(ModuleCode::Hrm, PermissionAction::Write)
             }
             HrmPermission::PayrollRead => {

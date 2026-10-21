@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
+use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::hrm::{PaginatedResult, PaginationQuery};
 use topems_shared_core::locale::Locale;
@@ -108,8 +109,9 @@ pub fn create_routes() -> Router<ApiState> {
     security(("bearerAuth" = []))
 )]
 pub async fn list_positions(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<QueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -117,6 +119,10 @@ pub async fn list_positions(
 ) -> Json<ApiResponse<PaginatedResult<Position>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PositionRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let pagination = PaginationQuery {
         page: params.page,
         page_size: params.page_size,
@@ -213,6 +219,10 @@ pub async fn create_position(
 ) -> Json<ApiResponse<Position>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PositionWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     if req.name.is_empty() {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
             "岗位名称不能为空".to_string(),
@@ -325,7 +335,8 @@ pub async fn create_position(
     security(("bearerAuth" = []))
 )]
 pub async fn get_position(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -334,6 +345,10 @@ pub async fn get_position(
 ) -> Json<ApiResponse<Position>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PositionRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, Position>(
         only_own_schema_query!("hrm", r#"
         SELECT id, tenant_id, organization_id AS org_id, department_id,
@@ -374,7 +389,8 @@ pub async fn get_position(
     security(("bearerAuth" = []))
 )]
 pub async fn update_position(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -384,6 +400,10 @@ pub async fn update_position(
 ) -> Json<ApiResponse<Position>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PositionWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Position>(
@@ -459,6 +479,7 @@ pub async fn update_position(
 )]
 pub async fn delete_position(
     State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -467,6 +488,10 @@ pub async fn delete_position(
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PositionWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         "UPDATE hrm.positions SET deleted_at = NOW() WHERE id = $1"

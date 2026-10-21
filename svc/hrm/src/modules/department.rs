@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
+use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -59,8 +60,9 @@ pub struct DepartmentPaginationParams {
     ),
 )]
 pub async fn list_departments(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<DepartmentPaginationParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -68,6 +70,10 @@ pub async fn list_departments(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::DepartmentRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -149,7 +155,7 @@ pub async fn list_departments(
     ),
 )]
 pub async fn create_department(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
@@ -159,6 +165,10 @@ pub async fn create_department(
 ) -> Json<ApiResponse<Department>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::DepartmentWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -260,8 +270,9 @@ pub async fn create_department(
     ),
 )]
 pub async fn get_department(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -269,6 +280,10 @@ pub async fn get_department(
 ) -> Json<ApiResponse<Department>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::DepartmentRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let result = sqlx::query_as::<_, Department>(only_own_schema_query!(
         "hrm",
         r#"
@@ -313,7 +328,7 @@ pub async fn get_department(
     ),
 )]
 pub async fn update_department(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -324,6 +339,10 @@ pub async fn update_department(
 ) -> Json<ApiResponse<Department>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::DepartmentWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let existing = sqlx::query_as::<_, Department>(
         only_own_schema_query!("hrm", "SELECT id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE deleted_at IS NULL AND id = $1"),
     )
@@ -450,7 +469,7 @@ pub async fn update_department(
     ),
 )]
 pub async fn delete_department(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
@@ -459,6 +478,10 @@ pub async fn delete_department(
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::DepartmentWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
