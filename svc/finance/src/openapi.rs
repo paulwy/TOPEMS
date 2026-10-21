@@ -227,8 +227,6 @@ use crate::modules::*;
         crate::modules::financial_reports::get_monthly_trend,
         crate::modules::financial_reports::get_department_summary,
         crate::modules::financial_reports::get_financial_overview,
-        crate::modules::accounting_subjects::list_accounting_subjects,
-        crate::modules::accounting_subjects::get_accounting_subject,
         crate::modules::create_account,
         crate::modules::get_account_balances,
         crate::modules::get_trial_balance,

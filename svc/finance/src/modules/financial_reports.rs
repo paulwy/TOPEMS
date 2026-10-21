@@ -2027,7 +2027,7 @@ pub async fn export_report(
 
 // ============================================================================
 // V321: 10 个分析报表 handler
-// 查询 Finance 自有表（vouchers / accounting_subjects / budgets 等），返回聚合数据
+// 查询 Finance 自有表（vouchers / core_finance_accounts / budgets 等），返回聚合数据
 // ============================================================================
 
 /// 业务概览报表：收入、支出、利润、凭证数等核心指标
@@ -2066,7 +2066,7 @@ pub async fn get_business_overview(
     .unwrap_or(Decimal::ZERO);
 
     let subject_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.accounting_subjects WHERE status = 'active' AND deleted_at IS NULL"),
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_accounts WHERE status = 'active'"),
     )
     .fetch_one(&state.pool)
     .await
@@ -2357,9 +2357,9 @@ pub async fn get_cash_flow_analysis(
                   COALESCE(SUM(vi.credit), 0) as outflow
            FROM finance.core_finance_voucher_lines vi
            JOIN finance.core_finance_vouchers v ON v.id = vi.voucher_id
-           JOIN finance.accounting_subjects s ON s.code = vi.account_code
+           JOIN finance.core_finance_accounts s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
-             AND s.is_cash_flow = true AND s.deleted_at IS NULL
+             AND s.is_cash_flow = true  
            GROUP BY vi.account_code
            ORDER BY inflow DESC"#
     ))
@@ -2406,10 +2406,10 @@ pub async fn get_expense_analysis(
                   COALESCE(SUM(vi.debit), 0) as expense_amount
            FROM finance.core_finance_voucher_lines vi
            JOIN finance.core_finance_vouchers v ON v.id = vi.voucher_id
-           JOIN finance.accounting_subjects s ON s.code = vi.account_code
+           JOIN finance.core_finance_accounts s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%费用%' OR s.category ILIKE '%expense%' OR s.category ILIKE '%成本%')
-             AND s.deleted_at IS NULL
+              
            GROUP BY vi.account_code, vi.account_name
            ORDER BY expense_amount DESC"#),
     )
@@ -2460,10 +2460,10 @@ pub async fn get_profit_analysis(
         only_own_schema_query!("finance", r#"SELECT COALESCE(SUM(vi.credit), 0)
            FROM finance.core_finance_voucher_lines vi
            JOIN finance.core_finance_vouchers v ON v.id = vi.voucher_id
-           JOIN finance.accounting_subjects s ON s.code = vi.account_code
+           JOIN finance.core_finance_accounts s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%收入%' OR s.category ILIKE '%revenue%' OR s.category ILIKE '%收益%')
-             AND s.deleted_at IS NULL"#),
+              "#),
     )
     .bind(&period)
     .fetch_one(&state.pool)
@@ -2475,10 +2475,10 @@ pub async fn get_profit_analysis(
         r#"SELECT COALESCE(SUM(vi.debit), 0)
            FROM finance.core_finance_voucher_lines vi
            JOIN finance.core_finance_vouchers v ON v.id = vi.voucher_id
-           JOIN finance.accounting_subjects s ON s.code = vi.account_code
+           JOIN finance.core_finance_accounts s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%成本%' OR s.category ILIKE '%cost%')
-             AND s.deleted_at IS NULL"#
+              "#
     ))
     .bind(&period)
     .fetch_one(&state.pool)
@@ -2490,10 +2490,10 @@ pub async fn get_profit_analysis(
         r#"SELECT COALESCE(SUM(vi.debit), 0)
            FROM finance.core_finance_voucher_lines vi
            JOIN finance.core_finance_vouchers v ON v.id = vi.voucher_id
-           JOIN finance.accounting_subjects s ON s.code = vi.account_code
+           JOIN finance.core_finance_accounts s ON s.code = vi.account_code
            WHERE ($1 = '' OR v.period = $1) AND v.deleted_at IS NULL
              AND (s.category ILIKE '%费用%' OR s.category ILIKE '%expense%')
-             AND s.deleted_at IS NULL"#
+              "#
     ))
     .bind(&period)
     .fetch_one(&state.pool)
@@ -2576,7 +2576,7 @@ pub async fn get_financial_overview(
     .unwrap_or(Decimal::ZERO);
 
     let subject_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.accounting_subjects WHERE status = 'active' AND deleted_at IS NULL"),
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_accounts WHERE status = 'active'"),
     )
     .fetch_one(&state.pool)
     .await

@@ -1,6 +1,5 @@
 // 2026-08-07: 部分报表和模型 struct 仅 serde 使用，保留 crate 级 allow
 #![allow(dead_code)]
-pub mod accounting_subjects;
 pub mod audit_v52;
 pub mod compliance_v51;
 pub mod cqrs_routes;
@@ -3942,9 +3941,17 @@ pub async fn close_period_v2(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = req.period.unwrap_or_default();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_periods SET status = 'closed', updated_at = NOW() WHERE tenant_id = $1 AND period = $2"))
+    // period 形如 "YYYY-MM"；表 core_finance_periods 列为 year/month（无 period 列），按 (tenant_id, year, month) 定位。
+    let parts: Vec<&str> = period.split('-').collect();
+    let year: i32 = parts.first().and_then(|y| y.parse().ok()).unwrap_or(0);
+    let month: i32 = parts.get(1).and_then(|m| m.parse().ok()).unwrap_or(0);
+    if !(1..=12).contains(&month) || !(2000..=2100).contains(&year) {
+        return Json(ApiResponse::error(400, "period 格式应为 YYYY-MM"));
+    }
+    let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_periods SET status = 'closed', updated_at = NOW() WHERE tenant_id = $1 AND year = $2 AND month = $3"))
         .bind(tenant_id)
-        .bind(&period)
+        .bind(year)
+        .bind(month)
         .execute(&state.pool)
         .await;
     match res {
@@ -4256,7 +4263,7 @@ pub async fn create_opening_balances(
     // 科目名称（查不到则空）
     let subject_name: Option<String> = sqlx::query_scalar(only_own_schema_query!(
         "finance",
-        "SELECT name FROM finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL LIMIT 1"
+        "SELECT name FROM finance.core_finance_accounts WHERE code = $1 AND is_enabled = true LIMIT 1"
     ))
     .bind(&subject_code)
     .fetch_optional(&state.pool)
@@ -4311,7 +4318,7 @@ pub async fn set_opening_balance(
     let subject: Option<(String, Option<String>, Option<Uuid>)> = sqlx::query_as(
         only_own_schema_query!(
             "finance",
-            "SELECT code, name, organization_id FROM finance.accounting_subjects WHERE id = $1 AND deleted_at IS NULL LIMIT 1"
+            "SELECT code, name, tenant_id FROM finance.core_finance_accounts WHERE id = $1 AND is_enabled = true LIMIT 1"
         ),
     )
     .bind(account_id)
@@ -4927,7 +4934,6 @@ pub fn create_routes() -> Router<AppState> {
         .merge(report_center::create_routes())
         .merge(forecasting::create_routes())
         .merge(financial_reports::create_routes())
-        .merge(accounting_subjects::create_routes())
         .merge(currencies::create_routes())
         .nest("/cqrs", cqrs_routes::cqrs_routes())
         .merge(event_routes::event_routes())

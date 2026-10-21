@@ -1,4 +1,4 @@
-//! P1-10 财务主数据：币种主表 CRUD（public.core_finance_currencies）
+//! P1-10 财务主数据：币种主表 CRUD（finance.core_finance_currencies）
 //!
 //! 端点（挂载于 /api/finance 前缀）：
 //! - GET  /currencies            分页列表（search / is_active 筛选）
@@ -12,7 +12,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use utoipa::{IntoParams, ToSchema};
+use utoipa::IntoParams;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -97,7 +97,7 @@ fn default_true() -> bool {
     true
 }
 
-const TABLE: &str = "public.core_finance_currencies";
+const TABLE: &str = "finance.core_finance_currencies";
 
 /// 币种列表（分页 + 搜索 + 启用状态筛选）
 #[utoipa::path(
@@ -297,7 +297,7 @@ pub async fn delete_currency(
 }
 
 pub fn create_routes() -> axum::Router<AppState> {
-    use axum::routing::{delete, get, post, put};
+    use axum::routing::{get, put};
     axum::Router::new()
         .route("/currencies", get(list_currencies).post(create_currency))
         .route(

@@ -2,6 +2,10 @@
 //!
 //! 从 ERP plugin_erp schema 物理迁移到 Finance plugin_finance schema。
 //! 提供完整的 CRUD 操作：list/get/create/update/delete。
+//!
+//! 【DEPRECATED 2026-10-21 线C1】路由已下线：科目体系收敛到 finance.core_finance_accounts 单一实体，
+//! 本模块不再挂载（mod.rs 移除 pub mod / merge / openapi 注册），文件保留仅供历史与列结构参考。
+//! 前端无页面调用本模块端点，下线无回归。
 
 use axum::{
     extract::{Path, Query, State},

@@ -195,7 +195,7 @@ pub async fn create_opening_balance(
 
     let subject_name = match sqlx::query_as::<_, AccountingSubject>(only_own_schema_query!(
         "erp",
-        "SELECT name FROM finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL",
+        "SELECT name FROM finance.core_finance_accounts WHERE code = $1 AND is_enabled = true",
         "finance"
     ))
     .bind(&req.subject_code)
@@ -570,7 +570,7 @@ pub async fn import_opening_balances(
     for item in req {
         let subject_name = match sqlx::query_as::<_, AccountingSubject>(only_own_schema_query!(
             "erp",
-            "SELECT name FROM finance.accounting_subjects WHERE code = $1 AND deleted_at IS NULL",
+            "SELECT name FROM finance.core_finance_accounts WHERE code = $1 AND is_enabled = true",
             "finance"
         ))
         .bind(&item.subject_code)
