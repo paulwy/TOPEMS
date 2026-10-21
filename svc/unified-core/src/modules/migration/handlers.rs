@@ -1,6 +1,4 @@
-use axum::{
-    extract::{Json, Path, State},
-};
+use axum::extract::{Json, Path, State};
 use std::time::Instant;
 
 use super::models::*;

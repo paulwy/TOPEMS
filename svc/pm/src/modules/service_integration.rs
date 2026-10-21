@@ -15,8 +15,7 @@ pub fn create_routes(pool: PgPool) -> Router {
         )
         .route(
             "/service-integrations/{id}",
-            get(get_integration)
-                .put(update_integration),
+            get(get_integration).put(update_integration),
         )
         .with_state(pool)
 }
@@ -65,7 +64,6 @@ async fn update_integration(
 ) -> Json<ApiResponse<()>> {
     Json(ApiResponse::success((), "更新服务集成成功"))
 }
-
 
 #[cfg(test)]
 mod tests {
