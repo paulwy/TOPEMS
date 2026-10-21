@@ -396,3 +396,11 @@ pre-push:
           if [ -n "$REDIS_URL" ]; then export REDIS_URL; fi
         fi
         cargo test --workspace --lib
+
+    # [2026-10-22 NEW Gate DP] 业务域运行态探活（与 contract-gate 静态挂载互补）
+    # svc crate utoipa path → BFF GET 全路径 5xx 扫描（缺表/缺列/死锁等运行态缺陷）。
+    # BFF 在线（开发/部署机）严格检查，5xx 阻断推送；BFF 离线（CI/无运行态）SKIP_WARN 不阻断，
+    # 手动 bash scripts/dev/domain-probe.sh 复核。可 --include-verified 连已核销域全扫。
+    domain-probe:
+      tags: runtime probe
+      run: bash scripts/dev/domain-probe.sh

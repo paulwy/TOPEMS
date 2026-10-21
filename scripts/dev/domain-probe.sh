@@ -31,6 +31,13 @@ done
 TOKEN="$(head -1 "$TOKEN_FILE" 2>/dev/null || true)"
 if [[ -z "$TOKEN" ]]; then echo "ERR: 无 token（$TOKEN_FILE 空）" >&2; exit 2; fi
 
+# BFF 存活探测：在线则严格 5xx 检查；离线（日常 push 无 BFF）输出 SKIP_WARN 不阻断
+BFF_OK="$(curl -s -m 5 -o /dev/null -w '%{http_code}' "$BASE/health" 2>/dev/null || echo 000)"
+if [[ "$BFF_OK" != "200" ]]; then
+  echo "DOMAIN_PROBE_SKIP_WARN（BFF $BASE 不可达，探活跳过——部署/开发机启动后手动 bash scripts/dev/domain-probe.sh 复核）"
+  exit 0
+fi
+
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 FAIL=0
 
