@@ -556,6 +556,7 @@ const wmsRoutes: RouteConfigV2[] = [
     requiredPermissions: ['wms:fulfillment:read'],
     action: 'read',
   },
+  wmsInboundOrdersRoute,
   wmsInboundDetailRoute,
   wmsOutboundDetailRoute,
   wmsStockTakeDetailRoute,
