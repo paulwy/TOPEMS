@@ -1,10 +1,11 @@
 use axum::{
-    extract::{Query, State},
-    routing::get,
+    extract::{Extension, Query, State},
+    routing::{delete, get},
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
@@ -287,6 +288,7 @@ async fn search_all(
 pub async fn search_handler(
     State(pool): State<PgPool>,
     Query(req): Query<SearchRequest>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<SearchResponse>> {
     let keyword = normalize_query(&req.keyword);
     if keyword.is_empty() {
@@ -298,7 +300,7 @@ pub async fn search_handler(
     let search_type = detect_search_type(&req.keyword).to_string();
 
     let page = req.page.unwrap_or(1).max(1);
-    let page_size = req.page.unwrap_or(20).min(100);
+    let page_size = req.page_size.unwrap_or(20).min(100);
 
     let query_terms = tokenize(&keyword);
 
@@ -367,16 +369,21 @@ pub async fn search_handler(
 
     let (_offset, _total_pages, current_page) = calculate_pagination(page, page_size, total);
 
-    // 记录搜索日志（fire-and-forget，不阻塞响应）
-    let log_query = keyword.clone();
-    let log_pool = pool.clone();
-    let log_result_count = total;
+    // 记录最近搜索（fire-and-forget，不阻塞响应）——写入 public.search_recent（用户级去重）。
+    // 说明：旧版写 public.search_logs 但该表无 query/result_count 列（INSERT 恒失败被 let _ 吞），
+    // 本批顺手改道 search_recent（有真实列，且支撑 /search/recent 读回）。
+    let recent_user_id: Uuid = claims.sub.parse().unwrap_or_else(|_| Uuid::nil());
+    let recent_keyword = keyword.clone();
+    let recent_pool = pool.clone();
     tokio::spawn(async move {
-        let _ = sqlx::query("INSERT INTO public.search_logs (query, result_count) VALUES ($1, $2)")
-            .bind(log_query)
-            .bind(log_result_count)
-            .execute(&log_pool)
-            .await;
+        let _ = sqlx::query(
+            "INSERT INTO public.search_recent (user_id, keyword, searched_at) VALUES ($1, $2, now()) \
+             ON CONFLICT (user_id, keyword) DO UPDATE SET searched_at = now()",
+        )
+        .bind(recent_user_id)
+        .bind(recent_keyword)
+        .execute(&recent_pool)
+        .await;
     });
 
     Json(api_success(SearchResponse {
@@ -472,5 +479,56 @@ pub async fn suggestions_handler(
 
 #[allow(dead_code)]
 pub fn search_routes() -> Router<PgPool> {
-    Router::new().route("/", get(search_handler))
+    Router::new()
+        .route("/", get(search_handler))
+        .route("/suggestions", get(suggestions_handler))
+        .route("/recent", get(list_recent).delete(clear_recent))
+}
+
+// ==================== /search/recent（最近搜索，用户级） ====================
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["search:read"])),
+    path = "/api/search/recent",
+    tag = "fulltext",
+    responses(
+        (status = 200, description = "当前用户最近搜索关键词列表"),
+    ),
+)]
+pub async fn list_recent(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<String>>> {
+    let user_id: Uuid = claims.sub.parse().unwrap_or_else(|_| Uuid::nil());
+    let rows = sqlx::query_as::<_, (String,)>(
+        "SELECT keyword FROM public.search_recent \
+         WHERE user_id = $1 ORDER BY searched_at DESC LIMIT 10",
+    )
+    .bind(user_id)
+    .fetch_all(&pool)
+    .await
+    .unwrap_or_default();
+    Json(api_success(rows.into_iter().map(|(k,)| k).collect()))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["search:read"])),
+    path = "/api/search/recent",
+    tag = "fulltext",
+    responses(
+        (status = 200, description = "清空当前用户最近搜索"),
+    ),
+)]
+pub async fn clear_recent(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<String>> {
+    let user_id: Uuid = claims.sub.parse().unwrap_or_else(|_| Uuid::nil());
+    let _ = sqlx::query("DELETE FROM public.search_recent WHERE user_id = $1")
+        .bind(user_id)
+        .execute(&pool)
+        .await;
+    Json(api_success("cleared".to_string()))
 }

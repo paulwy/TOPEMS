@@ -54,6 +54,8 @@ impl SearchRealModule {
                 "/api/search/suggestions",
                 get(handlers::suggestions_handler),
             )
+            .route("/api/search/recent", get(handlers::list_recent))
+            .route("/api/search/recent", axum::routing::delete(handlers::clear_recent))
             .layer(axum::middleware::from_fn(require_permission(
                 "search:admin",
             )))

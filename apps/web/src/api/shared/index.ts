@@ -163,23 +163,24 @@ export const searchApi = {
     }
   ): Promise<ApiResponse<SearchResponse>> {
     const searchParams = new URLSearchParams();
-    searchParams.set('q', query);
+    // svc/search 真搜索参数为 keyword（S1：由 apiClient.core stub 改指 apiClient.search 真服务）
+    searchParams.set('keyword', query);
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
-    if (params?.types?.length) searchParams.set('types', params.types.join(','));
-    return apiClient.core.get(`/search?${searchParams.toString()}`);
+    if (params?.types?.length) searchParams.set('modules', params.types.join(','));
+    return apiClient.search.get(`?${searchParams.toString()}`);
   },
 
   async getSuggestions(query: string): Promise<ApiResponse<string[]>> {
-    return apiClient.core.get(`/search/suggestions?q=${encodeURIComponent(query)}`);
+    return apiClient.search.get(`/suggestions?q=${encodeURIComponent(query)}`);
   },
 
   async getRecentSearches(): Promise<ApiResponse<string[]>> {
-    return apiClient.core.get('/search/recent');
+    return apiClient.search.get('/recent');
   },
 
   async clearRecentSearches(): Promise<ApiResponse<string>> {
-    return apiClient.core.delete('/search/recent');
+    return apiClient.search.delete('/recent');
   },
 };
 

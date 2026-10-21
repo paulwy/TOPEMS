@@ -111,11 +111,11 @@ export const GuidePage: React.FC = () => {
     [selectedCategory, guides]
   );
 
-  const completedCount = useMemo(() => guides.filter((g: Guide) => g.isActive).length, [guides]);
+  const completedCount = useMemo(() => guides.filter((g: Guide) => g.is_active).length, [guides]);
   const totalProgress = useMemo(
     () =>
       guides.length > 0
-        ? Math.round(guides.reduce((acc, g) => acc + (g.isActive ? 100 : 0), 0) / guides.length)
+        ? Math.round(guides.reduce((acc, g) => acc + (g.is_active ? 100 : 0), 0) / guides.length)
         : 0,
     [guides]
   );
@@ -151,12 +151,12 @@ export const GuidePage: React.FC = () => {
         render: (row: Guide) => <Typography>{row.duration}</Typography>,
       },
       {
-        id: 'isActive',
+        id: 'is_active',
         label: i18n.t('help.guide_page.k5'),
         render: (row: Guide) => (
           <Chip
             label={i18n.t('help.guide_page.k5')}
-            color={row.isActive ? 'success' : 'default'}
+            color={row.is_active ? 'success' : 'default'}
             size='small'
           />
         ),
@@ -318,14 +318,14 @@ export const GuidePage: React.FC = () => {
                       width: 48,
                       height: 48,
                       borderRadius: 1,
-                      bgcolor: guide.isActive ? 'success.50' : 'primary.50',
+                      bgcolor: guide.is_active ? 'success.50' : 'primary.50',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
                     }}
                   >
-                    {guide.isActive ? (
+                    {guide.is_active ? (
                       <CheckCircle
                         style={{ width: 24, height: 24, color: theme.palette.success.main }}
                       />
@@ -343,7 +343,7 @@ export const GuidePage: React.FC = () => {
                       >
                         {guide.title}
                       </Typography>
-                      {guide.isActive && (
+                      {guide.is_active && (
                         <Chip
                           size='small'
                           label={i18n.t('help.guide_page.k5')}
@@ -393,7 +393,7 @@ export const GuidePage: React.FC = () => {
                   />
                 </Box>
 
-                {!guide.isActive && (
+                {!guide.is_active && (
                   <Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                       <Typography
@@ -420,10 +420,10 @@ export const GuidePage: React.FC = () => {
                 <Box sx={{ mt: 3 }}>
                   <Button
                     fullWidth
-                    variant={guide.isActive ? 'outlined' : 'contained'}
+                    variant={guide.is_active ? 'outlined' : 'contained'}
                     sx={{ textTransform: 'none', borderRadius: 1 }}
                   >
-                    {guide.isActive ? i18n.t('help.guide_page.k7') : i18n.t('help.guide_page.k6')}
+                    {guide.is_active ? i18n.t('help.guide_page.k7') : i18n.t('help.guide_page.k6')}
                     <ChevronRight size={16} />
                   </Button>
                 </Box>

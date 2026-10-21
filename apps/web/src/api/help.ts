@@ -7,7 +7,7 @@ export interface Faq {
   answer: string;
   category: string;
   views: number;
-  isActive: boolean;
+  is_active: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -38,7 +38,7 @@ interface UpdateFaqRequest {
   question?: string;
   answer?: string;
   category?: string;
-  isActive?: boolean;
+  is_active?: boolean;
   sort_order?: number;
 }
 
@@ -49,7 +49,7 @@ export interface Guide {
   category: string;
   duration: string;
   lessons_count: number;
-  isActive: boolean;
+  is_active: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -62,7 +62,7 @@ interface GuideLesson {
   content: string;
   duration: string;
   sort_order: number;
-  isActive: boolean;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -116,46 +116,46 @@ export const helpApi = {
   // 旧实现传 API_PATHS.help.*（已含 /api/core 前缀）→ /api/core/api/core/help/* 404。
   // 全仓其他 api 模块均为 per-service client + 相对路径，help 为孤例。
   async listFaqs(params?: FaqQuery): Promise<ApiResponse<FaqListResponse>> {
-    return apiClient.get<FaqListResponse>('/help/faqs', { params });
+    return apiClient.portal.get<FaqListResponse>('/help/faqs', { params });
   },
 
   async getFaq(id: string): Promise<ApiResponse<Faq>> {
-    return apiClient.get<Faq>(`/help/faqs/${id}`);
+    return apiClient.portal.get<Faq>(`/help/faqs/${id}`);
   },
 
   async createFaq(data: CreateFaqRequest): Promise<ApiResponse<Faq>> {
-    return apiClient.post<Faq>('/help/faqs', data);
+    return apiClient.portal.post<Faq>('/help/faqs', data);
   },
 
   async updateFaq(id: string, data: UpdateFaqRequest): Promise<ApiResponse<Faq>> {
-    return apiClient.put<Faq>(`/help/faqs/${id}`, data);
+    return apiClient.portal.put<Faq>(`/help/faqs/${id}`, data);
   },
 
   async deleteFaq(id: string): Promise<ApiResponse<boolean>> {
-    return apiClient.delete<boolean>(`/help/faqs/${id}`);
+    return apiClient.portal.delete<boolean>(`/help/faqs/${id}`);
   },
 
   async getFaqCategories(): Promise<ApiResponse<string[]>> {
-    return apiClient.get<string[]>('/help/faqs/categories');
+    return apiClient.portal.get<string[]>('/help/faqs/categories');
   },
 
   async listGuides(params?: GuideQuery): Promise<ApiResponse<GuideListResponse>> {
-    return apiClient.get<GuideListResponse>('/help/guides', { params });
+    return apiClient.portal.get<GuideListResponse>('/help/guides', { params });
   },
 
   async getGuide(id: string): Promise<ApiResponse<GuideDetailResponse>> {
-    return apiClient.get<GuideDetailResponse>(`/help/guides/${id}`);
+    return apiClient.portal.get<GuideDetailResponse>(`/help/guides/${id}`);
   },
 
   async createGuide(data: CreateGuideRequest): Promise<ApiResponse<Guide>> {
-    return apiClient.post<Guide>('/help/guides', data);
+    return apiClient.portal.post<Guide>('/help/guides', data);
   },
 
   async addLesson(guideId: string, data: CreateLessonRequest): Promise<ApiResponse<GuideLesson>> {
-    return apiClient.post<GuideLesson>(`/help/guides/${guideId}/lessons`, data);
+    return apiClient.portal.post<GuideLesson>(`/help/guides/${guideId}/lessons`, data);
   },
 
   async getGuideCategories(): Promise<ApiResponse<string[]>> {
-    return apiClient.get<string[]>('/help/guides/categories');
+    return apiClient.portal.get<string[]>('/help/guides/categories');
   },
 };

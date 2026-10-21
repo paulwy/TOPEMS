@@ -87,10 +87,8 @@ pub fn contract_stub_routes() -> Router<AppState> {
         .route("/governance/refresh", post(stub_action))
         // B4-④：/comments/* 与 /favorites/* 已由 modules::engagement 真实实现
         // （core_comments / core_favorites 表 + CRUD + 收藏查重），空壳删除。
-        .route("/search", get(stub_list))
-        .route("/search/suggestions", get(stub_list))
-        .route("/search/recent", get(stub_list))
-        .route("/search/recent", delete(stub_action))
+        // S1：/search* 已由 svc/search 真实服务承接（/api/search + /api/search/recent 用户级真表），
+        // 前端 searchApi 已改指 apiClient.search（q→keyword 对齐），core 空壳删除。
         // B4-⑤：/dict/dict-types/{id}/items 已由 master-data 真实路由承接
         // （GET /api/master-data/dict/dict-types/{dict_type_id}/items, list_dict_items 走真 DB），
         // 前端 dictItemApi.list 已改指 apiClient.master，core 空壳删除。
@@ -169,18 +167,6 @@ pub fn contract_stub_routes() -> Router<AppState> {
         // B4-①：WMS 四类审批（inbound/outbound/stock-take/transfer × start/approve/reject）
         // 已由 svc/wms 真实实现，前端 wmsApprovalApi 改指 apiClient.wms（调拨命名 /transfers），
         // core 12 条兜底删除。
-        // ===== Help 服务（FAQ + 指南）契约兜底 =====
-        // 真实实现位于 svc/portal（/api/portal/help/*），前端按 Group1 走 /api/core/help/*。
-        // unified-core 暂无 help 表与 handler，做轻量兜底：列表空壳、写操作成功回执、
-        // 详情类 HTTP200+内层404、分类空数组。待上游支持。
-        .route("/help/faqs", get(stub_list).post(stub_action))
-        .route("/help/faqs/categories", get(stub_string_array))
-        .route(
-            "/help/faqs/{id}",
-            get(stub_detail_404).put(stub_action).delete(stub_action),
-        )
-        .route("/help/guides", get(stub_list).post(stub_action))
-        .route("/help/guides/categories", get(stub_string_array))
-        .route("/help/guides/{id}", get(stub_detail_404))
-        .route("/help/guides/{id}/lessons", post(stub_action))
+        // S1：/help/* 已由 svc/portal 真实实现（/api/portal/help/*，faq/guide CRUD + 分类），
+        // 前端 helpApi 已改指 apiClient.portal（isActive→is_active 对齐），core 7 条兜底删除。
 }
