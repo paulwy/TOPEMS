@@ -511,10 +511,7 @@ pub async fn update_team(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
     // leader_id 列为 uuid：必须按 Uuid 绑定，直接绑 String 会推断为 text 导致 COALESCE 类型不匹配
-    let leader_id: Option<Uuid> = req
-        .leader_id
-        .as_ref()
-        .and_then(|s| Uuid::parse_str(s).ok());
+    let leader_id: Option<Uuid> = req.leader_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
     let result = sqlx::query_as::<_, TeamRow>(
         r#"
