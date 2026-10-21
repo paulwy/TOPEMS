@@ -611,7 +611,15 @@ impl GatewayMonitor {
 
         // 聚合计算收进块作用域：全部锁 guard 在块尾 drop，避免持锁 await
         // get_health() 时对同一批 tokio Mutex 重入导致自死锁
-        let (total_metrics, metrics_by_type, avg_latency_p99, avg_error_rate, total_throughput, active_connections, alerts_count) = {
+        let (
+            total_metrics,
+            metrics_by_type,
+            avg_latency_p99,
+            avg_error_rate,
+            total_throughput,
+            active_connections,
+            alerts_count,
+        ) = {
             let metrics = store.metrics.lock().await;
             let latencies = store.latency_history.lock().await;
             let error_rates = store.error_rate_history.lock().await;
