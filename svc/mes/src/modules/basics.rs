@@ -21,13 +21,12 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route(
-            "/workshops",
-            get(list_workshops).post(create_workshop),
-        )
+        .route("/workshops", get(list_workshops).post(create_workshop))
         .route(
             "/workshops/{id}",
-            get(get_workshop).put(update_workshop).delete(delete_workshop),
+            get(get_workshop)
+                .put(update_workshop)
+                .delete(delete_workshop),
         )
         .route(
             "/production-lines",
@@ -204,8 +203,7 @@ async fn list_workshops(
     Extension(claims): Extension<Claims>,
     Query(q): Query<ListQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopRead).await
-    {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopRead).await {
         return e;
     }
     let page = q.page.unwrap_or(1).max(1);
@@ -283,8 +281,7 @@ async fn get_workshop(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopRead).await
-    {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopRead).await {
         return e;
     }
     let row = sqlx::query(
@@ -320,8 +317,7 @@ async fn create_workshop(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateWorkshopRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await
-    {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await {
         return e;
     }
     let result = sqlx::query(
@@ -339,7 +335,10 @@ async fn create_workshop(
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
-            Json(ApiResponse::success(serde_json::json!({ "id": id }), "车间创建成功"))
+            Json(ApiResponse::success(
+                serde_json::json!({ "id": id }),
+                "车间创建成功",
+            ))
         }
         Ok(None) => Json(ApiResponse::error(500, "车间创建失败")),
         Err(e) => {
@@ -358,8 +357,7 @@ async fn update_workshop(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWorkshopRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await
-    {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await {
         return e;
     }
     let result = sqlx::query(
@@ -378,7 +376,10 @@ async fn update_workshop(
     .fetch_optional(&state.pool)
     .await;
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(serde_json::json!({ "id": id }), "车间更新成功")),
+        Ok(Some(_)) => Json(ApiResponse::success(
+            serde_json::json!({ "id": id }),
+            "车间更新成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "车间不存在")),
         Err(e) => {
             tracing::error!("[mes] 车间更新失败: {}", e);
@@ -392,8 +393,7 @@ async fn delete_workshop(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await
-    {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkshopWrite).await {
         return e;
     }
     let result = sqlx::query("UPDATE workshops SET deleted_at = NOW() WHERE id = $1")
@@ -401,7 +401,9 @@ async fn delete_workshop(
         .execute(&state.pool)
         .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "车间删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "车间删除成功"))
+        }
         Ok(_) => Json(ApiResponse::error(404, "车间不存在")),
         Err(e) => {
             tracing::error!("[mes] 车间删除失败: {}", e);
@@ -551,7 +553,10 @@ async fn create_production_line(
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
-            Json(ApiResponse::success(serde_json::json!({ "id": id }), "产线创建成功"))
+            Json(ApiResponse::success(
+                serde_json::json!({ "id": id }),
+                "产线创建成功",
+            ))
         }
         Ok(None) => Json(ApiResponse::error(500, "产线创建失败")),
         Err(e) => {
@@ -590,7 +595,10 @@ async fn update_production_line(
     .fetch_optional(&state.pool)
     .await;
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(serde_json::json!({ "id": id }), "产线更新成功")),
+        Ok(Some(_)) => Json(ApiResponse::success(
+            serde_json::json!({ "id": id }),
+            "产线更新成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "产线不存在")),
         Err(e) => {
             tracing::error!("[mes] 产线更新失败: {}", e);
@@ -614,7 +622,9 @@ async fn delete_production_line(
         .execute(&state.pool)
         .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "产线删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "产线删除成功"))
+        }
         Ok(_) => Json(ApiResponse::error(404, "产线不存在")),
         Err(e) => {
             tracing::error!("[mes] 产线删除失败: {}", e);
@@ -764,7 +774,10 @@ async fn create_shift(
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
-            Json(ApiResponse::success(serde_json::json!({ "id": id }), "班次创建成功"))
+            Json(ApiResponse::success(
+                serde_json::json!({ "id": id }),
+                "班次创建成功",
+            ))
         }
         Ok(None) => Json(ApiResponse::error(500, "班次创建失败")),
         Err(e) => {
@@ -804,7 +817,10 @@ async fn update_shift(
     .fetch_optional(&state.pool)
     .await;
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(serde_json::json!({ "id": id }), "班次更新成功")),
+        Ok(Some(_)) => Json(ApiResponse::success(
+            serde_json::json!({ "id": id }),
+            "班次更新成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "班次不存在")),
         Err(e) => {
             tracing::error!("[mes] 班次更新失败: {}", e);
@@ -826,7 +842,9 @@ async fn delete_shift(
         .execute(&state.pool)
         .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "班次删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "班次删除成功"))
+        }
         Ok(_) => Json(ApiResponse::error(404, "班次不存在")),
         Err(e) => {
             tracing::error!("[mes] 班次删除失败: {}", e);
@@ -982,7 +1000,10 @@ async fn create_work_calendar(
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
-            Json(ApiResponse::success(serde_json::json!({ "id": id }), "日历创建成功"))
+            Json(ApiResponse::success(
+                serde_json::json!({ "id": id }),
+                "日历创建成功",
+            ))
         }
         Ok(None) => Json(ApiResponse::error(500, "日历创建失败")),
         Err(e) => {
@@ -1024,7 +1045,10 @@ async fn update_work_calendar(
     .fetch_optional(&state.pool)
     .await;
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(serde_json::json!({ "id": id }), "日历更新成功")),
+        Ok(Some(_)) => Json(ApiResponse::success(
+            serde_json::json!({ "id": id }),
+            "日历更新成功",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "日历不存在")),
         Err(e) => {
             tracing::error!("[mes] 日历更新失败: {}", e);
@@ -1048,7 +1072,9 @@ async fn delete_work_calendar(
         .execute(&state.pool)
         .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "日历删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "日历删除成功"))
+        }
         Ok(_) => Json(ApiResponse::error(404, "日历不存在")),
         Err(e) => {
             tracing::error!("[mes] 日历删除失败: {}", e);
