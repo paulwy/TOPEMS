@@ -62,7 +62,7 @@
 | 1.3′ | **（替代路径）** 岗位 CRUD | `GET/POST/PUT/DELETE /api/hrm/positions`，`position.rs:110,205,327,376,460`；`department_id` **无 DB 外键** | `/hrm/positions` → `HrmPositionPage.tsx:12`（adapter 接 positionApi） | 岗位字典 | 已具备（无 FK、无 handler 权限） |
 | 1.4 | **（向导·管理员步）** 填管理员姓名/工号/用户名/邮箱/密码 | `POST /api/hrm/setup/admin`，P0-3（`9d33f86b8`，方案B）：建 `hrm.employees` 并接受可选 `user_id` 回绑；不直写 iam，iam.users 与 core_users 不同步、建号权威在 unified-core | 向导页管理员步先调 `POST /api/core/iam/users`（`userApi.createUser`）建号拿 `data.id`，再回传 `user_id` 调 `/setup/admin` 绑定（`4ac94af80`） | 员工档案 + 可登录 IAM 账号绑定 | **已具备**（P0-3 方案B + P0-1 串联；角色授权由 IAM 建号端点负责） |
 | 1.5 | 录入员工档案（正式员工 CRUD） | `GET/POST/PUT/DELETE /api/hrm/employees`，`employee.rs:100,345,159,500,648`；含 details/export；`user_id` 可空绑 IAM 账号 | `/hrm/employees` → `HrmEmployeePage/index.tsx:42-81`；创建页 `HrmEmployeeCreatePage.tsx:79`（**无密码字段、不调 register**） | 员工名册 | 已具备（员工↔登录账号需另在 IAM 建号绑定） |
-| 1.6 | **（向导·完成步）** 确认初始化完成 | `POST /api/hrm/setup/complete`，`setup.rs:786-879`；**仅把 completion 步标 completed，不建角色/不绑权限/不改租户状态**（`:841-854`） | api 壳 `hrmSetup.ts:137`，**无页面调用** | 状态标记，无授权结果 | 部分（前端 P0-1 已接 `completeInitialization`；后端仍空动作，不建角色/绑权限，见 P1-1） |
+| 1.6 | **（向导·完成步）** 确认初始化完成 | `POST /api/hrm/setup/complete`，`setup.rs:786-879`（P1-1 闭环）：落 completion 初始化标记、汇总公司/部门/岗位数并核验 admin 是否绑定 IAM 账号，未绑定告警；**不建角色/不绑权限/不改租户状态**（授权归属 IAM 建号端点，方案 B） | api 壳 `hrmSetup.ts:137`；P0-1 向导完成步已调用 `completeInitialization` | 状态标记，无授权结果 | 已具备（P0-1 + P1-1 闭环：complete 落标记+汇总+admin 绑定核验，前端已接线） |
 
 > 向导进度存储：`hrm.initialization_status`（建表 `20260725000000_business_base_tables.sql:756-763`）。P0-2（`33479ed7d`）新增幂等迁移 `20261020000025` 为默认组织 0001 播种 5 条 pending 步骤行，`get_init_progress` 空集按未开始处理。
 
@@ -70,10 +70,10 @@
 
 | # | 操作动作 | 后端路由/文件证据 | 前端页面/路由证据 | 预期产出 | 状态 |
 |---|---|---|---|---|---|
-| 2.1 | 建业务用户账号 | `POST /api/core/iam/auth/register`（开放无开关，`auth.rs:466-622`，注册后 is_superuser=false、不绑角色/租户 `:588-602`）；或管理员经 `POST /api/iam/users` 建号 | 登录页注册分支 `LoginPage.tsx:111-135`；用户管理 `/iam/user` → `UserManagementPage.tsx:64-107`，`api/iam/user.ts:44-137` | 可登录用户 | 部分（自助注册产出不可用账号，P1-4） |
-| 2.2 | 建角色并绑定权限 | `core_roles`/`core_role_permissions`；角色 CRUD `role.rs:74,410-432,490`；`GET /api/iam/roles` | `/iam/role` → `RoleManagementPage.tsx:73-166`，`api/iam/role.ts:7-40` | 角色-权限映射 | 部分（scope 方言不匹配，P1-3） |
-| 2.3 | 维护权限字典 | `core_permissions` CRUD，`permission.rs:43-47`；元数据同步 `permission_metadata.rs:25-71` | `/iam/permission` → `PermissionManagementPage.tsx:15-46`，`api/iam/permission.ts:7-22` | 权限目录 | 部分（三套方言，P1-3） |
-| 2.4 | 把角色授予用户 | `core_user_roles`，`user/roles.rs:395` | 用户管理页内授权 | 人-角色-权限贯通 | 部分（登录 JWT 不展开角色权限，P1-3） |
+| 2.1 | 建业务用户账号 | `POST /api/core/iam/auth/register`（`REGISTER_ENABLED` 默认关 403，开放时新账号 `status=pending` 待管理员激活并分配角色/租户，P1-3 闭环）；或管理员经 `POST /api/iam/users` 建号 | 登录页注册分支 `LoginPage.tsx:111-135`；用户管理 `/iam/user` → `UserManagementPage.tsx:64-107`，`api/iam/user.ts:44-137` | 可登录用户 | 已具备（P1-3 闭环：注册开关默认关、开放时 pending 待激活，不产生不可用账号） |
+| 2.2 | 建角色并绑定权限 | `core_roles`/`core_role_permissions`；角色 CRUD `role.rs:74,410-432,490`；`GET /api/iam/roles` | `/iam/role` → `RoleManagementPage.tsx:73-166`，`api/iam/role.ts:7-40` | 角色-权限映射 | 已具备（P0-4 闭环：权限字典补 23 码对齐，角色-权限经 `core_role_permissions` 规范化映射） |
+| 2.3 | 维护权限字典 | `core_permissions` CRUD，`permission.rs:43-47`；元数据同步 `permission_metadata.rs:25-71` | `/iam/permission` → `PermissionManagementPage.tsx:15-46`，`api/iam/permission.ts:7-22` | 权限目录 | 已具备（P0-4 闭环：中间件已挂载码全部补齐 23 个，三套方言命名口径统一） |
+| 2.4 | 把角色授予用户 | `core_user_roles`，`user/roles.rs:395` | 用户管理页内授权 | 人-角色-权限贯通 | 已具备（P0-4 闭环：登录 JWT/`/users/me`/`my-permissions` 非超管实时 JOIN `core_user_roles→core_roles/core_role_permissions→core_permissions` 展开，超管 `['*']` 短路） |
 
 ### 阶段 3　各模块前置主数据（按依赖顺序）
 
@@ -372,6 +372,7 @@
 
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
+| 2026-10-22 | v1.30 | 本地未推送（TODO 核销 + 活文档状态收口） | **遗留排查收口（2026-10-22）**：① §2 能力盘点表滞后标注同步——1.6（P0-1/P1-1 已闭环：complete 落标记+汇总+admin 绑定核验）、2.1（P1-3 已闭环：`REGISTER_ENABLED` 默认关、开放时 pending 待激活）、2.2/2.3（P0-4 已闭环：权限字典补 23 码、方言对齐）、2.4（P0-4 已闭环：登录 JWT/me 实时 JOIN 规范化授权表展开）五处"部分"更新为"已具备"；② TODO.md 核销过时条目 TRAE 并行线（`svc/erp`、`svc/search` 工作区干净，`navigation-menu-demo.design/` 已不存在）；③ 核实其余遗留均为外部/生产机依赖（8 项生产任务已建执行清单 `docs/deploy/production-execution-checklist.md`；`get_business_overview` 占位前端零消费待业务口径；contract-stub 🔴67 条待产品排期；unused-vars 长尾 85 处；E11c wms/scm 动态金额 bind 登记边缘），本地可闭环项归零 |
 | 2026-10-22 | v1.29 | 脚本修复（drill 生成器消 warn） | **nginx drill 2 warn 清理**：`scripts/gen-nginx-drill-conf.sh` 替换段加 #8（`listen 443 ssl http2;` → `listen 443 ssl;` + 独立 `http2 on;`，本机 nginx 1.31 弃用告警）与 #9（自签无 OCSP → drill 演练 `ssl_stapling on/verify` 置 off）。**生产 conf `deploy/nginx/topems.conf` 不动**（Linux 生产 nginx 版本未定，旧版仅支持 listen 参数式 http2；正式证书含 OCSP responder 应保留 on）。重生成 drill conf → `nginx -t` **0 warn** test successful → 起 nginx 冒烟 core/bi/quality 全 200（链路未破坏）→ 已停。生产机侧：conf 上 Linux 后按实际 nginx 版本确认无 warn |
 | 2026-10-22 | v1.28 | 无代码变更（复核登记） | **verify-nginx-prod.sh 全链实跑（runbook A1 固化脚本）**：`--conf deploy/nginx/topems.conf --repo-conf 同源` → [1/3] nginx -t NGINX_T_SKIP_WARN（macOS 非 Linux，脚本设计如此；drill conf 另跑 nginx -t 通过）/[2/3] **UPSTREAM_OK**（server_service → localhost:8099，与仓库事实源一致，无 legacy map）/ [3/3] **SMOKE 14/14 200**（core/erp/hrm/finance/mes/qms/lims/bi/pm/portal/wms/scm/srm/rd 经 nginx 80→443 自签→8098 顶替 8099 等价链路全通）；结果 **PASS exit=0**。生产 conf 2 warn 待优化（listen http2 弃用 / ssl_stapling 无 OCSP）；生产机复核点仅剩 Linux 侧 nginx -t（use epoll）+ systemctl 实跑 + 层2 专项 |
 | 2026-10-22 | v1.27 | 生产部署前置复核（脚本契约修复 + 三件走查实跑） | **① smoke-prod.sh 契约对齐**：登录 `/api/v1/auth/login`→`/api/core/iam/auth/login`、受保护抽样 `/api/v1/users`→`/api/core/iam/users/me`（当前 IAM 契约；BFF 8098 实测 200）。**② 本机实跑 smoke-prod --base localhost:8098 层1 全 PASS**：登录+JWT+users/me、15 域 /health 全 200、BI test-sql+query 200、插件 /api/plugins/health 200。**③ nginx 演练实跑**（brew nginx 1.31.1 + gen-nginx-drill-conf.sh 生成 drill conf → nginx -t 语法通过（2 warn：listen http2 弃用/ssl_stapling 无 OCSP，生产 conf 待优化）→ 起 nginx 80→301→443 自签 → https 代理冒烟 /health 200、业务域 200；/api/v1/users 404 归属 BFF 开发态无旧兼容路由（nginx 层正常）。**④ systemd 材料静态走查**：deploy/systemd/ 31 单元 + topems.target，ExecStart 统一 `/opt/topems/bin/<name>-service`（unified-core 特例原名），与 install.sh/update.sh SERVICES 数组及 cp 逻辑全一致；**实跑 systemctl install/update/rollback 与层2 专项（E/F/G/H）需 Linux 生产机（环境阻塞，待生产机复核）** |
