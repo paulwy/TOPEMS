@@ -573,7 +573,10 @@ impl DocumentService {
             let mut file = archive
                 .by_index(i)
                 .map_err(|e| TopemsError::FileFormatError(format!("读取 PPTX 条目失败: {}", e)))?;
-            if file.name().starts_with("ppt/slides/slide") && file.name().ends_with(".xml") {
+            if file
+                .name()
+                .is_ok_and(|n| n.starts_with("ppt/slides/slide") && n.ends_with(".xml"))
+            {
                 let mut content = String::new();
                 file.read_to_string(&mut content).map_err(|e| {
                     TopemsError::FileFormatError(format!("读取幻灯片内容失败: {}", e))
@@ -638,7 +641,7 @@ impl DocumentService {
             let mut file = archive.by_index(i).map_err(|e| {
                 TopemsError::FileFormatError(format!("读取 OpenDocument 条目失败: {}", e))
             })?;
-            if file.name() == target_file {
+            if file.name().as_deref().ok() == Some(target_file) {
                 let mut content = String::new();
                 file.read_to_string(&mut content)
                     .map_err(|e| TopemsError::FileFormatError(format!("读取内容失败: {}", e)))?;
@@ -664,7 +667,7 @@ impl DocumentService {
             let mut file = archive
                 .by_index(i)
                 .map_err(|e| TopemsError::FileFormatError(format!("读取 DOCX 条目失败: {}", e)))?;
-            if file.name() == "word/document.xml" {
+            if file.name().as_deref().ok() == Some("word/document.xml") {
                 let mut content = String::new();
                 file.read_to_string(&mut content).map_err(|e| {
                     TopemsError::FileFormatError(format!("读取文档内容失败: {}", e))
@@ -691,7 +694,10 @@ impl DocumentService {
             let mut file = archive
                 .by_index(i)
                 .map_err(|e| TopemsError::FileFormatError(format!("读取 XLSX 条目失败: {}", e)))?;
-            if file.name().starts_with("xl/worksheets/sheet") && file.name().ends_with(".xml") {
+            if file
+                .name()
+                .is_ok_and(|n| n.starts_with("xl/worksheets/sheet") && n.ends_with(".xml"))
+            {
                 let mut content = String::new();
                 file.read_to_string(&mut content).map_err(|e| {
                     TopemsError::FileFormatError(format!("读取工作表内容失败: {}", e))
