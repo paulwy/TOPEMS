@@ -47,6 +47,7 @@ export const MES_PATHS = {
   settingBomVersionPolicy: '/mes/setting/bom-version-policy',
   settingApsConfig: '/mes/setting/aps-config',
   settingEquipmentThreshold: '/mes/setting/equipment-threshold',
+  masterData: '/mes/master-data',
 } as const;
 
 // ---- V257 P0-1：页面级 Props interface（Frontend 泛型收紧 · 3/15 核心模块首批）----
@@ -899,6 +900,12 @@ interface EquipmentThresholdPageProps {
 
   redirectOnSave?: string;
 }
+
+interface MesMasterDataPageProps {
+  /** 主数据 Tab key（workshops/productionLines/shifts/workCalendars）*/
+
+  activeTab?: string;
+}
 // ---- 路由配置（供路由系统使用） ----
 export const mesModuleConfig: RouteModuleConfig = {
   code: 'mes',
@@ -1468,6 +1475,18 @@ export const mesModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['mes:equipment_threshold:read'],
       action: 'read',
     } as RouteConfigV2<EquipmentThresholdPageProps>,
+    {
+      path: MES_PATHS.masterData,
+      element: lazyWithRetry(() => import('@/pages/mes/MesMasterDataPage'), 'MesMasterDataPage'),
+      module: 'mes',
+      code: 'mes-master-data',
+      title: i18n.t('mes.nav.mes-master-data'),
+      titleKey: 'mes.nav.mes-master-data',
+      template: 'management',
+      group: 'master-data',
+      requiredPermissions: ['mes:workshop:read'],
+      action: 'read',
+    } as unknown as RouteConfigV2<MesMasterDataPageProps>,
   ] as RouteConfigV2<Record<string, unknown>>[],
 };
 
@@ -1905,6 +1924,17 @@ export const mesNavConfig: ModuleNavConfig = {
       order: 4,
       group: 'setting',
       description: i18n.t('mes.nav.mes-equipment-threshold_desc'),
+    },
+    {
+      code: 'mes-master-data',
+      label: i18n.t('mes.nav.mes-master-data'),
+      labelKey: 'mes.nav.mes-master-data',
+      icon: 'Factory',
+      path: MES_PATHS.masterData,
+      permission: 'mes:workshop:read',
+      order: 5,
+      group: 'business',
+      description: i18n.t('mes.nav.mes-master-data_desc'),
     },
   ],
 };

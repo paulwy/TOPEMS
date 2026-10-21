@@ -4,6 +4,7 @@ pub mod approval_common;
 pub mod aps_compat;
 pub mod aps_scheduling;
 pub mod audit;
+pub mod basics;
 pub mod capacity;
 pub mod dashboard_ws;
 pub mod demand_forecast;
@@ -71,6 +72,7 @@ pub fn create_routes() -> Router<AppState> {
         .merge(work_station::create_routes())
         .merge(audit::create_routes())
         .merge(settings::create_routes())
+        .merge(basics::create_routes())
 }
 
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
@@ -920,6 +922,73 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     production_plan::init_database(pool).await?;
     capacity::init_database(pool).await?;
     demand_forecast::init_database(pool).await?;
+
+    // 批2（P1-6）：主数据表幂等兜底（与迁移 20261021000006 对齐）
+    for create_sql in [
+        r#"
+        CREATE TABLE IF NOT EXISTS workshops (
+            id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            code        VARCHAR(64) NOT NULL UNIQUE,
+            name        VARCHAR(128) NOT NULL,
+            location    VARCHAR(256),
+            manager     VARCHAR(128),
+            status      VARCHAR(32) DEFAULT 'active',
+            description TEXT,
+            created_at  TIMESTAMP DEFAULT NOW(),
+            updated_at  TIMESTAMP DEFAULT NOW(),
+            deleted_at  TIMESTAMP
+        )
+        "#,
+        r#"
+        CREATE TABLE IF NOT EXISTS production_lines (
+            id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            code        VARCHAR(64) NOT NULL UNIQUE,
+            name        VARCHAR(128) NOT NULL,
+            workshop_id UUID REFERENCES workshops(id) ON DELETE SET NULL,
+            description TEXT,
+            status      VARCHAR(32) DEFAULT 'active',
+            created_at  TIMESTAMP DEFAULT NOW(),
+            updated_at  TIMESTAMP DEFAULT NOW(),
+            deleted_at  TIMESTAMP
+        )
+        "#,
+        r#"
+        CREATE TABLE IF NOT EXISTS shifts (
+            id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            code         VARCHAR(64) NOT NULL UNIQUE,
+            name         VARCHAR(128) NOT NULL,
+            start_time   TIME NOT NULL,
+            end_time     TIME NOT NULL,
+            is_overnight BOOLEAN DEFAULT FALSE,
+            status       VARCHAR(32) DEFAULT 'active',
+            description  TEXT,
+            created_at   TIMESTAMP DEFAULT NOW(),
+            updated_at   TIMESTAMP DEFAULT NOW(),
+            deleted_at   TIMESTAMP
+        )
+        "#,
+        r#"
+        CREATE TABLE IF NOT EXISTS work_calendars (
+            id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            code          VARCHAR(64) NOT NULL UNIQUE,
+            name          VARCHAR(128) NOT NULL,
+            calendar_type VARCHAR(32) DEFAULT 'workday',
+            work_date     DATE NOT NULL,
+            shift_id      UUID REFERENCES shifts(id) ON DELETE SET NULL,
+            is_working    BOOLEAN DEFAULT TRUE,
+            remark        TEXT,
+            created_at    TIMESTAMP DEFAULT NOW(),
+            updated_at    TIMESTAMP DEFAULT NOW(),
+            deleted_at    TIMESTAMP
+        )
+        "#,
+    ] {
+        sqlx::query(create_sql)
+            .execute(pool)
+            .await
+            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+            .ok();
+    }
 
     Ok(())
 }

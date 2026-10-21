@@ -20,6 +20,7 @@ import { materialRequirementApi } from './materialRequirement';
 import { productionKanbanApi } from './productionKanban';
 import { apsApi } from './aps';
 import { anomalyDetectionApi } from './anomalyDetection';
+import { workshopApi, productionLineApi, shiftApi, workCalendarApi } from './basics';
 
 export * from './types';
 export * from './aps';
@@ -43,6 +44,8 @@ export { teamApi } from './team';
 export { materialRequirementApi } from './materialRequirement';
 export { productionKanbanApi } from './productionKanban';
 export { apsApi } from './aps';
+export { workshopApi, productionLineApi, shiftApi, workCalendarApi } from './basics';
+export type { Workshop, ProductionLine, Shift, WorkCalendar } from './basics';
 
 export const mesApi = {
   orders: productionOrderApi,
@@ -68,6 +71,10 @@ export const mesApi = {
   kanban: productionKanbanApi,
   aps: apsApi,
   anomaly: anomalyDetectionApi,
+  workshops: workshopApi,
+  productionLines: productionLineApi,
+  shifts: shiftApi,
+  workCalendars: workCalendarApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.mes.get('/health');

@@ -25,6 +25,14 @@ pub enum MesPermission {
     EquipmentWrite,
     WorkStationRead,
     WorkStationWrite,
+    WorkshopRead,
+    WorkshopWrite,
+    ProductionLineRead,
+    ProductionLineWrite,
+    ShiftRead,
+    ShiftWrite,
+    WorkCalendarRead,
+    WorkCalendarWrite,
     ProductionSchedulingRead,
     ProductionSchedulingWrite,
     ProductionSchedulingAdjust,
@@ -86,6 +94,30 @@ impl MesPermission {
                 SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
             }
             MesPermission::WorkStationWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::WorkshopRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::WorkshopWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::ProductionLineRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::ProductionLineWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::ShiftRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::ShiftWrite => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
+            }
+            MesPermission::WorkCalendarRead => {
+                SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Read)
+            }
+            MesPermission::WorkCalendarWrite => {
                 SharedModulePermission::new(ModuleCode::Mes, PermissionAction::Write)
             }
             MesPermission::ProductionSchedulingRead => {

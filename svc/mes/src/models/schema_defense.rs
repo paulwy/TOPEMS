@@ -5,7 +5,7 @@
 
 pub const SERVICE_SCHEMA: &str = "mes";
 
-/// mes 10 张表的列定义单一事实源。不含 id 列（verify 自动拼）。。不含 id 列（verify 自动拼）。
+/// mes 14 张表的列定义单一事实源。不含 id 列（verify 自动拼）。
 pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "audit_logs",
@@ -374,6 +374,63 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_by", "UUID"),
             ("deleted_at", "TIMESTAMPTZ"),
             ("tenant_id", "UUID"),
+        ],
+    ),
+    (
+        "workshops",
+        &[
+            ("code", "VARCHAR(64) NOT NULL UNIQUE"),
+            ("name", "VARCHAR(128) NOT NULL"),
+            ("location", "VARCHAR(256)"),
+            ("manager", "VARCHAR(128)"),
+            ("status", "VARCHAR(32) DEFAULT 'active'"),
+            ("description", "TEXT"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    (
+        "production_lines",
+        &[
+            ("code", "VARCHAR(64) NOT NULL UNIQUE"),
+            ("name", "VARCHAR(128) NOT NULL"),
+            ("workshop_id", "UUID"),
+            ("description", "TEXT"),
+            ("status", "VARCHAR(32) DEFAULT 'active'"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    (
+        "shifts",
+        &[
+            ("code", "VARCHAR(64) NOT NULL UNIQUE"),
+            ("name", "VARCHAR(128) NOT NULL"),
+            ("start_time", "TIME NOT NULL"),
+            ("end_time", "TIME NOT NULL"),
+            ("is_overnight", "BOOLEAN DEFAULT FALSE"),
+            ("status", "VARCHAR(32) DEFAULT 'active'"),
+            ("description", "TEXT"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
+        ],
+    ),
+    (
+        "work_calendars",
+        &[
+            ("code", "VARCHAR(64) NOT NULL UNIQUE"),
+            ("name", "VARCHAR(128) NOT NULL"),
+            ("calendar_type", "VARCHAR(32) DEFAULT 'workday'"),
+            ("work_date", "DATE NOT NULL"),
+            ("shift_id", "UUID"),
+            ("is_working", "BOOLEAN DEFAULT TRUE"),
+            ("remark", "TEXT"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
 ];
