@@ -151,13 +151,25 @@ impl Default for EventRouter {
     }
 }
 
-/// 构造一个配置好默认处理器的路由器
+/// 处理器注册表（单一配置来源）
+///
+/// 新增事件处理器时仅需在此登记；`default_router()` 由本注册表驱动构建，
+/// `EventRouter::list_handlers()` 自省实际注册（与注册表恒一致）。
+pub fn default_handlers() -> Vec<Box<dyn DomainEventHandler>> {
+    vec![
+        Box::new(VoucherPostedHandler::new()),
+        Box::new(VoucherReversedHandler::new()),
+        Box::new(ReceivableSettledHandler::new()),
+        Box::new(PayableSettledHandler::new()),
+    ]
+}
+
+/// 构造一个由注册表配置的默认路由器
 pub fn default_router() -> EventRouter {
     let mut router = EventRouter::new();
-    router.register(Box::new(VoucherPostedHandler::new()));
-    router.register(Box::new(VoucherReversedHandler::new()));
-    router.register(Box::new(ReceivableSettledHandler::new()));
-    router.register(Box::new(PayableSettledHandler::new()));
+    for handler in default_handlers() {
+        router.register(handler);
+    }
     router
 }
 

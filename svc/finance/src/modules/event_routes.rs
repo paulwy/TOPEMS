@@ -23,7 +23,7 @@ use topems_shared_core::{response::ApiResponse, TopemsError};
 // 响应模型
 // =============================================================================
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct HandlersResponse {
     pub handlers: Vec<String>,
     pub count: usize,
@@ -115,6 +115,19 @@ pub async fn list_published_events() -> Json<ApiResponse<Vec<PublishedEvent>>> {
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:read"])),
+    path = "/events/handlers",
+    responses(
+        (status = 200, description = "成功", body = ApiResponse<HandlersResponse>),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "服务内部错误"),
+    ),
+    tag = "Finance Events & Sagas",
+    operation_id = "list_event_handlers",
+)]
+/// 事件管道诊断自省：返回当前已注册的处理器名列表（内存管道，非 DB 存储）
 pub async fn list_handlers() -> Json<ApiResponse<HandlersResponse>> {
     let pipeline = get_event_pipeline();
     let handlers = pipeline.get_router().list_handlers();
