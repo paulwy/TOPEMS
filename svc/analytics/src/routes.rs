@@ -707,15 +707,14 @@ pub async fn reports_center_stats(
     // 组织计数（BE-02 方案 A）：hrm 组织数据对 analytics（schema=bi，boundary allow=[]）不可裸引，
     // 由 bi.org_stats 物化视图提供快照（companies/departments/employees 排除软删 + refreshed_at）。
     // 查询失败（视图缺失/未刷新）回落 0 + orgStatsStatus=not-connected，绝不伪造数字。
-    let (total_companies, total_departments, total_employees, org_refreshed) = sqlx::query_as::<_, (
-        i64, i64, i64, Option<chrono::DateTime<chrono::Utc>>,
-    )>(
-        "SELECT companies, departments, employees, refreshed_at FROM bi.org_stats"
-    )
-    .fetch_one(&state.pool)
-    .await
-    .map(|(c, d, e, r)| (c, d, e, r.map(|t| t.to_rfc3339())))
-    .unwrap_or((0, 0, 0, None));
+    let (total_companies, total_departments, total_employees, org_refreshed) =
+        sqlx::query_as::<_, (i64, i64, i64, Option<chrono::DateTime<chrono::Utc>>)>(
+            "SELECT companies, departments, employees, refreshed_at FROM bi.org_stats",
+        )
+        .fetch_one(&state.pool)
+        .await
+        .map(|(c, d, e, r)| (c, d, e, r.map(|t| t.to_rfc3339())))
+        .unwrap_or((0, 0, 0, None));
 
     // 近 6 个月真实用户增长（数据来源表：core_users）：
     //   新增用户 = core_users.created_at 分月计数；
