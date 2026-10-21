@@ -6,8 +6,9 @@
 # 用法：替代原 lefthook pre-push 的 cargo-check-workspace 内联命令。
 set -u
 
+# [2026-10-22] sccache 与 rustc 1.95.0 不兼容（spawn 失败），不再启用；
+# 与 .cargo/config.toml 注释结论一致（2026-10-02 已移除，此处曾遗漏）
 export SQLX_OFFLINE=true
-command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true
 
 OUT="$(mktemp /tmp/cargo-check-XXXXXX.log)"
 cargo check --workspace 2>&1 | tee "$OUT"

@@ -367,7 +367,7 @@ pre-push:
       tags: rust clippy
       run: |
         export SQLX_OFFLINE=true
-        command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true
+        # [2026-10-22] sccache 与 rustc 1.95.0 不兼容（spawn 失败），不再启用
         cargo clippy --workspace --all-targets -- -D clippy::correctness
     # [V294 NEW] cargo test workspace — Rust-only（从 pre-commit 移入，避免提交超时）
     # 只跑 --lib 单元测试，不跑集成测试（集成测试需要数据库）
@@ -386,7 +386,7 @@ pre-push:
       run: |
         export SQLX_OFFLINE=true
         export RUST_TEST_THREADS=1
-        command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true
+        # [2026-10-22] sccache 与 rustc 1.95.0 不兼容（spawn 失败），不再启用
         # 本机 DB/Redis 使用 .env 中的自定义凭据；测试内默认值（topems:topems_secret）与本机不一致，
         # 故从 .env 派生 TEST_DATABASE_URL / REDIS_URL（已显式提供时不覆盖；.env 缺失则回退测试内默认值）
         if [ -f .env ]; then
