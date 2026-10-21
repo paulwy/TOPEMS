@@ -4,6 +4,7 @@ pub mod configuration;
 pub mod dashboard;
 pub mod document;
 pub mod document_version;
+pub mod drawings;
 pub mod material;
 pub mod openapi;
 pub mod pdm_plugin;
@@ -34,6 +35,7 @@ pub fn create_api_routes() -> Router<AppState> {
         .merge(configuration::create_routes())
         .merge(document::create_routes())
         .merge(document_version::create_routes())
+        .merge(drawings::create_routes())
         .merge(project::create_routes())
         .merge(version::create_routes())
         .merge(production_process::create_routes())

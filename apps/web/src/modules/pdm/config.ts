@@ -34,6 +34,7 @@ const PDM_PATHS = {
   settingCategoryRule: '/pdm/setting/category-rule',
   settingDocApprovalFlow: '/pdm/setting/doc-approval-flow',
   settingChangeTemplate: '/pdm/setting/change-template',
+  drawing: '/pdm/drawing',
 } as const;
 // V259 TypeMap: filters/initialValues 从 Record<string, unknown> 升级为具体 schema
 // 已对齐后端 DTO: Product ← ProductQuery, Material ← MaterialQuery, ProductConfig ← CreateProductRequest
@@ -334,6 +335,18 @@ const changeTemplateRoute: RouteConfigV2<ChangeTemplatePageProps> = {
   requiredPermissions: ['pdm:change_template:read'],
   action: 'read',
 };
+const pdmDrawingRoute: RouteConfigV2<Record<string, never>> = {
+  path: PDM_PATHS.drawing,
+  element: lazyWithRetry(() => import('@/pages/pdm/PdmDrawingPage'), 'PdmDrawingPage'),
+  module: 'pdm',
+  code: 'pdm-drawing',
+  title: i18n.t('pdm.drawing.title'),
+  titleKey: 'pdm.drawing.title',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['pdm:drawing:read'],
+  action: 'read',
+};
 
 // ---- 路由配置（供路由系统使用） ----
 export const pdmModuleConfig: RouteModuleConfig = {
@@ -369,6 +382,7 @@ export const pdmModuleConfig: RouteModuleConfig = {
     categoryRuleRoute,
     docApprovalFlowRoute,
     changeTemplateRoute,
+    pdmDrawingRoute,
   ],
 };
 
@@ -456,6 +470,18 @@ export const pdmNavConfig: ModuleNavConfig = {
       group: 'master',
       showInTabs: true,
       description: i18n.t('pdm.nav.pdm-document_desc'),
+    },
+    {
+      code: 'pdm-drawing',
+      label: i18n.t('pdm.drawing.title'),
+      labelKey: 'pdm.drawing.title',
+      icon: 'FileText',
+      path: PDM_PATHS.drawing,
+      permission: 'pdm:drawing:read',
+      order: 6,
+      group: 'master',
+      showInTabs: true,
+      description: i18n.t('pdm.drawing.desc'),
     },
     {
       code: 'pdm-version',

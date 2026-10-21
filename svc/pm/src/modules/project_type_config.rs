@@ -1,11 +1,61 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     routing::get,
     Json, Router,
 };
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
+
+// ==================== P2-11 剩余项：PM 项目类型模板接真 ====================
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ProjectTypeConfig {
+    pub id: Uuid,
+    pub type_code: String,
+    pub type_name: String,
+    pub name_en: Option<String>,
+    pub description: Option<String>,
+    pub default_phases: Option<String>,
+    pub default_milestones: Option<String>,
+    pub default_workflow: Option<Uuid>,
+    pub is_active: bool,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ListTypesQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub is_active: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateTypeRequest {
+    pub type_code: String,
+    pub type_name: String,
+    pub name_en: Option<String>,
+    pub description: Option<String>,
+    pub default_phases: Option<String>,
+    pub default_milestones: Option<String>,
+    pub default_workflow: Option<Uuid>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateTypeRequest {
+    pub type_name: Option<String>,
+    pub name_en: Option<String>,
+    pub description: Option<String>,
+    pub default_phases: Option<String>,
+    pub default_milestones: Option<String>,
+    pub default_workflow: Option<Uuid>,
+    pub is_active: Option<bool>,
+}
+
+const TENANT_SQL: &str = "COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')";
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -27,12 +77,101 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
     tag = "project_type_config"
 )]
-async fn list_types(State(_pool): State<PgPool>) -> Json<ApiResponse<Vec<()>>> {
-    Json(ApiResponse::success(vec![], "获取项目类型列表成功"))
+async fn list_types(
+    State(pool): State<PgPool>,
+    Query(query): Query<ListTypesQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+    let search_pattern = query.search.map(|s| format!("%{}%", s));
+
+    let result = sqlx::query_as::<_, ProjectTypeConfig>(
+        r#"
+        SELECT id, type_code, type_name, name_en, description,
+               default_phases::text, default_milestones::text, default_workflow,
+               is_active, created_at::text, updated_at::text
+        FROM pm.project_type_configs
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR type_code ILIKE $1 OR type_name ILIKE $1 OR COALESCE(name_en, '') ILIKE $1)
+          AND ($2::boolean IS NULL OR is_active = $2)
+        ORDER BY created_at DESC
+        LIMIT $3 OFFSET $4
+        "#,
+    )
+    .bind(&search_pattern)
+    .bind(&query.is_active)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&pool)
+    .await;
+
+    match result {
+        Ok(items) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM pm.project_type_configs
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR type_code ILIKE $1 OR type_name ILIKE $1 OR COALESCE(name_en, '') ILIKE $1)
+                  AND ($2::boolean IS NULL OR is_active = $2)
+                "#,
+            )
+            .bind(&search_pattern)
+            .bind(&query.is_active)
+            .fetch_one(&pool)
+            .await;
+            let total = count_result.unwrap_or(0);
+            Json(ApiResponse::success(
+                serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
+                "获取项目类型列表成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取项目类型列表失败: {e}");
+            Json(ApiResponse::error(500, "获取项目类型列表失败"))
+        }
+    }
 }
 
-async fn create_type(State(_pool): State<PgPool>) -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success((), "创建项目类型成功"))
+async fn create_type(
+    State(pool): State<PgPool>,
+    Json(req): Json<CreateTypeRequest>,
+) -> Json<ApiResponse<ProjectTypeConfig>> {
+    if req.type_code.trim().is_empty() || req.type_name.trim().is_empty() {
+        return Json(ApiResponse::error(400, "类型编码与名称不能为空"));
+    }
+
+    let sql = format!(
+        r#"
+        INSERT INTO pm.project_type_configs
+            (type_code, type_name, name_en, description, default_phases, default_milestones, default_workflow, tenant_id)
+        VALUES
+            ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, {TENANT_SQL})
+        RETURNING id, type_code, type_name, name_en, description,
+                  default_phases::text, default_milestones::text, default_workflow,
+                  is_active, created_at::text, updated_at::text
+        "#,
+        TENANT_SQL = TENANT_SQL,
+    );
+
+    let result = sqlx::query_as::<_, ProjectTypeConfig>(&sql)
+        .bind(&req.type_code)
+        .bind(&req.type_name)
+        .bind(&req.name_en)
+        .bind(&req.description)
+        .bind(&req.default_phases)
+        .bind(&req.default_milestones)
+        .bind(&req.default_workflow)
+        .fetch_one(&pool)
+        .await;
+
+    match result {
+        Ok(row) => Json(ApiResponse::success(row, "创建项目类型成功")),
+        Err(e) => {
+            tracing::error!("创建项目类型失败: {e}");
+            Json(ApiResponse::error(500, "创建项目类型失败"))
+        }
+    }
 }
 
 #[utoipa::path(
@@ -40,7 +179,7 @@ async fn create_type(State(_pool): State<PgPool>) -> Json<ApiResponse<()>> {
     security(("BearerAuth" = ["pm:read"])),
     path = "/project-types/{id}",
     params(
-("id" = String, Path, description = "id")
+        ("id" = String, Path, description = "id")
     ),
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
@@ -48,16 +187,101 @@ async fn create_type(State(_pool): State<PgPool>) -> Json<ApiResponse<()>> {
     ),
     tag = "project_type_config"
 )]
-async fn get_type(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success((), "获取项目类型成功"))
+async fn get_type(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ProjectTypeConfig>> {
+    let result = sqlx::query_as::<_, ProjectTypeConfig>(
+        r#"
+        SELECT id, type_code, type_name, name_en, description,
+               default_phases::text, default_milestones::text, default_workflow,
+               is_active, created_at::text, updated_at::text
+        FROM pm.project_type_configs
+        WHERE id = $1 AND deleted_at IS NULL
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&pool)
+    .await;
+
+    match result {
+        Ok(Some(row)) => Json(ApiResponse::success(row, "获取项目类型成功")),
+        Ok(None) => Json(ApiResponse::error(404, "项目类型不存在")),
+        Err(e) => {
+            tracing::error!("获取项目类型失败: {e}");
+            Json(ApiResponse::error(500, "获取项目类型失败"))
+        }
+    }
 }
 
-async fn update_type(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success((), "更新项目类型成功"))
+async fn update_type(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateTypeRequest>,
+) -> Json<ApiResponse<ProjectTypeConfig>> {
+    let result = sqlx::query_as::<_, ProjectTypeConfig>(
+        r#"
+        UPDATE pm.project_type_configs SET
+            type_name = COALESCE($2, type_name),
+            name_en = COALESCE($3, name_en),
+            description = COALESCE($4, description),
+            default_phases = COALESCE($5::jsonb, default_phases),
+            default_milestones = COALESCE($6::jsonb, default_milestones),
+            default_workflow = COALESCE($7, default_workflow),
+            is_active = COALESCE($8, is_active),
+            updated_at = now()
+        WHERE id = $1 AND deleted_at IS NULL
+        RETURNING id, type_code, type_name, name_en, description,
+                  default_phases::text, default_milestones::text, default_workflow,
+                  is_active, created_at::text, updated_at::text
+        "#,
+    )
+    .bind(id)
+    .bind(&req.type_name)
+    .bind(&req.name_en)
+    .bind(&req.description)
+    .bind(&req.default_phases)
+    .bind(&req.default_milestones)
+    .bind(&req.default_workflow)
+    .bind(&req.is_active)
+    .fetch_optional(&pool)
+    .await;
+
+    match result {
+        Ok(Some(row)) => Json(ApiResponse::success(row, "更新项目类型成功")),
+        Ok(None) => Json(ApiResponse::error(404, "项目类型不存在")),
+        Err(e) => {
+            tracing::error!("更新项目类型失败: {e}");
+            Json(ApiResponse::error(500, "更新项目类型失败"))
+        }
+    }
 }
 
-async fn delete_type(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success((), "删除项目类型成功"))
+async fn delete_type(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query(
+        r#"
+        UPDATE pm.project_type_configs SET deleted_at = now(), updated_at = now()
+        WHERE id = $1 AND deleted_at IS NULL
+        "#,
+    )
+    .bind(id)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::Value::Null,
+            "删除项目类型成功",
+        )),
+        Ok(_) => Json(ApiResponse::error(404, "项目类型不存在")),
+        Err(e) => {
+            tracing::error!("删除项目类型失败: {e}");
+            Json(ApiResponse::error(500, "删除项目类型失败"))
+        }
+    }
 }
 
 #[cfg(test)]

@@ -48,6 +48,7 @@ export const PM_PATHS = {
   projectWizard: '/pm/project-wizard',
   timeline: '/pm/timeline',
   projectList: '/pm/project-list',
+  projectTypeConfig: '/pm/project-type-config',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -269,6 +270,22 @@ const pmRoutes: RouteConfigV2[] = [
     action: 'read',
     tier: 'basic',
   },
+  {
+    path: PM_PATHS.projectTypeConfig,
+    element: lazyWithRetry(
+      () => import('@/pages/pm/PmProjectTypeConfigPage'),
+      'PmProjectTypeConfigPage'
+    ),
+    module: 'pm',
+    code: 'pm-project-type-config',
+    title: i18n.t('pm.project_type_config.title'),
+    titleKey: 'pm.project_type_config.title',
+    template: 'list',
+    group: 'business',
+    requiredPermissions: ['pm:read'],
+    action: 'read',
+    tier: 'basic',
+  },
 ];
 
 export const pmModuleConfig: RouteModuleConfig = {
@@ -392,6 +409,17 @@ export const pmNavConfig: ModuleNavConfig = {
       order: 2,
       group: 'process',
       description: i18n.t('pm.nav.pm-templates_desc'),
+    },
+    {
+      code: 'pm-project-type-config',
+      label: i18n.t('pm.project_type_config.title'),
+      labelKey: 'pm.project_type_config.title',
+      icon: 'ClipboardList',
+      path: PM_PATHS.projectTypeConfig,
+      permission: 'pm:read',
+      order: 3,
+      group: 'process',
+      description: i18n.t('pm.project_type_config.desc'),
     },
     {
       code: 'pm-reports',
