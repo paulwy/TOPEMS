@@ -164,9 +164,9 @@ pub fn contract_stub_routes() -> Router<AppState> {
         )
         .route("/system/api-keys/{id}", get(stub_list))
         .route("/system/api-keys/{id}", put(stub_action))
-        // B4-①：WMS 四类审批（inbound/outbound/stock-take/transfer × start/approve/reject）
-        // 已由 svc/wms 真实实现，前端 wmsApprovalApi 改指 apiClient.wms（调拨命名 /transfers），
-        // core 12 条兜底删除。
-        // S1：/help/* 已由 svc/portal 真实实现（/api/portal/help/*，faq/guide CRUD + 分类），
-        // 前端 helpApi 已改指 apiClient.portal（isActive→is_active 对齐），core 7 条兜底删除。
+    // B4-①：WMS 四类审批（inbound/outbound/stock-take/transfer × start/approve/reject）
+    // 已由 svc/wms 真实实现，前端 wmsApprovalApi 改指 apiClient.wms（调拨命名 /transfers），
+    // core 12 条兜底删除。
+    // S1：/help/* 已由 svc/portal 真实实现（/api/portal/help/*，faq/guide CRUD + 分类），
+    // 前端 helpApi 已改指 apiClient.portal（isActive→is_active 对齐），core 7 条兜底删除。
 }
