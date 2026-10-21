@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Select, MenuItem, FormControl, InputLabel, Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/store/authStore';
 import { tenantApi } from '@/api/unified-core/tenant';
 import type { Tenant } from '@/api/unified-core/tenant';
 
@@ -11,7 +10,13 @@ import type { Tenant } from '@/api/unified-core/tenant';
  */
 export const TenantSwitcher: React.FC = () => {
   const { t } = useTranslation();
-  const isSuperuser = useAuthStore((s) => s.isSuperuser());
+  // 数据源与 useAuth 一致（localStorage 'user' 由登录流程写入）；authStore 旧版已废弃
+  let isSuperuser = false;
+  try {
+    isSuperuser = JSON.parse(localStorage.getItem('user') || '{}').is_superuser === true;
+  } catch {
+    isSuperuser = false;
+  }
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [currentTenantId, setCurrentTenantId] = useState<string>('');
   const [loading, setLoading] = useState(false);

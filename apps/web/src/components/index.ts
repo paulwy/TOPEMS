@@ -341,8 +341,7 @@ export {
 export { default as ExportModal } from './export/ExportModal';
 export { default as ExportButton } from './export/ExportButton';
 
-// 认证组件
-export { LoginFormV2 } from './auth/LoginFormV2';
+// 认证组件（登录表单由 pages/shared/LoginPage 自实现，LoginFormV2 已废弃删除）
 
 // 权限验证组件
 export {

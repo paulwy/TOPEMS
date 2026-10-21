@@ -1,6 +1,7 @@
 // 2026-08-07: 部分报表和模型 struct 仅 serde 使用，保留 crate 级 allow
 #![allow(dead_code)]
 pub mod audit_v52;
+pub mod bootstrap;
 pub mod compliance_v51;
 pub mod cqrs_routes;
 pub mod currencies;
@@ -4933,6 +4934,7 @@ pub fn create_routes() -> Router<AppState> {
         .merge(operational::create_routes())
         .merge(report_center::create_routes())
         .merge(forecasting::create_routes())
+        .merge(bootstrap::create_routes())
         .merge(financial_reports::create_routes())
         .merge(currencies::create_routes())
         .nest("/cqrs", cqrs_routes::cqrs_routes())

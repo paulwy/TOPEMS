@@ -5,7 +5,6 @@ import {
   type UseWebSocketOptions,
   type WsMessage,
 } from './useWebSocket';
-import { useAuthStore } from '@/store/authStore';
 import { apiLogger } from '@/utils/logger';
 
 interface UseDashboardWebSocketOptions extends Omit<
@@ -38,7 +37,7 @@ export function useDashboardWebSocket(options: UseDashboardWebSocketOptions = {}
     enabled = false, // WS未挂载路由，全局关闭不连接
   } = options;
 
-  const { token } = useAuthStore();
+  const token = localStorage.getItem('token') ?? '';
 
   const wsPath = useMemo(() => {
     const basePath = MODULE_WS_PATHS[module] || MODULE_WS_PATHS.mes;

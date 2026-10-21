@@ -6,7 +6,6 @@ import {
   getNextReconnectDelay,
   DEFAULT_RECONNECT_STRATEGY,
 } from '@/utils/websocketOptimizer';
-import { useAuthToken } from '@/store/authStore';
 
 const WS_SIGNING_SECRET = import.meta.env.VITE_WS_SIGNING_SECRET || 'topems-ws-signing-secret';
 
@@ -321,7 +320,7 @@ export function useWebSocketSubscription(
   const [isConnected, setIsConnected] = useState(false);
   const [authStatus, setAuthStatus] = useState<'pending' | 'success' | 'failed'>('pending');
   const handlerRef = useRef(handler);
-  const token = useAuthToken();
+  const token = localStorage.getItem('token') ?? '';
 
   useEffect(() => {
     handlerRef.current = handler;
@@ -450,7 +449,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     shouldReconnect,
   });
   callbacksRef.current = { onMessage, onOpen, onClose, onError, authMessage, shouldReconnect };
-  const authToken = useAuthToken();
+  const authToken = localStorage.getItem('token') ?? '';
   const token = autoAuthToken ? authToken : null;
 
   useEffect(() => {

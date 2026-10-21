@@ -107,6 +107,7 @@ use crate::modules::*;
         ),
     ),
     paths(
+        bootstrap::bootstrap_defaults,
         create_account,
         get_account_balances,
         list_vouchers,

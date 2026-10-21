@@ -7,7 +7,6 @@ import type { Notification } from '@/api/notification';
 import { getNotifications, getUnreadCount, markAllAsRead } from '@/api/notification';
 import { logger } from '@/utils/logger';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
-import { useAuthStore } from '@/store/authStore';
 import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
@@ -25,8 +24,14 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
   const [showSettings, setShowSettings] = useState(false);
   const [totalUnread, setTotalUnread] = useState(0);
 
-  const { user } = useAuthStore();
-  const userId = user?.id || '';
+  // 数据源与 useAuth 一致（localStorage 'user' 由登录流程写入）；authStore 旧版已废弃
+  let currentUser: { id?: string } | null = null;
+  try {
+    currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+  } catch {
+    currentUser = null;
+  }
+  const userId = currentUser?.id || '';
 
   // WebSocket 实时通知
   const {

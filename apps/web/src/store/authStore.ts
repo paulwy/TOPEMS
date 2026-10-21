@@ -1,3 +1,11 @@
+/**
+ * 【DEPRECATED 2026-10-21 批6/P2-10】旧版认证 store（zustand persist）。
+ * - 会话/认证状态现已由 `@/hooks/useAuth`（AuthProvider + localStorage token/user/roles/permissions）统一承载；
+ * - 本 store 无任何写入方（login/logout 不 setToken/setUser），读取方此前拿到的一直是初始空值；
+ * - 真实读取方已迁移至 localStorage/useAuth（useWebSocket/TenantSwitcher/useDashboardWebSocket/useABTest/NotificationPanel）；
+ * - 保留本文件仅因 ~20 个组件测试以 `vi.mock('@/store', { useAuthStore: ... })` 方式 mock 该符号、
+ *   以及 `types/topems-core.d.ts` 的 re-export；**禁止新增使用**，后续测试迁移后可删除。
+ */
 import { useMemo } from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';

@@ -11,7 +11,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAuthStore } from '@/store/authStore';
 import {
   abTestEngine,
   type Experiment,
@@ -36,9 +35,18 @@ function getAnonymousUserId(): string {
   return id;
 }
 
-/** 从 authStore 提取用户属性（用于定向） */
+/** 从 localStorage 提取用户属性（登录流程写入的 'user'；authStore 旧版已废弃） */
+function getLocalUser(): Record<string, unknown> | null {
+  try {
+    return JSON.parse(localStorage.getItem('user') || 'null');
+  } catch {
+    return null;
+  }
+}
+
+/** 从 localStorage 提取用户属性（用于定向） */
 function getUserAttributes(): Record<string, unknown> {
-  const user = useAuthStore.getState().user;
+  const user = getLocalUser();
   if (!user) return {};
   return {
     role: user.role,
@@ -52,7 +60,7 @@ function getUserAttributes(): Record<string, unknown> {
 
 /** 获取当前用户 ID（登录用户优先，否则匿名 ID） */
 function getCurrentUserId(): string {
-  const user = useAuthStore.getState().user;
+  const user = getLocalUser();
   return user?.id ?? getAnonymousUserId();
 }
 
