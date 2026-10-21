@@ -114,6 +114,7 @@
 - **批次 3 mdm-v59 AI 治理**（`378f18467`）：后端 23 路由（governance/matching/classifier），前端 AiGovernancePage（1036 行，Tabs 三子视图：治理建议/匹配裁决/分类管理）+ i18n 68 key。**2026-10-22 环境核销**：同批 2，建规则 200。
 - **批次 4 mdm-v55 商业化**（`6beaaab27`）：后端 `/mdm-v55` 路由，前端 CommercialConsolePage（1056 行，4 tab：产品/订阅/账单/SLA）+ i18n 全。**2026-10-22 环境核销**：同批 2，建产品 200。
 - **其他历史排期项核销（2026-10-22，活文档 v1.25，零代码）**：BI（analytics crate `/api/bi`）核心端点 health/test-sql/query/dashboards 全 200、routes.rs 全路径 0 个 5xx；质量域 quality_v51 21 条 path GET 扫描 0 个 5xx、写端点探针 422/405 非 500、`mdm_quality_*` 6 表已随 v1.24 的 81 张补建覆盖。两域无缺表无 5xx，纯核销。
+- **冻结模块核销（2026-10-22，活文档 v1.26，零代码）**：knowledge_v53（14）/ disaster_v56（23）/ semantic_v57（21）/ versioning_v54（20）/ governance_v58（23）GET 全路径扫描 0 个 5xx、写探针 422 非 500；引用表（mdm_kg_*/mdm_bc_*/mdm_version_*/mdm_governance_*/mdm_maturity_* 等）已随 81 张 mdm_* 补建覆盖。**至此 master-data 全部历史模块实跑核销完成**。
 
 ## 批 E1 · eslint 回绿（prettier 格式 + archive ignore）（2026-10-19）✅ 完成
 
