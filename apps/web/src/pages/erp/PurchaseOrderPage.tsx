@@ -680,35 +680,35 @@ const PurchaseOrderPage: React.FC = () => {
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <InfoItem
-                  label={t('"+K+".drawer.supplier_name')}
+                  label={t('erp.purchase_order.drawer.supplier_name')}
                   value={selectedOrder.supplier_name}
                 />
                 <InfoItem
-                  label={t('"+K+".drawer.supplier_code')}
+                  label={t('erp.purchase_order.drawer.supplier_code')}
                   value={selectedOrder.supplier_code}
                 />
                 <InfoItem
-                  label={t('"+K+".drawer.buyer')}
+                  label={t('erp.purchase_order.drawer.buyer')}
                   value={selectedOrder.buyer}
                 />
                 <InfoItem
-                  label={t('"+K+".drawer.department')}
+                  label={t('erp.purchase_order.drawer.department')}
                   value={selectedOrder.department}
                 />
                 <InfoItem
-                  label={t('"+K+".drawer.item_count')}
-                  value={`${selectedOrder.items_count} ${t('"+K+".drawer.item_unit')}`}
+                  label={t('erp.purchase_order.drawer.item_count')}
+                  value={`${selectedOrder.items_count} ${t('erp.purchase_order.drawer.item_unit')}`}
                 />
                 <InfoItem
-                  label={t('"+K+".drawer.amount')}
+                  label={t('erp.purchase_order.drawer.amount')}
                   value={formatAmount(selectedOrder.total_amount, selectedOrder.currency)}
                 />
                 <InfoItem
-                  label={t('"+K+".drawer.created_at')}
+                  label={t('erp.purchase_order.drawer.created_at')}
                   value={selectedOrder.created_at}
                 />
                 <InfoItem
-                  label={t('"+K+".drawer.expected_date')}
+                  label={t('erp.purchase_order.drawer.expected_date')}
                   value={selectedOrder.expected_date}
                 />
               </div>
@@ -783,7 +783,7 @@ const PurchaseOrderPage: React.FC = () => {
               variant='ghost'
               onClick={() => setCreateModalOpen(false)}
             >
-              {t('"+K+".button.cancel')}
+              {t('erp.purchase_order.button.cancel')}
             </Button>
             <Button
               variant='primary'
@@ -900,7 +900,7 @@ const PurchaseOrderPage: React.FC = () => {
               htmlFor='po-remark'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              {t('"+K+".form.remark')}
+              {t('erp.purchase_order.form.remark')}
             </label>
             <textarea
               id='po-remark'
@@ -924,7 +924,7 @@ const PurchaseOrderPage: React.FC = () => {
               htmlFor='field-1'
               style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
             >
-              {t('"+K+".form.attachment')}
+              {t('erp.purchase_order.form.attachment')}
             </label>
             <FileUpload
               id='field-1'
@@ -933,7 +933,7 @@ const PurchaseOrderPage: React.FC = () => {
               multiple
               maxSize={20}
               accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip,.rar'
-              hint={t('"+K+".form.attachment_hint')}
+              hint={t('erp.purchase_order.form.attachment_hint')}
             />
           </div>
         </div>

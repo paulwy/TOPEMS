@@ -298,7 +298,7 @@ const WmsOutboundOrderPage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiOrders.length;
         }
-        if (apiOrders.length > 0) {
+        if (Array.isArray(apiOrders)) {
           setIsMockData(false);
           return { orders: mapApiOutboundOrders(apiOrders), total };
         }

@@ -49,7 +49,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/users',
         name: i18n.t('shared.core-modules.k1'),
-        component: () => import(/* @vite-ignore */ 'topems_core/pages/UserManagement'),
+        component: () => import('@/pages/iam/UserManagementPage'),
         componentPath: './pages/UserManagement',
         icon: 'Users',
         permissions: ['core:user:view'],
@@ -57,7 +57,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/roles',
         name: i18n.t('shared.core-modules.k2'),
-        component: () => import(/* @vite-ignore */ 'topems_core/pages/RoleManagement'),
+        component: () => import('@/pages/iam/RoleManagementPage'),
         componentPath: './pages/RoleManagement',
         icon: 'Shield',
         permissions: ['core:role:view'],
@@ -65,7 +65,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/permissions',
         name: i18n.t('shared.core-modules.k3'),
-        component: () => import(/* @vite-ignore */ 'topems_core/pages/PermissionManagement'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/' + 'PermissionManagement'),
         componentPath: './pages/PermissionManagement',
         icon: 'Key',
         permissions: ['core:permission:view'],
@@ -73,7 +73,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/org',
         name: i18n.t('shared.core-modules.k4'),
-        component: () => import(/* @vite-ignore */ 'topems_core/pages/OrgChart'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/' + 'OrgChart'),
         componentPath: './pages/OrgChart',
         icon: 'Building2',
         permissions: ['core:org:view'],
@@ -81,7 +81,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/workflow/designer',
         name: i18n.t('shared.core-modules.k5'),
-        component: () => import(/* @vite-ignore */ 'topems_core/pages/FlowDesignerPage'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/' + 'FlowDesignerPage'),
         componentPath: './pages/FlowDesignerPage',
         icon: 'Workflow',
         permissions: ['core:workflow:design'],
@@ -89,7 +89,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/workflow/monitor',
         name: i18n.t('shared.core-modules.k6'),
-        component: () => import(/* @vite-ignore */ 'topems_core/pages/FlowMonitorPage'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/' + 'FlowMonitorPage'),
         componentPath: './pages/FlowMonitorPage',
         icon: 'Activity',
         permissions: ['core:workflow:monitor'],
@@ -97,7 +97,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/workflow/templates',
         name: i18n.t('shared.core-modules.k7'),
-        component: () => import(/* @vite-ignore */ 'topems_core/pages/FlowTemplatePage'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/' + 'FlowTemplatePage'),
         componentPath: './pages/FlowTemplatePage',
         icon: 'FileText',
         permissions: ['core:workflow:view'],
@@ -105,7 +105,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/documents',
         name: i18n.t('shared.core-modules.k8'),
-        component: () => import(/* @vite-ignore */ 'topems_core/pages/DocumentCenterPage'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/' + 'DocumentCenterPage'),
         componentPath: './pages/DocumentCenterPage',
         icon: 'FolderOpen',
         permissions: ['core:doc:view'],
@@ -113,7 +113,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/reports',
         name: i18n.t('shared.core-modules.k9'),
-        component: () => import(/* @vite-ignore */ 'topems_core/pages/ReportListPage'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/' + 'ReportListPage'),
         componentPath: './pages/ReportListPage',
         icon: 'BarChart3',
         permissions: ['core:report:view'],
@@ -135,7 +135,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/dashboard',
         name: i18n.t('shared.core-modules.hr_1'),
-        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/' + 'DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['hrm:dashboard:view'],
@@ -143,7 +143,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/attendance',
         name: i18n.t('shared.core-modules.k12'),
-        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/AttendancePage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/' + 'AttendancePage'),
         componentPath: './pages/AttendancePage',
         icon: 'Calendar',
         permissions: ['hrm:attendance:view'],
@@ -151,7 +151,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/payroll',
         name: i18n.t('shared.core-modules.k13'),
-        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/PayrollPage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/' + 'PayrollPage'),
         componentPath: './pages/PayrollPage',
         icon: 'Wallet',
         permissions: ['hrm:payroll:view'],
@@ -159,7 +159,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/performance',
         name: i18n.t('shared.core-modules.k14'),
-        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/PerformancePage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/' + 'PerformancePage'),
         componentPath: './pages/PerformancePage',
         icon: 'TrendingUp',
         permissions: ['hrm:performance:view'],
@@ -167,7 +167,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/training',
         name: i18n.t('shared.core-modules.k15'),
-        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/TrainingPage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/' + 'TrainingPage'),
         componentPath: './pages/TrainingPage',
         icon: 'GraduationCap',
         permissions: ['hrm:training:view'],
@@ -175,7 +175,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/recruitment',
         name: i18n.t('shared.core-modules.k16'),
-        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/RecruitmentPage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/' + 'RecruitmentPage'),
         componentPath: './pages/RecruitmentPage',
         icon: 'UserPlus',
         permissions: ['hrm:recruitment:view'],
@@ -197,7 +197,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/dashboard',
         name: i18n.t('shared.core-modules.crm_2'),
-        component: () => import(/* @vite-ignore */ 'topems_crm/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/' + 'DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['crm:dashboard:view'],
@@ -205,7 +205,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/customers',
         name: i18n.t('shared.core-modules.k19'),
-        component: () => import(/* @vite-ignore */ 'topems_crm/pages/CustomerManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/' + 'CustomerManagementPage'),
         componentPath: './pages/CustomerManagementPage',
         icon: 'Users',
         permissions: ['crm:customer:view'],
@@ -213,7 +213,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/contacts',
         name: i18n.t('shared.core-modules.k20'),
-        component: () => import(/* @vite-ignore */ 'topems_crm/pages/ContactManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/' + 'ContactManagementPage'),
         componentPath: './pages/ContactManagementPage',
         icon: 'User',
         permissions: ['crm:contact:view'],
@@ -221,7 +221,8 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/opportunities',
         name: i18n.t('shared.core-modules.k21'),
-        component: () => import(/* @vite-ignore */ 'topems_crm/pages/OpportunityManagementPage'),
+        component: () =>
+          import(/* @vite-ignore */ 'topems_crm/pages/' + 'OpportunityManagementPage'),
         componentPath: './pages/OpportunityManagementPage',
         icon: 'Target',
         permissions: ['crm:opportunity:view'],
@@ -229,7 +230,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/scoring',
         name: i18n.t('shared.core-modules.k22'),
-        component: () => import(/* @vite-ignore */ 'topems_crm/pages/CustomerScoringPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/' + 'CustomerScoringPage'),
         componentPath: './pages/CustomerScoringPage',
         icon: 'Star',
         permissions: ['crm:scoring:view'],
@@ -237,7 +238,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/forecast',
         name: i18n.t('shared.core-modules.k23'),
-        component: () => import(/* @vite-ignore */ 'topems_crm/pages/SalesForecastPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/' + 'SalesForecastPage'),
         componentPath: './pages/SalesForecastPage',
         icon: 'TrendingUp',
         permissions: ['crm:forecast:view'],
@@ -245,7 +246,8 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/interactions',
         name: i18n.t('shared.core-modules.k24'),
-        component: () => import(/* @vite-ignore */ 'topems_crm/pages/InteractionManagementPage'),
+        component: () =>
+          import(/* @vite-ignore */ 'topems_crm/pages/' + 'InteractionManagementPage'),
         componentPath: './pages/InteractionManagementPage',
         icon: 'MessageSquare',
         permissions: ['crm:interaction:view'],
@@ -253,7 +255,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/billing',
         name: i18n.t('shared.core-modules.k25'),
-        component: () => import(/* @vite-ignore */ 'topems_crm/pages/BillingPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/' + 'BillingPage'),
         componentPath: './pages/BillingPage',
         icon: 'FileText',
         permissions: ['crm:billing:view'],
@@ -275,7 +277,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/dashboard',
         name: i18n.t('shared.core-modules.k28'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/' + 'DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['finance:dashboard:view'],
@@ -283,23 +285,15 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/accounts',
         name: i18n.t('shared.core-modules.k29'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceAccountPage'),
+        component: () => import('@/pages/finance/FinanceLedgerPage'),
         componentPath: './pages/FinanceAccountPage',
         icon: 'BookOpen',
         permissions: ['finance:account:view'],
       },
       {
-        path: '/finance/vouchers',
-        name: i18n.t('shared.core-modules.k30'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceVoucherPage'),
-        componentPath: './pages/FinanceVoucherPage',
-        icon: 'Receipt',
-        permissions: ['finance:voucher:view'],
-      },
-      {
         path: '/finance/ledger',
         name: i18n.t('shared.core-modules.k31'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceLedgerPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinanceLedgerPage'),
         componentPath: './pages/FinanceLedgerPage',
         icon: 'Book',
         permissions: ['finance:ledger:view'],
@@ -308,7 +302,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
         path: '/finance/receivable-payable',
         name: i18n.t('shared.core-modules.k32'),
         component: () =>
-          import(/* @vite-ignore */ 'topems_finance/pages/FinanceReceivablePayablePage'),
+          import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinanceReceivablePayablePage'),
         componentPath: './pages/FinanceReceivablePayablePage',
         icon: 'ArrowLeftRight',
         permissions: ['finance:rp:view'],
@@ -316,7 +310,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/receipts',
         name: i18n.t('shared.core-modules.k33'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceReceiptPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinanceReceiptPage'),
         componentPath: './pages/FinanceReceiptPage',
         icon: 'ArrowDownLeft',
         permissions: ['finance:receipt:view'],
@@ -324,7 +318,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/payments',
         name: i18n.t('shared.core-modules.k34'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinancePaymentPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinancePaymentPage'),
         componentPath: './pages/FinancePaymentPage',
         icon: 'ArrowUpRight',
         permissions: ['finance:payment:view'],
@@ -332,7 +326,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/reports',
         name: i18n.t('shared.core-modules.k35'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceReportsPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinanceReportsPage'),
         componentPath: './pages/FinanceReportsPage',
         icon: 'BarChart3',
         permissions: ['finance:report:view'],
@@ -340,7 +334,8 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/financial-reports',
         name: i18n.t('shared.core-modules.k36'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinancialReportsPage'),
+        component: () =>
+          import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinancialReportsPage'),
         componentPath: './pages/FinancialReportsPage',
         icon: 'PieChart',
         permissions: ['finance:freport:view'],
@@ -348,7 +343,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/budget',
         name: i18n.t('shared.core-modules.k37'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceBudgetPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinanceBudgetPage'),
         componentPath: './pages/FinanceBudgetPage',
         icon: 'Calculator',
         permissions: ['finance:budget:view'],
@@ -356,7 +351,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/expense',
         name: i18n.t('shared.core-modules.k38'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceExpensePage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinanceExpensePage'),
         componentPath: './pages/FinanceExpensePage',
         icon: 'CreditCard',
         permissions: ['finance:expense:view'],
@@ -364,7 +359,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/invoice',
         name: i18n.t('shared.core-modules.k39'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceInvoicePage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinanceInvoicePage'),
         componentPath: './pages/FinanceInvoicePage',
         icon: 'FileText',
         permissions: ['finance:invoice:view'],
@@ -372,7 +367,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/tax',
         name: i18n.t('shared.core-modules.k40'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceTaxPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinanceTaxPage'),
         componentPath: './pages/FinanceTaxPage',
         icon: 'Landmark',
         permissions: ['finance:tax:view'],
@@ -380,7 +375,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/assets',
         name: i18n.t('shared.core-modules.k41'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceAssetPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinanceAssetPage'),
         componentPath: './pages/FinanceAssetPage',
         icon: 'Package',
         permissions: ['finance:asset:view'],
@@ -388,7 +383,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/cost',
         name: i18n.t('shared.core-modules.k42'),
-        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceCostPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/' + 'FinanceCostPage'),
         componentPath: './pages/FinanceCostPage',
         icon: 'DollarSign',
         permissions: ['finance:cost:view'],
@@ -410,7 +405,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/dashboard',
         name: i18n.t('shared.core-modules.k45'),
-        component: () => import(/* @vite-ignore */ 'topems_pm/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/' + 'DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['pm:dashboard:view'],
@@ -418,7 +413,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/projects',
         name: i18n.t('shared.core-modules.k46'),
-        component: () => import(/* @vite-ignore */ 'topems_pm/pages/ProjectListPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/' + 'ProjectListPage'),
         componentPath: './pages/ProjectListPage',
         icon: 'ListTodo',
         permissions: ['pm:project:view'],
@@ -426,7 +421,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/tasks',
         name: i18n.t('shared.core-modules.k47'),
-        component: () => import(/* @vite-ignore */ 'topems_pm/pages/ProjectTaskPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/' + 'ProjectTaskPage'),
         componentPath: './pages/ProjectTaskPage',
         icon: 'CheckSquare',
         permissions: ['pm:task:view'],
@@ -434,7 +429,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/gantt',
         name: i18n.t('shared.core-modules.k48'),
-        component: () => import(/* @vite-ignore */ 'topems_pm/pages/GanttChartPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/' + 'GanttChartPage'),
         componentPath: './pages/GanttChartPage',
         icon: 'BarChart',
         permissions: ['pm:gantt:view'],
@@ -442,7 +437,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/milestones',
         name: i18n.t('shared.core-modules.k49'),
-        component: () => import(/* @vite-ignore */ 'topems_pm/pages/MilestonePage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/' + 'MilestonePage'),
         componentPath: './pages/MilestonePage',
         icon: 'Flag',
         permissions: ['pm:milestone:view'],
@@ -450,7 +445,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/risks',
         name: i18n.t('shared.core-modules.k50'),
-        component: () => import(/* @vite-ignore */ 'topems_pm/pages/RiskManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/' + 'RiskManagementPage'),
         componentPath: './pages/RiskManagementPage',
         icon: 'AlertTriangle',
         permissions: ['pm:risk:view'],
@@ -458,7 +453,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/contracts',
         name: i18n.t('shared.core-modules.k51'),
-        component: () => import(/* @vite-ignore */ 'topems_pm/pages/ContractListPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/' + 'ContractListPage'),
         componentPath: './pages/ContractListPage',
         icon: 'FileText',
         permissions: ['pm:contract:view'],
@@ -466,7 +461,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/reports',
         name: i18n.t('shared.core-modules.k52'),
-        component: () => import(/* @vite-ignore */ 'topems_pm/pages/ProjectReportPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/' + 'ProjectReportPage'),
         componentPath: './pages/ProjectReportPage',
         icon: 'BarChart3',
         permissions: ['pm:report:view'],
@@ -488,7 +483,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/dashboard',
         name: i18n.t('shared.core-modules.mes_3'),
-        component: () => import(/* @vite-ignore */ 'topems_mes/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/' + 'DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['mes:dashboard:view'],
@@ -497,7 +492,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
         path: '/mes/production-orders',
         name: i18n.t('shared.core-modules.k55'),
         component: () =>
-          import(/* @vite-ignore */ 'topems_mes/pages/ProductionOrderManagementPage'),
+          import(/* @vite-ignore */ 'topems_mes/pages/' + 'ProductionOrderManagementPage'),
         componentPath: './pages/ProductionOrderManagementPage',
         icon: 'ClipboardList',
         permissions: ['mes:order:view'],
@@ -505,7 +500,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/production-process',
         name: i18n.t('shared.core-modules.k56'),
-        component: () => import(/* @vite-ignore */ 'topems_mes/pages/ProductionProcessPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/' + 'ProductionProcessPage'),
         componentPath: './pages/ProductionProcessPage',
         icon: 'GitBranch',
         permissions: ['mes:process:view'],
@@ -513,7 +508,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/production-records',
         name: i18n.t('shared.core-modules.k57'),
-        component: () => import(/* @vite-ignore */ 'topems_mes/pages/ProductionRecordPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/' + 'ProductionRecordPage'),
         componentPath: './pages/ProductionRecordPage',
         icon: 'FileText',
         permissions: ['mes:record:view'],
@@ -521,7 +516,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/workstations',
         name: i18n.t('shared.core-modules.k58'),
-        component: () => import(/* @vite-ignore */ 'topems_mes/pages/WorkStationPage'),
+        component: () => import('@/pages/mes/WorkStationPage'),
         componentPath: './pages/WorkStationPage',
         icon: 'Monitor',
         permissions: ['mes:workstation:view'],
@@ -529,7 +524,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/mobile-workstation',
         name: i18n.t('shared.core-modules.k59'),
-        component: () => import(/* @vite-ignore */ 'topems_mes/pages/MobileWorkstationPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/' + 'MobileWorkstationPage'),
         componentPath: './pages/MobileWorkstationPage',
         icon: 'Smartphone',
         permissions: ['mes:mobile:view'],
@@ -537,7 +532,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/equipment',
         name: i18n.t('shared.core-modules.k60'),
-        component: () => import(/* @vite-ignore */ 'topems_mes/pages/EquipmentManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/' + 'EquipmentManagementPage'),
         componentPath: './pages/EquipmentManagementPage',
         icon: 'Settings',
         permissions: ['mes:equipment:view'],
@@ -545,7 +540,8 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/maintenance',
         name: i18n.t('shared.core-modules.k61'),
-        component: () => import(/* @vite-ignore */ 'topems_mes/pages/EquipmentMaintenancePage'),
+        component: () =>
+          import(/* @vite-ignore */ 'topems_mes/pages/' + 'EquipmentMaintenancePage'),
         componentPath: './pages/EquipmentMaintenancePage',
         icon: 'Wrench',
         permissions: ['mes:maintenance:view'],
@@ -553,7 +549,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/lims/samples',
         name: i18n.t('shared.core-modules.k62'),
-        component: () => import(/* @vite-ignore */ 'topems_mes/pages/LimsSamplePage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/' + 'LimsSamplePage'),
         componentPath: './pages/LimsSamplePage',
         icon: 'FlaskConical',
         permissions: ['mes:lims:sample:view'],
@@ -561,7 +557,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/lims/tasks',
         name: i18n.t('shared.core-modules.k63'),
-        component: () => import(/* @vite-ignore */ 'topems_mes/pages/LimsTaskPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/' + 'LimsTaskPage'),
         componentPath: './pages/LimsTaskPage',
         icon: 'ClipboardCheck',
         permissions: ['mes:lims:task:view'],
@@ -569,7 +565,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/qms/check',
         name: i18n.t('shared.core-modules.k64'),
-        component: () => import(/* @vite-ignore */ 'topems_mes/pages/QmsCheckPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/' + 'QmsCheckPage'),
         componentPath: './pages/QmsCheckPage',
         icon: 'BadgeCheck',
         permissions: ['mes:qms:check:view'],
@@ -577,7 +573,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/ehs/check',
         name: i18n.t('shared.core-modules.ehs_4'),
-        component: () => import(/* @vite-ignore */ 'topems_mes/pages/EhsCheckPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/' + 'EhsCheckPage'),
         componentPath: './pages/EhsCheckPage',
         icon: 'ShieldAlert',
         permissions: ['mes:ehs:check:view'],
@@ -599,7 +595,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/dashboard',
         name: i18n.t('shared.core-modules.scm_5'),
-        component: () => import(/* @vite-ignore */ 'topems_scm/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/' + 'DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['scm:dashboard:view'],
@@ -607,7 +603,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/suppliers',
         name: i18n.t('shared.core-modules.k67'),
-        component: () => import(/* @vite-ignore */ 'topems_scm/pages/SupplierManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/' + 'SupplierManagementPage'),
         componentPath: './pages/SupplierManagementPage',
         icon: 'Building',
         permissions: ['scm:supplier:view'],
@@ -615,7 +611,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/purchase-orders',
         name: i18n.t('shared.core-modules.k68'),
-        component: () => import(/* @vite-ignore */ 'topems_scm/pages/PurchaseOrderPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/' + 'PurchaseOrderPage'),
         componentPath: './pages/PurchaseOrderPage',
         icon: 'ShoppingCart',
         permissions: ['scm:po:view'],
@@ -623,7 +619,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/purchase-receipts',
         name: i18n.t('shared.core-modules.k69'),
-        component: () => import(/* @vite-ignore */ 'topems_scm/pages/PurchaseReceiptPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/' + 'PurchaseReceiptPage'),
         componentPath: './pages/PurchaseReceiptPage',
         icon: 'Package',
         permissions: ['scm:receipt:view'],
@@ -631,7 +627,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/inventory',
         name: i18n.t('shared.core-modules.k70'),
-        component: () => import(/* @vite-ignore */ 'topems_scm/pages/InventoryPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/' + 'InventoryPage'),
         componentPath: './pages/InventoryPage',
         icon: 'Boxes',
         permissions: ['scm:inventory:view'],
@@ -639,7 +635,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/warehouses',
         name: i18n.t('shared.core-modules.k71'),
-        component: () => import(/* @vite-ignore */ 'topems_scm/pages/WarehousePage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/' + 'WarehousePage'),
         componentPath: './pages/WarehousePage',
         icon: 'Warehouse',
         permissions: ['scm:warehouse:view'],
@@ -647,7 +643,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/in-out-bound',
         name: i18n.t('shared.core-modules.k72'),
-        component: () => import(/* @vite-ignore */ 'topems_scm/pages/InOutBoundPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/' + 'InOutBoundPage'),
         componentPath: './pages/InOutBoundPage',
         icon: 'ArrowLeftRight',
         permissions: ['scm:iob:view'],
@@ -655,7 +651,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/inventory-check',
         name: i18n.t('shared.core-modules.k73'),
-        component: () => import(/* @vite-ignore */ 'topems_scm/pages/InventoryCheckPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/' + 'InventoryCheckPage'),
         componentPath: './pages/InventoryCheckPage',
         icon: 'ClipboardList',
         permissions: ['scm:check:view'],
@@ -663,7 +659,7 @@ const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/inventory-alert',
         name: i18n.t('shared.core-modules.k74'),
-        component: () => import(/* @vite-ignore */ 'topems_scm/pages/InventoryAlertPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/' + 'InventoryAlertPage'),
         componentPath: './pages/InventoryAlertPage',
         icon: 'AlertTriangle',
         permissions: ['scm:alert:view'],

@@ -153,7 +153,7 @@ pre-commit:
     ports-consistency:
       tags: config ports
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^(config/ports.env|config/services.yaml|Cargo.toml|apps/web/src/config/ports.ts|apps/web/vite.config.ts|apps/web/nginx.conf|scripts/ci/check-config-sources.cjs)$" || true)
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(config/ports.env|config/services.yaml|Cargo.toml|apps/web/src/config/ports.ts|apps/web/vite.config.ts|apps/web/nginx.conf|scripts/ci/check-config-sources.cjs)$' || true)
         [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/ci/check-config-sources.cjs" ]; then
           node scripts/ci/check-config-sources.cjs --check

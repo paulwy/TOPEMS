@@ -944,7 +944,7 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   };
 
   const handleSettingsOpen = () => {
-    navigate('/settings');
+    navigate('/admin/system-settings');
   };
 
   const handleProfileOpen = () => {

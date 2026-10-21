@@ -252,7 +252,7 @@ const CrmContractRedesignPage: React.FC = () => {
               : [];
           total = obj.total || apiContracts.length;
         }
-        if (apiContracts.length > 0) {
+        if (Array.isArray(apiContracts)) {
           setIsMockData(false);
           return { contracts: mapApiContracts(apiContracts), total };
         }

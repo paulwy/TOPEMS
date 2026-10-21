@@ -251,7 +251,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiReviews.length;
         }
-        if (apiReviews.length > 0) {
+        if (Array.isArray(apiReviews)) {
           setIsMockData(false);
           return { reviews: mapApiPerformanceReviews(apiReviews), total };
         }

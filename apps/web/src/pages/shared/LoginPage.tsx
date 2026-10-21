@@ -77,7 +77,6 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
         exact: false,
         refetchType: 'active',
       });
-      apiLogger.info(i18n.t('pages.login_page.k0'), response);
       if (response.success) {
         addNotification({
           title: i18n.t('pages.login_page.k4'),
@@ -97,7 +96,6 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
       }
     },
     onError: (err: unknown) => {
-      apiLogger.error(i18n.t('pages.login_page.k1'), err);
       addNotification({
         title: i18n.t('pages.login_page.k8'),
         message: (err as { message?: string }).message || i18n.t('pages.login_page.k9'),
@@ -392,7 +390,7 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
-                        bgcolor: form.watch('password')?.match(/[a-z]/)
+                        bgcolor: form.watch('password')?.match(/[A-Z]/)
                           ? 'success.dark'
                           : 'grey.200',
                       }}
@@ -460,7 +458,7 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
                       minWidth: 'auto',
                     }}
                   >
-                    {i18n.t('pages.login_page.k4')}
+                    {i18n.t('pages.login_page.forgot_password')}
                   </Button>
                 </Box>
               )}

@@ -301,7 +301,7 @@ const WmsStocktakePage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiRecords.length;
         }
-        if (apiRecords.length > 0) {
+        if (Array.isArray(apiRecords)) {
           setIsMockData(false);
           return { orders: mapApiStocktakes(apiRecords), total };
         }

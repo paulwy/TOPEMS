@@ -299,7 +299,7 @@ const QmsEightDRedesignPage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiReports.length;
         }
-        if (apiReports.length > 0) {
+        if (Array.isArray(apiReports)) {
           setIsMockData(false);
           return { reports: mapApiEightDReports(apiReports), total };
         }

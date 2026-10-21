@@ -336,7 +336,7 @@ const QmsNonconformancePage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiIssues.length;
         }
-        if (apiIssues.length > 0) {
+        if (Array.isArray(apiIssues)) {
           setIsMockData(false);
           return { items: mapApiNonconformances(apiIssues), total };
         }

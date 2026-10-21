@@ -1020,6 +1020,18 @@ export const mesModuleConfig: RouteModuleConfig = {
       action: 'read',
     } as RouteConfigV2<WorkStationPageProps>,
     {
+      path: '/mes/workstations',
+      element: lazyWithRetry(() => import('@/pages/mes/WorkStationPage'), 'WorkStationPage'),
+      module: 'mes',
+      code: 'mes-workstations',
+      title: i18n.t('mes.nav.mes-work-stations'),
+      titleKey: 'mes.nav.mes-work-stations',
+      template: 'list',
+      group: 'master',
+      requiredPermissions: ['mes:work_station:read'],
+      action: 'read',
+    } as RouteConfigV2<WorkStationPageProps>,
+    {
       path: MES_PATHS.teams,
       element: lazyWithRetry(() => import('@/pages/mes/TeamManagementPage'), 'TeamManagementPage'),
       module: 'mes',

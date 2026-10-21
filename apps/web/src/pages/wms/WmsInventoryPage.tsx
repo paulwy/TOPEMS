@@ -260,7 +260,7 @@ const WmsInventoryPage: React.FC = () => {
             ? resData.data
             : resData.data.list || resData.data.items || [];
         }
-        if (apiItems.length > 0) {
+        if (Array.isArray(apiItems)) {
           return { items: mapApiInventory(apiItems), total: apiItems.length };
         }
       } catch (e) {

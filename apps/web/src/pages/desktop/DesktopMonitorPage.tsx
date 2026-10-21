@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ensureNamespacesLoaded } from '@/i18n';
 import {
   Box,
   Card,
@@ -46,6 +47,7 @@ const gap = (n: number) => ({ gap: n * 8 });
 const DesktopMonitorPage = () => {
   const { t } = useTranslation();
   const theme = useTheme();
+  const [, forceRender] = useState(0);
   const [metrics, setMetrics] = useState<ApiMetrics | null>(null);
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
@@ -77,6 +79,11 @@ const DesktopMonitorPage = () => {
   }, []);
 
   useEffect(() => {
+    // /desktop/* 为静态路由（routes/common.ts），不经 DynamicRoutes 预载命名空间，
+    // 需在此显式加载 desktop ns，避免 t() 首次渲染返回原始 key。
+    ensureNamespacesLoaded(['desktop'])
+      .then(() => forceRender((v) => v + 1))
+      .catch(() => {});
     setIsDesktop(tauriAuth.isAvailable());
     fetchAll();
   }, [fetchAll]);

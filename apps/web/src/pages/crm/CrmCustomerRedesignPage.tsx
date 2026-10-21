@@ -286,7 +286,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiCustomers.length;
         }
-        if (apiCustomers.length > 0) {
+        if (Array.isArray(apiCustomers)) {
           setIsMockData(false);
           return { customers: mapApiCustomers(apiCustomers), total };
         }

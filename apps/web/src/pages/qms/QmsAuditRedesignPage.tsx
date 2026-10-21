@@ -285,7 +285,7 @@ const QmsAuditRedesignPage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiPlans.length;
         }
-        if (apiPlans.length > 0) {
+        if (Array.isArray(apiPlans)) {
           setIsMockData(false);
           return { audits: mapApiAuditPlans(apiPlans), total };
         }

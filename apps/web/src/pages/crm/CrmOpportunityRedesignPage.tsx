@@ -265,7 +265,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiOpportunities.length;
         }
-        if (apiOpportunities.length > 0) {
+        if (Array.isArray(apiOpportunities)) {
           setIsMockData(false);
           return { opportunities: mapApiOpportunities(apiOpportunities), total };
         }

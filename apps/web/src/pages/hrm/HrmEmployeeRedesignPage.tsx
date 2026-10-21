@@ -281,7 +281,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiEmployees.length;
         }
-        if (apiEmployees.length > 0) {
+        if (Array.isArray(apiEmployees)) {
           setIsMockData(false);
           return { employees: mapApiEmployees(apiEmployees), total };
         }

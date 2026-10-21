@@ -244,6 +244,21 @@ export const financeModuleConfig: RouteModuleConfig = {
       action: 'read',
     } satisfies RouteConfigV2<FinanceLedgerPageProps>,
     {
+      path: '/finance/accounts',
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceLedgerPage'),
+        'FinanceLedgerPage'
+      ),
+      module: 'finance',
+      code: 'finance-accounts',
+      title: i18n.t('finance.nav.finance-ledger'),
+      titleKey: 'finance.nav.finance-ledger',
+      template: 'list',
+      group: 'business',
+      requiredPermissions: ['finance:ledger:read', 'finance:dashboard:read'],
+      action: 'read',
+    } satisfies RouteConfigV2<FinanceLedgerPageProps>,
+    {
       path: FINANCE_PATHS.vouchers,
       element: lazyWithRetry(
         () => import('@/pages/finance/FinanceVoucherPage'),

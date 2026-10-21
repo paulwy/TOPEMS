@@ -284,7 +284,7 @@ const WmsLocationPage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiLocations.length;
         }
-        if (apiLocations.length > 0) {
+        if (Array.isArray(apiLocations)) {
           setIsMockData(false);
           return { locations: mapApiLocations(apiLocations), total };
         }

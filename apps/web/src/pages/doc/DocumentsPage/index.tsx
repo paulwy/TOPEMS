@@ -1,6 +1,6 @@
 import { designTokens } from '@topems/tokens';
 import { CardListTemplate } from '@/components/templates';
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import {
   Upload,
   Search,
@@ -14,7 +14,7 @@ import {
   Clock,
   Type,
 } from 'lucide-react';
-import i18n from '@/i18n';
+import i18n, { ensureNamespacesLoaded } from '@/i18n';
 import { useNavigate } from 'react-router-dom';
 import { docApi } from '@/api/doc';
 import { useNotificationStore } from '@/store';
@@ -62,6 +62,12 @@ const DocumentsPage: React.FC = () => {
   } = useConfirmDialog();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
+
+  // 静态路由（/doc/*）不经 DynamicRoutes 预载命名空间，需在此显式加载 doc ns，
+  // 避免 i18n.t() 首次渲染返回原始 key（如 doc.nav.doc-documents）。
+  useEffect(() => {
+    ensureNamespacesLoaded(['doc']).catch(() => {});
+  }, []);
 
   const { data: folders = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.DOC_FOLDERS_BASE,

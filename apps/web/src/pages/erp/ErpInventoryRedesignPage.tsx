@@ -669,7 +669,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                   }}
                 >
                   <span>
-                    {t('"+K+".drawer.safety_stock_label', {
+                    {t('erp.erp_inventory_redesign.drawer.safety_stock_label', {
                       value: selectedItem.safety_stock,
                       unit: selectedItem.unit,
                     })}
