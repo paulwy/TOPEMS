@@ -1,10 +1,10 @@
 // 2026-08-07: 部分报表和模型 struct 仅 serde 使用，保留 crate 级 allow
 #![allow(dead_code)]
 pub mod accounting_subjects;
-pub mod currencies;
 pub mod audit_v52;
 pub mod compliance_v51;
 pub mod cqrs_routes;
+pub mod currencies;
 pub mod decision_v60;
 pub mod event_routes;
 pub mod financial_reports;

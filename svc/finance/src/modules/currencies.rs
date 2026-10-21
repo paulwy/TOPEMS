@@ -11,8 +11,8 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
 use sqlx::PgPool;
+use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -218,7 +218,9 @@ pub async fn create_currency(
         Ok(c) => Json(ApiResponse::success(c)),
         Err(e) => {
             tracing::error!("创建币种失败: {}", e);
-            if e.to_string().contains("uk_core_finance_currencies_tenant_code") {
+            if e.to_string()
+                .contains("uk_core_finance_currencies_tenant_code")
+            {
                 Json(ApiResponse::error(&format!("币种代码 {} 已存在", code)))
             } else {
                 Json(ApiResponse::error("创建失败"))
