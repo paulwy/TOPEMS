@@ -236,8 +236,10 @@ pub async fn create_bank_account(
 
     let row = match sqlx::query(only_own_schema_query!("erp",
         "INSERT INTO erp.bank_accounts \
-         (bank_name, account_number, account_name, branch_name, currency, balance, is_default, status) \
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) \
+         (bank_name, account_number, account_name, branch_name, currency, balance, is_default, status, tenant_id) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, \
+                 COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, \
+                          '00000000-0000-0000-0000-000000000000'::UUID)) \
          RETURNING id, bank_name, account_number, account_name, branch_name, currency, balance, is_default, status, created_at, updated_at"))
         .bind(&req.bank_name)
         .bind(&req.account_number)

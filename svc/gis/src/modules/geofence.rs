@@ -1,13 +1,28 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use topems_shared_core::{response::ApiResponse, TopemsError};
+
+const NIL_UUID: Uuid = Uuid::nil();
+
+/// 非超管可见行：本租户或公共（nil）行；超管不限制。
+fn tenant_scope(claims: &Claims) -> Option<String> {
+    if claims.is_superuser {
+        return None;
+    }
+    Some(format!(
+        "(tenant_id = '{}' OR tenant_id = '{NIL_UUID}')",
+        get_tenant_id_from_claims(claims)
+    ))
+}
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 pub struct Geofence {
@@ -75,6 +90,7 @@ pub struct GeofenceQuery {
 
 pub async fn list_geofences(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<GeofenceQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut sql = String::from("SELECT * FROM gis.geofences WHERE 1=1");
@@ -91,9 +107,23 @@ pub async fn list_geofences(
         sql.push_str(" AND shape_type = $3");
     }
 
+    if let Some(scope) = tenant_scope(&claims) {
+        sql.push_str(&format!(" AND {scope}"));
+    }
+
     sql.push_str(" ORDER BY created_at DESC");
 
-    let result = sqlx::query_as::<_, Geofence>(&sql).fetch_all(&pool).await;
+    let mut query = sqlx::query_as::<_, Geofence>(&sql);
+    if let Some(chat_id) = params.chat_id {
+        query = query.bind(chat_id);
+    }
+    if let Some(status) = params.status {
+        query = query.bind(status);
+    }
+    if let Some(shape_type) = params.shape_type {
+        query = query.bind(shape_type);
+    }
+    let result = query.fetch_all(&pool).await;
 
     match result {
         Ok(geofences) => Json(ApiResponse::success(
@@ -112,15 +142,17 @@ pub async fn list_geofences(
 
 pub async fn get_geofence(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Geofence>> {
-    match sqlx::query_as::<_, Geofence>(only_own_schema_query!(
-        "gis",
-        "SELECT * FROM gis.geofences WHERE id = $1"
-    ))
-    .bind(id)
-    .fetch_one(&pool)
-    .await
+    let scope = tenant_scope(&claims)
+        .map(|s| format!(" AND {s}"))
+        .unwrap_or_default();
+    let base = only_own_schema_query!("gis", "SELECT * FROM gis.geofences WHERE id = $1");
+    match sqlx::query_as::<_, Geofence>(&format!("{base}{scope}"))
+        .bind(id)
+        .fetch_one(&pool)
+        .await
     {
         Ok(geofence) => Json(ApiResponse::success(geofence, "获取地理围栏成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理围栏未找到")),
@@ -133,6 +165,7 @@ pub async fn get_geofence(
 
 pub async fn create_geofence(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateGeofenceRequest>,
 ) -> Json<ApiResponse<Geofence>> {
     let event_types = serde_json::json!(payload
@@ -142,6 +175,7 @@ pub async fn create_geofence(
         .notify_channels
         .unwrap_or_else(|| vec!["notification".to_string()]));
     let notify_users = serde_json::json!(payload.notify_users.unwrap_or_default());
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     match sqlx::query_as::<_, Geofence>(only_own_schema_query!(
         "gis",
@@ -149,9 +183,9 @@ pub async fn create_geofence(
         INSERT INTO gis.geofences (
             name, description, chat_id, creator_id, shape_type,
             coordinates, radius, event_types, status, trigger_cooldown,
-            notify_channels, notify_users, gis_fence_id, start_at, end_at
+            notify_channels, notify_users, gis_fence_id, start_at, end_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING *
         "#
     ))
@@ -170,6 +204,7 @@ pub async fn create_geofence(
     .bind(payload.gis_fence_id)
     .bind(payload.start_at)
     .bind(payload.end_at)
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await
     {
@@ -183,16 +218,18 @@ pub async fn create_geofence(
 
 pub async fn update_geofence(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateGeofenceRequest>,
 ) -> Json<ApiResponse<Geofence>> {
-    let current = match sqlx::query_as::<_, Geofence>(only_own_schema_query!(
-        "gis",
-        "SELECT * FROM gis.geofences WHERE id = $1"
-    ))
-    .bind(id)
-    .fetch_one(&pool)
-    .await
+    let scope = tenant_scope(&claims)
+        .map(|s| format!(" AND {s}"))
+        .unwrap_or_default();
+    let current_base = only_own_schema_query!("gis", "SELECT * FROM gis.geofences WHERE id = $1");
+    let current = match sqlx::query_as::<_, Geofence>(&format!("{current_base}{scope}"))
+        .bind(id)
+        .fetch_one(&pool)
+        .await
     {
         Ok(g) => g,
         Err(sqlx::Error::RowNotFound) => {
@@ -228,7 +265,7 @@ pub async fn update_geofence(
     let start_at = payload.start_at.or(current.start_at);
     let end_at = payload.end_at.or(current.end_at);
 
-    match sqlx::query_as::<_, Geofence>(only_own_schema_query!(
+    let update_base = only_own_schema_query!(
         "gis",
         r#"
         UPDATE gis.geofences
@@ -239,22 +276,23 @@ pub async fn update_geofence(
         WHERE id = $13
         RETURNING *
         "#
-    ))
-    .bind(&name)
-    .bind(&description)
-    .bind(&coordinates)
-    .bind(radius)
-    .bind(&event_types)
-    .bind(&status)
-    .bind(trigger_cooldown)
-    .bind(&notify_channels)
-    .bind(&notify_users)
-    .bind(gis_fence_id)
-    .bind(start_at)
-    .bind(end_at)
-    .bind(id)
-    .fetch_one(&pool)
-    .await
+    );
+    match sqlx::query_as::<_, Geofence>(&format!("{update_base}{scope}"))
+        .bind(&name)
+        .bind(&description)
+        .bind(&coordinates)
+        .bind(radius)
+        .bind(&event_types)
+        .bind(&status)
+        .bind(trigger_cooldown)
+        .bind(&notify_channels)
+        .bind(&notify_users)
+        .bind(gis_fence_id)
+        .bind(start_at)
+        .bind(end_at)
+        .bind(id)
+        .fetch_one(&pool)
+        .await
     {
         Ok(geofence) => Json(ApiResponse::success(geofence, "更新地理围栏成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
@@ -266,15 +304,17 @@ pub async fn update_geofence(
 
 pub async fn delete_geofence(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    match sqlx::query(only_own_schema_query!(
-        "gis",
-        "DELETE FROM gis.geofences WHERE id = $1"
-    ))
-    .bind(id)
-    .execute(&pool)
-    .await
+    let scope = tenant_scope(&claims)
+        .map(|s| format!(" AND {s}"))
+        .unwrap_or_default();
+    let delete_base = only_own_schema_query!("gis", "DELETE FROM gis.geofences WHERE id = $1");
+    match sqlx::query(&format!("{delete_base}{scope}"))
+        .bind(id)
+        .execute(&pool)
+        .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {

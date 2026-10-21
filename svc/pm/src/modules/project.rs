@@ -9,12 +9,16 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use sqlx::Row;
 use std::sync::Arc;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::{
     commit_retry, EventPublisher, EventType, PmProjectCreatedPayload,
 };
+
+use crate::modules::effective_tenant_id;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -242,11 +246,14 @@ async fn list_projects(
 async fn create_project(
     State(state): State<AppState>,
     Extension(audit): Extension<PmAuditService>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let tenant_id = effective_tenant_id(&ctx, &claims);
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(
         serde_json::json!({"name": req.name, "code": req.code, "project_type": req.project_type}),
@@ -288,7 +295,7 @@ async fn create_project(
     .bind(&req.tags)
     .bind(req.parent_id)
     .bind(req.workspace_id)
-    .bind(Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap())
+    .bind(tenant_id)
     .bind(Some("system"))
     .bind(now)
     .bind(now)

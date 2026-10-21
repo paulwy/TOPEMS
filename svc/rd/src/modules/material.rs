@@ -306,8 +306,10 @@ pub async fn create_material_test(
         r#"
         INSERT INTO rs.material_tests (
             id, project_id, experiment_id, material_name, supplier, batch_number,
-            test_results, conclusion, tested_by, tested_at, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            test_results, conclusion, tested_by, tested_at, created_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
+                  COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID,
+                           '00000000-0000-0000-0000-000000000000'::UUID))
         RETURNING id, project_id, experiment_id, material_name, supplier, batch_number,
                   test_results, conclusion, tested_by, tested_at, created_at
         "#,
