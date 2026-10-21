@@ -17,13 +17,13 @@
 - [x] **P1-1 · `setup/complete` 闭环（F1，本地待验）**：落 completion 初始化标记、汇总公司/部门/岗位数并核验 admin 绑定 IAM 账号，未绑定告警；角色/权限归 IAM 建号端点，hrm 不跨服务直写。
 - [x] **P1-2 · 部门/岗位后端 handler 级权限校验**（`4d87064ea`）：10 个 handler 补 DepartmentRead/Write、PositionRead/Write `check_permission`，对齐 company/employee。
 - [x] **P1-3 · 自助注册开放无开关**（S1 `cc16d41d8`）：`REGISTER_ENABLED` 默认关（403），开启时新账号 pending 待管理员激活分配角色/租户。
-- [ ] **P1-4 · 前端权限守卫几乎未落地**：35 个 config.ts 0 声明权限、菜单不过滤；补模块权限声明/路由 requiredPermissions/菜单按钮守卫。
+- [x] **P1-4 · 前端权限守卫** ✅ 闭环（`064287e6f`）：实测 35 个 config.ts **早已全部**有 requiredPermissions 声明（原"0 声明"为过时口径），路由层 ProtectedRoute/ModuleGate 双层守卫已存在；唯一真实缺口 GlobalLayoutV3 侧边栏菜单不过滤——新建 `config/menuPermissions.ts`（34 项 path→模块代表权限码）后渲染层过滤（无映射恒显示、映射无权限整组/项隐藏）；typecheck/eslint 绿。
 - [x] **P1-5 · `/users/me`、自身改密被管理权限保护**，普通用户可能 403；自服务端点改登录即可访问（`62cf693a8`，拆入 `me` 路由组仅校验登录）。
 - [ ] **P1-6 · MES 缺车间/产线/工作中心/班次/工作日历**，工位 `workshop_id` 悬空；补实体 CRUD + 前端页并回填外键。
 - [ ] **P1-7 · QMS 缺结构化检验项/检验方案/抽样方案，LIMS 缺检验项目(analyte)**；补表与 CRUD + 方案配置页。
 - [x] **P1-8 · 多表租户隔离**（`52cc3a467`，迁移 `20261020000026`）：gis.geofences/rs.material_tests 补 tenant_id+RLS，关闭 erp.bank_accounts 开放策略，gis 按 claims 过滤落库、rs/erp 按 GUC 落租户、pm 建项目按会话租户；bi/pm 本已有 RLS，wms/mes 无写死 UUID。
 - [ ] **P1-9 · 后端有前端缺的管理页**：MES 产能日历、LIMS 方法分类、CRM 标签、财务会计期间/辅助核算创建、ERP 字典、EHS 危险源列表、GIS 设备注册。
-- [ ] **P1-10 · 财务两套科目表并存、会计期间无管理页、税率硬编码、无币种主表**；统一科目体系，补期间/税率/币种主数据页。
+- [ ] **P1-10 · 财务主数据** 🔶 部分闭环（`78042fe2a`）：币种主表（`public.core_finance_currencies`，迁移 `20261021000001` 幂等 + 16 行种子）+ 后端 CRUD + 前端币种/期间管理页已落地（BFF 实跑 list(17)/create/search/delete 全 200）；税率面已具备（`finance_v56_tax_*` + FinanceTaxPage）。**科目体系归并未做**（代码引用 `finance.accounting_subjects` vs 实表 `public.core_finance_accounts`，当前库无 finance schema，属高风险架构变更，待拍板；阻塞批 6）。
 
 > P2 增强/一致性/技术债（空态 CTA、向导租户归属、批量事务、岗位 FK、路由清理、菜单种子、新租户补播、技术债、公共主数据域）见活文档 §3 P2 表，按需认领。
 > 已闭环：P2-6 DEV 旁路（S3 `e1980e95d`）、P2-9 孤儿 admin123 脚本（S4 `f23f543db`）、P2-3 向导批量步整批校验+失败回滚（F2）、P2-4 岗位重名校验/部门归属（F2）+ DB 硬 FK（`793a3f4b2`，迁移 `20261020000027`，先解绑孤儿 ON DELETE SET NULL）；P2-1 主页初始化 checklist CTA（`958e0cc9a`）；P2-2 向导 org/进度归属按会话租户、首启超管回退默认 org（`2def461ff`）。
@@ -37,18 +37,18 @@
 ### 下一批（三线并行，立即执行）
 
 **线 A · 契约缺口收口（真实缺陷，最高优先级）**
-- [ ] A1 · master-data mdm-v66 预埋桩 2 路径缺失 + 3 方法级：补 `GET /quality-v51/checks/{entity_type}/{entity_id}`、`GET /mdm-v54/version/{entity_type}/{entity_id}` 及 3 处方法（明细见 master-data-contract-review §二/§三，前端调、后端无 → 真实 404/405）→ web 契约冒烟复验全绿
-- [ ] A2 · SCM 缺 UI 接线：C 8 条业务能力（去别名重复后 6 条）补前端页/wrapper；D 2 条审批/驳回接线；E 3 条死 API 评估（下线或标注）→ scm 契约增量复核归零
+- [x] A1 · master-data 契约缺口收口 ✅ 完成（`0ee8ab851`）：实测缺口 5 处全补（以 `master-data-contract-review-2026-10-20.md` §二/§三 原文为准）——路径级 2：`GET /mdm-v66/dashboard/recent`（补无 id 版、保留带 id 版）、`POST /mdm-v66/lineage/refresh`（补无 id POST）；方法级 3：`GET /mdm-v66/categories`、`GET /mdm-v66/maps`、`GET /mdm-v66/tags`（后端原仅 POST 桩，追加 get list）。cargo check 过，BFF 实跑 5 条全 200。
+- [x] A2 · SCM 契约 §C/D/E 复核 ✅ 完成（`0ee8ab851` 同期，零代码改动）：C1 realTimeStatus+DashboardPage 已消费；C3-C6 incomingInspection list/create/get/update 已接线；C8 inventoryTurnover days 经 CrudPage 展示；D1 priceComparison approve / D2 purchaseOrder reject 均在；E1-E2 quotes / E3 submitQuote wrapper 均在 → 增量复核归零。
 
 **线 B · P1-4 前端权限守卫（体验层）**
-- [ ] B1 · 35 个模块 config.ts 补 permission 声明（对齐 P0-4 已补 23 码权限字典）
-- [ ] B2 · 路由 requiredPermissions + 菜单按权限过滤 + PermissionGate 组件接线
-- [ ] 验收：typecheck/eslint 绿；无权限角色菜单不显示入口；冒烟不回归
+- [x] B1 · 模块权限声明 ✅ 核销（实测 35 个 config.ts 早已全部有 requiredPermissions，无欠账）
+- [x] B2 · 菜单按权限过滤 ✅ 完成（`064287e6f`）：新建 `config/menuPermissions.ts`（34 项 path→模块代表权限码），GlobalLayoutV3 items useMemo 渲染层过滤；路由层 ProtectedRoute/ModuleGate 双层守卫既有，无需新增。
+- [x] 验收 ✅：typecheck/eslint 绿；无权限映射恒显示、映射无权限整组/项隐藏；冒烟无回归
 
 **线 C · P1-10 财务主数据（含 P1-9 财务子集）**
-- [ ] C1 · 统一科目体系：`core_finance_accounts`（挂 admin）vs `accounting_subjects`（挂 erp）归并/明确归属
-- [ ] C2 · 会计期间管理页 + 税率去硬编码 + 币种主表 + 前端页
-- [ ] 验收：CRUD 真库可用、前端页接线、tests 绿
+- [ ] C1 · 统一科目体系：`core_finance_accounts`（挂 admin）vs `accounting_subjects`（挂 erp）归并/明确归属（**未做**：代码引用 `finance.accounting_subjects`、实表 `public.core_finance_accounts`、当前库无 finance schema，归并属高风险架构变更，待拍板后另批；阻塞批 6）
+- [x] C2 · 币种主表 + 期间/币种前端页 ✅ 完成（`78042fe2a`）：迁移 `20261021000001`（幂等 + 16 行种子）+ `currencies.rs` 全 CRUD（list 分页/search/is_active + create + update COALESCE + delete）+ FinanceCurrencyPage/FinancePeriodPage + 路由/i18n；BFF 实跑 list(17)/create(THB)/search/delete 全 200。税率面既有（`finance_v56_tax_*` + FinanceTaxPage），无需新增。
+- [x] 验收 ✅：CRUD 真库可用、前端页接线、BFF 实跑 200、tests 绿
 
 ### 后续批（按依赖顺序）
 
