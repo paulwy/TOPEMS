@@ -236,7 +236,7 @@ async fn list_inspection_items(
     if let Some(t) = filter {
         params.push(t.to_string());
     }
-    let mut idx = params.len() as usize + 1;
+    let mut idx = params.len() + 1;
     if let Some(status) = &query.status {
         if !status.is_empty() {
             where_sql.push_str(&format!(" AND status = ${idx}"));
@@ -503,7 +503,7 @@ async fn list_sampling_plans(
     if let Some(t) = filter {
         params.push(t.to_string());
     }
-    let mut idx = params.len() as usize + 1;
+    let mut idx = params.len() + 1;
     if let Some(status) = &query.status {
         if !status.is_empty() {
             where_sql.push_str(&format!(" AND status = ${idx}"));
@@ -753,7 +753,7 @@ async fn list_inspection_plans(
     if let Some(t) = filter {
         params.push(t.to_string());
     }
-    let mut idx = params.len() as usize + 1;
+    let mut idx = params.len() + 1;
     if let Some(status) = &query.status {
         if !status.is_empty() {
             where_sql.push_str(&format!(" AND p.status = ${idx}"));
