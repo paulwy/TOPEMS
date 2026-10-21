@@ -16,8 +16,7 @@ pub fn create_routes(pool: PgPool) -> Router {
         .route(
             "/service-integrations/{id}",
             get(get_integration)
-                .put(update_integration)
-                .delete(delete_integration),
+                .put(update_integration),
         )
         .with_state(pool)
 }
@@ -67,12 +66,6 @@ async fn update_integration(
     Json(ApiResponse::success((), "更新服务集成成功"))
 }
 
-async fn delete_integration(
-    State(_pool): State<PgPool>,
-    Path(_id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success((), "删除服务集成成功"))
-}
 
 #[cfg(test)]
 mod tests {

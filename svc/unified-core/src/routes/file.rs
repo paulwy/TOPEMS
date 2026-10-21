@@ -43,24 +43,12 @@ pub fn file_routes(state: &AppState) -> Router<AppState> {
         .route("/files", get(modules::file::manage::list_files))
         .route("/files/{id}", get(modules::file::manage::get_file))
         .route(
-            "/files/{id}/shares",
-            get(modules::file::manage::get_file_shares),
-        )
-        .route(
             "/files/{id}/permissions",
             get(modules::file::manage::get_file_permissions),
         )
         .route(
             "/files/shared",
             get(modules::file::manage::get_shared_files),
-        )
-        .route(
-            "/files/received",
-            get(modules::file::manage::get_received_files),
-        )
-        .route(
-            "/files/starred",
-            get(modules::file::manage::list_starred_files),
         )
         .route("/files/search", get(modules::file::manage::search_files))
         // 后端既有统计路由为 /stats；前端 fileApi.getStats 调用 /files/stats。
@@ -81,18 +69,11 @@ pub fn file_routes(state: &AppState) -> Router<AppState> {
         .route("/files/{id}", put(modules::file::manage::update_file))
         .route("/files/{id}/move", post(modules::file::manage::move_file))
         .route("/files/{id}/copy", post(modules::file::manage::copy_file))
-        .route("/files/{id}/share", post(modules::file::manage::share_file))
-        .route("/files/{id}/star", post(modules::file::manage::star_file))
-        .route(
-            "/files/{id}/unstar",
-            post(modules::file::manage::unstar_file),
-        )
         .route(
             "/files/{id}/permissions",
             post(modules::file::manage::set_file_permissions),
         )
         .route("/files/export", post(modules::file::manage::export_files))
-        .route("/shares/{id}", delete(modules::file::manage::delete_share))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("file:write"),

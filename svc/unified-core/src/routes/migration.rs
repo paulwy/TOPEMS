@@ -12,10 +12,6 @@ pub fn migration_routes(state: &AppState) -> Router<AppState> {
             get(modules::migration::handlers::list_services),
         )
         .route(
-            "/api/migrations/services/{name}/status",
-            get(modules::migration::handlers::get_status),
-        )
-        .route(
             "/api/migrations/services/{name}/apply",
             post(modules::migration::handlers::apply_migration),
         )

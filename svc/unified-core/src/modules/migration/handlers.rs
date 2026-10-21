@@ -1,6 +1,5 @@
 use axum::{
     extract::{Json, Path, State},
-    http::HeaderMap,
 };
 use std::time::Instant;
 
@@ -37,48 +36,6 @@ pub async fn list_services(
                 "Failed to list services: {}",
                 e
             )))
-        }
-    };
-
-    result
-}
-
-pub async fn get_status(
-    State(state): State<AppState>,
-    Path(service_name): Path<String>,
-    headers: HeaderMap,
-) -> Json<CoreResponse<MigrationStatus>> {
-    let start_time = Instant::now();
-    let x_debug = headers.get("X-Debug").map(|h| h.to_str().unwrap_or(""));
-    tracing::info!(
-        "[Migration] get_status START - service: {}, X-Debug: {:?}",
-        service_name,
-        x_debug
-    );
-
-    let service_layer = MigrationServiceLayer::new(state.pool.clone());
-
-    let result = match service_layer.get_status(&service_name).await {
-        Ok(status) => {
-            let elapsed = start_time.elapsed();
-            tracing::info!(
-                "[Migration] get_status END - service: {}, pending: {}, applied: {}, elapsed: {:?}",
-                service_name,
-                status.pending.len(),
-                status.applied.len(),
-                elapsed
-            );
-            Json(CoreResponse::success(status, "Status retrieved"))
-        }
-        Err(e) => {
-            let elapsed = start_time.elapsed();
-            tracing::error!(
-                "[Migration] get_status ERROR - service: {}, elapsed: {:?}, error: {}",
-                service_name,
-                elapsed,
-                e
-            );
-            Json(CoreResponse::error(&format!("Failed to get status: {}", e)))
         }
     };
 

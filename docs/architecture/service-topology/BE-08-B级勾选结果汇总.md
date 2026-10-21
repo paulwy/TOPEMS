@@ -27,7 +27,7 @@
 |---|---|---:|---|---|---|
 | batch_03 | GET | `/api/migrations/services/{name}/status` | unified-core | `modules::migration::handlers::get_status` | openapi_doc=no；db_write=readonly；internal_refs 空；last_modified=2026-07-02（>2 个月未动）；仅查迁移记录表、无业务链 |
 
-> **下线执行纪律**（与 BE-08-A 级下线实施同标准）：路由注册行 + handler 函数体 + openapi.rs 同步；执行前逐条复核 handler 复用/前端调用面/api-boundary-gate 拦截；每批 cargo check + grep 零残留 + 快照对比。**本轮仅勾选，不执行下线**——留待业务复核后按批实施。
+> **下线执行纪律**（与 BE-08-A 级下线实施同标准）：路由注册行 + handler 函数体 + openapi.rs 同步；执行前逐条复核 handler 复用/前端调用面/api-boundary-gate 拦截；每批 cargo check + grep 零残留 + 快照对比。**本轮仅勾选，不执行下线**——留待业务复核后按批实施。**已执行（2026-10-21）**：实际下线 9 条（file.rs 7 占位 + migrations status 零引用 + pm delete_integration 空占位）；**pm delete_type 降级保留**（实测真实软删 handler，非空 unit——宁少删降级，与 A 级先例同原则）。
 
 ## 三、待定 150 条（2026-10-21 已逐条定性 ✅）
 

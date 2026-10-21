@@ -1020,62 +1020,10 @@ pub async fn set_file_permission(
 }
 
 /// 分享文件
-pub async fn share_file(
-    State(_state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Path(id): Path<String>,
-    Json(_payload): Json<serde_json::Value>,
-) -> Json<serde_json::Value> {
-    tracing::info!(
-        "File manage share_file called with id: {} for user: {}",
-        id,
-        claims.username
-    );
-    Json(serde_json::json!({
-        "success": false,
-        "message": "分享文件功能尚未实现 (Not Implemented)",
-        "data": null,
-        "code": 501
-    }))
-}
 
 /// 获取文件的分享列表
-pub async fn get_file_shares(
-    State(_state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Path(id): Path<String>,
-) -> Json<serde_json::Value> {
-    tracing::info!(
-        "File manage get_file_shares called with id: {} for user: {}",
-        id,
-        claims.username
-    );
-    Json(serde_json::json!({
-        "success": false,
-        "message": "获取文件分享列表功能尚未实现 (Not Implemented)",
-        "data": null,
-        "code": 501
-    }))
-}
 
 /// 删除分享
-pub async fn delete_share(
-    State(_state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Path(id): Path<String>,
-) -> Json<serde_json::Value> {
-    tracing::info!(
-        "File manage delete_share called with id: {} for user: {}",
-        id,
-        claims.username
-    );
-    Json(serde_json::json!({
-        "success": false,
-        "message": "删除分享功能尚未实现 (Not Implemented)",
-        "data": null,
-        "code": 501
-    }))
-}
 
 /// 设置文件权限
 pub async fn set_file_permissions(
@@ -1134,21 +1082,6 @@ pub async fn get_shared_files(
 }
 
 /// 获取分享给我的文件列表
-pub async fn get_received_files(
-    State(_state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-) -> Json<serde_json::Value> {
-    tracing::info!(
-        "File manage get_received_files called for user: {}",
-        claims.username
-    );
-    Json(serde_json::json!({
-        "success": false,
-        "message": "获取分享给我的文件列表功能尚未实现 (Not Implemented)",
-        "data": null,
-        "code": 501
-    }))
-}
 
 /// 获取文件统计信息
 pub async fn get_file_stats(
@@ -1168,59 +1101,10 @@ pub async fn get_file_stats(
 }
 
 /// 收藏文件
-pub async fn star_file(
-    State(_state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Path(id): Path<String>,
-) -> Json<serde_json::Value> {
-    tracing::info!(
-        "File manage star_file called with id: {} for user: {}",
-        id,
-        claims.username
-    );
-    Json(serde_json::json!({
-        "success": false,
-        "message": "收藏文件功能尚未实现 (Not Implemented)",
-        "data": null,
-        "code": 501
-    }))
-}
 
 /// 取消收藏
-pub async fn unstar_file(
-    State(_state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Path(id): Path<String>,
-) -> Json<serde_json::Value> {
-    tracing::info!(
-        "File manage unstar_file called with id: {} for user: {}",
-        id,
-        claims.username
-    );
-    Json(serde_json::json!({
-        "success": false,
-        "message": "取消收藏功能尚未实现 (Not Implemented)",
-        "data": null,
-        "code": 501
-    }))
-}
 
 /// 列出收藏的文件
-pub async fn list_starred_files(
-    State(_state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-) -> Json<serde_json::Value> {
-    tracing::info!(
-        "File manage list_starred_files called for user: {}",
-        claims.username
-    );
-    Json(serde_json::json!({
-        "success": false,
-        "message": "列出收藏文件功能尚未实现 (Not Implemented)",
-        "data": null,
-        "code": 501
-    }))
-}
 
 /// 导出文件（批量）
 // gate: admin-only

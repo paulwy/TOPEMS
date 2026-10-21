@@ -196,38 +196,6 @@ impl MigrationServiceLayer {
         Ok(services)
     }
 
-    pub async fn get_status(&self, service_name: &str) -> Result<MigrationStatus, sqlx::Error> {
-        info!("Getting migration status for service: {}", service_name);
-        info!("Service name length: {}", service_name.len());
-        info!("Service name bytes: {:?}", service_name.as_bytes());
-
-        let count: (i64,) =
-            sqlx::query_as(r#"SELECT COUNT(*) FROM core_migration_history WHERE plugin_name = $1"#)
-                .bind(service_name)
-                .fetch_one(&self.pool)
-                .await?;
-
-        info!("Total records for {}: {}", service_name, count.0);
-
-        let applied: Vec<AppliedMigration> = sqlx::query_as(
-            r#"
-            SELECT version, name, applied_at, duration_ms
-            FROM core_migration_history
-            WHERE plugin_name = $1 AND success = true
-            ORDER BY applied_at DESC
-            "#,
-        )
-        .bind(service_name)
-        .fetch_all(&self.pool)
-        .await?;
-
-        info!("Applied migrations for {}: {}", service_name, applied.len());
-
-        let pending = vec![];
-
-        Ok(MigrationStatus { pending, applied })
-    }
-
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn apply_migration(
         &self,
