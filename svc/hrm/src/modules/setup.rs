@@ -133,13 +133,23 @@ const DEFAULT_ORG_ID: Uuid = Uuid::from_u128(0x00000000000000000000000000000001)
 )]
 pub async fn get_init_progress(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<InitProgressResponse>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let org_id = DEFAULT_ORG_ID;
+    // P2-2：进度行按会话租户归属；首启超管无租户时回退 DEFAULT_ORG_ID（与种子一致）
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
 
     let steps = sqlx::query_as::<_, InitializationStatus>(
         only_own_schema_query!("hrm", r#"
@@ -233,7 +243,6 @@ pub async fn setup_company_info(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -243,6 +252,8 @@ pub async fn setup_company_info(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
     };
+    // P2-2：进度行/公司归属按会话租户；首启超管回退 DEFAULT_ORG_ID（与种子一致）
+    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
 
     // 验证必填字段
     if req.name.trim().is_empty() {
@@ -391,7 +402,6 @@ pub async fn setup_departments(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -401,6 +411,8 @@ pub async fn setup_departments(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
     };
+    // P2-2：进度行/部门归属按会话租户；首启超管回退 DEFAULT_ORG_ID（与种子一致）
+    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
 
     if req.departments.is_empty() {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
@@ -591,7 +603,6 @@ pub async fn setup_positions(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -601,6 +612,8 @@ pub async fn setup_positions(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
     };
+    // P2-2：进度行/岗位归属按会话租户；首启超管回退 DEFAULT_ORG_ID（与种子一致）
+    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
 
     if req.positions.is_empty() {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
@@ -837,7 +850,6 @@ pub async fn setup_admin_user(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -847,6 +859,8 @@ pub async fn setup_admin_user(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
     };
+    // P2-2：进度行/管理员归属按会话租户；首启超管回退 DEFAULT_ORG_ID（与种子一致）
+    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
 
     // 验证必填字段
     if req.name.trim().is_empty() {
@@ -1084,7 +1098,6 @@ pub async fn complete_initialization(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -1094,6 +1107,8 @@ pub async fn complete_initialization(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
     };
+    // P2-2：complete 进度归属按会话租户；首启超管回退 DEFAULT_ORG_ID（与种子一致）
+    let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
 
     if !req.confirm {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
