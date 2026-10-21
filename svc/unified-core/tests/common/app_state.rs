@@ -18,6 +18,7 @@ use topems_shared_auth::security::{
 use topems_shared_core::feature_flag::FeatureFlagService;
 use topems_shared_core::health::{SimpleHealthConfig, SystemMetrics};
 use topems_shared_core::{CompressionConfig, CompressionMiddleware};
+use topems_unified_core::middleware::anti_replay::AntiReplayState;
 use topems_unified_core::middleware::input_validation::InputValidationConfig;
 use topems_unified_core::middleware::rate_limit::{RateLimitConfig, RateLimitMiddleware};
 use topems_unified_core::middleware::versioning::{VersionConfig, VersionMiddleware};
@@ -52,6 +53,7 @@ pub fn test_app_state(pool: sqlx::PgPool) -> AppState {
         ws_state: Arc::new(WsState::new(Arc::new(auth_state))),
         http_client: ReqwestClient::new(),
         rate_limit_middleware: Arc::new(RateLimitMiddleware::new(RateLimitConfig::default())),
+        anti_replay_state: Arc::new(AntiReplayState::new()),
         versioning_middleware: Arc::new(VersionMiddleware::new(VersionConfig::default())),
         security_headers_layer: Arc::new(SecurityHeadersLayer::new(
             SecurityHeadersConfig::default(),

@@ -129,9 +129,11 @@ pub async fn anti_replay_middleware(
     };
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
+        .ok()
+        .and_then(|d| i64::try_from(d.as_secs()).ok())
         .unwrap_or(0);
-    if (now - ts).abs() > config.tolerance_secs as i64 {
+    let tolerance = i64::try_from(config.tolerance_secs).unwrap_or(i64::MAX);
+    if (now - ts).abs() > tolerance {
         return reject("Request timestamp out of tolerance window");
     }
 
