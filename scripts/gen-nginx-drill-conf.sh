@@ -50,6 +50,10 @@ s = s.replace("/etc/nginx/certs/", "%s/certs/" % out)       # 5
 s = re.sub(r"(server localhost:)\d+", r"\g<1>8099", s)      # 6
 s = re.sub(r"^[ \t]*brotli[^;]*;[ \t]*\n", "", s, flags=re.M)  # 7
 s = s.replace("root /usr/share/nginx/html;", "root %s/html;" % out)
+# 8: nginx >=1.25.1 建议独立 http2 指令；本机 1.31 对 listen ... http2 报 deprecated warn
+s = re.sub(r"^([ \t]*)listen\s+443 ssl http2;[ \t]*\n", r"\1listen 443 ssl;\n\1http2 on;\n", s, flags=re.M)
+# 9: 本机自签证书无 OCSP responder，ssl_stapling on/verify 报 warn → 演练关掉（生产正式证书保留 on）
+s = re.sub(r"^([ \t]*)(ssl_stapling(?:_verify)?)\s+on;[ \t]*\n", r"\1\2 off;\n", s, flags=re.M)
 p.write_text(s)
 print(f"drill conf: {out}/topems-drill.conf (upstream server_service -> localhost:8099)")
 PYEOF
