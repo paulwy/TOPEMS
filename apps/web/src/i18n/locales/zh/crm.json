@@ -637,6 +637,30 @@
       "stage_closed_lost": "输单",
       "msg_load_fail": "无法加载销售漏斗数据",
       "title_load_fail": "加载失败"
+    },
+    "tags": {
+      "title": "客户标签",
+      "titleDesc": "维护客户标签与营销分组",
+      "searchPlaceholder": "搜索标签",
+      "create": "新建标签",
+      "edit": "编辑标签",
+      "actions": "操作",
+      "cancel": "取消",
+      "save": "保存",
+      "saveSuccess": "标签保存成功",
+      "saveFailed": "标签保存失败",
+      "deleteSuccess": "标签删除成功",
+      "deleteFailed": "标签删除失败",
+      "code": "标签编码",
+      "name": "标签名称",
+      "color": "颜色",
+      "category": "分类",
+      "status": "状态",
+      "description": "描述"
+    },
+    "nav": {
+      "crm-tags": "客户标签",
+      "crm-tags_desc": "客户标签管理"
     }
   },
   "crm.contact_detail_page.k0": "联系人详情",

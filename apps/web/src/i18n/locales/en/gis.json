@@ -947,6 +947,29 @@
     },
     "mapModule": {
       "k0": "3D View"
+    },
+    "devices": {
+      "title": "Device Registration",
+      "titleDesc": "Register GIS monitoring devices",
+      "searchPlaceholder": "Search device",
+      "create": "Register Device",
+      "edit": "Edit Device",
+      "actions": "Actions",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saveSuccess": "Device saved",
+      "saveFailed": "Failed to save device",
+      "deleteSuccess": "Device deleted",
+      "deleteFailed": "Failed to delete device",
+      "code": "Code",
+      "name": "Name",
+      "type": "Type",
+      "status": "Status",
+      "description": "Description"
+    },
+    "nav": {
+      "gis-devices": "Device Registration",
+      "gis-devices_desc": "GIS device registration"
     }
   },
   "map3_d_view": {

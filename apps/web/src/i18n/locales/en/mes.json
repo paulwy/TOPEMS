@@ -2937,6 +2937,30 @@
     },
     "production_kanban_page": {
       "status_maintenance": "Under Maintenance"
+    },
+    "capacity": {
+      "title": "Capacity Calendar",
+      "titleDesc": "Daily capacity planning per work center",
+      "searchPlaceholder": "Search work center",
+      "create": "New Capacity",
+      "edit": "Edit Capacity",
+      "actions": "Actions",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saveSuccess": "Capacity saved",
+      "saveFailed": "Failed to save capacity",
+      "deleteSuccess": "Capacity deleted",
+      "deleteFailed": "Failed to delete capacity",
+      "date": "Date",
+      "workCenter": "Work Center",
+      "availableHours": "Available Hours",
+      "usedHours": "Used Hours",
+      "utilizationRate": "Utilization",
+      "status": "Status"
+    },
+    "nav": {
+      "mes-capacity": "Capacity Calendar",
+      "mes-capacity_desc": "Work center capacity calendar"
     }
   },
   "equipment_management_page": {

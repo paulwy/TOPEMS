@@ -1862,5 +1862,31 @@
   "mes.masterData.saveSuccess": "保存成功",
   "mes.masterData.saveFailed": "保存失败，请检查输入",
   "mes.masterData.deleteSuccess": "删除成功",
-  "mes.masterData.deleteFailed": "删除失败"
+  "mes.masterData.deleteFailed": "删除失败",
+  "mes": {
+    "capacity": {
+      "title": "产能日历",
+      "titleDesc": "维护各工作中心每日可用产能与占用情况",
+      "searchPlaceholder": "搜索工作中心",
+      "create": "新建产能",
+      "edit": "编辑产能",
+      "actions": "操作",
+      "cancel": "取消",
+      "save": "保存",
+      "saveSuccess": "产能保存成功",
+      "saveFailed": "产能保存失败",
+      "deleteSuccess": "产能删除成功",
+      "deleteFailed": "产能删除失败",
+      "date": "日期",
+      "workCenter": "工作中心",
+      "availableHours": "可用工时",
+      "usedHours": "已用工时",
+      "utilizationRate": "利用率",
+      "status": "状态"
+    },
+    "nav": {
+      "mes-capacity": "产能日历",
+      "mes-capacity_desc": "各工作中心产能日历管理"
+    }
+  }
 }

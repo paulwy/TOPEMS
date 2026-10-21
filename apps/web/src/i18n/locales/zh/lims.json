@@ -740,7 +740,30 @@
     "sample": {},
     "task": {},
     "testmethod": {},
-    "reagent": {}
+    "reagent": {},
+    "methodCategories": {
+      "title": "方法分类",
+      "titleDesc": "维护检测方法分类体系",
+      "searchPlaceholder": "搜索分类",
+      "create": "新建分类",
+      "edit": "编辑分类",
+      "actions": "操作",
+      "cancel": "取消",
+      "save": "保存",
+      "saveSuccess": "分类保存成功",
+      "saveFailed": "分类保存失败",
+      "deleteSuccess": "分类删除成功",
+      "deleteFailed": "分类删除失败",
+      "code": "分类编码",
+      "name": "分类名称",
+      "sortOrder": "排序",
+      "status": "状态",
+      "description": "描述"
+    },
+    "nav": {
+      "lims-method-categories": "方法分类",
+      "lims-method-categories_desc": "检测方法分类管理"
+    }
   },
   "instrumentmaintenance": {
     "instrument_id_not_found": "仪器id不存在",

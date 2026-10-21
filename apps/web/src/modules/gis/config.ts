@@ -12,6 +12,7 @@ export const GIS_PATHS = {
   map: '/gis/map',
   tracking: '/gis/tracking',
   fence: '/gis/fence',
+  devices: '/gis/devices',
 } as const;
 export interface DashboardPageProps {}
 
@@ -90,7 +91,24 @@ export const gisModuleConfig: RouteModuleConfig = {
   order: 12,
   description: i18n.t('gis.nav.module_name_desc'),
   permission: 'gis:dashboard:read',
-  routes: [dashboardRoute, gisMapRoute, gisTrackingRoute, gisFenceRoute],
+  routes: [
+    dashboardRoute,
+    gisMapRoute,
+    gisTrackingRoute,
+    gisFenceRoute,
+    {
+      path: GIS_PATHS.devices,
+      element: lazyWithRetry(() => import('@/pages/gis/DevicePage'), 'DevicePage'),
+      module: 'gis',
+      code: 'gis-devices',
+      title: i18n.t('gis.nav.gis-devices'),
+      titleKey: 'gis.nav.gis-devices',
+      template: 'list',
+      group: 'master',
+      requiredPermissions: ['gis:dashboard:read'],
+      action: 'read',
+    } as unknown as RouteConfigV2<Record<string, unknown>>,
+  ],
 };
 
 // ---- 导航配置（供导航注册表使用） ----
@@ -153,6 +171,17 @@ export const gisNavConfig: ModuleNavConfig = {
       order: 3,
       group: 'process',
       description: i18n.t('gis.nav.gis-fence_desc'),
+    },
+    {
+      code: 'gis-devices',
+      label: i18n.t('gis.nav.gis-devices'),
+      labelKey: 'gis.nav.gis-devices',
+      icon: 'MapPin',
+      path: GIS_PATHS.devices,
+      permission: 'gis:dashboard:read',
+      order: 5,
+      group: 'master',
+      description: i18n.t('gis.nav.gis-devices_desc'),
     },
   ],
 };

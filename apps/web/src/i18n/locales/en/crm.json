@@ -709,6 +709,30 @@
     },
     "opportunity_redesign": {
       "stage_qualified": "Confirmed"
+    },
+    "tags": {
+      "title": "Customer Tags",
+      "titleDesc": "Manage customer tags and marketing groups",
+      "searchPlaceholder": "Search tag",
+      "create": "New Tag",
+      "edit": "Edit Tag",
+      "actions": "Actions",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saveSuccess": "Tag saved",
+      "saveFailed": "Failed to save tag",
+      "deleteSuccess": "Tag deleted",
+      "deleteFailed": "Failed to delete tag",
+      "code": "Code",
+      "name": "Name",
+      "color": "Color",
+      "category": "Category",
+      "status": "Status",
+      "description": "Description"
+    },
+    "nav": {
+      "crm-tags": "Customer Tags",
+      "crm-tags_desc": "Customer tag management"
     }
   },
   "crm.contact_detail_page.k0": "Contact Detail",

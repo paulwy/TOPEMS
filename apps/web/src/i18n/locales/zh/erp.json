@@ -2735,6 +2735,29 @@
           "title": "Title"
         }
       }
+    },
+    "dictionaries": {
+      "title": "数据字典",
+      "titleDesc": "维护 ERP 业务数据字典",
+      "searchPlaceholder": "搜索字典",
+      "create": "新建字典",
+      "edit": "编辑字典",
+      "actions": "操作",
+      "cancel": "取消",
+      "save": "保存",
+      "saveSuccess": "字典保存成功",
+      "saveFailed": "字典保存失败",
+      "deleteSuccess": "字典删除成功",
+      "deleteFailed": "字典删除失败",
+      "code": "字典编码",
+      "name": "字典名称",
+      "category": "分类",
+      "status": "状态",
+      "description": "描述"
+    },
+    "nav": {
+      "erp-dictionaries": "数据字典",
+      "erp-dictionaries_desc": "ERP 业务数据字典管理"
     }
   },
   "erp.voucher.batchAction.batchSubmit.success": "Success",
@@ -3260,8 +3283,6 @@
   "erp.nav.erp-sales-order_desc": "销售订单",
   "erp.nav.erp-financial-statements": "财务报表",
   "erp.nav.erp-financial-statements_desc": "财务报表",
-  "erp.nav.erp-dictionaries": "数据字典",
-  "erp.nav.erp-dictionaries_desc": "数据字典",
   "erp.nav.erp-database-management": "数据库管理",
   "erp.nav.erp-database-management_desc": "数据库管理",
   "erp.nav.erp-audit-log": "审计日志",

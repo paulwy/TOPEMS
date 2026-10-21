@@ -1122,7 +1122,7 @@ pub async fn create_safety_hazard(
         .bind(&req.severity)
         .bind(&req.exposure)
         .bind(&req.likelihood)
-        .bind(Some(claims.sub.as_str()))
+        .bind(claims.sub.parse::<Uuid>().ok())
         .bind(tenant_id)
         .fetch_one(&state.pool)
         .await

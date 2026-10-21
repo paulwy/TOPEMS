@@ -127,7 +127,7 @@ pub async fn list_devices(
     {
         Ok(devices) => Json(ApiResponse::success(
             serde_json::json!({
-                "devices": devices,
+                "items": devices,
                 "total": devices.len()
             }),
             "获取设备列表成功",

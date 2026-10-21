@@ -2838,6 +2838,29 @@
         "id}": "Title"
       },
       "title": "Title"
+    },
+    "methodCategories": {
+      "title": "Method Categories",
+      "titleDesc": "Manage test method categories",
+      "searchPlaceholder": "Search category",
+      "create": "New Category",
+      "edit": "Edit Category",
+      "actions": "Actions",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saveSuccess": "Category saved",
+      "saveFailed": "Failed to save category",
+      "deleteSuccess": "Category deleted",
+      "deleteFailed": "Failed to delete category",
+      "code": "Code",
+      "name": "Name",
+      "sortOrder": "Sort",
+      "status": "Status",
+      "description": "Description"
+    },
+    "nav": {
+      "lims-method-categories": "Method Categories",
+      "lims-method-categories_desc": "Test method categories"
     }
   },
   "lims.dashboard.${sc.id}": "Title",

@@ -690,7 +690,7 @@ pub async fn create_category(
     )
     .bind(&req.category_code)
     .bind(&req.category_name)
-    .bind(&req.parent_id)
+    .bind(req.parent_id.as_ref().map(|p| Uuid::parse_str(p).unwrap_or(Uuid::nil())))
     .bind(sort_order)
     .bind(&req.description)
     .bind(ctx.tenant_id)

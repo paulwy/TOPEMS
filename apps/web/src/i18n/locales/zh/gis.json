@@ -571,5 +571,30 @@
   "gis.gis_fence_page.e13_poly": "多边形围栏至少需要 3 个顶点，请补充坐标",
   "gis.gis_fence_page.e13_rect": "矩形围栏需要两个对角点坐标",
   "gis.gis_fence_page.e14": "完成绘制",
-  "gis.gis_fence_page.e15": "取消"
+  "gis.gis_fence_page.e15": "取消",
+  "gis": {
+    "devices": {
+      "title": "设备注册",
+      "titleDesc": "注册 GIS 监测设备并维护设备档案",
+      "searchPlaceholder": "搜索设备",
+      "create": "注册设备",
+      "edit": "编辑设备",
+      "actions": "操作",
+      "cancel": "取消",
+      "save": "保存",
+      "saveSuccess": "设备保存成功",
+      "saveFailed": "设备保存失败",
+      "deleteSuccess": "设备删除成功",
+      "deleteFailed": "设备删除失败",
+      "code": "设备编码",
+      "name": "设备名称",
+      "type": "设备类型",
+      "status": "状态",
+      "description": "描述"
+    },
+    "nav": {
+      "gis-devices": "设备注册",
+      "gis-devices_desc": "GIS 设备注册管理"
+    }
+  }
 }

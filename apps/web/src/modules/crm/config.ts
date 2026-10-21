@@ -47,6 +47,7 @@ export const CRM_PATHS = {
   salesFunnel: '/crm/sales-funnel',
   customerScoring: '/crm/customer-scoring',
   salesForecast: '/crm/sales-forecast',
+  tags: '/crm/tags',
   customerSegmentation: '/crm/customer-segmentation',
   rfm: '/crm/rfm',
   forecastAlgorithm: '/crm/forecast-algorithm',
@@ -344,6 +345,18 @@ const crmRoutes: RouteConfigV2[] = [
     requiredPermissions: ['crm:return:read', 'crm:dashboard:read'],
     action: 'read',
   },
+  {
+    path: CRM_PATHS.tags,
+    element: lazyWithRetry(() => import('@/pages/crm/TagPage'), 'TagPage'),
+    module: 'crm',
+    code: 'crm-tags',
+    title: i18n.t('crm.nav.crm-tags'),
+    titleKey: 'crm.nav.crm-tags',
+    template: 'list',
+    group: 'master',
+    requiredPermissions: ['crm:customer:read'],
+    action: 'read',
+  } as unknown as RouteConfigV2<Record<string, unknown>>,
 ];
 
 export const crmModuleConfig: RouteModuleConfig = {
@@ -531,6 +544,17 @@ export const crmNavConfig: ModuleNavConfig = {
       order: 3,
       group: 'analytics',
       description: i18n.t('crm.nav.crm-recommendation_desc'),
+    },
+    {
+      code: 'crm-tags',
+      label: i18n.t('crm.nav.crm-tags'),
+      labelKey: 'crm.nav.crm-tags',
+      icon: 'Tags',
+      path: CRM_PATHS.tags,
+      permission: 'crm:customer:read',
+      order: 9,
+      group: 'master',
+      description: i18n.t('crm.nav.crm-tags_desc'),
     },
   ],
 };

@@ -48,6 +48,7 @@ export const MES_PATHS = {
   settingApsConfig: '/mes/setting/aps-config',
   settingEquipmentThreshold: '/mes/setting/equipment-threshold',
   masterData: '/mes/master-data',
+  capacity: '/mes/capacity',
 } as const;
 
 // ---- V257 P0-1：页面级 Props interface（Frontend 泛型收紧 · 3/15 核心模块首批）----
@@ -1499,6 +1500,18 @@ export const mesModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['mes:workshop:read'],
       action: 'read',
     } as unknown as RouteConfigV2<MesMasterDataPageProps>,
+    {
+      path: MES_PATHS.capacity,
+      element: lazyWithRetry(() => import('@/pages/mes/CapacityPage'), 'CapacityPage'),
+      module: 'mes',
+      code: 'mes-capacity',
+      title: i18n.t('mes.nav.mes-capacity'),
+      titleKey: 'mes.nav.mes-capacity',
+      template: 'list',
+      group: 'master',
+      requiredPermissions: ['mes:workshop:read'],
+      action: 'read',
+    } as unknown as RouteConfigV2<MesMasterDataPageProps>,
   ] as RouteConfigV2<Record<string, unknown>>[],
 };
 
@@ -1947,6 +1960,17 @@ export const mesNavConfig: ModuleNavConfig = {
       order: 5,
       group: 'business',
       description: i18n.t('mes.nav.mes-master-data_desc'),
+    },
+    {
+      code: 'mes-capacity',
+      label: i18n.t('mes.nav.mes-capacity'),
+      labelKey: 'mes.nav.mes-capacity',
+      icon: 'CalendarDays',
+      path: MES_PATHS.capacity,
+      permission: 'mes:workshop:read',
+      order: 6,
+      group: 'business',
+      description: i18n.t('mes.nav.mes-capacity_desc'),
     },
   ],
 };

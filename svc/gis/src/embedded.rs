@@ -178,7 +178,8 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
         )
         .route(
             "/devices",
-            axum::routing::get(modules::device::list_devices),
+            axum::routing::get(modules::device::list_devices)
+                .post(modules::device::register_device),
         )
         .route(
             "/devices/{id}",

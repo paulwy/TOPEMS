@@ -188,7 +188,7 @@ pub async fn list_capacities(
         r#"
         SELECT id, work_center_id, work_center_name, capacity_date,
                available_hours::float8, used_hours::float8, utilization_rate::float8,
-               status, tenant_id, created_at, updated_at
+               status, tenant_id, created_at::timestamptz, updated_at::timestamptz
         FROM capacities
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR work_center_name ILIKE $2)
@@ -227,7 +227,7 @@ pub async fn list_capacities(
             .unwrap_or(0);
 
             let response_data = serde_json::json!({
-                "capacities": capacities,
+                "items": capacities,
                 "total": total,
                 "page": page,
                 "page_size": page_size
@@ -281,7 +281,7 @@ pub async fn get_capacity(
         r#"
         SELECT id, work_center_id, work_center_name, capacity_date,
                available_hours::float8, used_hours::float8, utilization_rate::float8,
-               status, tenant_id, created_at, updated_at
+               status, tenant_id, created_at::timestamptz, updated_at::timestamptz
         FROM capacities
         WHERE id = $1 AND tenant_id = $2
         "#,
@@ -319,8 +319,9 @@ pub async fn create_capacity(
             (id, work_center_id, work_center_name, capacity_date, available_hours,
              used_hours, utilization_rate, status, tenant_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        RETURNING id, work_center_id, work_center_name, capacity_date, available_hours,
-                  used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        RETURNING id, work_center_id, work_center_name, capacity_date,
+                  available_hours::float8, used_hours::float8, utilization_rate::float8,
+                  status, tenant_id, created_at::timestamptz, updated_at::timestamptz
         "#,
     )
     .bind(id)
@@ -403,8 +404,9 @@ pub async fn update_capacity(
             work_center_name = $1, capacity_date = $2, available_hours = $3,
             used_hours = $4, utilization_rate = $5, status = $6, updated_at = $7
         WHERE id = $8 AND tenant_id = $9
-        RETURNING id, work_center_id, work_center_name, capacity_date, available_hours,
-                  used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        RETURNING id, work_center_id, work_center_name, capacity_date,
+                  available_hours::float8, used_hours::float8, utilization_rate::float8,
+                  status, tenant_id, created_at::timestamptz, updated_at::timestamptz
         "#,
     )
     .bind(&work_center_name)
@@ -563,8 +565,9 @@ pub async fn allocate_capacity(
         UPDATE capacities SET
             used_hours = $1, utilization_rate = $2, status = 'allocated', updated_at = $3
         WHERE id = $4 AND tenant_id = $5
-        RETURNING id, work_center_id, work_center_name, capacity_date, available_hours,
-                  used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        RETURNING id, work_center_id, work_center_name, capacity_date,
+                  available_hours::float8, used_hours::float8, utilization_rate::float8,
+                  status, tenant_id, created_at::timestamptz, updated_at::timestamptz
         "#,
     )
     .bind(Some(new_used))
@@ -636,8 +639,9 @@ pub async fn release_capacity(
         UPDATE capacities SET
             used_hours = $1, utilization_rate = $2, status = 'released', updated_at = $3
         WHERE id = $4 AND tenant_id = $5
-        RETURNING id, work_center_id, work_center_name, capacity_date, available_hours,
-                  used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        RETURNING id, work_center_id, work_center_name, capacity_date,
+                  available_hours::float8, used_hours::float8, utilization_rate::float8,
+                  status, tenant_id, created_at::timestamptz, updated_at::timestamptz
         "#,
     )
     .bind(Some(new_used))
@@ -711,8 +715,9 @@ pub async fn maintenance_capacity(
         r#"
         UPDATE capacities SET status = $1, updated_at = $2
         WHERE id = $3 AND tenant_id = $4
-        RETURNING id, work_center_id, work_center_name, capacity_date, available_hours,
-                  used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        RETURNING id, work_center_id, work_center_name, capacity_date,
+                  available_hours::float8, used_hours::float8, utilization_rate::float8,
+                  status, tenant_id, created_at::timestamptz, updated_at::timestamptz
         "#,
     )
     .bind(target_status)
@@ -826,8 +831,9 @@ pub async fn submit_capacity(
         UPDATE capacities SET
             status = 'allocated', updated_at = $1
         WHERE id = $2 AND tenant_id = $3
-        RETURNING id, work_center_id, work_center_name, capacity_date, available_hours,
-                  used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        RETURNING id, work_center_id, work_center_name, capacity_date,
+                  available_hours::float8, used_hours::float8, utilization_rate::float8,
+                  status, tenant_id, created_at::timestamptz, updated_at::timestamptz
         "#,
     )
     .bind(now)

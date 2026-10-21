@@ -3265,6 +3265,29 @@
           "title": "Title"
         }
       }
+    },
+    "dictionaries": {
+      "title": "Data Dictionaries",
+      "titleDesc": "Manage ERP business dictionaries",
+      "searchPlaceholder": "Search dictionary",
+      "create": "New Dictionary",
+      "edit": "Edit Dictionary",
+      "actions": "Actions",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saveSuccess": "Dictionary saved",
+      "saveFailed": "Failed to save dictionary",
+      "deleteSuccess": "Dictionary deleted",
+      "deleteFailed": "Failed to delete dictionary",
+      "code": "Code",
+      "name": "Name",
+      "category": "Category",
+      "status": "Status",
+      "description": "Description"
+    },
+    "nav": {
+      "erp-dictionaries": "Data Dictionaries",
+      "erp-dictionaries_desc": "ERP business dictionaries"
     }
   },
   "financial_analysis_page": {
@@ -4090,7 +4113,6 @@
   "erp.nav.erp-purchase-order": "Purchase Orders",
   "erp.nav.erp-sales-order": "Sales Orders",
   "erp.nav.erp-financial-statements": "Financial Statements",
-  "erp.nav.erp-dictionaries": "Dictionaries",
   "erp.nav.erp-database-management": "Database",
   "erp.nav.erp-audit-log": "Audit Logs",
   "erp.nav.erp-office-supplies": "Office Supplies",
@@ -4121,7 +4143,6 @@
   "erp.nav.erp-purchase-order_desc": "Purchase Orders",
   "erp.nav.erp-sales-order_desc": "Sales Orders",
   "erp.nav.erp-financial-statements_desc": "Financial Statements",
-  "erp.nav.erp-dictionaries_desc": "Dictionaries",
   "erp.nav.erp-database-management_desc": "Database",
   "erp.nav.erp-audit-log_desc": "Audit Logs",
   "erp.nav.erp-office-supplies_desc": "Office Supplies",
