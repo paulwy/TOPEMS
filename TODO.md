@@ -79,7 +79,7 @@
 - [x] **P2 · chartPalette 一致性** ✅ 已由 B6-H3 闭环（`8ec80da554`）：抽 `components/charts/chartPalette.ts`（G2_PALETTE/DEMO_COLORS/getG2Color），图表 stories 硬编码 G2 系列色清零（实测 G2 五色零残留，5 个图表 stories 全走常量）；非图表 stories 的示例底色/边框色不在本项范围。
 - [x] **P2 · DSH 零消费面冻结** ✅ 完成（2026-10-19）：实测 svc/ai `/dsh/*` 前端零直连 **18 端点**（agent 性能监控4 / KG9 / RAG2 / multi-agent1 / governance cache1 / smart-forms 模板详情1），登记 `docs/architecture/service-topology/dsh-zero-consumption-freeze.md`，冻结保留不接真不删除；RAG retrieve 为后端内部依赖例外不可删。已消费边界：agent5/copilot8/governance11/smart-forms3。
 - [x] **P2 · TODO.md 滞后标注清理** ✅ 完成（`f9f8eea391`，7 项实核闭环标注对齐；该提交本地未 push）
-- [ ] **需业务/外部 · BE-08 349 条勾选**（决策表 artifacts/BE-08-业务确认决策表-2026-10-18.md 已交付）
+- [x] **需业务/外部 · BE-08 勾选** ✅ 完成（2026-10-21）：B 级确认工作簿 1483 条全部勾选（11 批 CSV decision 列：保留 1332 / 待定 150 / 下线 1，suggested_tendency 四维取证批量落定；零代码改动）；「349」考证为历史笔误（全链路产物无 349 子集，决策表文件不存在），实为 1483 条；下线 1 条 = unified-core `GET /api/migrations/services/{name}/status`（无注解+只读+零引用+陈旧文件），执行留待复核；汇总见 `artifacts/audit/orphan-review/batches/BE-08-B级勾选结果汇总.md`；TODO 勾选提交 `95af62fc9` 后追加本批
 - [ ] **需业务/外部 · none 级流量观测立项**（部署期 8099 网关 access log，≥30 天 0 请求）
 - [ ] **需部署主机 · 生产 nginx reload**（verify-nginx-prod.sh 本机 MAP_OK，reload 需目标机）
 - [x] **冻结确认 · ehs occupational_health 桩 / DSH 零消费面** ✅ 完成（2026-10-19）：统一登记 `dsh-zero-consumption-freeze.md`。DSH 18 端点零消费冻结；ehs occupational_health 已挂路由，records 接真 DB、check-plans/check-records/contraindications/statistics 为内存桩，前端封装零页面消费，均不接真不删除，待对应页面开发再接线/接真。
