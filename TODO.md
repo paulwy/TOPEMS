@@ -23,7 +23,7 @@
 - [ ] **P1-7 · QMS 缺结构化检验项/检验方案/抽样方案，LIMS 缺检验项目(analyte)**；补表与 CRUD + 方案配置页。
 - [x] **P1-8 · 多表租户隔离**（`52cc3a467`，迁移 `20261020000026`）：gis.geofences/rs.material_tests 补 tenant_id+RLS，关闭 erp.bank_accounts 开放策略，gis 按 claims 过滤落库、rs/erp 按 GUC 落租户、pm 建项目按会话租户；bi/pm 本已有 RLS，wms/mes 无写死 UUID。
 - [ ] **P1-9 · 后端有前端缺的管理页**：MES 产能日历、LIMS 方法分类、CRM 标签、财务会计期间/辅助核算创建、ERP 字典、EHS 危险源列表、GIS 设备注册。
-- [ ] **P1-10 · 财务主数据** 🔶 部分闭环（`78042fe2a`）：币种主表（`public.core_finance_currencies`，迁移 `20261021000001` 幂等 + 16 行种子）+ 后端 CRUD + 前端币种/期间管理页已落地（BFF 实跑 list(17)/create/search/delete 全 200）；税率面已具备（`finance_v56_tax_*` + FinanceTaxPage）。**科目体系归并未做**（代码引用 `finance.accounting_subjects` vs 实表 `public.core_finance_accounts`，当前库无 finance schema，属高风险架构变更，待拍板；阻塞批 6）。
+- [x] **P1-10 · 财务主数据** ✅ 闭环（`78042fe2a` + `6c29a8189`）：币种主表（`finance.core_finance_currencies`，迁移 `20261021000001` 幂等 + 16 行种子 + `20261021000002/00003` 归位）+ 后端 CRUD + 前端币种/期间管理页已落地（BFF 实跑 list(17)/create/search/delete 全 200）；税率面已具备（`finance_v56_tax_*` + FinanceTaxPage）。**科目体系已归并（线C1 `6c29a8189`）**：59 张 finance 表全部归位 finance schema、代码全部收敛到 `finance.core_finance_accounts`、V321 `accounting_subjects` 路由下线（404）、科目/币种/期间/报表 BFF 复验全 200。
 
 > P2 增强/一致性/技术债（空态 CTA、向导租户归属、批量事务、岗位 FK、路由清理、菜单种子、新租户补播、技术债、公共主数据域）见活文档 §3 P2 表，按需认领。
 > 已闭环：P2-6 DEV 旁路（S3 `e1980e95d`）、P2-9 孤儿 admin123 脚本（S4 `f23f543db`）、P2-3 向导批量步整批校验+失败回滚（F2）、P2-4 岗位重名校验/部门归属（F2）+ DB 硬 FK（`793a3f4b2`，迁移 `20261020000027`，先解绑孤儿 ON DELETE SET NULL）；P2-1 主页初始化 checklist CTA（`958e0cc9a`）；P2-2 向导 org/进度归属按会话租户、首启超管回退默认 org（`2def461ff`）。
@@ -46,7 +46,7 @@
 - [x] 验收 ✅：typecheck/eslint 绿；无权限映射恒显示、映射无权限整组/项隐藏；冒烟无回归
 
 **线 C · P1-10 财务主数据（含 P1-9 财务子集）**
-- [ ] C1 · 统一科目体系：`core_finance_accounts`（挂 admin）vs `accounting_subjects`（挂 erp）归并/明确归属（**未做**：代码引用 `finance.accounting_subjects`、实表 `public.core_finance_accounts`、当前库无 finance schema，归并属高风险架构变更，待拍板后另批；阻塞批 6）
+- [x] C1 · 统一科目体系 ✅ 完成（`6c29a8189`，方案 A 根治）：迁移 `20261021000002`（幂等建 finance schema + 归位 51 张 core_finance_*/finance_v5* + core_finance_accounts 补 `category` 列）+ `20261021000003`（补归位 finance_v60_* 8 张）→ **59 张 finance 表全部归位 finance schema**；代码收敛 8+ 处（financial_reports 8 处 JOIN/COUNT、mod.rs 2 处查询、erp opening_balance 2 处）全部改 `finance.core_finance_accounts`（`deleted_at`→`is_enabled`、`organization_id`→`tenant_id` 适配）；V321 `accounting_subjects` 模块下线（mod.rs 挂载/openapi 注册移除，路由 404）；currencies TABLE 统一 `finance.core_finance_currencies`；BFF 重启（SEARCH_PATH 加 finance）后冒烟：accounts/currencies/periods/reports 全 200（原 accounts 500 → 200）、accounting-subjects 404、期间 close 列名 bug 顺带修复（period→year/month）。
 - [x] C2 · 币种主表 + 期间/币种前端页 ✅ 完成（`78042fe2a`）：迁移 `20261021000001`（幂等 + 16 行种子）+ `currencies.rs` 全 CRUD（list 分页/search/is_active + create + update COALESCE + delete）+ FinanceCurrencyPage/FinancePeriodPage + 路由/i18n；BFF 实跑 list(17)/create(THB)/search/delete 全 200。税率面既有（`finance_v56_tax_*` + FinanceTaxPage），无需新增。
 - [x] 验收 ✅：CRUD 真库可用、前端页接线、BFF 实跑 200、tests 绿
 
@@ -58,7 +58,7 @@
 | 批 3 | P1-7 QMS 检验项/检验方案/抽样方案 + LIMS 检验项目(analyte) | 无 |
 | 批 4 | P1-9 其余管理页：MES 产能日历 / LIMS 方法分类 / CRM 标签 / ERP 字典 / EHS 危险源 / GIS 设备注册 | 批 2 产能日历相关 |
 | 批 5 | P2-5 路由清理（`common.ts` 10 处重复注册 + 9 孤儿路由 + `/settings` 死链 + BackupPage 无引用）+ P2-7 菜单种子 tenant 错位 | 线 B 权限声明后（避免再覆盖） |
-| 批 6 | P2-8 财务默认科目/期间按新租户补播 + P2-10 技术债（roles.rs 空桩 / LoginFormV2 / authStore / OpenAPI 双块） | 线 C 科目体系定稿后 |
+| 批 6 | P2-8 财务默认科目/期间按新租户补播 + P2-10 技术债（roles.rs 空桩 / LoginFormV2 / authStore / OpenAPI 双块） | 线 C 科目体系已定稿（`6c29a8189`），依赖解除，可开工 |
 | 批 7 | P2-11 公共主数据域（物料目录 / UOM / 税率 / 币种 / 样品 → master-data 承接规划） | 线 C 币种/税率落地后 |
 
 ## 下一步工作规划（2026-10-18）📌 待办，源自 5 方向全面评估报告 artifacts/TOPEMS-下一步工作规划报告-2026-10-18.md
