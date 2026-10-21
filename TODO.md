@@ -692,6 +692,7 @@
   - **错误态**（mock 500 /crm/contacts）：呈现「❌ 加载失败 + 重新加载」错误提示，不白屏 ✓（修复前**静默空表格**）
   - 🐛 **模板级缺陷 1（CrudPage 错误态缺失 + 双层重试延迟）**：`src/components/templates/CrudPage.tsx` 列表 `useQuery` 只解构 `data/isPending`，未传 `error`/`onRefresh` → 500 时**静默空表格无错误提示**；且 axios 层重试（2 次+退避）与 tanstack 默认 retry:3 **叠加** → 错误提示延迟 ~10s+（实测 tbody 长期停留骨架行）。修复：解构 `isError/error/refetch` → 传 `ListPageTemplate`（复用其 ErrorEmptyState + 重试按钮）；`retry: false`（api-client 已内建重试）。**全仓受益**（ListPageTemplate 型 CrudPage 列表页）
   - 执行方式：新增 `apps/web/e2e/ui/b3-list-render.spec.ts`（8 页正常态 + 2 mock 态），`API_URL=http://localhost:8099 pnpm exec playwright test e2e/ui/b3-list-render.spec.ts --project=chromium --workers=1 --retries=0` → **3 passed (30.7s)**
+  - **✅ 复跑全绿（2026-10-22，契约修复后回归）**：`playwright test e2e/ui/b3-list-render.spec.ts e2e/ui/b4-navigation.spec.ts`（chromium + mobile-iphone 双 project）→ **8 passed (1.3m)**。三轮根因链逐层剥离：① **403 全灭**——远端 iam schema 重建（--no-data）后 `iam.users.test_admin` 为 `is_superuser=f`、角色权限空 → DB 复位超管 + `run-e2e-stack.sh` 种子补 `is_superuser`（`3360e98744`）；② **数据缺失**——`wms.inbound_orders` 0 行 → 幂等播种 IB-DEMO-001/002（order_number 判存）+ `order_date` 回填（NOT NULL 列 sqlx 解码报错）；③ **前端缺陷 ×2**——`WmsInboundOrderPage` 响应解包只认 `list`/`items` 不认后端实际返回的 `orders`（`d7d6131499`）；**`/wms/inbound-orders` 路由常量已定义但从未注册进 `wmsRoutes` 数组**（远端 P2-5 批 `69d7a42f5d` 遗留，直连 404 → NO_DATA）→ 注册路由（`0e48583331`）。**遗留登记**：`wmsOutboundOrdersRoute`/`wmsStocktakeRoute`/`wmsLocationsRoute` 三个常量同样未挂载（frontend-lint warning 在案），待远端 P2-5 意图明确后处理，不擅自注册
   - 遗留：`TreeBuilder` 无错误态渲染（CrudPage tree 视图 500 仍静默，待办 D4 前补）→ **已补（2026-10-17）**：`TreeBuilder` 新增 `error`/`onRefresh` props，渲染 `ErrorEmptyState`（复用 B3 已验证组件，含重试按钮）；`CrudPage` tree query 解构 `isError/error/refetch` 并透传——**tree 视图 500 不再静默**；验证：typecheck + eslint 全绿；**注**：当前仓库无启用 tree 视图的生产页面（`hasTree`/`treeDataAdapter` 未在 pages 使用），实机待未来 tree 页面启用后覆盖
 - ✅ B4 导航链路（2026-10-17 实机完成）：侧栏/顶栏/面包屑/返回全链路验证（新增 `apps/web/e2e/ui/b4-navigation.spec.ts`，10 项全过 8.3s）：
   - **侧栏**：`nav[aria-label="Main navigation"]` 渲染 + 含核心模块项（客户管理/制造执行/质量管理/财务/人力资源）；展开「客户管理」→ 点「联系人」→ URL /crm/contacts；展开「人力资源」→ 点「员工」→ /hrm/employees
@@ -699,6 +700,7 @@
   - **浏览器返回**：跨模块跳转后 goBack 回到前页 /crm/contacts
   - **顶栏**：header 存在 + 搜索入口
   - 复用基线：现有 `e2e/ui/navigation.spec.ts` 仍通过（登录表单版）；`mobile-navigation.spec.ts` 待 A5/D 阶段实机
+  - **✅ 复跑全绿 + 移动端断言适配（2026-10-22）**：B4 随 B3 同轮回归（双 project）全过。**断言修复**：「顶栏搜索入口」原断言要求 header 文本含「搜索」，但 `.desktop-only` 在 ≤640px 按响应式设计折叠为纯图标按钮（文字隐藏、`aria-label` 仍含「搜索」）——非应用缺陷 → 断言改移动端感知（文本无「搜索」时回退校验 `topbar-command-palette` 可见且 aria-label 含「搜索」），`3360e98744`
 
 ### C. 数据录入（模拟输入）验证
 - ✅ C1 表单覆盖清点（2026-10-16 静态完成）：录入面三形态——① **整页表单** `FormPageTemplate`（`zodResolver`，`mode onBlur`，`src/components/templates/FormPageTemplate.tsx`）：**16 文件 / 52 处**；② **列表+弹窗 CRUD** `ListPageTemplate`（内嵌 `FormDialog`）：**75 文件 / 203 处**（主形态）；③ 直接用 `FormDialog`：10 文件 / 41 处；④ **手写 `useForm`**：仅 4 文件（`shared/LoginPage.tsx`/`shared/ForgotPasswordPage.tsx`/`shared/ProfilePage.tsx`/`shared/hooks/useProfile.ts`，均为 auth/个人中心）→ **表单机制一致性良好，无大面积双轨**
