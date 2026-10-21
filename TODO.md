@@ -15,18 +15,18 @@
 ### P1 · 明显短板
 
 - [x] **P1-1 · `setup/complete` 闭环（F1，本地待验）**：落 completion 初始化标记、汇总公司/部门/岗位数并核验 admin 绑定 IAM 账号，未绑定告警；角色/权限归 IAM 建号端点，hrm 不跨服务直写。
-- [ ] **P1-2 · 部门/岗位后端无 handler 级权限校验**（仅全局 `hrm:admin`），补 DepartmentRead/Write、PositionRead/Write。
+- [x] **P1-2 · 部门/岗位后端 handler 级权限校验**（`4d87064ea`）：10 个 handler 补 DepartmentRead/Write、PositionRead/Write `check_permission`，对齐 company/employee。
 - [x] **P1-3 · 自助注册开放无开关**（S1 `cc16d41d8`）：`REGISTER_ENABLED` 默认关（403），开启时新账号 pending 待管理员激活分配角色/租户。
 - [ ] **P1-4 · 前端权限守卫几乎未落地**：35 个 config.ts 0 声明权限、菜单不过滤；补模块权限声明/路由 requiredPermissions/菜单按钮守卫。
 - [x] **P1-5 · `/users/me`、自身改密被管理权限保护**，普通用户可能 403；自服务端点改登录即可访问（`62cf693a8`，拆入 `me` 路由组仅校验登录）。
 - [ ] **P1-6 · MES 缺车间/产线/工作中心/班次/工作日历**，工位 `workshop_id` 悬空；补实体 CRUD + 前端页并回填外键。
 - [ ] **P1-7 · QMS 缺结构化检验项/检验方案/抽样方案，LIMS 缺检验项目(analyte)**；补表与 CRUD + 方案配置页。
-- [ ] **P1-8 · 多表缺租户隔离**：erp.bank_accounts、gis.geofences、rs.material_tests、bi.analytics_datasets 无 tenant_id；pm.projects 列表不过滤；wms/mes 部分 organization_id 写死公共 UUID。
+- [x] **P1-8 · 多表租户隔离**（`52cc3a467`，迁移 `20261020000026`）：gis.geofences/rs.material_tests 补 tenant_id+RLS，关闭 erp.bank_accounts 开放策略，gis 按 claims 过滤落库、rs/erp 按 GUC 落租户、pm 建项目按会话租户；bi/pm 本已有 RLS，wms/mes 无写死 UUID。
 - [ ] **P1-9 · 后端有前端缺的管理页**：MES 产能日历、LIMS 方法分类、CRM 标签、财务会计期间/辅助核算创建、ERP 字典、EHS 危险源列表、GIS 设备注册。
 - [ ] **P1-10 · 财务两套科目表并存、会计期间无管理页、税率硬编码、无币种主表**；统一科目体系，补期间/税率/币种主数据页。
 
 > P2 增强/一致性/技术债（空态 CTA、向导租户归属、批量事务、岗位 FK、路由清理、菜单种子、新租户补播、技术债、公共主数据域）见活文档 §3 P2 表，按需认领。
-> 已闭环：P2-6 DEV 旁路（S3 `e1980e95d`）、P2-9 孤儿 admin123 脚本（S4 `f23f543db`）、P2-3 向导批量步整批校验+失败回滚（F2）、P2-4 岗位重名校验/部门归属存在性（F2，DB FK 待另立）；P2-2 向导租户归属并入 F 批随 P1-1 租户模型统一。
+> 已闭环：P2-6 DEV 旁路（S3 `e1980e95d`）、P2-9 孤儿 admin123 脚本（S4 `f23f543db`）、P2-3 向导批量步整批校验+失败回滚（F2）、P2-4 岗位重名校验/部门归属（F2）+ DB 硬 FK（`793a3f4b2`，迁移 `20261020000027`，先解绑孤儿 ON DELETE SET NULL）；P2-1 主页初始化 checklist CTA（`958e0cc9a`）；P2-2 向导 org/进度归属按会话租户、首启超管回退默认 org（`2def461ff`）。
 
 ---
 

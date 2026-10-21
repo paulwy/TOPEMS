@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.8（F 批后端首启闭环：P1-1 complete 标记+核验、P2-3 整批回滚、P2-4 岗位重名校验/部门归属；本地待验未推送） |
+| 版本 | v1.9（P1-2/P2-1/P1-8/P2-2/P2-4 DB FK 五项闭环；见文末变更日志） |
 | 最近更新 | 2026-10-21 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
@@ -269,13 +269,13 @@
 | # | 缺口 | 影响 | 建议做法 | 证据 |
 |---|---|---|---|---|
 | **P1-1** ✅ 后端闭环（F1，本地待验） | ~~`setup/complete` 空动作：不建默认角色、不绑权限、不改租户状态~~ | 已闭环（边界内）：complete 落 `completion` 初始化标记、汇总公司/部门/岗位数并核验 admin 是否绑定 IAM 账号，未绑定则告警提示先开通账号并分配默认角色/权限；**角色/权限不由 hrm 跨服务直写**（方案B，避免 core_user_roles 孤儿/错位行），默认角色/权限由 IAM 建号端点分配 | complete 写初始化标记 + 结果核验汇总；授权归属 IAM，hrm 不越界写角色目录 | `hrm/setup.rs complete_initialization` |
-| P1-2 | 部门/岗位后端无 handler 级 `check_permission`，仅全局 `hrm:admin` | 粒度粗，无法按部门/岗位授权 | 补 DepartmentRead/Write、PositionRead/Write 权限校验（对齐 company/employee） | `department.rs`、`position.rs` grep check_permission=0 |
+| **P1-2** ✅ 闭环（`4d87064ea`） | ~~部门/岗位后端无 handler 级 `check_permission`，仅全局 `hrm:admin`~~ | 已闭环：部门/岗位 10 个 handler（list/get/create/update/delete）补 `check_permission`，读用 DepartmentRead/PositionRead、写用 DepartmentWrite/PositionWrite（对齐 company/employee；模块级映射到 `hrm:read/write`）；`permission.rs` 增 PositionRead/Write 变体与映射 | 读/写 handler 级权限校验，未授权 403 | `department.rs`、`position.rs`、`shared/permission.rs` |
 | **P1-3** ✅ 闭环（S1 `cc16d41d8`） | ~~自助注册开放无开关，注册账号无角色/权限/租户，注册后不可用~~ | 已闭环：`REGISTER_ENABLED` 默认关（403），开启时新账号落 `status=pending` 待管理员激活并分配角色/租户，登录仅放行 active；`.env.example` 已声明 | 开关默认关；开放时 pending 待激活，不产生可登录僵尸账号 | `auth.rs register`；`.env.example REGISTER_ENABLED` |
 | P1-4 | 前端权限守卫几乎未落地：35 个 config.ts 0 声明权限，PermissionGate 仅 1 处使用，菜单不过滤 | 无权限用户仍见全部入口，"可见但进不去" | 补模块权限声明、路由 requiredPermissions、菜单/按钮守卫（前端为体验层，后端为硬防线） | `modules/*/config.ts`；`PermissionGate.tsx` 1 处；`ModuleTabs.tsx:555`；`GlobalLayoutV3.tsx:59` |
 | **P1-5** ✅ 闭环 | ~~`/users/me`、自身改密被 `iam:read`/`admin:iam:write` 保护，普通用户 403~~ | 已闭环：自服务端点拆入独立 `me` 路由组，仅由全局 `auth_middleware` 校验登录（无 token→401），不再叠加管理权限层；管理类增删改/角色/权限仍守 `iam:read`/`admin:iam:write`/`admin:iam:delete` | 9 个自服务端点（GET/PUT `/users/me`、自身权限、自身偏好、改密、头像、自身权限校验、`/permissions/my-permissions`）身份一律取 `Claims.sub`，不接受 body/路径指定他人 | `routes/iam.rs`（`me` 路由组）；全局 `auth_middleware`（shared-auth） |
 | P1-6 | MES 缺车间/产线/工作中心表与路由，工位 `workshop_id` 悬空；缺班次/工作日历 | 无法做真实排产与产能建模，APS 基础数据不成立 | 补车间/产线/班次/日历实体 CRUD 与前端页，回填工位外键 | 全库无 workshop/production_line/shift/calendar 建表；`work_station.rs:30-43` |
 | P1-7 | QMS 缺结构化检验项/检验方案/抽样方案；LIMS 缺检验项目(analyte) | 检验只能填自由文本，无法标准化质检 | 补 inspection_item/sampling_plan/analyte 表与 CRUD + 前端方案配置页 | 无 checklist/inspection_item/sampling_plan 表；analyte 无表 |
-| P1-8 | 多表缺租户隔离：`erp.bank_accounts`、`gis.geofences`、`rs.material_tests`、`bi.analytics_datasets` 无 tenant_id；`pm.projects` 列表不过滤；wms/mes 部分 organization_id 写死公共 UUID | 多租户下数据串读 | 补 tenant_id 列与查询过滤，移除写死 UUID | `bank_account.rs`；DDL `20261007000009:1282`；`material.rs:307-313`；`dataset.rs:90-95`；`project.rs:188` |
+| **P1-8** ✅ 闭环（`52cc3a467`，迁移 `20261020000026`） | ~~多表缺租户隔离~~ | 已闭环（DB RLS 为主、app 层补强）：迁移为 `gis.geofences`/`rs.material_tests` 补 `tenant_id` 列并 ENABLE+FORCE RLS + `tenant_isolation_*` 策略，删除 `erp.bank_accounts` 的 `erp_allow_all` 开放策略并换租户策略；gis 五 handler 注入 claims 按租户/公共行过滤并落库 `tenant_id`，rs 建记录、erp 建账户按 `app.tenant_id` 落租户，pm 建项目由 `effective_tenant_id` 按会话租户落库（不再写死 0001）。核查结论：`bi.analytics_datasets`、`pm.projects` 本就带 `tenant_id` 与 `rls_tenant_isolation` 策略（DB 层已隔离）；wms/mes 源码未发现写死公共 UUID（原备注过时） | 缺列表补列+RLS，开放策略关闭，写死租户改会话租户 | 迁移 `20261020000026`；`gis/geofence.rs`、`rd/material.rs`、`erp/bank_account.rs`、`pm/project.rs` |
 | P1-9 | 后端有前端缺的管理页：MES 产能日历、LIMS 方法分类、CRM 标签、财务会计期间/辅助核算创建、ERP 字典、EHS 危险源列表、GIS 设备注册 | 主数据只能调 API，运营不可用 | 逐一补前端页面并接已有 api | 见 §3.1–3.3 各行"部分"标注 |
 | P1-10 | 财务两套科目表并存（`core_finance_accounts` 挂 admin、`accounting_subjects` 挂 erp）；会计期间无管理页；税率硬编码；无币种主表 | 账务主数据归属割裂，多币种/税务无法配置 | 统一科目体系、补期间/税率/币种主数据页 | `mod.rs:4934,5321`；`accounting_subjects.rs:398-408`；`tax_v56.rs:1057,2234` |
 
@@ -283,10 +283,10 @@
 
 | # | 缺口 | 影响 | 建议做法 | 证据 |
 |---|---|---|---|---|
-| P2-1 | 无首次引导/空态 CTA：登录固定落 `/dashboard`，落地页硬编码 mock，无"先录公司/人员"提示 | 新用户无方向 | 空组织时展示初始化 checklist 引导 | `LoginPage.tsx:84-90`；`HybridDashboard.tsx:14-46` |
-| P2-2（并入 F 批） | 向导写死 `DEFAULT_ORG_ID=0001`，不读 JWT tenant/org；迁移期不知租户，进度行按默认 org 播种 | 多租户写错归属 | 与 P1-1 租户初始化模型统一：首启建租户后按 Claims.tenant_id 落进度行/公司归属，不单独半改 | `svc/hrm/setup.rs:124,141,235…`；迁移 `20261020000025` |
+| **P2-1** ✅ 闭环（`958e0cc9a`） | ~~无首次引导/空态 CTA：落地页硬编码 mock，无"先录公司/人员"提示~~ | 已闭环：主页 `InitGate` 拉 `GET /setup/progress`，未完成时在 mock dashboard 上方渲染五步初始化 checklist（进度条+完成/进行/待办态+「开始初始化向导」CTA），完成或查询失败/无权限则静默回退 dashboard，不阻塞普通用户 | 空组织展示 checklist 引导，完成才进 mock 首页 | `pages/hrm/setup/InitChecklistPanel.tsx`；`pages/shared/HybridHomePage.tsx`；zh/en `hrm.json` |
+| **P2-2** ✅ 闭环（`2def461ff`） | ~~向导写死 `DEFAULT_ORG_ID=0001`，不读 JWT tenant/org~~ | 已闭环：六个向导端点（progress/company/departments/positions/admin/complete）的 org/进度归属改为 `tenant_filter.unwrap_or(DEFAULT_ORG_ID)`——已登录租户按 `Claims.tenant_id` 落进度行/公司归属，首启超管无租户时回退 `DEFAULT_ORG_ID`（与 `20261020000025` 种子一致），不另起半改 | 进度行/公司归属按会话租户，首启超管回退默认 org | `svc/hrm/setup.rs` |
 | **P2-3** ✅ 闭环（F2，本地待验） | ~~批量步部分失败不回滚，成功/失败混杂提交~~ | 已闭环：部门/岗位步先整批前置校验（空名、批次内重名/重码、库内同名、岗位部门存在性），全部通过才写库；任一 DB 错误不 commit，txn drop 自动回滚整批，杜绝部分成功混杂 | 全量前置校验 + 全成功才提交，失败整批回滚并明确报错 | `hrm/setup.rs setup_departments/setup_positions` |
-| **P2-4** ✅ 应用层闭环（F2，本地待验；DB FK 另立） | ~~岗位→部门无 DB 外键；岗位步无批次重名校验；positions 孤儿可静默存在~~ | 已闭环（应用层）：岗位步补批次内重名/重码校验、库内同名拦截、`department_id` 必须存在且属本租户（应用层孤儿防护）；**硬 DB 外键未加**（存量库可能已有孤儿，直接加 FK 会锁表/失败，另立迁移并先清孤儿） | 应用层重名校验 + 部门归属存在性；DB FK 待清孤儿后单独迁移 | `hrm/setup.rs setup_positions`；`position.rs` |
+| **P2-4** ✅ 全闭环（应用层 F2 + DB FK `793a3f4b2`，迁移 `20261020000027`） | ~~岗位→部门无 DB 外键；岗位步无批次重名校验；positions 孤儿可静默存在~~ | 已全闭环：应用层岗位步补批次内重名/重码校验、库内同名拦截、`department_id` 必须存在且属本租户；DB 层迁移 `20261020000027` 先把指向缺失部门的孤儿 `department_id` 解绑置 NULL（非破坏），再幂等建 `hrm_positions_department_id_fkey` → `hrm.departments(id) ON DELETE SET NULL` | 应用层重名校验+部门归属存在性；DB 硬 FK（先清孤儿） | `hrm/setup.rs setup_positions`；`position.rs`；迁移 `20261020000027` |
 | P2-5 | 路由遗留错配：`routes/common.ts` 10 处重复注册（且 requiredPermissions 置空）、9 处孤儿路由、`/settings` 死链、`BackupPage` 无引用 | 可达性混乱、权限被置空覆盖 | 清理 common.ts，统一以模块 config 为准 | `common.ts:44-191`；`GlobalLayoutV3.tsx:935`；`BackupPage.tsx` |
 | **P2-6** ✅ 闭环（S3 `e1980e95d`） | ~~`DEVELOPMENT_MODE=true` 伪造超管旁路未声明、prod 判定只看 PROFILE~~ | 已闭环：prod 判定覆盖 `PROFILE/RUST_ENV/ENV=prod|production`（补 RUST_ENV/ENV，避免只设 RUST_ENV 时旁路生效）；强化告警；`.env.example` 显式声明默认 false | 生产三环境变量任一为 prod 即忽略旁路，仍要求真实 JWT | `shared-auth/auth.rs` dev gate；`.env.example DEVELOPMENT_MODE` |
 | P2-7 | 菜单种子 tenant_id=全 0 与默认租户 0001 错位；DB 菜单非前端主驱动 | 菜单种子不生效（现状靠硬编码兜住） | 统一租户命名空间或改公共共享菜单策略 | `20260724000005_seed_module_menus.sql:6,20` |
@@ -365,5 +365,6 @@
 | 2026-10-21 | v1.6 | `62cf693a8` | **P1-5**：9 个自服务端点（GET/PUT `/users/me`、自身权限、自身偏好、改密、头像、自身权限校验、`/permissions/my-permissions`）拆入独立 `me` 路由组，仅由全局 `auth_middleware` 校验登录（无 token→401），不再要求 `iam:read`/`admin:iam:write`；管理类增删改/角色/权限/岗位仍守原权限层；身份一律取 `Claims.sub`，不接受 body/路径指定他人；pre-commit 全绿，lib 536 测试通过 |
 | 2026-10-21 | v1.7 | `cc16d41d8`/`7aff8b852`/`e1980e95d`/`f23f543db` | **S 安全收口批**：S1/P1-3 `REGISTER_ENABLED` 默认关、开放时新账号 pending 待激活；S2 首启 admin `must_change_password`、登录下发旗标、自身改密清除 + `ADMIN_INITIAL_PASSWORD` 声明（后端硬拦截/前端跳转留 P1-4）；S3/P2-6 DEV 旁路 prod 判定覆盖 RUST_ENV/ENV 并强化告警；S4/P2-9 停用孤儿脚本 admin123 播种并标注；P2-2 向导租户归属并入 F 批随 P1-1 统一 |
 | 2026-10-21 | v1.8 | 本地待验（未推送） | **F 批后端首启闭环（1–2）+ 实机验证**：P1-1 `setup/complete` 落 completion 初始化标记、汇总公司/部门/岗位数并核验 admin 是否绑定 IAM 账号，未绑定告警；角色/权限归 IAM 建号端点，hrm 不跨服务直写；P2-3 部门/岗位批量步前置全量校验、全成功才提交，DB 错误整批回滚；P2-4 岗位步补批次重名/重码、库内同名、部门归属存在性校验（应用层孤儿防护），硬 DB FK 待清孤儿后另立迁移。**顺手补漏**：名称≤255/编码≤50 前置校验直接 400（不再落 DB 超长 500），前端 `CompleteInitResponse` 补 `admin_bound/summary` 类型。实机 10+ 用例（重名/重码/空名/坏部门/门控/绑定分支/DB 错误整批回滚/超长 400）全通过；hrm 293 passed、fmt/eslint 绿 |
+| 2026-10-21 | v1.9 | `4d87064ea`/`958e0cc9a`/`52cc3a467`/`2def461ff`/`793a3f4b2` | **优先级连做五项**：P1-2 部门/岗位 10 handler 补读/写 `check_permission`；P2-1 主页 `InitGate` 未完成时渲染五步初始化 checklist CTA（完成/失败回退 dashboard）；P1-8 迁移 `20261020000026` 为 gis.geofences/rs.material_tests 补 tenant_id+RLS、关闭 erp.bank_accounts 开放策略，gis 按 claims 过滤落库、rs/erp 按 GUC 落租户、pm 建项目按会话租户（核查 bi/pm 已有 RLS，wms/mes 无写死 UUID）；P2-2 向导六端点 org/进度归属按会话租户、首启超管回退默认 org；P2-4 DB FK 迁移 `20261020000027` 先解绑孤儿再建 `positions→departments ON DELETE SET NULL`。gis 155 / rd 155 / erp 902 / pm 497 / hrm 293 测试绿，pre-commit 全绿 |
 
 > 后续每次闭环/修订在此追加一行；完成 P0/P1 后同步把 §3 对应行状态改为已具备并勾选 TODO.md。
