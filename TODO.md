@@ -30,6 +30,37 @@
 
 ---
 
+## 下一步批次计划（2026-10-21）📌 一步到位排期
+
+> 依据：活文档 `docs/onboarding/system-onboarding-and-gap-tracker.md` §3 缺口清单（P1 余 5 / P2 余 6）+ 契约审查 `docs/quality/{master-data,scm}-contract-review-2026-10-20.md` 派生待办 + mdm P3 四批次已完结。每线独立 commit/push，lefthook 全跑。
+
+### 下一批（三线并行，立即执行）
+
+**线 A · 契约缺口收口（真实缺陷，最高优先级）**
+- [ ] A1 · master-data mdm-v66 预埋桩 2 路径缺失 + 3 方法级：补 `GET /quality-v51/checks/{entity_type}/{entity_id}`、`GET /mdm-v54/version/{entity_type}/{entity_id}` 及 3 处方法（明细见 master-data-contract-review §二/§三，前端调、后端无 → 真实 404/405）→ web 契约冒烟复验全绿
+- [ ] A2 · SCM 缺 UI 接线：C 8 条业务能力（去别名重复后 6 条）补前端页/wrapper；D 2 条审批/驳回接线；E 3 条死 API 评估（下线或标注）→ scm 契约增量复核归零
+
+**线 B · P1-4 前端权限守卫（体验层）**
+- [ ] B1 · 35 个模块 config.ts 补 permission 声明（对齐 P0-4 已补 23 码权限字典）
+- [ ] B2 · 路由 requiredPermissions + 菜单按权限过滤 + PermissionGate 组件接线
+- [ ] 验收：typecheck/eslint 绿；无权限角色菜单不显示入口；冒烟不回归
+
+**线 C · P1-10 财务主数据（含 P1-9 财务子集）**
+- [ ] C1 · 统一科目体系：`core_finance_accounts`（挂 admin）vs `accounting_subjects`（挂 erp）归并/明确归属
+- [ ] C2 · 会计期间管理页 + 税率去硬编码 + 币种主表 + 前端页
+- [ ] 验收：CRUD 真库可用、前端页接线、tests 绿
+
+### 后续批（按依赖顺序）
+
+| 批 | 内容 | 依赖 |
+|---|---|---|
+| 批 2 | P1-6 MES 车间/产线/班次/工作日历（含工位 `workshop_id` 回填） | 无 |
+| 批 3 | P1-7 QMS 检验项/检验方案/抽样方案 + LIMS 检验项目(analyte) | 无 |
+| 批 4 | P1-9 其余管理页：MES 产能日历 / LIMS 方法分类 / CRM 标签 / ERP 字典 / EHS 危险源 / GIS 设备注册 | 批 2 产能日历相关 |
+| 批 5 | P2-5 路由清理（`common.ts` 10 处重复注册 + 9 孤儿路由 + `/settings` 死链 + BackupPage 无引用）+ P2-7 菜单种子 tenant 错位 | 线 B 权限声明后（避免再覆盖） |
+| 批 6 | P2-8 财务默认科目/期间按新租户补播 + P2-10 技术债（roles.rs 空桩 / LoginFormV2 / authStore / OpenAPI 双块） | 线 C 科目体系定稿后 |
+| 批 7 | P2-11 公共主数据域（物料目录 / UOM / 税率 / 币种 / 样品 → master-data 承接规划） | 线 C 币种/税率落地后 |
+
 ## 下一步工作规划（2026-10-18）📌 待办，源自 5 方向全面评估报告 artifacts/TOPEMS-下一步工作规划报告-2026-10-18.md
 
 > 5 方向评估产出（TODO 全库核查 / 前端测试覆盖 / 布局 / UI / DSH 差距），按优先级分批推进。当前 HEAD==origin==153da334e2。
