@@ -2913,5 +2913,14 @@
   "hrm.setup_wizard.done.go_home": "返回主页",
   "hrm.setup_wizard.reminder.title": "系统尚未完成初始化",
   "hrm.setup_wizard.reminder.message": "请先完成公司信息、部门、岗位与管理员账号的初始化向导。",
-  "hrm.setup_wizard.reminder.action": "前往初始化向导"
+  "hrm.setup_wizard.reminder.action": "前往初始化向导",
+  "hrm.setup_wizard.checklist.title": "完成系统初始化",
+  "hrm.setup_wizard.checklist.subtitle": "新系统启用后，按顺序完成以下步骤即可正式使用。",
+  "hrm.setup_wizard.checklist.progress": "已完成 {{done}} / {{total}} 步",
+  "hrm.setup_wizard.checklist.start": "开始初始化向导",
+  "hrm.setup_wizard.checklist.step.company_info": "填写公司基本信息",
+  "hrm.setup_wizard.checklist.step.departments": "录入部门",
+  "hrm.setup_wizard.checklist.step.positions": "录入岗位",
+  "hrm.setup_wizard.checklist.step.admin_user": "创建管理员账号",
+  "hrm.setup_wizard.checklist.step.completion": "完成初始化并核验"
 }
