@@ -2,6 +2,8 @@ import React, { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppShell } from '../components/redesign/layout/AppShell';
 import type { NavItem } from '../components/redesign/layout/SideRail';
+import { usePermission } from '../hooks/usePermission';
+import { MENU_PERMISSIONS } from '../config/menuPermissions';
 import {
   useUnreadNotificationCount,
   useSetUnreadNotificationCount,
@@ -843,6 +845,8 @@ const footerItems: NavItem[] = [];
 export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWidth = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  // P1-4 前端权限守卫：侧边栏菜单按权限过滤（无权限的模块组/入口不展示）
+  const { checkPermission } = usePermission();
 
   // P5: 未读数轮询写入 store，消息中心徽标实时跟随；无未读时徽标自动隐藏
   const unreadCount = useUnreadNotificationCount();
@@ -867,13 +871,21 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
     };
   }, [setUnread]);
 
-  // 将未读数注入消息中心菜单项徽标，0/undefined 时不展示
+  // 将未读数注入消息中心菜单项徽标，0/undefined 时不展示；
+  // P1-4：菜单按权限过滤（无权限映射的 path 恒显示；有映射而用户无权限则整组/项隐藏）
   const items = useMemo<NavItem[]>(
     () =>
-      navItems.map((item) =>
-        item.id === 'im' ? { ...item, badge: unreadCount > 0 ? unreadCount : undefined } : item
-      ),
-    [unreadCount]
+      navItems
+        .filter(
+          (item) =>
+            !item.path ||
+            !MENU_PERMISSIONS[item.path] ||
+            checkPermission(MENU_PERMISSIONS[item.path])
+        )
+        .map((item) =>
+          item.id === 'im' ? { ...item, badge: unreadCount > 0 ? unreadCount : undefined } : item
+        ),
+    [unreadCount, checkPermission]
   );
 
   // 根据当前路径计算激活的导航项（支持子菜单）
