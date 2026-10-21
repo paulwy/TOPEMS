@@ -5051,6 +5051,51 @@
       "message_export_success": "导出成功",
       "message_trial_balanced": "试算平衡",
       "message_trial_unbalanced": "试算不平衡，请检查凭证"
+    },
+    "nav": {
+      "finance-currency": "币种管理",
+      "finance-period": "会计期间"
+    },
+    "currency_page": {
+      "title": "币种管理",
+      "add": "新增",
+      "search_placeholder": "搜索代码/名称",
+      "col_code": "代码",
+      "col_name": "名称",
+      "col_symbol": "符号",
+      "col_rate": "汇率",
+      "col_status": "状态",
+      "col_actions": "操作",
+      "active": "启用",
+      "inactive": "停用",
+      "add_title": "新增币种",
+      "edit_title": "编辑币种",
+      "created": "币种已创建",
+      "create_failed": "创建失败",
+      "updated": "币种已更新",
+      "update_failed": "更新失败",
+      "deleted": "币种已删除",
+      "delete_failed": "删除失败",
+      "invalid_form": "请填写代码/名称且汇率合法"
+    },
+    "period_page": {
+      "title": "会计期间",
+      "search_placeholder": "搜索期间(如 2026-10)",
+      "col_period": "期间",
+      "col_year": "年份",
+      "col_month": "月份",
+      "col_status": "状态",
+      "col_actions": "操作",
+      "status_open": "开账",
+      "status_closed": "已关账",
+      "status_year_end": "已年结",
+      "action_open": "开账",
+      "action_close": "关账",
+      "action_close-income": "关结转损益",
+      "action_year-end": "年结",
+      "confirm_text": "确认对期间 {{period}} 执行该操作？",
+      "action_done": "操作成功",
+      "action_failed": "操作失败"
     }
   },
   "mes": {

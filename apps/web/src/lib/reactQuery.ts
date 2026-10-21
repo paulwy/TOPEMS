@@ -560,6 +560,7 @@ export const QUERY_KEYS = {
     APPROVAL_CONFIG: ['finance', 'approval-config'],
     ACCOUNTS: ['finance', 'accounts'],
     PERIODS: ['finance', 'periods'],
+    CURRENCIES: ['finance', 'currencies'],
     COUNTERPARTIES: ['finance', 'counterparties'],
     VOUCHER_TEMPLATES: ['finance', 'voucher-templates'],
     AUX_ACCOUNTS: ['finance', 'aux-accounts'],

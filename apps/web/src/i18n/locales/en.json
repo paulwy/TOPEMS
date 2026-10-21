@@ -5045,6 +5045,51 @@
       "message_export_success": "Exported successfully",
       "message_trial_balanced": "Trial balance is balanced",
       "message_trial_unbalanced": "Trial balance is not balanced, please check vouchers"
+    },
+    "nav": {
+      "finance-currency": "Currencies",
+      "finance-period": "Accounting Periods"
+    },
+    "currency_page": {
+      "title": "Currencies",
+      "add": "Add",
+      "search_placeholder": "Search code/name",
+      "col_code": "Code",
+      "col_name": "Name",
+      "col_symbol": "Symbol",
+      "col_rate": "Rate",
+      "col_status": "Status",
+      "col_actions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive",
+      "add_title": "Add Currency",
+      "edit_title": "Edit Currency",
+      "created": "Currency created",
+      "create_failed": "Create failed",
+      "updated": "Currency updated",
+      "update_failed": "Update failed",
+      "deleted": "Currency deleted",
+      "delete_failed": "Delete failed",
+      "invalid_form": "Fill code/name and a valid rate"
+    },
+    "period_page": {
+      "title": "Accounting Periods",
+      "search_placeholder": "Search period (e.g. 2026-10)",
+      "col_period": "Period",
+      "col_year": "Year",
+      "col_month": "Month",
+      "col_status": "Status",
+      "col_actions": "Actions",
+      "status_open": "Open",
+      "status_closed": "Closed",
+      "status_year_end": "Year-End Closed",
+      "action_open": "Open",
+      "action_close": "Close",
+      "action_close-income": "Close Income",
+      "action_year-end": "Year-End Close",
+      "confirm_text": "Confirm this action on period {{period}}?",
+      "action_done": "Done",
+      "action_failed": "Failed"
     }
   },
   "mes": {

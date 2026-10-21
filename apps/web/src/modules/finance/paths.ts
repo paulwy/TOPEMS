@@ -11,6 +11,8 @@ export const FINANCE_PATHS = {
   approvalConfig: '/finance/approval-config',
   invoices: '/finance/invoices',
   tax: '/finance/tax',
+  currency: '/finance/currency',
+  period: '/finance/period',
   expense: '/finance/expense',
   cost: '/finance/cost',
   assets: '/finance/assets',

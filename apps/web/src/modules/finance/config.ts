@@ -376,6 +376,36 @@ export const financeModuleConfig: RouteModuleConfig = {
       action: 'read',
     } satisfies RouteConfigV2<FinanceTaxPageProps>,
     {
+      path: FINANCE_PATHS.currency,
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceCurrencyPage'),
+        'FinanceCurrencyPage'
+      ),
+      module: 'finance',
+      code: 'finance-currency',
+      title: i18n.t('finance.nav.finance-currency'),
+      titleKey: 'finance.nav.finance-currency',
+      template: 'list',
+      group: 'master',
+      requiredPermissions: ['finance:currency:read', 'finance:dashboard:read'],
+      action: 'read',
+    } satisfies RouteConfigV2,
+    {
+      path: FINANCE_PATHS.period,
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinancePeriodPage'),
+        'FinancePeriodPage'
+      ),
+      module: 'finance',
+      code: 'finance-period',
+      title: i18n.t('finance.nav.finance-period'),
+      titleKey: 'finance.nav.finance-period',
+      template: 'list',
+      group: 'master',
+      requiredPermissions: ['finance:period:read', 'finance:dashboard:read'],
+      action: 'read',
+    } satisfies RouteConfigV2,
+    {
       path: FINANCE_PATHS.expense,
       element: lazyWithRetry(
         () => import('@/pages/finance/FinanceExpensePage'),
