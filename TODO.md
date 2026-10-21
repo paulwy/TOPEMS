@@ -19,8 +19,8 @@
 - [x] **P1-3 · 自助注册开放无开关**（S1 `cc16d41d8`）：`REGISTER_ENABLED` 默认关（403），开启时新账号 pending 待管理员激活分配角色/租户。
 - [x] **P1-4 · 前端权限守卫** ✅ 闭环（`064287e6f`）：实测 35 个 config.ts **早已全部**有 requiredPermissions 声明（原"0 声明"为过时口径），路由层 ProtectedRoute/ModuleGate 双层守卫已存在；唯一真实缺口 GlobalLayoutV3 侧边栏菜单不过滤——新建 `config/menuPermissions.ts`（34 项 path→模块代表权限码）后渲染层过滤（无映射恒显示、映射无权限整组/项隐藏）；typecheck/eslint 绿。
 - [x] **P1-5 · `/users/me`、自身改密被管理权限保护**，普通用户可能 403；自服务端点改登录即可访问（`62cf693a8`，拆入 `me` 路由组仅校验登录）。
-- [ ] **P1-6 · MES 缺车间/产线/工作中心/班次/工作日历**，工位 `workshop_id` 悬空；补实体 CRUD + 前端页并回填外键。
-- [ ] **P1-7 · QMS 缺结构化检验项/检验方案/抽样方案，LIMS 缺检验项目(analyte)**；补表与 CRUD + 方案配置页。
+- [x] **P1-6 · MES 缺车间/产线/工作中心/班次/工作日历**，工位 `workshop_id` 悬空；补实体 CRUD + 前端页并回填外键。
+- [x] **P1-7 · QMS 缺结构化检验项/检验方案/抽样方案，LIMS 缺检验项目(analyte)**；补表与 CRUD + 方案配置页。
 - [x] **P1-8 · 多表租户隔离**（`52cc3a467`，迁移 `20261020000026`）：gis.geofences/rs.material_tests 补 tenant_id+RLS，关闭 erp.bank_accounts 开放策略，gis 按 claims 过滤落库、rs/erp 按 GUC 落租户、pm 建项目按会话租户；bi/pm 本已有 RLS，wms/mes 无写死 UUID。
 - [ ] **P1-9 · 后端有前端缺的管理页**：MES 产能日历、LIMS 方法分类、CRM 标签、财务会计期间/辅助核算创建、ERP 字典、EHS 危险源列表、GIS 设备注册。
 - [x] **P1-10 · 财务主数据** ✅ 闭环（`78042fe2a` + `6c29a8189`）：币种主表（`finance.core_finance_currencies`，迁移 `20261021000001` 幂等 + 16 行种子 + `20261021000002/00003` 归位）+ 后端 CRUD + 前端币种/期间管理页已落地（BFF 实跑 list(17)/create/search/delete 全 200）；税率面已具备（`finance_v56_tax_*` + FinanceTaxPage）。**科目体系已归并（线C1 `6c29a8189`）**：59 张 finance 表全部归位 finance schema、代码全部收敛到 `finance.core_finance_accounts`、V321 `accounting_subjects` 路由下线（404）、科目/币种/期间/报表 BFF 复验全 200。
