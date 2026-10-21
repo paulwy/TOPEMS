@@ -29,10 +29,13 @@
 
 > **下线执行纪律**（与 BE-08-A 级下线实施同标准）：路由注册行 + handler 函数体 + openapi.rs 同步；执行前逐条复核 handler 复用/前端调用面/api-boundary-gate 拦截；每批 cargo check + grep 零残留 + 快照对比。**本轮仅勾选，不执行下线**——留待业务复核后按批实施。
 
-## 三、待定 150 条（需业务逐条定性，本轮如实标注不擅断）
+## 三、待定 150 条（2026-10-21 已逐条定性 ✅）
 
-判定口径：无 utoipa 注解 + 无 DB 写操作（或仅有只读/动态 SQL 低估风险项）。分布：batch_01(30)/batch_03(71)/batch_07(11)/batch_10(11)/batch_11(10)/batch_04(5)/batch_06(5)/batch_05(3)/batch_02(2)/batch_08(1)/batch_09(1)。
-代表：portal graphql 运维/安全内联闭包、server 纯 GET（nest 前缀丢失待确认）、unified-core 无注解只读 handler、ai dsh/agent 只读系列、finance 结算中心 8 条、crm 销售预测/漏斗系列等（明细见各批 CSV decision=待定 行）。
+判定口径：无 utoipa 注解 + 无 DB 写操作（或仅有只读/动态 SQL 低估风险项）。
+**定性结果：下线 9 / 重构 1 / 保留 140**（规则证据驱动、保守优先，详见 `BE-08-待定150条定性.md`）：
+- **下线 9**：unified-core file.rs 分享/收藏/星标/接收 7 条（NotImplemented 占位 + 零引用）+ pm project-types/service-integrations DELETE 2 条（空 unit 占位）——A 级下线判据同型
+- **重构 1**：finance `GET /api/finance/events/handlers`（占位但文件近期活跃）
+- **保留 140**：测试桩 4（inventory 误捕）+ server 前缀丢失 5（实为 /api/communication）+ real 只读观察 131（静态证据不足以下线，保守保留）
 
 ## 四、349 条出处考证（避免后续对账歧义）
 
@@ -44,5 +47,5 @@
 ## 五、产物与后续
 
 - 本勾选结果已写入 11 批 CSV `decision` 列（保留/待定/下线），可回传业务复核
-- 后续可选动作（均需业务拍板）：① 执行下线 1 条（batch_03 migrations status）；② 待定 150 条逐条定性（保留/重构/下线）；③ 保留 1332 条登记观察
+- 后续动作：① 待定 150 条已定性 ✅（2026-10-21）；② 下线累计 10 条（migrations status 1 + 定性下线 9）待按 BE-08-A 级纪律执行；③ 重构 1 条入 backlog；④ 保留 1472 条登记观察
 - TODO.md「BE-08 349 条勾选」已更新为「✅ BE-08 B 级 1483 条勾选完成（349 为历史笔误，实为 1483）」
