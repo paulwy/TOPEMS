@@ -1,5 +1,6 @@
 //! Middleware module
 
+pub mod anti_replay;
 pub mod audit_log;
 pub mod input_validation;
 pub mod permission;

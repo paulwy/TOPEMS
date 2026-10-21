@@ -537,6 +537,7 @@ async fn main() -> anyhow::Result<()> {
         ws_state: ws_state.clone(),
         http_client,
         rate_limit_middleware,
+        anti_replay_state: std::sync::Arc::new(middleware::anti_replay::AntiReplayState::new()),
         versioning_middleware,
         security_headers_layer,
         compression_middleware,

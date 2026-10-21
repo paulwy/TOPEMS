@@ -15,6 +15,7 @@ mod flow;
 mod iam;
 mod master;
 mod migration;
+mod rate_limit_config;
 // V68.1 A2.1: routes/monitor.rs 旧适配层依赖 modules::monitor（已拆到 svc/monitor），这里不再载入
 // V68.1 A2.2: routes/plugin.rs 适配层依赖 modules::plugin（已拆到 svc/plugin-registry 8096），这里不再载入
 mod contract_stubs;
@@ -169,6 +170,11 @@ pub fn create_routes(
         .nest("/file", file::file_routes(state))
         .merge(master::master_routes(state))
         .merge(feature_flag::feature_flag_routes(state))
+        // 限流/非重放配置管理（前端 admin RateLimitConfigPage 契约 /api/core/iam/v1/rate-limit/config[/anti-replay]）
+        .nest(
+            "/iam/v1",
+            rate_limit_config::rate_limit_config_routes(state),
+        )
         // V514-2: migration 路由此前定义未挂载（migration_routes 未进 merge 链），前端 /api/core/migration/migrations/* 404。
         // 实际路径 = /api/core + /api/migrations/*（register_routes_with_legacy_alias 双轨 /api/core + /api/v1/core）。
         .merge(migration::migration_routes(state))
@@ -263,5 +269,9 @@ pub fn create_routes(
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             handlers::rate_limit_middleware_fn,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            middleware::anti_replay::anti_replay_middleware,
         ))
 }

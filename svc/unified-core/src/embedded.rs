@@ -248,6 +248,9 @@ async fn build_router_inner(
         ws_state: ws_state.clone(),
         http_client,
         rate_limit_middleware,
+        anti_replay_state: std::sync::Arc::new(
+            crate::middleware::anti_replay::AntiReplayState::new(),
+        ),
         versioning_middleware,
         security_headers_layer,
         compression_middleware,

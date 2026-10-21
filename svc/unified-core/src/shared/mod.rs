@@ -31,6 +31,7 @@ use topems_shared_core::{
 };
 use uuid::Uuid;
 
+use crate::middleware::anti_replay::AntiReplayState;
 use crate::middleware::input_validation::InputValidationConfig;
 use crate::middleware::rate_limit::RateLimitMiddleware;
 use crate::middleware::versioning::VersionMiddleware;
@@ -45,6 +46,8 @@ pub struct AppState {
     pub ws_state: Arc<WsState>,
     pub http_client: Client,
     pub rate_limit_middleware: Arc<RateLimitMiddleware>,
+    /// 非重放防护状态（配置可写 + nonce 缓存），供配置端点与中间件共享
+    pub anti_replay_state: Arc<AntiReplayState>,
     pub versioning_middleware: Arc<VersionMiddleware>,
     pub security_headers_layer: Arc<SecurityHeadersLayer>,
     pub compression_middleware: Arc<CompressionMiddleware>,
