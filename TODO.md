@@ -63,8 +63,18 @@
 - [x] **P2 · 动态 Value 通道金额 Decimal（finance 收/付/银 + erp 银行账户）** ✅ 完成（2026-10-20，见下方「批 E9」块）：NEW-P2-2 续。hrm 其余工资面甄别全为 BigDecimal/Decimal/内存报表 DTO，零改动；改 finance `collection/payment_record/payable/receivable` 动态 `sqlx::query` 通道金额读/写为 Decimal（含账龄 SUM 聚合）、erp `bank_accounts.balance`(18,4)；finance 1087、erp 902 passed，check/clippy/fmt 绿。
 - [x] **P2 · tax_v56.rs 连库甄别** ✅ 完成（2026-10-20，见下方「批 E10」块）：六张 `finance_v56_tax_*` 表金额/比率/阈值列全为 double precision，模型 f64 匹配，**非错配、零改动**。
 - [x] **P2 · E11 全局收口反查（srm + scm 主表）** ✅ 部分完成（2026-10-20，见下方「批 E11a/E11b」块）：代码侧反查持久化边界 f64 + 连库核类型；闭环 srm `purchase_orders/supplier_contracts.total_amount`、scm `purchase_orders/purchase_contracts/purchase_requisitions.total_amount`(numeric) f64→Decimal；srm 559、scm 337 passed，check/clippy/fmt 绿；scm 明细/报价与其余 crate 见 E11c 遗留。
+- [x] **mdm P3 · master-data 预留能力 UI 四批次全部落地** ✅ 完成（2026-10-20，见下方「批 M」块）：schema-registry（`883e70146`）/ lineage-v52（`b3620e9c6`）/ mdm-v59 AI 治理（`378f18467`）/ mdm-v55 商业化（`6beaaab27`）四批前后端全部实现并推送，契约 10/15/23 对闭合，typecheck/eslint 绿
 
 ---
+
+## 批 M · mdm P3 预留能力 UI 四批次（2026-10-20）✅ 全部完成
+
+> 排期：`docs/quality/mdm-p3-ui-roadmap-2026-10-20.md`；契约依据：`docs/quality/master-data-contract-review-2026-10-20.md` B1-B4。四批代码均于 2026-10-20 落地（早于排期文档状态记录），后续补验证与状态回写（roadmap/活文档 v1.10）。
+
+- **批次 1 schema-registry**（`883e70146` + `f122d1b98`/`8ab52a995` 修复 + `4bf7e049c` 冒烟清零）：后端 `/schema-registry` 10 路由挂载，前端 wrapper 10 方法 + SchemaRegistryPage（列表/新建/编辑/动态数据 CRUD）+ 路由/菜单/i18n 38 key；typecheck/eslint 绿。
+- **批次 2 lineage-v52**（`b3620e9c6`）：后端 15 路由（register/graph/upstream/downstream/export/delete/impact×4/propagate/rules×2/log/rollback），前端 LineageAnalyticsPage（926 行，v60 血缘图底座 + 影响分析/传播/回滚）+ i18n 66 key。
+- **批次 3 mdm-v59 AI 治理**（`378f18467`）：后端 23 路由（governance/matching/classifier），前端 AiGovernancePage（1036 行，Tabs 三子视图：治理建议/匹配裁决/分类管理）+ i18n 68 key。
+- **批次 4 mdm-v55 商业化**（`6beaaab27`）：后端 `/mdm-v55` 路由，前端 CommercialConsolePage（1056 行，4 tab：产品/订阅/账单/SLA）+ i18n 全。
 
 ## 批 E1 · eslint 回绿（prettier 格式 + archive ignore）（2026-10-19）✅ 完成
 

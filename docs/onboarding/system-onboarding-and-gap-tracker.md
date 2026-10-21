@@ -340,6 +340,20 @@
 
 ---
 
+## 6. mdm P3 预留能力 UI 批次落地记录（2026-10-20 全部完结）
+
+> 依据排期：`docs/quality/mdm-p3-ui-roadmap-2026-10-20.md`（4 个能力域分 4 批）。全部批次代码于 2026-10-20 落地（早于排期文档状态记录），本档同步完结状态。
+
+| 批次 | 能力域 | 实现提交 | 落地内容 |
+|---|---|---|---|
+| 1 | B4 schema-registry 元数据驱动动态 API | `883e70146`（+`f122d1b98`/`8ab52a995` 修复、`4bf7e049c` 冒烟清零） | 后端 `/schema-registry` 10 路由 + 前端 wrapper 10 方法 + SchemaRegistryPage；i18n 38 key，typecheck/eslint 绿 |
+| 2 | B1 lineage-v52 血缘分析/传播/回滚 | `b3620e9c6` | 后端 `/lineage-v52` 15 路由 + LineageAnalyticsPage（926 行工作台，v60 血缘图底座）；i18n 66 key |
+| 3 | B3 mdm-v59 AI 治理/匹配/分类 | `378f18467` | 后端 `/mdm-v59` 23 路由 + AiGovernancePage（1036 行，Tabs 三子视图）；i18n 68 key |
+| 4 | B2 mdm-v55 API 商业化/计费/SLA | `6beaaab27` | 后端 `/mdm-v55` 路由 + CommercialConsolePage（1056 行，4 tab 控制台）；i18n 全 |
+
+验证：全批次 typecheck / eslint 绿，契约分别 10/15/23 对闭合（契约审查报告 B1-B4）；本地 origin 同步已推送。
+
+---
 ## 附：取证文件索引（原始证据）
 
 - 组织底座与向导：`agents/s_000EleGk8qx/artifacts/findings-org-setup.md`
@@ -365,6 +379,7 @@
 | 2026-10-21 | v1.6 | `62cf693a8` | **P1-5**：9 个自服务端点（GET/PUT `/users/me`、自身权限、自身偏好、改密、头像、自身权限校验、`/permissions/my-permissions`）拆入独立 `me` 路由组，仅由全局 `auth_middleware` 校验登录（无 token→401），不再要求 `iam:read`/`admin:iam:write`；管理类增删改/角色/权限/岗位仍守原权限层；身份一律取 `Claims.sub`，不接受 body/路径指定他人；pre-commit 全绿，lib 536 测试通过 |
 | 2026-10-21 | v1.7 | `cc16d41d8`/`7aff8b852`/`e1980e95d`/`f23f543db` | **S 安全收口批**：S1/P1-3 `REGISTER_ENABLED` 默认关、开放时新账号 pending 待激活；S2 首启 admin `must_change_password`、登录下发旗标、自身改密清除 + `ADMIN_INITIAL_PASSWORD` 声明（后端硬拦截/前端跳转留 P1-4）；S3/P2-6 DEV 旁路 prod 判定覆盖 RUST_ENV/ENV 并强化告警；S4/P2-9 停用孤儿脚本 admin123 播种并标注；P2-2 向导租户归属并入 F 批随 P1-1 统一 |
 | 2026-10-21 | v1.8 | 本地待验（未推送） | **F 批后端首启闭环（1–2）+ 实机验证**：P1-1 `setup/complete` 落 completion 初始化标记、汇总公司/部门/岗位数并核验 admin 是否绑定 IAM 账号，未绑定告警；角色/权限归 IAM 建号端点，hrm 不跨服务直写；P2-3 部门/岗位批量步前置全量校验、全成功才提交，DB 错误整批回滚；P2-4 岗位步补批次重名/重码、库内同名、部门归属存在性校验（应用层孤儿防护），硬 DB FK 待清孤儿后另立迁移。**顺手补漏**：名称≤255/编码≤50 前置校验直接 400（不再落 DB 超长 500），前端 `CompleteInitResponse` 补 `admin_bound/summary` 类型。实机 10+ 用例（重名/重码/空名/坏部门/门控/绑定分支/DB 错误整批回滚/超长 400）全通过；hrm 293 passed、fmt/eslint 绿 |
-| 2026-10-21 | v1.9 | `4d87064ea`/`958e0cc9a`/`52cc3a467`/`2def461ff`/`793a3f4b2` | **优先级连做五项**：P1-2 部门/岗位 10 handler 补读/写 `check_permission`；P2-1 主页 `InitGate` 未完成时渲染五步初始化 checklist CTA（完成/失败回退 dashboard）；P1-8 迁移 `20261020000026` 为 gis.geofences/rs.material_tests 补 tenant_id+RLS、关闭 erp.bank_accounts 开放策略，gis 按 claims 过滤落库、rs/erp 按 GUC 落租户、pm 建项目按会话租户（核查 bi/pm 已有 RLS，wms/mes 无写死 UUID）；P2-2 向导六端点 org/进度归属按会话租户、首启超管回退默认 org；P2-4 DB FK 迁移 `20261020000027` 先解绑孤儿再建 `positions→departments ON DELETE SET NULL`。gis 155 / rd 155 / erp 902 / pm 497 / hrm 293 测试绿，pre-commit 全绿 |
+| 2026-10-21 | v1.9 | `4d87064ea`/`958e0cc9a`/`52cc3a467`/`2def461ff`/`793a3f4b2` | **优先级连做五项**：P1-2 部门/岗位 10 handler
+| 2026-10-21 | v1.10 | `883e70146`/`b3620e9c6`/`378f18467`/`6beaaab27` | **mdm P3 预留能力 UI 四批次全部完结**（schema-registry / lineage-v52 / mdm-v59 AI 治理 / mdm-v55 商业化，详见 §6） | 补读/写 `check_permission`；P2-1 主页 `InitGate` 未完成时渲染五步初始化 checklist CTA（完成/失败回退 dashboard）；P1-8 迁移 `20261020000026` 为 gis.geofences/rs.material_tests 补 tenant_id+RLS、关闭 erp.bank_accounts 开放策略，gis 按 claims 过滤落库、rs/erp 按 GUC 落租户、pm 建项目按会话租户（核查 bi/pm 已有 RLS，wms/mes 无写死 UUID）；P2-2 向导六端点 org/进度归属按会话租户、首启超管回退默认 org；P2-4 DB FK 迁移 `20261020000027` 先解绑孤儿再建 `positions→departments ON DELETE SET NULL`。gis 155 / rd 155 / erp 902 / pm 497 / hrm 293 测试绿，pre-commit 全绿 |
 
 > 后续每次闭环/修订在此追加一行；完成 P0/P1 后同步把 §3 对应行状态改为已具备并勾选 TODO.md。
