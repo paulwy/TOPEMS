@@ -399,8 +399,10 @@ pre-push:
 
     # [2026-10-22 NEW Gate DP] 业务域运行态探活（与 contract-gate 静态挂载互补）
     # svc crate utoipa path → BFF GET 全路径 5xx 扫描（缺表/缺列/死锁等运行态缺陷）。
-    # BFF 在线（开发/部署机）严格检查，5xx 阻断推送；BFF 离线（CI/无运行态）SKIP_WARN 不阻断，
-    # 手动 bash scripts/dev/domain-probe.sh 复核。可 --include-verified 连已核销域全扫。
+    # 全量口径：含已核销域（master-data/analytics/ai/plugin-registry/unified-core/server），
+    # ~3100 path；BFF 在线（开发/部署机）严格检查，5xx 阻断推送；BFF 离线（CI/无运行态）
+    # SKIP_WARN 不阻断，手动 bash scripts/dev/domain-probe.sh 复核。
     domain-probe:
       tags: runtime probe
+      timeout: 900s
       run: bash scripts/dev/domain-probe.sh

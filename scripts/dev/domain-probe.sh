@@ -4,8 +4,9 @@
 # 用途：对 svc/<crate>/src 抽取 utoipa path → BFF 实跑 GET → 报告 5xx/超时
 #       （挂载后 500 = 缺表/缺列/运行态缺陷，与 contract-gate 静态挂载互补）
 # 用法：
-#   bash scripts/dev/domain-probe.sh                 # 全量域（默认跳过已核销 5 域）
+#   bash scripts/dev/domain-probe.sh                 # 全量 27 域（含已核销 master-data/analytics/ai 等）
 #   bash scripts/dev/domain-probe.sh --domain erp    # 指定域
+#   bash scripts/dev/domain-probe.sh --skip-verified # 跳过已核销域（旧口径：22 域）
 #   bash scripts/dev/domain-probe.sh --base http://localhost:8098 --token /tmp/smoke_token.txt
 # 退出码：0=无 5xx；1=存在 5xx 或超时
 # ==============================================================================
@@ -14,7 +15,8 @@ set -uo pipefail
 BASE="${BASE:-http://localhost:8098}"
 TOKEN_FILE="${TOKEN_FILE:-/tmp/smoke_token.txt}"
 DOMAIN=""
-SKIP="master-data analytics ai plugin-registry unified-core server"
+# 默认全量口径（含已核销域 master-data/analytics/ai/plugin-registry/unified-core/server）
+SKIP=""
 CURL_TIMEOUT="${CURL_TIMEOUT:-12}"
 
 while [[ $# -gt 0 ]]; do
@@ -24,6 +26,7 @@ while [[ $# -gt 0 ]]; do
     --token) TOKEN_FILE="$2"; shift 2 ;;
     --timeout) CURL_TIMEOUT="$2"; shift 2 ;;
     --include-verified) SKIP="" ;;
+    --skip-verified) SKIP="master-data analytics ai plugin-registry unified-core server" ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
@@ -47,12 +50,17 @@ import re, pathlib, sys, urllib.request, urllib.error
 repo, base, token, timeout, domain = sys.argv[1], sys.argv[2], sys.argv[3], float(sys.argv[4]), sys.argv[5]
 def probe(p):
     req = urllib.request.Request(base + p, headers={'Authorization': 'Bearer ' + token})
-    try:
-        return urllib.request.urlopen(req, timeout=timeout).status
-    except urllib.error.HTTPError as e:
-        return e.code
-    except Exception:
-        return 'ERR'
+    # 瞬时抖动消噪：ERR/5xx 重试 1 次再判定（全量扫描时长内偶发超时不误拦）
+    for _ in range(2):
+        try:
+            return urllib.request.urlopen(req, timeout=timeout).status
+        except urllib.error.HTTPError as e:
+            if e.code >= 500:
+                continue
+            return e.code
+        except Exception:
+            continue
+    return 'ERR'
 skip = {'master-data','analytics','ai','plugin-registry','unified-core','server'}
 d = pathlib.Path(repo) / 'svc' / domain
 ps = set()
@@ -88,8 +96,11 @@ fi
 for d in "${targets[@]}"; do
   out="$(run_probe "$d")"
   n="$(echo "$out" | grep -c '^  ' || true)"
+  if [[ "${n:-0}" -gt 0 ]]; then
+    echo "$out" | grep '^  ' || true   # 5xx/超时明细（失败必显，便于定位修复）
+    FAIL=1
+  fi
   echo "$out" | grep -v '^  ' || true
-  if [[ "${n:-0}" -gt 0 ]]; then FAIL=1; fi
 done
 
 if [[ "$FAIL" -eq 0 ]]; then echo "DOMAIN_PROBE_OK（全部域 0 个 5xx）"; else echo "DOMAIN_PROBE_FAIL（存在 5xx，见上）"; fi

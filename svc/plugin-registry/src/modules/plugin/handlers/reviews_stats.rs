@@ -324,12 +324,8 @@ pub async fn get_plugin_statistics(
 )]
 pub async fn get_review_statistics(
     State(_state): State<AppState>,
-    Path(plugin_code): Path<String>,
 ) -> Json<CoreResponse<ReviewStatistics>> {
-    tracing::info!(
-        "[Plugin] Getting review statistics for plugin: {}",
-        plugin_code
-    );
+    tracing::info!("[Plugin] Getting aggregate review statistics");
 
     let stats = ReviewStatistics {
         plugin_id: uuid::Uuid::nil(),
