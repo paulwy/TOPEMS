@@ -609,43 +609,57 @@ impl GatewayMonitor {
     pub async fn get_dashboard() -> Dashboard {
         let store = get_monitoring_store();
 
-        let metrics = store.metrics.lock().await;
-        let latencies = store.latency_history.lock().await;
-        let error_rates = store.error_rate_history.lock().await;
-        let throughputs = store.throughput_history.lock().await;
-        let connections = store.active_connections.lock().await;
-        let thresholds = store.alert_thresholds.lock().await;
+        // 聚合计算收进块作用域：全部锁 guard 在块尾 drop，避免持锁 await
+        // get_health() 时对同一批 tokio Mutex 重入导致自死锁
+        let (total_metrics, metrics_by_type, avg_latency_p99, avg_error_rate, total_throughput, active_connections, alerts_count) = {
+            let metrics = store.metrics.lock().await;
+            let latencies = store.latency_history.lock().await;
+            let error_rates = store.error_rate_history.lock().await;
+            let throughputs = store.throughput_history.lock().await;
+            let connections = store.active_connections.lock().await;
+            let thresholds = store.alert_thresholds.lock().await;
 
-        let mut metrics_by_type = HashMap::new();
-        for metric in metrics.iter() {
-            *metrics_by_type
-                .entry(metric.metric_type.as_str().to_string())
-                .or_insert(0) += 1;
-        }
+            let mut metrics_by_type = HashMap::new();
+            for metric in metrics.iter() {
+                *metrics_by_type
+                    .entry(metric.metric_type.as_str().to_string())
+                    .or_insert(0) += 1;
+            }
 
-        let avg_latency_p99 = Self::percentile(&latencies, 99.0);
-        let avg_error_rate = if error_rates.is_empty() {
-            0.0
-        } else {
-            error_rates.iter().sum::<f64>() / error_rates.len() as f64
-        };
-        let total_throughput = if throughputs.is_empty() {
-            0.0
-        } else {
-            throughputs.iter().sum::<f64>()
+            let avg_latency_p99 = Self::percentile(&latencies, 99.0);
+            let avg_error_rate = if error_rates.is_empty() {
+                0.0
+            } else {
+                error_rates.iter().sum::<f64>() / error_rates.len() as f64
+            };
+            let total_throughput = if throughputs.is_empty() {
+                0.0
+            } else {
+                throughputs.iter().sum::<f64>()
+            };
+
+            (
+                metrics.len(),
+                metrics_by_type,
+                avg_latency_p99,
+                avg_error_rate,
+                total_throughput,
+                *connections,
+                thresholds.iter().filter(|t| t.enabled).count(),
+            )
         };
 
         let health = Self::get_health().await;
 
         Dashboard {
-            total_metrics: metrics.len(),
+            total_metrics,
             metrics_by_type,
             avg_latency_p99,
             avg_error_rate,
             total_throughput,
-            active_connections: *connections,
+            active_connections,
             health_status: health.status,
-            alerts_count: thresholds.iter().filter(|t| t.enabled).count(),
+            alerts_count,
         }
     }
 

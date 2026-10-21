@@ -115,6 +115,7 @@
 - **批次 4 mdm-v55 商业化**（`6beaaab27`）：后端 `/mdm-v55` 路由，前端 CommercialConsolePage（1056 行，4 tab：产品/订阅/账单/SLA）+ i18n 全。**2026-10-22 环境核销**：同批 2，建产品 200。
 - **其他历史排期项核销（2026-10-22，活文档 v1.25，零代码）**：BI（analytics crate `/api/bi`）核心端点 health/test-sql/query/dashboards 全 200、routes.rs 全路径 0 个 5xx；质量域 quality_v51 21 条 path GET 扫描 0 个 5xx、写端点探针 422/405 非 500、`mdm_quality_*` 6 表已随 v1.24 的 81 张补建覆盖。两域无缺表无 5xx，纯核销。
 - **冻结模块核销（2026-10-22，活文档 v1.26，零代码）**：knowledge_v53（14）/ disaster_v56（23）/ semantic_v57（21）/ versioning_v54（20）/ governance_v58（23）GET 全路径扫描 0 个 5xx、写探针 422 非 500；引用表（mdm_kg_*/mdm_bc_*/mdm_version_*/mdm_governance_*/mdm_maturity_* 等）已随 81 张 mdm_* 补建覆盖。**至此 master-data 全部历史模块实跑核销完成**。
+- **全业务域批量核销 + 探活门禁（2026-10-22，活文档 v1.30）**：新建 `scripts/dev/domain-probe.sh`（svc crate path → GET 全路径 5xx 扫描，--domain/--include-verified 可配）；22 域 ~2500 path 首扫 4 个 5xx 全修复：① erp.asset_categories 缺表 ② finance.reconcile_orders 缺表 ③ erp.bank_accounts 残壳缺 14 列 ④ portal gateway-monitoring/dashboard 持锁 await get_health 自死锁（聚合收块作用域修复）。补建 `database/init/09_erp_finance_wms_schema.sql` + `scripts/dev/ensure-erp-finance-wms-schema.sh`（幂等）。修复后 4 端点 200；**全量复扫 DOMAIN_PROBE_OK 22 域 0 个 5xx**；门禁默认 0 / smoke-live 无真 404。BFF 重启（cargo build -p topems-server）。
 
 ## 批 E1 · eslint 回绿（prettier 格式 + archive ignore）（2026-10-19）✅ 完成
 
