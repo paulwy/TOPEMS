@@ -32,6 +32,8 @@ export const ERP_PATHS = {
   announcement: '/erp/announcement',
   vehicleRequest: '/erp/vehicle-request',
   financialAnalysis: '/erp/financial-analysis',
+  salesOrders: '/erp/sales-orders',
+  inventory: '/erp/inventory',
 } as const;
 export interface DashboardPageProps {}
 
@@ -499,6 +501,38 @@ const financialAnalysisRoute: RouteConfigV2<FinancialAnalysisPageProps> = {
   requiredPermissions: ['erp:financial_analysis:read', 'erp:dashboard:read'],
   action: 'read',
   tier: 'basic',
+};
+
+const erpSalesOrdersRoute: RouteConfigV2<Record<string, never>> = {
+  path: ERP_PATHS.salesOrders,
+  element: lazyWithRetry(
+    () => import('@/pages/erp/ErpSalesOrderRedesignPage'),
+    'ErpSalesOrderRedesignPage'
+  ),
+  module: 'erp',
+  code: 'erp-sales-orders',
+  title: i18n.t('erp.nav.erp-sales-orders'),
+  titleKey: 'erp.nav.erp-sales-orders',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['erp:sales:read'],
+  action: 'read',
+};
+
+const erpInventoryRoute: RouteConfigV2<Record<string, never>> = {
+  path: ERP_PATHS.inventory,
+  element: lazyWithRetry(
+    () => import('@/pages/erp/ErpInventoryRedesignPage'),
+    'ErpInventoryRedesignPage'
+  ),
+  module: 'erp',
+  code: 'erp-inventory',
+  title: i18n.t('erp.nav.erp-inventory'),
+  titleKey: 'erp.nav.erp-inventory',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['erp:inventory:read'],
+  action: 'read',
 };
 
 // ---- 路由配置（供路由系统使用） ----

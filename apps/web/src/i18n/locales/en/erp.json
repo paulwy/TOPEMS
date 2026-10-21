@@ -4415,5 +4415,9 @@
   "erp.demo.inv_cat_drive": "Drives",
   "erp.demo.inv_cat_hmi": "HMI",
   "erp.demo.unit_piece": "pcs",
-  "erp.purchase_order.department.unassigned": "Unassigned"
+  "erp.purchase_order.department.unassigned": "Unassigned",
+  "erp.nav.erp-sales-orders": "Sales Orders",
+  "erp.nav.erp-sales-orders_desc": "Sales Orders",
+  "erp.nav.erp-inventory": "Inventory",
+  "erp.nav.erp-inventory_desc": "Inventory"
 }

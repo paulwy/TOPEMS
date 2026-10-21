@@ -1641,5 +1641,7 @@
   "crm.opportunity_redesign.toast_delete_fail": "Opportunity deletion failed",
   "crm.opportunity_redesign.toast_delete_success": "Opportunity deleted successfully",
   "crm.opportunity_redesign.toast_update_fail": "Opportunity update failed",
-  "crm.opportunity_redesign.toast_update_success": "Opportunity updated successfully"
+  "crm.opportunity_redesign.toast_update_success": "Opportunity updated successfully",
+  "crm.nav.crm-contracts": "Contracts",
+  "crm.nav.crm-contracts_desc": "Contracts"
 }

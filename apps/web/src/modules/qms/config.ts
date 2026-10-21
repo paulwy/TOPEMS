@@ -35,6 +35,8 @@ export const QMS_PATHS = {
   eightDDetail: '/qms/eightd/:id',
   apqpDetail: '/qms/apqp/:id',
   fmeaDetail: '/qms/fmea/:id',
+  eightD: '/qms/eight-d',
+  audit: '/qms/audit',
 } as const;
 
 // ---- V257 P0-1：页面级 Props interface（Frontend 泛型收紧 · 3/15 核心模块首批）----
@@ -673,6 +675,36 @@ export const qmsModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['qms:audit:read', 'qms:dashboard:read'],
       action: 'read',
     } as RouteConfigV2<QmsAuditManagementPageProps>,
+    {
+      path: QMS_PATHS.eightD,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/QmsEightDRedesignPage'),
+        'QmsEightDRedesignPage'
+      ),
+      module: 'qms',
+      code: 'qms-eight-d',
+      title: i18n.t('qms.nav.qms-eight-d'),
+      titleKey: 'qms.nav.qms-eight-d',
+      template: 'list',
+      group: 'business',
+      requiredPermissions: ['qms:read'],
+      action: 'read',
+    } as RouteConfigV2<Record<string, never>>,
+    {
+      path: QMS_PATHS.audit,
+      element: lazyWithRetry(
+        () => import('@/pages/qms/QmsAuditRedesignPage'),
+        'QmsAuditRedesignPage'
+      ),
+      module: 'qms',
+      code: 'qms-audit',
+      title: i18n.t('qms.nav.qms-audit'),
+      titleKey: 'qms.nav.qms-audit',
+      template: 'list',
+      group: 'process',
+      requiredPermissions: ['qms:audit:read'],
+      action: 'read',
+    } as RouteConfigV2<Record<string, never>>,
     {
       path: QMS_PATHS.standards,
       element: lazyWithRetry(

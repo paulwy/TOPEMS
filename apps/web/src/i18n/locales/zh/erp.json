@@ -3575,5 +3575,9 @@
   "erp.demo.inv_cat_drive": "驱动",
   "erp.demo.inv_cat_hmi": "人机界面",
   "erp.demo.unit_piece": "台",
-  "erp.purchase_order.department.unassigned": "未分配"
+  "erp.purchase_order.department.unassigned": "未分配",
+  "erp.nav.erp-sales-orders": "销售订单",
+  "erp.nav.erp-sales-orders_desc": "销售订单",
+  "erp.nav.erp-inventory": "库存管理",
+  "erp.nav.erp-inventory_desc": "库存管理"
 }

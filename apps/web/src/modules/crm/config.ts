@@ -54,6 +54,7 @@ export const CRM_PATHS = {
   recommendation: '/crm/recommendation',
   returns: '/crm/returns',
   returnDetail: '/crm/returns/:id',
+  contracts: '/crm/contracts',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -170,6 +171,22 @@ const salesFunnelRoute: RouteConfigV2<CRMSalesFunnelPageProps> = {
   template: 'kanban',
   group: 'analytics',
   requiredPermissions: ['crm:sales_funnel:read', 'crm:dashboard:read'],
+  action: 'read',
+};
+
+const crmContractsRoute: RouteConfigV2<Record<string, never>> = {
+  path: CRM_PATHS.contracts,
+  element: lazyWithRetry(
+    () => import('@/pages/crm/CrmContractRedesignPage'),
+    'CrmContractRedesignPage'
+  ),
+  module: 'crm',
+  code: 'crm-contracts',
+  title: i18n.t('crm.nav.crm-contracts'),
+  titleKey: 'crm.nav.crm-contracts',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['crm:contract:read'],
   action: 'read',
 };
 

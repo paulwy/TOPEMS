@@ -1588,5 +1588,11 @@
   "wms.demo.creator_zhang": "张三",
   "wms.demo.creator_li": "李四",
   "wms.demo.creator_wang": "王五",
-  "wms.demo.creator_zhao": "赵六"
+  "wms.demo.creator_zhao": "赵六",
+  "wms.nav.wms-inbound-orders": "入库单",
+  "wms.nav.wms-inbound-orders_desc": "入库单",
+  "wms.nav.wms-outbound-orders": "出库单",
+  "wms.nav.wms-outbound-orders_desc": "出库单",
+  "wms.nav.wms-stocktake": "库存盘点",
+  "wms.nav.wms-stocktake_desc": "库存盘点"
 }

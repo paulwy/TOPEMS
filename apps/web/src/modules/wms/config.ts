@@ -76,6 +76,10 @@ export const WMS_PATHS = {
   WmsTransferDetail: '/wms/transfer-orders/:id',
   WmsWavePickDetail: '/wms/wave-picks/:id',
   WmsMovementDetail: '/wms/inventory-movements/:id',
+  inboundOrders: '/wms/inbound-orders',
+  outboundOrders: '/wms/outbound-orders',
+  stocktake: '/wms/stocktake',
+  locations: '/wms/locations',
 } as const;
 
 // ---- 路由配置（供路由系统使用） ----
@@ -234,6 +238,57 @@ const wmsStockTakeDetailRoute: RouteConfigV2<WmsStockTakeDetailPageProps> = {
   template: 'detail',
   group: 'business',
   requiredPermissions: ['wms:stocktake:read'],
+  action: 'read',
+};
+const wmsInboundOrdersRoute: RouteConfigV2<Record<string, never>> = {
+  path: WMS_PATHS.inboundOrders,
+  element: lazyWithRetry(() => import('@/pages/wms/WmsInboundOrderPage'), 'WmsInboundOrderPage'),
+  module: 'wms',
+  code: 'wms-inbound-orders',
+  title: i18n.t('wms.nav.wms-inbound-orders'),
+  titleKey: 'wms.nav.wms-inbound-orders',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['wms:inbound:read'],
+  action: 'read',
+};
+
+const wmsOutboundOrdersRoute: RouteConfigV2<Record<string, never>> = {
+  path: WMS_PATHS.outboundOrders,
+  element: lazyWithRetry(() => import('@/pages/wms/WmsOutboundOrderPage'), 'WmsOutboundOrderPage'),
+  module: 'wms',
+  code: 'wms-outbound-orders',
+  title: i18n.t('wms.nav.wms-outbound-orders'),
+  titleKey: 'wms.nav.wms-outbound-orders',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['wms:outbound:read'],
+  action: 'read',
+};
+
+const wmsStocktakeRoute: RouteConfigV2<Record<string, never>> = {
+  path: WMS_PATHS.stocktake,
+  element: lazyWithRetry(() => import('@/pages/wms/WmsStocktakePage'), 'WmsStocktakePage'),
+  module: 'wms',
+  code: 'wms-stocktake',
+  title: i18n.t('wms.nav.wms-stocktake'),
+  titleKey: 'wms.nav.wms-stocktake',
+  template: 'list',
+  group: 'business',
+  requiredPermissions: ['wms:stocktake:read'],
+  action: 'read',
+};
+
+const wmsLocationsRoute: RouteConfigV2<Record<string, never>> = {
+  path: WMS_PATHS.locations,
+  element: lazyWithRetry(() => import('@/pages/wms/WmsLocationPage'), 'WmsLocationPage'),
+  module: 'wms',
+  code: 'wms-locations',
+  title: i18n.t('wms.nav.wms-locations'),
+  titleKey: 'wms.nav.wms-locations',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['wms:location:read'],
   action: 'read',
 };
 

@@ -2134,5 +2134,9 @@
   "qms.inspectionStandard.saveSuccess": "保存成功",
   "qms.inspectionStandard.saveFailed": "保存失败，请检查输入",
   "qms.inspectionStandard.deleteSuccess": "删除成功",
-  "qms.inspectionStandard.deleteFailed": "删除失败"
+  "qms.inspectionStandard.deleteFailed": "删除失败",
+  "qms.nav.qms-eight-d": "8D 报告",
+  "qms.nav.qms-eight-d_desc": "8D 报告",
+  "qms.nav.qms-audit": "质量审核",
+  "qms.nav.qms-audit_desc": "质量审核"
 }

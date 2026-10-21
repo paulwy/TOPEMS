@@ -3613,5 +3613,9 @@
   "qms.inspectionStandard.saveSuccess": "Saved successfully",
   "qms.inspectionStandard.saveFailed": "Save failed, please check input",
   "qms.inspectionStandard.deleteSuccess": "Deleted successfully",
-  "qms.inspectionStandard.deleteFailed": "Delete failed"
+  "qms.inspectionStandard.deleteFailed": "Delete failed",
+  "qms.nav.qms-eight-d": "8D Report",
+  "qms.nav.qms-eight-d_desc": "8D Report",
+  "qms.nav.qms-audit": "Quality Audit",
+  "qms.nav.qms-audit_desc": "Quality Audit"
 }

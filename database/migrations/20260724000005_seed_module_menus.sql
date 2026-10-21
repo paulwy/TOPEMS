@@ -4,7 +4,7 @@
 
 -- Menu groups for 财务管理
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('finance_analytics', '财务管理分析', 'BarChart3', 9),
     ('finance_business', '财务管理业务', 'Briefcase', 7),
@@ -18,7 +18,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 财务管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('finance-reports', '财务报表', 'FileSpreadsheet', 1, '/finance/reports', 'finance:report:read', 'finance_analytics'),
     ('finance-opening-balance', '期初余额', 'CircleDot', 2, '/finance/opening-balance', 'finance:opening_balance:read', 'finance_analytics'),
@@ -38,7 +38,7 @@ FROM (VALUES
     ('finance-tax', '税务管理', 'FileCheck', 3, '/finance/tax', 'finance:tax:read', 'finance_process'),
     ('finance-cost', '成本管理', 'BarChart3', 4, '/finance/cost', 'finance:cost:read', 'finance_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -52,7 +52,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 生产执行
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('mes_analytics', '生产执行分析', 'BarChart3', 11),
     ('mes_business', '生产执行业务', 'Briefcase', 9),
@@ -66,7 +66,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 生产执行
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('mes-production-kanban', '生产看板', 'LayoutGrid', 1, '/mes/production-kanban', 'mes:kanban:read', 'mes_analytics'),
     ('mes-production-record', '生产记录', 'ScrollText', 2, '/mes/production-record', 'mes:production_record:read', 'mes_analytics'),
@@ -94,7 +94,7 @@ FROM (VALUES
     ('mes-traceability', '质量追溯', 'Search', 7, '/mes/traceability', 'mes:traceability:read', 'mes_process'),
     ('mes-aps-scheduling', 'APS高级排程', 'Brain', 8, '/mes/aps-scheduling', 'mes:production_schedule:read', 'mes_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -108,7 +108,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 人力资源
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('hrm_analytics', '人力资源分析', 'BarChart3', 8),
     ('hrm_business', '人力资源业务', 'Briefcase', 6),
@@ -122,7 +122,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 人力资源
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('hrm-reports', '统计报表', 'BarChart3', 1, '/hrm/reports', 'hrm:report:read', 'hrm_analytics'),
     ('hrm-overview', '数据概览', 'PieChart', 2, '/hrm/overview', 'hrm:read', 'hrm_analytics'),
@@ -141,7 +141,7 @@ FROM (VALUES
     ('hrm-training', '培训管理', 'GraduationCap', 6, '/hrm/training', 'hrm:training:read', 'hrm_process'),
     ('hrm-performance', '绩效管理', 'Trophy', 7, '/hrm/performance', 'hrm:performance:read', 'hrm_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -155,7 +155,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 产品数据
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('pdm_analytics', '产品数据分析', 'BarChart3', 16),
     ('pdm_business', '产品数据业务', 'Briefcase', 14),
@@ -169,7 +169,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 产品数据
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('pdm-stats', '统计分析', 'BarChart3', 1, '/pdm/stats', 'pdm:stats:read', 'pdm_analytics'),
     ('pdm-product', '产品管理', 'Box', 1, '/pdm/product', 'pdm:product:read', 'pdm_business'),
@@ -188,7 +188,7 @@ FROM (VALUES
     ('pdm-version', '版本管理', 'Tag', 1, '/pdm/version', 'pdm:version:read', 'pdm_process'),
     ('pdm-change', '变更管理', 'RefreshCw', 2, '/pdm/change', 'pdm:change:read', 'pdm_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -202,7 +202,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 仓储管理
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('wms_analytics', '仓储管理分析', 'BarChart3', 15),
     ('wms_business', '仓储管理业务', 'Briefcase', 13),
@@ -216,7 +216,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 仓储管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('wms-items', '库存查询', 'Package', 1, '/wms/inventory', 'wms:inventory:read', 'wms_analytics'),
     ('wms-inventory-report', '库存报表', 'BarChart3', 2, '/wms/inventory-report', 'wms:report:read', 'wms_analytics'),
@@ -235,7 +235,7 @@ FROM (VALUES
     ('wms-inventory-check', '库存盘点', 'ClipboardCheck', 6, '/wms/stock-take', 'wms:inventory_check:read', 'wms_process'),
     ('wms-replenishment', '补货管理', 'RefreshCw', 7, '/wms/replenishment', 'wms:replenishment:read', 'wms_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -249,7 +249,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 安全环保
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('ehs_analytics', '安全环保分析', 'BarChart3', 13),
     ('ehs_business', '安全环保业务', 'Briefcase', 11),
@@ -263,7 +263,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 安全环保
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('ehs-environment', '环境监测', 'Leaf', 1, '/ehs/environment', 'ehs:environment:read', 'ehs_analytics'),
     ('ehs-check', '安全检查', 'ClipboardCheck', 1, '/ehs/check', 'ehs:check:read', 'ehs_business'),
@@ -280,7 +280,7 @@ FROM (VALUES
     ('ehs-training', '培训管理', 'GraduationCap', 2, '/ehs/training', 'ehs:training:read', 'ehs_process'),
     ('ehs-drill', '应急演练', 'LifeBuoy', 3, '/ehs/drill', 'ehs:drill:read', 'ehs_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -294,7 +294,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 实验室管理
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('lims_analytics', '实验室管理分析', 'BarChart3', 14),
     ('lims_business', '实验室管理业务', 'Briefcase', 12),
@@ -308,7 +308,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 实验室管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('lims-uncertainty', '不确定度', 'Activity', 1, '/lims/uncertainty', 'lims:uncertainty:read', 'lims_analytics'),
     ('lims-inspection-result', '检验结果', 'FileCheck', 2, '/lims/inspection-result', 'lims:result:read', 'lims_analytics'),
@@ -325,7 +325,7 @@ FROM (VALUES
     ('lims-test-method', '测试方法', 'FileText', 1, '/lims/test-method', 'lims:test_method:read', 'lims_settings'),
     ('lims-barcode', '条码管理', 'Barcode', 2, '/lims/barcode', 'lims:barcode:read', 'lims_settings')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -339,7 +339,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 客户关系
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('crm_analytics', '客户关系分析', 'BarChart3', 10),
     ('crm_business', '客户关系业务', 'Briefcase', 8),
@@ -353,7 +353,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 客户关系
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('crm-recommendation', '智能推荐', 'Sparkles', 1, '/crm/recommendation', 'crm:recommendation:read', 'crm_analytics'),
     ('crm-customers', '客户管理', 'UserCircle', 1, '/crm/customers', 'crm:customer:read', 'crm_business'),
@@ -368,7 +368,7 @@ FROM (VALUES
     ('crm-sales-forecast', '销售预测', 'BarChart3', 2, '/crm/sales-forecast', 'crm:forecast:read', 'crm_process'),
     ('crm-billing', '计费管理', 'CreditCard', 3, '/crm/billing', 'crm:billing:read', 'crm_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -382,7 +382,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 质量管理
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('qms_analytics', '质量管理分析', 'BarChart3', 12),
     ('qms_business', '质量管理业务', 'Briefcase', 10),
@@ -396,7 +396,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 质量管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('qms-spc', 'SPC统计', 'TrendingUp', 1, '/qms/spc', 'qms:spc:read', 'qms_analytics'),
     ('qms-quality-cost', '质量成本', 'Wallet', 2, '/qms/quality-cost', 'qms:quality_cost:read', 'qms_analytics'),
@@ -410,7 +410,7 @@ FROM (VALUES
     ('qms-fmea', 'FMEA分析', 'AlertTriangle', 3, '/qms/fmea', 'qms:fmea:read', 'qms_process'),
     ('qms-eightd', '8D报告', 'FileCheck', 4, '/qms/eightd', 'qms:eightd:read', 'qms_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -424,7 +424,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 供应链管理
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('scm_analytics', '供应链管理分析', 'BarChart3', 13),
     ('scm_business', '供应链管理业务', 'Briefcase', 11),
@@ -438,7 +438,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 供应链管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('scm-overview', '供应链概览', 'PieChart', 1, '/scm/overview', 'scm:read', 'scm_analytics'),
     ('scm-inventory-turnover', '库存周转', 'TrendingUp', 2, '/scm/inventory-turnover', 'scm:inventory_turnover:read', 'scm_analytics'),
@@ -456,7 +456,7 @@ FROM (VALUES
     ('scm-mrp-suggestion', 'MRP建议', 'Lightbulb', 5, '/scm/mrp-suggestion', 'scm:mrp_suggestion:read', 'scm_process'),
     ('scm-purchase-contract', '采购合同', 'FileText', 6, '/scm/purchase-contract', 'scm:contract:read', 'scm_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -470,7 +470,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 供应商关系
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('srm_analytics', '供应商关系分析', 'BarChart3', 17),
     ('srm_business', '供应商关系业务', 'Briefcase', 15),
@@ -485,7 +485,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 供应商关系
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('srm-evaluation', '供应商评估', 'Star', 1, '/srm/evaluation', 'srm:evaluation:read', 'srm_analytics'),
     ('srm-performance', '绩效分析', 'TrendingUp', 2, '/srm/performance', 'srm:performance:read', 'srm_analytics'),
@@ -502,7 +502,7 @@ FROM (VALUES
     ('srm-quotation', '报价管理', 'FileText', 3, '/srm/quotation', 'srm:quotation:read', 'srm_process'),
     ('srm-scoring-dimension', '评分维度', 'Target', 1, '/srm/scoring-dimension', 'srm:evaluation:read', 'srm_settings')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -516,7 +516,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 报表中心
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('report_business', '报表中心业务', 'Briefcase', 7),
     ('report_overview', '报表中心概览', 'LayoutDashboard', 6),
@@ -530,7 +530,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 报表中心
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('report-list', '报表列表', 'List', 1, '/report/list', 'report:read', 'report_business'),
     ('report-design', '报表设计', 'Wand2', 2, '/report/design', 'report:design:write', 'report_business'),
@@ -541,7 +541,7 @@ FROM (VALUES
     ('report-subscription', '报表订阅', 'Bell', 2, '/report/subscription', 'report:subscription:read', 'report_process'),
     ('report-template', '模板管理', 'FolderKanban', 1, '/report/template', 'report:template:read', 'report_settings')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
@@ -555,7 +555,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu groups for 项目管理
 INSERT INTO core_menu_groups (id, code, name, icon, sort_order, status, tenant_id)
-SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000000'
+SELECT gen_random_uuid(), v.code, v.name, v.icon, v.sort_order, 'active', '00000000-0000-0000-0000-000000000001'
 FROM (VALUES
     ('pm_analytics', '项目管理分析', 'BarChart3', 16),
     ('pm_business', '项目管理业务', 'Briefcase', 14),
@@ -569,7 +569,7 @@ ON CONFLICT (tenant_id, code) DO UPDATE SET
 
 -- Menu items for 项目管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
-SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
+SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
     ('pm-reports', '项目报表', 'BarChart3', 1, '/pm/reports', 'pm:report:read', 'pm_analytics'),
     ('pm-projects', '项目列表', 'FolderKanban', 1, '/pm/projects', 'pm:project:read', 'pm_business'),
@@ -578,7 +578,7 @@ FROM (VALUES
     ('pm-resources', '资源管理', 'Users', 1, '/pm/resources', 'pm:resource:read', 'pm_process'),
     ('pm-templates', '模板管理', 'LayoutTemplate', 2, '/pm/templates', 'pm:template:read', 'pm_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
-JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000000'
+JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     path = EXCLUDED.path,
