@@ -42,5 +42,7 @@
 
 ## 状态
 
-- [x] 批次 1 已排期（本期实施）
-- [ ] 批次 2-4 待按批次推进（每批独立 commit/push）
+- [x] 批次 1 schema-registry **已完成**（2026-10-20 `883e70146` feat(master) 实现 + `f122d1b98`/`8ab52a995` 后端修复 + `4bf7e049c` 冒烟清零）：后端 10 路由已挂载（`mod.rs` /schema-registry），前端 wrapper 10 方法 + SchemaRegistryPage（列表/新建/编辑/动态数据 CRUD）+ 路由/菜单/i18n zh/en 38 key 齐全；typecheck/eslint 绿，契约 10 对闭合
+- [ ] 批次 2 lineage-v52（待排）
+- [ ] 批次 3 mdm-v59 AI 治理（待排）
+- [ ] 批次 4 mdm-v55 商业化（待排，依赖计费口径确认）
