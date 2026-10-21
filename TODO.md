@@ -59,7 +59,7 @@
 | 批 4 ✅ | P1-9 其余管理页：MES 产能日历 / LIMS 方法分类 / CRM 标签 / ERP 字典 / EHS 危险源 / GIS 设备注册（`cdeeef76b`） | 批 2 产能日历相关 |
 | 批 5 | P2-5 路由清理（`common.ts` 10 处重复注册 + 9 孤儿路由 + `/settings` 死链 + BackupPage 无引用）+ P2-7 菜单种子 tenant 错位 | 线 B 权限声明后（避免再覆盖） |
 | 批 6 | P2-8 财务默认科目/期间按新租户补播 + P2-10 技术债（roles.rs 空桩 / LoginFormV2 / authStore / OpenAPI 双块） | ✅ 完成（`fb944841d`）：P2-8 迁移 `20261021000004`（幂等函数 `finance.bootstrap_defaults` + 存量 30 租户补播）+ `POST /api/finance/bootstrap` 播种 API（BFF 实跑 200 幂等）；P2-10 roles.rs 标注 DEPRECATED、LoginFormV2 死代码删除（含 index re-export + i18n 68 key）、authStore 旧版标注废弃 + 5 读取方迁移 localStorage/useAuth、OpenAPI 双块实勘不存在核销 |
-| 批 7 | P2-11 公共主数据域（物料目录 / UOM / 税率 / 币种 / 样品 → master-data 承接规划） | 线 C 币种/税率落地后 |
+| 批 7 ✅ | P2-11 公共主数据域：物料目录 / UOM / 样品 由 master-data 承接（`143268b49`；币种/税率已由批 6/线 C 落地） | ✅ 完成：迁移 `20261021000010` 建 master_data.materials/uoms/samples 三表 + schema_defense 4→7；后端三实体全 CRUD（list 动态过滤/搜索分页/COALESCE 局部更新/软删/locale CASE）；前端 master 模块 PublicMasterDataPage 3 Tab + route/nav/i18n zh/en；BFF 冒烟 create/update/delete/list 全 200。门禁：glossary-verify 拦 en deleteFailed 译法（改 Delete failed 后通过）；pre-push 全绿已推 origin/main |
 
 ## 下一步工作规划（2026-10-18）📌 待办，源自 5 方向全面评估报告 artifacts/TOPEMS-下一步工作规划报告-2026-10-18.md
 
