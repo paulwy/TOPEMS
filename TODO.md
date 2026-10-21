@@ -362,7 +362,7 @@
 - **NEW-P2-7（请求路径 panic）核销：已在批 E5（#60）闭环**。`lineage_v52.rs` analysis_from_row 返回 Result→map_err 不 panic；`business_tools/mod.rs` 改 `if let Some(data)` 不 unwrap；现网无 panic 字面量、无 `data.as_ref().unwrap()`。审计旧行号（:59/65/:496）已漂移，勿据旧号重找。
 - **本批新修 · H-8**：`docs/project/roadmap.md` 归档横幅真相源由已归档的 `docs/project/TODO.md` 改指根 `TODO.md`。
 - **本批新修 · H-4**：`scripts/dev/health-check.sh`（LEGACY-DEV 本地独立进程探测）去硬编码 `admin/admin123`，改读 `TOPEMS_DEV_USER/TOPEMS_DEV_PASSWORD` 环境变量、未设置则跳过登录；加遗留标注（生产用 verify-nginx-prod.sh）。shellcheck 绿。
-- **登记待核实（不擅改）**：H-5 `rollback.sh:289`/`start-production.sh` 旧 8000/`topems-unified-core`，需对照生产 systemd（topems-server.service=8099 BFF / topems-unified-core.service 并存）核实后再统一；H-9 developer 三文档 8000 为 dev 独立进程语境（api-base 已双标注 8000/8099），不影响生产；H-10 `.env.example` 样例口令附警示，保留。
+- **登记待核实（不擅改）**：H-5 `rollback.sh:289`/`start-production.sh` 旧 8000/`topems-unified-core`，需对照生产 systemd（topems-server.service=8099 BFF / topems-unified-core.service 并存）核实后再统一；H-9 developer 三文档 8000 为 dev 独立进程语境（api-base 已双标注 8000/8099），不影响生产；H-10 `.env.example` 样例口令附警示，保留。**✅ 批 B 核销（2026-10-21）**：8000 核实为 unified-core 独立模式事实端口（services.yaml CORE_PORT、api-base-url-convention 明确 core=8000/单体 BFF=8099/plugin-registry=8096）；rollback.sh `localhost:8000` 为独立模式健康检查（与对外 8099 两层语义）、start-production.sh 注释 CORE_PORT=8000 为事实源；H-9 三文档 8000 为 dev 独立进程语境（api-base 已双标注）→ 口径自洽零代码改动，仅登记核销（详见活文档 v1.20）。
 
 ### 审计报告 P2 技术小批执行（2026-10-20 拍板）✅ 15 提交已推送
 
@@ -570,7 +570,7 @@
 - **方法**：真栈（8099）下按 `ROUTE_FILTER` 分 14 批跑完 spec 运行时推导的 **471 条静态去重路由**（动态段 `:param` 已过滤），逐批落 json 后汇总。
 - **结果**：**硬失败 = 0**（无 pageerror / 无被踢 /login / 无空白 / 无 404 页）；非预期跳转 34（均为模块根 → 子页正常重定向，INFO）。
 - **HTTP 错误甄别**：296 条 **403 全部是 test_admin 未绑角色的后端鉴权噪声**（前端守卫被 mock 权限骗过、后端 API 拒），非缺陷；**无 5xx**。
-- **2 条 404 登记（后端端点未挂载，非前端可修）**：`/admin/rate-limit`、`/admin/feature-flag` 调 `/api/core/iam/v1/rate-limit/config[/anti-replay]`，后端两种前缀均 404，属未实现端点，待后端接线。
+- **2 条 404 登记（后端端点未挂载，非前端可修）**：`/admin/rate-limit`、`/admin/feature-flag` 调 `/api/core/iam/v1/rate-limit/config[/anti-replay]`，后端两种前缀均 404，属未实现端点，待后端接线。**✅ 已收口（2026-10-21 批 A，`9f4e821be`/`40ae21ec0`）**：feature-flags 后端已挂（BFF 实跑 200）；rate-limit/anti-replay 四端点已接线（GET/PUT `/iam/v1/rate-limit/config[/anti-replay]`，BFF 实跑 4 端点全 200 + PUT 幂等回读），详见活文档 v1.20。
 - **顺带修 2 处前端健壮性崩溃（真栈暴露）**：
   - `pages/shared/FavoritesPage.tsx`：`recentSearchesData ?? []` 在 data 为对象时不兜底，`recentSearches.map is not a function` 触发 ErrorBoundary → 改 `Array.isArray` 归一。
   - `pages/notification/NotificationTemplatesPage.tsx`：list 响应 `data.templates` 非数组时 `.length`/`.filter` 崩溃 → `Array.isArray` 兜底 + `total ?? length`。
@@ -3171,7 +3171,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 1. **FRS 全路由踢 /login（头号根因）**：`createAuthenticatedContext(browser)` 默认账号 = TEST_ACCOUNTS.superadmin(admin)（本地 DB 不存在）→ apiLogin fallback mock token → 服务端验签 401 → 全路由踢回登录页（硬失败 60/83/56 条）。修复：FRS 显式传 `'test_admin','admin123'`（真 token）。
 2. **Google Fonts 噪声**：无外网环境 fonts.googleapis 加载失败（isNoise 缺该规则）→ 补 `fonts\.googleapis`，批1/5 console 89/64 → 0。
 3. **/api/aps/* 404（vite dev）**：aps 无独立服务（由 svc/mes aps_compat 兼容层提供 /api/aps → 内部重写 /api/mes），vite SERVICES 缺 aps 条目 → dev proxy 404。修复：加 `{ name:'aps', port: BACKEND_PORTS.mes, apiPrefix:'/api/aps' }`（monolith 模式自动指向 :8099；**改 vite.config 必须重启 dev**）。
-4. **/admin/rate-limit 双前缀 404**：UseRateLimitConfig 用 apiClient.core（baseURL=/api/core）调绝对路径 `/api/core/iam/v1/rate-limit/config` → `/api/core/api/core/...`；改相对 `/iam/v1/*`（5 处，与 help.ts 同源模式）。
+4. **/admin/rate-limit 双前缀 404**：UseRateLimitConfig 用 apiClient.core（baseURL=/api/core）调绝对路径 `/api/core/iam/v1/rate-limit/config` → `/api/core/api/core/...`；改相对 `/iam/v1/*`（5 处，与 help.ts 同源模式）。**✅ 已收口（2026-10-21 批 A）**：前端已用相对路径，后端四端点接线补齐，BFF 实跑全 200。
 5. **/rd/settings reports/summary 404**：RsReportPage 调 `/reports/summary`，后端实际路由 `/reports/projects/summary`（少 /projects 段）→ 对齐。
 6. **mes 3 list 接口 500（process-routes/records/work-reports）**：LIMIT/OFFSET 占位符与 tenant 同号冲突——where_clause 内 tenant 占 `$N`（params.len()+1），LIMIT/OFFSET 复用 `params.len()+1/+2` → 无筛选时 `LIMIT $1` 吃到 tenant_uuid → uuid 类型错误 → 500（curl 复现）。修复：顺延 `params.len()+2/+3`，**全仓扫描同模式 10 文件一并修**（mes: process_route/work_report/production_record/team/process_flow/equipment_oee/equipment/work_station；production_scheduling/production_order 已正确）。
 7. **/notification/templates + /srm/performance 偶发 query failed**：前端已用外迁路径 /api/communication/notification（主路径 200）与 srm /performance/reports（200）——复跑后归零，无代码改动。
