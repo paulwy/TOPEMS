@@ -1494,6 +1494,7 @@
 
 > 权威检查单：`docs/architecture/go-live-checklist-and-rollback-2026-10-06.md`（R4 演练收尾产出，2026-10-06）
 > 生产前置三项：**Linux systemd 实跑 install/update/rollback**、**A2 docker 回归（5433）**、**A1 生产 nginx 验证**（Runbook：`docs/deploy/nginx-prod-first-deploy-runbook.md` + `scripts/verify-nginx-prod.sh`）
+> **2026-10-22 本机前置复核（活文档 v1.27，推送 `4e24d565`）**：① smoke-prod.sh 契约对齐（登录 →`/api/core/iam/auth/login`、users →`/api/core/iam/users/me`）后本机实跑**层1 全 PASS**（登录+users/me、15 域 health、BI test-sql+query、插件）；② nginx 演练实跑：gen-nginx-drill-conf.sh → drill conf → `nginx -t` 通过（2 warn：http2 弃用/ssl_stapling）→ 起 80→443 自签 → https 代理 /health 200（/api/v1/users 404 归属 BFF 开发态无旧兼容路由，非 nginx 层）；③ systemd 材料静态走查：31 单元 ExecStart 与 install/update cp 逻辑全一致（unified-core 原名特例已覆盖）。**仍待生产机**：systemctl 实跑 install/update/rollback、层2 专项（E/F/G/H）逐项复验。
 > 迁移账本口径：280/298（半迁移既成债，未来结构演进走"直接 DDL 运维"约定，见 `docs/database/database-half-migration-ops.md`）
 
 ### 2.1 代码与构建门禁（CI 层）

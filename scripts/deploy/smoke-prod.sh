@@ -73,18 +73,18 @@ echo "============================================================"
 log_info "层1A IAM 登录 → JWT → 受保护 API"
 LOGIN_RESP=$(curl "${CURL_OPTS[@]}" -X POST -H "Content-Type: application/json" \
   -d "{\"username\":\"$USERNAME\",\"password\":\"$PASSWORD\"}" \
-  "$BASE/api/v1/auth/login" 2>/dev/null)
+  "$BASE/api/core/iam/auth/login" 2>/dev/null)
 TOKEN=$(echo "$LOGIN_RESP" | jq -r '.data.access_token // .data.token // empty' 2>/dev/null)
 if [[ -z "$TOKEN" || "$TOKEN" == "null" ]]; then
   log_fail "登录失败（未取到 token）: $(echo "$LOGIN_RESP" | head -c 200)"
 else
   log_pass "登录成功，token 已获取"
   USERS_CODE=$(curl "${CURL_OPTS[@]}" -o /dev/null -w '%{http_code}' \
-    -H "Authorization: Bearer $TOKEN" "$BASE/api/v1/users" 2>/dev/null)
+    -H "Authorization: Bearer $TOKEN" "$BASE/api/core/iam/users/me" 2>/dev/null)
   if [[ "$USERS_CODE" == "200" ]]; then
-    log_pass "GET /api/v1/users（带 token）-> 200"
+    log_pass "GET /api/core/iam/users/me（带 token）-> 200"
   else
-    log_fail "GET /api/v1/users -> ${USERS_CODE}（token 未生效）"
+    log_fail "GET /api/core/iam/users/me -> ${USERS_CODE}（token 未生效）"
   fi
 fi
 
