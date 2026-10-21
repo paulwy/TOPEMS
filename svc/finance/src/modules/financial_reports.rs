@@ -2065,9 +2065,10 @@ pub async fn get_business_overview(
     .await
     .unwrap_or(Decimal::ZERO);
 
-    let subject_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_accounts WHERE status = 'active'"),
-    )
+    let subject_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM finance.core_finance_accounts WHERE status = 'active'"
+    ))
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
@@ -2575,9 +2576,10 @@ pub async fn get_financial_overview(
     .await
     .unwrap_or(Decimal::ZERO);
 
-    let subject_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_accounts WHERE status = 'active'"),
-    )
+    let subject_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "finance",
+        "SELECT COUNT(*) FROM finance.core_finance_accounts WHERE status = 'active'"
+    ))
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
