@@ -80,6 +80,11 @@
 - [x] **P2 · DSH 零消费面冻结** ✅ 完成（2026-10-19）：实测 svc/ai `/dsh/*` 前端零直连 **18 端点**（agent 性能监控4 / KG9 / RAG2 / multi-agent1 / governance cache1 / smart-forms 模板详情1），登记 `docs/architecture/service-topology/dsh-zero-consumption-freeze.md`，冻结保留不接真不删除；RAG retrieve 为后端内部依赖例外不可删。已消费边界：agent5/copilot8/governance11/smart-forms3。
 - [x] **P2 · TODO.md 滞后标注清理** ✅ 完成（`f9f8eea391`，7 项实核闭环标注对齐；该提交本地未 push）
 - [x] **需业务/外部 · BE-08 勾选** ✅ 完成（2026-10-21）：B 级确认工作簿 1483 条全部勾选（11 批 CSV decision 列：保留 1332 / 待定 150 / 下线 1，suggested_tendency 四维取证批量落定；零代码改动）；「349」考证为历史笔误（全链路产物无 349 子集，决策表文件不存在），实为 1483 条；下线 1 条 = unified-core `GET /api/migrations/services/{name}/status`（无注解+只读+零引用+陈旧文件），执行留待复核；汇总见 `artifacts/audit/orphan-review/batches/BE-08-B级勾选结果汇总.md`；TODO 勾选提交 `95af62fc9` 后追加本批；**② 待定 150 条逐条定性已完成（2026-10-21）**：下线 9（unified-core file.rs 7 + pm 2，A 级判据同型）/ 重构 1（finance events/handlers）/ 保留 140（测试桩 4 + 前缀丢失 5 + real 只读观察 131），逐条报告 `docs/architecture/service-topology/BE-08-待定150条定性.md`；全量 1483 最终态：保留 1472 / 待定 0 / 下线 10 / 重构 1；下线执行留待按 A 级纪律实施
+- [x] **门禁 · 前端契约双轨（静态 pre-commit + 实跑验收）** ✅ 完成（2026-10-21）：防「前端封装但后端未挂载」回归。
+  - 静态门禁 `scripts/dev/contract-gate.py`（lefthook pre-commit 已接线，秒级零依赖）：base 从 runtime.ts 解析、覆盖 `.route()`/方法级/全限定 handler、`:x` 查询占位与双拼折叠修正；nest/聚合挂载 svc 与逐条实测锚点豁免（2026-10-21 全量 226 条静态缺口实测真 404=0，全部已挂载）；默认模式缺口 0 绿、`--strict` 复核锚点 svc（226 条可见）
+  - 实跑验收 `scripts/dev/contract-smoke-live.py`（手动/部署前，逐端点 3s 短超时，真 404 才 fail）：`--gaps` 测静态缺口 / 全量 4116 端点
+  - 验证：假缺口（addressbook/search-fake-gate）→ 静态 exit 1 拦截 ✅；226 锚点全挂载实测 ✅；Cargo.toml:354 jsonwebtoken 10.4 核对 ✅
+  - 局限（文档化）：实跑对带动态段路径受 `{id}` 通配吞并影响无法判 404，静态模板匹配兜底；聚合挂载 svc 新增端点靠实跑验收兜底
 - [ ] **backlog · finance `GET /api/finance/events/handlers` 重构**（BE-08 待定 150 条定性 2026-10-21，decision=重构）：`list_handlers`（svc/finance/src/modules/event_routes.rs:118）读取内存 event pipeline router 的 handler 名列表（event_handler.rs:140 `list_handlers`），无 DB 操作、文件近期活跃——占位性质来自依赖内存管道而非空实现。重构方向：handler 注册来源配置化/接真（DB 或注册表），或明确保留内存桩语义；执行前复核前端/内部消费（api-boundary-gate 拦截教训）
 - [ ] **需业务/外部 · none 级流量观测立项**（部署期 8099 网关 access log，≥30 天 0 请求）
 - [ ] **需部署主机 · 生产 nginx reload**（verify-nginx-prod.sh 本机 MAP_OK，reload 需目标机）

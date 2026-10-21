@@ -48,6 +48,16 @@ pre-commit:
     # 避免 pre-commit 超时（cargo test --workspace 需 3-5min，clippy --all-targets 需 2-3min）。
     # pre-push 已有 cargo-fmt-check + cargo-clippy-workspace，下方补充 cargo-test-workspace。
 
+    # [Gate Contract] 前端契约静态门禁（防「前端封装但后端未挂载」回归）
+    # 秒级、零外部依赖（BFF 无需在线）；挂载锚点 svc 豁免（实测锚点登记），
+    # 真 404 判定由实跑验收 scripts/dev/contract-smoke-live.py（部署前手动）兜底。
+    contract-gate:
+      tags: contract backend
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|ts|tsx)$' || true)
+        [ -z "$STAGED" ] && exit 0
+        python3 scripts/dev/contract-gate.py
+
     # [Gate G] Permission matrix 3-way gate (dry-run)
     perm-matrix:
       tags: permission security
