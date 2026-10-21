@@ -22,7 +22,7 @@
 - [x] **P1-6 · MES 缺车间/产线/工作中心/班次/工作日历**，工位 `workshop_id` 悬空；补实体 CRUD + 前端页并回填外键。
 - [x] **P1-7 · QMS 缺结构化检验项/检验方案/抽样方案，LIMS 缺检验项目(analyte)**；补表与 CRUD + 方案配置页。
 - [x] **P1-8 · 多表租户隔离**（`52cc3a467`，迁移 `20261020000026`）：gis.geofences/rs.material_tests 补 tenant_id+RLS，关闭 erp.bank_accounts 开放策略，gis 按 claims 过滤落库、rs/erp 按 GUC 落租户、pm 建项目按会话租户；bi/pm 本已有 RLS，wms/mes 无写死 UUID。
-- [ ] **P1-9 · 后端有前端缺的管理页**：MES 产能日历、LIMS 方法分类、CRM 标签、财务会计期间/辅助核算创建、ERP 字典、EHS 危险源列表、GIS 设备注册。
+- [x] **P1-9 · 后端有前端缺的管理页** ✅ 闭环（`cdeeef76b` 批4）：MES 产能日历、LIMS 方法分类、CRM 标签、ERP 字典、EHS 危险源列表、GIS 设备注册六页已挂载（财务会计期间/辅助核算创建由 P1-10 `78042fe2a` 完成）；EHS 危险源复用既有 EhsHazardPage、CRM 标签复用既有 crm.tags 路由，迁移 `20261021000008/00009`（erp_dictionaries 建表 + ehs 契约表 + crm/gis 补列）。
 - [x] **P1-10 · 财务主数据** ✅ 闭环（`78042fe2a` + `6c29a8189`）：币种主表（`finance.core_finance_currencies`，迁移 `20261021000001` 幂等 + 16 行种子 + `20261021000002/00003` 归位）+ 后端 CRUD + 前端币种/期间管理页已落地（BFF 实跑 list(17)/create/search/delete 全 200）；税率面已具备（`finance_v56_tax_*` + FinanceTaxPage）。**科目体系已归并（线C1 `6c29a8189`）**：59 张 finance 表全部归位 finance schema、代码全部收敛到 `finance.core_finance_accounts`、V321 `accounting_subjects` 路由下线（404）、科目/币种/期间/报表 BFF 复验全 200。
 
 > P2 增强/一致性/技术债（空态 CTA、向导租户归属、批量事务、岗位 FK、路由清理、菜单种子、新租户补播、技术债、公共主数据域）见活文档 §3 P2 表，按需认领。
@@ -56,7 +56,7 @@
 |---|---|---|
 | 批 2 | P1-6 MES 车间/产线/班次/工作日历（含工位 `workshop_id` 回填） | 无 |
 | 批 3 | P1-7 QMS 检验项/检验方案/抽样方案 + LIMS 检验项目(analyte) | 无 |
-| 批 4 | P1-9 其余管理页：MES 产能日历 / LIMS 方法分类 / CRM 标签 / ERP 字典 / EHS 危险源 / GIS 设备注册 | 批 2 产能日历相关 |
+| 批 4 ✅ | P1-9 其余管理页：MES 产能日历 / LIMS 方法分类 / CRM 标签 / ERP 字典 / EHS 危险源 / GIS 设备注册（`cdeeef76b`） | 批 2 产能日历相关 |
 | 批 5 | P2-5 路由清理（`common.ts` 10 处重复注册 + 9 孤儿路由 + `/settings` 死链 + BackupPage 无引用）+ P2-7 菜单种子 tenant 错位 | 线 B 权限声明后（避免再覆盖） |
 | 批 6 | P2-8 财务默认科目/期间按新租户补播 + P2-10 技术债（roles.rs 空桩 / LoginFormV2 / authStore / OpenAPI 双块） | ✅ 完成（`fb944841d`）：P2-8 迁移 `20261021000004`（幂等函数 `finance.bootstrap_defaults` + 存量 30 租户补播）+ `POST /api/finance/bootstrap` 播种 API（BFF 实跑 200 幂等）；P2-10 roles.rs 标注 DEPRECATED、LoginFormV2 死代码删除（含 index re-export + i18n 68 key）、authStore 旧版标注废弃 + 5 读取方迁移 localStorage/useAuth、OpenAPI 双块实勘不存在核销 |
 | 批 7 | P2-11 公共主数据域（物料目录 / UOM / 税率 / 币种 / 样品 → master-data 承接规划） | 线 C 币种/税率落地后 |
