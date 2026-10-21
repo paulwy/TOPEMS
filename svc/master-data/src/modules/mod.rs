@@ -665,9 +665,10 @@ pub fn create_routes() -> Router<AppState> {
                 // --- 血缘（预埋）---
                 .route("/lineage", get(contract_fallbacks::ok))
                 .route("/lineage/column", get(contract_fallbacks::ok))
+                .route("/lineage/refresh", post(contract_fallbacks::ok))
                 .route("/lineage/refresh/{id}", post(contract_fallbacks::ok))
                 // --- 资产标签 ---
-                .route("/tags", post(contract_fallbacks::ok))
+                .route("/tags", post(contract_fallbacks::ok).get(contract_fallbacks::list))
                 .route(
                     "/tags/{id}",
                     get(contract_fallbacks::ok)
@@ -679,7 +680,7 @@ pub fn create_routes() -> Router<AppState> {
                     post(contract_fallbacks::ok).delete(contract_fallbacks::ok),
                 )
                 // --- 资产分类 ---
-                .route("/categories", post(contract_fallbacks::ok))
+                .route("/categories", post(contract_fallbacks::ok).get(contract_fallbacks::list))
                 .route("/categories/tree", get(contract_fallbacks::array))
                 .route(
                     "/categories/{id}",
@@ -688,7 +689,7 @@ pub fn create_routes() -> Router<AppState> {
                         .delete(contract_fallbacks::ok),
                 )
                 // --- 数据地图 ---
-                .route("/maps", post(contract_fallbacks::ok))
+                .route("/maps", post(contract_fallbacks::ok).get(contract_fallbacks::list))
                 .route(
                     "/maps/{id}",
                     get(contract_fallbacks::ok)
@@ -698,6 +699,7 @@ pub fn create_routes() -> Router<AppState> {
                 .route("/maps/{id}/export", get(contract_fallbacks::ok))
                 // --- 搜索建议 / 仪表盘 ---
                 .route("/search/suggestions", get(contract_fallbacks::array))
+                .route("/dashboard/recent", get(contract_fallbacks::array))
                 .route("/dashboard/recent/{id}", get(contract_fallbacks::array))
                 .route("/dashboard/orphans", get(contract_fallbacks::array)),
         )
