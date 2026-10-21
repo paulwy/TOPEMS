@@ -1555,7 +1555,7 @@
 ### ✅ 第一梯队修复完成（2026-10-07，摘要 `artifacts/tier1-fixes/TOPEMS第一梯队修复摘要.md`）
 - **后端 P1×4**：
   - BE-01 事件处理器 4 张缺失表（hrm_cache_invalidation_logs / gis_map_markers / integration_sync_logs / lims_inspection_records）判定全部业务必需 → 补建表迁移 `20261007000018~21`（含 tenant_id/RLS，幂等），cargo check 通过（commit `451182683`）
-  - BE-02 analytics 仪表盘查询：验证发现原查询 `core_permissions.tenant_id` 列不存在（必然跑不通）+ 跨 schema 引 hrm 被 boundary-gate 拒绝 → 降级修正（组织计数置 0 + 坏列修正），门禁 PASS、5432 实跑返回数值；**live 组织计数登记 follow-up**（需 bi 物化视图或 allowlist 评审，commit `095572cb1`）
+  - BE-02 analytics 仪表盘查询：验证发现原查询 `core_permissions.tenant_id` 列不存在（必然跑不通）+ 跨 schema 引 hrm 被 boundary-gate 拒绝 → 降级修正（组织计数置 0 + 坏列修正），门禁 PASS、5432 实跑返回数值；**live 组织计数登记 follow-up**（需 bi 物化视图或 allowlist 评审，commit `095572cb1`）→ **✅ 已闭环（2026-10-22，活文档 v1.36，提交 `a1e410e36`）**：BE-02 组织计数最小纠正（方案 A 物化视图）——`database/init/11_bi_org_stats.sql` 建 `bi.org_stats` 物化视图（hrm.companies/departments/employees 排除软删计数 + refreshed_at，全租户合计口径与 core_users 超管一致）+ `scripts/dev/ensure-bi-org-stats.sh`（guard 幂等 + REFRESH，权威库 topems_test 与主库均建）；`reports_center_stats` 改读 `bi.org_stats`（不再裸引 hrm，boundary 双 gate PASS：analytics schema=bi 引用=22）；`totalCompanies/totalDepartments/totalEmployees` 由 null 改真实计数 + `orgStatsStatus=connected` + `orgStatsUpdatedAt`（视图缺失回落 0 + not-connected，绝不伪造）；实跑验证：BFF 重启后 `/api/bi/reports-center/stats` 返回主库真实计数 0/0/0 + connected；探活门禁含写探针全绿。前端契约零改动（`api/report/index.ts:168` 早已预留 connected 语义）。刷新策略：物化视图静态快照，由 ensure 脚本/部署时 REFRESH 刷新（hrm 写侧触发刷新为后续可选增强，不属最小纠正）
   - BE-03 孤儿 `transfer.rs` 确认零引用且与 transfer_order.rs 重复 → 删除（-969 行，commit `b7ca075ca`）
   - BE-04 物化视图按 **CQRS 投影汇总表**建（原生 MV 只读与代码 INSERT/UPDATE 冲突），含刷新策略登记（commit `583b7179a`）
 - **前端 P1×3**：permission 补 POST stub、密码策略/安全设置写函数确认死路径已移除、通讯录补 4 条 stub；typecheck/eslint/cargo 全过，无遗留 405/404
@@ -1697,7 +1697,7 @@
 
 ### 📋 调研交付（未实施，方案已备）
 - **FE-17 client 收敛**（`fe17-client-convergence-plan.md`）：实测 9 套请求层（web client.ts 为事实标准 428 模块、shared-utils 死代码、desktop 401 静默/mobile baseURL 缺后缀两个 bug 已点出），5 阶段收敛方案 12–15 人日
-- **BE-02 组织计数**（`be02-bi-org-count-plan.md`）：**关键发现——第一梯队修复落在非 live 的 routes.rs 死代码上**，live 的 main.rs 旧版仍引用不存在的 iam_users/org_* 五表，仪表盘整卡实为占位；组织数据真实归属 hrm（存在但 0 行、RLS 开）；方案 A 物化视图 / B allowlist / C 降级，建议先做最小纠正（0.5 人日）
+- **BE-02 组织计数**（`be02-bi-org-count-plan.md`）：**关键发现——第一梯队修复落在非 live 的 routes.rs 死代码上**，live 的 main.rs 旧版仍引用不存在的 iam_users/org_* 五表，仪表盘整卡实为占位；组织数据真实归属 hrm（存在但 0 行、RLS 开）；方案 A 物化视图 / B allowlist / C 降级，建议先做最小纠正（0.5 人日）→ **✅ 已闭环（2026-10-22，见上方 BE-02 条目 v1.36）**：方案 A 落地（bi.org_stats 物化视图 + 查询改读 + connected），主库 0/0/0 真实计数；hrm 数据写入后由 ensure 脚本刷新
 - **第三梯队可行性**（`tier3-feasibility.md`）：TABLE_DEFS 对拍止血（S）+ codegen（L）；OpenAPI 门禁基建已现成（28 crate 提取管线，只差回写，M）；迁移目录治理"子目录/改名高风险不做"（sqlx 校验链约束），只做低风险四项（S–M）
 - **DB-03 残留**：5433 空库重放后残留 329 列（与 5432 的既有差异，审计快照口径）已登记第三梯队
 
