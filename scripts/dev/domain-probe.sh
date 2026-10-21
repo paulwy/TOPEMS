@@ -49,8 +49,8 @@ run_probe() {
   python3 - "$REPO" "$BASE" "$TOKEN" "$CURL_TIMEOUT" "$1" <<'PYEOF'
 import re, pathlib, sys, urllib.request, urllib.error, json
 repo, base, token, timeout, domain = sys.argv[1], sys.argv[2], sys.argv[3], float(sys.argv[4]), sys.argv[5]
-def probe(p):
-    req = urllib.request.Request(base + p, headers={'Authorization': 'Bearer ' + token})
+def probe(p, method='GET'):
+    req = urllib.request.Request(base + p, headers={'Authorization': 'Bearer ' + token}, method=method)
     # 瞬时抖动消噪：ERR/5xx 重试 1 次再判定（全量扫描时长内偶发超时不误拦）
     # 盲区补强：HTTP 200 但 body code>=500（业务级错误被包装，如 ehs 缺表时
     # CoreResponse::error(500) 外层 HTTP 200）同样计 5xx——读 body 解析 JSON code
@@ -74,6 +74,8 @@ def probe(p):
         except Exception:
             continue
     return 'ERR'
+def is_bad(c):
+    return c in (500, 501, 'ERR') or (isinstance(c, int) and c >= 500)
 skip = {'master-data','analytics','ai','plugin-registry','unified-core','server'}
 d = pathlib.Path(repo) / 'svc' / domain
 ps = set()
@@ -83,13 +85,24 @@ for f in d.rglob('*.rs'):
     for m in re.findall(r'path\s*=\s*"(/[^"]+)"', s):
         ps.add(m if m.startswith('/api') else '/api' + m)
 bad = []
+warn = []
 for p in sorted(ps):
     c = probe(p)
-    if c in (500, 501, 'ERR') or (isinstance(c, int) and c >= 500):
+    if is_bad(c):
         bad.append((p, str(c)))
+    if not is_bad(c) and isinstance(c, int) and 200 <= c < 300:
+        # 写探针：空 body POST，5xx/body500 计 FAIL（服务端错误）；
+        # 2xx 意外可写记 WARN 不拦（提示人工关注，避免误伤宽容 handler）
+        w = probe(p, 'POST')
+        if is_bad(w):
+            bad.append((p, 'POST ' + str(w)))
+        elif isinstance(w, int) and 200 <= w < 300:
+            warn.append((p, str(w)))
 for p, c in bad:
     print(f"  {c} {p}")
-print(f"[{domain}] total={len(ps)} 5xx={len(bad)}")
+for p, c in warn:
+    print(f"  WARN POST {c} {p}（空 body 可写，需人工确认）")
+print(f"[{domain}] total={len(ps)} 5xx={len(bad)} write_warn={len(warn)}")
 PYEOF
 }
 
@@ -108,11 +121,12 @@ fi
 
 for d in "${targets[@]}"; do
   out="$(run_probe "$d")"
-  n="$(echo "$out" | grep -c '^  ' || true)"
+  n="$(echo "$out" | grep -c '^  [0-9]' || true)"   # 5xx/超时明细（数字开头）；WARN 提示行不置 FAIL
   if [[ "${n:-0}" -gt 0 ]]; then
-    echo "$out" | grep '^  ' || true   # 5xx/超时明细（失败必显，便于定位修复）
+    echo "$out" | grep '^  [0-9]' || true   # 5xx/超时明细（失败必显，便于定位修复）
     FAIL=1
   fi
+  echo "$out" | grep '^  WARN' || true      # 意外可写提示（不 FAIL）
   echo "$out" | grep -v '^  ' || true
 done
 

@@ -404,5 +404,5 @@ pre-push:
     # SKIP_WARN 不阻断，手动 bash scripts/dev/domain-probe.sh 复核。
     domain-probe:
       tags: runtime probe
-      timeout: 900s
+      timeout: 1800s
       run: bash scripts/dev/domain-probe.sh
