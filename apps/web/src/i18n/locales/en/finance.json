@@ -3483,6 +3483,8 @@
   "finance.nav.finance-approval-config": "Approval Config",
   "finance.nav.finance-invoices": "Invoices",
   "finance.nav.finance-expense": "Expenses",
+  "finance.nav.finance-currency": "Currency Management",
+  "finance.nav.finance-period": "Accounting Period",
   "finance.nav.finance-expense-approval": "Expense Approvals",
   "finance.nav.finance-budget": "Budget",
   "finance.nav.finance-assets": "Fixed Assets",

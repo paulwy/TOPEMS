@@ -4564,6 +4564,8 @@
   "shared.use_auto_breadcrumbs.k144": "库存盘点",
   "shared.use_auto_breadcrumbs.k145": "库位管理",
   "shared.use_auto_breadcrumbs.k146": "销售订单",
+  "shared.use_auto_breadcrumbs.k147": "币种管理",
+  "shared.use_auto_breadcrumbs.k148": "会计期间",
   "shared._mock.xxxx_15": "-",
   "shared.config.admin_name": "系统管理",
   "shared.config.ai_name": "智能助手",

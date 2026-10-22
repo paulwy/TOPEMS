@@ -1861,6 +1861,8 @@
   "finance.nav.finance-invoices_desc": "发票管理",
   "finance.nav.finance-expense": "费用管理",
   "finance.nav.finance-expense_desc": "费用管理",
+  "finance.nav.finance-currency": "币种管理",
+  "finance.nav.finance-period": "会计期间",
   "finance.nav.finance-expense-approval": "费用审批",
   "finance.nav.finance-expense-approval_desc": "费用审批",
   "finance.nav.finance-budget": "预算管理",

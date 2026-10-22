@@ -508,6 +508,8 @@ function formatSegmentLabel(segment: string): string {
     activities: i18n.t('shared.use_auto_breadcrumbs.k10'),
     reports: i18n.t('shared.use_auto_breadcrumbs.k11'),
     finance: i18n.t('shared.use_auto_breadcrumbs.k12'),
+    currency: i18n.t('shared.use_auto_breadcrumbs.k147'),
+    period: i18n.t('shared.use_auto_breadcrumbs.k148'),
     inventory: i18n.t('shared.use_auto_breadcrumbs.k13'),
     sales: i18n.t('shared.use_auto_breadcrumbs.k14'),
     'sales-orders': i18n.t('shared.use_auto_breadcrumbs.k146'),
