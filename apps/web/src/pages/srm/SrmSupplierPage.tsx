@@ -12,12 +12,17 @@ import i18n from '@/i18n';
 
 const ct = designTokens.colors;
 
-const apiAdapter = createCrudPageAdapter({
-  list: srmApi.listSuppliers,
-  create: srmApi.createSupplier,
-  update: srmApi.updateSupplier,
-  delete: srmApi.deleteSupplier,
-});
+// normalizeListResponse 默认只认 items/materials/data 字段，SRM 后端信封键为
+// suppliers，需显式 itemsField='suppliers'，否则 total=92 有数但列表恒渲染「暂无数据」
+const apiAdapter = createCrudPageAdapter(
+  {
+    list: srmApi.listSuppliers,
+    create: srmApi.createSupplier,
+    update: srmApi.updateSupplier,
+    delete: srmApi.deleteSupplier,
+  },
+  { itemsField: 'suppliers' }
+);
 
 const SupplierStats: React.FC = () => {
   const { data: suppliers = [] } = useQuery({
