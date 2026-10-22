@@ -374,6 +374,7 @@ const crmRoutes: RouteConfigV2[] = [
     requiredPermissions: ['crm:customer:read'],
     action: 'read',
   } as unknown as RouteConfigV2<Record<string, unknown>>,
+  crmContractsRoute,
 ];
 
 export const crmModuleConfig: RouteModuleConfig = {

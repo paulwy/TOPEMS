@@ -510,6 +510,7 @@ function formatSegmentLabel(segment: string): string {
     finance: i18n.t('shared.use_auto_breadcrumbs.k12'),
     inventory: i18n.t('shared.use_auto_breadcrumbs.k13'),
     sales: i18n.t('shared.use_auto_breadcrumbs.k14'),
+    'sales-orders': i18n.t('shared.use_auto_breadcrumbs.k146'),
     projects: i18n.t('shared.use_auto_breadcrumbs.k15'),
     tasks: i18n.t('shared.use_auto_breadcrumbs.k16'),
     gantt: i18n.t('shared.use_auto_breadcrumbs.k17'),

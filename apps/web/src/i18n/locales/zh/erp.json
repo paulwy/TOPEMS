@@ -3281,6 +3281,8 @@
   "erp.nav.erp-purchase-order_desc": "采购订单",
   "erp.nav.erp-sales-order": "销售订单",
   "erp.nav.erp-sales-order_desc": "销售订单",
+  "erp.nav.erp-sales-orders": "销售订单",
+  "erp.nav.erp-inventory": "库存管理",
   "erp.nav.erp-financial-statements": "财务报表",
   "erp.nav.erp-financial-statements_desc": "财务报表",
   "erp.nav.erp-database-management": "数据库管理",

@@ -4112,6 +4112,8 @@
   "erp.nav.erp-material-management": "Materials",
   "erp.nav.erp-purchase-order": "Purchase Orders",
   "erp.nav.erp-sales-order": "Sales Orders",
+  "erp.nav.erp-sales-orders": "Sales Orders",
+  "erp.nav.erp-inventory": "Inventory",
   "erp.nav.erp-financial-statements": "Financial Statements",
   "erp.nav.erp-database-management": "Database",
   "erp.nav.erp-audit-log": "Audit Logs",

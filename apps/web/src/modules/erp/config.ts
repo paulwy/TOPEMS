@@ -575,6 +575,8 @@ export const erpModuleConfig: RouteModuleConfig = {
     announcementRoute,
     vehicleRequestRoute,
     financialAnalysisRoute,
+    erpSalesOrdersRoute,
+    erpInventoryRoute,
     {
       path: ERP_PATHS.dictionaries,
       element: lazyWithRetry(() => import('@/pages/erp/DictionaryPage'), 'DictionaryPage'),
