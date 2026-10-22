@@ -3297,3 +3297,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.73（2026-10-23）**：双表统一第二批——mes.core_* 45 张空壳 + public.barcode_scans 清理（保护清单 564 表比对，FK 链 CASCADE）；探活 OK + gate 保持；剩余 73 组空壳 + 40 组有数据双表待分批。
 
 > **系统完善 v1.74（2026-10-23）**：双表统一第三批——26 组可删冗余版清理（audit_logs 3 域、iam.core_* 8 张、public/devices/refs 5 张、documents 2 域、mes 生产资源 4 张、schema_defense_ledger 4 域）；数据版保留；探活 OK + gate 保持。
+
+> **系统完善 v1.75（2026-10-23）**：双表统一第四批——101 张非 public 全空冗余版清理（bi.analytics 11、iam.core_* 24、finance 12、ehs.qa_ehs_* 18、mes/qms/rs/integration 等）；DDL 备份 + CASCADE + 探活 OK + gate 保持；双表剩余 145 组待定性。
