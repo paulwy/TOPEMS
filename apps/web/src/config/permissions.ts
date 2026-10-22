@@ -849,6 +849,22 @@ const PERMISSION_DEFS: Record<string, string> = {
 
   // shared (1 code · R4/R6 stub)
   'shared:dashboard:read': 'shared:dashboard:read',
+
+  // system-hardening 新增页权限码（v1.80：批4/批7/mdm 批次页面，menu-health P1 补注册）
+  'crm:contract:read': 'crm:contract:read',
+  'erp:sales:read': 'erp:sales:read',
+  'finance:currency:read': 'finance:currency:read',
+  'finance:period:read': 'finance:period:read',
+  'lims:test-method:read': 'lims:test-method:read',
+  'master_data:ai_governance:read': 'master_data:ai_governance:read',
+  'master_data:commercial:read': 'master_data:commercial:read',
+  'master_data:lineage:read': 'master_data:lineage:read',
+  'master-data:schema:read': 'master-data:schema:read',
+  'mes:workshop:read': 'mes:workshop:read',
+  'pdm:drawing:read': 'pdm:drawing:read',
+  'qms:action:read': 'qms:action:read',
+  'pm:read': 'pm:read',
+  'qms:read': 'qms:read',
 };
 
 // Convenience flattened list of all 3-part permission code strings (for R5 orphan checks)

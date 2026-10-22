@@ -3330,3 +3330,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.78（2026-10-23）**：DDL 基准口径统一——rebuild_orphan_tables.sql iam/mes.core_* 154 处按实际映射归位（core_plugin→core、core_ticket→ticket、其余→public）；validate 0 Error + gate 保持；v1.70 观察项闭环。
 
 > **系统完善 v1.79（2026-10-23）**：analytics usage/api-usage 端点核销——实测 /api/core/tenant/{id}/analytics/{usage,api-usage} 均 200 真实数据（v1.44 T2-c 已实现），历史「404 属排期」观察项闭环。
+
+> **系统完善 v1.80（2026-10-23）**：CI 11 FAIL 本机复核——menu-health 修复（补 14 权限码）✅；perm-matrix/i18n-quality/icons/nav-route/api-modules/error-handling 核销 ✅；page-audit 92%<95%（44 页自实现未用模板）登记待批；mes-online/rust-audit/frontend-test/coverage/code-quality 需 CI 环境。
