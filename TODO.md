@@ -1872,6 +1872,7 @@
 ### 📋 待业务拍板
 - 用户填 decision 列（保留/下线/重构/待定）回传 → 集成侧按批生成实施清单 → 按 A 级下线先例执行（逐条复核 + cargo check + grep 零残留 + 快照对比 + api-boundary-gate 前端调用面检查）
 - 建议优先过目：batch_03 下线 1 条 + 各批待定区（150 条，代表项见总览第四节）
+- **✅ 勾选下线 10 条复核完成（2026-10-22，见 `artifacts/audit/orphan-review/batches/BE-08-勾选下线10条复核摘要.md`）**：unified-core 8 条（files 7 + migrations status）**天然清零**（路由/handler 已不存在，勾选为残留快照）+ pm service-integrations DELETE **天然清零**（handler 不存在）+ pm project-types DELETE **保留**（批 7 续 2026-10-19 已建真实 CRUD，勾选时点晚于补建作废）——**10 条全部无需新执行**，decision 列已同步更新。
 
 ## ✅ 执行进度：批 2 + A5 完成态（2026-10-08）
 
