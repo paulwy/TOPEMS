@@ -74,9 +74,33 @@ interface Contract {
   created_at: string;
 }
 
+// API 返回合同行可能带兼容别名字段，用宽松输入类型承载
+interface RawApiContract {
+  id: string;
+  contract_no?: string;
+  contractNo?: string;
+  title?: string;
+  name?: string;
+  customer_name?: string;
+  customerName?: string;
+  amount?: number;
+  total_amount?: number;
+  status?: string;
+  sign_date?: string;
+  signDate?: string;
+  start_date?: string;
+  startDate?: string;
+  end_date?: string;
+  endDate?: string;
+  owner?: string;
+  ownerName?: string;
+  type?: string;
+  created_at?: string;
+}
+
 // Mock 数据
 // 将 API 返回的合同数据映射为页面使用的 Contract 类型
-const mapApiContracts = (apiContracts: any[]): Contract[] => {
+const mapApiContracts = (apiContracts: RawApiContract[]): Contract[] => {
   return apiContracts.map((c, index) => ({
     id: c.id,
     contract_no: c.contract_no || c.contractNo || `CON2026${String(index + 1).padStart(5, '0')}`,
@@ -225,7 +249,7 @@ const CrmContractRedesignPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; type?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -237,14 +261,18 @@ const CrmContractRedesignPage: React.FC = () => {
         }
         const res = await apiClient.crm.get('/contracts', { params });
         const resData = res as unknown as { data?: unknown };
-        let apiContracts: any[] = [];
+        let apiContracts: RawApiContract[] = [];
         let total = 0;
         const data = resData.data;
         if (Array.isArray(data)) {
-          apiContracts = data;
+          apiContracts = data as RawApiContract[];
           total = data.length;
         } else if (data && typeof data === 'object') {
-          const obj = data as Record<string, any>;
+          const obj = data as {
+            list?: RawApiContract[];
+            items?: RawApiContract[];
+            total?: number;
+          };
           apiContracts = Array.isArray(obj.list)
             ? obj.list
             : Array.isArray(obj.items)
@@ -372,7 +400,7 @@ const CrmContractRedesignPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredContracts = contracts;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedContracts = filteredContracts;
 
@@ -652,7 +680,7 @@ const CrmContractRedesignPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as 'all' | 'active' | 'pending' | 'completed')}
         />
       </ListPageTemplate>
 

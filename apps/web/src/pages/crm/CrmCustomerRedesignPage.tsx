@@ -270,7 +270,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; level?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -290,7 +290,11 @@ const CrmCustomerRedesignPage: React.FC = () => {
           apiCustomers = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData.data as any;
+          const dataObj = resData.data as {
+            list?: ApiCustomer[];
+            items?: ApiCustomer[];
+            total?: number;
+          };
           apiCustomers = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -357,7 +361,8 @@ const CrmCustomerRedesignPage: React.FC = () => {
       // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
       let apiFailed = false;
       try {
-        await customerApi.create({
+        // 请求体含 API 契约外的扩展字段，先赋变量再传参：保持 payload 形状不变
+        const payload = {
           name: data.customer_name || '',
           code: data.customer_no,
           // 后端 CreateCustomerRequest.customer_type 为必填 String，缺省给合理默认值 enterprise
@@ -368,7 +373,8 @@ const CrmCustomerRedesignPage: React.FC = () => {
           industry: data.industry,
           rating: data.level,
           status: (data.status as string) || 'active',
-        } as any);
+        };
+        await customerApi.create(payload);
       } catch (e) {
         console.warn('[CRM Customers] Create API unavailable, using mock create:', e);
         apiFailed = true;
@@ -427,7 +433,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredCustomers = customers;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedCustomers = filteredCustomers;
 
@@ -703,7 +709,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as 'all' | 'active' | 'inactive' | 'potential')}
         />
       </ListPageTemplate>
 

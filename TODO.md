@@ -516,6 +516,25 @@
 - **仍留待（需追溯 API 响应/请求类型）**：同页 `params:any` 查询参数、`resData.data as any`、两处 mutation 对象 `as any`、`(data as any)?.total` 取总数，共 5 处 warning。
 - **门禁**：`tsc --noEmit` exit 0；该文件定点 eslint 0 error（剩 5 处 warning 即上述留待项）。
 
+### no-explicit-any 第七批 · crm 商机页整页清零 + hrm 员工页留待收尾（2026-10-22）✅
+
+- **本批净降 23 处**（基线 374→351）：
+  - `CrmOpportunityRedesignPage.tsx` 18 处整页清零——`mapApiOpportunities` 兼容层 12 个 `(o as any)` 改局部 `RawApiOpportunity`（ApiOpportunity & 可选别名字段 opp_no/title/customer_name/customerName/amount/expected_date/expectedDate/owner/source）承载；`params:any` → 具名查询参数接口；`resData.data as any` → `{list?,items?,total?}` 接口断言；create/update mutation 请求体 `as any` → payload 先赋局部变量再传参（对象字面量经变量传参不触发 excess property check，**payload 形状与行为零变更**，由结构类型兼容承载契约外扩展字段）；`(data as any)?.total` → `data?.total`（queryFn 两分支同形返回自动推断）；tab `id as any` → `as 'all'|'pipeline'|'won'|'lost'`。
+  - `HrmEmployeeRedesignPage.tsx` 第六批留待 5 处清零——同模式：`params:any` 具名化、`dataObj as any` 接口断言、create/update payload 变量化（create 含 `employee_no: data.emp_no` 别名映射）、`(data as any)?.total` → `data?.total`。
+- **顺手修**：HrmEmployee L122 三元嵌套多余括号 prettier error（`?(e.phone||...)` → 去括号）。
+- **门禁**：`tsc --noEmit` exit 0；两文件定点 eslint 0 error 0 warning；全量 eslint 5 个 prettier error 均在未触碰文件（StatTile/modules registry/FinanceVoucher/NotFound/appRoutes），为既有问题非本批引入。
+- **留待下批（同构模式可复制）**：`HrmAttendanceRedesignPage` 21 处、`HrmPerformanceRedesignPage` 20 处、`CrmContractRedesignPage` 6 处、`CrmCustomerRedesignPage` 5 处——均为 redesign 页同构五形态（mapApi 兼容层/params/dataObj/mutation payload/data?.total + tab 断言）；`__tests__` mock any 与 `api/client.ts` 维持有意保留口径。
+
+### no-explicit-any 第八批 · hrm 考勤/绩效 + crm 合同/客户四页清零（2026-10-23）✅
+
+- **本批净降 52 处**（基线 351→299），第七批留待四页同构模式批量清零：
+  - `HrmAttendanceRedesignPage` 21 处——`RawApiAttendance` 宽松输入类型承载 11 个别名（employee_name/employeeName、check_in/checkIn、work_hours/workHours 等）+ params 具名化 + dataObj 接口断言 + create/update payload 变量化 + `data?.total` + tab 联合断言（'all'|'normal'|'abnormal'|'leave'）。
+  - `HrmPerformanceRedesignPage` 20 处——`RawApiPerformanceReview` 承载 10 个别名；**契约错位显式登记**：页面评级为 S/A/B/C/D 字母，后端 `PerformanceReview.overall_rating` 声明为 `number`，create/update 中 `data.rating as unknown as number` 原样透传字母（原靠 as any 绕过），注释标明待后端契约对齐。
+  - `CrmContractRedesignPage` 6 处——本页 API 行无已导出类型，新建局部 `RawApiContract` 接口（18 个可选别名）承载 mapApiContracts 与 dataObj 断言；`apiClient.crm.get('/contracts')` 直连裸路径（未走封装 api），params 具名化。
+  - `CrmCustomerRedesignPage` 5 处——params/dataObj/payload/`data?.total`/tab 五形态同构收尾（create 含 `name: data.customer_name`、`code: data.customer_no` 别名映射 + `customer_type` 缺省 enterprise）。
+- **门禁**：`tsc --noEmit` exit 0；四文件定点 eslint 0 error 0 warning；全量 eslint error 仅剩 5 个既有 prettier（StatTile/modules registry/FinanceVoucher/NotFound/appRoutes，非本批触碰）。
+- **no-explicit-any 产品代码收口完成 ✅**：剩余 299 处中——测试 mock any 285 处（`__tests__` 有意保留）+ `api/client.ts` 10 处（第一批判定保留：改 unknown 引发 ApiResponse 连锁不兼容）+ **产品代码仅余 14 处**，全部为前批已判定项：LazyChart 2（tooltipFormatter 返回不兼容）、AmapLayer 2（高德实例）、CrudPage 2（适配器泛型）、routes/v2 2（P=any 逆变）、eventBus 1（EventHandler 逆变）、crudPageAdapter 1（PaginationParams 逆变）、SystemSettings 2 + Tenant 2（表单模型待对齐）——**保留口径已全部登记，本规则债收无可收，转入按需处理**。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

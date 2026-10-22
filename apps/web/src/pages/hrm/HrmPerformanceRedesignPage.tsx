@@ -80,20 +80,37 @@ interface PerformanceReview {
   created_at: string;
 }
 
+// API 返回行可能带页面兼容字段（employee_name/reviewerName 等别名），用宽松输入类型承载
+type RawApiPerformanceReview = ApiPerformanceReview & {
+  review_no?: string;
+  employee_name?: string;
+  employeeName?: string;
+  department?: string;
+  period?: string;
+  reviewer?: string;
+  reviewerName?: string;
+  rating?: string;
+  score?: number;
+  kpi_completion?: number;
+  kpiCompletion?: number;
+  improvement?: string;
+  improvementSuggestion?: string;
+};
+
 // 将 API 返回的 PerformanceReview 类型映射为页面使用的 PerformanceReview 类型
-const mapApiPerformanceReviews = (apiReviews: ApiPerformanceReview[]): PerformanceReview[] => {
+const mapApiPerformanceReviews = (apiReviews: RawApiPerformanceReview[]): PerformanceReview[] => {
   return apiReviews.map((r, index) => ({
     id: r.id,
-    review_no: (r as any).review_no || `PR2026H${String(index + 1).padStart(3, '0')}`,
-    employee_name: (r as any).employee_name || (r as any).employeeName || '-',
-    department: (r as any).department || '-',
-    period: (r as any).period || '-',
-    reviewer: (r as any).reviewer || (r as any).reviewerName || '-',
-    rating: ((r as any).rating as PerformanceReview['rating']) || 'B',
-    status: ((r as any).status as PerformanceReview['status']) || 'pending',
-    score: (r as any).score || 0,
-    kpi_completion: (r as any).kpi_completion || (r as any).kpiCompletion || 0,
-    improvement: (r as any).improvement || (r as any).improvementSuggestion || '',
+    review_no: r.review_no || `PR2026H${String(index + 1).padStart(3, '0')}`,
+    employee_name: r.employee_name || r.employeeName || '-',
+    department: r.department || '-',
+    period: r.period || '-',
+    reviewer: r.reviewer || r.reviewerName || '-',
+    rating: (r.rating as PerformanceReview['rating']) || 'B',
+    status: (r.status as PerformanceReview['status']) || 'pending',
+    score: r.score || 0,
+    kpi_completion: r.kpi_completion || r.kpiCompletion || 0,
+    improvement: r.improvement || r.improvementSuggestion || '',
     created_at: r.created_at,
   }));
 };
@@ -223,7 +240,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; department?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -245,7 +262,11 @@ const HrmPerformanceRedesignPage: React.FC = () => {
           apiReviews = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData.data as any;
+          const dataObj = resData.data as {
+            list?: ApiPerformanceReview[];
+            items?: ApiPerformanceReview[];
+            total?: number;
+          };
           apiReviews = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -307,15 +328,19 @@ const HrmPerformanceRedesignPage: React.FC = () => {
       // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
       let apiFailed = false;
       try {
-        await performanceReviewApi.create({
+        // 请求体含 API 契约外的扩展字段，先赋变量再传参：保持 payload 形状不变
+        const payload = {
           employee_id: data.review_no,
           employee_name: data.employee_name,
           period: data.period,
-          overall_rating: data.rating,
+          // 页面评级为 S/A/B/C/D 字母，后端 PerformanceReview.overall_rating 声明为 number；
+          // 既有行为即原样透传字母（原先靠 as any 绕过），此处显式保留，待后端契约对齐
+          overall_rating: data.rating as unknown as number,
           score: data.score,
           reviewer: data.reviewer,
           status: data.status,
-        } as any);
+        };
+        await performanceReviewApi.create(payload);
       } catch (e) {
         console.warn('[HRM Performance] Create API unavailable, using mock create:', e);
         apiFailed = true;
@@ -343,12 +368,14 @@ const HrmPerformanceRedesignPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<PerformanceReview> }) => {
       let apiFailed = false;
       try {
-        await performanceReviewApi.update(id, {
-          overall_rating: data.rating,
+        const payload = {
+          // 同 create：页面字母评级原样透传数值字段，待后端契约对齐
+          overall_rating: data.rating as unknown as number,
           score: data.score,
           reviewer_comment: data.improvement,
           status: data.status,
-        } as any);
+        };
+        await performanceReviewApi.update(id, payload);
       } catch (e) {
         console.warn('[HRM Performance] Update API unavailable, using mock update:', e);
         apiFailed = true;
@@ -372,7 +399,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredReviews = reviews;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedReviews = filteredReviews;
 
@@ -678,7 +705,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as 'all' | 'pending' | 'in_review' | 'completed')}
         />
       </ListPageTemplate>
 

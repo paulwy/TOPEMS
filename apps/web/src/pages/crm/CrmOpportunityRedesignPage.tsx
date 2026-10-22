@@ -77,19 +77,32 @@ interface Opportunity {
   created_at: string;
 }
 
+// API 返回行可能带页面兼容字段（opp_no/customer_name/expected_date 等别名），用宽松输入类型承载
+type RawApiOpportunity = ApiOpportunity & {
+  opp_no?: string;
+  title?: string;
+  customer_name?: string;
+  customerName?: string;
+  amount?: number;
+  expected_date?: string;
+  expectedDate?: string;
+  owner?: string;
+  source?: string;
+};
+
 // 将 API 返回的 Opportunity 类型映射为页面使用的 Opportunity 类型
-const mapApiOpportunities = (apiOpportunities: ApiOpportunity[]): Opportunity[] => {
+const mapApiOpportunities = (apiOpportunities: RawApiOpportunity[]): Opportunity[] => {
   return apiOpportunities.map((o, index) => ({
     id: o.id,
-    opp_no: (o as any).opp_no || `OPP2026${String(index + 1).padStart(5, '0')}`,
-    name: (o as any).name || (o as any).title || '-',
-    customer_name: (o as any).customer_name || (o as any).customerName || '-',
-    stage: ((o as any).stage as Opportunity['stage']) || 'lead',
-    amount: (o as any).amount || 0,
-    expected_date: (o as any).expected_date || (o as any).expectedDate || '-',
-    probability: (o as any).win_rate || 0,
-    owner: (o as any).owner || '-',
-    source: ((o as any).source as Opportunity['source']) || 'other',
+    opp_no: o.opp_no || `OPP2026${String(index + 1).padStart(5, '0')}`,
+    name: o.name || o.title || '-',
+    customer_name: o.customer_name || o.customerName || '-',
+    stage: (o.stage as Opportunity['stage']) || 'lead',
+    amount: o.amount || 0,
+    expected_date: o.expected_date || o.expectedDate || '-',
+    probability: o.win_rate || 0,
+    owner: o.owner || '-',
+    source: (o.source as Opportunity['source']) || 'other',
     created_at: o.created_at,
   }));
 };
@@ -237,7 +250,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; stage?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -259,7 +272,11 @@ const CrmOpportunityRedesignPage: React.FC = () => {
           apiOpportunities = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData.data as any;
+          const dataObj = resData.data as {
+            list?: ApiOpportunity[];
+            items?: ApiOpportunity[];
+            total?: number;
+          };
           apiOpportunities = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -321,7 +338,9 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
       let apiFailed = false;
       try {
-        await opportunityApi.create({
+        // 请求体含 API 契约外的扩展字段（customer_name/amount/stage 等），
+        // 先赋变量再传参：保持现有 payload 形状不变，由结构类型兼容承载
+        const payload = {
           name: data.name || '',
           customer_name: data.customer_name,
           amount: data.amount,
@@ -330,7 +349,8 @@ const CrmOpportunityRedesignPage: React.FC = () => {
           win_rate: data.probability,
           owner: data.owner,
           source: data.source,
-        } as any);
+        };
+        await opportunityApi.create(payload);
       } catch (e) {
         console.warn('[CRM Opportunities] Create API unavailable, using mock create:', e);
         apiFailed = true;
@@ -364,7 +384,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<Opportunity> }) => {
       let apiFailed = false;
       try {
-        await opportunityApi.update(id, {
+        const payload = {
           name: data.name,
           customer_name: data.customer_name,
           amount: data.amount,
@@ -373,7 +393,8 @@ const CrmOpportunityRedesignPage: React.FC = () => {
           win_rate: data.probability,
           owner: data.owner,
           source: data.source,
-        } as any);
+        };
+        await opportunityApi.update(id, payload);
       } catch (e) {
         console.warn('[CRM Opportunities] Update API unavailable, using mock update:', e);
         apiFailed = true;
@@ -403,7 +424,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredOpportunities = opportunities;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedOpportunities = filteredOpportunities;
 
@@ -687,7 +708,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as 'all' | 'pipeline' | 'won' | 'lost')}
         />
       </ListPageTemplate>
 

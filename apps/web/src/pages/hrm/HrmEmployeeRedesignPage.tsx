@@ -119,7 +119,7 @@ const mapApiEmployees = (apiEmployees: RawApiEmployee[]): Employee[] => {
     position: e.position || '-',
     level: (e.level as Employee['level']) || 'P5',
     status: (e.status as Employee['status']) || 'active',
-    phone: isEncryptedBlob(e.phone) ? '-' : (e.phone || e.mobile || '-'),
+    phone: isEncryptedBlob(e.phone) ? '-' : e.phone || e.mobile || '-',
     email: e.email || '-',
     join_date: e.join_date || e.hire_date || '-',
     salary: e.salary || 0,
@@ -264,7 +264,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; department?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -284,7 +284,11 @@ const HrmEmployeeRedesignPage: React.FC = () => {
           apiEmployees = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData.data as any;
+          const dataObj = resData.data as {
+            list?: ApiEmployee[];
+            items?: ApiEmployee[];
+            total?: number;
+          };
           apiEmployees = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -346,7 +350,8 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
       let apiFailed = false;
       try {
-        await employeeApi.create({
+        // 请求体含 API 契约外的扩展字段，先赋变量再传参：保持 payload 形状不变
+        const payload = {
           name: data.name || '',
           employee_no: data.emp_no,
           department: data.department,
@@ -358,7 +363,8 @@ const HrmEmployeeRedesignPage: React.FC = () => {
           hire_date: data.join_date,
           salary: data.salary,
           manager: data.manager,
-        } as any);
+        };
+        await employeeApi.create(payload);
       } catch (e) {
         console.warn('[HRM Employees] Create API unavailable, using mock create:', e);
         apiFailed = true;
@@ -386,7 +392,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<Employee> }) => {
       let apiFailed = false;
       try {
-        await employeeApi.update(id, {
+        const payload = {
           name: data.name,
           department: data.department,
           position: data.position,
@@ -397,7 +403,8 @@ const HrmEmployeeRedesignPage: React.FC = () => {
           hire_date: data.join_date,
           salary: data.salary,
           manager: data.manager,
-        } as any);
+        };
+        await employeeApi.update(id, payload);
       } catch (e) {
         console.warn('[HRM Employees] Update API unavailable, using mock update:', e);
         apiFailed = true;
@@ -421,7 +428,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredEmployees = employees;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedEmployees = filteredEmployees;
 

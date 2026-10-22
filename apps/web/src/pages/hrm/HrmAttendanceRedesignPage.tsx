@@ -78,20 +78,38 @@ interface AttendanceRecord {
   remark: string;
 }
 
+// API 返回行可能带页面兼容字段（employee_name/check_in 等别名），用宽松输入类型承载
+type RawApiAttendance = ApiAttendanceRecord & {
+  emp_no?: string;
+  employee_name?: string;
+  employeeName?: string;
+  department?: string;
+  date?: string;
+  check_in?: string;
+  checkIn?: string;
+  check_out?: string;
+  checkOut?: string;
+  work_hours?: number;
+  workHours?: number;
+  overtime_hours?: number;
+  overtimeHours?: number;
+  remark?: string;
+};
+
 // 将 API 返回的 AttendanceRecord 类型映射为页面使用的 AttendanceRecord 类型
-const mapApiAttendance = (apiRecords: ApiAttendanceRecord[]): AttendanceRecord[] => {
+const mapApiAttendance = (apiRecords: RawApiAttendance[]): AttendanceRecord[] => {
   return apiRecords.map((r, index) => ({
     id: r.id,
-    emp_no: (r as any).emp_no || `EMP${String(index + 1).padStart(3, '0')}`,
-    employee_name: (r as any).employee_name || (r as any).employeeName || '-',
-    department: (r as any).department || '-',
-    date: (r as any).date || '-',
-    check_in: (r as any).check_in || (r as any).checkIn || '-',
-    check_out: (r as any).check_out || (r as any).checkOut || '-',
-    status: ((r as any).status as AttendanceRecord['status']) || 'normal',
-    work_hours: (r as any).work_hours || (r as any).workHours || 0,
-    overtime_hours: (r as any).overtime_hours || (r as any).overtimeHours || 0,
-    remark: (r as any).remark || '',
+    emp_no: r.emp_no || `EMP${String(index + 1).padStart(3, '0')}`,
+    employee_name: r.employee_name || r.employeeName || '-',
+    department: r.department || '-',
+    date: r.date || '-',
+    check_in: r.check_in || r.checkIn || '-',
+    check_out: r.check_out || r.checkOut || '-',
+    status: (r.status as AttendanceRecord['status']) || 'normal',
+    work_hours: r.work_hours || r.workHours || 0,
+    overtime_hours: r.overtime_hours || r.overtimeHours || 0,
+    remark: r.remark || '',
   }));
 };
 
@@ -208,7 +226,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
     queryFn: async () => {
       try {
         // 尝试调用真实 API（服务端分页）
-        const params: any = {
+        const params: { page: number; pageSize: number; search?: string; department?: string } = {
           page: currentPage,
           pageSize,
         };
@@ -230,7 +248,11 @@ const HrmAttendanceRedesignPage: React.FC = () => {
           apiRecords = resData;
           total = resData.length;
         } else if (resData.data) {
-          const dataObj = resData.data as any;
+          const dataObj = resData.data as {
+            list?: ApiAttendanceRecord[];
+            items?: ApiAttendanceRecord[];
+            total?: number;
+          };
           apiRecords = Array.isArray(resData.data)
             ? resData.data
             : dataObj.list || dataObj.items || [];
@@ -292,7 +314,8 @@ const HrmAttendanceRedesignPage: React.FC = () => {
       // S1：真实 API 创建失败时不再静默假成功——记录降级标记，由 onSuccess 给出醒目警示
       let apiFailed = false;
       try {
-        await attendanceApi.create({
+        // 请求体含 API 契约外的扩展字段，先赋变量再传参：保持 payload 形状不变
+        const payload = {
           employee_id: data.emp_no,
           employee_name: data.employee_name,
           date: data.date,
@@ -300,7 +323,8 @@ const HrmAttendanceRedesignPage: React.FC = () => {
           check_out: data.check_out,
           status: data.status,
           department: data.department,
-        } as any);
+        };
+        await attendanceApi.create(payload);
       } catch (e) {
         console.warn('[HRM Attendance] Create API unavailable, using mock create:', e);
         apiFailed = true;
@@ -328,11 +352,12 @@ const HrmAttendanceRedesignPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<AttendanceRecord> }) => {
       let apiFailed = false;
       try {
-        await attendanceApi.update(id, {
+        const payload = {
           check_in: data.check_in,
           check_out: data.check_out,
           status: data.status,
-        } as any);
+        };
+        await attendanceApi.update(id, payload);
       } catch (e) {
         console.warn('[HRM Attendance] Update API unavailable, using mock update:', e);
         apiFailed = true;
@@ -356,7 +381,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredRecords = records;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = data?.total || 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedRecords = filteredRecords;
 
@@ -627,7 +652,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         <Tabs
           tabs={tabsConfig}
           activeTab={activeTab}
-          onChange={(id) => setActiveTab(id as any)}
+          onChange={(id) => setActiveTab(id as 'all' | 'normal' | 'abnormal' | 'leave')}
         />
       </ListPageTemplate>
 
