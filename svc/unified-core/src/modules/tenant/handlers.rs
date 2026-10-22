@@ -2379,3 +2379,197 @@ pub async fn delete_tenant_api_key(
     }
     Json(CoreResponse::success(key_id, "API key deleted"))
 }
+
+const TENANT_SEC_AUDIT_PREFIX: &str = "tenant_security_auditlogs_";
+const TENANT_SEC_SESSIONS_PREFIX: &str = "tenant_security_sessions_";
+const TENANT_SEC_IPLIST_PREFIX: &str = "tenant_security_iplist_";
+
+/// `GET /tenant/{id}/security/audit-logs`
+pub async fn list_tenant_audit_logs(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_AUDIT_PREFIX).await {
+        Ok(a) => Json(CoreResponse::success(
+            serde_json::Value::Array(a),
+            "Audit logs retrieved",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] list audit logs failed: {}", e);
+            Json(CoreResponse::error("读取租户审计日志失败"))
+        }
+    }
+}
+
+/// `GET /tenant/{id}/security/audit-logs/export`
+pub async fn export_tenant_audit_logs(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_AUDIT_PREFIX).await {
+        Ok(a) => Json(CoreResponse::success(
+            serde_json::json!({
+                "format": "json",
+                "count": a.len(),
+                "records": serde_json::Value::Array(a),
+                "exported_at": chrono::Utc::now().to_rfc3339(),
+            }),
+            "Audit logs exported",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] export audit logs failed: {}", e);
+            Json(CoreResponse::error("导出租户审计日志失败"))
+        }
+    }
+}
+
+/// `GET /tenant/{id}/security/audit-logs/{log_id}`
+pub async fn get_tenant_audit_log(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, log_id)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_AUDIT_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] get audit log read failed: {}", e);
+            return Json(CoreResponse::error("读取租户审计日志失败"));
+        }
+    };
+    match arr
+        .iter()
+        .find(|d| d.get("id").and_then(|v| v.as_str()) == Some(log_id.as_str()))
+    {
+        Some(entry) => Json(CoreResponse::success(entry.clone(), "Audit log retrieved")),
+        None => Json(CoreResponse::error("审计日志不存在")),
+    }
+}
+
+/// `GET /tenant/{id}/security/sessions`
+pub async fn list_tenant_sessions(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX).await {
+        Ok(a) => Json(CoreResponse::success(
+            serde_json::Value::Array(a),
+            "Sessions retrieved",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] list sessions failed: {}", e);
+            Json(CoreResponse::error("读取租户会话失败"))
+        }
+    }
+}
+
+/// `POST /tenant/{id}/security/sessions/revoke-all`
+pub async fn revoke_all_tenant_sessions(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] revoke-all read failed: {}", e);
+            return Json(CoreResponse::error("读取租户会话失败"));
+        }
+    };
+    let count = arr.len();
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX, &[]).await {
+        tracing::error!("[Tenant] revoke-all write failed: {}", e);
+        return Json(CoreResponse::error("撤销租户会话失败"));
+    }
+    Json(CoreResponse::success(
+        serde_json::json!({"revoked": count}),
+        "All sessions revoked",
+    ))
+}
+
+/// `POST /tenant/{id}/security/sessions/{session_id}/revoke`
+pub async fn revoke_tenant_session(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, session_id)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] revoke session read failed: {}", e);
+            return Json(CoreResponse::error("读取租户会话失败"));
+        }
+    };
+    let before = arr.len();
+    arr.retain(|d| d.get("id").and_then(|v| v.as_str()) != Some(session_id.as_str()));
+    if arr.len() == before {
+        return Json(CoreResponse::error("会话不存在"));
+    }
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_SESSIONS_PREFIX, &arr).await {
+        tracing::error!("[Tenant] revoke session write failed: {}", e);
+        return Json(CoreResponse::error("撤销租户会话失败"));
+    }
+    Json(CoreResponse::success(
+        serde_json::json!({"id": session_id, "revoked": true}),
+        "Session revoked",
+    ))
+}
+
+/// `POST /tenant/{id}/security/ip-whitelist`
+pub async fn add_tenant_ip_whitelist(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] add ip read failed: {}", e);
+            return Json(CoreResponse::error("读取租户 IP 白名单失败"));
+        }
+    };
+    let mut entry = payload;
+    if let Some(obj) = entry.as_object_mut() {
+        obj.entry("id".to_string())
+            .or_insert_with(|| serde_json::json!(Uuid::new_v4().to_string()));
+        obj.insert(
+            "created_at".to_string(),
+            serde_json::json!(chrono::Utc::now().to_rfc3339()),
+        );
+    } else {
+        entry = serde_json::json!({
+            "id": Uuid::new_v4().to_string(),
+            "created_at": chrono::Utc::now().to_rfc3339(),
+        });
+    }
+    arr.push(entry.clone());
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX, &arr).await {
+        tracing::error!("[Tenant] add ip write failed: {}", e);
+        return Json(CoreResponse::error("写入租户 IP 白名单失败"));
+    }
+    Json(CoreResponse::success(entry, "IP whitelist entry added"))
+}
+
+/// `DELETE /tenant/{id}/security/ip-whitelist/{ip_id}`
+pub async fn remove_tenant_ip_whitelist(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, ip_id)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<String>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] remove ip read failed: {}", e);
+            return Json(CoreResponse::error("读取租户 IP 白名单失败"));
+        }
+    };
+    arr.retain(|d| d.get("id").and_then(|v| v.as_str()) != Some(ip_id.as_str()));
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_IPLIST_PREFIX, &arr).await {
+        tracing::error!("[Tenant] remove ip write failed: {}", e);
+        return Json(CoreResponse::error("写入租户 IP 白名单失败"));
+    }
+    Json(CoreResponse::success(ip_id, "IP whitelist entry removed"))
+}

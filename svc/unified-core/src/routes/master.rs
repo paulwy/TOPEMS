@@ -98,6 +98,22 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             get(modules::tenant::handlers::list_tenant_api_keys),
         )
         .route(
+            "/tenant/{id}/security/audit-logs",
+            get(modules::tenant::handlers::list_tenant_audit_logs),
+        )
+        .route(
+            "/tenant/{id}/security/audit-logs/export",
+            get(modules::tenant::handlers::export_tenant_audit_logs),
+        )
+        .route(
+            "/tenant/{id}/security/audit-logs/{log_id}",
+            get(modules::tenant::handlers::get_tenant_audit_log),
+        )
+        .route(
+            "/tenant/{id}/security/sessions",
+            get(modules::tenant::handlers::list_tenant_sessions),
+        )
+        .route(
             "/tenant/context",
             get(modules::tenant::handlers::get_current_tenant_context),
         )
@@ -239,6 +255,22 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/tenant/{id}/security/api-keys/{key_id}",
             delete(modules::tenant::handlers::delete_tenant_api_key),
+        )
+        .route(
+            "/tenant/{id}/security/sessions/revoke-all",
+            post(modules::tenant::handlers::revoke_all_tenant_sessions),
+        )
+        .route(
+            "/tenant/{id}/security/sessions/{session_id}/revoke",
+            post(modules::tenant::handlers::revoke_tenant_session),
+        )
+        .route(
+            "/tenant/{id}/security/ip-whitelist",
+            post(modules::tenant::handlers::add_tenant_ip_whitelist),
+        )
+        .route(
+            "/tenant/{id}/security/ip-whitelist/{ip_id}",
+            delete(modules::tenant::handlers::remove_tenant_ip_whitelist),
         )
         .route(
             "/tenant/{id}/users/invite",
