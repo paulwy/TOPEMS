@@ -75,8 +75,10 @@ const ProductionOrderManagementPage: React.FC = () => {
   );
   const productionOrderApiAdapter: CrudApiAdapter<ProductionOrder> = {
     list: async (params) => {
+      // 后端 /api/mes/orders 为 1 基分页，直接透传页码；
+      // 此前减 1 转 0 基导致翻页错位（第 N 页实际请求第 N-1 页数据）
       const response = await mesApi.orders.list({
-        page: params?.page !== undefined ? params.page - 1 : 0,
+        page: params?.page,
         page_size: params?.pageSize ?? 10,
         search: params?.search as string | undefined,
         status: params?.status && params.status !== 'all' ? (params.status as string) : undefined,
