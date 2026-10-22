@@ -154,7 +154,12 @@ impl MesRealModule {
             ))
             // 业务 404 归一化（见 normalize_business_not_found 注释）：把 RowNotFound 类
             // "不存在"响应的 HTTP 状态码由 404 改写为 200，与前端契约一致。
-            .layer(axum::middleware::from_fn(normalize_business_not_found));
+            .layer(axum::middleware::from_fn(normalize_business_not_found))
+            // P2：8099 请求层 RLS 中间件（对齐 finance_real_module 同构；2026-10-22 批量补挂新增模块）
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.db.clone(),
+                topems_shared_db::rls::rls_middleware,
+            ));
 
         tracing::info!(
             "✅ 真实 mes 模块已接入统一入口（db={}，prefix={}）",

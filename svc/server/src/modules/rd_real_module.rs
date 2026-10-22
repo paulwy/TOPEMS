@@ -80,6 +80,11 @@ impl RdRealModule {
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
                 topems_shared_auth::auth::auth_middleware,
+            ))
+            // P2：8099 请求层 RLS 中间件（对齐 finance_real_module 同构；2026-10-22 批量补挂新增模块）
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.db.clone(),
+                topems_shared_db::rls::rls_middleware,
             ));
 
         tracing::info!(
