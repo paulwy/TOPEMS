@@ -602,6 +602,7 @@
 ### 遗留（非本批可决 / 长尾）
 - e2e 栈纳入 CI 待 E3 GitHub Billing/CI 恢复（外部阻塞，技术不可决）。
 - 其余域弱 spec（antd 选择器、无真断言）照本范本后续逐个补；空库域（qms/srm/pm/pdm/gis）需先 API 造数才能闭环。
+  - **✅ 进展（2026-10-23，第三/四域）**：`wms-inbound.spec.ts`（TC-WMS-001/002 列表+详情断言后端 `order_number`）与 `hrm-employee.spec.ts`（TC-HRM-001/002）照范本整文件重写（旧 wms spec 为 antd 选择器 + `.catch(()=>{})` 吞断言假绿）；真栈 **4/4 绿**。**补测抓到真缺陷并修复**：`WmsInboundOrderPage` 映射漏读真实键 `order_number`/`warehouse_name`（页面曾按行号合成 `IN2026*` 假单号）+ 后端 FSM 状态（created/confirmed/received）未归一全部回落「待入库」→ 修 `mapApiInboundOrders` 补真实键优先、`normalizeInboundStatus` 显式收敛四态（复用既有 label 零新 i18n key，顺手去掉 1 处 `as` 断言）；typecheck/eslint/prettier 全绿。
 - `test_admin` 未绑业务角色：后续 spec 可改用 admin 登录，或给种子 test_admin 补绑角色。
 
 ---

@@ -1,109 +1,88 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, navigateTo, expectUrl, expectPageVisible, expectHasHeading } from './helpers/auth';
+import { navigateTo, expectUrl } from './helpers/auth';
+import { API_URL } from '../utils/testUtils';
+
+/** 以超管 admin 页面登录（test_admin 未绑 wms 角色，会被权限守卫拦截） */
+async function pageLoginAsSuperAdmin(page: import('@playwright/test').Page): Promise<void> {
+  await page.goto('/login', { waitUntil: 'load', timeout: 30000 });
+  await page
+    .waitForSelector('input[placeholder*="用户名"], input[name="username"]', { timeout: 15000 })
+    .catch(() => {});
+  await page.getByPlaceholder('请输入用户名').fill('admin');
+  await page.getByPlaceholder('请输入密码').fill('admin123');
+  await page.getByTestId('login-submit').click();
+  await page.waitForURL('**/dashboard', { timeout: 30000 });
+  await page
+    .waitForSelector('main, #main-content, [role="main"]', { timeout: 10000 })
+    .catch(() => {});
+}
 
 /**
- * WMS 入库流程 E2E 测试
- * 业务流程: 采购入库 → 质检 → 上架 → 库存更新
- * 测试用例: TC-WMS-001 ~ TC-WMS-005
+ * WMS 入库单数据流 E2E（真后端断言，非「可达不崩」级）
+ *
+ * 方法：先用 admin 调真后端取第一条入库单（id/order_number），再以登录态打开
+ * 列表页 / 详情页，断言前端正文确实渲染了后端返回的记录——证明列表/详情
+ * 接的是真数据而非空壳/mock。
+ *
+ * 前置：真后端栈已起（scripts/dev/run-e2e-stack.sh login），API_URL 指向 8099；
+ * wms.inbound_orders 已有幂等种子 IB-DEMO-001/002。
  */
-test.describe('WMS Inbound Order Flow (TC-WMS-001 ~ TC-WMS-005)', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
+
+async function adminToken(): Promise<string> {
+  const res = await fetch(`${API_URL}/api/core/iam/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: 'admin', password: 'admin123' }),
+  });
+  const data = await res.json();
+  const token = data?.data?.access_token || data?.data?.token || '';
+  if (!token) throw new Error('admin 真登录失败，未取到 token');
+  return token;
+}
+
+interface InboundOrderRecord {
+  id: string;
+  order_number: string;
+}
+
+async function firstInboundOrder(token: string): Promise<InboundOrderRecord> {
+  const res = await fetch(`${API_URL}/api/wms/inbound-orders?page=1&page_size=10`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  // 后端列表实际返回键为 orders（见 WmsInboundOrderPage 响应解包修复 d7d6131499）
+  const items: InboundOrderRecord[] =
+    data?.data?.orders ?? data?.data?.items ?? (Array.isArray(data?.data) ? data.data : []);
+  const o = items[0];
+  if (!o?.id || !o?.order_number) {
+    throw new Error('后端入库单列表为空或结构异常，无法做数据流断言');
+  }
+  return o;
+}
+
+test.describe('WMS 入库单数据流（真后端断言）', () => {
+  // TC-WMS-001：列表页渲染后端入库单记录
+  test('TC-WMS-001 入库单列表展示后端返回的入库单记录', async ({ page }) => {
+    const token = await adminToken();
+    const order = await firstInboundOrder(token);
+
+    await pageLoginAsSuperAdmin(page);
+    await navigateTo(page, '/wms/inbound-orders');
+    await expectUrl(page, /wms\/inbound-orders/);
+
+    // 前端列表正文必须出现后端取到的入库单号（真数据流，而非空表/mock）
+    await expect(page.locator('body')).toContainText(order.order_number, { timeout: 10000 });
   });
 
-  // TC-WMS-001: 创建入库单，验证入库单创建成功
-  test('TC-WMS-001 should create inbound order successfully', async ({ page }) => {
-    await navigateTo(page, '/wms/inbound');
-    await expectUrl(page, /wms\/inbound/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
+  // TC-WMS-002：详情页渲染后端入库单记录
+  test('TC-WMS-002 入库单详情页展示后端返回的入库单记录', async ({ page }) => {
+    const token = await adminToken();
+    const order = await firstInboundOrder(token);
 
-    // 验证入库单列表页面加载
-    const listContainer = page.locator('table, .ant-table, [role="table"]').first();
-    await expect(listContainer).toBeVisible({ timeout: 10000 }).catch(() => {
-      // 列表可能使用其他容器，验证页面主体即可
-    });
+    await pageLoginAsSuperAdmin(page);
+    await navigateTo(page, `/wms/inbound-orders/${order.id}`);
+    await expect(page).toHaveURL(/wms\/inbound-orders\//);
 
-    // 尝试点击新建按钮（如果存在）
-    const createButton = page.getByRole('button', { name: /新建|创建|新增/ }).first();
-    if (await createButton.isVisible().catch(() => false)) {
-      await createButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      // 验证弹窗或表单出现
-      const modal = page.locator('.ant-modal, [role="dialog"]').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
-  });
-
-  // TC-WMS-002: 入库单收货，验证收货数量正确
-  test('TC-WMS-002 should receive inbound order with correct quantity', async ({ page }) => {
-    await navigateTo(page, '/wms/inbound-order');
-    await expectUrl(page, /wms\/inbound-order/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
-
-    // 验证入库单订单列表加载
-    const table = page.locator('table, .ant-table').first();
-    await expect(table).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 验证操作列存在收货按钮（如果有数据）
-    const receiveButton = page.getByRole('button', { name: /收货|确认收货/ }).first();
-    if (await receiveButton.isVisible().catch(() => false)) {
-      await receiveButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-    }
-  });
-
-  // TC-WMS-003: 质检通过，验证质检状态更新
-  test('TC-WMS-003 should pass quality inspection and update status', async ({ page }) => {
-    await navigateTo(page, '/wms/inbound');
-    await expectUrl(page, /wms\/inbound/);
-    await expectPageVisible(page);
-
-    // 验证页面包含质检相关元素
-    const inspectButton = page.getByRole('button', { name: /质检|检验/ }).first();
-    if (await inspectButton.isVisible().catch(() => false)) {
-      await inspectButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      // 验证质检弹窗
-      const modal = page.locator('.ant-modal, [role="dialog"]').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
-  });
-
-  // TC-WMS-004: 上架到库位，验证库位库存增加
-  test('TC-WMS-004 should putaway to location and increase location inventory', async ({ page }) => {
-    await navigateTo(page, '/wms/inbound');
-    await expectUrl(page, /wms\/inbound/);
-    await expectPageVisible(page);
-
-    // 验证上架按钮存在
-    const putawayButton = page.getByRole('button', { name: /上架|确认上架/ }).first();
-    if (await putawayButton.isVisible().catch(() => false)) {
-      await putawayButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-    }
-
-    // 导航到库位管理页面验证库存
-    await navigateTo(page, '/wms/location-management');
-    await expectUrl(page, /wms\/location-management/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
-  });
-
-  // TC-WMS-005: 入库完成，验证库存总量正确
-  test('TC-WMS-005 should complete inbound and verify total inventory', async ({ page }) => {
-    await navigateTo(page, '/wms/inventory');
-    await expectUrl(page, /wms\/inventory/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
-
-    // 验证库存列表加载
-    const inventoryTable = page.locator('table, .ant-table').first();
-    await expect(inventoryTable).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 验证库存汇总信息
-    const summaryCards = page.locator('.ant-card, [class*="summary"], [class*="stat"]').first();
-    await expect(summaryCards).toBeVisible({ timeout: 5000 }).catch(() => {});
+    await expect(page.locator('body')).toContainText(order.order_number, { timeout: 10000 });
   });
 });
