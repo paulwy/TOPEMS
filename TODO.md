@@ -3263,3 +3263,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.56（2026-10-23）**：clippy 全量清理（58→3，`--fix` 自动修 55 条纯样式，剩余 3 条 vendor/rsa 第三方 dead_code 无害）+ BI 面板核查（reports-center/stats connected 真实计数）。
 
 > **系统完善 v1.57（2026-10-23）**：mobile 契约 114/114 全闭环——clippy 触发 mobile-contract-smoke 暴露 6 FAIL → 补表（oa_calendar_events/announcements/push 列/唯一索引/mes 生产表）+ 脚本 base 探测（8099→8098 fallback）+ 8070 重建 + 8098 重启；ensure 并入 mobile/mes 自愈段。
+
+> **系统完善 v1.58（2026-10-23）**：残余缺表批量清零（erp/finance/public 11 表 test 结构复制主库 + ensure 自愈段）→ 曾缺表端点无 500；探活 0 5xx；gate 2653/6336/0。

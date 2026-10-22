@@ -240,4 +240,160 @@ CREATE TABLE IF NOT EXISTS mes.equipment (
   warranty_end_date date
 );"
 echo "mes 生产表就绪（equipment/production_orders）"
+# 残余缺表批量自愈（erp/finance/public 11 表，契约日志 relation 500 清零；幂等）
+psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+CREATE TABLE IF NOT EXISTS erp.erp_master_data_versions (
+  id uuid NOT NULL,
+  master_data_id text NOT NULL,
+  version_number integer NOT NULL,
+  domain text NOT NULL,
+  code text NOT NULL,
+  name text,
+  status text NOT NULL,
+  snapshot jsonb NOT NULL,
+  changed_by text,
+  created_at timestamp with time zone NOT NULL,
+  deleted_at timestamp with time zone
+);
+CREATE TABLE IF NOT EXISTS erp.erp_master_data_conflicts (
+  id uuid NOT NULL,
+  master_data_id text NOT NULL,
+  domain text NOT NULL,
+  conflict_type text NOT NULL,
+  field_name text NOT NULL,
+  local_value jsonb,
+  remote_value jsonb,
+  remote_service text,
+  status text NOT NULL,
+  merge_strategy text NOT NULL,
+  resolved_value jsonb,
+  detected_at timestamp with time zone NOT NULL,
+  resolved_at timestamp with time zone,
+  resolved_by text,
+  deleted_at timestamp with time zone
+);
+CREATE TABLE IF NOT EXISTS erp.erp_master_data_quality_rules (
+  id uuid NOT NULL,
+  name text NOT NULL,
+  description text,
+  domain text NOT NULL,
+  field_name text,
+  rule_type text NOT NULL,
+  severity text NOT NULL,
+  config jsonb NOT NULL,
+  is_active boolean NOT NULL,
+  created_at timestamp with time zone NOT NULL,
+  updated_at timestamp with time zone NOT NULL,
+  deleted_at timestamp with time zone
+);
+CREATE TABLE IF NOT EXISTS erp.erp_master_data_quality_reports (
+  id uuid NOT NULL,
+  domain text NOT NULL,
+  total_checked bigint NOT NULL,
+  total_issues bigint NOT NULL,
+  errors bigint NOT NULL,
+  warnings bigint NOT NULL,
+  info bigint NOT NULL,
+  issues jsonb,
+  generated_at timestamp with time zone NOT NULL,
+  deleted_at timestamp with time zone
+);
+CREATE TABLE IF NOT EXISTS finance.sales_invoices (
+  id uuid NOT NULL,
+  tenant_id uuid NOT NULL,
+  invoice_number character varying NOT NULL,
+  customer_id uuid NOT NULL,
+  customer_name character varying NOT NULL,
+  invoice_date date NOT NULL,
+  due_date date,
+  amount numeric NOT NULL,
+  tax_amount numeric NOT NULL,
+  total_amount numeric NOT NULL,
+  paid_amount numeric NOT NULL,
+  status character varying NOT NULL,
+  invoice_type character varying NOT NULL,
+  cancel_reason text,
+  red_flush_of uuid,
+  issued_at timestamp with time zone,
+  cancelled_at timestamp with time zone,
+  created_by uuid,
+  created_at timestamp with time zone NOT NULL,
+  updated_at timestamp with time zone NOT NULL,
+  deleted_at timestamp with time zone
+);
+CREATE TABLE IF NOT EXISTS finance.accounting_subjects (
+  id uuid NOT NULL,
+  deleted_at timestamp with time zone,
+  code character varying,
+  name character varying,
+  tenant_id uuid NOT NULL,
+  organization_id uuid NOT NULL,
+  category character varying,
+  level integer NOT NULL,
+  parent_code character varying,
+  description text,
+  is_cash_flow boolean NOT NULL,
+  status character varying NOT NULL,
+  created_at timestamp with time zone NOT NULL,
+  updated_at timestamp with time zone NOT NULL
+);
+CREATE TABLE IF NOT EXISTS finance.erp_collection_records (
+  id uuid NOT NULL,
+  deleted_at timestamp with time zone,
+  confirmed_by character varying,
+  confirmed_at timestamp with time zone,
+  tenant_id uuid,
+  invoice_no text,
+  amount numeric,
+  status text,
+  created_at timestamp with time zone,
+  collection_no text,
+  customer_id uuid,
+  customer_name text,
+  collection_date date,
+  payment_method text,
+  remark text,
+  created_by uuid,
+  currency text,
+  category text,
+  invoice_date timestamp with time zone,
+  fiscal_year integer,
+  collected_amount numeric,
+  reference_no text,
+  updated_at timestamp with time zone NOT NULL
+);
+CREATE TABLE IF NOT EXISTS public.approvals (
+  id uuid NOT NULL,
+  workflow_instance_id uuid,
+  status text,
+  created_at timestamp with time zone NOT NULL,
+  deleted_at timestamp with time zone,
+  node_id uuid,
+  task_name text,
+  assignee_id uuid,
+  approved_by uuid,
+  approval_type text,
+  comment text,
+  approved_at timestamp with time zone,
+  timeout_at timestamp with time zone,
+  tenant_id uuid
+);
+CREATE TABLE IF NOT EXISTS public.announcements (
+  id uuid NOT NULL,
+  deleted_at timestamp with time zone
+);
+CREATE TABLE IF NOT EXISTS erp.documents (
+  id uuid NOT NULL,
+  tenant_id uuid,
+  title text NOT NULL,
+  doc_type text NOT NULL,
+  status text NOT NULL,
+  file_url text,
+  file_size bigint,
+  uploader text,
+  created_at timestamp with time zone NOT NULL,
+  updated_at timestamp with time zone NOT NULL,
+  deleted_at timestamp with time zone
+);"
+echo "残余缺表批量就绪（erp/finance/public）"
 
