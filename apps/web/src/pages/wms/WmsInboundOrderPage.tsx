@@ -235,6 +235,15 @@ const WmsInboundOrderPage: React.FC = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isMockData, setIsMockData] = useState(false);
 
+  // 供应商选项（从现有列表数据去重，供新建/编辑弹窗选择）
+  const supplierOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return mockOrders
+      .map((o) => o.supplier_name)
+      .filter((s) => s && !seen.has(s) && seen.add(s))
+      .map((s) => ({ value: s, label: s }));
+  }, [mockOrders, t]);
+
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
     return () => clearTimeout(timer);
@@ -821,7 +830,7 @@ const WmsInboundOrderPage: React.FC = () => {
             <Button
               variant='primary'
               onClick={() => {
-                const supplierEl = document.getElementById('supplier') as HTMLInputElement | null;
+                const supplierEl = document.getElementById('supplier') as HTMLSelectElement | null;
                 const warehouseEl = document.getElementById(
                   'warehouse'
                 ) as HTMLSelectElement | null;
@@ -854,12 +863,14 @@ const WmsInboundOrderPage: React.FC = () => {
                 htmlFor='supplier'
                 style={sectionTitle}
               >
-                {t('wms.inbound_order_page.field_supplier')}
+                {t('wms.inbound_order_page.field_supplier')}{' '}
+                <span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>
               </label>
-              <Input
+              <Select
                 id='supplier'
                 placeholder={t('wms.inbound_order_page.placeholder_supplier')}
                 defaultValue={selectedOrder?.supplier_name}
+                options={supplierOptions}
               />
             </div>
             <div>

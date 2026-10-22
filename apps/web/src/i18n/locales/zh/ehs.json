@@ -869,6 +869,7 @@
   "ehs.accident.k18": "特别重大",
   "ehs.accident.k19": "事故地点",
   "ehs.accident.k20": "所属部门",
+  "ehs.accident.department_placeholder": "请选择部门",
   "ehs.accident.k21": "伤亡人数",
   "ehs.accident.k22": "直接损失",
   "ehs.accident.k23": "事故日期",

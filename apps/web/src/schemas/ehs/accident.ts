@@ -74,8 +74,13 @@ export const accidentSchema: EntitySchema = {
     {
       name: 'department_id',
       label: i18n.t('ehs.accident.k20'),
-      type: 'text',
+      type: 'select',
       showInList: false,
+      placeholder: i18n.t('ehs.accident.department_placeholder'),
+      options: {
+        type: 'static',
+        options: [],
+      },
     },
     {
       name: 'casualties',

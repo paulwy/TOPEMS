@@ -254,6 +254,15 @@ const WmsOutboundOrderPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<OutboundOrder | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // 客户选项（从现有列表数据去重，供新建/编辑弹窗选择）
+  const customerOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return mockOrders
+      .map((o) => o.customer_name)
+      .filter((s) => s && s !== '-' && !seen.has(s) && seen.add(s))
+      .map((s) => ({ value: s, label: s }));
+  }, [mockOrders, t]);
   const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
@@ -833,7 +842,7 @@ const WmsOutboundOrderPage: React.FC = () => {
             <Button
               variant='primary'
               onClick={() => {
-                const customerEl = document.getElementById('field-1') as HTMLInputElement | null;
+                const customerEl = document.getElementById('field-1') as HTMLSelectElement | null;
                 const warehouseEl = document.getElementById('field-2') as HTMLSelectElement | null;
                 const expectedEl = document.getElementById('field-3') as HTMLInputElement | null;
                 const formData: Partial<OutboundOrder> = {
@@ -862,12 +871,14 @@ const WmsOutboundOrderPage: React.FC = () => {
                 htmlFor='field-1'
                 style={sectionTitle}
               >
-                {t('wms.outbound_order_page.field_customer')}
+                {t('wms.outbound_order_page.field_customer')}{' '}
+                <span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>
               </label>
-              <Input
+              <Select
                 id='field-1'
                 placeholder={t('wms.outbound_order_page.placeholder_customer')}
                 defaultValue={selectedOrder?.customer_name}
+                options={customerOptions}
               />
             </div>
             <div>

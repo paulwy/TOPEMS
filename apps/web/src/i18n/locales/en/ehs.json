@@ -869,6 +869,7 @@
   "ehs.accident.k18": "Extraordinarily Critical",
   "ehs.accident.k19": "Incident Location",
   "ehs.accident.k20": "Department",
+  "ehs.accident.department_placeholder": "Select department",
   "ehs.accident.k21": "Casualties",
   "ehs.accident.k22": "Direct Loss",
   "ehs.accident.k23": "Incident Date",

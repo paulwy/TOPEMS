@@ -314,6 +314,15 @@ const PurchaseOrderPage: React.FC = () => {
 
   const orders = data || mockOrders;
 
+  // 供应商选项（从现有列表数据去重，供新建弹窗选择）
+  const supplierOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return orders
+      .map((o) => o.supplier_name)
+      .filter((s) => s && !seen.has(s) && seen.add(s))
+      .map((s) => ({ value: s, label: s }));
+  }, [orders]);
+
   // 筛选
   const filteredOrders = useMemo(() => {
     let result = orders;
@@ -804,11 +813,13 @@ const PurchaseOrderPage: React.FC = () => {
                 htmlFor='po-supplier'
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
-                {t('erp.purchase_order.form.supplier')} *
+                {t('erp.purchase_order.form.supplier')}{' '}
+                <span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>
               </label>
-              <Input
+              <Select
                 id='po-supplier'
                 placeholder={t('erp.purchase_order.form.supplier_placeholder')}
+                options={supplierOptions}
               />
             </div>
             <div>

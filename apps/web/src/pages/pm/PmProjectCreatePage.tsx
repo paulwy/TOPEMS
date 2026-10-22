@@ -171,8 +171,9 @@ const PmProjectCreatePage: React.FC = () => {
         {
           name: 'leader',
           label: i18n.t('pm.pm_project_create_page.k32'),
-          type: 'text',
+          type: 'select',
           placeholder: i18n.t('pm.pm_project_create_page.k33'),
+          options: [],
         },
       ],
     },
