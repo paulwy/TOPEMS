@@ -48,6 +48,7 @@ DB_URL="${DATABASE_URL:-postgresql://topems_app:topems_app_secret@localhost:5432
 PUBLIC_ALLOWLIST=(
   "inspection_records"   # erp_public_business_tables 建，mes 质检查询使用
   "audit_logs"           # unified-core 审计日志共享表（显式 public. 限定引用）
+  "schema_defense_ledger" # 设计性多 schema 防御台账（每域 1 行，mes 版 search_path 优先，public 版为汇总非遮蔽）
 )
 
 say()  { printf '[mes_guard] %s\n' "$*"; }

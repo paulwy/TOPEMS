@@ -3332,3 +3332,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.79（2026-10-23）**：analytics usage/api-usage 端点核销——实测 /api/core/tenant/{id}/analytics/{usage,api-usage} 均 200 真实数据（v1.44 T2-c 已实现），历史「404 属排期」观察项闭环。
 
 > **系统完善 v1.80（2026-10-23）**：CI 11 FAIL 本机复核——menu-health 修复（补 14 权限码）✅；perm-matrix/i18n-quality/icons/nav-route/api-modules/error-handling 核销 ✅；page-audit 92%<95%（44 页自实现未用模板）登记待批；mes-online/rust-audit/frontend-test/coverage/code-quality 需 CI 环境。
+
+> **系统完善 v1.81（2026-10-23）**：mes-online 核销——public.capacities 迁数据删冗余（mes 2 行）+ schema_defense_ledger 白名单，mes_guard PASS（编译 0 error）；rust-audit 绿（4 allowed 非阻塞）；探活/contract-gate 复验 OK。CI 11 FAIL 剩：page-audit（44 页待批）+ frontend-test/coverage/code-quality（CI 环境）。
