@@ -2795,7 +2795,7 @@ pub async fn get_tenant_usage(
     .map(|r| serde_json::json!({
         "period_start": r.get::<String,_>("period_start"),
         "period_end": r.get::<String,_>("period_end"),
-        "users_count": r.get::<i32,_>("users_count"),
+        "users_count": r.get::<i64,_>("users_count"),
         "storage_used_mb": r.get::<i64,_>("storage_used_mb"),
         "api_calls_count": r.get::<i64,_>("api_calls_count"),
         "base_cost": r.get::<String,_>("base_cost"),
@@ -2958,7 +2958,7 @@ pub async fn get_governance_trends(
     Extension(_claims): Extension<Claims>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     let rows: Vec<serde_json::Value> = sqlx::query(
-        "SELECT period_start::text, period_end::text, users_count, storage_used_mb, api_calls_count, base_cost::text FROM core_tenant_usage ORDER BY period_start DESC LIMIT 6",
+        "SELECT period_start::text, period_end::text, COALESCE(SUM(users_count),0)::bigint AS users_count, COALESCE(SUM(storage_used_mb),0)::bigint AS storage_used_mb, COALESCE(SUM(api_calls_count),0)::bigint AS api_calls_count, COALESCE(SUM(base_cost),0)::text AS base_cost FROM core_tenant_usage GROUP BY period_start, period_end ORDER BY period_start DESC LIMIT 6",
     )
     .fetch_all(&state.pool)
     .await
@@ -2967,7 +2967,7 @@ pub async fn get_governance_trends(
     .map(|r| serde_json::json!({
         "period_start": r.get::<String,_>("period_start"),
         "period_end": r.get::<String,_>("period_end"),
-        "users_count": r.get::<i32,_>("users_count"),
+        "users_count": r.get::<i64,_>("users_count"),
         "storage_used_mb": r.get::<i64,_>("storage_used_mb"),
         "api_calls_count": r.get::<i64,_>("api_calls_count"),
         "base_cost": r.get::<String,_>("base_cost"),

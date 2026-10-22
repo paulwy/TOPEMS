@@ -3249,3 +3249,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.49（2026-10-22）**：core_tenant_modules 种子并入 ensure 脚本（首租户 5 模块）——overview active_modules=5 真实化；全量探活 0 5xx + USAGE_COLLECT_OK。
 
 > **系统完善 v1.50（2026-10-22）**：API 请求计数闭环——core_audit_logs 补表（中间件写库静默失败根因）+ analytics 4 面板聚合真实化（api-usage 19/activity/top-endpoints/real-time 9）+ collect api_calls_count 真实化（usage 读回 25）+ NULLIF user_id 修 6 处。
+
+> **系统完善 v1.51（2026-10-23）**：trends 平台级聚合（GROUP BY SUM + i64 修 500）+ erp_master_data_audit_trail 补表消 warn + usage 历史期回填（trends 6 期真实：268/40/32/24/16/8）+ ensure 脚本并入。
