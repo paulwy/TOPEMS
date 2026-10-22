@@ -75,7 +75,7 @@
 | tenant/integrations | 4 | 🔴 | 0 命中（第三方集成登记） | `api/tenant/config.ts` |
 | tenant/webhooks | 5 | 🟢 部分 | integration `plugin.rs` / communication 有 webhook 能力可复用 | `api/tenant/config.ts`、`api/notification/webhook.ts` |
 | tenant/security | 18 | 🟡 部分 | iam/auth 已有 password-policy；2fa/api-keys/audit-logs/sessions/ip-whitelist 🔴 | `api/tenant/security.ts` |
-| system/api-keys | 2 | 🔴（原误标🟢） | 真实仅列表/创建/删除；stub 的 GET 详情、PUT 更新为未实现，非冗余 | `api/unified-core/system.ts` |
+| system/api-keys | 2 | ✅ 已闭环（2026-10-22，`349c187ae`） | 真实 CRUD 全量：列表/创建/删除 + 补 GET 详情/PUT 更新（get_api_key/update_api_key，mask 密文 + RowNotFound 404）；顺手修 updated_at TIMESTAMP/TIMESTAMPTZ 类型 panic | `api/unified-core/system.ts` |
 | wms-approval | 0（原12，第二批已删） | ✅ 已对接 | 前端改指 apiClient.wms（transfer=/transfers），core 兜底删除 | `api/wms/index.ts` |
 | help | 7 | ⚠ 保留 | `help.ts` 仍走 core client（非已迁出），删除会裸 404 | `api/help.ts` |
 
@@ -333,7 +333,7 @@
 | **core copilot/forms/documents** | 8 | ⚠️ 页面零方法调用（BusinessCopilotPage 仅类型 import，走 dsh/smart-forms），但 api 封装方法仍指 core（businessCopilot.ts:214,222,268 / businessIntelligence.ts:253,320） | dsh/smart-forms 已承接（sessions POST、chat、intent、modules、forms validate/generate、documents DOC_BASE_PATH） | **✅ S2 已闭环（2026-10-22，`526a7687c`）**：实证修正——6 条真死删（getSession/getFormDefinition/documents parse+summary×2+search，页面+hook 零调用）+ 2 条 hook 活调保留（deleteSession useBusinessCopilot.ts:282 / searchFAQ :258，svc/ai 未实现子路径） | ✅ S2 |
 | **governance 剩余**（risk/compliance/cost/performance/audit/trends/recommendations + security-events） | 8 | ❌ 前端零消费 | ai governance_dashboard_handlers 已覆盖 dashboard/score | **产品定指标口径**后按需新建；零消费期间保留兜底 | P |
 | **documents 通用库定位** | 4 | ⚠️ 封装引用（businessIntelligence.ts:320 GET /documents/{id}） | 全仓 0 命中（非 ai knowledge） | **产品定方向**：并入 ai knowledge（改指）或独立文档库（新建）；决定前保留兜底 | P |
-| **system/api-keys** | 2 | ❌ 零页面调用 | 真实仅列表/创建/删除，缺 GET 详情/PUT 更新 | 与租户中心同批（做=补 handler，不做=下线） | P |
+| **system/api-keys** | 2 | ❌ 零页面调用 | **✅ 已闭环（2026-10-22，`349c187ae`）**：补 GET 详情 + PUT 更新 handler（对齐 list/create/delete 租户口径，mask + 404），真实 CRUD 全量就绪；前端封装 api/unified-core/system.ts 零页面消费，待租户中心页面启用 | ✅ 已闭环（P 组 2 条） |
 
 **执行批次总表**：
 - **S1（本机可闭环，共 2 组 9 条）**：help 转发删兜底 + search/recent 新建。**✅ 已闭环（v1.37）**。
