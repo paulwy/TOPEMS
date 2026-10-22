@@ -1,139 +1,165 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, navigateTo, expectUrl, expectPageVisible, expectHasHeading } from './helpers/auth';
+import { navigateTo, expectUrl } from './helpers/auth';
+import { API_URL } from '../utils/testUtils';
+
+/** 以超管 admin 页面登录（test_admin 未绑 erp 角色，会被权限守卫拦截） */
+async function pageLoginAsSuperAdmin(page: import('@playwright/test').Page): Promise<void> {
+  await page.goto('/login', { waitUntil: 'load', timeout: 30000 });
+  await page
+    .waitForSelector('input[placeholder*="用户名"], input[name="username"]', { timeout: 15000 })
+    .catch(() => {});
+  await page.getByPlaceholder('请输入用户名').fill('admin');
+  await page.getByPlaceholder('请输入密码').fill('admin123');
+  await page.getByTestId('login-submit').click();
+  await page.waitForURL('**/dashboard', { timeout: 30000 });
+  await page
+    .waitForSelector('main, #main-content, [role="main"]', { timeout: 10000 })
+    .catch(() => {});
+}
 
 /**
- * ERP 成本管理流程 E2E 测试
- * 业务流程: 成本中心创建 → 成本分摊规则 → 成本核算 → 成本分析报表 → 成本预警
- * 测试用例: TC-ERP-011 ~ TC-ERP-015
+ * ERP 成本域（预算管理 + 费用报销）数据流 E2E（真后端断言，非「可达不崩」级）
+ *
+ * 方法：先以 admin 调真后端 /api/finance/budgets、/api/finance/expenses 取造数
+ * 标记记录（fiscal_year=2099 预算 / expense_number=EXP2099 报销单，库内既有 61 条
+ * 占位预算全 fiscal_year=0，标记记录唯一），再以登录态打开列表页 / 详情弹窗，
+ * 断言前端确实渲染后端返回的字段——证明接的是真数据。
+ *
+ * 前置：真后端栈已起（scripts/dev/run-e2e-stack.sh login），API_URL 指向 8099；
+ * 造数记录已存在（2026-10-23 批11 erp-cost 补测时 API 造数 + tenant_id 补齐）。
  */
-test.describe('ERP Cost Management Flow (TC-ERP-011 ~ TC-ERP-015)', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-  });
 
-  // TC-ERP-011: 成本中心创建，验证中心创建成功
-  test('TC-ERP-011 should create cost center successfully', async ({ page }) => {
+async function adminToken(): Promise<string> {
+  const res = await fetch(`${API_URL}/api/core/iam/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: 'admin', password: 'admin123' }),
+  });
+  const data = await res.json();
+  const token = data?.data?.access_token || data?.data?.token || '';
+  if (!token) throw new Error('admin 真登录失败，未取到 token');
+  return token;
+}
+
+interface BudgetRecord {
+  id: string;
+  fiscal_year: string;
+  total_budget: string;
+}
+
+interface ExpenseRecord {
+  id: string;
+  expense_number: string;
+  applicant_name: string | null;
+  expense_type: string | null;
+}
+
+/** 取造数标记预算（fiscal_year=2099，库内唯一非占位记录） */
+async function markerBudget(token: string): Promise<BudgetRecord> {
+  const res = await fetch(`${API_URL}/api/finance/budgets?page=1&page_size=100`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  const items: BudgetRecord[] = data?.data?.items ?? [];
+  const b = items.find((r) => r?.id && r?.fiscal_year === '2099');
+  if (!b) throw new Error('后端预算列表无 fiscal_year=2099 造数记录，无法做数据流断言');
+  return b;
+}
+
+/** 取造数标记报销单（expense_number=EXP2099） */
+async function markerExpense(token: string): Promise<ExpenseRecord> {
+  const res = await fetch(`${API_URL}/api/finance/expenses?page=1&page_size=100`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  const items: ExpenseRecord[] = data?.data?.items ?? [];
+  const e = items.find((r) => r?.id && r?.expense_number === 'EXP2099');
+  if (!e) throw new Error('后端费用报销列表无 EXP2099 造数记录，无法做数据流断言');
+  return e;
+}
+
+test.describe('ERP 成本域数据流（真后端断言）', () => {
+  // TC-ERP-011：预算列表渲染后端预算记录（fiscal_year=2099 + 金额双真实键）
+  test('TC-ERP-011 预算列表展示后端返回的预算记录', async ({ page }) => {
+    const token = await adminToken();
+    const budget = await markerBudget(token);
+
+    await pageLoginAsSuperAdmin(page);
     await navigateTo(page, '/erp/budget-management');
     await expectUrl(page, /erp\/budget-management/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
 
-    // 验证成本中心/预算列表加载
-    const listContainer = page.locator('table, .ant-table, [role="table"], .MuiTable-root, [class*="table"]').first();
-    await expect(listContainer).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 尝试点击新建成本中心按钮
-    const createButton = page.getByRole('button', { name: /新建|创建|新增|成本中心/ }).first();
-    if (await createButton.isVisible().catch(() => false)) {
-      await createButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      // 验证成本中心创建弹窗或表单出现
-      const modal = page.locator('.ant-modal, [role="dialog"], .MuiDialog-root').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
+    // 前端列表正文必须出现后端取到的会计年度与格式化金额（真数据流，而非占位/mock）
+    await expect(page.locator('body')).toContainText(budget.fiscal_year, { timeout: 10000 });
+    await expect(page.locator('body')).toContainText('¥88,888.00', { timeout: 10000 });
   });
 
-  // TC-ERP-012: 成本分摊规则，验证分摊逻辑配置
-  test('TC-ERP-012 should configure cost allocation rule successfully', async ({ page }) => {
+  // TC-ERP-012：预算详情弹窗渲染后端预算记录
+  test('TC-ERP-012 预算详情弹窗展示后端返回的预算记录', async ({ page }) => {
+    const token = await adminToken();
+    const budget = await markerBudget(token);
+
+    await pageLoginAsSuperAdmin(page);
+    await navigateTo(page, '/erp/budget-management');
+    await expect(page.locator('body')).toContainText(budget.fiscal_year, { timeout: 10000 });
+
+    // 打开造数记录所在行的「查看」详情弹窗（CrudPage 行操作，MUI Dialog +
+    // FormBuilder view 模式：文本值渲染在禁用 input 的 value 上，须用 toHaveValue 断言）
+    await page
+      .locator('tr', { hasText: budget.fiscal_year })
+      .getByRole('button', { name: '查看' })
+      .click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await expect(dialog.locator('input[name="fiscal_year"]')).toHaveValue(budget.fiscal_year, {
+      timeout: 5000,
+    });
+  });
+
+  // TC-ERP-013：费用报销列表渲染后端报销记录（expense_number + expense_type 双真实键）
+  test('TC-ERP-013 费用报销列表展示后端返回的报销记录', async ({ page }) => {
+    const token = await adminToken();
+    const expense = await markerExpense(token);
+
+    await pageLoginAsSuperAdmin(page);
     await navigateTo(page, '/erp/budget-management');
     await expectUrl(page, /erp\/budget-management/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
 
-    // 验证页面列表加载
-    const listContainer = page.locator('table, .ant-table, [role="table"], .MuiTable-root').first();
-    await expect(listContainer).toBeVisible({ timeout: 10000 }).catch(() => {});
+    // 切到「费用报销」Tab
+    await page.getByRole('tab', { name: '费用报销' }).click();
 
-    // 尝试点击成本分摊规则按钮
-    const allocButton = page.getByRole('button', { name: /分摊|分摊规则|成本分摊|规则配置/ }).first();
-    if (await allocButton.isVisible().catch(() => false)) {
-      await allocButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      // 验证分摊规则弹窗或表单
-      const modal = page.locator('.ant-modal, [role="dialog"], .MuiDialog-root, .MuiDrawer-root').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-
-      const confirmButton = page.getByRole('button', { name: /确认|确定|保存|提交/ }).first();
-      if (await confirmButton.isVisible().catch(() => false)) {
-        await confirmButton.click({ force: true }).catch(() => {});
-        await page.waitForTimeout(1000);
-      }
+    // 前端列表正文必须出现后端取到的报销单号与费用类型（真数据流，而非空表/mock）
+    await expect(page.locator('body')).toContainText(expense.expense_number, { timeout: 10000 });
+    if (expense.expense_type) {
+      await expect(page.locator('body')).toContainText(expense.expense_type, { timeout: 10000 });
     }
   });
 
-  // TC-ERP-013: 成本核算，验证核算结果生成
-  test('TC-ERP-013 should perform cost accounting and verify result', async ({ page }) => {
-    await navigateTo(page, '/erp/receivable-payable');
-    await expectUrl(page, /erp\/receivable-payable/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
+  // TC-ERP-014：费用报销详情弹窗渲染后端报销记录
+  test('TC-ERP-014 费用报销详情弹窗展示后端返回的报销记录', async ({ page }) => {
+    const token = await adminToken();
+    const expense = await markerExpense(token);
 
-    // 验证应收应付/核算列表加载
-    const listContainer = page.locator('table, .ant-table, [role="table"], .MuiTable-root').first();
-    await expect(listContainer).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 尝试点击成本核算按钮
-    const accountButton = page.getByRole('button', { name: /核算|成本核算|计算|结转/ }).first();
-    if (await accountButton.isVisible().catch(() => false)) {
-      await accountButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      // 验证核算确认弹窗
-      const modal = page.locator('.ant-modal, [role="dialog"], .MuiDialog-root').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-
-      const confirmButton = page.getByRole('button', { name: /确认|确定|核算/ }).first();
-      if (await confirmButton.isVisible().catch(() => false)) {
-        await confirmButton.click({ force: true }).catch(() => {});
-        await page.waitForTimeout(1000);
-      }
-    }
-  });
-
-  // TC-ERP-014: 成本分析报表，验证分析数据加载
-  test('TC-ERP-014 should load cost analysis report and verify data', async ({ page }) => {
-    await navigateTo(page, '/erp/financial-analysis');
-    await expectUrl(page, /erp\/financial-analysis/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
-
-    // 验证成本分析图表或统计卡片加载
-    const chartArea = page.locator('[class*="chart"], [class*="echarts"], .recharts-wrapper, svg.recharts-surface, canvas, .MuiTable-root').first();
-    await expect(chartArea).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 验证汇总统计卡片
-    const statCards = page.locator('.ant-card, .MuiCard-root, [class*="stat"], [class*="summary"]').first();
-    await expect(statCards).toBeVisible({ timeout: 5000 }).catch(() => {});
-  });
-
-  // TC-ERP-015: 成本预警，验证预警阈值触发
-  test('TC-ERP-015 should trigger cost warning and verify threshold', async ({ page }) => {
+    await pageLoginAsSuperAdmin(page);
     await navigateTo(page, '/erp/budget-management');
-    await expectUrl(page, /erp\/budget-management/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
+    await page.getByRole('tab', { name: '费用报销' }).click();
+    await expect(page.locator('body')).toContainText(expense.expense_number, { timeout: 10000 });
 
-    // 验证预算/预警列表加载
-    const listContainer = page.locator('table, .ant-table, [role="table"], .MuiTable-root').first();
-    await expect(listContainer).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 尝试点击成本预警设置按钮
-    const warnButton = page.getByRole('button', { name: /预警|成本预警|阈值设置|预算预警/ }).first();
-    if (await warnButton.isVisible().catch(() => false)) {
-      await warnButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      // 验证预警配置弹窗
-      const modal = page.locator('.ant-modal, [role="dialog"], .MuiDialog-root').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-
-      const confirmButton = page.getByRole('button', { name: /确认|确定|保存/ }).first();
-      if (await confirmButton.isVisible().catch(() => false)) {
-        await confirmButton.click({ force: true }).catch(() => {});
-        await page.waitForTimeout(1000);
-      }
+    // 打开造数记录所在行的「查看」详情弹窗（同 FormBuilder view 模式断言）
+    await page
+      .locator('tr', { hasText: expense.expense_number })
+      .getByRole('button', { name: '查看' })
+      .click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await expect(dialog.locator('input[name="expense_number"]')).toHaveValue(
+      expense.expense_number,
+      { timeout: 5000 },
+    );
+    if (expense.applicant_name) {
+      await expect(dialog.locator('input[name="applicant_name"]')).toHaveValue(
+        expense.applicant_name,
+        { timeout: 5000 },
+      );
     }
-
-    // 验证预警提示信息（若存在）
-    const warningNotice = page.locator('[class*="warning"], [class*="alert"], .ant-alert-warning').first();
-    await expect(warningNotice).toBeVisible({ timeout: 3000 }).catch(() => {});
   });
 });
