@@ -1,4 +1,11 @@
 {
+  "shared": {
+    "plugins": {
+      "config": {
+        "core_name": "核心功能"
+      }
+    }
+  },
   "reactQuery": {
     "data_load_failed": "数据加载失败",
     "operation_failed": "操作失败",

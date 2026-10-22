@@ -534,6 +534,7 @@ const BIModuleDetailPage = () => {
         maxWidth={false}
       >
         <DashboardTemplate
+          autoTitle={false}
           title=''
           subtitle=''
           breadcrumbs={[
@@ -554,6 +555,7 @@ const BIModuleDetailPage = () => {
       maxWidth={false}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         breadcrumbs={[

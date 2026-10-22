@@ -1,4 +1,8 @@
 {
+  "topbar": {
+    "collapse_sidebar": "收起侧边栏",
+    "expand_sidebar": "展开侧边栏"
+  },
   "common": {
     "save": "保存",
     "cancel": "取消",

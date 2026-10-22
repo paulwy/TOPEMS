@@ -142,6 +142,7 @@ export const DashboardPage: React.FC = () => {
       maxWidth={false}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         stats={stats}

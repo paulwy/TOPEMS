@@ -298,7 +298,7 @@ const BIDashboardPage = () => {
   return (
     <PageContainer
       title={i18n.t('bi.bi_dashboard_page.bi_heading')}
-      subtitle={i18n.t('bi.bi_dashboard_page.create')}
+      subtitle={i18n.t('bi.bi_dashboard_page.subtitle')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary[600]} 100%)`,
@@ -309,6 +309,7 @@ const BIDashboardPage = () => {
       <DashboardLayout
         title=''
         subtitle=''
+        autoTitle={false}
         breadcrumbs={[
           { label: i18n.t('bi.bi_dashboard_page.home'), href: '/dashboard' },
           { label: 'BI' },

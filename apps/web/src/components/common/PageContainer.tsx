@@ -47,7 +47,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   sx,
   contentSx,
   autoTitle = true,
-  autoBreadcrumbs = true,
+  autoBreadcrumbs: _autoBreadcrumbs, // G1: 面包屑统一由 AppShell 自动面包屑渲染
   backButton,
 }) => {
   const location = useLocation();
@@ -77,17 +77,6 @@ export const PageContainer: React.FC<PageContainerProps> = ({
 
   const title = propTitle || computedTitle || '';
 
-  const breadcrumbs = useMemo(() => {
-    if (!autoBreadcrumbs) return;
-    if (navHierarchy.length > 0) {
-      return navHierarchy.map((item) => ({
-        label: item.labelKey ? t(item.labelKey, { defaultValue: item.label }) : item.label,
-        href: item.path,
-      }));
-    }
-    return;
-  }, [autoBreadcrumbs, navHierarchy, t]);
-
   const backButtonConfig = useMemo(() => {
     if (backButton === false || !backButton) return;
     if (backButton === true) {
@@ -111,7 +100,6 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     ...(headerContent && { children: headerContent }),
     ...(actions && { actions }),
     ...(backButtonConfig && { backButton: backButtonConfig }),
-    ...(breadcrumbs && { breadcrumbs }),
   };
 
   const hasHeader = Boolean(title || Object.keys(mergedHeaderProps).length > 0);

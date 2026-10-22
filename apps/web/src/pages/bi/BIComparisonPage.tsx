@@ -212,6 +212,7 @@ const BIComparisonPage = () => {
       maxWidth={false}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         breadcrumbs={[

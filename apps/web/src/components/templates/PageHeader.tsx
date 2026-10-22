@@ -1,11 +1,8 @@
-import { designTokens } from '@topems/tokens';
 import { iconSm, iconMd, iconLg } from '../sharedStyles';
 import React from 'react';
 import {
   Box,
   Typography,
-  Breadcrumbs,
-  Link,
   IconButton,
   Tooltip,
   Paper,
@@ -20,8 +17,7 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import { ChevronRight, RefreshCw, MoreHorizontal } from 'lucide-react';
-import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
-import { useAutoBreadcrumbs } from '@/hooks';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { BackButton } from '@topems/shared-components';
 
 export interface BreadcrumbItem {
@@ -115,9 +111,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   subtitle,
   description,
-  breadcrumbs: manualBreadcrumbs,
+  breadcrumbs: _manualBreadcrumbs, // G1: 面包屑统一由 AppShell 自动面包屑渲染
   pathTabs: manualPathTabs,
-  autoBreadcrumbs = true,
+  autoBreadcrumbs: _autoBreadcrumbs,
   actions,
   backButton,
   onRefresh,
@@ -136,114 +132,19 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   compact = false,
   showDivider = true,
   customToolbar,
-  detailItemName,
+  detailItemName: _detailItemName, // pathTabs 停用自动派生后不再使用，保留接口
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const location = useLocation();
   const navigate = useNavigate();
 
-  const autoItems = useAutoBreadcrumbs({
-    includeHome: true,
-  });
-
-  const breadcrumbs =
-    manualBreadcrumbs && manualBreadcrumbs.length > 0
-      ? manualBreadcrumbs
-      : autoBreadcrumbs
-        ? autoItems
-        : undefined;
-
-  // Determine pathTabs: explicit > auto-derived from route path > legacy breadcrumbs
+  // G1: pathTabs 仅接受显式传入，不再从路由自动派生（层级导航统一由 AppShell 面包屑渲染）
   const resolvedPathTabs: PathTabItem[] | undefined = React.useMemo(() => {
-    // 1. If explicit pathTabs provided, use them
     if (manualPathTabs && manualPathTabs.length > 0) {
       return manualPathTabs;
     }
-
-    // 2. Auto-derive from current route path using NavigationRegistry
-    const pathname = location.pathname;
-
-    // Don't show path tabs for platform-level pages
-    const platformPaths = ['/', '/dashboard', '/modules'];
-    if (platformPaths.includes(pathname)) return;
-
-    const autoBreadcrumbItems = autoItems;
-
-    if (!autoBreadcrumbItems || autoBreadcrumbItems.length === 0) {
-      return;
-    }
-
-    const tabs: PathTabItem[] = autoBreadcrumbItems.map((item, index) => ({
-      label: item.label,
-      href: item.href,
-      active: index === autoBreadcrumbItems.length - 1,
-    }));
-
-    if (detailItemName && tabs.length > 0) {
-      tabs[tabs.length - 1] = {
-        ...tabs[tabs.length - 1],
-        label: detailItemName,
-      };
-    }
-
-    return tabs.length > 1 ? tabs : undefined;
-  }, [manualPathTabs, location.pathname, detailItemName, autoItems]);
-
-  const renderBreadcrumbs = () => {
-    if (!breadcrumbs || breadcrumbs.length === 0) return null;
-
-    return (
-      <Breadcrumbs
-        separator={<ChevronRight style={iconSm} />}
-        sx={{ mb: 2 }}
-      >
-        {breadcrumbs.map((item, index) => {
-          const isLast = index === breadcrumbs.length - 1;
-
-          if (isLast || !item.href) {
-            return (
-              <Typography
-                key={index}
-                color='text.primary'
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                }}
-              >
-                {item.icon as React.ReactNode}
-                {item.label}
-              </Typography>
-            );
-          }
-
-          return (
-            <Link
-              key={index}
-              component={RouterLink}
-              to={item.href}
-              color='inherit'
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                textDecoration: 'none',
-                '&:hover': {
-                  textDecoration: 'underline',
-                },
-              }}
-            >
-              {item.icon as React.ReactNode}
-              {item.label}
-            </Link>
-          );
-        })}
-      </Breadcrumbs>
-    );
-  };
+    return;
+  }, [manualPathTabs]);
 
   const renderPathTabs = () => {
     if (!resolvedPathTabs || resolvedPathTabs.length === 0) return null;
@@ -411,9 +312,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     );
   };
 
-  // Whether to show old-style breadcrumbs (only when pathTabs are not active)
-  const showLegacyBreadcrumbs = !resolvedPathTabs && breadcrumbs && breadcrumbs.length > 0;
-
   return (
     <Paper
       elevation={0}
@@ -435,9 +333,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       >
         {/* 路径标签导航（替代面包屑） */}
         {renderPathTabs()}
-
-        {/* 面包屑导航（向后兼容，仅在 pathTabs 未激活时显示） */}
-        {showLegacyBreadcrumbs && renderBreadcrumbs()}
 
         {/* Banner 模式 */}
         {banner && !loading && (

@@ -568,6 +568,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
       maxWidth={false}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         loading={loading}

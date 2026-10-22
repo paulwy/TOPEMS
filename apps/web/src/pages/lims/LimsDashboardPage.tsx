@@ -85,6 +85,7 @@ const LimsDashboardPage: React.FC = () => {
       autoBreadcrumbs
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         statCards={statCards}
         charts={charts as unknown as ChartCard[]}

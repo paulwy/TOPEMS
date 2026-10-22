@@ -229,6 +229,7 @@ export const DashboardPage: React.FC = () => {
       maxWidth={false}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         emptyState={{ show: !loading && !statsData }}
         subtitle=''

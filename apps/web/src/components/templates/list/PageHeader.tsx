@@ -1,9 +1,7 @@
-import { designTokens } from '@topems/tokens';
 import React from 'react';
-import { Box, Breadcrumbs, Button, IconButton, Link, Tooltip, Typography } from '@mui/material';
-import { ChevronRight, Download, RefreshCw } from 'lucide-react';
+import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
+import { Download, RefreshCw } from 'lucide-react';
 import { BackButton } from '@topems/shared-components';
-import { Link as RouterLink } from 'react-router-dom';
 import type { BatchAction } from './types';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
@@ -54,7 +52,7 @@ export interface PageHeaderProps<T = unknown> {
 export function PageHeader<T = unknown>({
   title,
   subtitle,
-  breadcrumbs,
+  breadcrumbs: _breadcrumbs, // G1: 面包屑统一由 AppShell 自动面包屑渲染
   backButton,
   primaryActionButton,
   actions,
@@ -74,7 +72,7 @@ export function PageHeader<T = unknown>({
   const showActionsBar =
     primaryActionButton || (actions && actions.length > 0) || onRefresh || exportable;
 
-  if (!breadcrumbs && !title && !showActionsBar) return null;
+  if (!title && !showActionsBar) return null;
 
   return (
     <Box
@@ -86,37 +84,6 @@ export function PageHeader<T = unknown>({
         bgcolor: 'background.paper',
       }}
     >
-      {/* 面包屑导航 */}
-      {breadcrumbs && breadcrumbs.length > 0 && (
-        <Breadcrumbs
-          separator={<ChevronRight size={14} />}
-          sx={{ mb: 1 }}
-        >
-          {breadcrumbs.map((crumb, index) =>
-            crumb.href ? (
-              <Link
-                key={index}
-                component={RouterLink}
-                to={crumb.href}
-                color='inherit'
-                underline='hover'
-                sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
-              >
-                {crumb.label}
-              </Link>
-            ) : (
-              <Typography
-                key={index}
-                color='text.primary'
-                sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
-              >
-                {crumb.label}
-              </Typography>
-            )
-          )}
-        </Breadcrumbs>
-      )}
-
       {/* Title栏 */}
       <Box
         sx={{

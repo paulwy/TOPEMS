@@ -100,7 +100,7 @@ describe('PageHeader', () => {
     expect(screen.getByText('这是描述信息')).toBeInTheDocument();
   });
 
-  it('should render manual breadcrumbs when provided', () => {
+  it('G1: 页面级 breadcrumbs 不再由 PageHeader 渲染（统一由 AppShell 自动面包屑）', () => {
     const breadcrumbs = [
       { label: '首页', href: '/' },
       { label: '列表', href: '/list' },
@@ -113,9 +113,10 @@ describe('PageHeader', () => {
         autoBreadcrumbs={false}
       />
     );
-    expect(screen.getByText('首页')).toBeInTheDocument();
-    expect(screen.getByText('列表')).toBeInTheDocument();
-    expect(screen.getByText('详情')).toBeInTheDocument();
+    expect(screen.queryByText('首页')).not.toBeInTheDocument();
+    expect(screen.queryByText('列表')).not.toBeInTheDocument();
+    expect(screen.queryByText('详情')).not.toBeInTheDocument();
+    expect(screen.getByText('测试页面')).toBeInTheDocument();
   });
 
   it('should render back button when backButton prop is provided', () => {

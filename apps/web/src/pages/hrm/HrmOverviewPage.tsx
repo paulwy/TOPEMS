@@ -273,6 +273,7 @@ const HrmOverviewPage: React.FC = () => {
       maxWidth={false}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         breadcrumbs={[

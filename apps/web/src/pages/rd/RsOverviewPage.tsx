@@ -263,6 +263,7 @@ const RsOverviewPage: React.FC = () => {
       maxWidth={false}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         breadcrumbs={[

@@ -258,6 +258,7 @@ const BiPermissionPage = () => {
       maxWidth={false}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         breadcrumbs={[

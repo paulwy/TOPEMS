@@ -87,6 +87,7 @@ const PdmDashboardPage: React.FC = () => {
       autoBreadcrumbs
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         statCards={statCards}
         charts={chartConfigs as unknown as ChartCard[]}

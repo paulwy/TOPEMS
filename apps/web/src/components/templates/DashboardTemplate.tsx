@@ -660,6 +660,8 @@ const DataTable: React.FC<{ table: DataTableConfig }> = ({ table }) => {
 export interface DashboardTemplateProps {
   title: string;
   subtitle?: string;
+  /** 是否允许内部 PageContainer 用路由 label 自动兜底标题（默认 true；外层已有标题时传 false 避免双标题） */
+  autoTitle?: boolean;
   breadcrumbs?: Array<{ label: string; href?: string; path?: string }>;
   stats?: StatCard[];
   charts?: ChartCard[];
@@ -713,6 +715,7 @@ const legacyChartToConfig = (c: ChartCard): ChartConfig => ({
 export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   title,
   subtitle,
+  autoTitle,
   breadcrumbs,
   statCards: statCardsProp,
   stats,
@@ -773,6 +776,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     <PageContainer
       title={title}
       subtitle={subtitle}
+      autoTitle={autoTitle}
       autoBreadcrumbs={!breadcrumbs}
       headerProps={{
         breadcrumbs: breadcrumbs?.map((b) => ({

@@ -591,6 +591,7 @@ export const MonitorMetricsPage: React.FC = () => {
     >
       {categoryTabs}
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         loading={loading}

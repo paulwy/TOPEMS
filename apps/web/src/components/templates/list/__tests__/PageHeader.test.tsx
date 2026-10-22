@@ -26,7 +26,7 @@ describe('PageHeader', () => {
     vi.clearAllMocks();
   });
 
-  it('returns null when no title, breadcrumbs, or actions are provided', () => {
+  it('returns null when no title or actions are provided', () => {
     const { container } = renderWithProviders(<PageHeader />);
     expect(container.firstChild).toBeNull();
   });
@@ -46,10 +46,16 @@ describe('PageHeader', () => {
     expect(screen.getByText('管理系统中所有用户')).toBeInTheDocument();
   });
 
-  it('renders breadcrumbs when provided', () => {
-    renderWithProviders(<PageHeader breadcrumbs={[{ label: '首页' }, { label: '系统设置' }]} />);
-    expect(screen.getByText('首页')).toBeInTheDocument();
-    expect(screen.getByText('系统设置')).toBeInTheDocument();
+  it('G1: 页面级 breadcrumbs 不再由 PageHeader 渲染（统一由 AppShell）', () => {
+    renderWithProviders(
+      <PageHeader
+        title='用户管理'
+        breadcrumbs={[{ label: '首页' }, { label: '系统设置' }]}
+      />
+    );
+    expect(screen.queryByText('首页')).not.toBeInTheDocument();
+    expect(screen.queryByText('系统设置')).not.toBeInTheDocument();
+    expect(screen.getByText('用户管理')).toBeInTheDocument();
   });
 
   it('renders primary action button when provided', () => {

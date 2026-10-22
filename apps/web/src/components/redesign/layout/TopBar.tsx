@@ -102,7 +102,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             variant='ghost'
             size='sm'
             onClick={handleToggle}
-            aria-label={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+            aria-label={sidebarExpanded ? t('topbar.collapse_sidebar') : t('topbar.expand_sidebar')}
           >
             <ToggleIcon size={18} />
           </Button>

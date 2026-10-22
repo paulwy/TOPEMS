@@ -153,13 +153,21 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
         );
 
       default: {
+        // 若 options 已自带"全部"选项（value '' 或 'all'），不再自动追加，避免菜单内出现两个"全部"
+        const hasBuiltinAll = filter.options?.some(
+          (opt) => String(opt.value) === '' || String(opt.value) === 'all'
+        );
         const menuItems = [
-          <MenuItem
-            key=''
-            value=''
-          >
-            {i18n.t('components.list_search_bar.k1')}
-          </MenuItem>,
+          ...(hasBuiltinAll
+            ? []
+            : [
+                <MenuItem
+                  key=''
+                  value=''
+                >
+                  {i18n.t('components.list_search_bar.k1')}
+                </MenuItem>,
+              ]),
           ...(filter.options?.map((option) => (
             <MenuItem
               key={option.value}

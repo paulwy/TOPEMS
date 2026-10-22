@@ -26,8 +26,6 @@ import {
   Collapse,
   useTheme,
   useMediaQuery,
-  Breadcrumbs,
-  Link,
   Button,
   Dialog,
   DialogTitle,
@@ -61,9 +59,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { EmptyState, ErrorEmptyState, BackButton } from '@topems/shared-components';
-import { Link as RouterLink } from 'react-router-dom';
 import {
-  useAutoBreadcrumbs,
   useListPageState,
   useUrlListState,
   useCrudOperations,
@@ -125,8 +121,8 @@ export function ListPageTemplate<
 >({
   title,
   subtitle,
-  breadcrumbs: manualBreadcrumbs,
-  autoBreadcrumbs = true,
+  breadcrumbs: _manualBreadcrumbs, // G1: 面包屑统一由 AppShell 自动面包屑渲染
+  autoBreadcrumbs: _autoBreadcrumbs,
   backButton,
   columns,
   data: propData,
@@ -1548,15 +1544,6 @@ export function ListPageTemplate<
   );
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const autoItems = useAutoBreadcrumbs({
-    includeHome: true,
-  });
-  const breadcrumbs =
-    manualBreadcrumbs && manualBreadcrumbs.length > 0
-      ? manualBreadcrumbs
-      : autoBreadcrumbs
-        ? autoItems
-        : undefined;
   const [sortBy, setSortBy] = useState(defaultSortBy || '');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(defaultSortOrder);
   // searchInput：
@@ -3270,8 +3257,8 @@ export function ListPageTemplate<
   };
   return (
     <Box {...props}>
-      {/* 页面头部：面包屑、标题、操作按钮 */}
-      {(breadcrumbs || title) && (
+      {/* 页面头部：标题、操作按钮（G1: 面包屑统一由 AppShell 自动面包屑渲染） */}
+      {title && (
         <Box
           sx={{
             px: { xs: 2, sm: 3 },
@@ -3281,37 +3268,6 @@ export function ListPageTemplate<
             bgcolor: 'background.paper',
           }}
         >
-          {/* 面包屑导航 */}
-          {breadcrumbs && breadcrumbs.length > 0 && (
-            <Breadcrumbs
-              separator={<ChevronRight size={14} />}
-              sx={{ mb: 1 }}
-            >
-              {breadcrumbs.map((crumb, index) =>
-                crumb.href ? (
-                  <Link
-                    key={index}
-                    component={RouterLink}
-                    to={crumb.href}
-                    color='inherit'
-                    underline='hover'
-                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
-                  >
-                    {crumb.label}
-                  </Link>
-                ) : (
-                  <Typography
-                    key={index}
-                    color='text.primary'
-                    sx={{ fontSize: designTokens.typography.fontSize.scale['0.875rem'] }}
-                  >
-                    {crumb.label}
-                  </Typography>
-                )
-              )}
-            </Breadcrumbs>
-          )}
-
           {/* 标题栏 */}
           <Box
             sx={{

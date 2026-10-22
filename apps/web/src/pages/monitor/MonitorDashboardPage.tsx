@@ -883,6 +883,7 @@ export const MonitorDashboardPage: React.FC = () => {
       }}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         loading={loading}

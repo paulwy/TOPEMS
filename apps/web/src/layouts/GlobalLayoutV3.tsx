@@ -127,7 +127,7 @@ const navItems: NavItem[] = [
         id: 'erp-sales-order',
         label: 'shared.sidebar.erp_sales_order',
         icon: TrendingUp,
-        path: '/erp/sales-order',
+        path: '/erp/sales-orders',
       },
       {
         id: 'erp-inventory',

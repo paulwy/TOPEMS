@@ -257,6 +257,7 @@ const BIVisualizationPage = () => {
         maxWidth={false}
       >
         <DashboardTemplate
+          autoTitle={false}
           title=''
           subtitle=''
           breadcrumbs={[
@@ -309,6 +310,7 @@ const BIVisualizationPage = () => {
       maxWidth={false}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         breadcrumbs={[

@@ -325,6 +325,7 @@ export const DashboardPage: React.FC = () => {
       autoBreadcrumbs
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         stats={stats}
         charts={charts}

@@ -241,6 +241,7 @@ const FinanceDashboardPage: React.FC = () => {
     >
       <DashboardTemplate
         title=''
+        autoTitle={false}
         emptyState={{ show: !loading && !statsData }}
         statCards={statCards}
         charts={chartConfigs as unknown as ChartCard[]}

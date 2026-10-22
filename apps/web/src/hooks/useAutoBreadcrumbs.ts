@@ -179,8 +179,11 @@ function findBestPathMatch(
       if (exactMatch) {
         const label =
           isDynamic && dynamicTitleResolver
-            ? dynamicTitleResolver(paramName, paramValue) || item.label
-            : item.label;
+            ? dynamicTitleResolver(paramName, paramValue) ||
+              (item.labelKey ? i18n.t(item.labelKey) : item.label)
+            : item.labelKey
+              ? i18n.t(item.labelKey)
+              : item.label;
 
         const actualPath = isDynamic ? path : itemPath;
 
@@ -206,7 +209,7 @@ function findBestPathMatch(
         const childBreadcrumbs = [
           ...breadcrumbs,
           {
-            label: item.label,
+            label: item.labelKey ? i18n.t(item.labelKey) : item.label,
             href: itemPath,
           },
         ];
@@ -352,7 +355,7 @@ function findNavItemByPath(path: string, _items: NavItem[]): NavItem | undefined
 function findItemHierarchy(path: string, _allNavItems: NavItem[]): AutoBreadcrumbItem[] {
   const navHierarchy = navigationRegistryV2.getNavHierarchy(path);
   return navHierarchy.map((item) => ({
-    label: item.label,
+    label: item.labelKey ? i18n.t(item.labelKey) : item.label,
     href: item.path,
   }));
 }
@@ -432,7 +435,7 @@ function generateSmartFallbackBreadcrumbs(
     let href: string | undefined;
 
     if (navItem) {
-      label = navItem.label;
+      label = navItem.labelKey ? i18n.t(navItem.labelKey) : navItem.label;
       href = isLast ? undefined : currentPath;
     } else if (isDynamic) {
       label = dynamicTitleResolver
@@ -498,6 +501,7 @@ function formatSegmentLabel(segment: string): string {
   }
 
   const labelMap: Record<string, string> = {
+    core: i18n.t('shared.plugins.config.core_name'),
     dashboard: i18n.t('shared.use_auto_breadcrumbs.k7'),
     customers: i18n.t('shared.use_auto_breadcrumbs.k8'),
     opportunities: i18n.t('shared.use_auto_breadcrumbs.k9'),

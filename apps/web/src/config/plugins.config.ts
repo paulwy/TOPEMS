@@ -25,7 +25,7 @@ export interface RemoteModuleConfig {
 
 export const REMOTE_MODULES: RemoteModuleConfig[] = [
   {
-    name: 'Core',
+    name: i18n.t('shared.plugins.config.core_name'),
     code: 'topems_core',
     description: i18n.t('shared.plugins.config.k0'),
     port: MF_PORTS.topems_core,

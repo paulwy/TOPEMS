@@ -421,6 +421,7 @@ const QmsDashboardPage: React.FC = () => {
   return (
     <PageContainer>
       <DashboardTemplate
+        autoTitle={false}
         title=''
         emptyState={{ show: !effectiveLoading && !effectiveOverview }}
         stats={stats}

@@ -230,6 +230,7 @@ const BiIndexPage = () => {
       maxWidth={false}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         breadcrumbs={[{ label: t('bi.bi_index_page.home'), href: '/dashboard' }, { label: 'BI' }]}

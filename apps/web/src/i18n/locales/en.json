@@ -1,4 +1,8 @@
 {
+  "topbar": {
+    "collapse_sidebar": "Collapse sidebar",
+    "expand_sidebar": "Expand sidebar"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",

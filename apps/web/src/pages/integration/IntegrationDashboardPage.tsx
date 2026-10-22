@@ -211,6 +211,7 @@ export const IntegrationDashboardPage: React.FC = () => {
       }}
     >
       <DashboardTemplate
+        autoTitle={false}
         title=''
         subtitle=''
         loading={loading}

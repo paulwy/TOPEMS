@@ -37,9 +37,9 @@ const iconMap: Record<string, React.ReactNode> = {
 
 const getGreeting = (): string => {
   const hour = new Date().getHours();
-  if (hour < 12) return i18n.t('pages.dashboard_page.k0');
-  if (hour < 18) return i18n.t('pages.dashboard_page.k1');
-  return i18n.t('pages.dashboard_page.k2');
+  if (hour < 12) return i18n.t('pages.dashboard_page.k3');
+  if (hour < 18) return i18n.t('pages.dashboard_page.k4');
+  return i18n.t('pages.dashboard_page.k5');
 };
 
 const DocumentDashboardPage: React.FC = () => {
@@ -62,7 +62,7 @@ const DocumentDashboardPage: React.FC = () => {
     return [
       {
         id: 'total-documents',
-        title: i18n.t('pages.dashboard_page.k3'),
+        title: i18n.t('doc.documents.stat_files'),
         value: statsData.total_documents.toLocaleString(),
         icon: iconMap.FileText,
         change: 0,
@@ -71,7 +71,7 @@ const DocumentDashboardPage: React.FC = () => {
       },
       {
         id: 'published-documents',
-        title: i18n.t('pages.dashboard_page.k4'),
+        title: i18n.t('doc.status.published'),
         value: statsData.published_documents.toLocaleString(),
         icon: iconMap.FolderOpen,
         change: 0,
@@ -80,7 +80,7 @@ const DocumentDashboardPage: React.FC = () => {
       },
       {
         id: 'draft-documents',
-        title: i18n.t('pages.dashboard_page.k5'),
+        title: i18n.t('doc.status.draft'),
         value: statsData.draft_documents.toLocaleString(),
         icon: iconMap.Clock,
         change: 0,
@@ -89,7 +89,7 @@ const DocumentDashboardPage: React.FC = () => {
       },
       {
         id: 'archived-documents',
-        title: i18n.t('pages.dashboard_page.k6'),
+        title: i18n.t('doc.status.archived'),
         value: statsData.archived_documents.toLocaleString(),
         icon: iconMap.Star,
         change: 0,
@@ -98,7 +98,7 @@ const DocumentDashboardPage: React.FC = () => {
       },
       {
         id: 'total-folders',
-        title: i18n.t('pages.dashboard_page.k7'),
+        title: i18n.t('doc.documents.stat_folders'),
         value: statsData.total_folders.toLocaleString(),
         icon: iconMap.HardDrive,
         change: 0,
@@ -107,7 +107,7 @@ const DocumentDashboardPage: React.FC = () => {
       },
       {
         id: 'templates',
-        title: i18n.t('pages.dashboard_page.k8'),
+        title: i18n.t('doc.menu.template'),
         value: statsData.total_templates.toLocaleString(),
         icon: iconMap.FileSpreadsheet,
         change: 0,
@@ -226,6 +226,7 @@ const DocumentDashboardPage: React.FC = () => {
     >
       <DashboardTemplate
         title=''
+        autoTitle={false}
         subtitle=''
         stats={stats}
         charts={charts}

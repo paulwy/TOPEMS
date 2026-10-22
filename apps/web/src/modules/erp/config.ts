@@ -15,7 +15,7 @@ export const ERP_PATHS = {
   inventoryManagement: '/erp/inventory-management',
   materialManagement: '/erp/material-management',
   purchaseOrder: '/erp/purchase-order',
-  salesOrder: '/erp/sales-order',
+  salesOrder: '/erp/sales-orders',
   financialReport: '/erp/financial-report',
   dictManagement: '/erp/dict-management',
   dictionaries: '/erp/data-dictionaries',

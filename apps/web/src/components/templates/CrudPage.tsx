@@ -172,6 +172,12 @@ export interface CrudPageProps<T = Record<string, unknown>> {
   actions?: Array<'create' | 'edit' | 'detail' | 'delete'>;
   /** 是否只读模式（隐藏新增、编辑、删除按钮） */
   readOnly?: boolean;
+  /**
+   * 是否显示内部 ListPageTemplate 的标题区。
+   * 默认 false：外层 PageContainer 已提供页面标题，内部标题隐藏避免双标题；
+   * 仅当页面没有外层标题（如嵌入微前端场景）时置为 true。
+   */
+  showHeaderTitle?: boolean;
 }
 
 // ============ 组件 ============
@@ -193,6 +199,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   disablePagination = false,
   actions: actionsProp,
   readOnly = false,
+  showHeaderTitle = false,
 }: CrudPageProps<T>) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -872,8 +879,8 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
               </>
             ) : (
               <ListPageTemplate
-                title={schema.title}
-                subtitle={schema.description}
+                title={showHeaderTitle ? schema.title : ''}
+                subtitle={showHeaderTitle ? schema.description : ''}
                 breadcrumbs={breadcrumbs}
                 columns={columns}
                 data={rows}

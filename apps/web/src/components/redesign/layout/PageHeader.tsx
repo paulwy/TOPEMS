@@ -20,7 +20,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   backButton,
   primaryAction,
   secondaryActions,
-  breadcrumbs,
+  breadcrumbs: _breadcrumbs, // G1: 面包屑统一由 AppShell 自动面包屑渲染，页面级 breadcrumbs 不再渲染
   className,
   style,
   action: _action, // 显式排除 action，避免传递给非 form 元素
@@ -39,48 +39,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       }}
       {...rest}
     >
-      {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav aria-label={t('shared.header_breadcrumbs.k0')}>
-          <ol
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-2)',
-              margin: 0,
-              padding: 0,
-              listStyle: 'none',
-              fontSize: 'var(--text-xs)',
-              color: 'var(--text-tertiary)',
-            }}
-          >
-            {breadcrumbs.map((crumb, index) => (
-              <li
-                key={index}
-                style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
-              >
-                {index > 0 && <span aria-hidden='true'>/</span>}
-                {crumb.href || crumb.onClick ? (
-                  <a
-                    href={crumb.href}
-                    onClick={(e) => {
-                      if (crumb.onClick) {
-                        e.preventDefault();
-                        crumb.onClick();
-                      }
-                    }}
-                    style={{ color: 'inherit', textDecoration: 'none' }}
-                  >
-                    {crumb.label}
-                  </a>
-                ) : (
-                  <span style={{ color: 'var(--text-secondary)' }}>{crumb.label}</span>
-                )}
-              </li>
-            ))}
-          </ol>
-        </nav>
-      )}
-
       <div
         style={{
           display: 'flex',

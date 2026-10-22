@@ -34,7 +34,7 @@ describe('PageHeader', () => {
     expect(screen.getByText('新建客户')).toBeInTheDocument();
   });
 
-  it('renders with breadcrumbs', () => {
+  it('G1: 页面级 breadcrumbs 不再由 PageHeader 渲染（统一由 AppShell 自动面包屑）', () => {
     render(
       <PageHeader
         title='客户详情'
@@ -42,7 +42,8 @@ describe('PageHeader', () => {
       />
     );
 
-    expect(screen.getByText('首页')).toBeInTheDocument();
-    expect(screen.getByText('客户管理')).toBeInTheDocument();
+    expect(screen.queryByText('首页')).not.toBeInTheDocument();
+    expect(screen.queryByText('客户管理')).not.toBeInTheDocument();
+    expect(screen.getByText('客户详情')).toBeInTheDocument();
   });
 });
