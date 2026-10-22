@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { ApiResponse, PaginationParams } from '../client';
+import type { PaginationParams } from '../client';
 
 // ==================== GIS 设备注册 ====================
 
@@ -40,10 +40,9 @@ export interface DeviceListResponse {
 
 export const gisDeviceApi = {
   list: (params: PaginationParams & { search?: string; status?: string }) =>
-    apiClient.get<ApiResponse<DeviceListResponse>>('/api/gis/devices', { params }),
-  create: (data: CreateDeviceRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>('/api/gis/devices', data),
+    apiClient.gis.get<DeviceListResponse>('/devices', { params }),
+  create: (data: CreateDeviceRequest) => apiClient.gis.post<{ id: string }>('/devices', data),
   update: (id: string, data: UpdateDeviceRequest) =>
-    apiClient.put<ApiResponse<{ id: string }>>(`/api/gis/devices/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/gis/devices/${id}`),
+    apiClient.gis.put<{ id: string }>(`/devices/${id}`, data),
+  remove: (id: string) => apiClient.gis.delete<string>(`/devices/${id}`),
 };
