@@ -154,8 +154,9 @@ pub fn contract_stub_routes() -> Router<AppState> {
             "/tenant/{id}/security/ip-whitelist/{sub}",
             delete(stub_action),
         )
-        .route("/system/api-keys/{id}", get(stub_list))
-        .route("/system/api-keys/{id}", put(stub_action))
+    // P 组 api-keys 2 条已补真（GET /system/api-keys/{id} + PUT /system/api-keys/{id}，
+    // modules/settings/api_keys.rs get_api_key/update_api_key，settings.rs 挂载），
+    // 原 stub GET+PUT 兜底删除（防同 path 冲突）。
     // B4-①：WMS 四类审批（inbound/outbound/stock-take/transfer × start/approve/reject）
     // 已由 svc/wms 真实实现，前端 wmsApprovalApi 改指 apiClient.wms（调拨命名 /transfers），
     // core 12 条兜底删除。

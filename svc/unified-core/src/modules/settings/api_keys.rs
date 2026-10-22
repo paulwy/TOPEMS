@@ -91,7 +91,7 @@ pub async fn list_api_keys(
             for row in rows {
                 let setting_key: String = row.get("setting_key");
                 let raw: String = row.get("setting_value");
-                let updated_at: chrono::DateTime<chrono::Utc> = row.get("updated_at");
+                let updated_at: chrono::NaiveDateTime = row.get("updated_at");
                 let id = setting_key
                     .strip_prefix(API_KEY_PREFIX)
                     .unwrap_or(&setting_key)
@@ -106,7 +106,7 @@ pub async fn list_api_keys(
                 // Decrypt the stored secret (no-op for legacy plain text) before
                 // applying the response mask.
                 entry.secret = mask_secret(&decrypt_secret(&state, &entry.secret));
-                entry.created_at = updated_at.to_rfc3339();
+                entry.created_at = updated_at.and_utc().to_rfc3339();
                 entries.push(entry);
             }
             Json(ApiResponse::success(entries, "获取 API Key 列表成功"))
@@ -221,6 +221,173 @@ pub async fn delete_api_key(
             tracing::error!("Failed to delete API key: {}", e);
             Json(ApiResponse::from(TopemsError::internal(
                 "删除 API Key 失败",
+                e,
+            )))
+        }
+    }
+}
+
+/// `GET /system/api-keys/{id}`
+pub async fn get_api_key(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<ApiResponse<ApiKeyEntry>> {
+    let tenant_id = tenant_uuid(&claims);
+    let key = setting_key(&id);
+
+    let result = sqlx::query(
+        "SELECT setting_key, setting_value, updated_at FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
+    )
+    .bind(tenant_id)
+    .bind(&key)
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(row) => {
+            let setting_key: String = row.get("setting_key");
+            let raw: String = row.get("setting_value");
+            let updated_at: chrono::NaiveDateTime = row.get("updated_at");
+
+            let mut entry = match serde_json::from_str::<ApiKeyEntry>(&raw) {
+                Ok(e) => e,
+                Err(e) => {
+                    return Json(ApiResponse::from(TopemsError::internal(
+                        "解析 API Key 数据失败",
+                        e,
+                    )));
+                }
+            };
+            entry.id = setting_key
+                .strip_prefix(API_KEY_PREFIX)
+                .unwrap_or(&setting_key)
+                .to_string();
+            entry.secret = mask_secret(&decrypt_secret(&state, &entry.secret));
+            entry.created_at = updated_at.and_utc().to_rfc3339();
+            Json(ApiResponse::success(entry, "获取 API Key 详情成功"))
+        }
+        Err(sqlx::error::Error::RowNotFound) => Json(ApiResponse::error(404, "API Key 不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get API key: {}", e);
+            Json(ApiResponse::from(TopemsError::internal(
+                "获取 API Key 详情失败",
+                e,
+            )))
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateApiKeyRequest {
+    pub name: Option<String>,
+    pub key_type: Option<String>,
+    pub secret: Option<String>,
+}
+
+/// `PUT /system/api-keys/{id}`
+pub async fn update_api_key(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(payload): Json<UpdateApiKeyRequest>,
+) -> Json<ApiResponse<ApiKeyEntry>> {
+    let tenant_id = tenant_uuid(&claims);
+    let key = setting_key(&id);
+
+    let existing = sqlx::query(
+        "SELECT setting_key, setting_value, updated_at FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
+    )
+    .bind(tenant_id)
+    .bind(&key)
+    .fetch_one(&state.pool)
+    .await;
+
+    let row = match existing {
+        Ok(row) => row,
+        Err(sqlx::error::Error::RowNotFound) => {
+            return Json(ApiResponse::error(404, "API Key 不存在"));
+        }
+        Err(e) => {
+            tracing::error!("Failed to load API key for update: {}", e);
+            return Json(ApiResponse::from(TopemsError::internal(
+                "更新 API Key 失败",
+                e,
+            )));
+        }
+    };
+
+    let setting_key: String = row.get("setting_key");
+    let raw: String = row.get("setting_value");
+    let updated_at: chrono::NaiveDateTime = row.get("updated_at");
+
+    let mut entry = match serde_json::from_str::<ApiKeyEntry>(&raw) {
+        Ok(e) => e,
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "解析 API Key 数据失败",
+                e,
+            )));
+        }
+    };
+
+    if let Some(name) = payload.name {
+        if name.trim().is_empty() {
+            return Json(ApiResponse::error(400, "API Key 名称不能为空"));
+        }
+        entry.name = name;
+    }
+    if let Some(key_type) = payload.key_type {
+        if !is_allowed_type(&key_type) {
+            return Json(ApiResponse::error(
+                400,
+                &format!("API Key 类型无效，允许: {}", ALLOWED_TYPES.join(", ")),
+            ));
+        }
+        entry.key_type = key_type;
+    }
+    if let Some(secret) = payload.secret {
+        if secret.is_empty() {
+            return Json(ApiResponse::error(400, "API Key 密钥不能为空"));
+        }
+        entry.secret = encrypt_secret(&state, &secret);
+    }
+
+    let serialized = match serde_json::to_string(&entry) {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "序列化 API Key 失败",
+                e,
+            )));
+        }
+    };
+
+    let result = sqlx::query(
+        "UPDATE core_tenant_settings SET setting_value = $1, updated_at = NOW() WHERE tenant_id = $2 AND setting_key = $3 AND deleted_at IS NULL",
+    )
+    .bind(&serialized)
+    .bind(tenant_id)
+    .bind(&key)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => {
+            let mut response = entry;
+            response.id = setting_key
+                .strip_prefix(API_KEY_PREFIX)
+                .unwrap_or(&setting_key)
+                .to_string();
+            response.secret = mask_secret(&decrypt_secret(&state, &response.secret));
+            response.created_at = updated_at.and_utc().to_rfc3339();
+            Json(ApiResponse::success(response, "更新 API Key 成功"))
+        }
+        Ok(_) => Json(ApiResponse::error(404, "API Key 不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update API key: {}", e);
+            Json(ApiResponse::from(TopemsError::internal(
+                "更新 API Key 失败",
                 e,
             )))
         }

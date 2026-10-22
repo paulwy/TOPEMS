@@ -21,6 +21,10 @@ pub fn settings_routes(state: &AppState) -> Router<AppState> {
             "/system/api-keys",
             get(modules::settings::api_keys::list_api_keys),
         )
+        .route(
+            "/system/api-keys/{id}",
+            get(modules::settings::api_keys::get_api_key),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("system:read"),
@@ -42,6 +46,10 @@ pub fn settings_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/system/api-keys/{id}",
             axum::routing::delete(modules::settings::api_keys::delete_api_key),
+        )
+        .route(
+            "/system/api-keys/{id}",
+            put(modules::settings::api_keys::update_api_key),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
