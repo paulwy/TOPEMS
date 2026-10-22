@@ -560,6 +560,8 @@ function formatSegmentLabel(segment: string): string {
     'inbound-orders': i18n.t('shared.use_auto_breadcrumbs.k62'),
     'outbound-orders': i18n.t('shared.use_auto_breadcrumbs.k63'),
     'stock-takes': i18n.t('shared.use_auto_breadcrumbs.k64'),
+    stocktake: i18n.t('shared.use_auto_breadcrumbs.k144'),
+    locations: i18n.t('shared.use_auto_breadcrumbs.k145'),
     inbound: i18n.t('shared.use_auto_breadcrumbs.k65'),
     outbound: i18n.t('shared.use_auto_breadcrumbs.k66'),
     stats: i18n.t('shared.use_auto_breadcrumbs.k67'),
