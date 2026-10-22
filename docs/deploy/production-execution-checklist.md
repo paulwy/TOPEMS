@@ -24,27 +24,96 @@
 
 **前置条件**：Linux 生产机（systemd），部署用户可用 sudo；二进制产物就绪（或生产机可构建）。
 
-**执行步骤**：
+### P-1.0 · 前置检查（部署前 1 天）
+
+> 依据：`scripts/deploy/install.sh` 内建检查 + 生产环境基线要求。
+
+| # | 检查项 | 命令/操作 | 预期结果 | 执行记录 |
+|---|---|---|---|---|
+| 1.0.1 | **OS 与 systemd** | `cat /etc/os-release` + `systemctl is-system-running` | Ubuntu 22.04+ 或等价；`running` 或 `degraded`（非 failed） | ☐ |
+| 1.0.2 | **sudo 权限** | `sudo -n true` 或 `sudo -v` | 无密码或已缓存；exit 0 | ☐ |
+| 1.0.3 | **磁盘空间** | `df -h /opt` | 可用 > 20G（含构建缓存与备份） | ☐ |
+| 1.0.4 | **内存** | `free -h` | 可用 > 4G（Rust 构建需内存） | ☐ |
+| 1.0.5 | **Rust/Cargo** | `cargo --version` | ≥ 1.75（workspace 基线） | ☐ |
+| 1.0.6 | **Node.js** | `node --version` | ≥ 18（前端构建） | ☐ |
+| 1.0.7 | **pnpm** | `pnpm --version` | ≥ 8（monorepo 包管理） | ☐ |
+| 1.0.8 | **PostgreSQL 客户端** | `psql --version` | ≥ 14（与服务端匹配） | ☐ |
+| 1.0.9 | **PostgreSQL 服务端可达** | `pg_isready -h <db-host> -p 5432` | `accepting connections` | ☐ |
+| 1.0.10 | **Redis（可选）** | `redis-cli ping` | `PONG`（未装则 install.sh 仅警告） | ☐ |
+| 1.0.11 | **网络出口** | `curl -sI https://static.crates.io` | 200（Rust 依赖拉取） | ☐ |
+| 1.0.12 | **DNS 解析** | `nslookup <db-host>` | 正常解析 | ☐ |
+| 1.0.13 | **防火墙/端口** | `ss -tlnp \| grep 8099` 或 `nc -zv <db-host> 5432` | 8099 未占用；5432 可达 | ☐ |
+| 1.0.14 | **时间同步** | `timedatectl status` | NTP 同步正常（JWT/日志时间戳） | ☐ |
+| 1.0.15 | **备份目录可写** | `mkdir -p /opt/topems/backups && touch /opt/topems/backups/.test` | 可创建/写入 | ☐ |
+| 1.0.16 | **代码包就绪** | `ls target/release/topems-*` 或确认生产机可构建 | 二进制存在或构建环境完整 | ☐ |
+| 1.0.17 | **环境变量模板** | `ls config/env/.env.production.template` | 模板存在 | ☐ |
+| 1.0.18 | **关键环境变量已配置** | 检查 `.env.production` 或部署机环境变量 | `ADMIN_INITIAL_PASSWORD` 已覆盖、`REGISTER_ENABLED=false`、`DEVELOPMENT_MODE=false` | ☐ |
+| 1.0.19 | **数据库备份** | `pg_dump -h <db-host> -U topems -d topems -F c -f /opt/topems/backups/pre-deploy-$(date +%Y%m%d-%H%M%S).dump` | 备份文件生成，大小 > 0 | ☐ |
+| 1.0.20 | **备份校验** | `pg_restore --list /opt/topems/backups/pre-deploy-*.dump \| head -20` | 能列出表结构，无损坏 | ☐ |
+
+### P-1.1 · 安装（首次部署）
 
 ```bash
-# ① 安装（首次部署）
-./scripts/deploy/install.sh --prefix /opt/topems --user topems
-#    --skip-build 可跳过本地构建（用已有二进制）
-#    建议先 --dry-run 预演（--dry-run --skip-build）
+# ① 预演（强烈推荐先 dry-run 核对完整计划）
+./scripts/deploy/install.sh --prefix /opt/topems --user topems --dry-run --skip-build
 
-# ② 更新（后续版本）
-./scripts/deploy/update.sh --version <tag> --restart
-#    --services erp,bi  仅更新指定服务
+# ② 实际安装（跳过构建，用已有二进制）
+sudo ./scripts/deploy/install.sh --prefix /opt/topems --user topems --skip-build
 
-# ③ 回滚
-./scripts/deploy/rollback.sh /opt/topems/backups/<backup_dir>
-#    先 --dry-run 核对回滚计划，再实际执行
+# 或生产机本地构建（需 Rust/Node 环境完整）
+sudo ./scripts/deploy/install.sh --prefix /opt/topems --user topems
 ```
+
+**install.sh 内部流程**（供理解）：
+1. 检查 Rust/Cargo、PostgreSQL 客户端、Node.js（缺失即 exit 1）
+2. 创建目录结构 `${PREFIX}/{bin,svc,config,logs,data,lib}`
+3. 创建服务用户 `topems`（不存在则 `useradd -r -s /bin/false`）
+4. 构建/复制 29 个服务二进制到 `${PREFIX}/bin/`
+5. 构建 shared packages（shared-types/shared-utils）
+6. 构建前端 Host Shell（apps/web → `${PREFIX}/web/`）
+7. 复制 systemd 服务文件（`deploy/systemd/*.service` → `/etc/systemd/system/`）
+8. 创建 per-service 工作目录 `${PREFIX}/svc/<svc>` 与环境文件 `${PREFIX}/config/<svc>.env`
+9. `systemctl daemon-reload` + `systemctl enable topems.target`
+
+### P-1.2 · 更新（后续版本）
+
+```bash
+# ① 预演
+./scripts/deploy/update.sh --version v1.2.3 --restart --dry-run
+
+# ② 实际更新（全量服务）
+sudo ./scripts/deploy/update.sh --version v1.2.3 --restart
+
+# 或仅更新指定服务
+sudo ./scripts/deploy/update.sh --version v1.2.3 --services erp,bi --restart
+```
+
+### P-1.3 · 回滚
+
+```bash
+# ① 预演（核对完整回滚计划）
+./scripts/deploy/rollback.sh --dry-run /opt/topems/backups/<backup_dir>
+
+# ② 实际回滚（需 PGPASSWORD 环境变量）
+PGPASSWORD='<db-password>' sudo ./scripts/deploy/rollback.sh /opt/topems/backups/<backup_dir>
+
+# 非 root 回滚（仅数据库段，服务段自动跳过）
+SKIP_ROOT_CHECK=1 PGPASSWORD='<db-password>' ./scripts/deploy/rollback.sh /opt/topems/backups/<backup_dir>
+```
+
+**rollback.sh 内部流程**：
+1. 停止服务（`systemctl stop topems.target`）
+2. 备份当前数据库（`pg_dump` → `pre_rollback_*/database_pre_rollback.sql`）
+3. 恢复环境变量（`.env.backup` → `/opt/topems/.env`）
+4. 恢复数据库（`dropdb` → `createdb` → `psql < database.sql`）
+5. 恢复上传文件（`uploads.tar.gz` → `/opt/topems/`）
+6. 启动服务（`systemctl start topems.target`）
+7. 验证：服务状态、权限数据行数（≥10）、管理员登录冒烟（如设 `ROLLBACK_ADMIN_PASS`）
 
 **验收标准**：
 - install 后 `systemctl status topems.target` 为 active，服务全部 running（数量以实际生成单元为准；TODO.md 容器实跑口径为 29 个 systemd 服务）
 - update 后新版本生效、服务无重启失败
-- rollback 恢复指定备份且数据校验通过
+- rollback 恢复指定备份且数据校验通过（权限数 ≥10、登录冒烟成功）
 
 ---
 
