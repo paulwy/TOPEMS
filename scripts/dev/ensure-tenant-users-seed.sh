@@ -396,4 +396,50 @@ CREATE TABLE IF NOT EXISTS erp.documents (
   deleted_at timestamp with time zone
 );"
 echo "残余缺表批量就绪（erp/finance/public）"
+# qms/ticket schema + 核心表 + wms 类型对齐（hidden-500 修复；幂等）
+psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+CREATE SCHEMA IF NOT EXISTS qms; CREATE SCHEMA IF NOT EXISTS ticket;
+CREATE TABLE IF NOT EXISTS qms.qa_quality_costs (
+  id uuid NOT NULL,
+  cost_no character varying NOT NULL,
+  cost_category character varying NOT NULL,
+  cost_type character varying,
+  amount numeric NOT NULL,
+  department character varying,
+  description text,
+  related_issue_id uuid,
+  incurred_date timestamp with time zone,
+  created_by character varying,
+  created_at timestamp with time zone NOT NULL,
+  updated_at timestamp with time zone NOT NULL,
+  deleted_at timestamp with time zone,
+  tenant_id uuid
+);
+CREATE TABLE IF NOT EXISTS ticket.core_tickets (
+  id uuid NOT NULL,
+  deleted_at timestamp with time zone,
+  assignee_id uuid,
+  closed_at timestamp with time zone,
+  created_at timestamp with time zone NOT NULL,
+  description text,
+  metadata jsonb,
+  reporter_id uuid,
+  resolved_at timestamp with time zone,
+  severity text NOT NULL,
+  sla_due_at timestamp with time zone,
+  source_business_id text,
+  source_service text NOT NULL,
+  status text NOT NULL,
+  tags text[],
+  tenant_id uuid NOT NULL,
+  ticket_no text,
+  ticket_type text NOT NULL,
+  title text NOT NULL,
+  updated_at timestamp with time zone NOT NULL
+);
+ALTER TABLE wms.batches ALTER COLUMN location_id TYPE uuid USING NULLIF(location_id::text,'')::uuid;
+ALTER TABLE wms.batches ALTER COLUMN warehouse_id TYPE uuid USING NULLIF(warehouse_id::text,'')::uuid;
+ALTER TABLE wms.batches ALTER COLUMN supplier_id TYPE uuid USING NULLIF(supplier_id::text,'')::uuid;"
+echo "qms/ticket/batches 修复就绪"
+
 

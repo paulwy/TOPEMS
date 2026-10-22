@@ -3269,3 +3269,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.59（2026-10-23）**：写路径探针（domain-probe P3 段 POST 抽查，防 5xx 回归）+ 全端点冒烟复核（4150 前端封装：已挂载 39 / 缺口 4111 产品排期）；探活/gate/mobile 保持全绿。
 
 > **系统完善 v1.60（2026-10-23）**：production-verify 本机等价核销（17 通过/0 失败，警告为本机 dev 差异）；crontab 定时采集 + RLS 基线复验保持；生产机实跑仍待 SSH 档。
+
+> **系统完善 v1.61（2026-10-23）**：hidden-500 全面清零——日志 ERROR 追查发现 HTTP 200 包装 code=500（探活盲区）；336 表列差补列 + qms/ticket schema/表 + wms.batches 类型对齐；domain-probe 新增 P4 body-code 探针防回归；13 端点全 OK + gate 0 缺口。

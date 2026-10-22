@@ -139,6 +139,20 @@ else
   FAIL=1
 fi
 
+# [P4] hidden-500 probe (system hardening): GET body-code check - HTTP 200 wrapping body code=500 must FAIL
+for HB in "api/wms/batches" "api/qms/quality-costs" "api/ticket/tickets" "api/srm/suppliers"; do
+  HBODY="$(curl -s -m 8 "$BASE/$HB" -H "Authorization: Bearer $TOKEN" 2>/dev/null)"
+  HBCODE="$(printf '%s' "$HBODY" | python3 -c 'import sys,json
+try:
+  d=json.load(sys.stdin); print(d.get("code") if d.get("code") is not None else (0 if d.get("success") is True else -1))
+except Exception: print(-2)' 2>/dev/null)"
+  if [[ "$HBCODE" == "200" || "$HBCODE" == "0" || "$HBCODE" == "400" || "$HBCODE" == "404" ]]; then
+    echo "BODY_OK $HB (no hidden 500)"
+  else
+    echo "BODY_FAIL $HB -> body_code=$HBCODE (hidden 500)"; FAIL=1
+  fi
+done
+
 # [P3] write-path probe (system hardening): POST spot check - 422/400/404/409 = OK (validation/route), 5xx = FAIL
 for WR in "api/crm/tags" "api/gis/devices" "api/erp/dictionaries"; do
   WC="$(curl -s -m 8 -o /dev/null -w '%{http_code}' -X POST "$BASE/$WR" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}' 2>/dev/null)"
