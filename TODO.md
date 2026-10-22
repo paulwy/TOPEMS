@@ -3277,3 +3277,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.63（2026-10-23）**：crm/ehs 补扫确认（8 端点无 hidden-500）+ 日志终扫（19:49 后无 ERROR）+ RLS 复验（基线保持）。
 
 > **系统完善 v1.64（2026-10-23）**：剩余域 body 扫发现 mes/teams hidden-500（work_stations 缺表）→ 补建修复；P4 探针扩至 7 端点；核心闭环域表全有（151 缺表为未挂载扩展域不建）。
+
+> **系统完善 v1.65（2026-10-23）**：全域门禁终确认——日志 ERROR 清零、8070 在线、探活/gate/RLS/collect 全绿；本机可闭环系统完善项收口；剩余另档（生产部署 SSH / hrm / 前端 / portal 扩展表）待拍板。
