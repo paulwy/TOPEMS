@@ -1,5 +1,8 @@
 # 契约兜底（contract_stubs）→ 上游实现映射台账（B4 / F4）
 
+**契约基线（自动同步 2026-10-22）**：前端 2653 / 后端 6336 / 缺口 0
+
+
 > 生成：2026-10-19（2026-10-20 修订 §4.19/§5）· 来源：`svc/unified-core/src/routes/contract_stubs.rs`
 > **计数口径（防对账歧义）**：旧基线 125 为原始 `.route(` 注册数；现存活 **78** 为 `.route(` 注册数口径；按「方法-端点对」计为 **82**（help 等链式 `get().post()` 同一 path 注册多方法，故方法对多于 route 注册数）。后续对账须注明用哪种口径。
 > 挂载：`svc/unified-core/src/routes/mod.rs:187` `.merge(contract_stub_routes())`，位于 core 受保护路由轨，实际前缀 `/api/core/*`（双轨 `/api/v1/core/*`）。
