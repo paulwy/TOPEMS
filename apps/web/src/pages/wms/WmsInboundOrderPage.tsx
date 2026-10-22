@@ -103,13 +103,29 @@ type ApiInboundOrderCompat = ApiInboundOrder & {
   remark?: string;
 };
 
+// 后端 FSM 状态（created/confirmed/received/...）收敛到页面四态：
+// 未收货（created/confirmed/pending/未知）→ pending；已收货未完结 → in_progress
+const normalizeInboundStatus = (status?: string): InboundOrder['status'] => {
+  switch (status) {
+    case 'in_progress':
+    case 'completed':
+    case 'cancelled':
+      return status;
+    case 'received':
+      return 'in_progress';
+    default:
+      return 'pending';
+  }
+};
+
 const mapApiInboundOrders = (apiOrders: ApiInboundOrderCompat[]): InboundOrder[] => {
   return apiOrders.map((o, index) => ({
     id: o.id,
-    order_no: o.order_no || o.orderNo || `IN2026${String(index + 1).padStart(5, '0')}`,
+    order_no:
+      o.order_number || o.order_no || o.orderNo || `IN2026${String(index + 1).padStart(5, '0')}`,
     supplier_name: o.supplier_name || o.supplierName || '-',
-    warehouse: o.warehouse || '-',
-    status: (o.status as InboundOrder['status']) || 'pending',
+    warehouse: o.warehouse_name || o.warehouse || '-',
+    status: normalizeInboundStatus(o.status),
     total_quantity: o.total_quantity || o.totalQuantity || 0,
     total_amount: o.total_amount || o.totalAmount || 0,
     expected_date: o.expected_date || o.expectedDate || '-',
