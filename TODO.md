@@ -3273,3 +3273,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.61（2026-10-23）**：hidden-500 全面清零——日志 ERROR 追查发现 HTTP 200 包装 code=500（探活盲区）；336 表列差补列 + qms/ticket schema/表 + wms.batches 类型对齐；domain-probe 新增 P4 body-code 探针防回归；13 端点全 OK + gate 0 缺口。
 
 > **系统完善 v1.62（2026-10-23）**：每日 collect 定时闭环验证（01:47 采集 31 租户、api_calls 2584 真实增长）；hidden-500 扩展域扫无残余；契约台账基线刷新 10-23（2653/6336/0）。
+
+> **系统完善 v1.63（2026-10-23）**：crm/ehs 补扫确认（8 端点无 hidden-500）+ 日志终扫（19:49 后无 ERROR）+ RLS 复验（基线保持）。
