@@ -325,6 +325,10 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             post(modules::tenant::handlers::refresh_governance),
         )
         .route(
+            "/internal/usage/collect",
+            post(modules::tenant::handlers::collect_tenant_usage),
+        )
+        .route(
             "/tenant/{id}/security/sessions/revoke-all",
             post(modules::tenant::handlers::revoke_all_tenant_sessions),
         )

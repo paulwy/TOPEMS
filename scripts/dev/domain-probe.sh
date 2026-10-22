@@ -130,5 +130,14 @@ for d in "${targets[@]}"; do
   echo "$out" | grep -v '^  ' || true
 done
 
+# [P2] usage 采集写探针（系统完善批次）：POST collect → success 校验（数据基建闭环）
+COLLECT_OUT="$(curl -s -m 20 -X POST "$BASE/api/core/internal/usage/collect" -H "Authorization: Bearer $TOKEN" 2>/dev/null)"
+if echo "$COLLECT_OUT" | grep -q '"success":true'; then
+  echo "USAGE_COLLECT_OK（写探针：core_tenant_usage 采集成功）"
+else
+  echo "USAGE_COLLECT_FAIL（写探针：采集失败 ${COLLECT_OUT:0:80}）"
+  FAIL=1
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then echo "DOMAIN_PROBE_OK（全部域 0 个 5xx）"; else echo "DOMAIN_PROBE_FAIL（存在 5xx，见上）"; fi
 exit $FAIL

@@ -2785,7 +2785,7 @@ pub async fn get_tenant_usage(
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     let rows: Vec<serde_json::Value> = sqlx::query(
-        "SELECT period_start, period_end, users_count, storage_used_mb, api_calls_count, base_cost FROM core_tenant_usage WHERE tenant_id = $1 ORDER BY period_start DESC LIMIT 12",
+        "SELECT period_start::text, period_end::text, users_count, storage_used_mb, api_calls_count, base_cost::text FROM core_tenant_usage WHERE tenant_id = $1 ORDER BY period_start DESC LIMIT 12",
     )
     .bind(tenant_id)
     .fetch_all(&state.pool)
@@ -2904,7 +2904,7 @@ pub async fn get_governance_trends(
     Extension(_claims): Extension<Claims>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     let rows: Vec<serde_json::Value> = sqlx::query(
-        "SELECT period_start, period_end, users_count, storage_used_mb, api_calls_count, base_cost FROM core_tenant_usage ORDER BY period_start DESC LIMIT 6",
+        "SELECT period_start::text, period_end::text, users_count, storage_used_mb, api_calls_count, base_cost::text FROM core_tenant_usage ORDER BY period_start DESC LIMIT 6",
     )
     .fetch_all(&state.pool)
     .await
@@ -2934,4 +2934,47 @@ pub async fn refresh_governance(
         serde_json::json!({"refreshed": true, "at": chrono::Utc::now().to_rfc3339()}),
         "Governance data refreshed",
     ))
+}
+
+/// `POST /internal/usage/collect`（系统完善：core_tenant_usage 幂等聚合采集——当前月快照）
+/// 数据源：core_tenants（active）+ core_tenant_users（成员计数）；storage/api_calls 无采集源置 0。
+pub async fn collect_tenant_usage(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let result = sqlx::query(
+        r#"INSERT INTO core_tenant_usage (id, tenant_id, users_count, storage_used_mb, api_calls_count, period_start, period_end, base_cost)
+        SELECT gen_random_uuid(), t.id,
+               (SELECT COUNT(*) FROM core_tenant_users u WHERE u.tenant_id = t.id AND u.deleted_at IS NULL),
+               0, 0,
+               date_trunc('month', CURRENT_DATE)::date,
+               (date_trunc('month', CURRENT_DATE) + interval '1 month' - interval '1 day')::date,
+               0
+        FROM core_tenants t
+        WHERE t.deleted_at IS NULL AND t.status = 'active'
+        ON CONFLICT (tenant_id, period_start) DO UPDATE SET
+          users_count = EXCLUDED.users_count"#,
+    )
+    .execute(&state.pool)
+    .await;
+    match result {
+        Ok(r) => {
+            let rows = r.rows_affected();
+            let total_users: i64 = sqlx::query(
+                "SELECT COALESCE(SUM(users_count), 0)::bigint FROM core_tenant_usage WHERE period_start = date_trunc('month', CURRENT_DATE)::date",
+            )
+            .fetch_one(&state.pool)
+            .await
+            .map(|row| row.get("coalesce"))
+            .unwrap_or(0);
+            Json(CoreResponse::success(
+                serde_json::json!({"collected_tenants": rows, "total_users_this_period": total_users, "period_start": "current_month"}),
+                "Usage snapshot collected",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("[Tenant] usage collect failed: {}", e);
+            Json(CoreResponse::error("租户用量采集失败"))
+        }
+    }
 }
