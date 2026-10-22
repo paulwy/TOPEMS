@@ -57,11 +57,11 @@ psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
 ALTER TABLE public.core_files ADD COLUMN IF NOT EXISTS tenant_id UUID;
 CREATE INDEX IF NOT EXISTS idx_core_files_tenant ON public.core_files(tenant_id);
 INSERT INTO core_files (id, name, original_name, path, size, mime_type, extension, folder_id, uploader_id, status, tenant_id, created_at)
-SELECT gen_random_uuid(), n, n, '/uploads/'||n, s, m, lower(split_part(n,'.',-1)), NULL, '0d3a14bb-14a7-488e-a3c1-889f0b9c260f', 'active', '${TENANT_ID}', NOW()
-FROM (VALUES ('季度经营报告.pdf', 5242880, 'application/pdf'),
-             ('产品手册.pdf', 10485760, 'application/pdf'),
-             ('数据备份.sql', 20971520, 'application/sql')) AS f(n,s,m)
-ON CONFLICT DO NOTHING;"
+SELECT id, name, name, '/uploads/'||name, size, mime, ext, NULL, '0d3a14bb-14a7-488e-a3c1-889f0b9c260f', 'active', '${TENANT_ID}', NOW()
+FROM (VALUES ('c0000000-0000-0000-0000-000000000001'::uuid, '季度经营报告.pdf', 5242880::bigint, 'application/pdf', 'pdf'),
+             ('c0000000-0000-0000-0000-000000000002'::uuid, '产品手册.pdf', 10485760::bigint, 'application/pdf', 'pdf'),
+             ('c0000000-0000-0000-0000-000000000003'::uuid, '数据备份.sql', 20971520::bigint, 'application/sql', 'sql')) AS f(id,name,size,mime,ext)
+ON CONFLICT (id) DO NOTHING;"
 echo "core_files tenant_id 列 + 存储种子就绪（storage 采集真实源）"
 # core_tenant_usage 历史期回填（近 5 月，users=2，api_calls 递减近似；幂等 upsert）
 psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
@@ -72,4 +72,9 @@ SELECT gen_random_uuid(), t.id, 2, 0, 8 * (6 - i),
 FROM core_tenants t CROSS JOIN generate_series(1,5) AS i
 WHERE t.id = '${TENANT_ID}'
 ON CONFLICT (tenant_id, period_start) DO UPDATE SET users_count = EXCLUDED.users_count, api_calls_count = EXCLUDED.api_calls_count;"
-echo "core_tenant_usage 历史期回填就绪（trends 6 期）"
+# 历史期 storage 近似回填（35/28/21/14/7 递减，与 api_calls 趋势一致；幂等 upsert）
+psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+UPDATE core_tenant_usage SET storage_used_mb = v.mb
+FROM (VALUES ('2026-09-01'::date,28),('2026-08-01',21),('2026-07-01',14),('2026-06-01',7),('2026-05-01',0)) AS v(d,mb)
+WHERE core_tenant_usage.period_start = v.d AND tenant_id = '${TENANT_ID}';"
+echo "core_tenant_usage 历史期回填就绪（trends 6 期，含 storage 近似）"

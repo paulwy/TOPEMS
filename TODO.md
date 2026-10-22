@@ -3253,3 +3253,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.51（2026-10-23）**：trends 平台级聚合（GROUP BY SUM + i64 修 500）+ erp_master_data_audit_trail 补表消 warn + usage 历史期回填（trends 6 期真实：268/40/32/24/16/8）+ ensure 脚本并入。
 
 > **系统完善 v1.52（2026-10-23）**：storage 采集真实化（core_files 补 tenant_id + collect SUM(size) + upsert 补 storage_used_mb）→ overview/usage storage_mb=35 真实；v1.51 全局替换误伤 get_tenant_usage（原生 i32 列 get::<i64> panic）用 SQL 上下文精修回 i32；ensure 脚本并入 core_files 段。
+
+> **系统完善 v1.53（2026-10-23）**：core_files 种子幂等修复（固定 UUID + ON CONFLICT(id)，原 gen_random_uuid 无唯一约束致重复插 9 行）+ storage 历史期回填（5-9 月 28/21/14/7/0 递减并入 ensure）→ trends 全期 storage 真实（35/28/21/14/7/0）。
