@@ -123,7 +123,43 @@ SKIP_ROOT_CHECK=1 PGPASSWORD='<db-password>' ./scripts/deploy/rollback.sh /opt/t
 
 > ⚠️ **重要口径**：`scripts/dev/health-check.sh` 头部自述为 **LEGACY-DEV 非生产脚本**（直连旧端口 8000/8020/8010），并明确"生产唯一入口为 nginx upstream → :8099，**生产验收请使用 scripts/verify-nginx-prod.sh，勿用本脚本判定生产健康**"。生产 /health 验收以 P-3 为准。
 
-**执行步骤**：
+### P-2.0 · 前置检查（服务启动前）
+
+| # | 检查项 | 命令/操作 | 预期结果 | 执行记录 |
+|---|---|---|---|---|
+| 2.0.1 | systemd 服务文件已加载 | `systemctl list-unit-files 'topems-*' --no-pager` | 29 个服务单元 listed（enabled/disabled 状态正确） | ☐ |
+| 2.0.2 | topems.target 已启用 | `systemctl is-enabled topems.target` | enabled | ☐ |
+| 2.0.3 | 服务二进制存在 | `ls /opt/topems/bin/*-service` | 29 个二进制文件 | ☐ |
+| 2.0.4 | per-service 工作目录 | `ls /opt/topems/svc/` | 29 个服务目录 | ☐ |
+| 2.0.5 | per-service 环境文件 | `ls /opt/topems/config/*.env` | 29 个 .env 文件（非空或模板） | ☐ |
+| 2.0.6 | 数据库连接（每服务） | `grep DATABASE_URL /opt/topems/config/*.env` | 各服务 DATABASE_URL 指向生产库 | ☐ |
+| 2.0.7 | 端口冲突检查 | `ss -tlnp \| grep -E ':(8000\|8010\|8020\|8099)'` | 8099 未被占用（旧端口 8000/8010/8020 不应监听） | ☐ |
+| 2.0.8 | 日志目录可写 | `ls -ld /opt/topems/logs/` | drwxr-xr-x topems:topems | ☐ |
+
+### P-2.1 · 服务启动与状态确认
+
+```bash
+# 1. 启动所有服务
+sudo systemctl start topems.target
+
+# 2. 确认 target 状态
+systemctl status topems.target --no-pager
+# 预期：Active: active (exited) 或 active (running)
+
+# 3. 确认各服务状态（29 个）
+systemctl list-units 'topems-*' --no-pager --state=running
+# 预期：29 个服务 active/running，无 failed
+
+# 4. 如有失败服务，查看日志
+journalctl -u topems-<svc-name> --no-pager -n 50
+# 常见失败原因：数据库连接失败、端口冲突、环境变量缺失、二进制不存在
+
+# 5. 确认 BFF 端口监听
+ss -tlnp | grep 8099
+# 预期：topems-server 监听 8099（模块化单体 BFF）
+```
+
+### P-2.2 · 生产路径健康验证（经 nginx → :8099）
 
 ```bash
 # 生产机执行（经 nginx 反代链路，覆盖全部已启用服务）
@@ -135,17 +171,107 @@ bash scripts/verify-nginx-prod.sh \
   --probe "/health"
 ```
 
+**verify-nginx-prod.sh 三步判定**：
+1. **nginx -t**：语法校验（Linux 必须过；macOS 跳过并 WARN）
+2. **UPSTREAM_OK**：`upstream server_service` 指向 `localhost:8099`，无 `LEGACY_MAP_PRESENT`
+3. **SMOKE n/n 200**：各域 `/api/<svc>/health` 经反代返回 200
+
+**判读**：
+- `200` = 反代到 BFF 且该域适配器可服务
+- `404` 且 BFF 直连 200 = 路径/适配器错位
+- `502` = upstream(8099) 不可达（BFF 未启动或端口未监听）
+- `504` = 网关超时（BFF 响应慢或内部服务未就绪）
+
 **验收标准**：冒烟端点全部 HTTP 200；无 5xx / 真 404。
 
 ---
 
-## P-3 · 生产服务 /health 全绿
+## P-3 · 生产服务 /health 全绿（逐服务核对）
 
 **现状**：`health-check.sh` 就绪（但按 P-2 口径，生产路径走 verify-nginx-prod.sh）。
 
-**执行步骤**：同 P-2 命令（`--probe /health` 已覆盖各域健康检查）。如需逐服务核对，可对照 `docs/deploy/nginx-prod-first-deploy-runbook.md` §3.4 冒烟端点清单。
+> P-2 的 `--services` 参数默认仅覆盖 6 域（erp bi hrm portal core wms）。P-3 需扩展至全部 29 个已启用服务，逐服务确认 /health 200。
 
-**验收标准**：全部服务 /health 200，`FAIL=0`。
+### P-3.0 · 服务清单确认（29 个）
+
+> 依据 `scripts/deploy/install.sh` SERVICES 数组（L164-198）与 `deploy/systemd/*.service`。
+
+| 类别 | 服务名 | systemd 单元 | 备注 |
+|---|---|---|---|
+| **核心** | unified-core | topems-unified-core.service | IAM + Doc + Flow + File + Communication + Tenant + Billing + AI + Monitor |
+| **业务域** | ai | topems-ai.service | |
+| | analytics | topems-analytics.service | bi 别名 |
+| | communication | topems-communication.service | |
+| | crm | topems-crm.service | |
+| | ehs | topems-ehs.service | |
+| | erp | topems-erp.service | |
+| | finance | topems-finance.service | |
+| | gis | topems-gis.service | |
+| | hrm | topems-hrm.service | |
+| | integration | topems-integration.service | |
+| | lims | topems-lims.service | |
+| | master-data | topems-master-data.service | |
+| | mes | topems-mes.service | |
+| | mobile | topems-mobile.service | |
+| | monitor | topems-monitor.service | |
+| | pdm | topems-pdm.service | |
+| | plugin-registry | topems-plugin-registry.service | |
+| | pm | topems-pm.service | |
+| | portal | topems-portal.service | |
+| | qms | topems-qms.service | |
+| | rd | topems-rd.service | |
+| | scm | topems-scm.service | |
+| | search | topems-search.service | |
+| | server | topems-server.service | BFF 入口（:8099） |
+| | srm | topems-srm.service | |
+| | ticket | topems-ticket.service | |
+| | tms | topems-tms.service | |
+| | wms | topems-wms.service | |
+
+### P-3.1 · 逐服务健康验证（经 nginx 反代）
+
+```bash
+# 扩展 --services 覆盖全部 29 个服务
+bash scripts/verify-nginx-prod.sh \
+  --conf /etc/nginx/conf.d/topems.conf \
+  --repo-conf ./deploy/nginx/topems.conf \
+  --base http://<nginx-host> \
+  --services "unified-core ai analytics communication crm ehs erp finance gis hrm integration lims master-data mes mobile monitor pdm plugin-registry pm portal qms rd scm search server srm ticket tms wms" \
+  --probe "/health"
+```
+
+**注意**：`unified-core` 与 `server` 的 /health 路径可能为 `/health`（无 `/api/<svc>/` 前缀），需按实际路由调整：
+- `unified-core` → `http://<nginx-host>/health`（BFF 直接暴露）
+- `server` → `http://<nginx-host>/health`（同上）
+- 其他服务 → `http://<nginx-host>/api/<svc>/health`
+
+如脚本不支持差异化 probe，可分批执行：
+```bash
+# 批次 1：BFF 直连（/health）
+curl -s http://<nginx-host>/health | jq -r '.status'
+
+# 批次 2：各域服务（/api/<svc>/health）
+for svc in ai analytics communication crm ehs erp finance gis hrm integration lims master-data mes mobile monitor pdm plugin-registry pm portal qms rd scm search srm ticket tms wms; do
+  code=$(curl -s -o /dev/null -w '%{http_code}' "http://<nginx-host>/api/$svc/health")
+  echo "$svc: $code"
+done
+```
+
+### P-3.2 · BFF 直连健康验证（不经 nginx，排查用）
+
+```bash
+# BFF 直连（:8099）
+curl -s http://localhost:8099/health | jq -r '.status'
+# 预期："ok" 或 "healthy"
+
+# 各域服务经 BFF 内嵌适配器（:8099）
+for svc in ai analytics communication crm ehs erp finance gis hrm integration lims master-data mes mobile monitor pdm plugin-registry pm portal qms rd scm search srm ticket tms wms; do
+  code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:8099/api/$svc/health")
+  echo "$svc: $code"
+done
+```
+
+**验收标准**：全部服务 /health 200（经 nginx 反代与 BFF 直连均 200），`FAIL=0`。
 
 ---
 
@@ -153,10 +279,20 @@ bash scripts/verify-nginx-prod.sh \
 
 **现状**：本机/容器演练已 20/20 通过（exit=0）；生产机层1 自动断言 + 层2 专项未复核。
 
-**执行步骤**：
+### P-4.0 · 前置检查
+
+| # | 检查项 | 命令/操作 | 预期结果 | 执行记录 |
+|---|---|---|---|---|
+| 4.0.1 | 冒烟脚本可执行 | `ls -l scripts/deploy/smoke-prod.sh` | -rwxr-xr-x | ☐ |
+| 4.0.2 | 依赖工具就绪 | `which curl jq` | 均存在 | ☐ |
+| 4.0.3 | 管理员凭据已准备 | `echo $SMOKE_ADMIN` / `echo $SMOKE_PASS` | 非空（不硬编码） | ☐ |
+| 4.0.4 | BFF 8099 健康 | `curl -s http://localhost:8099/health \| jq -r '.status'` | ok/healthy | ☐ |
+| 4.0.5 | nginx 反代可达 | `curl -s http://<nginx-host>/health \| jq -r '.status'` | ok/healthy | ☐ |
+
+### P-4.1 · 层1 自动断言（20 项）
 
 ```bash
-# 层1 自动断言（生产机，需显式凭据）
+# 生产机执行（需显式凭据）
 ./scripts/deploy/smoke-prod.sh \
   --base http://<portal-url> \
   --user <admin> --password <pass> \
@@ -166,13 +302,86 @@ bash scripts/verify-nginx-prod.sh \
 SMOKE_ADMIN=<u> SMOKE_PASS=<p> ./scripts/deploy/smoke-prod.sh --base http://<portal-url>
 ```
 
-**层2 专项（人工按脚本指引复验）**：
-- E. 财务凭证借贷平衡（后端已验 10000=10000）
-- F. 工单下达事件化（uuid=text 修复后重验）
-- G. 质量链 qms↔lims↔ehs 事件联动
-- H. WS MES 看板推送（unified-core 投影）
+**层1 覆盖项**（依据 `smoke-prod.sh` L72-135）：
+- **A. IAM 登录 → JWT → 受保护 API**：`POST /api/core/iam/auth/login` → token → `GET /api/core/iam/users/me`（200）
+- **B. 各域服务健康**（16 域）：core erp hrm finance mes qms lims ehs bi pm portal wms scm srm rd（`/api/<域>/health` 或 `/health`）
+- **C. BI 真实 SQL**：`POST /api/bi/datasets/test-sql`（200/400/422 路由可达）+ `POST /api/bi/datasets/query`（200/400/422）
+- **D. 插件注册/运行时**：`GET /api/plugins/health`（200，带 token）
 
-**验收标准**：层1 全项 PASS（exit=0）；层2 四项专项逐项复验并记录。
+**判定**：全部 PASS → exit 0；任一 FAIL → exit 1 并打印 `❌` 项。
+
+### P-4.2 · 层2 专项（人工复验）
+
+> 依赖生产数据与事件编排，按 `smoke-prod.sh` L137-157 指引逐项执行并记录。
+
+| 专项 | 验证路径 | 期望结果 | 执行记录 |
+|---|---|---|---|
+| **E. 财务凭证借贷平衡** | `svc/finance` 凭证创建/查询 API（`/api/finance/v1/...`） | 创建借贷平衡凭证 → 查询汇总借贷恒等（decimal 精度无漂移） | ☐ |
+| **F. 工单下达事件化** | `svc/mes` 工单下达 API（`/api/mes/v1/...`） | 下达 → 事件发布 → 订阅方投影落库（uuid=text 修复后无类型错配） | ☐ |
+| **G. 质量链 qms↔lims↔ehs 事件联动** | `svc/qms`、`svc/lims`、`svc/ehs` 事件订阅链路 | qms 检验事件 → lims 采样联动 → ehs 风险联动（internal 前缀路由正常） | ☐ |
+| **H. WS MES 看板推送** | unified-core WS 端点（mes_real_module 投影提供） | 建立 WS 连接 → 订阅 MES 看板频道 → 工单状态变更实时推送 | ☐ |
+
+**层2 验证命令参考**（需按实际 API 调整）：
+
+```bash
+# E. 财务凭证借贷平衡
+# 1. 创建借贷平衡凭证
+TOKEN=$(curl -s -X POST http://<portal-url>/api/core/iam/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"<admin>","password":"<pass>"}' | jq -r '.data.access_token')
+
+curl -s -X POST http://<portal-url>/api/finance/v1/vouchers \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"voucher_date":"2026-10-22","entries":[{"account_code":"1001","debit":10000,"credit":0},{"account_code":"2202","debit":0,"credit":10000}]}' | jq '.success'
+
+# 2. 查询汇总验证借贷恒等
+curl -s "http://<portal-url>/api/finance/v1/vouchers/summary?date=2026-10-22" \
+  -H "Authorization: Bearer $TOKEN" | jq '.data | {total_debit, total_credit, balanced: (.total_debit == .total_credit)}'
+
+# F. 工单下达事件化
+# 1. 创建工单
+curl -s -X POST http://<portal-url>/api/mes/v1/work-orders \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"product_id":"<pid>","quantity":100}' | jq '.data.id'
+
+# 2. 下达工单（触发事件）
+curl -s -X POST "http://<portal-url>/api/mes/v1/work-orders/<wo-id>/release" \
+  -H "Authorization: Bearer $TOKEN" | jq '.success'
+
+# 3. 查询事件投影（uuid=text 修复后无类型错配）
+curl -s "http://<portal-url>/api/mes/v1/work-orders/<wo-id>/events" \
+  -H "Authorization: Bearer $TOKEN" | jq '.data | length'
+
+# G. 质量链事件联动
+# 1. qms 创建检验单
+curl -s -X POST http://<portal-url>/api/qms/v1/inspections \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"item_code":"<item>","type":"incoming"}' | jq '.data.id'
+
+# 2. 查询 lims 采样联动（internal 前缀路由）
+curl -s "http://<portal-url>/api/lims/v1/samples?inspection_id=<insp-id>" \
+  -H "Authorization: Bearer $TOKEN" | jq '.data | length'
+
+# 3. 查询 ehs 风险联动
+curl -s "http://<portal-url>/api/ehs/v1/risks?source_type=inspection&source_id=<insp-id>" \
+  -H "Authorization: Bearer $TOKEN" | jq '.data | length'
+
+# H. WS MES 看板推送
+# 1. 建立 WS 连接（wscat 或自定义客户端）
+wscat -c "ws://<portal-url>/api/core/iam/ws?token=$TOKEN"
+
+# 2. 订阅 MES 看板频道
+> {"action":"subscribe","channel":"mes.dashboard"}
+
+# 3. 触发工单状态变更（另一终端）
+curl -s -X POST "http://<portal-url>/api/mes/v1/work-orders/<wo-id>/start" \
+  -H "Authorization: Bearer $TOKEN"
+
+# 4. 观察 WS 推送（实时消息）
+< {"channel":"mes.dashboard","event":"work_order_started","data":{...}}
+```
+
+**验收标准**：层1 全项 PASS（exit=0）；层2 四项专项逐项复验并记录（成功/失败/原因）。
 
 ---
 
