@@ -101,16 +101,25 @@ type RawApiEmployee = {
   created_at?: string;
 };
 
+// 后端若返回未解密的加密字段（aes-256-gcm / key_version / JSON blob），
+// 前端兜底脱敏，避免把密文直接展示给用户（G7 数据渲染错误兜底）
+const isEncryptedBlob = (v: string | undefined): boolean =>
+  !!v && (v.includes('aes-256-gcm') || v.includes('key_version') || /^\{\s*"/.test(v));
+
+// 部门字段出现 "0-" 等「数字前缀+空名」异常格式时兜底为 '-'
+const normalizeDepartment = (v: string | undefined): string =>
+  !v || /^\d+-$/.test(v.trim()) ? '-' : v.trim();
+
 const mapApiEmployees = (apiEmployees: RawApiEmployee[]): Employee[] => {
   return apiEmployees.map((e, index) => ({
     id: e.id,
     emp_no: e.emp_no || e.employee_no || `EMP${String(index + 1).padStart(3, '0')}`,
     name: e.name || e.employee_name || '-',
-    department: e.department || '-',
+    department: normalizeDepartment(e.department),
     position: e.position || '-',
     level: (e.level as Employee['level']) || 'P5',
     status: (e.status as Employee['status']) || 'active',
-    phone: e.phone || e.mobile || '-',
+    phone: isEncryptedBlob(e.phone) ? '-' : (e.phone || e.mobile || '-'),
     email: e.email || '-',
     join_date: e.join_date || e.hire_date || '-',
     salary: e.salary || 0,

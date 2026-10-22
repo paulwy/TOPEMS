@@ -477,14 +477,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
       {
         key: 'customer_name',
         header: t('erp.erp_sales_order_redesign.column.customer_name'),
-        render: (row) => (
-          <div>
-            <div style={{ fontWeight: 500 }}>{row.customer_name}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-              {row.product_name}
-            </div>
-          </div>
-        ),
+        render: (row) => <div style={{ fontWeight: 500 }}>{row.customer_name}</div>,
       },
       {
         key: 'quantity',

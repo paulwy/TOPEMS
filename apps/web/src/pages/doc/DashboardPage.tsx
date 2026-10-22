@@ -216,7 +216,7 @@ const DocumentDashboardPage: React.FC = () => {
   return (
     <PageContainer
       title={i18n.t('pages.dashboard_page.k31')}
-      subtitle={`${getGreeting()}${i18n.t('pages.dashboard_page.k6')}`}
+      subtitle={`${getGreeting()}，${i18n.t('pages.dashboard_page.k6')}`}
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.cyan.main} 100%)`,

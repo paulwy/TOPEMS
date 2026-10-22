@@ -416,14 +416,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
       {
         key: 'employee_name',
         header: t('hrm.attendance_redesign_page.k24'),
-        render: (row) => (
-          <div>
-            <div style={{ fontWeight: 500 }}>{row.employee_name}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-              {row.department}
-            </div>
-          </div>
-        ),
+        render: (row) => <div style={{ fontWeight: 500 }}>{row.employee_name}</div>,
       },
       {
         key: 'check_in',

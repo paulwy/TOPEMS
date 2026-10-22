@@ -17,6 +17,10 @@ const TemplateDemoPage = createSafeLazy(() =>
 );
 const RedesignDemoPage = createSafeLazy(() => import('../pages/RedesignDemo'));
 const DynamicRouter = createSafeLazy(() => import('../lib/plugin-loader/DynamicRouter'));
+// G9 修复：/core/users、/core/roles 显式注册本地组件（DynamicRouter 依赖运行时模块注册，
+// 加载失败时会渲染空白，导致 /core/* 主体空白——双机确认的 G9 问题）。
+const CoreUsersPage = createSafeLazy(() => import('../pages/iam/UserManagementPage'));
+const CoreRolesPage = createSafeLazy(() => import('../pages/iam/RoleManagementPage'));
 const { lazy: PerformanceTestPage } = lazyWithPreload(
   () => import('../pages/performance/PerformanceTestPage')
 );
@@ -118,13 +122,42 @@ const AppRoutes: React.FC = () => {
          * D4: /core/* 统一走本地插件动态路由（DynamicRouter）。
          * 原 IS_STATIC_MODE 分支的「Module Federation 未启用」占位页已移除——
          * 前端回归模块化单体，业务域全部本地打包，不再区分 static / module-federation 部署模式。
+         * G9 修复：/core/users、/core/roles 平铺为顶层路由（嵌套 + 绝对子路径在 react-router v6
+         * 匹配不可靠，是 /core/* 主体空白的根因），确定性注册本地组件；
+         * 其余 /core/* 路径仍交由 DynamicRouter 处理（依赖其运行时模块注册）。
          */}
+        <Route
+          path='/core/users'
+          element={
+            <ProtectedRoute>
+              <GlobalLayoutV3>
+                <Suspense fallback={<PageLoader />}>
+                  <CoreUsersPage />
+                </Suspense>
+              </GlobalLayoutV3>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/core/roles'
+          element={
+            <ProtectedRoute>
+              <GlobalLayoutV3>
+                <Suspense fallback={<PageLoader />}>
+                  <CoreRolesPage />
+                </Suspense>
+              </GlobalLayoutV3>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path='/core/*'
           element={
             <ProtectedRoute>
               <GlobalLayoutV3>
-                <DynamicRouter />
+                <Suspense fallback={<PageLoader />}>
+                  <DynamicRouter />
+                </Suspense>
               </GlobalLayoutV3>
             </ProtectedRoute>
           }

@@ -464,14 +464,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       {
         key: 'name',
         header: t('crm.opportunity_redesign.col_name'),
-        render: (row) => (
-          <div>
-            <div style={{ fontWeight: 500 }}>{row.name}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-              {row.customer_name}
-            </div>
-          </div>
-        ),
+        render: (row) => <div style={{ fontWeight: 500 }}>{row.name}</div>,
       },
       {
         key: 'stage',

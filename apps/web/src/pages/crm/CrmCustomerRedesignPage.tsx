@@ -92,6 +92,16 @@ interface Customer {
   created_at: string;
 }
 
+// 联系人字段从 notes 首行解析；若首行为手机号/密文则视为数据异常，兜底 '-'
+const sanitizeContactPerson = (notes?: string): string => {
+  if (!notes) return '-';
+  const first = notes.split('\n')[0]?.trim() || '';
+  if (!first) return '-';
+  if (/^1[3-9]\d{9}$/.test(first)) return '-';
+  if (first.includes('aes-256-gcm') || first.includes('key_version')) return '-';
+  return first;
+};
+
 // 将 API 返回的 Customer 类型映射为页面使用的 Customer 类型
 const mapApiCustomers = (apiCustomers: ApiCustomer[]): Customer[] => {
   return apiCustomers.map((c, index) => ({
@@ -103,7 +113,7 @@ const mapApiCustomers = (apiCustomers: ApiCustomer[]): Customer[] => {
     level: (c.rating as Customer['level']) || 'C',
     status: (c.status as Customer['status']) || 'potential',
     customer_type: c.customer_type,
-    contact_person: c.notes?.split('\n')[0] || '-',
+    contact_person: sanitizeContactPerson(c.notes),
     contact_phone: c.phone || '-',
     email: c.email || '-',
     address: c.address || '-',
@@ -473,11 +483,8 @@ const CrmCustomerRedesignPage: React.FC = () => {
         key: 'customer_name',
         header: t('crm.customer_list_page.col_customer_name'),
         render: (row) => (
-          <div>
-            <div style={{ fontWeight: 500 }}>
-              {localizedName(row.customer_name, row.customer_name_en)}
-            </div>
-            <div style={cellSub}>{row.industry}</div>
+          <div style={{ fontWeight: 500 }}>
+            {localizedName(row.customer_name, row.customer_name_en)}
           </div>
         ),
       },

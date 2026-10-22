@@ -10,10 +10,33 @@
 // ============================================================================
 
 import type { ModuleConfig, ModuleRoute } from '@topems/app-shell';
+import { CORE_MODULES_CONFIG } from './core-modules';
 
 export type { ModuleConfig, ModuleRoute };
 
-export const CORE_MODULES: ModuleConfig[] = [];
+/**
+ * 核心模块路由注册：
+ * - MF 部署模式：注册 core-modules 全量路由（本地 + topems_core remote 字符串导入路由）。
+ * - static/本地打包模式（前端回归模块化单体）：仅注册本地组件可用的路由
+ *   （/core/users、/core/roles）。其余路由（permissions/org/workflow/documents/reports）
+ *   依赖 topems_core remote（端口 3001）未部署，若注册会因动态 import 失败导致页面崩溃。
+ *   判断依据：component 源码字符串含 `topems_core/pages` 即远程导入。
+ */
+const isMFMode = () => {
+  const mode = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_DEPLOYMENT_MODE : undefined) as string | undefined;
+  if (mode) return mode !== 'static';
+  return false;
+};
+
+export const CORE_MODULES: ModuleConfig[] = isMFMode()
+  ? CORE_MODULES_CONFIG
+  : CORE_MODULES_CONFIG.map((module) => ({
+      ...module,
+      routes: module.routes.filter((route) => {
+        const src = route.component?.toString() || '';
+        return !src.includes('topems_core/pages');
+      }),
+    })).filter((module) => module.routes.length > 0);
 
 // ============================================================================
 // Business Modules (sold as packages)
