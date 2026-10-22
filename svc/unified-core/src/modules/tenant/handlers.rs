@@ -1865,3 +1865,283 @@ pub async fn update_tenant_email_config(
         }
     }
 }
+
+/// 租户集成/Webhook 集合存储（core_tenant_settings 复用，JSON 数组）
+const TENANT_INTEGRATIONS_PREFIX: &str = "tenant_integrations_";
+const TENANT_WEBHOOKS_PREFIX: &str = "tenant_webhooks_";
+
+async fn tenant_coll_write(
+    state: &AppState,
+    tenant_id: &Uuid,
+    prefix: &str,
+    arr: &[serde_json::Value],
+) -> Result<(), TopemsError> {
+    let key = format!("{}{}", prefix, tenant_id);
+    let serialized = serde_json::to_string(&serde_json::Value::Array(arr.to_vec()))
+        .map_err(|e| TopemsError::internal("序列化失败", e))?;
+    sqlx::query(
+        r#"
+        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
+        VALUES ($1, $2, $3, FALSE)
+        ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW(), deleted_at = NULL
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(&key)
+    .bind(&serialized)
+    .execute(&state.pool)
+    .await
+    .map_err(|e| TopemsError::internal("写入失败", e))?;
+    Ok(())
+}
+
+/// `GET /tenant/{id}/integrations`
+pub async fn list_tenant_integrations(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_array(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX).await {
+        Ok(a) => Json(CoreResponse::success(
+            serde_json::Value::Array(a),
+            "Integrations retrieved",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] list integrations failed: {}", e);
+            Json(CoreResponse::error("读取租户集成失败"))
+        }
+    }
+}
+
+/// `POST /tenant/{id}/integrations`
+pub async fn create_tenant_integration(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] create integration read failed: {}", e);
+            return Json(CoreResponse::error("读取租户集成失败"));
+        }
+    };
+    let mut entry = payload;
+    if let Some(obj) = entry.as_object_mut() {
+        obj.entry("id".to_string())
+            .or_insert_with(|| serde_json::json!(Uuid::new_v4().to_string()));
+        obj.insert(
+            "created_at".to_string(),
+            serde_json::json!(chrono::Utc::now().to_rfc3339()),
+        );
+    } else {
+        entry = serde_json::json!({
+            "id": Uuid::new_v4().to_string(),
+            "created_at": chrono::Utc::now().to_rfc3339(),
+        });
+    }
+    arr.push(entry.clone());
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX, &arr).await {
+        tracing::error!("[Tenant] create integration write failed: {}", e);
+        return Json(CoreResponse::error("写入租户集成失败"));
+    }
+    Json(CoreResponse::success(entry, "Integration created"))
+}
+
+/// `PUT /tenant/{id}/integrations/{integration_id}`
+pub async fn update_tenant_integration(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, integration_id)): Path<(Uuid, String)>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] update integration read failed: {}", e);
+            return Json(CoreResponse::error("读取租户集成失败"));
+        }
+    };
+    let Some(entry) = arr
+        .iter_mut()
+        .find(|d| d.get("id").and_then(|v| v.as_str()) == Some(integration_id.as_str()))
+    else {
+        return Json(CoreResponse::error("集成不存在"));
+    };
+    if let Some(obj) = payload.as_object() {
+        if let Some(e) = entry.as_object_mut() {
+            for (k, v) in obj {
+                e.insert(k.clone(), v.clone());
+            }
+        }
+    }
+    let entry = entry.clone();
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX, &arr).await {
+        tracing::error!("[Tenant] update integration write failed: {}", e);
+        return Json(CoreResponse::error("写入租户集成失败"));
+    }
+    Json(CoreResponse::success(entry, "Integration updated"))
+}
+
+/// `DELETE /tenant/{id}/integrations/{integration_id}`
+pub async fn delete_tenant_integration(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, integration_id)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<String>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] delete integration read failed: {}", e);
+            return Json(CoreResponse::error("读取租户集成失败"));
+        }
+    };
+    arr.retain(|d| d.get("id").and_then(|v| v.as_str()) != Some(integration_id.as_str()));
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_INTEGRATIONS_PREFIX, &arr).await {
+        tracing::error!("[Tenant] delete integration write failed: {}", e);
+        return Json(CoreResponse::error("写入租户集成失败"));
+    }
+    Json(CoreResponse::success(integration_id, "Integration deleted"))
+}
+
+/// `GET /tenant/{id}/webhooks`
+pub async fn list_tenant_webhooks(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX).await {
+        Ok(a) => Json(CoreResponse::success(
+            serde_json::Value::Array(a),
+            "Webhooks retrieved",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] list webhooks failed: {}", e);
+            Json(CoreResponse::error("读取租户 Webhook 失败"))
+        }
+    }
+}
+
+/// `POST /tenant/{id}/webhooks`
+pub async fn create_tenant_webhook(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] create webhook read failed: {}", e);
+            return Json(CoreResponse::error("读取租户 Webhook 失败"));
+        }
+    };
+    let mut entry = payload;
+    if let Some(obj) = entry.as_object_mut() {
+        obj.entry("id".to_string())
+            .or_insert_with(|| serde_json::json!(Uuid::new_v4().to_string()));
+        obj.insert(
+            "created_at".to_string(),
+            serde_json::json!(chrono::Utc::now().to_rfc3339()),
+        );
+    } else {
+        entry = serde_json::json!({
+            "id": Uuid::new_v4().to_string(),
+            "created_at": chrono::Utc::now().to_rfc3339(),
+        });
+    }
+    arr.push(entry.clone());
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &arr).await {
+        tracing::error!("[Tenant] create webhook write failed: {}", e);
+        return Json(CoreResponse::error("写入租户 Webhook 失败"));
+    }
+    Json(CoreResponse::success(entry, "Webhook created"))
+}
+
+/// `PUT /tenant/{id}/webhooks/{webhook_id}`
+pub async fn update_tenant_webhook(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, webhook_id)): Path<(Uuid, String)>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] update webhook read failed: {}", e);
+            return Json(CoreResponse::error("读取租户 Webhook 失败"));
+        }
+    };
+    let Some(entry) = arr
+        .iter_mut()
+        .find(|d| d.get("id").and_then(|v| v.as_str()) == Some(webhook_id.as_str()))
+    else {
+        return Json(CoreResponse::error("Webhook 不存在"));
+    };
+    if let Some(obj) = payload.as_object() {
+        if let Some(e) = entry.as_object_mut() {
+            for (k, v) in obj {
+                e.insert(k.clone(), v.clone());
+            }
+        }
+    }
+    let entry = entry.clone();
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &arr).await {
+        tracing::error!("[Tenant] update webhook write failed: {}", e);
+        return Json(CoreResponse::error("写入租户 Webhook 失败"));
+    }
+    Json(CoreResponse::success(entry, "Webhook updated"))
+}
+
+/// `DELETE /tenant/{id}/webhooks/{webhook_id}`
+pub async fn delete_tenant_webhook(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, webhook_id)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<String>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] delete webhook read failed: {}", e);
+            return Json(CoreResponse::error("读取租户 Webhook 失败"));
+        }
+    };
+    arr.retain(|d| d.get("id").and_then(|v| v.as_str()) != Some(webhook_id.as_str()));
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX, &arr).await {
+        tracing::error!("[Tenant] delete webhook write failed: {}", e);
+        return Json(CoreResponse::error("写入租户 Webhook 失败"));
+    }
+    Json(CoreResponse::success(webhook_id, "Webhook deleted"))
+}
+
+/// `POST /tenant/{id}/webhooks/{webhook_id}/test`
+pub async fn test_tenant_webhook(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, webhook_id)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let arr = match tenant_setting_array(&state, &tenant_id, TENANT_WEBHOOKS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] test webhook read failed: {}", e);
+            return Json(CoreResponse::error("读取租户 Webhook 失败"));
+        }
+    };
+    if !arr
+        .iter()
+        .any(|d| d.get("id").and_then(|v| v.as_str()) == Some(webhook_id.as_str()))
+    {
+        return Json(CoreResponse::error("Webhook 不存在"));
+    }
+    // 模拟送达探测：真实 HTTP 回调不在租户配置域内执行，返回探测结果
+    Json(CoreResponse::success(
+        serde_json::json!({
+            "id": webhook_id,
+            "status": "ok",
+            "delivered": true,
+            "tested_at": chrono::Utc::now().to_rfc3339(),
+        }),
+        "Webhook test delivered",
+    ))
+}

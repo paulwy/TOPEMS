@@ -78,6 +78,14 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             get(modules::tenant::handlers::get_tenant_email_config),
         )
         .route(
+            "/tenant/{id}/integrations",
+            get(modules::tenant::handlers::list_tenant_integrations),
+        )
+        .route(
+            "/tenant/{id}/webhooks",
+            get(modules::tenant::handlers::list_tenant_webhooks),
+        )
+        .route(
             "/tenant/context",
             get(modules::tenant::handlers::get_current_tenant_context),
         )
@@ -163,6 +171,34 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/tenant/{id}/email-config",
             put(modules::tenant::handlers::update_tenant_email_config),
+        )
+        .route(
+            "/tenant/{id}/integrations",
+            post(modules::tenant::handlers::create_tenant_integration),
+        )
+        .route(
+            "/tenant/{id}/integrations/{integration_id}",
+            put(modules::tenant::handlers::update_tenant_integration),
+        )
+        .route(
+            "/tenant/{id}/integrations/{integration_id}",
+            delete(modules::tenant::handlers::delete_tenant_integration),
+        )
+        .route(
+            "/tenant/{id}/webhooks",
+            post(modules::tenant::handlers::create_tenant_webhook),
+        )
+        .route(
+            "/tenant/{id}/webhooks/{webhook_id}",
+            put(modules::tenant::handlers::update_tenant_webhook),
+        )
+        .route(
+            "/tenant/{id}/webhooks/{webhook_id}",
+            delete(modules::tenant::handlers::delete_tenant_webhook),
+        )
+        .route(
+            "/tenant/{id}/webhooks/{webhook_id}/test",
+            post(modules::tenant::handlers::test_tenant_webhook),
         )
         .route(
             "/tenant/{id}/users/invite",
