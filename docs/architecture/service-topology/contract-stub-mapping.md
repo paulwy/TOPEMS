@@ -330,14 +330,14 @@
 | **search/recent** | 2 | ✅ 活调（FavoritesPage:77,130 getRecentSearches/clearRecentSearches） | svc/search 未实现 recent 存储 | **排期新建**（svc/search 或 core 简易 recent 表 + 租户隔离，0.5 人日） | S1 |
 | favorites/comments | 8 | ✅ 活调（FavoritesPage:63,105 / CommentsPage） | ④ 已建 engagement 真后端（core_favorites/core_comments） | **已闭环，无排期** | ✅ |
 | **tenant 系列**（analytics7/billing8/settings2/branding2/features4/domains3/email2/integrations4/webhooks5/security18） | 55 | ❌ 零页面调用（tenantConfigApi/tenantSecurityApi/tenantAnalyticsApi 封装无页面消费） | 部分已挂（billing/invoices、modules 开关、password-policy）；多数 0 命中 | **产品判定**：租户中心页面开发时按需新建；不做则前端封装+兜底同删（不单删兜底防裸 404） | P |
-| **core copilot/forms/documents** | 8 | ⚠️ 页面零方法调用（BusinessCopilotPage 仅类型 import，走 dsh/smart-forms），但 api 封装方法仍指 core（businessCopilot.ts:214,222,268 / businessIntelligence.ts:253,320） | dsh/smart-forms 已承接（sessions POST、chat、intent、modules、forms validate/generate、documents DOC_BASE_PATH） | **前端死封装清理后同步删**（页面确认零消费 + 封装改指/删方法 + core 兜底删，同批执行防 gate 缺口） | S2 |
+| **core copilot/forms/documents** | 8 | ⚠️ 页面零方法调用（BusinessCopilotPage 仅类型 import，走 dsh/smart-forms），但 api 封装方法仍指 core（businessCopilot.ts:214,222,268 / businessIntelligence.ts:253,320） | dsh/smart-forms 已承接（sessions POST、chat、intent、modules、forms validate/generate、documents DOC_BASE_PATH） | **✅ S2 已闭环（2026-10-22，`526a7687c`）**：实证修正——6 条真死删（getSession/getFormDefinition/documents parse+summary×2+search，页面+hook 零调用）+ 2 条 hook 活调保留（deleteSession useBusinessCopilot.ts:282 / searchFAQ :258，svc/ai 未实现子路径） | ✅ S2 |
 | **governance 剩余**（risk/compliance/cost/performance/audit/trends/recommendations + security-events） | 8 | ❌ 前端零消费 | ai governance_dashboard_handlers 已覆盖 dashboard/score | **产品定指标口径**后按需新建；零消费期间保留兜底 | P |
 | **documents 通用库定位** | 4 | ⚠️ 封装引用（businessIntelligence.ts:320 GET /documents/{id}） | 全仓 0 命中（非 ai knowledge） | **产品定方向**：并入 ai knowledge（改指）或独立文档库（新建）；决定前保留兜底 | P |
 | **system/api-keys** | 2 | ❌ 零页面调用 | 真实仅列表/创建/删除，缺 GET 详情/PUT 更新 | 与租户中心同批（做=补 handler，不做=下线） | P |
 
 **执行批次总表**：
-- **S1（本机可闭环，共 2 组 9 条）**：help 转发删兜底 + search/recent 新建。建议下批执行。
-- **S2（前端联动，共 8 条）**：copilot/forms/documents 死封装清理 + core 兜底同步删（需前端批协同）。
+- **S1（本机可闭环，共 2 组 9 条）**：help 转发删兜底 + search/recent 新建。**✅ 已闭环（v1.37）**。
+- **S2（前端联动，共 8 条）**：copilot/forms/documents 死封装清理 + core 兜底同步删。**✅ 已闭环（v1.38）**。
 - **P（产品决策，共 69 条）**：tenant 55 + governance 8 + documents 4 + api-keys 2 —— 待租户中心/指标口径/文档库定位产品排期。
 
 ## 6. 备注
