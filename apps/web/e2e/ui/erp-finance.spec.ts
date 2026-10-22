@@ -1,143 +1,87 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, navigateTo, expectUrl, expectPageVisible, expectHasHeading } from './helpers/auth';
+import { navigateTo, expectUrl } from './helpers/auth';
+import { API_URL } from '../utils/testUtils';
+
+/** 以超管 admin 页面登录（test_admin 未绑 erp/finance 角色，会被权限守卫拦截） */
+async function pageLoginAsSuperAdmin(page: import('@playwright/test').Page): Promise<void> {
+  await page.goto('/login', { waitUntil: 'load', timeout: 30000 });
+  await page
+    .waitForSelector('input[placeholder*="用户名"], input[name="username"]', { timeout: 15000 })
+    .catch(() => {});
+  await page.getByPlaceholder('请输入用户名').fill('admin');
+  await page.getByPlaceholder('请输入密码').fill('admin123');
+  await page.getByTestId('login-submit').click();
+  await page.waitForURL('**/dashboard', { timeout: 30000 });
+  await page
+    .waitForSelector('main, #main-content, [role="main"]', { timeout: 10000 })
+    .catch(() => {});
+}
 
 /**
- * ERP 财务管理流程 E2E 测试
- * 业务流程: 凭证创建 → 凭证审核 → 凭证记账 → 期末结账 → 财务报表生成
- * 测试用例: TC-ERP-001 ~ TC-ERP-005
+ * ERP 财务凭证数据流 E2E（真后端断言，非「可达不崩」级）
+ *
+ * 方法：先用 admin 调真后端取第一条凭证（id/voucher_no），再以登录态打开
+ * 列表页（/erp/voucher-management）与详情页（/finance/vouchers/:id），
+ * 断言前端正文确实渲染了后端返回的凭证号——证明列表/详情接的是真数据。
+ *
+ * 前置：真后端栈已起（scripts/dev/run-e2e-stack.sh login），API_URL 指向 8099；
+ * finance.vouchers 已有种子 记202609*。
  */
-test.describe('ERP Finance Flow (TC-ERP-001 ~ TC-ERP-005)', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
-  });
 
-  // TC-ERP-001: 创建会计凭证，验证凭证创建成功
-  test('TC-ERP-001 should create accounting voucher successfully', async ({ page }) => {
+async function adminToken(): Promise<string> {
+  const res = await fetch(`${API_URL}/api/core/iam/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: 'admin', password: 'admin123' }),
+  });
+  const data = await res.json();
+  const token = data?.data?.access_token || data?.data?.token || '';
+  if (!token) throw new Error('admin 真登录失败，未取到 token');
+  return token;
+}
+
+interface VoucherRecord {
+  id: string;
+  voucher_no: string;
+}
+
+async function firstVoucher(token: string): Promise<VoucherRecord> {
+  const res = await fetch(`${API_URL}/api/finance/vouchers?page=1&page_size=10`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  // 后端列表实际直接返回数组（非 {items,total} 信封），真键为 voucher_no
+  const items: VoucherRecord[] = data?.data?.items ?? (Array.isArray(data?.data) ? data.data : []);
+  const v = items[0];
+  if (!v?.id || !v?.voucher_no) {
+    throw new Error('后端凭证列表为空或结构异常，无法做数据流断言');
+  }
+  return v;
+}
+
+test.describe('ERP 财务凭证数据流（真后端断言）', () => {
+  // TC-ERP-001：列表页渲染后端凭证记录
+  test('TC-ERP-001 凭证列表展示后端返回的凭证记录', async ({ page }) => {
+    const token = await adminToken();
+    const voucher = await firstVoucher(token);
+
+    await pageLoginAsSuperAdmin(page);
     await navigateTo(page, '/erp/voucher-management');
     await expectUrl(page, /erp\/voucher-management/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
 
-    // 验证凭证列表加载
-    const listContainer = page.locator('table, .ant-table, [role="table"], .MuiTable-root, [class*="table"]').first();
-    await expect(listContainer).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 尝试点击新建凭证按钮
-    const createButton = page.getByRole('button', { name: /新建|创建|新增|新增凭证/ }).first();
-    if (await createButton.isVisible().catch(() => false)) {
-      await createButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      // 验证凭证创建弹窗或表单出现
-      const modal = page.locator('.ant-modal, [role="dialog"], .MuiDialog-root').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
+    // 前端列表正文必须出现后端取到的凭证号（真数据流，而非空表/mock）
+    await expect(page.locator('body')).toContainText(voucher.voucher_no, { timeout: 10000 });
   });
 
-  // TC-ERP-002: 凭证审核，验证审核状态更新
-  test('TC-ERP-002 should approve voucher and verify audit status', async ({ page }) => {
-    await navigateTo(page, '/erp/voucher-management');
-    await expectUrl(page, /erp\/voucher-management/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
+  // TC-ERP-002：详情页渲染后端凭证记录
+  test('TC-ERP-002 凭证详情页展示后端返回的凭证记录', async ({ page }) => {
+    const token = await adminToken();
+    const voucher = await firstVoucher(token);
 
-    // 验证凭证列表加载
-    const listContainer = page.locator('table, .ant-table, [role="table"], .MuiTable-root').first();
-    await expect(listContainer).toBeVisible({ timeout: 10000 }).catch(() => {});
+    await pageLoginAsSuperAdmin(page);
+    await navigateTo(page, `/finance/vouchers/${voucher.id}`);
+    await expect(page).toHaveURL(/finance\/vouchers\//);
 
-    // 尝试点击审核按钮
-    const approveButton = page.getByRole('button', { name: /审核|凭证审核|审批/ }).first();
-    if (await approveButton.isVisible().catch(() => false)) {
-      await approveButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      // 验证审核确认弹窗
-      const modal = page.locator('.ant-modal, [role="dialog"], .MuiDialog-root').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-
-      // 确认审核
-      const confirmButton = page.getByRole('button', { name: /确认|确定|通过|审核通过/ }).first();
-      if (await confirmButton.isVisible().catch(() => false)) {
-        await confirmButton.click({ force: true }).catch(() => {});
-        await page.waitForTimeout(1000);
-      }
-    }
-  });
-
-  // TC-ERP-003: 凭证记账，验证记账处理完成
-  test('TC-ERP-003 should post voucher and verify posting handled', async ({ page }) => {
-    await navigateTo(page, '/erp/voucher-management');
-    await expectUrl(page, /erp\/voucher-management/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
-
-    // 验证凭证列表加载
-    const listContainer = page.locator('table, .ant-table, [role="table"], .MuiTable-root').first();
-    await expect(listContainer).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 尝试点击记账按钮
-    const postButton = page.getByRole('button', { name: /记账|过账|登记入账/ }).first();
-    if (await postButton.isVisible().catch(() => false)) {
-      await postButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      // 验证记账确认弹窗
-      const modal = page.locator('.ant-modal, [role="dialog"], .MuiDialog-root').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-
-      const confirmButton = page.getByRole('button', { name: /确认|确定|记账/ }).first();
-      if (await confirmButton.isVisible().catch(() => false)) {
-        await confirmButton.click({ force: true }).catch(() => {});
-        await page.waitForTimeout(1000);
-      }
-    }
-  });
-
-  // TC-ERP-004: 期末结账，验证结账流程完成
-  test('TC-ERP-004 should perform period closing successfully', async ({ page }) => {
-    await navigateTo(page, '/erp/accounting-management');
-    await expectUrl(page, /erp\/accounting-management/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
-
-    // 验证会计管理页面加载
-    const pageContainer = page.locator('table, .ant-table, [role="table"], .MuiTable-root, .MuiCard-root, [class*="stat"]').first();
-    await expect(pageContainer).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 尝试点击期末结账按钮
-    const closeButton = page.getByRole('button', { name: /结账|期末结账|关账/ }).first();
-    if (await closeButton.isVisible().catch(() => false)) {
-      await closeButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      // 验证结账确认弹窗
-      const modal = page.locator('.ant-modal, [role="dialog"], .MuiDialog-root').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-
-      const confirmButton = page.getByRole('button', { name: /确认|确定|结账/ }).first();
-      if (await confirmButton.isVisible().catch(() => false)) {
-        await confirmButton.click({ force: true }).catch(() => {});
-        await page.waitForTimeout(1000);
-      }
-    }
-  });
-
-  // TC-ERP-005: 财务报表生成，验证报表数据加载
-  test('TC-ERP-005 should generate financial report and verify report data', async ({ page }) => {
-    await navigateTo(page, '/erp/financial-report');
-    await expectUrl(page, /erp\/financial-report/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
-
-    // 验证报表表格或数据卡片加载
-    const reportTable = page.locator('table, .ant-table, [role="table"], .MuiTable-root, .MuiCard-root, [class*="summary"]').first();
-    await expect(reportTable).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 尝试点击生成报表按钮
-    const generateButton = page.getByRole('button', { name: /生成|生成报表|查询|导出/ }).first();
-    if (await generateButton.isVisible().catch(() => false)) {
-      await generateButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-    }
-
-    // 验证汇总统计卡片
-    const statCards = page.locator('.ant-card, .MuiCard-root, [class*="stat"], [class*="summary"]').first();
-    await expect(statCards).toBeVisible({ timeout: 5000 }).catch(() => {});
+    await expect(page.locator('body')).toContainText(voucher.voucher_no, { timeout: 10000 });
   });
 });
