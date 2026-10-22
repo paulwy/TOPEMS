@@ -3291,3 +3291,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.70（2026-10-23）**：iam 空壳表统一——删 iam 空壳 8 表（core_tenants 6 FK 链 CASCADE 断约束），public 单表数据保持（31/2/5/36/3）；collect 重跑幂等写 public（3946）；DDL 基准 schema 口径统一待生产排期；analytics usage 查询端点 404 属 4111 类产品排期。
 
 > **系统完善 v1.71（2026-10-23）**：pdm/flow 缺列修复——public.pdm_products 补 name_en、core_workflows 补 tenant_id（双库幂等）；端点 200，无新 ERROR（v1.61 补列漏网 public 承接表，口径补录）。
+
+> **系统完善 v1.72（2026-10-23）**：双表统一第一批——pm.projects/push public 空壳清理；ehs 空壳删除踩坑（显式 schema 前缀 FROM ehs.qa_ehs_risks）→ 恢复 43 张 + 迁数据 + 补 tenant_id；探活 OK 0 BODY_FAIL；经验：清理前查显式前缀引用；剩余空壳双表待分批。
