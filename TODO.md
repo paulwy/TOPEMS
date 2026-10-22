@@ -3267,3 +3267,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.58（2026-10-23）**：残余缺表批量清零（erp/finance/public 11 表 test 结构复制主库 + ensure 自愈段）→ 曾缺表端点无 500；探活 0 5xx；gate 2653/6336/0。
 
 > **系统完善 v1.59（2026-10-23）**：写路径探针（domain-probe P3 段 POST 抽查，防 5xx 回归）+ 全端点冒烟复核（4150 前端封装：已挂载 39 / 缺口 4111 产品排期）；探活/gate/mobile 保持全绿。
+
+> **系统完善 v1.60（2026-10-23）**：production-verify 本机等价核销（17 通过/0 失败，警告为本机 dev 差异）；crontab 定时采集 + RLS 基线复验保持；生产机实跑仍待 SSH 档。
