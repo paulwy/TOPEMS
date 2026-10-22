@@ -66,23 +66,15 @@ async fn stub_detail_404(
 #[allow(clippy::too_many_lines)]
 pub fn contract_stub_routes() -> Router<AppState> {
     Router::new()
-        // B4 第一批：创建会话/chat/intent/模块列表/模块详情前端已走 svc/ai `/dsh/copilot/*`，
-        // core 兜底删除；仅 sessions(GET/DELETE) 与 modules/{id}/faq 仍由 core 兜底。
-        .route("/copilot/sessions/{id}", get(stub_list))
-        .route("/copilot/sessions/{id}", delete(stub_action))
-        .route("/copilot/modules/{id}/faq", get(stub_list))
-        // B4 第一批：表单列表/validate/auto-fill/generate/submit/draft 前端已走
-        // svc/ai `/dsh/smart-forms/*`，core 兜底删除；仅 GET /forms/{id} 模板详情仍由 core 承载。
-        .route("/forms/{id}", get(stub_list))
-        // B4 第一批：文档列表/创建/详情/删除/generate 前端已走 svc/ai 或 /doc 真实模块，
-        // core 兜底删除；仅 parse、summary(GET/POST)、search 仍由 core 兜底。
-        .route("/documents/{id}/parse", post(stub_action))
-        .route("/documents/{id}/summary", get(stub_list))
-        .route("/documents/{id}/summary", post(stub_action))
-        .route("/documents/{id}/search", get(stub_list))
+        // S2：copilot/forms/documents 前端死封装清理——实证 hook 层活调保留 2 条
+        // （deleteSession :useBusinessCopilot.ts:282 / searchFAQ :258，svc/ai 未实现子路径），
+        // 其余 6 条（getSession + getFormDefinition + documents parse/summary×2/search）
+        // 页面+hook 零调用，core 兜底同步删除（防 gate 缺口）。
         // B4 第一批：dashboard/score/risk/compliance/cost/performance/security-events/audit/
         // recommendations 前端已改走 svc/ai `/dsh/governance/*`，core 兜底删除；
         // 仅 trends(GET)、refresh(POST) 仍由 core 承载，保留。
+        .route("/copilot/sessions/{id}", delete(stub_action))
+        .route("/copilot/modules/{id}/faq", get(stub_list))
         .route("/governance/trends", get(stub_list))
         .route("/governance/refresh", post(stub_action))
         // B4-④：/comments/* 与 /favorites/* 已由 modules::engagement 真实实现

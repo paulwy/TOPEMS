@@ -246,14 +246,6 @@ export interface DocumentGenerationRequest {
 // ============================================================================
 
 /**
- * 获取表单定义（模板详情）
- */
-export async function getFormDefinition(form_id: string): Promise<ApiResponse<FormDefinition>> {
-  // 对齐 core 契约 stub（/forms/{id} GET），svc/ai 对假模板 id 返裸 404
-  return apiClient.core.get(`/forms/${form_id}`);
-}
-
-/**
  * 获取所有表单定义（模板列表）
  */
 export async function getAllFormDefinitions(
@@ -318,58 +310,6 @@ export async function uploadDocument(
  */
 export async function getDocument(document_id: string): Promise<ApiResponse<DocumentInfo>> {
   return apiClient.ai.get(`/documents/${document_id}`);
-}
-
-/**
- * 解析文档
- */
-export async function parseDocument(
-  document_id: string
-): Promise<ApiResponse<DocumentParseResult>> {
-  // 对齐 core 契约 stub（/documents/{id}/parse POST），svc/ai 未实现该子路径
-  return apiClient.core.post(`/documents/${document_id}/parse`);
-}
-
-/**
- * 生成文档摘要
- */
-export async function generateDocumentSummary(
-  document_id: string,
-  summary_type: SummaryType = 'standard'
-): Promise<ApiResponse<DocumentSummary>> {
-  return apiClient.core.post(`/documents/${document_id}/summary`, { summary_type });
-}
-
-/**
- * 获取文档摘要
- */
-export async function getDocumentSummary(
-  document_id: string,
-  summary_type?: SummaryType
-): Promise<ApiResponse<DocumentSummary>> {
-  return apiClient.core.get(`/documents/${document_id}/summary`, {
-    params: summary_type ? { type: summary_type } : undefined,
-  });
-}
-
-/**
- * 搜索文档内容
- */
-export async function searchDocument(
-  document_id: string,
-  query: string
-): Promise<
-  ApiResponse<
-    Array<{
-      line_number: number;
-      content: string;
-      match_count: number;
-    }>
-  >
-> {
-  return apiClient.core.get(`/documents/${document_id}/search`, {
-    params: { q: query },
-  });
 }
 
 /**

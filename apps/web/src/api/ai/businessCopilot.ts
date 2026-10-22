@@ -207,18 +207,10 @@ export async function createSession(
 }
 
 /**
- * 获取会话信息
- */
-export async function getSession(session_id: string): Promise<ApiResponse<CopilotSession>> {
-  // 对齐 core 契约 stub（/copilot/sessions/{id} GET），svc/ai 对假 id 返裸 404
-  return apiClient.core.get(`/copilot/sessions/${session_id}`);
-}
-
-/**
- * 删除会话
+ * 删除会话（hook 活调：useBusinessCopilot.ts:282）
  */
 export async function deleteSession(session_id: string): Promise<ApiResponse<void>> {
-  // 对齐 core 契约 stub（/copilot/sessions/{id} DELETE）
+  // 对齐 core 契约 stub（/copilot/sessions/{id} DELETE），svc/ai 未实现该子路径
   return apiClient.core.delete(`/copilot/sessions/${session_id}`);
 }
 
@@ -258,7 +250,7 @@ export async function getAllModuleConfigs(): Promise<BusinessModuleConfig[]> {
 }
 
 /**
- * 搜索 FAQ
+ * 搜索 FAQ（hook 活调：useBusinessCopilot.ts:258）
  */
 export async function searchFAQ(
   module: BusinessModuleType,
