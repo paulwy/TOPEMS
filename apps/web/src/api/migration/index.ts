@@ -11,18 +11,6 @@ export interface MigrationService {
   tables: number;
 }
 
-interface AppliedMigration {
-  version: string;
-  name: string;
-  applied_at: string;
-  duration_ms?: number;
-}
-
-export interface MigrationStatus {
-  pending: string[];
-  applied: AppliedMigration[];
-}
-
 interface MigrationReport {
   file: string;
   success: boolean;
@@ -110,26 +98,6 @@ export const migrationApi = {
           `${i18n.t('shared.index.k5')}${serviceName}${i18n.t('shared.index.k6')}`
       );
     } catch (err: unknown) {
-      throw new Error(extractMessage(err));
-    }
-  },
-
-  async getMigrationStatus(serviceName: string): Promise<MigrationStatus> {
-    const requestPath = `/migrations/services/${encodeURIComponent(serviceName)}/status`;
-    try {
-      const res: ApiResponse<MigrationStatus> = await apiClient.migration.get(requestPath);
-      if (res && res.success && res.data) {
-        return {
-          pending: Array.isArray(res.data.pending) ? res.data.pending : [],
-          applied: Array.isArray(res.data.applied) ? res.data.applied : [],
-        };
-      }
-      throw new Error(
-        (res && res.message) ||
-          `${i18n.t('shared.index.k7')}${serviceName}${i18n.t('shared.index.k8')}`
-      );
-    } catch (err: unknown) {
-      logger.error(`[MigrationAPI] getMigrationStatus failed: ${extractMessage(err)}`);
       throw new Error(extractMessage(err));
     }
   },

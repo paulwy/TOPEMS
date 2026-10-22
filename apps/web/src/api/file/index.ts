@@ -53,12 +53,6 @@ export interface FileMetadata {
   updated_at: string;
 }
 
-interface ShareFileRequest {
-  principal_type: 'user' | 'group' | 'department';
-  principal_id: string;
-  permission: 'read' | 'write' | 'manage';
-}
-
 interface FilePermission {
   id: string;
   file_id: string;
@@ -174,10 +168,6 @@ export const fileApi = {
 
   // ==================== 分享与权限 ====================
 
-  async share(id: string, request: ShareFileRequest): Promise<ApiResponse<FilePermission>> {
-    return apiClient.file.post<FilePermission>(`/files/${id}/share`, request);
-  },
-
   async getPermissions(id: string): Promise<ApiResponse<FilePermission[]>> {
     return apiClient.file.get<FilePermission[]>(`/files/${id}/permissions`);
   },
@@ -223,14 +213,6 @@ export const fileApi = {
     request: { target_folder_id: string }
   ): Promise<ApiResponse<FileMetadata>> {
     return apiClient.file.post<FileMetadata>(`/files/${id}/move`, request);
-  },
-
-  async star(id: string): Promise<ApiResponse<unknown>> {
-    return apiClient.file.post(`/files/${id}/star`);
-  },
-
-  async unstar(id: string): Promise<ApiResponse<unknown>> {
-    return apiClient.file.post(`/files/${id}/unstar`);
   },
 
   async preview(id: string): Promise<ApiResponse<unknown>> {

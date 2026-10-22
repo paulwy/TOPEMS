@@ -1,26 +1,12 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Play, Eye, RotateCcw, FileSearch, Database } from 'lucide-react';
-import {
-  Box,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  CircularProgress,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Paper,
-  Button,
-} from '@mui/material';
+import { Play, RotateCcw, Database } from 'lucide-react';
+import { Box, CircularProgress, Typography, Paper, Button } from '@mui/material';
 import i18n from '@/i18n';
 import { useNotificationStore } from '@/store';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
 import { PageContainer } from '@/components/common';
-import { migrationApi, type MigrationService, type MigrationStatus } from '@/api/migration';
+import { migrationApi, type MigrationService } from '@/api/migration';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
@@ -28,15 +14,10 @@ import { useConfirmDialog } from '@/hooks';
 import { migrationSchema } from '@/schemas/admin';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-interface ServiceStatusMap {
-  [serviceName: string]: MigrationStatus;
-}
 const MigrationAdminPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
   const [batchApplying, setBatchApplying] = useState(false);
-  const [activeService, setActiveService] = useState<MigrationService | null>(null);
-  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [, setApplyingService] = useState<string | null>(null);
   const [, setRollingBackService] = useState<string | null>(null);
   const {
@@ -53,28 +34,7 @@ const MigrationAdminPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const statusQuery = useQuery({
-    queryKey: [
-      ...QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE,
-      servicesQuery.data?.map((s) => s.name) || [],
-    ],
-    queryFn: async () => {
-      const services = servicesQuery.data || [];
-      if (services.length === 0) return {};
-      const results = await Promise.all(
-        services.map((svc) => migrationApi.getMigrationStatus(svc.name).catch(() => null))
-      );
-      const statusMap: ServiceStatusMap = {};
-      services.forEach((svc, idx) => {
-        if (results[idx]) statusMap[svc.name] = results[idx] as MigrationStatus;
-      });
-      return statusMap;
-    },
-    enabled: !!servicesQuery.data && servicesQuery.data.length > 0,
-    staleTime: 5 * 60 * 1000,
-  });
   const services = useMemo(() => servicesQuery.data || [], [servicesQuery.data]);
-  const statusMap = useMemo(() => statusQuery.data || {}, [statusQuery.data]);
   const apiAdapter: CrudApiAdapter<MigrationService> = useMemo(
     () => ({
       list: async () => {
@@ -176,20 +136,6 @@ const MigrationAdminPage: React.FC = () => {
     },
     [openConfirmDialog, rollbackMutation]
   );
-  const handleShowStatus = useCallback(
-    async (service: MigrationService) => {
-      setActiveService(service);
-      setStatusDialogOpen(true);
-      if (!statusMap[service.name]) {
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.AD_HOC.MIGRATION_STATUS_BASE,
-          exact: false,
-          refetchType: 'active',
-        });
-      }
-    },
-    [statusMap, queryClient]
-  );
   const handleBatchApply = useCallback(() => {
     if (services.length === 0) return;
     openConfirmDialog({
@@ -235,21 +181,8 @@ const MigrationAdminPage: React.FC = () => {
       },
     });
   }, [services, openConfirmDialog, addNotification, queryClient]);
-  const getPendingCount = useCallback(
-    (serviceName: string) => statusMap[serviceName]?.pending?.length ?? 0,
-    [statusMap]
-  );
-  const getAppliedCount = useCallback(
-    (serviceName: string) => statusMap[serviceName]?.applied?.length ?? 0,
-    [statusMap]
-  );
   const customRowActions: RowAction[] = useMemo(
     () => [
-      {
-        label: i18n.t('admin.migration_admin_page.view_status'),
-        icon: <Eye size={16} />,
-        onClick: (row) => handleShowStatus(row as unknown as MigrationService),
-      },
       {
         label: i18n.t('admin.migration_admin_page.rollback'),
         icon: <RotateCcw size={16} />,
@@ -262,15 +195,13 @@ const MigrationAdminPage: React.FC = () => {
         onClick: (row) => handleApply(row as unknown as MigrationService),
       },
     ],
-    [handleApply, handleRollback, handleShowStatus]
+    [handleApply, handleRollback]
   );
   const headerContent = useMemo(() => {
     const totalServices = services.length;
-    const totalPending = services.reduce((sum, svc) => sum + getPendingCount(svc.name), 0);
-    const totalApplied = services.reduce((sum, svc) => sum + getAppliedCount(svc.name), 0);
     return (
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 3 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3 }}>
           <Box sx={{ textAlign: 'center' }}>
             <Box
               sx={{
@@ -307,58 +238,6 @@ const MigrationAdminPage: React.FC = () => {
                 mb: 1,
               }}
             >
-              <FileSearch sx={{ fontSize: 20, color: 'warning.main' }} />
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                {i18n.t('admin.migration_admin_page.pending_migration')}
-              </Typography>
-            </Box>
-            <Typography
-              variant='h4'
-              sx={{ fontWeight: 700 }}
-              color='warning.main'
-            >
-              {totalPending}
-            </Typography>
-          </Box>
-          <Box sx={{ textAlign: 'center' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-                mb: 1,
-              }}
-            >
-              <Play sx={{ fontSize: 20, color: 'success.main' }} />
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                {i18n.t('admin.migration_admin_page.applied_migration')}
-              </Typography>
-            </Box>
-            <Typography
-              variant='h4'
-              sx={{ fontWeight: 700 }}
-              color='success.main'
-            >
-              {totalApplied}
-            </Typography>
-          </Box>
-          <Box sx={{ textAlign: 'center' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-                mb: 1,
-              }}
-            >
               <Button
                 variant='contained'
                 startIcon={batchApplying ? <CircularProgress size={16} /> : <Play size={16} />}
@@ -373,7 +252,7 @@ const MigrationAdminPage: React.FC = () => {
         </Box>
       </Paper>
     );
-  }, [services, batchApplying, getAppliedCount, getPendingCount, handleBatchApply]);
+  }, [services, batchApplying, handleBatchApply]);
   return (
     <PageContainer
       title={i18n.t('admin.migration_admin_page.page_title')}
@@ -386,178 +265,6 @@ const MigrationAdminPage: React.FC = () => {
         customRowActions={customRowActions}
         idField='name'
       />
-      <Dialog
-        open={statusDialogOpen}
-        onClose={() => setStatusDialogOpen(false)}
-        maxWidth='lg'
-        fullWidth
-      >
-        <DialogContent>
-          <DialogTitle>
-            {activeService
-              ? i18n.t('admin:migration_admin_page.service_status_title', {
-                  serviceName: activeService.name,
-                })
-              : i18n.t('admin.migration_admin_page.migration_status')}
-          </DialogTitle>
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.secondary', mb: 4 }}
-          >
-            {activeService
-              ? i18n.t('admin:migration_admin_page.schema_port_info', {
-                  schema: activeService.schema,
-                  port: activeService.port,
-                })
-              : ''}
-          </Typography>
-          {activeService && statusMap[activeService.name] ? (
-            <Box sx={{ maxHeight: '60vh', overflowY: 'auto' }}>
-              <Box sx={{ mt: 4 }}>
-                <Typography
-                  variant='subtitle2'
-                  sx={{
-                    fontWeight: 600,
-                    mb: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: 'warning.main',
-                    }}
-                  />
-                  {i18n.t('admin:migration_admin_page.pending_with_count', {
-                    count: statusMap[activeService.name].pending.length,
-                  })}
-                </Typography>
-                {statusMap[activeService.name].pending.length === 0 ? (
-                  <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'text.secondary' }}
-                    >
-                      {i18n.t('admin.migration_admin_page.no_pending_files')}
-                    </Typography>
-                  </Paper>
-                ) : (
-                  <Paper
-                    sx={{
-                      p: 3,
-                      bgcolor: 'grey.50',
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                    }}
-                  >
-                    {statusMap[activeService.name].pending.map((file) => (
-                      <Typography
-                        key={file}
-                        variant='body2'
-                      >
-                        {file}
-                      </Typography>
-                    ))}
-                  </Paper>
-                )}
-              </Box>
-              <Box sx={{ mt: 4 }}>
-                <Typography
-                  variant='subtitle2'
-                  sx={{
-                    fontWeight: 600,
-                    mb: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: 'success.main',
-                    }}
-                  />
-                  {i18n.t('admin:migration_admin_page.applied_with_count', {
-                    count: statusMap[activeService.name].applied.length,
-                  })}
-                </Typography>
-                {statusMap[activeService.name].applied.length === 0 ? (
-                  <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'text.secondary' }}
-                    >
-                      {i18n.t('admin.migration_admin_page.no_applied_records')}
-                    </Typography>
-                  </Paper>
-                ) : (
-                  <Paper sx={{ overflow: 'hidden' }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ width: 120, fontWeight: 600 }}>
-                            {i18n.t('admin.migration_admin_page.version')}
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>
-                            {i18n.t('admin.migration_admin_page.name')}
-                          </TableCell>
-                          <TableCell sx={{ width: 180, fontWeight: 600 }}>
-                            {i18n.t('admin.migration_admin_page.execution_time')}
-                          </TableCell>
-                          <TableCell
-                            sx={{
-                              width: 100,
-                              textAlign: 'right',
-                              fontWeight: 600,
-                            }}
-                          >
-                            {i18n.t('admin.migration_admin_page.duration_ms')}
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {statusMap[activeService.name].applied.map((m) => (
-                          <TableRow key={`${m.version}-${m.name}`}>
-                            <TableCell sx={{ fontFamily: 'monospace', fontSize: 12 }}>
-                              {m.version}
-                            </TableCell>
-                            <TableCell>{m.name}</TableCell>
-                            <TableCell sx={{ fontSize: 12, color: 'text.secondary' }}>
-                              {m.applied_at ? new Date(m.applied_at).toLocaleString() : '-'}
-                            </TableCell>
-                            <TableCell
-                              sx={{
-                                textAlign: 'right',
-                                fontSize: 12,
-                                color: 'text.secondary',
-                              }}
-                            >
-                              {m.duration_ms ?? '-'}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </Paper>
-                )}
-              </Box>
-            </Box>
-          ) : (
-            <Box sx={{ py: 10, textAlign: 'center', color: 'text.secondary' }}>
-              <Typography variant='body2'>
-                {i18n.t('admin.migration_admin_page.no_status_info')}
-              </Typography>
-            </Box>
-          )}
-        </DialogContent>
-      </Dialog>
       <ConfirmDialog
         isOpen={confirmDialogOpen}
         onClose={setConfirmDialogClosed}

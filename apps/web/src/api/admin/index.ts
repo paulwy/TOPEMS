@@ -111,7 +111,6 @@ export const adminApi = {
   listMigrationServices: migrationApi.listServices,
   applyMigration: migrationApi.applyMigration,
   rollbackMigration: migrationApi.rollbackMigration,
-  getMigrationStatus: migrationApi.getMigrationStatus,
 
   listSettings: systemSettingApi.listSettings,
   getSetting: systemSettingApi.getSetting,
