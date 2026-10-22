@@ -78,3 +78,19 @@ UPDATE core_tenant_usage SET storage_used_mb = v.mb
 FROM (VALUES ('2026-09-01'::date,28),('2026-08-01',21),('2026-07-01',14),('2026-06-01',7),('2026-05-01',0)) AS v(d,mb)
 WHERE core_tenant_usage.period_start = v.d AND tenant_id = '${TENANT_ID}';"
 echo "core_tenant_usage 历史期回填就绪（trends 6 期，含 storage 近似）"
+# core_files RLS 租户隔离（有 tenant_id 的租户表，同域宽松策略格式；幂等）
+psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+ALTER TABLE public.core_files ENABLE ROW LEVEL SECURITY;
+DO \$\$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='core_files' AND policyname='tenant_isolation') THEN
+    CREATE POLICY tenant_isolation ON public.core_files USING (
+      (current_setting('app.tenant_id', true) IS NULL) OR
+      (current_setting('app.tenant_id', true) = '') OR
+      (current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000') OR
+      (tenant_id IS NULL) OR
+      (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+    );
+  END IF;
+END \$\$;"
+echo "core_files RLS 租户隔离就绪"

@@ -3257,3 +3257,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.53（2026-10-23）**：core_files 种子幂等修复（固定 UUID + ON CONFLICT(id)，原 gen_random_uuid 无唯一约束致重复插 9 行）+ storage 历史期回填（5-9 月 28/21/14/7/0 递减并入 ensure）→ trends 全期 storage 真实（35/28/21/14/7/0）。
 
 > **系统完善 v1.54（2026-10-23）**：collect 每日定时化——新增 collect-usage-daily.sh（存活检查 + token 复用 + 采集校验 + 日志）+ crontab 每日 01:00 注册；探活写探针保留双通道。
+
+> **系统完善 v1.55（2026-10-23）**：RLS 定期验证——新增 verify-rls.sh（全量校验 + 关键抽样，缺口 0/183 表）；core_files 补 tenant_isolation 策略（租户表安全加固）；口径校准（平台级/RBAC 表豁免标注）；ensure 并入 RLS 幂等段。
