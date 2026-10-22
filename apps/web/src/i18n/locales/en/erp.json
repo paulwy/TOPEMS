@@ -4223,6 +4223,7 @@
   "erp.erp_sales_order_redesign.form.delivery_date": "Delivery Date",
   "erp.erp_sales_order_redesign.form.salesperson": "Salesperson",
   "erp.erp_sales_order_redesign.form.status": "Order Status",
+  "erp.erp_sales_order_redesign.form.customer_name_placeholder": "Select customer",
   "erp.erp_sales_order_redesign.form.product_name_placeholder": "e.g. Servo Motor SM-750W",
   "erp.erp_sales_order_redesign.form.quantity_placeholder": "e.g. 50",
   "erp.erp_sales_order_redesign.form.unit_price_placeholder": "e.g. 3500",

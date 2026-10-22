@@ -217,13 +217,13 @@ const defaultItems: NavItem[] = [
         id: 'wms-inbound',
         label: 'shared.sidebar.wms_inbound',
         icon: Package,
-        path: '/wms/inbound-orders',
+        path: '/wms/inbound-order',
       },
       {
         id: 'wms-outbound',
         label: 'shared.sidebar.wms_outbound',
         icon: Package,
-        path: '/wms/outbound-orders',
+        path: '/wms/outbound-order',
       },
       {
         id: 'wms-inventory',

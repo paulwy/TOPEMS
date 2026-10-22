@@ -11,7 +11,6 @@ import {
   ChevronLeft,
   Check,
   RefreshCw,
-  Wallet,
   DollarSign,
   FileCheck,
   Clock,
@@ -30,7 +29,6 @@ import type { VoucherEntry } from '@/types/finance';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { FINANCE_PATHS } from '@/modules/finance/config';
-import { designTokens } from '@/theme/tokens';
 import { voucherSchema, accountingSubjectSchema } from '@/schemas/finance';
 import type { EntitySchema, BatchActionConfig } from '@/schema';
 import type { RowAction } from '@/components/templates';
@@ -42,8 +40,6 @@ import ConfirmDialogs from './components/ConfirmDialogs';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 
 // ============ 科目 Tab 面板（嵌套 CrudPage） ============
 
@@ -674,16 +670,7 @@ const FinanceVoucherPage: React.FC = () => {
   );
 
   return (
-    <PageContainer
-      padding={false}
-      maxWidth={false}
-      title={t('finance.finance_voucher_page_index.page_title')}
-      subtitle={t('finance.finance_voucher_page_index.import_6')}
-      headerProps={{
-        pageIcon: <Wallet style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
-      }}
-    >
+    <PageContainer padding={false} maxWidth={false} autoTitle={false}>
       <Box
         sx={{
           bgcolor: 'background.paper',

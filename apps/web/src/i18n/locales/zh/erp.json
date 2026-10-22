@@ -3383,6 +3383,7 @@
   "erp.erp_sales_order_redesign.form.delivery_date": "交付日期",
   "erp.erp_sales_order_redesign.form.salesperson": "销售员",
   "erp.erp_sales_order_redesign.form.status": "订单状态",
+  "erp.erp_sales_order_redesign.form.customer_name_placeholder": "请选择客户",
   "erp.erp_sales_order_redesign.form.product_name_placeholder": "例如：伺服电机 SM-750W",
   "erp.erp_sales_order_redesign.form.quantity_placeholder": "例如：50",
   "erp.erp_sales_order_redesign.form.unit_price_placeholder": "例如：3500",

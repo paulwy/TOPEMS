@@ -7,6 +7,7 @@ import ProtectedRouteWrapper from '../components/ProtectedRouteWrapper';
 import PageLoader from '../components/PageLoader';
 import { PageErrorBoundary } from '../components/ErrorBoundary';
 import { useAppInit } from '../hooks/useAppInit';
+import { ensureNamespacesLoaded } from '../i18n';
 import { createSafeLazy, lazyWithPreload } from '../utils/createSafeLazy';
 import { authRoutes, dashboardRoutes, commonRoutes, type RouteConfig } from './index';
 import { DASHBOARD_PATHS } from './dashboard';
@@ -19,8 +20,14 @@ const RedesignDemoPage = createSafeLazy(() => import('../pages/RedesignDemo'));
 const DynamicRouter = createSafeLazy(() => import('../lib/plugin-loader/DynamicRouter'));
 // G9 修复：/core/users、/core/roles 显式注册本地组件（DynamicRouter 依赖运行时模块注册，
 // 加载失败时会渲染空白，导致 /core/* 主体空白——双机确认的 G9 问题）。
-const CoreUsersPage = createSafeLazy(() => import('../pages/iam/UserManagementPage'));
-const CoreRolesPage = createSafeLazy(() => import('../pages/iam/RoleManagementPage'));
+// G4 修复：/core/* 为平铺顶层路由，不经 v2 loadModuleConfig 的命名空间预加载，
+// 故懒加载前先注入 iam 命名空间，避免页面 i18n key 明文泄漏。
+const CoreUsersPage = createSafeLazy(() =>
+  ensureNamespacesLoaded(['iam']).then(() => import('../pages/iam/UserManagementPage'))
+);
+const CoreRolesPage = createSafeLazy(() =>
+  ensureNamespacesLoaded(['iam']).then(() => import('../pages/iam/RoleManagementPage'))
+);
 const { lazy: PerformanceTestPage } = lazyWithPreload(
   () => import('../pages/performance/PerformanceTestPage')
 );
@@ -170,6 +177,11 @@ const AppRoutes: React.FC = () => {
               <TemplateDemoPage />
             </ProtectedRoute>
           }
+        />
+        {/* G10 修复：/settings 旧路径重定向到 /system/settings（顶栏"系统设置"现指向后者） */}
+        <Route
+          path='/settings'
+          element={<Navigate to={DASHBOARD_PATHS.systemSettings} replace />}
         />
         <Route
           path='/redesign-demo'

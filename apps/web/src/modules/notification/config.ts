@@ -216,7 +216,7 @@ export const notificationNavConfig: ModuleNavConfig = {
   suite: 'collaboration',
   status: 'online',
   order: 3,
-  description: i18n.t('notification.nav.notification-dashboard'),
+  description: i18n.t('notification.nav.module_name_desc'),
   navItems: [
     {
       code: 'notification-dashboard',

@@ -1,4 +1,3 @@
-import { designTokens } from '@topems/tokens';
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { alpha } from '@mui/material/styles';
@@ -8,7 +7,6 @@ import {
   CardContent,
   Grid,
   Typography,
-  Chip,
   Table,
   TableBody,
   TableCell,
@@ -508,11 +506,6 @@ const PlaceholderChart: React.FC<{ config: ChartConfig; isMain?: boolean }> = ({
           >
             {title}
           </Typography>
-          <Chip
-            label={type}
-            size='small'
-            sx={{ height: 20, fontSize: designTokens.typography.fontSize.scale['0.7rem'] }}
-          />
         </Box>
         <Box sx={{ flex: 1, minHeight: height - 40, position: 'relative' }}>
           {hovered !== null && data[hovered] && (

@@ -211,19 +211,30 @@ const NotFoundPage: React.FC = () => {
                         >
                           {i18n.t(mod.nameKey || mod.name)}
                         </Typography>
-                        {mod.description && (
-                          <Typography
-                            sx={{
-                              fontSize: designTokens.typography.fontSize.scale['0.75rem'],
-                              color: 'text.secondary',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {i18n.t(mod.description, { defaultValue: mod.description })}
-                          </Typography>
-                        )}
+                        {/* G10 修复：description 与模块名渲染文本相同（或为空）时不显示，
+                            避免"身份管理 身份管理"类重复两行；比较渲染后文本（name/desc
+                            可能在 i18n 加载前后被解析成 key 原文，raw 比较不可靠） */}
+                        {(() => {
+                          const nameText = i18n.t(mod.nameKey || mod.name);
+                          const descText = mod.description
+                            ? i18n.t(mod.description, { defaultValue: mod.description })
+                            : '';
+                          if (!descText || descText === nameText) return null;
+                          return (
+                            <Typography
+                              sx={{
+                                fontSize:
+                                  designTokens.typography.fontSize.scale['0.75rem'],
+                                color: 'text.secondary',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {descText}
+                            </Typography>
+                          );
+                        })()}
                       </Box>
                     </Paper>
                   );

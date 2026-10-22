@@ -883,7 +883,8 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               </label>
               <Select
                 id='field-1'
-                defaultValue={selectedOrder?.customer_name || t('erp.demo.company_a_name')}
+                defaultValue={selectedOrder?.customer_name || ''}
+                placeholder={t('erp.erp_sales_order_redesign.form.customer_name_placeholder')}
                 options={[
                   { value: t('erp.demo.company_a_name'), label: t('erp.demo.company_a_name') },
                   { value: t('erp.demo.company_b_name'), label: t('erp.demo.company_b_name') },
@@ -917,7 +918,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 id='field-3'
                 type='number'
                 placeholder={t('erp.erp_sales_order_redesign.form.quantity_placeholder')}
-                defaultValue={selectedOrder?.quantity || 50}
+                defaultValue={selectedOrder?.quantity ?? ''}
               />
             </div>
             <div>
@@ -931,7 +932,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 id='field-4'
                 type='number'
                 placeholder={t('erp.erp_sales_order_redesign.form.unit_price_placeholder')}
-                defaultValue={selectedOrder?.unit_price || 3500}
+                defaultValue={selectedOrder?.unit_price ?? ''}
               />
             </div>
             <div>
@@ -944,7 +945,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               <Input
                 id='field-5'
                 type='date'
-                defaultValue={selectedOrder?.order_date || '2026-09-15'}
+                defaultValue={selectedOrder?.order_date || ''}
               />
             </div>
             <div>
@@ -957,7 +958,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               <Input
                 id='field-6'
                 type='date'
-                defaultValue={selectedOrder?.delivery_date || '2026-09-30'}
+                defaultValue={selectedOrder?.delivery_date || ''}
               />
             </div>
             <div>
@@ -970,7 +971,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               <Input
                 id='field-7'
                 placeholder={t('erp.erp_sales_order_redesign.form.salesperson_placeholder')}
-                defaultValue={selectedOrder?.salesperson || t('erp.demo.owner_zhang')}
+                defaultValue={selectedOrder?.salesperson || ''}
               />
             </div>
             <div>

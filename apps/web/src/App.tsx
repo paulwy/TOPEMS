@@ -1,19 +1,10 @@
-import React, { Suspense, lazy, useState, useEffect } from 'react';
+import React from 'react';
 import AppLayout from './components/layout/AppLayout';
 import AppRoutes from './routes/appRoutes';
 import I18nReadyGate from './components/I18nReadyGate';
-import { useAuth } from './hooks/useAuth';
 
-// DevTools 仅在开发模式按需加载，生产构建由 Vite tree-shaking 移除（import.meta.env.DEV 字面量）
-const MicroFrontendDevTools = import.meta.env.DEV ? lazy(() => import('./dev-tools')) : null;
-
-// V40.0 Track F: 微前端可观测性面板（开发模式）
-// 使用 import.meta.env.DEV 编译时常量门控，确保生产构建中完全移除
-const ObservabilityPanel = import.meta.env.DEV
-  ? lazy(() =>
-      import('./microfrontend/observability').then((m) => ({ default: m.ObservabilityPanel }))
-    )
-  : null;
+// G5 修复（2026-10-22）：移除开发模式调试面板（微前端可观测性面板 / DevTools），
+// 原实现见 git 历史（V40.0 Track F）。生产构建本已 tree-shake，现直接不再渲染。
 
 // 自愈：清理历史遗留的 alg:none 伪 JWT（旧 dev 注入器写入的 `{header}.{payload}.` token）。
 // 此类 token 会被后端 jsonwebtoken 拒绝（401），且 dev_auth_bypass 会阻止登出，
@@ -80,77 +71,16 @@ if (import.meta.env.DEV) {
 }
 
 /**
- * 开发模式 dev 面板包装器
- *
- * 仅在用户已认证时渲染 ObservabilityPanel 和 MicroFrontendDevTools，
- * 避免在登录页等公开路由上叠加高 z-index 浮层导致按钮被遮挡。
- */
-const DevPanels: React.FC = () => {
-  const { isAuthenticated } = useAuth();
-  const [showDevTools, setShowDevTools] = useState(false);
-
-  // 快捷键切换：Ctrl + Shift + D
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
-        e.preventDefault();
-        setShowDevTools((prev) => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  if (!isAuthenticated) return null;
-
-  return (
-    <>
-      {/*
-        Dev-mode placeholder: MicroFrontendDevTools (left fixed multi-row buttons,
-        ~25 colored buttons spanning 3-4 rows) + ObservabilityPanel (right fixed
-        floating button ~48px) both use position: fixed and are taken out of flow,
-        which would otherwise cover content near the bottom of the page.
-        This in-flow div pushes the scroll-boundary down so the last screenful
-        remains visible. Rendered only when import.meta.env.DEV && authenticated;
-        fully tree-shaken from production builds.
-      */}
-      <div
-        aria-hidden='true'
-        style={{
-          width: '100%',
-          height: showDevTools ? 320 : 0,
-          flexShrink: 0,
-          pointerEvents: 'none',
-          transition: 'height 0.3s ease',
-        }}
-      />
-      {ObservabilityPanel && (
-        <Suspense fallback={null}>
-          <ObservabilityPanel />
-        </Suspense>
-      )}
-      {MicroFrontendDevTools && showDevTools && (
-        <Suspense fallback={null}>
-          <MicroFrontendDevTools />
-        </Suspense>
-      )}
-    </>
-  );
-};
-
-/**
  * 应用入口
  *
  * 仅负责组合：
  * - AppLayout：全局 Provider 树（ErrorBoundary / Theme / Notification / Loading / Auth / Plugin）
  * - AppRoutes：路由树 + 全局状态初始化（useAppInit）
- * - 开发模式下已认证才显示的可观测性面板与微前端 DevTools
  */
 const App: React.FC = () => (
   <I18nReadyGate>
     <AppLayout>
       <AppRoutes />
-      <DevPanels />
     </AppLayout>
   </I18nReadyGate>
 );
