@@ -3241,3 +3241,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - 前端开页面：新增 `api/unified-core/menu.ts`（10 端点 CRUD）+ `pages/system/MenuManagementPage`（分组/菜单项双区块列表 + 新增/编辑 Dialog + 删除），`modules/admin/config.ts` 注册 `/admin/menu` 路由与导航项（icon=Menu，permission=system:read），zh/en i18n 补 `admin.nav.admin-menu`。
   - 验证：`cargo check -p topems-unified-core --lib` 绿、menu 4 serde 单测过；前端 `tsc --noEmit` 0 error、新文件 eslint 0 error。
   - 已知留口：菜单 `permissions` JSONB 高级字段本版未暴露在表单（后端可选，留空即 null），后续按需补；`core_menus.permissions`、父子树级联删除为未来增强。
+
+> **系统完善批次 P0/P1/P2 闭环（2026-10-22，活文档 v1.47，提交 `94549a3c4`）**：**P0 usage 采集器**——新增 POST /api/core/internal/usage/collect（幂等 upsert，31 租户实跑；analytics/usage、trends、overview 出真实数据，顺修 date/base_cost 转 text 500）；**P1 吞错审计**——tenant 5 处 query_as 全列对 core_tenants 列匹配 OK（无漂移）；**P2 写探针**——domain-probe 加 USAGE_COLLECT 校验（unified-core 101 路由 0 5xx）。**nginx 2 warn 核销（v1.46，`531d0762b`）**：http2 已新式无 warn + stapling 自签假 warn（生产 cert 带 OCSP 无 warn）——本机生产验证边界已确认。
