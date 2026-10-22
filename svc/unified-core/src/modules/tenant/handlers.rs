@@ -2145,3 +2145,237 @@ pub async fn test_tenant_webhook(
         "Webhook test delivered",
     ))
 }
+
+/// 租户安全设置存储（core_tenant_settings 复用）
+const TENANT_SEC_PREFIX: &str = "tenant_security_";
+const TENANT_SEC_KEYS_PREFIX: &str = "tenant_security_apikeys_";
+
+/// `GET /tenant/{id}/security`
+pub async fn get_tenant_security(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_get(&state, &tenant_id, TENANT_SEC_PREFIX).await {
+        Ok(v) => Json(CoreResponse::success(v, "Tenant security retrieved")),
+        Err(e) => {
+            tracing::error!("[Tenant] get security failed: {}", e);
+            Json(CoreResponse::error("读取租户安全设置失败"))
+        }
+    }
+}
+
+/// `PUT /tenant/{id}/security`
+pub async fn update_tenant_security(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_put(&state, &tenant_id, TENANT_SEC_PREFIX, &payload).await {
+        Ok(()) => Json(CoreResponse::success(payload, "Tenant security updated")),
+        Err(e) => {
+            tracing::error!("[Tenant] update security failed: {}", e);
+            Json(CoreResponse::error("写入租户安全设置失败"))
+        }
+    }
+}
+
+/// `GET /tenant/{id}/security/password-policy`
+pub async fn get_tenant_password_policy(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_get(&state, &tenant_id, "tenant_security_ppolicy_").await {
+        Ok(v) => Json(CoreResponse::success(v, "Tenant password policy retrieved")),
+        Err(e) => {
+            tracing::error!("[Tenant] get password policy failed: {}", e);
+            Json(CoreResponse::error("读取租户密码策略失败"))
+        }
+    }
+}
+
+/// `PUT /tenant/{id}/security/password-policy`
+pub async fn update_tenant_password_policy(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_put(&state, &tenant_id, "tenant_security_ppolicy_", &payload).await {
+        Ok(()) => Json(CoreResponse::success(
+            payload,
+            "Tenant password policy updated",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] update password policy failed: {}", e);
+            Json(CoreResponse::error("写入租户密码策略失败"))
+        }
+    }
+}
+
+/// `POST /tenant/{id}/security/enable-2fa`
+pub async fn enable_tenant_2fa(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let mut v = match tenant_setting_get(&state, &tenant_id, TENANT_SEC_PREFIX).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[Tenant] enable 2fa read failed: {}", e);
+            return Json(CoreResponse::error("读取租户安全设置失败"));
+        }
+    };
+    if let Some(obj) = v.as_object_mut() {
+        obj.insert("two_factor_enabled".to_string(), serde_json::json!(true));
+    }
+    match tenant_setting_put(&state, &tenant_id, TENANT_SEC_PREFIX, &v).await {
+        Ok(()) => Json(CoreResponse::success(
+            serde_json::json!({"enabled": true}),
+            "2FA enabled",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] enable 2fa write failed: {}", e);
+            Json(CoreResponse::error("启用 2FA 失败"))
+        }
+    }
+}
+
+/// `POST /tenant/{id}/security/disable-2fa`
+pub async fn disable_tenant_2fa(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let mut v = match tenant_setting_get(&state, &tenant_id, TENANT_SEC_PREFIX).await {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("[Tenant] disable 2fa read failed: {}", e);
+            return Json(CoreResponse::error("读取租户安全设置失败"));
+        }
+    };
+    if let Some(obj) = v.as_object_mut() {
+        obj.insert("two_factor_enabled".to_string(), serde_json::json!(false));
+    }
+    match tenant_setting_put(&state, &tenant_id, TENANT_SEC_PREFIX, &v).await {
+        Ok(()) => Json(CoreResponse::success(
+            serde_json::json!({"enabled": false}),
+            "2FA disabled",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] disable 2fa write failed: {}", e);
+            Json(CoreResponse::error("禁用 2FA 失败"))
+        }
+    }
+}
+
+/// `GET /tenant/{id}/security/api-keys`
+pub async fn list_tenant_api_keys(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX).await {
+        Ok(a) => Json(CoreResponse::success(
+            serde_json::Value::Array(a),
+            "API keys retrieved",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] list api keys failed: {}", e);
+            Json(CoreResponse::error("读取租户 API Key 失败"))
+        }
+    }
+}
+
+/// `POST /tenant/{id}/security/generate-api-key`
+pub async fn generate_tenant_api_key(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] generate api key read failed: {}", e);
+            return Json(CoreResponse::error("读取租户 API Key 失败"));
+        }
+    };
+    let name = payload
+        .get("name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("default");
+    let raw_key = format!("tk_{}", Uuid::new_v4().to_string().replace('-', ""));
+    let id = Uuid::new_v4().to_string();
+    let entry = serde_json::json!({
+        "id": id,
+        "name": name,
+        "key": raw_key,
+        "created_at": chrono::Utc::now().to_rfc3339(),
+        "last_used_at": serde_json::Value::Null,
+    });
+    arr.push(entry.clone());
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &arr).await {
+        tracing::error!("[Tenant] generate api key write failed: {}", e);
+        return Json(CoreResponse::error("写入租户 API Key 失败"));
+    }
+    Json(CoreResponse::success(entry, "API key generated"))
+}
+
+/// `POST /tenant/{id}/security/rotate-api-key/{key_id}`
+pub async fn rotate_tenant_api_key(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, key_id)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] rotate api key read failed: {}", e);
+            return Json(CoreResponse::error("读取租户 API Key 失败"));
+        }
+    };
+    let Some(entry) = arr
+        .iter_mut()
+        .find(|d| d.get("id").and_then(|v| v.as_str()) == Some(key_id.as_str()))
+    else {
+        return Json(CoreResponse::error("API Key 不存在"));
+    };
+    let new_key = format!("tk_{}", Uuid::new_v4().to_string().replace('-', ""));
+    if let Some(obj) = entry.as_object_mut() {
+        obj.insert("key".to_string(), serde_json::json!(new_key));
+        obj.insert(
+            "rotated_at".to_string(),
+            serde_json::json!(chrono::Utc::now().to_rfc3339()),
+        );
+    }
+    let result = entry.clone();
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &arr).await {
+        tracing::error!("[Tenant] rotate api key write failed: {}", e);
+        return Json(CoreResponse::error("写入租户 API Key 失败"));
+    }
+    Json(CoreResponse::success(result, "API key rotated"))
+}
+
+/// `DELETE /tenant/{id}/security/api-keys/{key_id}`
+pub async fn delete_tenant_api_key(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, key_id)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<String>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] delete api key read failed: {}", e);
+            return Json(CoreResponse::error("读取租户 API Key 失败"));
+        }
+    };
+    arr.retain(|d| d.get("id").and_then(|v| v.as_str()) != Some(key_id.as_str()));
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_SEC_KEYS_PREFIX, &arr).await {
+        tracing::error!("[Tenant] delete api key write failed: {}", e);
+        return Json(CoreResponse::error("写入租户 API Key 失败"));
+    }
+    Json(CoreResponse::success(key_id, "API key deleted"))
+}

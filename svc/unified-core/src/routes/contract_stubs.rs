@@ -102,36 +102,6 @@ pub fn contract_stub_routes() -> Router<AppState> {
         )
         .route("/tenant/{id}/billing/card", post(stub_action))
         .route("/tenant/{id}/billing/card", delete(stub_action))
-        .route("/tenant/{id}/security", get(stub_list))
-        .route("/tenant/{id}/security", put(stub_action))
-        .route("/tenant/{id}/security/password-policy", get(stub_list))
-        .route("/tenant/{id}/security/password-policy", put(stub_action))
-        .route("/tenant/{id}/security/enable-2fa", post(stub_action))
-        .route("/tenant/{id}/security/disable-2fa", post(stub_action))
-        .route("/tenant/{id}/security/api-keys", get(stub_list))
-        .route("/tenant/{id}/security/generate-api-key", post(stub_action))
-        .route(
-            "/tenant/{id}/security/rotate-api-key/{sub}",
-            post(stub_action),
-        )
-        .route("/tenant/{id}/security/api-keys/{sub}", delete(stub_action))
-        .route("/tenant/{id}/security/audit-logs", get(stub_list))
-        .route("/tenant/{id}/security/audit-logs/{sub}", get(stub_list))
-        .route("/tenant/{id}/security/audit-logs/export", post(stub_action))
-        .route("/tenant/{id}/security/sessions", get(stub_list))
-        .route(
-            "/tenant/{id}/security/sessions/{sub}/revoke",
-            post(stub_action),
-        )
-        .route(
-            "/tenant/{id}/security/sessions/revoke-all",
-            post(stub_action),
-        )
-        .route("/tenant/{id}/security/ip-whitelist", post(stub_action))
-        .route(
-            "/tenant/{id}/security/ip-whitelist/{sub}",
-            delete(stub_action),
-        )
     // P 组 api-keys 2 条已补真（GET /system/api-keys/{id} + PUT /system/api-keys/{id}，
     // modules/settings/api_keys.rs get_api_key/update_api_key，settings.rs 挂载），
     // 原 stub GET+PUT 兜底删除（防同 path 冲突）。

@@ -86,6 +86,18 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             get(modules::tenant::handlers::list_tenant_webhooks),
         )
         .route(
+            "/tenant/{id}/security",
+            get(modules::tenant::handlers::get_tenant_security),
+        )
+        .route(
+            "/tenant/{id}/security/password-policy",
+            get(modules::tenant::handlers::get_tenant_password_policy),
+        )
+        .route(
+            "/tenant/{id}/security/api-keys",
+            get(modules::tenant::handlers::list_tenant_api_keys),
+        )
+        .route(
             "/tenant/context",
             get(modules::tenant::handlers::get_current_tenant_context),
         )
@@ -199,6 +211,34 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/tenant/{id}/webhooks/{webhook_id}/test",
             post(modules::tenant::handlers::test_tenant_webhook),
+        )
+        .route(
+            "/tenant/{id}/security",
+            put(modules::tenant::handlers::update_tenant_security),
+        )
+        .route(
+            "/tenant/{id}/security/password-policy",
+            put(modules::tenant::handlers::update_tenant_password_policy),
+        )
+        .route(
+            "/tenant/{id}/security/enable-2fa",
+            post(modules::tenant::handlers::enable_tenant_2fa),
+        )
+        .route(
+            "/tenant/{id}/security/disable-2fa",
+            post(modules::tenant::handlers::disable_tenant_2fa),
+        )
+        .route(
+            "/tenant/{id}/security/generate-api-key",
+            post(modules::tenant::handlers::generate_tenant_api_key),
+        )
+        .route(
+            "/tenant/{id}/security/rotate-api-key/{key_id}",
+            post(modules::tenant::handlers::rotate_tenant_api_key),
+        )
+        .route(
+            "/tenant/{id}/security/api-keys/{key_id}",
+            delete(modules::tenant::handlers::delete_tenant_api_key),
         )
         .route(
             "/tenant/{id}/users/invite",
