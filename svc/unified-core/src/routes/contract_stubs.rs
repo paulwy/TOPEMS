@@ -77,31 +77,13 @@ pub fn contract_stub_routes() -> Router<AppState> {
         .route("/copilot/modules/{id}/faq", get(stub_list))
         .route("/governance/trends", get(stub_list))
         .route("/governance/refresh", post(stub_action))
-        // B4-④：/comments/* 与 /favorites/* 已由 modules::engagement 真实实现
-        // （core_comments / core_favorites 表 + CRUD + 收藏查重），空壳删除。
-        // S1：/search* 已由 svc/search 真实服务承接（/api/search + /api/search/recent 用户级真表），
-        // 前端 searchApi 已改指 apiClient.search（q→keyword 对齐），core 空壳删除。
-        // B4-⑤：/dict/dict-types/{id}/items 已由 master-data 真实路由承接
-        // （GET /api/master-data/dict/dict-types/{dict_type_id}/items, list_dict_items 走真 DB），
-        // 前端 dictItemApi.list 已改指 apiClient.master，core 空壳删除。
-        .route("/tenant/{id}/analytics/overview", get(stub_list))
-        .route("/tenant/{id}/analytics/usage", get(stub_list))
-        .route("/tenant/{id}/analytics/activity", get(stub_list))
-        .route("/tenant/{id}/analytics/api-usage", get(stub_list))
-        .route("/tenant/{id}/analytics/top-endpoints", get(stub_list))
-        .route("/tenant/{id}/analytics/user-stats", get(stub_list))
-        .route("/tenant/{id}/analytics/real-time", get(stub_list))
-        .route("/tenant/{id}/billing/subscription", get(stub_list))
-        .route("/tenant/{id}/billing/invoices", get(stub_list))
-        .route("/tenant/{id}/billing/invoices/{sub}", get(stub_list))
-        .route("/tenant/{id}/billing/invoices/{sub}/pay", post(stub_action))
-        .route("/tenant/{id}/billing/plan", post(stub_action))
-        .route(
-            "/tenant/{id}/billing/subscription/cancel",
-            post(stub_action),
-        )
-        .route("/tenant/{id}/billing/card", post(stub_action))
-        .route("/tenant/{id}/billing/card", delete(stub_action))
+    // B4-④：/comments/* 与 /favorites/* 已由 modules::engagement 真实实现
+    // （core_comments / core_favorites 表 + CRUD + 收藏查重），空壳删除。
+    // S1：/search* 已由 svc/search 真实服务承接（/api/search + /api/search/recent 用户级真表），
+    // 前端 searchApi 已改指 apiClient.search（q→keyword 对齐），core 空壳删除。
+    // B4-⑤：/dict/dict-types/{id}/items 已由 master-data 真实路由承接
+    // （GET /api/master-data/dict/dict-types/{dict_type_id}/items, list_dict_items 走真 DB），
+    // 前端 dictItemApi.list 已改指 apiClient.master，core 空壳删除。
     // P 组 api-keys 2 条已补真（GET /system/api-keys/{id} + PUT /system/api-keys/{id}，
     // modules/settings/api_keys.rs get_api_key/update_api_key，settings.rs 挂载），
     // 原 stub GET+PUT 兜底删除（防同 path 冲突）。

@@ -98,6 +98,46 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             get(modules::tenant::handlers::list_tenant_api_keys),
         )
         .route(
+            "/tenant/{id}/billing/invoices",
+            get(modules::tenant::handlers::get_invoices),
+        )
+        .route(
+            "/tenant/{id}/billing/invoices/{invoice_id}",
+            get(modules::tenant::handlers::get_tenant_invoice),
+        )
+        .route(
+            "/tenant/{id}/billing/subscription",
+            get(modules::tenant::handlers::get_tenant_subscription),
+        )
+        .route(
+            "/tenant/{id}/analytics/overview",
+            get(modules::tenant::handlers::get_tenant_analytics_overview),
+        )
+        .route(
+            "/tenant/{id}/analytics/usage",
+            get(modules::tenant::handlers::get_tenant_usage),
+        )
+        .route(
+            "/tenant/{id}/analytics/api-usage",
+            get(modules::tenant::handlers::get_tenant_api_usage),
+        )
+        .route(
+            "/tenant/{id}/analytics/activity",
+            get(modules::tenant::handlers::get_tenant_activity),
+        )
+        .route(
+            "/tenant/{id}/analytics/top-endpoints",
+            get(modules::tenant::handlers::get_tenant_top_endpoints),
+        )
+        .route(
+            "/tenant/{id}/analytics/user-stats",
+            get(modules::tenant::handlers::get_tenant_user_stats),
+        )
+        .route(
+            "/tenant/{id}/analytics/real-time",
+            get(modules::tenant::handlers::get_tenant_real_time),
+        )
+        .route(
             "/tenant/{id}/security/audit-logs",
             get(modules::tenant::handlers::list_tenant_audit_logs),
         )
@@ -255,6 +295,26 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/tenant/{id}/security/api-keys/{key_id}",
             delete(modules::tenant::handlers::delete_tenant_api_key),
+        )
+        .route(
+            "/tenant/{id}/billing/plan",
+            post(modules::tenant::handlers::update_tenant_plan),
+        )
+        .route(
+            "/tenant/{id}/billing/subscription/cancel",
+            post(modules::tenant::handlers::cancel_tenant_subscription),
+        )
+        .route(
+            "/tenant/{id}/billing/invoices/{invoice_id}/pay",
+            post(modules::tenant::handlers::pay_tenant_invoice),
+        )
+        .route(
+            "/tenant/{id}/billing/card",
+            post(modules::tenant::handlers::add_tenant_card),
+        )
+        .route(
+            "/tenant/{id}/billing/card",
+            delete(modules::tenant::handlers::remove_tenant_card),
         )
         .route(
             "/tenant/{id}/security/sessions/revoke-all",
