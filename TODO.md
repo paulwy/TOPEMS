@@ -3295,3 +3295,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.72（2026-10-23）**：双表统一第一批——pm.projects/push public 空壳清理；ehs 空壳删除踩坑（显式 schema 前缀 FROM ehs.qa_ehs_risks）→ 恢复 43 张 + 迁数据 + 补 tenant_id；探活 OK 0 BODY_FAIL；经验：清理前查显式前缀引用；剩余空壳双表待分批。
 
 > **系统完善 v1.73（2026-10-23）**：双表统一第二批——mes.core_* 45 张空壳 + public.barcode_scans 清理（保护清单 564 表比对，FK 链 CASCADE）；探活 OK + gate 保持；剩余 73 组空壳 + 40 组有数据双表待分批。
+
+> **系统完善 v1.74（2026-10-23）**：双表统一第三批——26 组可删冗余版清理（audit_logs 3 域、iam.core_* 8 张、public/devices/refs 5 张、documents 2 域、mes 生产资源 4 张、schema_defense_ledger 4 域）；数据版保留；探活 OK + gate 保持。
