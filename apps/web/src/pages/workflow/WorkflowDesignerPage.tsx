@@ -25,6 +25,8 @@ import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
+import { PageContainer } from '@/components/common';
+
 const WorkflowDesignerPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -212,96 +214,98 @@ const WorkflowDesignerPage: React.FC = () => {
     : i18n.t('workflow.workflow_designer_page.k12');
 
   return (
-    <>
-      <DesignerTemplate
-        mode='fullscreen'
-        title={title}
-        subtitle={i18n.t('workflow.workflow_designer_page.k13')}
-        loading={loading}
-      >
-        {/* Designer */}
-        <Box sx={{ flex: 1 }}>
-          <WorkflowDesigner
-            initialNodes={nodes}
-            initialEdges={edges}
-            onSave={handleSave}
-          />
-        </Box>
-      </DesignerTemplate>
+    <PageContainer autoTitle>
+      <>
+        <DesignerTemplate
+          mode='fullscreen'
+          title={title}
+          subtitle={i18n.t('workflow.workflow_designer_page.k13')}
+          loading={loading}
+        >
+          {/* Designer */}
+          <Box sx={{ flex: 1 }}>
+            <WorkflowDesigner
+              initialNodes={nodes}
+              initialEdges={edges}
+              onSave={handleSave}
+            />
+          </Box>
+        </DesignerTemplate>
 
-      {/* Save Dialog */}
-      <Dialog
-        open={showSaveDialog}
-        onClose={() => setShowSaveDialog(false)}
-      >
-        <DialogContent sx={{ maxWidth: 400 }}>
-          <DialogTitle>{i18n.t('workflow.workflow_designer_page.k14')}</DialogTitle>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{ mb: 2 }}
-          >
-            {i18n.t('pages.workflow_designer_page.k0')}
-          </Typography>
-          <Stack spacing={2}>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ mb: 0.5, fontWeight: 500 }}
-              >
-                {i18n.t('pages.workflow_designer_page.k1')}
-              </Typography>
-              <TextField
-                fullWidth
-                size='small'
-                value={formData.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder={i18n.t('workflow.workflow_designer_page.k15')}
-              />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ mb: 0.5, fontWeight: 500 }}
-              >
-                {i18n.t('pages.workflow_designer_page.k2')}
-              </Typography>
-              <TextField
-                fullWidth
-                size='small'
-                multiline
-                rows={3}
-                value={formData.description}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder={i18n.t('workflow.workflow_designer_page.k16')}
-              />
-            </Box>
-          </Stack>
-          <DialogActions>
-            <Button
-              variant='outlined'
-              onClick={() => setShowSaveDialog(false)}
+        {/* Save Dialog */}
+        <Dialog
+          open={showSaveDialog}
+          onClose={() => setShowSaveDialog(false)}
+        >
+          <DialogContent sx={{ maxWidth: 400 }}>
+            <DialogTitle>{i18n.t('workflow.workflow_designer_page.k14')}</DialogTitle>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mb: 2 }}
             >
-              {i18n.t('pages.workflow_designer_page.k3')}
-            </Button>
-            <Button
-              onClick={handleSaveWorkflow}
-              disabled={saving}
-              variant='contained'
-              startIcon={saving ? undefined : <Save size={16} />}
-            >
-              {saving
-                ? i18n.t('pages.workflow_designer_page.k4')
-                : i18n.t('workflow.workflow_designer_page.k17')}
-            </Button>
-          </DialogActions>
-        </DialogContent>
-      </Dialog>
-    </>
+              {i18n.t('pages.workflow_designer_page.k0')}
+            </Typography>
+            <Stack spacing={2}>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ mb: 0.5, fontWeight: 500 }}
+                >
+                  {i18n.t('pages.workflow_designer_page.k1')}
+                </Typography>
+                <TextField
+                  fullWidth
+                  size='small'
+                  value={formData.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder={i18n.t('workflow.workflow_designer_page.k15')}
+                />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ mb: 0.5, fontWeight: 500 }}
+                >
+                  {i18n.t('pages.workflow_designer_page.k2')}
+                </Typography>
+                <TextField
+                  fullWidth
+                  size='small'
+                  multiline
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  placeholder={i18n.t('workflow.workflow_designer_page.k16')}
+                />
+              </Box>
+            </Stack>
+            <DialogActions>
+              <Button
+                variant='outlined'
+                onClick={() => setShowSaveDialog(false)}
+              >
+                {i18n.t('pages.workflow_designer_page.k3')}
+              </Button>
+              <Button
+                onClick={handleSaveWorkflow}
+                disabled={saving}
+                variant='contained'
+                startIcon={saving ? undefined : <Save size={16} />}
+              >
+                {saving
+                  ? i18n.t('pages.workflow_designer_page.k4')
+                  : i18n.t('workflow.workflow_designer_page.k17')}
+              </Button>
+            </DialogActions>
+          </DialogContent>
+        </Dialog>
+      </>
+    </PageContainer>
   );
 };
 export default WorkflowDesignerPage;

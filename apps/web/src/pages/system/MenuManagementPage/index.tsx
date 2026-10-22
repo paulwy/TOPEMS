@@ -28,6 +28,8 @@ import {
 import { Edit, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import menuApi, { type MenuGroup, type MenuItem } from '@/api/unified-core/menu';
 
+import { PageContainer } from '@/components/common';
+
 interface GroupForm {
   name: string;
   code: string;
@@ -253,429 +255,435 @@ const MenuManagementPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 2,
-        }}
-      >
-        <Box>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 600 }}
+    <PageContainer autoTitle>
+      <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mb: 2,
+          }}
+        >
+          <Box>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 600 }}
+            >
+              {t('system.menu_management.title')}
+            </Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              {t('system.menu_management.subtitle')}
+            </Typography>
+          </Box>
+          <Button
+            variant='outlined'
+            startIcon={<RefreshCw size={16} />}
+            onClick={fetchGroups}
+            disabled={loading}
           >
-            {t('system.menu_management.title')}
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {t('system.menu_management.subtitle')}
-          </Typography>
+            {t('system.menu_management.refresh')}
+          </Button>
         </Box>
-        <Button
-          variant='outlined'
-          startIcon={<RefreshCw size={16} />}
-          onClick={fetchGroups}
-          disabled={loading}
-        >
-          {t('system.menu_management.refresh')}
-        </Button>
-      </Box>
 
-      {error && (
-        <Alert
-          severity='error'
-          sx={{ mb: 2 }}
-          onClose={() => setError('')}
-        >
-          {error}
-        </Alert>
-      )}
-
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        {/* ===== 分组 ===== */}
-        <Paper sx={{ flex: '1 1 320px', p: 2 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mb: 1.5,
-            }}
+        {error && (
+          <Alert
+            severity='error'
+            sx={{ mb: 2 }}
+            onClose={() => setError('')}
           >
-            <Typography
-              variant='subtitle1'
-              sx={{ fontWeight: 600 }}
+            {error}
+          </Alert>
+        )}
+
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {/* ===== 分组 ===== */}
+          <Paper sx={{ flex: '1 1 320px', p: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 1.5,
+              }}
             >
-              {t('system.menu_management.groups_title', { count: groups.length })}
-            </Typography>
-            <Button
-              size='small'
-              variant='contained'
-              startIcon={<Plus size={14} />}
-              onClick={openGroupCreate}
-            >
-              {t('system.menu_management.add_group')}
-            </Button>
-          </Box>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('system.menu_management.col_name')}</TableCell>
-                <TableCell>{t('system.menu_management.col_code')}</TableCell>
-                <TableCell>{t('system.menu_management.col_sort')}</TableCell>
-                <TableCell align='right'>{t('system.menu_management.col_actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {groups.map((g) => (
-                <TableRow
-                  key={g.id}
-                  selected={g.id === selectedGroupId}
-                  hover
-                  onClick={() => setSelectedGroupId(g.id)}
-                  sx={{ cursor: 'pointer' }}
-                >
-                  <TableCell>{g.name}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={g.code}
-                      size='small'
-                      variant='outlined'
-                    />
-                  </TableCell>
-                  <TableCell>{g.sort_order}</TableCell>
-                  <TableCell align='right'>
-                    <IconButton
-                      size='small'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openGroupEdit(g);
-                      }}
-                    >
-                      <Edit size={15} />
-                    </IconButton>
-                    <IconButton
-                      size='small'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeGroup(g);
-                      }}
-                    >
-                      <Trash2 size={15} />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {groups.length === 0 && (
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+              >
+                {t('system.menu_management.groups_title', { count: groups.length })}
+              </Typography>
+              <Button
+                size='small'
+                variant='contained'
+                startIcon={<Plus size={14} />}
+                onClick={openGroupCreate}
+              >
+                {t('system.menu_management.add_group')}
+              </Button>
+            </Box>
+            <Table size='small'>
+              <TableHead>
                 <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    align='center'
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    {t('system.menu_management.empty_groups')}
-                  </TableCell>
+                  <TableCell>{t('system.menu_management.col_name')}</TableCell>
+                  <TableCell>{t('system.menu_management.col_code')}</TableCell>
+                  <TableCell>{t('system.menu_management.col_sort')}</TableCell>
+                  <TableCell align='right'>{t('system.menu_management.col_actions')}</TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Paper>
-
-        {/* ===== 菜单项 ===== */}
-        <Paper sx={{ flex: '2 1 480px', p: 2 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mb: 1.5,
-            }}
-          >
-            <Typography
-              variant='subtitle1'
-              sx={{ fontWeight: 600 }}
-            >
-              {t('system.menu_management.menus_title', { count: menus.length })}
-            </Typography>
-            <Button
-              size='small'
-              variant='contained'
-              startIcon={<Plus size={14} />}
-              onClick={openMenuCreate}
-              disabled={!selectedGroupId}
-            >
-              {t('system.menu_management.add_menu')}
-            </Button>
-          </Box>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('system.menu_management.col_name')}</TableCell>
-                <TableCell>{t('system.menu_management.col_code')}</TableCell>
-                <TableCell>{t('system.menu_management.col_path')}</TableCell>
-                <TableCell>{t('system.menu_management.col_sort')}</TableCell>
-                <TableCell>{t('system.menu_management.col_status')}</TableCell>
-                <TableCell align='right'>{t('system.menu_management.col_actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {menus.map((m) => (
-                <TableRow
-                  key={m.id}
-                  hover
-                >
-                  <TableCell>{m.name}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={m.code}
-                      size='small'
-                      variant='outlined'
-                    />
-                  </TableCell>
-                  <TableCell sx={{ fontSize: 13 }}>{m.path || '-'}</TableCell>
-                  <TableCell>{m.sort_order}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={
-                        m.status === 'active'
-                          ? t('system.menu_management.status_active')
-                          : t('system.menu_management.status_inactive')
-                      }
-                      size='small'
-                      color={m.status === 'active' ? 'success' : 'default'}
-                    />
-                  </TableCell>
-                  <TableCell align='right'>
-                    <IconButton
-                      size='small'
-                      onClick={() => openMenuEdit(m)}
-                    >
-                      <Edit size={15} />
-                    </IconButton>
-                    <IconButton
-                      size='small'
-                      onClick={() => removeMenu(m)}
-                    >
-                      <Trash2 size={15} />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {menus.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    align='center'
-                    sx={{ color: 'text.secondary' }}
+              </TableHead>
+              <TableBody>
+                {groups.map((g) => (
+                  <TableRow
+                    key={g.id}
+                    selected={g.id === selectedGroupId}
+                    hover
+                    onClick={() => setSelectedGroupId(g.id)}
+                    sx={{ cursor: 'pointer' }}
                   >
-                    {selectedGroupId
-                      ? t('system.menu_management.empty_menus_in_group')
-                      : t('system.menu_management.empty_menus_select')}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </Paper>
-      </Box>
-
-      {/* ===== 分组弹窗 ===== */}
-      <Dialog
-        open={groupDialog.open}
-        onClose={() => setGroupDialog({ open: false, editing: null, form: emptyGroup })}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>
-          {groupDialog.editing
-            ? t('system.menu_management.edit_group')
-            : t('system.menu_management.add_group')}
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            label={t('system.menu_management.col_name')}
-            fullWidth
-            margin='dense'
-            value={groupDialog.form.name}
-            onChange={(e) =>
-              setGroupDialog((d) => ({ ...d, form: { ...d.form, name: e.target.value } }))
-            }
-          />
-          <TextField
-            label={t('system.menu_management.col_code')}
-            fullWidth
-            margin='dense'
-            value={groupDialog.form.code}
-            onChange={(e) =>
-              setGroupDialog((d) => ({ ...d, form: { ...d.form, code: e.target.value } }))
-            }
-          />
-          <TextField
-            label={t('system.menu_management.field_icon')}
-            fullWidth
-            margin='dense'
-            value={groupDialog.form.icon}
-            onChange={(e) =>
-              setGroupDialog((d) => ({ ...d, form: { ...d.form, icon: e.target.value } }))
-            }
-          />
-          <TextField
-            label={t('system.menu_management.col_sort')}
-            type='number'
-            fullWidth
-            margin='dense'
-            value={groupDialog.form.sort_order}
-            onChange={(e) =>
-              setGroupDialog((d) => ({ ...d, form: { ...d.form, sort_order: e.target.value } }))
-            }
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setGroupDialog({ open: false, editing: null, form: emptyGroup })}>
-            {t('system.menu_management.cancel')}
-          </Button>
-          <Button
-            variant='contained'
-            onClick={submitGroup}
-          >
-            {t('system.menu_management.save')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ===== 菜单项弹窗 ===== */}
-      <Dialog
-        open={menuDialog.open}
-        onClose={() => setMenuDialog({ open: false, editing: null, form: emptyMenu })}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>
-          {menuDialog.editing
-            ? t('system.menu_management.edit_menu')
-            : t('system.menu_management.add_menu')}
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            label={t('system.menu_management.col_name')}
-            fullWidth
-            margin='dense'
-            value={menuDialog.form.name}
-            onChange={(e) =>
-              setMenuDialog((d) => ({ ...d, form: { ...d.form, name: e.target.value } }))
-            }
-          />
-          <TextField
-            label={t('system.menu_management.col_code')}
-            fullWidth
-            margin='dense'
-            value={menuDialog.form.code}
-            onChange={(e) =>
-              setMenuDialog((d) => ({ ...d, form: { ...d.form, code: e.target.value } }))
-            }
-          />
-          <TextField
-            label={t('system.menu_management.field_path')}
-            fullWidth
-            margin='dense'
-            value={menuDialog.form.path}
-            onChange={(e) =>
-              setMenuDialog((d) => ({ ...d, form: { ...d.form, path: e.target.value } }))
-            }
-          />
-          <TextField
-            label={t('system.menu_management.field_icon')}
-            fullWidth
-            margin='dense'
-            value={menuDialog.form.icon}
-            onChange={(e) =>
-              setMenuDialog((d) => ({ ...d, form: { ...d.form, icon: e.target.value } }))
-            }
-          />
-          <TextField
-            label={t('system.menu_management.col_sort')}
-            type='number'
-            fullWidth
-            margin='dense'
-            value={menuDialog.form.sort_order}
-            onChange={(e) =>
-              setMenuDialog((d) => ({ ...d, form: { ...d.form, sort_order: e.target.value } }))
-            }
-          />
-          <FormControl
-            fullWidth
-            margin='dense'
-          >
-            <InputLabel>{t('system.menu_management.col_status')}</InputLabel>
-            <Select
-              label={t('system.menu_management.col_status')}
-              value={menuDialog.form.status}
-              onChange={(e) =>
-                setMenuDialog((d) => ({ ...d, form: { ...d.form, status: e.target.value } }))
-              }
-            >
-              <MuiMenuItem value='active'>{t('system.menu_management.status_active')}</MuiMenuItem>
-              <MuiMenuItem value='inactive'>
-                {t('system.menu_management.status_inactive')}
-              </MuiMenuItem>
-            </Select>
-          </FormControl>
-          <FormControl
-            fullWidth
-            margin='dense'
-          >
-            <InputLabel>{t('system.menu_management.parent_menu')}</InputLabel>
-            <Select
-              label={t('system.menu_management.parent_menu')}
-              value={menuDialog.form.parent_id}
-              onChange={(e) =>
-                setMenuDialog((d) => ({ ...d, form: { ...d.form, parent_id: e.target.value } }))
-              }
-            >
-              <MuiMenuItem value=''>{t('system.menu_management.top_level')}</MuiMenuItem>
-              {menus
-                .filter((m) => m.id !== menuDialog.editing?.id)
-                .map((m) => (
-                  <MuiMenuItem
-                    key={m.id}
-                    value={m.id}
-                  >
-                    {m.name}
-                  </MuiMenuItem>
+                    <TableCell>{g.name}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={g.code}
+                        size='small'
+                        variant='outlined'
+                      />
+                    </TableCell>
+                    <TableCell>{g.sort_order}</TableCell>
+                    <TableCell align='right'>
+                      <IconButton
+                        size='small'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openGroupEdit(g);
+                        }}
+                      >
+                        <Edit size={15} />
+                      </IconButton>
+                      <IconButton
+                        size='small'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeGroup(g);
+                        }}
+                      >
+                        <Trash2 size={15} />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
                 ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setMenuDialog({ open: false, editing: null, form: emptyMenu })}>
-            {t('system.menu_management.cancel')}
-          </Button>
-          <Button
-            variant='contained'
-            onClick={submitMenu}
-          >
-            {t('system.menu_management.save')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+                {groups.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      align='center'
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      {t('system.menu_management.empty_groups')}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Paper>
 
-      <ConfirmDialog
-        isOpen={confirmOpen}
-        onClose={closeConfirm}
-        onConfirm={() => {
-          confirmConfig?.onConfirm();
-          closeConfirm();
-        }}
-        title={confirmConfig?.title || ''}
-        message={confirmConfig?.message || ''}
-        danger={confirmConfig?.danger}
-      />
-    </Box>
+          {/* ===== 菜单项 ===== */}
+          <Paper sx={{ flex: '2 1 480px', p: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: 1.5,
+              }}
+            >
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+              >
+                {t('system.menu_management.menus_title', { count: menus.length })}
+              </Typography>
+              <Button
+                size='small'
+                variant='contained'
+                startIcon={<Plus size={14} />}
+                onClick={openMenuCreate}
+                disabled={!selectedGroupId}
+              >
+                {t('system.menu_management.add_menu')}
+              </Button>
+            </Box>
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t('system.menu_management.col_name')}</TableCell>
+                  <TableCell>{t('system.menu_management.col_code')}</TableCell>
+                  <TableCell>{t('system.menu_management.col_path')}</TableCell>
+                  <TableCell>{t('system.menu_management.col_sort')}</TableCell>
+                  <TableCell>{t('system.menu_management.col_status')}</TableCell>
+                  <TableCell align='right'>{t('system.menu_management.col_actions')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {menus.map((m) => (
+                  <TableRow
+                    key={m.id}
+                    hover
+                  >
+                    <TableCell>{m.name}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={m.code}
+                        size='small'
+                        variant='outlined'
+                      />
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 13 }}>{m.path || '-'}</TableCell>
+                    <TableCell>{m.sort_order}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={
+                          m.status === 'active'
+                            ? t('system.menu_management.status_active')
+                            : t('system.menu_management.status_inactive')
+                        }
+                        size='small'
+                        color={m.status === 'active' ? 'success' : 'default'}
+                      />
+                    </TableCell>
+                    <TableCell align='right'>
+                      <IconButton
+                        size='small'
+                        onClick={() => openMenuEdit(m)}
+                      >
+                        <Edit size={15} />
+                      </IconButton>
+                      <IconButton
+                        size='small'
+                        onClick={() => removeMenu(m)}
+                      >
+                        <Trash2 size={15} />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {menus.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      align='center'
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      {selectedGroupId
+                        ? t('system.menu_management.empty_menus_in_group')
+                        : t('system.menu_management.empty_menus_select')}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Paper>
+        </Box>
+
+        {/* ===== 分组弹窗 ===== */}
+        <Dialog
+          open={groupDialog.open}
+          onClose={() => setGroupDialog({ open: false, editing: null, form: emptyGroup })}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>
+            {groupDialog.editing
+              ? t('system.menu_management.edit_group')
+              : t('system.menu_management.add_group')}
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              label={t('system.menu_management.col_name')}
+              fullWidth
+              margin='dense'
+              value={groupDialog.form.name}
+              onChange={(e) =>
+                setGroupDialog((d) => ({ ...d, form: { ...d.form, name: e.target.value } }))
+              }
+            />
+            <TextField
+              label={t('system.menu_management.col_code')}
+              fullWidth
+              margin='dense'
+              value={groupDialog.form.code}
+              onChange={(e) =>
+                setGroupDialog((d) => ({ ...d, form: { ...d.form, code: e.target.value } }))
+              }
+            />
+            <TextField
+              label={t('system.menu_management.field_icon')}
+              fullWidth
+              margin='dense'
+              value={groupDialog.form.icon}
+              onChange={(e) =>
+                setGroupDialog((d) => ({ ...d, form: { ...d.form, icon: e.target.value } }))
+              }
+            />
+            <TextField
+              label={t('system.menu_management.col_sort')}
+              type='number'
+              fullWidth
+              margin='dense'
+              value={groupDialog.form.sort_order}
+              onChange={(e) =>
+                setGroupDialog((d) => ({ ...d, form: { ...d.form, sort_order: e.target.value } }))
+              }
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setGroupDialog({ open: false, editing: null, form: emptyGroup })}
+            >
+              {t('system.menu_management.cancel')}
+            </Button>
+            <Button
+              variant='contained'
+              onClick={submitGroup}
+            >
+              {t('system.menu_management.save')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* ===== 菜单项弹窗 ===== */}
+        <Dialog
+          open={menuDialog.open}
+          onClose={() => setMenuDialog({ open: false, editing: null, form: emptyMenu })}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>
+            {menuDialog.editing
+              ? t('system.menu_management.edit_menu')
+              : t('system.menu_management.add_menu')}
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              label={t('system.menu_management.col_name')}
+              fullWidth
+              margin='dense'
+              value={menuDialog.form.name}
+              onChange={(e) =>
+                setMenuDialog((d) => ({ ...d, form: { ...d.form, name: e.target.value } }))
+              }
+            />
+            <TextField
+              label={t('system.menu_management.col_code')}
+              fullWidth
+              margin='dense'
+              value={menuDialog.form.code}
+              onChange={(e) =>
+                setMenuDialog((d) => ({ ...d, form: { ...d.form, code: e.target.value } }))
+              }
+            />
+            <TextField
+              label={t('system.menu_management.field_path')}
+              fullWidth
+              margin='dense'
+              value={menuDialog.form.path}
+              onChange={(e) =>
+                setMenuDialog((d) => ({ ...d, form: { ...d.form, path: e.target.value } }))
+              }
+            />
+            <TextField
+              label={t('system.menu_management.field_icon')}
+              fullWidth
+              margin='dense'
+              value={menuDialog.form.icon}
+              onChange={(e) =>
+                setMenuDialog((d) => ({ ...d, form: { ...d.form, icon: e.target.value } }))
+              }
+            />
+            <TextField
+              label={t('system.menu_management.col_sort')}
+              type='number'
+              fullWidth
+              margin='dense'
+              value={menuDialog.form.sort_order}
+              onChange={(e) =>
+                setMenuDialog((d) => ({ ...d, form: { ...d.form, sort_order: e.target.value } }))
+              }
+            />
+            <FormControl
+              fullWidth
+              margin='dense'
+            >
+              <InputLabel>{t('system.menu_management.col_status')}</InputLabel>
+              <Select
+                label={t('system.menu_management.col_status')}
+                value={menuDialog.form.status}
+                onChange={(e) =>
+                  setMenuDialog((d) => ({ ...d, form: { ...d.form, status: e.target.value } }))
+                }
+              >
+                <MuiMenuItem value='active'>
+                  {t('system.menu_management.status_active')}
+                </MuiMenuItem>
+                <MuiMenuItem value='inactive'>
+                  {t('system.menu_management.status_inactive')}
+                </MuiMenuItem>
+              </Select>
+            </FormControl>
+            <FormControl
+              fullWidth
+              margin='dense'
+            >
+              <InputLabel>{t('system.menu_management.parent_menu')}</InputLabel>
+              <Select
+                label={t('system.menu_management.parent_menu')}
+                value={menuDialog.form.parent_id}
+                onChange={(e) =>
+                  setMenuDialog((d) => ({ ...d, form: { ...d.form, parent_id: e.target.value } }))
+                }
+              >
+                <MuiMenuItem value=''>{t('system.menu_management.top_level')}</MuiMenuItem>
+                {menus
+                  .filter((m) => m.id !== menuDialog.editing?.id)
+                  .map((m) => (
+                    <MuiMenuItem
+                      key={m.id}
+                      value={m.id}
+                    >
+                      {m.name}
+                    </MuiMenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setMenuDialog({ open: false, editing: null, form: emptyMenu })}>
+              {t('system.menu_management.cancel')}
+            </Button>
+            <Button
+              variant='contained'
+              onClick={submitMenu}
+            >
+              {t('system.menu_management.save')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <ConfirmDialog
+          isOpen={confirmOpen}
+          onClose={closeConfirm}
+          onConfirm={() => {
+            confirmConfig?.onConfirm();
+            closeConfirm();
+          }}
+          title={confirmConfig?.title || ''}
+          message={confirmConfig?.message || ''}
+          danger={confirmConfig?.danger}
+        />
+      </Box>
+    </PageContainer>
   );
 };
 

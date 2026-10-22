@@ -27,6 +27,8 @@ import { drawingApi } from '@/api/pdm/pdmDrawing';
 import type { PdmDrawing } from '@/api/pdm/pdmDrawing';
 import { useNotificationStore } from '@/store';
 
+import { PageContainer } from '@/components/common';
+
 interface ListLike {
   items?: unknown[];
   total?: number;
@@ -156,178 +158,180 @@ const PdmDrawingPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 600 }}
-          >
-            {t('pdm.drawing.title')}
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{ mt: 0.5 }}
-          >
-            {t('pdm.drawing.subtitle')}
-          </Typography>
-        </Box>
-        <Button
-          variant='contained'
-          startIcon={<Plus size={18} />}
-          onClick={openCreate}
-        >
-          {t('pdm.drawing.create')}
-        </Button>
-      </Box>
-
-      <Card sx={{ p: 2 }}>
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                {columns.map((c) => (
-                  <TableCell key={c.key}>{c.label}</TableCell>
-                ))}
-                <TableCell>{t('pdm.drawing.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length + 1}>{t('pdm.drawing.loading')}</TableCell>
-                </TableRow>
-              ) : rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length + 1}>{t('pdm.drawing.empty')}</TableCell>
-                </TableRow>
-              ) : (
-                rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    hover
-                  >
-                    {columns.map((c) => (
-                      <TableCell key={c.key}>
-                        {c.key === 'status' ? (
-                          <Chip
-                            size='small'
-                            label={row.status}
-                            color={row.status === 'active' ? 'success' : 'default'}
-                          />
-                        ) : (
-                          ((row as unknown as Record<string, string | null | number | undefined>)[
-                            c.key
-                          ] ?? '-')
-                        )}
-                      </TableCell>
-                    ))}
-                    <TableCell>
-                      <IconButton
-                        size='small'
-                        onClick={() => openEdit(row)}
-                      >
-                        <Pencil size={16} />
-                      </IconButton>
-                      <IconButton
-                        size='small'
-                        color='error'
-                        onClick={() => {
-                          void deleteMutation.mutate(row.id);
-                        }}
-                      >
-                        <Trash2 size={16} />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component='div'
-          count={total}
-          page={page}
-          rowsPerPage={pageSize}
-          onPageChange={(_e, p) => setPage(p)}
-          onRowsPerPageChange={(e) => {
-            setPageSize(parseInt(e.target.value, 10));
-            setPage(0);
-          }}
-        />
-      </Card>
-
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>{editingId ? t('pdm.drawing.edit') : t('pdm.drawing.create')}</DialogTitle>
-        <DialogContent>
-          <Stack
-            spacing={2}
-            sx={{ mt: 1 }}
-          >
-            {!editingId && (
-              <TextField
-                label={t('pdm.drawing.no')}
-                value={form.drawing_no}
-                onChange={(e) => setForm({ ...form, drawing_no: e.target.value })}
-                size='small'
-              />
-            )}
-            <TextField
-              label={t('pdm.drawing.name')}
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              size='small'
-            />
-            <TextField
-              label={t('pdm.drawing.nameEn')}
-              value={form.name_en}
-              onChange={(e) => setForm({ ...form, name_en: e.target.value })}
-              size='small'
-            />
-            <TextField
-              label={t('pdm.drawing.type')}
-              value={form.drawing_type}
-              onChange={(e) => setForm({ ...form, drawing_type: e.target.value })}
-              size='small'
-            />
-            <TextField
-              label={t('pdm.drawing.filePath')}
-              value={form.file_path}
-              onChange={(e) => setForm({ ...form, file_path: e.target.value })}
-              size='small'
-            />
-            <TextField
-              label={t('pdm.drawing.description')}
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              size='small'
-              multiline
-              rows={2}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>{t('pdm.drawing.cancel')}</Button>
+    <PageContainer autoTitle>
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Box>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 600 }}
+            >
+              {t('pdm.drawing.title')}
+            </Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mt: 0.5 }}
+            >
+              {t('pdm.drawing.subtitle')}
+            </Typography>
+          </Box>
           <Button
             variant='contained'
-            startIcon={<FileText size={16} />}
-            onClick={() => {
-              if (editingId) void updateMutation.mutate(editingId);
-              else void createMutation.mutate();
-            }}
+            startIcon={<Plus size={18} />}
+            onClick={openCreate}
           >
-            {t('pdm.drawing.save')}
+            {t('pdm.drawing.create')}
           </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        </Box>
+
+        <Card sx={{ p: 2 }}>
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  {columns.map((c) => (
+                    <TableCell key={c.key}>{c.label}</TableCell>
+                  ))}
+                  <TableCell>{t('pdm.drawing.actions')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length + 1}>{t('pdm.drawing.loading')}</TableCell>
+                  </TableRow>
+                ) : rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length + 1}>{t('pdm.drawing.empty')}</TableCell>
+                  </TableRow>
+                ) : (
+                  rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      hover
+                    >
+                      {columns.map((c) => (
+                        <TableCell key={c.key}>
+                          {c.key === 'status' ? (
+                            <Chip
+                              size='small'
+                              label={row.status}
+                              color={row.status === 'active' ? 'success' : 'default'}
+                            />
+                          ) : (
+                            ((row as unknown as Record<string, string | null | number | undefined>)[
+                              c.key
+                            ] ?? '-')
+                          )}
+                        </TableCell>
+                      ))}
+                      <TableCell>
+                        <IconButton
+                          size='small'
+                          onClick={() => openEdit(row)}
+                        >
+                          <Pencil size={16} />
+                        </IconButton>
+                        <IconButton
+                          size='small'
+                          color='error'
+                          onClick={() => {
+                            void deleteMutation.mutate(row.id);
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            component='div'
+            count={total}
+            page={page}
+            rowsPerPage={pageSize}
+            onPageChange={(_e, p) => setPage(p)}
+            onRowsPerPageChange={(e) => {
+              setPageSize(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+          />
+        </Card>
+
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>{editingId ? t('pdm.drawing.edit') : t('pdm.drawing.create')}</DialogTitle>
+          <DialogContent>
+            <Stack
+              spacing={2}
+              sx={{ mt: 1 }}
+            >
+              {!editingId && (
+                <TextField
+                  label={t('pdm.drawing.no')}
+                  value={form.drawing_no}
+                  onChange={(e) => setForm({ ...form, drawing_no: e.target.value })}
+                  size='small'
+                />
+              )}
+              <TextField
+                label={t('pdm.drawing.name')}
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                size='small'
+              />
+              <TextField
+                label={t('pdm.drawing.nameEn')}
+                value={form.name_en}
+                onChange={(e) => setForm({ ...form, name_en: e.target.value })}
+                size='small'
+              />
+              <TextField
+                label={t('pdm.drawing.type')}
+                value={form.drawing_type}
+                onChange={(e) => setForm({ ...form, drawing_type: e.target.value })}
+                size='small'
+              />
+              <TextField
+                label={t('pdm.drawing.filePath')}
+                value={form.file_path}
+                onChange={(e) => setForm({ ...form, file_path: e.target.value })}
+                size='small'
+              />
+              <TextField
+                label={t('pdm.drawing.description')}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                size='small'
+                multiline
+                rows={2}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpen(false)}>{t('pdm.drawing.cancel')}</Button>
+            <Button
+              variant='contained'
+              startIcon={<FileText size={16} />}
+              onClick={() => {
+                if (editingId) void updateMutation.mutate(editingId);
+                else void createMutation.mutate();
+              }}
+            >
+              {t('pdm.drawing.save')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </PageContainer>
   );
 };
 

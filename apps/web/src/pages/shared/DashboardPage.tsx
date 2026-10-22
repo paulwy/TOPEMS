@@ -49,6 +49,8 @@ import i18n from '@/i18n';
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
 
+import { PageContainer } from '@/components/common';
+
 const QUERY_KEY = ['dashboard', 'overview'];
 
 interface ModuleItem {
@@ -844,136 +846,139 @@ const DashboardPage: React.FC = () => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-      <PageHeader
-        title={i18n.t('dashboard.dash_workspace')}
-        subtitle={i18n.t('dashboard.dash_workspace_subtitle')}
-        secondaryActions={[
-          {
-            label: i18n.t('dashboard.dash_refresh'),
-            onClick: () => refetch(),
-            icon: <RefreshCw size={16} />,
-          },
-        ]}
-      />
-
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'flex-end',
-          marginBottom: 'var(--space-3)',
-          gap: 'var(--space-3)',
-          flexWrap: 'wrap',
-        }}
-      >
-        {showCustomRange && (
-          <div style={{ width: 320 }}>
-            <DateRangePicker
-              value={customDateRange}
-              onChange={setCustomDateRange}
-              presets={[
-                {
-                  label: i18n.t('dashboard.dash_today'),
-                  value: () => {
-                    const d = new Date().toISOString().split('T')[0];
-                    return { start: d, end: d };
-                  },
-                },
-                {
-                  label: i18n.t('dashboard.dash_recent_7d'),
-                  value: () => {
-                    const e = new Date();
-                    const s = new Date();
-                    s.setDate(s.getDate() - 7);
-                    return {
-                      start: s.toISOString().split('T')[0],
-                      end: e.toISOString().split('T')[0],
-                    };
-                  },
-                },
-                {
-                  label: i18n.t('dashboard.dash_recent_30d'),
-                  value: () => {
-                    const e = new Date();
-                    const s = new Date();
-                    s.setDate(s.getDate() - 30);
-                    return {
-                      start: s.toISOString().split('T')[0],
-                      end: e.toISOString().split('T')[0],
-                    };
-                  },
-                },
-              ]}
-            />
-          </div>
-        )}
-        <Select
-          value={timeRange}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (val === 'custom') {
-              setShowCustomRange(true);
-            } else {
-              setShowCustomRange(false);
-              setCustomDateRange(undefined);
-              setTimeRange(val);
-            }
-          }}
-          options={[
-            ...timeRangeOptions.map((o) => ({ ...o, label: i18n.t(o.labelKey) })),
-            { value: 'custom', label: i18n.t('dashboard.dash_custom_range') },
+    <PageContainer autoTitle>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+        <PageHeader
+          title={i18n.t('dashboard.dash_workspace')}
+          subtitle={i18n.t('dashboard.dash_workspace_subtitle')}
+          secondaryActions={[
+            {
+              label: i18n.t('dashboard.dash_refresh'),
+              onClick: () => refetch(),
+              icon: <RefreshCw size={16} />,
+            },
           ]}
-          style={{ width: 160 }}
         />
-      </div>
 
-      {error && (
-        <Alert
-          variant='warning'
-          title={i18n.t('dashboard.dash_load_error')}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'flex-end',
+            marginBottom: 'var(--space-3)',
+            gap: 'var(--space-3)',
+            flexWrap: 'wrap',
+          }}
         >
-          {i18n.t('dashboard.dash_load_error_desc')}
-          <Button
-            size='sm'
-            variant='ghost'
-            onClick={() => refetch()}
-          >
-            {i18n.t('dashboard.dash_retry')}
-          </Button>
-        </Alert>
-      )}
-
-      <Tabs
-        tabs={tabs.map((t) => ({
-          ...t,
-          label: i18n.t(t.labelKey),
-          badge: t.id === 'modules' ? modules.length : t.id === 'alerts' ? alerts.length : t.badge,
-        }))}
-        activeTab={activeTab}
-        onChange={setActiveTab}
-      />
-
-      <div style={{ marginTop: 'var(--space-2)' }}>
-        {isLoading ? (
-          <div
-            style={{
-              padding: 'var(--space-12)',
-              textAlign: 'center',
-              color: 'var(--text-secondary)',
+          {showCustomRange && (
+            <div style={{ width: 320 }}>
+              <DateRangePicker
+                value={customDateRange}
+                onChange={setCustomDateRange}
+                presets={[
+                  {
+                    label: i18n.t('dashboard.dash_today'),
+                    value: () => {
+                      const d = new Date().toISOString().split('T')[0];
+                      return { start: d, end: d };
+                    },
+                  },
+                  {
+                    label: i18n.t('dashboard.dash_recent_7d'),
+                    value: () => {
+                      const e = new Date();
+                      const s = new Date();
+                      s.setDate(s.getDate() - 7);
+                      return {
+                        start: s.toISOString().split('T')[0],
+                        end: e.toISOString().split('T')[0],
+                      };
+                    },
+                  },
+                  {
+                    label: i18n.t('dashboard.dash_recent_30d'),
+                    value: () => {
+                      const e = new Date();
+                      const s = new Date();
+                      s.setDate(s.getDate() - 30);
+                      return {
+                        start: s.toISOString().split('T')[0],
+                        end: e.toISOString().split('T')[0],
+                      };
+                    },
+                  },
+                ]}
+              />
+            </div>
+          )}
+          <Select
+            value={timeRange}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === 'custom') {
+                setShowCustomRange(true);
+              } else {
+                setShowCustomRange(false);
+                setCustomDateRange(undefined);
+                setTimeRange(val);
+              }
             }}
+            options={[
+              ...timeRangeOptions.map((o) => ({ ...o, label: i18n.t(o.labelKey) })),
+              { value: 'custom', label: i18n.t('dashboard.dash_custom_range') },
+            ]}
+            style={{ width: 160 }}
+          />
+        </div>
+
+        {error && (
+          <Alert
+            variant='warning'
+            title={i18n.t('dashboard.dash_load_error')}
           >
-            {i18n.t('dashboard.dash_loading')}
-          </div>
-        ) : activeTab === 'overview' ? (
-          renderOverview()
-        ) : activeTab === 'modules' ? (
-          renderModules()
-        ) : (
-          renderAlerts()
+            {i18n.t('dashboard.dash_load_error_desc')}
+            <Button
+              size='sm'
+              variant='ghost'
+              onClick={() => refetch()}
+            >
+              {i18n.t('dashboard.dash_retry')}
+            </Button>
+          </Alert>
         )}
+
+        <Tabs
+          tabs={tabs.map((t) => ({
+            ...t,
+            label: i18n.t(t.labelKey),
+            badge:
+              t.id === 'modules' ? modules.length : t.id === 'alerts' ? alerts.length : t.badge,
+          }))}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        />
+
+        <div style={{ marginTop: 'var(--space-2)' }}>
+          {isLoading ? (
+            <div
+              style={{
+                padding: 'var(--space-12)',
+                textAlign: 'center',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              {i18n.t('dashboard.dash_loading')}
+            </div>
+          ) : activeTab === 'overview' ? (
+            renderOverview()
+          ) : activeTab === 'modules' ? (
+            renderModules()
+          ) : (
+            renderAlerts()
+          )}
+        </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

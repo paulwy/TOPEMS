@@ -27,6 +27,8 @@ import { projectTypeConfigApi } from '@/api/pm/projectTypeConfig';
 import type { ProjectTypeConfig } from '@/api/pm/projectTypeConfig';
 import { useNotificationStore } from '@/store';
 
+import { PageContainer } from '@/components/common';
+
 interface ListLike {
   items?: unknown[];
   total?: number;
@@ -157,190 +159,192 @@ const PmProjectTypeConfigPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box>
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 600 }}
-          >
-            {t('pm.project_type_config.title')}
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{ mt: 0.5 }}
-          >
-            {t('pm.project_type_config.subtitle')}
-          </Typography>
-        </Box>
-        <Button
-          variant='contained'
-          startIcon={<Plus size={18} />}
-          onClick={openCreate}
-        >
-          {t('pm.project_type_config.create')}
-        </Button>
-      </Box>
-
-      <Card sx={{ p: 2 }}>
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                {columns.map((c) => (
-                  <TableCell key={c.key}>{c.label}</TableCell>
-                ))}
-                <TableCell>{t('pm.project_type_config.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length + 1}>
-                    {t('pm.project_type_config.loading')}
-                  </TableCell>
-                </TableRow>
-              ) : rows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length + 1}>
-                    {t('pm.project_type_config.empty')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    hover
-                  >
-                    {columns.map((c) => (
-                      <TableCell key={c.key}>
-                        {c.key === 'is_active' ? (
-                          <Chip
-                            size='small'
-                            label={String(row.is_active)}
-                            color={row.is_active ? 'success' : 'default'}
-                          />
-                        ) : (
-                          ((row as unknown as Record<string, string | null | number | undefined>)[
-                            c.key
-                          ] ?? '-')
-                        )}
-                      </TableCell>
-                    ))}
-                    <TableCell>
-                      <IconButton
-                        size='small'
-                        onClick={() => openEdit(row)}
-                      >
-                        <Pencil size={16} />
-                      </IconButton>
-                      <IconButton
-                        size='small'
-                        color='error'
-                        onClick={() => {
-                          void deleteMutation.mutate(row.id);
-                        }}
-                      >
-                        <Trash2 size={16} />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component='div'
-          count={total}
-          page={page}
-          rowsPerPage={pageSize}
-          onPageChange={(_e, p) => setPage(p)}
-          onRowsPerPageChange={(e) => {
-            setPageSize(parseInt(e.target.value, 10));
-            setPage(0);
-          }}
-        />
-      </Card>
-
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>
-          {editingId ? t('pm.project_type_config.edit') : t('pm.project_type_config.create')}
-        </DialogTitle>
-        <DialogContent>
-          <Stack
-            spacing={2}
-            sx={{ mt: 1 }}
-          >
-            {!editingId && (
-              <TextField
-                label={t('pm.project_type_config.code')}
-                value={form.type_code}
-                onChange={(e) => setForm({ ...form, type_code: e.target.value })}
-                size='small'
-              />
-            )}
-            <TextField
-              label={t('pm.project_type_config.name')}
-              value={form.type_name}
-              onChange={(e) => setForm({ ...form, type_name: e.target.value })}
-              size='small'
-            />
-            <TextField
-              label={t('pm.project_type_config.nameEn')}
-              value={form.name_en}
-              onChange={(e) => setForm({ ...form, name_en: e.target.value })}
-              size='small'
-            />
-            <TextField
-              label={t('pm.project_type_config.description')}
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              size='small'
-              multiline
-              rows={2}
-            />
-            <TextField
-              label={t('pm.project_type_config.defaultPhases')}
-              value={form.default_phases}
-              onChange={(e) => setForm({ ...form, default_phases: e.target.value })}
-              size='small'
-              multiline
-              rows={2}
-              placeholder='[{"name":"立项","order":1}]'
-            />
-            <TextField
-              label={t('pm.project_type_config.defaultMilestones')}
-              value={form.default_milestones}
-              onChange={(e) => setForm({ ...form, default_milestones: e.target.value })}
-              size='small'
-              multiline
-              rows={2}
-              placeholder='[{"name":"需求确认","due_days":7}]'
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>{t('pm.project_type_config.cancel')}</Button>
+    <PageContainer autoTitle>
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Box>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 600 }}
+            >
+              {t('pm.project_type_config.title')}
+            </Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mt: 0.5 }}
+            >
+              {t('pm.project_type_config.subtitle')}
+            </Typography>
+          </Box>
           <Button
             variant='contained'
-            startIcon={<ClipboardList size={16} />}
-            onClick={() => {
-              if (editingId) void updateMutation.mutate(editingId);
-              else void createMutation.mutate();
-            }}
+            startIcon={<Plus size={18} />}
+            onClick={openCreate}
           >
-            {t('pm.project_type_config.save')}
+            {t('pm.project_type_config.create')}
           </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        </Box>
+
+        <Card sx={{ p: 2 }}>
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  {columns.map((c) => (
+                    <TableCell key={c.key}>{c.label}</TableCell>
+                  ))}
+                  <TableCell>{t('pm.project_type_config.actions')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length + 1}>
+                      {t('pm.project_type_config.loading')}
+                    </TableCell>
+                  </TableRow>
+                ) : rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length + 1}>
+                      {t('pm.project_type_config.empty')}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      hover
+                    >
+                      {columns.map((c) => (
+                        <TableCell key={c.key}>
+                          {c.key === 'is_active' ? (
+                            <Chip
+                              size='small'
+                              label={String(row.is_active)}
+                              color={row.is_active ? 'success' : 'default'}
+                            />
+                          ) : (
+                            ((row as unknown as Record<string, string | null | number | undefined>)[
+                              c.key
+                            ] ?? '-')
+                          )}
+                        </TableCell>
+                      ))}
+                      <TableCell>
+                        <IconButton
+                          size='small'
+                          onClick={() => openEdit(row)}
+                        >
+                          <Pencil size={16} />
+                        </IconButton>
+                        <IconButton
+                          size='small'
+                          color='error'
+                          onClick={() => {
+                            void deleteMutation.mutate(row.id);
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            component='div'
+            count={total}
+            page={page}
+            rowsPerPage={pageSize}
+            onPageChange={(_e, p) => setPage(p)}
+            onRowsPerPageChange={(e) => {
+              setPageSize(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+          />
+        </Card>
+
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>
+            {editingId ? t('pm.project_type_config.edit') : t('pm.project_type_config.create')}
+          </DialogTitle>
+          <DialogContent>
+            <Stack
+              spacing={2}
+              sx={{ mt: 1 }}
+            >
+              {!editingId && (
+                <TextField
+                  label={t('pm.project_type_config.code')}
+                  value={form.type_code}
+                  onChange={(e) => setForm({ ...form, type_code: e.target.value })}
+                  size='small'
+                />
+              )}
+              <TextField
+                label={t('pm.project_type_config.name')}
+                value={form.type_name}
+                onChange={(e) => setForm({ ...form, type_name: e.target.value })}
+                size='small'
+              />
+              <TextField
+                label={t('pm.project_type_config.nameEn')}
+                value={form.name_en}
+                onChange={(e) => setForm({ ...form, name_en: e.target.value })}
+                size='small'
+              />
+              <TextField
+                label={t('pm.project_type_config.description')}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                size='small'
+                multiline
+                rows={2}
+              />
+              <TextField
+                label={t('pm.project_type_config.defaultPhases')}
+                value={form.default_phases}
+                onChange={(e) => setForm({ ...form, default_phases: e.target.value })}
+                size='small'
+                multiline
+                rows={2}
+                placeholder='[{"name":"立项","order":1}]'
+              />
+              <TextField
+                label={t('pm.project_type_config.defaultMilestones')}
+                value={form.default_milestones}
+                onChange={(e) => setForm({ ...form, default_milestones: e.target.value })}
+                size='small'
+                multiline
+                rows={2}
+                placeholder='[{"name":"需求确认","due_days":7}]'
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpen(false)}>{t('pm.project_type_config.cancel')}</Button>
+            <Button
+              variant='contained'
+              startIcon={<ClipboardList size={16} />}
+              onClick={() => {
+                if (editingId) void updateMutation.mutate(editingId);
+                else void createMutation.mutate();
+              }}
+            >
+              {t('pm.project_type_config.save')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </PageContainer>
   );
 };
 

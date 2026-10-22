@@ -29,6 +29,8 @@ import { workshopApi, productionLineApi, shiftApi, workCalendarApi } from '@/api
 import type { Workshop, ProductionLine, Shift, WorkCalendar } from '@/api/mes';
 import { useNotificationStore } from '@/store';
 
+import { PageContainer } from '@/components/common';
+
 type TabKey = 'workshops' | 'productionLines' | 'shifts' | 'workCalendars';
 
 interface ListLike {
@@ -234,178 +236,180 @@ const MesMasterDataPage: React.FC = () => {
   }, [tab, t]);
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography
-        variant='h5'
-        sx={{ fontWeight: 600 }}
-        gutterBottom
-      >
-        {t('mes.masterData.title')}
-      </Typography>
-      <Card>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            px: 2,
-            pt: 1,
-          }}
+    <PageContainer autoTitle>
+      <Box sx={{ p: 3 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 600 }}
+          gutterBottom
         >
-          <Tabs
-            value={tab}
-            onChange={(_, v: TabKey) => {
-              setTab(v);
-              setPage(0);
-              setSearch('');
+          {t('mes.masterData.title')}
+        </Typography>
+        <Card>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: 2,
+              pt: 1,
             }}
           >
-            <Tab
-              value='workshops'
-              label={t('mes.masterData.tabWorkshops')}
-            />
-            <Tab
-              value='productionLines'
-              label={t('mes.masterData.tabProductionLines')}
-            />
-            <Tab
-              value='shifts'
-              label={t('mes.masterData.tabShifts')}
-            />
-            <Tab
-              value='workCalendars'
-              label={t('mes.masterData.tabWorkCalendars')}
-            />
-          </Tabs>
-          <Stack
-            direction='row'
-            spacing={1}
-            sx={{ alignItems: 'center' }}
-          >
-            <TextField
-              size='small'
-              placeholder={t('mes.masterData.searchPlaceholder')}
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+            <Tabs
+              value={tab}
+              onChange={(_, v: TabKey) => {
+                setTab(v);
                 setPage(0);
+                setSearch('');
               }}
-            />
-            <Button
-              startIcon={<Plus size={16} />}
-              variant='contained'
-              onClick={openCreate}
             >
-              {t('mes.masterData.create')}
-            </Button>
-          </Stack>
-        </Box>
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                {columns[tab].map((c) => (
-                  <TableCell key={c.key}>{c.label}</TableCell>
-                ))}
-                <TableCell align='right'>{t('mes.masterData.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  hover
-                >
-                  {columns[tab].map((c) => {
-                    const v = (row as unknown as Record<string, unknown>)[c.key];
-                    return (
-                      <TableCell key={c.key}>
-                        {c.key === 'status' ? (
-                          <Chip
-                            size='small'
-                            color={(v as string) === 'active' ? 'success' : 'default'}
-                            label={v as string}
-                          />
-                        ) : typeof v === 'boolean' ? (
-                          <Chip
-                            size='small'
-                            color={v ? 'success' : 'default'}
-                            label={v ? '✓' : '—'}
-                          />
-                        ) : (
-                          ((v as string) ?? '—')
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                  <TableCell align='right'>
-                    <IconButton
-                      size='small'
-                      onClick={() => openEdit(row)}
-                    >
-                      <Pencil size={16} />
-                    </IconButton>
-                    <IconButton
-                      size='small'
-                      onClick={() => removeMutation.mutate(row.id)}
-                    >
-                      <Trash2 size={16} />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component='div'
-          count={total}
-          page={page}
-          rowsPerPage={pageSize}
-          rowsPerPageOptions={[10]}
-          onPageChange={(_, p) => setPage(p)}
-          labelRowsPerPage=''
-        />
-      </Card>
-
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>
-          {editingId ? t('mes.masterData.edit') : t('mes.masterData.create')}
-        </DialogTitle>
-        <DialogContent>
-          <Stack
-            spacing={2}
-            sx={{ mt: 1 }}
-          >
-            {formFields.map((f) => (
-              <TextField
-                key={f.key}
-                size='small'
-                label={f.label}
-                type={f.type ?? 'text'}
-                value={form[f.key] ?? ''}
-                onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))}
-                fullWidth
+              <Tab
+                value='workshops'
+                label={t('mes.masterData.tabWorkshops')}
               />
-            ))}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>{t('mes.masterData.cancel')}</Button>
-          <Button
-            variant='contained'
-            onClick={() => saveMutation.mutate()}
-          >
-            {t('mes.masterData.save')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+              <Tab
+                value='productionLines'
+                label={t('mes.masterData.tabProductionLines')}
+              />
+              <Tab
+                value='shifts'
+                label={t('mes.masterData.tabShifts')}
+              />
+              <Tab
+                value='workCalendars'
+                label={t('mes.masterData.tabWorkCalendars')}
+              />
+            </Tabs>
+            <Stack
+              direction='row'
+              spacing={1}
+              sx={{ alignItems: 'center' }}
+            >
+              <TextField
+                size='small'
+                placeholder={t('mes.masterData.searchPlaceholder')}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(0);
+                }}
+              />
+              <Button
+                startIcon={<Plus size={16} />}
+                variant='contained'
+                onClick={openCreate}
+              >
+                {t('mes.masterData.create')}
+              </Button>
+            </Stack>
+          </Box>
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  {columns[tab].map((c) => (
+                    <TableCell key={c.key}>{c.label}</TableCell>
+                  ))}
+                  <TableCell align='right'>{t('mes.masterData.actions')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    hover
+                  >
+                    {columns[tab].map((c) => {
+                      const v = (row as unknown as Record<string, unknown>)[c.key];
+                      return (
+                        <TableCell key={c.key}>
+                          {c.key === 'status' ? (
+                            <Chip
+                              size='small'
+                              color={(v as string) === 'active' ? 'success' : 'default'}
+                              label={v as string}
+                            />
+                          ) : typeof v === 'boolean' ? (
+                            <Chip
+                              size='small'
+                              color={v ? 'success' : 'default'}
+                              label={v ? '✓' : '—'}
+                            />
+                          ) : (
+                            ((v as string) ?? '—')
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                    <TableCell align='right'>
+                      <IconButton
+                        size='small'
+                        onClick={() => openEdit(row)}
+                      >
+                        <Pencil size={16} />
+                      </IconButton>
+                      <IconButton
+                        size='small'
+                        onClick={() => removeMutation.mutate(row.id)}
+                      >
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            component='div'
+            count={total}
+            page={page}
+            rowsPerPage={pageSize}
+            rowsPerPageOptions={[10]}
+            onPageChange={(_, p) => setPage(p)}
+            labelRowsPerPage=''
+          />
+        </Card>
+
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>
+            {editingId ? t('mes.masterData.edit') : t('mes.masterData.create')}
+          </DialogTitle>
+          <DialogContent>
+            <Stack
+              spacing={2}
+              sx={{ mt: 1 }}
+            >
+              {formFields.map((f) => (
+                <TextField
+                  key={f.key}
+                  size='small'
+                  label={f.label}
+                  type={f.type ?? 'text'}
+                  value={form[f.key] ?? ''}
+                  onChange={(e) => setForm((p) => ({ ...p, [f.key]: e.target.value }))}
+                  fullWidth
+                />
+              ))}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpen(false)}>{t('mes.masterData.cancel')}</Button>
+            <Button
+              variant='contained'
+              onClick={() => saveMutation.mutate()}
+            >
+              {t('mes.masterData.save')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </PageContainer>
   );
 };
 

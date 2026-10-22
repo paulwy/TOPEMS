@@ -26,6 +26,8 @@ import { tagApi } from '@/api/crm/tags';
 import type { CrmTag } from '@/api/crm/tags';
 import { useNotificationStore } from '@/store';
 
+import { PageContainer } from '@/components/common';
+
 interface ListLike {
   items?: unknown[];
   total?: number;
@@ -122,124 +124,126 @@ const TagPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography
-        variant='h5'
-        sx={{ fontWeight: 600 }}
-      >
-        {t('crm.tags.title')}
-      </Typography>
-      <Typography
-        variant='body2'
-        sx={{ color: 'text.secondary', mt: 0.5 }}
-      >
-        {t('crm.tags.titleDesc')}
-      </Typography>
-      <Stack
-        direction='row'
-        spacing={2}
-        sx={{ mt: 2, mb: 2 }}
-      >
-        <TextField
-          size='small'
-          placeholder={t('crm.tags.searchPlaceholder')}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <Button
-          variant='contained'
-          startIcon={<Plus size={18} />}
-          onClick={openCreate}
+    <PageContainer autoTitle>
+      <Box sx={{ p: 3 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 600 }}
         >
-          {t('crm.tags.create')}
-        </Button>
-      </Stack>
-      <Card variant='outlined'>
-        <TableContainer>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                {columns.map((c) => (
-                  <TableCell key={c.key}>{c.label}</TableCell>
-                ))}
-                <TableCell>{t('crm.tags.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  hover
-                >
-                  {columns.map((c) => (
-                    <TableCell key={c.key}>
-                      {(row as unknown as Record<string, string | number | null>)[c.key] ?? '-'}
-                    </TableCell>
-                  ))}
-                  <TableCell>
-                    <IconButton
-                      size='small'
-                      onClick={() => openEdit(row)}
-                    >
-                      <Pencil size={16} />
-                    </IconButton>
-                    <IconButton
-                      size='small'
-                      color='error'
-                      onClick={() => removeMutation.mutate(row.id)}
-                    >
-                      <Trash2 size={16} />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component='div'
-          count={total}
-          page={page}
-          onPageChange={(_e, p) => setPage(p)}
-          rowsPerPage={pageSize}
-          rowsPerPageOptions={[pageSize]}
-          labelRowsPerPage=''
-        />
-      </Card>
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>{editingId ? t('crm.tags.edit') : t('crm.tags.create')}</DialogTitle>
-        <DialogContent>
-          <Stack
-            spacing={2}
-            sx={{ mt: 1 }}
-          >
-            {formFields.map((f) => (
-              <TextField
-                key={f.key}
-                size='small'
-                label={f.label}
-                value={form[f.key] ?? ''}
-                onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
-              />
-            ))}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>{t('crm.tags.cancel')}</Button>
+          {t('crm.tags.title')}
+        </Typography>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary', mt: 0.5 }}
+        >
+          {t('crm.tags.titleDesc')}
+        </Typography>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ mt: 2, mb: 2 }}
+        >
+          <TextField
+            size='small'
+            placeholder={t('crm.tags.searchPlaceholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
           <Button
             variant='contained'
-            onClick={() => saveMutation.mutate()}
+            startIcon={<Plus size={18} />}
+            onClick={openCreate}
           >
-            {t('crm.tags.save')}
+            {t('crm.tags.create')}
           </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        </Stack>
+        <Card variant='outlined'>
+          <TableContainer>
+            <Table size='small'>
+              <TableHead>
+                <TableRow>
+                  {columns.map((c) => (
+                    <TableCell key={c.key}>{c.label}</TableCell>
+                  ))}
+                  <TableCell>{t('crm.tags.actions')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    hover
+                  >
+                    {columns.map((c) => (
+                      <TableCell key={c.key}>
+                        {(row as unknown as Record<string, string | number | null>)[c.key] ?? '-'}
+                      </TableCell>
+                    ))}
+                    <TableCell>
+                      <IconButton
+                        size='small'
+                        onClick={() => openEdit(row)}
+                      >
+                        <Pencil size={16} />
+                      </IconButton>
+                      <IconButton
+                        size='small'
+                        color='error'
+                        onClick={() => removeMutation.mutate(row.id)}
+                      >
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            component='div'
+            count={total}
+            page={page}
+            onPageChange={(_e, p) => setPage(p)}
+            rowsPerPage={pageSize}
+            rowsPerPageOptions={[pageSize]}
+            labelRowsPerPage=''
+          />
+        </Card>
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>{editingId ? t('crm.tags.edit') : t('crm.tags.create')}</DialogTitle>
+          <DialogContent>
+            <Stack
+              spacing={2}
+              sx={{ mt: 1 }}
+            >
+              {formFields.map((f) => (
+                <TextField
+                  key={f.key}
+                  size='small'
+                  label={f.label}
+                  value={form[f.key] ?? ''}
+                  onChange={(e) => setForm((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                />
+              ))}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpen(false)}>{t('crm.tags.cancel')}</Button>
+            <Button
+              variant='contained'
+              onClick={() => saveMutation.mutate()}
+            >
+              {t('crm.tags.save')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </PageContainer>
   );
 };
 
