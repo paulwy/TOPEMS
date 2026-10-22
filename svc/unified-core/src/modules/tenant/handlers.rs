@@ -2795,7 +2795,7 @@ pub async fn get_tenant_usage(
     .map(|r| serde_json::json!({
         "period_start": r.get::<String,_>("period_start"),
         "period_end": r.get::<String,_>("period_end"),
-        "users_count": r.get::<i64,_>("users_count"),
+        "users_count": r.get::<i32,_>("users_count"),
         "storage_used_mb": r.get::<i64,_>("storage_used_mb"),
         "api_calls_count": r.get::<i64,_>("api_calls_count"),
         "base_cost": r.get::<String,_>("base_cost"),
@@ -3000,7 +3000,7 @@ pub async fn collect_tenant_usage(
         r#"INSERT INTO core_tenant_usage (id, tenant_id, users_count, storage_used_mb, api_calls_count, period_start, period_end, base_cost)
         SELECT gen_random_uuid(), t.id,
                (SELECT COUNT(*) FROM core_tenant_users u WHERE u.tenant_id = t.id AND u.deleted_at IS NULL),
-               0,
+               (SELECT COALESCE(SUM(f.size)::bigint / 1048576, 0) FROM core_files f WHERE f.tenant_id = t.id AND f.deleted_at IS NULL),
                (SELECT COUNT(*) FROM core_audit_logs a JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = t.id
                 WHERE a.created_at >= date_trunc('month', now())),
                date_trunc('month', CURRENT_DATE)::date,
@@ -3010,6 +3010,7 @@ pub async fn collect_tenant_usage(
         WHERE t.deleted_at IS NULL AND t.status = 'active'
         ON CONFLICT (tenant_id, period_start) DO UPDATE SET
           users_count = EXCLUDED.users_count,
+          storage_used_mb = EXCLUDED.storage_used_mb,
           api_calls_count = EXCLUDED.api_calls_count"#,
     )
     .execute(&state.pool)

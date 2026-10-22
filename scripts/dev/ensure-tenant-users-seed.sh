@@ -52,6 +52,17 @@ CREATE TABLE IF NOT EXISTS erp.erp_master_data_audit_trail (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );"
 echo "erp_master_data_audit_trail 表就绪"
+# core_files 补 tenant_id 列（download.rs 引用致 500）+ 存储种子（35MB 演示级；幂等）
+psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+ALTER TABLE public.core_files ADD COLUMN IF NOT EXISTS tenant_id UUID;
+CREATE INDEX IF NOT EXISTS idx_core_files_tenant ON public.core_files(tenant_id);
+INSERT INTO core_files (id, name, original_name, path, size, mime_type, extension, folder_id, uploader_id, status, tenant_id, created_at)
+SELECT gen_random_uuid(), n, n, '/uploads/'||n, s, m, lower(split_part(n,'.',-1)), NULL, '0d3a14bb-14a7-488e-a3c1-889f0b9c260f', 'active', '${TENANT_ID}', NOW()
+FROM (VALUES ('季度经营报告.pdf', 5242880, 'application/pdf'),
+             ('产品手册.pdf', 10485760, 'application/pdf'),
+             ('数据备份.sql', 20971520, 'application/sql')) AS f(n,s,m)
+ON CONFLICT DO NOTHING;"
+echo "core_files tenant_id 列 + 存储种子就绪（storage 采集真实源）"
 # core_tenant_usage 历史期回填（近 5 月，users=2，api_calls 递减近似；幂等 upsert）
 psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
 INSERT INTO core_tenant_usage (id, tenant_id, users_count, storage_used_mb, api_calls_count, period_start, period_end, base_cost)
