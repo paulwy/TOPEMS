@@ -1,108 +1,108 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, navigateTo, expectUrl, expectPageVisible, expectHasHeading } from './helpers/auth';
+import { navigateTo, expectUrl } from './helpers/auth';
+import { API_URL } from '../utils/testUtils';
+
+/** 以超管 admin 页面登录（test_admin 未绑 scm 角色，会被权限守卫拦截） */
+async function pageLoginAsSuperAdmin(page: import('@playwright/test').Page): Promise<void> {
+  await page.goto('/login', { waitUntil: 'load', timeout: 30000 });
+  await page
+    .waitForSelector('input[placeholder*="用户名"], input[name="username"]', { timeout: 15000 })
+    .catch(() => {});
+  await page.getByPlaceholder('请输入用户名').fill('admin');
+  await page.getByPlaceholder('请输入密码').fill('admin123');
+  await page.getByTestId('login-submit').click();
+  await page.waitForURL('**/dashboard', { timeout: 30000 });
+  await page
+    .waitForSelector('main, #main-content, [role="main"]', { timeout: 10000 })
+    .catch(() => {});
+}
 
 /**
- * SCM 供应商管理流程 E2E 测试
- * 业务流程: 供应商准入 → 供应商评估 → 供应商分级 → 绩效分析 → 供应商排名
- * 测试用例: TC-SCM-006 ~ TC-SCM-010
+ * SCM 供应商数据流 E2E（真后端断言，非「可达不崩」级）
+ *
+ * 方法：先用 admin 调真后端 /api/scm/suppliers 取真记录，再以登录态打开
+ * 列表页 / 详情弹窗，断言前端确实渲染后端返回的字段——证明接的是真数据。
+ *
+ * 前置：真后端栈已起（scripts/dev/run-e2e-stack.sh login），API_URL 指向 8099。
  */
-test.describe('SCM Supplier Management Flow (TC-SCM-006 ~ TC-SCM-010)', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
+
+async function adminToken(): Promise<string> {
+  const res = await fetch(`${API_URL}/api/core/iam/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: 'admin', password: 'admin123' }),
   });
+  const data = await res.json();
+  const token = data?.data?.access_token || data?.data?.token || '';
+  if (!token) throw new Error('admin 真登录失败，未取到 token');
+  return token;
+}
 
-  // TC-SCM-006: 供应商准入，验证准入流程
-  test('TC-SCM-006 should admit supplier and verify admission process', async ({ page }) => {
-    await navigateTo(page, '/scm/supplier-admission');
-    await expectUrl(page, /scm\/supplier-admission/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
+interface SupplierRecord {
+  id: string;
+  supplier_no: string | null;
+  name: string;
+  email: string | null;
+}
 
-    // 验证准入申请列表加载
-    const listContainer = page.locator('table, .ant-table, [role="table"]').first();
-    await expect(listContainer).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 尝试点击新建/准入按钮
-    const createButton = page.getByRole('button', { name: /新建|创建|新增|准入/ }).first();
-    if (await createButton.isVisible().catch(() => false)) {
-      await createButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      const modal = page.locator('.ant-modal, [role="dialog"]').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
+async function firstSupplier(token: string): Promise<SupplierRecord> {
+  const res = await fetch(`${API_URL}/api/scm/suppliers?page=1&page_size=10`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
+  const data = await res.json();
+  const items: SupplierRecord[] =
+    data?.data?.items ?? (Array.isArray(data?.data) ? data.data : []);
+  // 取首条 supplier_no 与 name 均非空的记录做双真实键断言（防合成假编号）
+  const s = items.find((r) => r?.id && r?.name && r?.supplier_no);
+  if (!s) throw new Error('后端供应商列表无双键齐全记录，无法做数据流断言');
+  return s;
+}
 
-  // TC-SCM-007: 供应商评估，验证评估结果
-  test('TC-SCM-007 should evaluate supplier and verify evaluation result', async ({ page }) => {
-    await navigateTo(page, '/scm/supplier-evaluation');
-    await expectUrl(page, /scm\/supplier-evaluation/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
+test.describe('SCM 供应商数据流（真后端断言）', () => {
+  // TC-SCM-006：列表页渲染后端供应商记录（supplier_no + name 双真实键）
+  test('TC-SCM-006 供应商列表展示后端返回的供应商记录', async ({ page }) => {
+    const token = await adminToken();
+    const supplier = await firstSupplier(token);
 
-    // 验证评估列表加载
-    const table = page.locator('table, .ant-table').first();
-    await expect(table).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 验证评估按钮存在
-    const evalButton = page.getByRole('button', { name: /评估|发起评估|评分/ }).first();
-    if (await evalButton.isVisible().catch(() => false)) {
-      await evalButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      const modal = page.locator('.ant-modal, [role="dialog"]').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
-  });
-
-  // TC-SCM-008: 供应商分级，验证分级逻辑
-  test('TC-SCM-008 should grade supplier and verify grading logic', async ({ page }) => {
+    await pageLoginAsSuperAdmin(page);
     await navigateTo(page, '/scm/suppliers');
     await expectUrl(page, /scm\/suppliers/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
 
-    // 验证供应商列表加载
-    const table = page.locator('table, .ant-table').first();
-    await expect(table).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 验证分级按钮存在
-    const gradeButton = page.getByRole('button', { name: /分级|评级|等级调整/ }).first();
-    if (await gradeButton.isVisible().catch(() => false)) {
-      await gradeButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      const modal = page.locator('.ant-modal, [role="dialog"]').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
+    // 前端列表正文必须出现后端取到的供应商编码与名称（真数据流，而非空表/mock）
+    await expect(page.locator('body')).toContainText(supplier.supplier_no as string, {
+      timeout: 10000,
+    });
+    await expect(page.locator('body')).toContainText(supplier.name, { timeout: 10000 });
   });
 
-  // TC-SCM-009: 供应商绩效分析，验证绩效统计
-  test('TC-SCM-009 should analyze supplier performance and verify statistics', async ({ page }) => {
+  // TC-SCM-007：详情弹窗渲染后端供应商记录（列表不展示、仅详情展示的 email）
+  test('TC-SCM-007 供应商详情弹窗展示后端返回的供应商记录', async ({ page }) => {
+    const token = await adminToken();
+    const res = await fetch(`${API_URL}/api/scm/suppliers?page=1&page_size=10`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    const items: SupplierRecord[] = data?.data?.items ?? [];
+    // 取首条 name 与 email 均非空的记录，email 在列表列不展示、详情弹窗展示
+    const supplier = items.find((r) => r?.id && r?.name && r?.email) ?? items[0];
+    if (!supplier?.name) throw new Error('后端供应商列表为空，无法做详情断言');
+
+    await pageLoginAsSuperAdmin(page);
     await navigateTo(page, '/scm/suppliers');
-    await expectUrl(page, /scm\/suppliers/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
+    await expect(page.locator('body')).toContainText(supplier.name, { timeout: 10000 });
 
-    // 验证绩效统计卡片加载
-    const summaryCards = page.locator('.ant-card, [class*="summary"], [class*="stat"]').first();
-    await expect(summaryCards).toBeVisible({ timeout: 5000 }).catch(() => {});
-
-    // 验证绩效图表
-    const chart = page.locator('canvas, [class*="chart"]').first();
-    await expect(chart).toBeVisible({ timeout: 5000 }).catch(() => {});
-  });
-
-  // TC-SCM-010: 供应商排名，验证排名计算
-  test('TC-SCM-010 should rank suppliers and verify ranking calculation', async ({ page }) => {
-    await navigateTo(page, '/scm/overview');
-    await expectUrl(page, /scm\/overview/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
-
-    // 验证供应链概览统计卡片
-    const summaryCards = page.locator('.ant-card, [class*="summary"], [class*="stat"]').first();
-    await expect(summaryCards).toBeVisible({ timeout: 5000 }).catch(() => {});
-
-    // 验证供应商排名表格/榜单
-    const rankTable = page.locator('table, .ant-table, [class*="rank"], [class*="leaderboard"]').first();
-    await expect(rankTable).toBeVisible({ timeout: 5000 }).catch(() => {});
+    // 打开首行「查看」详情弹窗（CrudPage 行操作，MUI Dialog + FormBuilder view 模式：
+    // 文本值渲染在禁用 input 的 value 上，不在文本流里，须用 toHaveValue 断言）
+    await page.getByRole('button', { name: '查看' }).first().click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await expect(dialog.locator('input[name="name"]')).toHaveValue(supplier.name, {
+      timeout: 5000,
+    });
+    if (supplier.email) {
+      await expect(dialog.locator('input[name="email"]')).toHaveValue(supplier.email, {
+        timeout: 5000,
+      });
+    }
   });
 });

@@ -1,106 +1,92 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, navigateTo, expectUrl, expectPageVisible, expectHasHeading } from './helpers/auth';
+import { navigateTo, expectUrl } from './helpers/auth';
+import { API_URL } from '../utils/testUtils';
+
+/** 以超管 admin 页面登录（test_admin 未绑 scm 角色，会被权限守卫拦截） */
+async function pageLoginAsSuperAdmin(page: import('@playwright/test').Page): Promise<void> {
+  await page.goto('/login', { waitUntil: 'load', timeout: 30000 });
+  await page
+    .waitForSelector('input[placeholder*="用户名"], input[name="username"]', { timeout: 15000 })
+    .catch(() => {});
+  await page.getByPlaceholder('请输入用户名').fill('admin');
+  await page.getByPlaceholder('请输入密码').fill('admin123');
+  await page.getByTestId('login-submit').click();
+  await page.waitForURL('**/dashboard', { timeout: 30000 });
+  await page
+    .waitForSelector('main, #main-content, [role="main"]', { timeout: 10000 })
+    .catch(() => {});
+}
 
 /**
- * SCM 采购管理流程 E2E 测试
- * 业务流程: 采购申请 → 申请转订单 → 采购收货 → 发票匹配 → 采购退货
- * 测试用例: TC-SCM-001 ~ TC-SCM-005
+ * SCM 采购订单数据流 E2E（真后端断言，非「可达不崩」级）
+ *
+ * 方法：先用 admin 调真后端 /api/scm/purchase-orders 取首条真记录
+ * （order_number），再以登录态打开列表页 / 详情弹窗，断言前端确实渲染
+ * 后端返回的采购单号——证明页面接的是 SCM 真数据（此前该路由复用
+ * erp/PurchaseOrderPage 接 /api/erp/purchase-orders 空端点，已修复）。
+ *
+ * 前置：真后端栈已起（scripts/dev/run-e2e-stack.sh login），API_URL 指向 8099。
  */
-test.describe('SCM Purchase Management Flow (TC-SCM-001 ~ TC-SCM-005)', () => {
-  test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
+
+async function adminToken(): Promise<string> {
+  const res = await fetch(`${API_URL}/api/core/iam/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: 'admin', password: 'admin123' }),
   });
+  const data = await res.json();
+  const token = data?.data?.access_token || data?.data?.token || '';
+  if (!token) throw new Error('admin 真登录失败，未取到 token');
+  return token;
+}
 
-  // TC-SCM-001: 创建采购申请，验证申请创建
-  test('TC-SCM-001 should create purchase requisition successfully', async ({ page }) => {
-    await navigateTo(page, '/scm/purchase-requisition');
-    await expectUrl(page, /scm\/purchase-requisition/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
+interface PurchaseOrderRecord {
+  id: string;
+  order_number: string;
+}
 
-    // 验证采购申请列表加载
-    const listContainer = page.locator('table, .ant-table, [role="table"]').first();
-    await expect(listContainer).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 尝试点击新建按钮
-    const createButton = page.getByRole('button', { name: /新建|创建|新增/ }).first();
-    if (await createButton.isVisible().catch(() => false)) {
-      await createButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      const modal = page.locator('.ant-modal, [role="dialog"]').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
+async function firstPurchaseOrder(token: string): Promise<PurchaseOrderRecord> {
+  const res = await fetch(`${API_URL}/api/scm/purchase-orders?page=1&page_size=10`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
+  const data = await res.json();
+  const items: PurchaseOrderRecord[] =
+    data?.data?.items ?? (Array.isArray(data?.data) ? data.data : []);
+  const o = items.find((r) => r?.id && r?.order_number);
+  if (!o) throw new Error('后端采购订单列表为空或结构异常，无法做数据流断言');
+  return o;
+}
 
-  // TC-SCM-002: 采购申请转订单，验证订单生成
-  test('TC-SCM-002 should convert requisition to purchase order and verify order generation', async ({ page }) => {
+test.describe('SCM 采购订单数据流（真后端断言）', () => {
+  // TC-SCM-001：列表页渲染后端采购订单记录（真实键 order_number）
+  test('TC-SCM-001 采购订单列表展示后端返回的采购订单记录', async ({ page }) => {
+    const token = await adminToken();
+    const order = await firstPurchaseOrder(token);
+
+    await pageLoginAsSuperAdmin(page);
     await navigateTo(page, '/scm/purchase-orders');
     await expectUrl(page, /scm\/purchase-orders/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
 
-    // 验证采购订单列表加载
-    const table = page.locator('table, .ant-table').first();
-    await expect(table).toBeVisible({ timeout: 10000 }).catch(() => {});
-
-    // 验证转订单/生成订单按钮存在
-    const convertButton = page.getByRole('button', { name: /转订单|生成订单|转采购订单/ }).first();
-    if (await convertButton.isVisible().catch(() => false)) {
-      await convertButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      const modal = page.locator('.ant-modal, [role="dialog"]').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
+    // 前端列表正文必须出现后端取到的采购单号（真数据流，而非空表/mock）
+    await expect(page.locator('body')).toContainText(order.order_number, { timeout: 10000 });
   });
 
-  // TC-SCM-003: 采购收货，验证收货数量
-  test('TC-SCM-003 should receive purchase order with correct quantity', async ({ page }) => {
+  // TC-SCM-002：详情弹窗渲染后端采购订单记录
+  test('TC-SCM-002 采购订单详情弹窗展示后端返回的采购订单记录', async ({ page }) => {
+    const token = await adminToken();
+    const order = await firstPurchaseOrder(token);
+
+    await pageLoginAsSuperAdmin(page);
     await navigateTo(page, '/scm/purchase-orders');
-    await expectUrl(page, /scm\/purchase-orders/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
+    await expect(page.locator('body')).toContainText(order.order_number, { timeout: 10000 });
 
-    // 验证收货按钮存在
-    const receiveButton = page.getByRole('button', { name: /收货|确认收货|采购收货/ }).first();
-    if (await receiveButton.isVisible().catch(() => false)) {
-      await receiveButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      const modal = page.locator('.ant-modal, [role="dialog"]').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
-  });
-
-  // TC-SCM-004: 发票匹配，验证三单匹配
-  test('TC-SCM-004 should match invoice and verify three-way match', async ({ page }) => {
-    await navigateTo(page, '/scm/purchase-orders');
-    await expectUrl(page, /scm\/purchase-orders/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
-
-    // 验证发票匹配按钮存在
-    const matchButton = page.getByRole('button', { name: /发票匹配|匹配|三单匹配|对账/ }).first();
-    if (await matchButton.isVisible().catch(() => false)) {
-      await matchButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      const modal = page.locator('.ant-modal, [role="dialog"]').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
-  });
-
-  // TC-SCM-005: 采购退货，验证退货流程
-  test('TC-SCM-005 should process purchase return and verify return flow', async ({ page }) => {
-    await navigateTo(page, '/scm/purchase-orders');
-    await expectUrl(page, /scm\/purchase-orders/);
-    await expectPageVisible(page);
-    await expectHasHeading(page);
-
-    // 验证退货按钮存在
-    const returnButton = page.getByRole('button', { name: /退货|采购退货|退料/ }).first();
-    if (await returnButton.isVisible().catch(() => false)) {
-      await returnButton.click({ force: true }).catch(() => {});
-      await page.waitForTimeout(1000);
-      const modal = page.locator('.ant-modal, [role="dialog"]').first();
-      await expect(modal).toBeVisible({ timeout: 5000 }).catch(() => {});
-    }
+    // 打开首行「查看」详情弹窗（CrudPage 行操作，MUI Dialog + FormBuilder view 模式：
+    // 文本值渲染在禁用 input 的 value 上，不在文本流里，须用 toHaveValue 断言）
+    await page.getByRole('button', { name: '查看' }).first().click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await expect(dialog.locator('input[name="order_number"]')).toHaveValue(order.order_number, {
+      timeout: 5000,
+    });
   });
 });
