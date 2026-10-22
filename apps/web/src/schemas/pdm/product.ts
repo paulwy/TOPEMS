@@ -13,7 +13,8 @@ export const productSchema: EntitySchema = {
 
   fields: [
     {
-      name: 'code',
+      // 后端真键 product_no（非 code）——对齐契约，否则编号列空渲
+      name: 'product_no',
       label: i18n.t('pdm.product.k2'),
       type: 'text',
       required: true,
@@ -90,8 +91,8 @@ export const productSchema: EntitySchema = {
   ],
 
   list: {
-    columns: ['code', 'name', 'category', 'version', 'status', 'unit', 'created_at'],
-    searchFields: ['code', 'name', 'category'],
+    columns: ['product_no', 'name', 'category', 'version', 'status', 'unit', 'created_at'],
+    searchFields: ['product_no', 'name', 'category'],
     pageSize: 10,
     statusBadge: {
       field: 'status',
@@ -129,7 +130,7 @@ export const productSchema: EntitySchema = {
   formSections: [
     {
       title: i18n.t('pdm.product.k25'),
-      fields: ['code', 'name', 'category', 'unit'],
+      fields: ['product_no', 'name', 'category', 'unit'],
     },
     {
       title: i18n.t('pdm.product.k26'),

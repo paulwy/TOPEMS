@@ -31,7 +31,7 @@ export default function ProductPage() {
           items = items.filter(
             (p) =>
               (p.name || '').toLowerCase().includes(lower) ||
-              (p.code || '').toLowerCase().includes(lower) ||
+              (p.product_no || '').toLowerCase().includes(lower) ||
               (p.category || '').toLowerCase().includes(lower)
           );
         }

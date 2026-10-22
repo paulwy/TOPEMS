@@ -156,7 +156,7 @@ export default function PdmBomPage() {
                     key={p.id}
                     value={p.id}
                   >
-                    {p.name} ({p.code})
+                    {p.name} ({p.product_no})
                   </MenuItem>
                 ))}
               </Select>

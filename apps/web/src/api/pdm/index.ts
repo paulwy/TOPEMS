@@ -160,7 +160,9 @@ interface PdmStatistics {
 export interface Product {
   id: string;
   name: string;
-  code: string;
+  // 后端真键 product_no（非 code）——契约/schema/创建请求全链对齐此键，
+  // 否则列表编号列空渲 + 创建 422（缺 product_no 反序列化失败）
+  product_no: string;
   version: string;
   status: string;
   description?: string;
@@ -172,7 +174,7 @@ export interface Product {
 
 export interface CreateProductRequest {
   name: string;
-  code: string;
+  product_no: string;
   version: string;
   status: string;
   description?: string;
@@ -182,7 +184,7 @@ export interface CreateProductRequest {
 
 interface UpdateProductRequest {
   name?: string;
-  code?: string;
+  product_no?: string;
   version?: string;
   status?: string;
   description?: string;
