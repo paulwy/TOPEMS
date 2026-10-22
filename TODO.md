@@ -3265,3 +3265,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.57（2026-10-23）**：mobile 契约 114/114 全闭环——clippy 触发 mobile-contract-smoke 暴露 6 FAIL → 补表（oa_calendar_events/announcements/push 列/唯一索引/mes 生产表）+ 脚本 base 探测（8099→8098 fallback）+ 8070 重建 + 8098 重启；ensure 并入 mobile/mes 自愈段。
 
 > **系统完善 v1.58（2026-10-23）**：残余缺表批量清零（erp/finance/public 11 表 test 结构复制主库 + ensure 自愈段）→ 曾缺表端点无 500；探活 0 5xx；gate 2653/6336/0。
+
+> **系统完善 v1.59（2026-10-23）**：写路径探针（domain-probe P3 段 POST 抽查，防 5xx 回归）+ 全端点冒烟复核（4150 前端封装：已挂载 39 / 缺口 4111 产品排期）；探活/gate/mobile 保持全绿。

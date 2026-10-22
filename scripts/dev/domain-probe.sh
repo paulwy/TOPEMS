@@ -139,5 +139,15 @@ else
   FAIL=1
 fi
 
+# [P3] write-path probe (system hardening): POST spot check - 422/400/404/409 = OK (validation/route), 5xx = FAIL
+for WR in "api/crm/tags" "api/gis/devices" "api/erp/dictionaries"; do
+  WC="$(curl -s -m 8 -o /dev/null -w '%{http_code}' -X POST "$BASE/$WR" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}' 2>/dev/null)"
+  case "$WC" in
+    422|400|404|409) echo "WRITE_OK $WR -> $WC (validation/route, no 5xx)" ;;
+    200) echo "WRITE_OK $WR -> 200 (empty body accepted)" ;;
+    *) echo "WRITE_FAIL $WR -> $WC (write-path 5xx)"; FAIL=1 ;;
+  esac
+done
+
 if [[ "$FAIL" -eq 0 ]]; then echo "DOMAIN_PROBE_OK（全部域 0 个 5xx）"; else echo "DOMAIN_PROBE_FAIL（存在 5xx，见上）"; fi
 exit $FAIL
