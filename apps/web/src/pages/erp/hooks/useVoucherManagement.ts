@@ -69,13 +69,13 @@ export const useVoucherManagement = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const vouchers = useMemo(
-    () =>
-      vouchersQuery.data?.success && vouchersQuery.data.data
-        ? vouchersQuery.data.data.items || []
-        : [],
-    [vouchersQuery.data]
-  );
+  const vouchers = useMemo(() => {
+    if (!vouchersQuery.data?.success || !vouchersQuery.data.data) return [];
+    // 后端凭证列表实际返回数组（非 {items,total} 信封），两种形态都兼容
+    const raw = vouchersQuery.data.data as unknown;
+    if (Array.isArray(raw)) return raw as Voucher[];
+    return (raw as { items?: Voucher[] }).items || [];
+  }, [vouchersQuery.data]);
   const totalCount =
     vouchersQuery.data?.success && vouchersQuery.data.data ? vouchersQuery.data.data.total || 0 : 0;
   const loading = vouchersQuery.isLoading;

@@ -25,7 +25,8 @@ export const voucherSchema: EntitySchema = {
 
   fields: [
     {
-      name: 'voucher_number',
+      // 后端凭证真键为 voucher_no（GET /api/finance/vouchers 返回）
+      name: 'voucher_no',
       label: i18n.t('finance.voucher.k2'),
       type: 'text',
       required: true,
@@ -123,7 +124,7 @@ export const voucherSchema: EntitySchema = {
 
   list: {
     columns: [
-      'voucher_number',
+      'voucher_no',
       'voucher_date',
       'period',
       'total_debit',
@@ -131,7 +132,7 @@ export const voucherSchema: EntitySchema = {
       'maker_name',
       'status',
     ],
-    searchFields: ['voucher_number', 'summary', 'maker_name'],
+    searchFields: ['voucher_no', 'summary', 'maker_name'],
     pageSize: 10,
     selectable: true,
     statusBadge: {
@@ -188,7 +189,7 @@ export const voucherSchema: EntitySchema = {
   formSections: [
     {
       title: i18n.t('finance.voucher.k31'),
-      fields: ['voucher_number', 'voucher_date', 'period', 'attachment_count'],
+      fields: ['voucher_no', 'voucher_date', 'period', 'attachment_count'],
     },
     {
       title: i18n.t('finance.voucher.k32'),

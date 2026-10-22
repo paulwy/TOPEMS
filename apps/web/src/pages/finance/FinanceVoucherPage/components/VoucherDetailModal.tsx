@@ -52,7 +52,7 @@ const VoucherDetailModal: React.FC<VoucherDetailModalProps> = ({
                 variant='h6'
                 sx={{ color: 'indigo.600', fontWeight: 'bold' }}
               >
-                {currentVoucher.voucher_number}
+                {currentVoucher.voucher_no || currentVoucher.voucher_number}
               </Typography>
             </Box>
             <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>

@@ -228,6 +228,12 @@ export interface Equipment {
   status: string;
   value?: number;
   description?: string;
+  // 后端实际返回的扩展字段（列表/详情均有）
+  equipment_no?: string;
+  maintenance_frequency_days?: number;
+  warranty_expiry_date?: string | null;
+  last_maintenance_date?: string | null;
+  next_maintenance_date?: string | null;
   created_at: string;
   updated_at: string;
 }

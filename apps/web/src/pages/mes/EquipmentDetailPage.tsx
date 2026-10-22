@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { QUERY_KEYS, queryClient, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Wrench } from 'lucide-react';
-import { assetApi, type Asset } from '@/api/erp';
+import { equipmentApi, type Equipment } from '@/api/mes';
 import type { ApiResponse } from '@/api/client';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
@@ -26,11 +26,11 @@ const EquipmentDetailPage: React.FC = () => {
     data: equipmentData,
     isPending: loading,
     error: queryError,
-  } = useQuery<Asset | null>({
+  } = useQuery<Equipment | null>({
     queryKey: id ? QUERY_KEYS.MES.EQUIPMENT_DETAIL(id) : ['mes', 'equipment', 'null'],
     queryFn: async () => {
       if (!id) return null;
-      const res = await assetApi.get(id);
+      const res = await equipmentApi.get(id);
       if (res.code === 200 && res.data) {
         return res.data;
       }
@@ -42,15 +42,15 @@ const EquipmentDetailPage: React.FC = () => {
 
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
-  const equipment: Asset | null = equipmentData ?? null;
+  const equipment: Equipment | null = equipmentData ?? null;
   const errorMessage = queryError
     ? i18n.t('mes.equipment_detail_page.notifications.load_error.message')
     : undefined;
   const deleteMutation = useMutation({
-    mutationFn: (equipmentId: string) => assetApi.delete(equipmentId),
+    mutationFn: (equipmentId: string) => equipmentApi.delete(equipmentId),
     onSuccess: (res: ApiResponse<string>) => {
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.ERP.ASSETS,
+        queryKey: QUERY_KEYS.AD_HOC.MES_EQUIPMENT_BASE,
         exact: false,
         refetchType: 'active',
       });
@@ -77,6 +77,8 @@ const EquipmentDetailPage: React.FC = () => {
   };
   const getStatusLabel = (status: string) => {
     switch (status) {
+      case 'available':
+        return i18n.t('mes.equipment_detail_page.status_available');
       case 'idle':
         return i18n.t('mes.equipment_detail_page.status_idle');
       case 'in_use':
@@ -89,7 +91,7 @@ const EquipmentDetailPage: React.FC = () => {
         return status;
     }
   };
-  const formatDate = (date: string | undefined) => {
+  const formatDate = (date: string | null | undefined) => {
     if (!date) return '-';
     return new Date(date).toLocaleDateString('zh-CN');
   };
@@ -115,7 +117,7 @@ const EquipmentDetailPage: React.FC = () => {
             {i18n.t('mes.equipment_detail_page.field_equipment_number')}
           </InputLabel>
           <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
-            {equipment.asset_number || '-'}
+            {equipment.code || equipment.equipment_no || '-'}
           </Typography>
         </Box>
         <Box>
@@ -128,13 +130,13 @@ const EquipmentDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('mes.equipment_detail_page.field_equipment_category')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{equipment.category || '-'}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{equipment.type || '-'}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {i18n.t('mes.equipment_detail_page.field_brand')}
+            {i18n.t('mes.equipment_detail_page.field_manufacturer')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{equipment.brand || '-'}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{equipment.manufacturer || '-'}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
@@ -169,43 +171,41 @@ const EquipmentDetailPage: React.FC = () => {
       >
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {i18n.t('mes.equipment_detail_page.field_serial_no')}
-          </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{equipment.serial_number || '-'}</Typography>
-        </Box>
-        <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {i18n.t('mes.equipment_detail_page.field_manufacturer')}
-          </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{equipment.manufacturer || '-'}</Typography>
-        </Box>
-        <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {i18n.t('mes.equipment_detail_page.field_rated_power')}
+            {i18n.t('mes.equipment_detail_page.field_maintenance_frequency')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>
-            {equipment.rated_power ? `${equipment.rated_power} kW` : '-'}
+            {equipment.maintenance_frequency_days ? `${equipment.maintenance_frequency_days}` : '-'}
           </Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {i18n.t('mes.equipment_detail_page.field_rated_voltage')}
+            {i18n.t('mes.equipment_detail_page.field_last_maintenance')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>
-            {equipment.rated_voltage ? `${equipment.rated_voltage} V` : '-'}
-          </Typography>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(equipment.last_maintenance_date)}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {i18n.t('mes.equipment_detail_page.field_purchase_amount')}
+            {i18n.t('mes.equipment_detail_page.field_next_maintenance')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{formatCurrency(equipment.purchase_amount)}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(equipment.next_maintenance_date)}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.equipment_detail_page.field_warranty_expiry')}
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(equipment.warranty_expiry_date)}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('mes.equipment_detail_page.field_location')}
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>{equipment.location || '-'}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
+            {i18n.t('mes.equipment_detail_page.field_description')}
+          </InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{equipment.description || '-'}</Typography>
         </Box>
       </Box>
     );
@@ -230,13 +230,7 @@ const EquipmentDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('mes.equipment_detail_page.field_purchase_amount')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{formatCurrency(equipment.purchase_amount)}</Typography>
-        </Box>
-        <Box>
-          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {i18n.t('mes.equipment_detail_page.field_responsible_person')}
-          </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{equipment.responsible_id || '-'}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{formatCurrency(equipment.value)}</Typography>
         </Box>
       </Box>
     );
@@ -327,12 +321,12 @@ const EquipmentDetailPage: React.FC = () => {
         />
       ),
       title: equipment?.name,
-      subtitle: equipment?.asset_number || undefined,
-      tags: [equipment?.category || ''],
+      subtitle: equipment?.code || equipment?.equipment_no || undefined,
+      tags: [equipment?.type || ''],
       stats: [
         {
           label: i18n.t('mes.equipment_detail_page.field_equipment_category'),
-          value: equipment?.category || '-',
+          value: equipment?.type || '-',
         },
         {
           label: i18n.t('mes.equipment_detail_page.field_status'),
@@ -356,7 +350,8 @@ const EquipmentDetailPage: React.FC = () => {
         subtitle=''
         detailItemName={
           equipment?.name ||
-          equipment?.asset_number ||
+          equipment?.code ||
+          equipment?.equipment_no ||
           equipment?.id ||
           i18n.t('mes.equipment_detail_page.k0')
         }

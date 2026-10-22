@@ -91,10 +91,10 @@ const voucherWizard: WizardConfig = {
       key: 'basic',
       title: i18n.t('shared.voucher.k11'),
       description: i18n.t('shared.voucher.k12'),
-      fields: ['voucher_number', 'voucher_date', 'period', 'voucher_type', 'summary'],
+      fields: ['voucher_no', 'voucher_date', 'period', 'voucher_type', 'description'],
       groupTitle: i18n.t('shared.voucher.k13'),
       validate: (values) => {
-        if (!values.voucher_number) return i18n.t('shared.voucher.k14');
+        if (!values.voucher_no) return i18n.t('shared.voucher.k14');
         if (!values.voucher_date) return i18n.t('shared.voucher.k15');
         return null;
       },
@@ -146,7 +146,8 @@ export const voucherSchema: EntitySchema & {
 
   fields: [
     {
-      name: 'voucher_number',
+      // 后端凭证真键为 voucher_no（GET /api/finance/vouchers 返回）
+      name: 'voucher_no',
       label: i18n.t('schema:erp.voucher.voucher_number.label'),
       type: 'text',
       required: true,
@@ -199,7 +200,8 @@ export const voucherSchema: EntitySchema & {
       showInList: true,
     },
     {
-      name: 'summary',
+      // 后端摘要真键为 description
+      name: 'description',
       label: i18n.t('schema:erp.voucher.summary.label'),
       type: 'textarea',
       showInList: true,
@@ -297,11 +299,11 @@ export const voucherSchema: EntitySchema & {
   formSections: [
     {
       title: i18n.t('schema:erp.voucher.section.0.title'),
-      fields: ['voucher_number', 'voucher_date', 'period', 'voucher_type'],
+      fields: ['voucher_no', 'voucher_date', 'period', 'voucher_type'],
     },
     {
       title: i18n.t('schema:erp.voucher.section.1.title'),
-      fields: ['summary', 'attachment_count'],
+      fields: ['description', 'attachment_count'],
     },
   ],
 

@@ -45,6 +45,8 @@ export interface AccountingSubject {
 export interface FinancialVoucher {
   id: string;
   voucher_number: string;
+  /** 后端凭证真键（list/get 实际返回）；voucher_number 为历史兼容字段 */
+  voucher_no?: string;
   voucher_date: string;
   period: string;
   attachment_count?: number;

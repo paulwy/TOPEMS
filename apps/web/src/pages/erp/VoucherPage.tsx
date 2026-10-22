@@ -34,9 +34,15 @@ function VoucherStats() {
     queryFn: async () => {
       const response = await voucherApi.list({ page: 1, page_size: 100 });
       if (!response.success) throw new Error(i18n.t('erp.voucher_page.k0'));
-      const items = response.data?.items || [];
+      // 后端凭证列表实际返回数组（非 {items,total} 信封），两种形态都兼容
+      const raw = response.data as unknown;
+      const items = Array.isArray(raw)
+        ? (raw as { status?: string }[])
+        : ((raw as { items?: { status?: string }[] } | undefined)?.items ?? []);
       return {
-        total: response.data?.total ?? items.length,
+        total: Array.isArray(raw)
+          ? items.length
+          : ((raw as { total?: number } | undefined)?.total ?? items.length),
         draft: items.filter((v) => v.status === 'draft').length,
         submitted: items.filter((v) => v.status === 'submitted').length,
         approved: items.filter((v) => v.status === 'approved').length,
