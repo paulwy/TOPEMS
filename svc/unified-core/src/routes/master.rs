@@ -66,6 +66,10 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             get(modules::tenant::handlers::get_tenant_branding),
         )
         .route(
+            "/tenant/{id}/features",
+            get(modules::tenant::handlers::get_tenant_features),
+        )
+        .route(
             "/tenant/context",
             get(modules::tenant::handlers::get_current_tenant_context),
         )
@@ -127,6 +131,18 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/tenant/{id}/branding",
             put(modules::tenant::handlers::update_tenant_branding),
+        )
+        .route(
+            "/tenant/{id}/features",
+            put(modules::tenant::handlers::update_tenant_features),
+        )
+        .route(
+            "/tenant/{id}/features/{feature}/enable",
+            post(modules::tenant::handlers::enable_tenant_feature),
+        )
+        .route(
+            "/tenant/{id}/features/{feature}/disable",
+            post(modules::tenant::handlers::disable_tenant_feature),
         )
         .route(
             "/tenant/{id}/users/invite",

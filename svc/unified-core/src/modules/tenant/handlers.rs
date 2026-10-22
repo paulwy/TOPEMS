@@ -1546,3 +1546,140 @@ pub async fn update_tenant_branding(
         }
     }
 }
+
+/// 租户特性开关：core_tenants.features (jsonb) Record<string,bool>
+async fn tenant_features_read(
+    state: &AppState,
+    tenant_id: &Uuid,
+) -> Result<serde_json::Map<String, serde_json::Value>, TopemsError> {
+    let row = sqlx::query("SELECT features FROM core_tenants WHERE id = $1 AND deleted_at IS NULL")
+        .bind(tenant_id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| TopemsError::internal("读取租户特性失败", e))?;
+    match row {
+        Some(r) => {
+            let raw: serde_json::Value = r.get("features");
+            match raw {
+                serde_json::Value::Object(m) => Ok(m),
+                serde_json::Value::Null => Ok(serde_json::Map::new()),
+                other => {
+                    tracing::warn!("[Tenant] features 非对象: {:?}", other);
+                    Ok(serde_json::Map::new())
+                }
+            }
+        }
+        // 租户不存在
+        None => Err(TopemsError::Internal("租户不存在".to_string())),
+    }
+}
+
+async fn tenant_features_write(
+    state: &AppState,
+    tenant_id: &Uuid,
+    features: &serde_json::Map<String, serde_json::Value>,
+) -> Result<(), TopemsError> {
+    let value = serde_json::Value::Object(features.clone());
+    sqlx::query(
+        "UPDATE core_tenants SET features = $2, updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(tenant_id)
+    .bind(&value)
+    .execute(&state.pool)
+    .await
+    .map_err(|e| TopemsError::internal("写入租户特性失败", e))?;
+    Ok(())
+}
+
+fn tenant_features_to_array(map: &serde_json::Map<String, serde_json::Value>) -> serde_json::Value {
+    let arr: Vec<serde_json::Value> = map
+        .iter()
+        .map(|(k, v)| serde_json::json!({ "key": k, "enabled": v }))
+        .collect();
+    serde_json::Value::Array(arr)
+}
+
+/// `GET /tenant/{id}/features`
+pub async fn get_tenant_features(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_features_read(&state, &tenant_id).await {
+        Ok(m) => Json(CoreResponse::success(
+            tenant_features_to_array(&m),
+            "Tenant features retrieved",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] get features failed: {}", e);
+            Json(CoreResponse::error("读取租户特性失败"))
+        }
+    }
+}
+
+/// `PUT /tenant/{id}/features`
+pub async fn update_tenant_features(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let map = match payload.get("features").and_then(|v| v.as_object()) {
+        Some(m) => m.clone(),
+        None => {
+            return Json(CoreResponse::error("缺少 features 字段"));
+        }
+    };
+    match tenant_features_write(&state, &tenant_id, &map).await {
+        Ok(()) => Json(CoreResponse::success(
+            tenant_features_to_array(&map),
+            "Tenant features updated",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] update features failed: {}", e);
+            Json(CoreResponse::error("写入租户特性失败"))
+        }
+    }
+}
+
+async fn tenant_features_set(
+    state: &AppState,
+    tenant_id: &Uuid,
+    feature: &str,
+    enabled: bool,
+) -> Result<serde_json::Value, TopemsError> {
+    let mut map = tenant_features_read(state, tenant_id).await?;
+    map.insert(feature.to_string(), serde_json::json!(enabled));
+    tenant_features_write(state, tenant_id, &map).await?;
+    Ok(serde_json::json!({ "feature": feature, "enabled": enabled }))
+}
+
+/// `POST /tenant/{id}/features/{feature}/enable`
+pub async fn enable_tenant_feature(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, feature)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_features_set(&state, &tenant_id, &feature, true).await {
+        Ok(v) => Json(CoreResponse::success(v, "Feature enabled")),
+        Err(e) => {
+            tracing::error!("[Tenant] enable feature failed: {}", e);
+            Json(CoreResponse::error("启用租户特性失败"))
+        }
+    }
+}
+
+/// `POST /tenant/{id}/features/{feature}/disable`
+pub async fn disable_tenant_feature(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, feature)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_features_set(&state, &tenant_id, &feature, false).await {
+        Ok(v) => Json(CoreResponse::success(v, "Feature disabled")),
+        Err(e) => {
+            tracing::error!("[Tenant] disable feature failed: {}", e);
+            Json(CoreResponse::error("禁用租户特性失败"))
+        }
+    }
+}
