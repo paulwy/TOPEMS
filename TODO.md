@@ -3275,3 +3275,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.62（2026-10-23）**：每日 collect 定时闭环验证（01:47 采集 31 租户、api_calls 2584 真实增长）；hidden-500 扩展域扫无残余；契约台账基线刷新 10-23（2653/6336/0）。
 
 > **系统完善 v1.63（2026-10-23）**：crm/ehs 补扫确认（8 端点无 hidden-500）+ 日志终扫（19:49 后无 ERROR）+ RLS 复验（基线保持）。
+
+> **系统完善 v1.64（2026-10-23）**：剩余域 body 扫发现 mes/teams hidden-500（work_stations 缺表）→ 补建修复；P4 探针扩至 7 端点；核心闭环域表全有（151 缺表为未挂载扩展域不建）。

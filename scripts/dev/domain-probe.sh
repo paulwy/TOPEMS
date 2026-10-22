@@ -140,7 +140,7 @@ else
 fi
 
 # [P4] hidden-500 probe (system hardening): GET body-code check - HTTP 200 wrapping body code=500 must FAIL
-for HB in "api/wms/batches" "api/qms/quality-costs" "api/ticket/tickets" "api/srm/suppliers"; do
+for HB in "api/wms/batches" "api/qms/quality-costs" "api/ticket/tickets" "api/srm/suppliers" "api/mes/teams" "api/crm/customers" "api/ehs/hazards"; do
   HBODY="$(curl -s -m 8 "$BASE/$HB" -H "Authorization: Bearer $TOKEN" 2>/dev/null)"
   HBCODE="$(printf '%s' "$HBODY" | python3 -c 'import sys,json
 try:

@@ -441,5 +441,46 @@ ALTER TABLE wms.batches ALTER COLUMN location_id TYPE uuid USING NULLIF(location
 ALTER TABLE wms.batches ALTER COLUMN warehouse_id TYPE uuid USING NULLIF(warehouse_id::text,'')::uuid;
 ALTER TABLE wms.batches ALTER COLUMN supplier_id TYPE uuid USING NULLIF(supplier_id::text,'')::uuid;"
 echo "qms/ticket/batches 修复就绪"
+# mes.work_stations 补建（aps_scheduling/team 引用；幂等）
+psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+CREATE TABLE IF NOT EXISTS mes.work_stations (
+  id uuid NOT NULL,
+  deleted_at timestamp with time zone,
+  organization_id uuid,
+  station_no character varying,
+  station_code character varying,
+  workshop_id uuid,
+  station_name character varying NOT NULL,
+  station_type character varying,
+  description text,
+  location character varying,
+  building character varying,
+  floor character varying,
+  area character varying,
+  capacity integer,
+  current_load integer,
+  efficiency_percentage numeric,
+  supervisor character varying,
+  supervisor_id uuid,
+  team character varying,
+  equipment_id uuid,
+  process_id uuid,
+  equipment_ids jsonb,
+  available_skills jsonb,
+  available_tools jsonb,
+  status character varying NOT NULL,
+  last_maintenance_date date,
+  next_maintenance_date date,
+  maintenance_frequency_days integer,
+  operating_hours jsonb,
+  notes text,
+  created_at timestamp with time zone NOT NULL,
+  updated_at timestamp with time zone NOT NULL,
+  created_by uuid,
+  updated_by uuid,
+  tenant_id uuid,
+  name character varying
+);"
+echo "mes.work_stations 就绪"
 
 
