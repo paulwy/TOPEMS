@@ -194,27 +194,29 @@ health_checks() {
 functional_checks() {
     log_info "执行功能验证..."
 
-    # AI 服务端点
+    # 核心契约端点（2026-10-22 更新：旧 /dsh/agent、/ai/copilot 等路径已下线/改指，
+    # 换为当前契约面真实路由；401=路由存在需认证视为 pass）
     local endpoints=(
-        "/dsh/agent/tools"
-        "/dsh/agent/active-sessions"
-        "/ai/copilot/modules"
-        "/ai/forms/templates"
-        "/ai/documents/types"
-        "/ai/governance/stats"
+        "/api/core/iam/users"
+        "/api/core/iam/users/me"
+        "/api/ai/dsh/governance/risk"
+        "/api/core/system/api-keys"
+        "/api/master-data/dict/dict-types"
+        "/api/ehs/hazards"
     )
 
     for endpoint in "${endpoints[@]}"; do
         local response
         response=$(http_get "${BASE_URL}${endpoint}" 10)
-        local http_code
-        http_code=$(echo "$response" | tail -2 | head -1)
-        if [ "$http_code" = "200" ]; then
-            record_check "functional" "端点 $endpoint" "pass" "HTTP $http_code"
-        elif [ "$http_code" = "401" ] || [ "$http_code" = "403" ]; then
-            record_check "functional" "端点 $endpoint" "pass" "需要认证（HTTP $http_code）"
+        local resp_code="000"
+        resp_code=$(echo "$response" | tail -2 | head -1 || true)
+        resp_code="${resp_code:-000}"
+        if [ "$resp_code" = "200" ]; then
+            record_check "functional" "端点 $endpoint" "pass" "HTTP 200"
+        elif [ "$resp_code" = "401" ] || [ "$resp_code" = "403" ]; then
+            record_check "functional" "端点 $endpoint" "pass" "需要认证（HTTP 401/403）"
         else
-            record_check "functional" "端点 $endpoint" "warn" "HTTP $http_code"
+            record_check "functional" "端点 $endpoint" "warn" "HTTP $resp_code"
         fi
     done
 
