@@ -94,3 +94,150 @@ BEGIN
   END IF;
 END \$\$;"
 echo "core_files RLS 租户隔离就绪"
+# mobile 域补表自愈（契约冒烟 114 端点修复：oa 日程/公告 + push 列 + mes 生产表；幂等）
+psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+CREATE TABLE IF NOT EXISTS mobile.oa_calendar_events (
+  id UUID PRIMARY KEY, tenant_id UUID NOT NULL, title TEXT, description TEXT,
+  type TEXT DEFAULT 'reminder', start_time TIMESTAMPTZ NOT NULL, end_time TIMESTAMPTZ,
+  all_day BOOLEAN DEFAULT FALSE, location TEXT, is_reminder BOOLEAN DEFAULT FALSE,
+  reminder_minutes INTEGER, color TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS mobile.oa_announcements (
+  id UUID PRIMARY KEY, tenant_id UUID NOT NULL, title TEXT, content TEXT,
+  priority TEXT DEFAULT 'normal', author TEXT, author_name TEXT,
+  published_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE mobile.push_notifications ADD COLUMN IF NOT EXISTS user_id UUID;
+ALTER TABLE mobile.push_notifications ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ;
+DROP INDEX IF EXISTS mobile.uq_push_devices_token;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_push_devices_token ON mobile.push_devices(device_token);
+ALTER TABLE mobile.push_devices ALTER COLUMN app_version DROP NOT NULL;
+ALTER TABLE mobile.push_devices ALTER COLUMN os_version DROP NOT NULL;
+ALTER TABLE mobile.push_devices ALTER COLUMN device_model DROP NOT NULL;
+CREATE SCHEMA IF NOT EXISTS mes;"
+echo "mobile 域核心补表就绪"
+psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+CREATE TABLE IF NOT EXISTS mes.production_orders (
+  id uuid NOT NULL,
+  deleted_at timestamp with time zone,
+  organization_id uuid,
+  order_number character varying NOT NULL,
+  order_type character varying,
+  product_name character varying NOT NULL,
+  product_code character varying NOT NULL,
+  product_specification text,
+  batch_number character varying,
+  quantity bigint NOT NULL,
+  unit character varying,
+  planned_quantity integer,
+  completed_quantity bigint,
+  rejected_quantity integer,
+  scrapped_quantity integer,
+  priority character varying,
+  status character varying NOT NULL,
+  progress_percentage integer,
+  planned_start_date date,
+  planned_end_date date,
+  actual_start_date date,
+  actual_end_date date,
+  estimated_duration_hours numeric,
+  actual_duration_hours numeric,
+  customer_id uuid,
+  customer_name character varying,
+  customer_order_number character varying,
+  sales_order_id uuid,
+  process_route_id uuid,
+  process_route_name character varying,
+  work_station_id uuid,
+  work_station_name character varying,
+  assigned_to character varying,
+  assigned_to_id uuid,
+  team character varying,
+  material_requirements jsonb,
+  tool_requirements jsonb,
+  quality_requirements jsonb,
+  special_instructions text,
+  notes text,
+  created_at timestamp with time zone NOT NULL,
+  updated_at timestamp with time zone NOT NULL,
+  created_by uuid,
+  updated_by uuid,
+  tenant_id uuid,
+  source_order_id uuid,
+  source_order_number character varying,
+  workshop_id uuid,
+  product_name_en character varying,
+  order_no character varying NOT NULL,
+  product_id uuid,
+  source character varying,
+  qualified_quantity bigint
+);
+CREATE TABLE IF NOT EXISTS mes.equipment (
+  id uuid NOT NULL,
+  deleted_at timestamp with time zone,
+  organization_id uuid NOT NULL,
+  equipment_code character varying NOT NULL,
+  equipment_name character varying NOT NULL,
+  equipment_type character varying,
+  category character varying,
+  model character varying,
+  brand character varying,
+  serial_number character varying,
+  specification text,
+  manufacturer character varying,
+  manufacture_date date,
+  purchase_date date,
+  installation_date date,
+  location character varying,
+  building character varying,
+  floor character varying,
+  area character varying,
+  work_station_id uuid,
+  responsible_person character varying,
+  responsible_person_id uuid,
+  department character varying,
+  purchase_price numeric,
+  current_value numeric,
+  depreciation_rate numeric,
+  warranty_expiry_date date,
+  power_consumption numeric,
+  capacity character varying,
+  max_capacity numeric,
+  current_capacity numeric,
+  efficiency_percentage numeric,
+  availability_percentage numeric,
+  performance_percentage numeric,
+  quality_percentage numeric,
+  oee_percentage numeric,
+  status character varying NOT NULL,
+  operating_status character varying,
+  last_inspection_date date,
+  next_inspection_date date,
+  last_maintenance_date date,
+  next_maintenance_date date,
+  maintenance_frequency_days integer,
+  total_operating_hours numeric,
+  total_maintenance_count integer,
+  total_failure_count integer,
+  last_failure_date date,
+  failure_description text,
+  operating_hours jsonb,
+  maintenance_history jsonb,
+  inspection_history jsonb,
+  failure_history jsonb,
+  notes text,
+  attachments jsonb,
+  created_at timestamp with time zone NOT NULL,
+  updated_at timestamp with time zone NOT NULL,
+  created_by uuid,
+  updated_by uuid,
+  tenant_id uuid,
+  description text NOT NULL,
+  equipment_no text,
+  equipment_name_en character varying,
+  maintenance_cycle integer,
+  name character varying,
+  warranty_end_date date
+);"
+echo "mes 生产表就绪（equipment/production_orders）"
+

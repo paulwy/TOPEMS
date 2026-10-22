@@ -997,6 +997,86 @@ pub async fn delete_material_category(
     Json(ApiResponse::success((), "危险品分类删除成功"))
 }
 
+/// 解析请求租户：超管 → nil UUID；否则取 claims.tenant_id。
+fn resolve_material_tenant(claims: &Claims) -> uuid::Uuid {
+    if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }
+}
+
+/// qa_ehs_hazardous_materials 行 → HazardousMaterial（jsonb 字段宽容解析）
+fn material_from_row(r: &sqlx::postgres::PgRow) -> HazardousMaterial {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let hazards: Option<serde_json::Value> = r.try_get("hazards").ok().flatten();
+    let hazards = hazards.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|x| x.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    HazardousMaterial {
+        id: r.try_get("id").unwrap_or_default(),
+        material_no: r.try_get("material_no").unwrap_or_default(),
+        name: r.try_get("name").unwrap_or_default(),
+        category: r.try_get("category").unwrap_or_default(),
+        hazard_class: r.try_get("hazard_class").ok().flatten(),
+        un_number: r.try_get("un_number").ok().flatten(),
+        cas_no: r.try_get("cas_no").ok().flatten(),
+        specification: r.try_get("specification").ok().flatten(),
+        unit: r.try_get("unit").ok().flatten(),
+        description: r.try_get("description").ok().flatten(),
+        hazards,
+        storage_requirements: r.try_get("storage_requirements").ok().flatten(),
+        handling_requirements: r.try_get("handling_requirements").ok().flatten(),
+        emergency_measures: r.try_get("emergency_measures").ok().flatten(),
+        msds_url: r.try_get("msds_url").ok().flatten(),
+        status: r.try_get("status").unwrap_or_else(|_| "active".to_string()),
+        created_at: r.try_get::<String, _>("created_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
+}
+
+/// qa_ehs_msds 行 → MsdsData（file_url 表无来源恒 None，created_at 用 updated_at 兼容）
+fn msds_from_row(r: &sqlx::postgres::PgRow) -> MsdsData {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    MsdsData {
+        id: r.try_get("id").unwrap_or_default(),
+        material_id: r.try_get("material_id").unwrap_or_default(),
+        material_name: r.try_get("material_name").unwrap_or_default(),
+        version: r.try_get("version").ok().flatten(),
+        product_name: r.try_get("product_name").ok().flatten(),
+        manufacturer: r.try_get("manufacturer").ok().flatten(),
+        emergency_phone: r.try_get("emergency_phone").ok().flatten(),
+        hazard_identification: r.try_get("hazard_identification").ok().flatten(),
+        composition_info: r.try_get("composition_info").ok().flatten(),
+        first_aid_measures: r.try_get("first_aid_measures").ok().flatten(),
+        fire_fighting_measures: r.try_get("fire_fighting_measures").ok().flatten(),
+        accidental_release_measures: r.try_get("accidental_release_measures").ok().flatten(),
+        handling_and_storage: r.try_get("handling_and_storage").ok().flatten(),
+        exposure_controls: r.try_get("exposure_controls").ok().flatten(),
+        physical_chemical_properties: r.try_get("physical_chemical_properties").ok().flatten(),
+        reactivity_info: r.try_get("reactivity_info").ok().flatten(),
+        toxicological_info: r.try_get("toxicological_info").ok().flatten(),
+        ecological_info: r.try_get("ecological_info").ok().flatten(),
+        disposal_considerations: r.try_get("disposal_considerations").ok().flatten(),
+        transport_info: r.try_get("transport_info").ok().flatten(),
+        regulatory_info: r.try_get("regulatory_info").ok().flatten(),
+        other_info: r.try_get("other_info").ok().flatten(),
+        file_url: None,
+        created_at: r.try_get::<String, _>("updated_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1143,85 +1223,5 @@ mod tests {
     fn test_storage_incompatible_oxidizer_flammable() {
         assert!(!storage_compatibility(&["氧化", "易燃"]));
         assert!(!storage_compatibility(&["oxidizer", "flammable"]));
-    }
-}
-
-/// 解析请求租户：超管 → nil UUID；否则取 claims.tenant_id。
-fn resolve_material_tenant(claims: &Claims) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }
-}
-
-/// qa_ehs_hazardous_materials 行 → HazardousMaterial（jsonb 字段宽容解析）
-fn material_from_row(r: &sqlx::postgres::PgRow) -> HazardousMaterial {
-    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
-    let hazards: Option<serde_json::Value> = r.try_get("hazards").ok().flatten();
-    let hazards = hazards.and_then(|v| {
-        v.as_array().map(|arr| {
-            arr.iter()
-                .filter_map(|e| e.as_str().map(|x| x.to_string()))
-                .collect::<Vec<String>>()
-        })
-    });
-    HazardousMaterial {
-        id: r.try_get("id").unwrap_or_default(),
-        material_no: r.try_get("material_no").unwrap_or_default(),
-        name: r.try_get("name").unwrap_or_default(),
-        category: r.try_get("category").unwrap_or_default(),
-        hazard_class: r.try_get("hazard_class").ok().flatten(),
-        un_number: r.try_get("un_number").ok().flatten(),
-        cas_no: r.try_get("cas_no").ok().flatten(),
-        specification: r.try_get("specification").ok().flatten(),
-        unit: r.try_get("unit").ok().flatten(),
-        description: r.try_get("description").ok().flatten(),
-        hazards,
-        storage_requirements: r.try_get("storage_requirements").ok().flatten(),
-        handling_requirements: r.try_get("handling_requirements").ok().flatten(),
-        emergency_measures: r.try_get("emergency_measures").ok().flatten(),
-        msds_url: r.try_get("msds_url").ok().flatten(),
-        status: r.try_get("status").unwrap_or_else(|_| "active".to_string()),
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
-        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
-    }
-}
-
-/// qa_ehs_msds 行 → MsdsData（file_url 表无来源恒 None，created_at 用 updated_at 兼容）
-fn msds_from_row(r: &sqlx::postgres::PgRow) -> MsdsData {
-    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
-    MsdsData {
-        id: r.try_get("id").unwrap_or_default(),
-        material_id: r.try_get("material_id").unwrap_or_default(),
-        material_name: r.try_get("material_name").unwrap_or_default(),
-        version: r.try_get("version").ok().flatten(),
-        product_name: r.try_get("product_name").ok().flatten(),
-        manufacturer: r.try_get("manufacturer").ok().flatten(),
-        emergency_phone: r.try_get("emergency_phone").ok().flatten(),
-        hazard_identification: r.try_get("hazard_identification").ok().flatten(),
-        composition_info: r.try_get("composition_info").ok().flatten(),
-        first_aid_measures: r.try_get("first_aid_measures").ok().flatten(),
-        fire_fighting_measures: r.try_get("fire_fighting_measures").ok().flatten(),
-        accidental_release_measures: r.try_get("accidental_release_measures").ok().flatten(),
-        handling_and_storage: r.try_get("handling_and_storage").ok().flatten(),
-        exposure_controls: r.try_get("exposure_controls").ok().flatten(),
-        physical_chemical_properties: r.try_get("physical_chemical_properties").ok().flatten(),
-        reactivity_info: r.try_get("reactivity_info").ok().flatten(),
-        toxicological_info: r.try_get("toxicological_info").ok().flatten(),
-        ecological_info: r.try_get("ecological_info").ok().flatten(),
-        disposal_considerations: r.try_get("disposal_considerations").ok().flatten(),
-        transport_info: r.try_get("transport_info").ok().flatten(),
-        regulatory_info: r.try_get("regulatory_info").ok().flatten(),
-        other_info: r.try_get("other_info").ok().flatten(),
-        file_url: None,
-        created_at: r.try_get::<String, _>("updated_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
-        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }

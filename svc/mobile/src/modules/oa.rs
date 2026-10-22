@@ -185,7 +185,7 @@ pub async fn list_meetings(
          AND ($2::text IS NULL OR status = $2) \
          ORDER BY start_time DESC LIMIT $3 OFFSET $4"
     ))
-    .bind(&tid)
+    .bind(tid)
     .bind(q.status)
     .bind(page_size)
     .bind(offset)
@@ -197,7 +197,7 @@ pub async fn list_meetings(
                 "mobile",
                 "SELECT COUNT(*) FROM mobile.oa_meetings WHERE tenant_id = $1"
             ))
-            .bind(&tid)
+            .bind(tid)
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
@@ -263,7 +263,7 @@ pub async fn create_meeting(
          VALUES ($1,$2,$3,$4,$5,'scheduled',$6,$7,$8,$9,$10,NOW(),NOW()) RETURNING *"
     ))
     .bind(id)
-    .bind(&tid)
+    .bind(tid)
     .bind(&req.title)
     .bind(req.description)
     .bind(req.r#type.unwrap_or_else(|| "internal".to_string()))
@@ -418,7 +418,7 @@ pub async fn list_calendar_events(
         "mobile",
         "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 ORDER BY start_time DESC LIMIT 100"
     ))
-    .bind(&tid)
+    .bind(tid)
     .fetch_all(&pool)
     .await
     {
@@ -439,7 +439,7 @@ async fn fetch_events_in_range(
         "mobile",
         "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 AND start_time >= $2 AND start_time < $3 ORDER BY start_time ASC"
     ))
-    .bind(&tid)
+    .bind(tid)
     .bind(start)
     .bind(end)
     .fetch_all(pool)
@@ -456,7 +456,7 @@ pub async fn get_schedule_event(
         "mobile",
         "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 AND id = $2"
     ))
-    .bind(&tid)
+    .bind(tid)
     .bind(id)
     .fetch_optional(&pool)
     .await
@@ -579,7 +579,7 @@ pub async fn list_my_events(
              AND ($3::text = '' OR start_time::date <= $3::date)
              ORDER BY start_time DESC LIMIT $4 OFFSET $5"
         ))
-        .bind(&tid)
+        .bind(tid)
         .bind(&start_filter)
         .bind(&end_filter)
         .bind(page_size)
@@ -619,7 +619,7 @@ pub async fn update_event_status(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
     ))
-    .bind(&tid)
+    .bind(tid)
     .bind(id)
     .execute(&pool)
     .await
@@ -643,7 +643,7 @@ pub async fn add_event_attendee(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
     ))
-    .bind(&tid)
+    .bind(tid)
     .bind(id)
     .execute(&pool)
     .await
@@ -666,7 +666,7 @@ pub async fn remove_event_attendee(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
     ))
-    .bind(&tid)
+    .bind(tid)
     .bind(id)
     .execute(&pool)
     .await
@@ -697,7 +697,7 @@ pub async fn create_calendar_event(
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW(),NOW()) RETURNING *"
     ))
     .bind(id)
-    .bind(&tid)
+    .bind(tid)
     .bind(&req.title)
     .bind(req.description)
     .bind(req.r#type.unwrap_or_else(|| "reminder".to_string()))
@@ -806,7 +806,7 @@ pub async fn list_oa_tasks(
          AND ($3::text IS NULL OR priority = $3) \
          ORDER BY created_at DESC LIMIT $4 OFFSET $5"
     ))
-    .bind(&tid)
+    .bind(tid)
     .bind(q.status)
     .bind(q.priority)
     .bind(page_size)
@@ -819,7 +819,7 @@ pub async fn list_oa_tasks(
                 "mobile",
                 "SELECT COUNT(*) FROM mobile.oa_tasks WHERE tenant_id = $1"
             ))
-            .bind(&tid)
+            .bind(tid)
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
@@ -884,7 +884,7 @@ pub async fn create_oa_task(
          VALUES ($1,$2,$3,$4,$5,'todo',$6,$7,$8,$9,NOW(),NOW()) RETURNING *"
     ))
     .bind(id)
-    .bind(&tid)
+    .bind(tid)
     .bind(&req.title)
     .bind(req.description)
     .bind(req.priority.unwrap_or_else(|| "medium".to_string()))
@@ -1012,7 +1012,7 @@ pub async fn list_announcements(
          AND ($2::text IS NULL OR priority = $2) \
          ORDER BY published_at DESC LIMIT $3 OFFSET $4"
     ))
-    .bind(&tid)
+    .bind(tid)
     .bind(q.priority)
     .bind(page_size)
     .bind(offset)
@@ -1024,7 +1024,7 @@ pub async fn list_announcements(
                 "mobile",
                 "SELECT COUNT(*) FROM mobile.oa_announcements WHERE tenant_id = $1"
             ))
-            .bind(&tid)
+            .bind(tid)
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
@@ -1115,7 +1115,7 @@ pub async fn get_oa_stats(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
         "mobile",
         "SELECT COUNT(*) FROM mobile.oa_meetings WHERE tenant_id = $1 AND start_time::date = CURRENT_DATE"
     ))
-    .bind(&tid)
+    .bind(tid)
     .fetch_one(&pool)
     .await
     .unwrap_or(0);
@@ -1123,7 +1123,7 @@ pub async fn get_oa_stats(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
         "mobile",
         "SELECT COUNT(*) FROM mobile.oa_tasks WHERE tenant_id = $1 AND status != 'completed'"
     ))
-    .bind(&tid)
+    .bind(tid)
     .fetch_one(&pool)
     .await
     .unwrap_or(0);
@@ -1131,7 +1131,7 @@ pub async fn get_oa_stats(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
         "mobile",
         "SELECT COUNT(*) FROM mobile.oa_announcements WHERE tenant_id = $1"
     ))
-    .bind(&tid)
+    .bind(tid)
     .fetch_one(&pool)
     .await
     .unwrap_or(0);

@@ -3259,3 +3259,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.54（2026-10-23）**：collect 每日定时化——新增 collect-usage-daily.sh（存活检查 + token 复用 + 采集校验 + 日志）+ crontab 每日 01:00 注册；探活写探针保留双通道。
 
 > **系统完善 v1.55（2026-10-23）**：RLS 定期验证——新增 verify-rls.sh（全量校验 + 关键抽样，缺口 0/183 表）；core_files 补 tenant_isolation 策略（租户表安全加固）；口径校准（平台级/RBAC 表豁免标注）；ensure 并入 RLS 幂等段。
+
+> **系统完善 v1.56（2026-10-23）**：clippy 全量清理（58→3，`--fix` 自动修 55 条纯样式，剩余 3 条 vendor/rsa 第三方 dead_code 无害）+ BI 面板核查（reports-center/stats connected 真实计数）。
+
+> **系统完善 v1.57（2026-10-23）**：mobile 契约 114/114 全闭环——clippy 触发 mobile-contract-smoke 暴露 6 FAIL → 补表（oa_calendar_events/announcements/push 列/唯一索引/mes 生产表）+ 脚本 base 探测（8099→8098 fallback）+ 8070 重建 + 8098 重启；ensure 并入 mobile/mes 自愈段。

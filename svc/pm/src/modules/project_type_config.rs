@@ -100,7 +100,7 @@ async fn list_types(
         "#,
     )
     .bind(&search_pattern)
-    .bind(&query.is_active)
+    .bind(query.is_active)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&pool)
@@ -117,7 +117,7 @@ async fn list_types(
                 "#,
             )
             .bind(&search_pattern)
-            .bind(&query.is_active)
+            .bind(query.is_active)
             .fetch_one(&pool)
             .await;
             let total = count_result.unwrap_or(0);
@@ -161,7 +161,7 @@ async fn create_type(
         .bind(&req.description)
         .bind(&req.default_phases)
         .bind(&req.default_milestones)
-        .bind(&req.default_workflow)
+        .bind(req.default_workflow)
         .fetch_one(&pool)
         .await;
 
@@ -242,8 +242,8 @@ async fn update_type(
     .bind(&req.description)
     .bind(&req.default_phases)
     .bind(&req.default_milestones)
-    .bind(&req.default_workflow)
-    .bind(&req.is_active)
+    .bind(req.default_workflow)
+    .bind(req.is_active)
     .fetch_optional(&pool)
     .await;
 

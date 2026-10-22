@@ -123,7 +123,7 @@ pub async fn create_connection(
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(id)
-    .bind(&tid)
+    .bind(tid)
     .bind(&req.name)
     .bind(req.r#type.unwrap_or_else(|| "custom".to_string()))
     .bind(&req.api_url)
@@ -190,7 +190,7 @@ pub async fn update_connection(
     .bind(req.isactive)
     .bind(req.status)
     .bind(id)
-    .bind(&tid)
+    .bind(tid)
     .fetch_optional(&state.pool)
     .await
     {
@@ -220,7 +220,7 @@ pub async fn delete_connection(
         "DELETE FROM erp_connections WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
-    .bind(&tid)
+    .bind(tid)
     .execute(&state.pool)
     .await
     {

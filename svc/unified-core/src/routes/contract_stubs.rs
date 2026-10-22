@@ -13,7 +13,7 @@
 //! 注意：本路由树在嵌入模式被 BFF nest 到 /api/core 之下，故路径一律相对根（不带 /api/core）。
 
 use axum::extract::State;
-use axum::routing::{delete, get, post, put};
+use axum::routing::{delete, get};
 use axum::{Json, Router};
 
 use crate::AppState;

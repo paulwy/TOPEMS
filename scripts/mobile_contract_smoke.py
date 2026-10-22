@@ -21,7 +21,18 @@ import urllib.request
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 API_DIR = os.path.join(BASE, "apps", "mobile", "src", "api")
-MOBILE_URL = "http://localhost:8099/api/mobile"
+# base 探测：8099（生产 monolith 入口）优先，本机 dev 态 8098（unified-core BFF）fallback
+def _probe_base() -> str:
+    for port in (8099, 8098):
+        try:
+            with urllib.request.urlopen(f"http://localhost:{port}/health", timeout=2) as r:
+                if r.status == 200:
+                    return f"http://localhost:{port}/api/mobile"
+        except Exception:
+            continue
+    return "http://localhost:8099/api/mobile"
+
+MOBILE_URL = _probe_base()
 TEST_UID = "e91e2228-ab9d-4ac3-99f4-fdcd9c723f21"
 TEST_UUID = "00000000-0000-0000-0000-000000000099"
 
