@@ -670,7 +670,11 @@ const FinanceVoucherPage: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false} autoTitle={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+      autoTitle={false}
+    >
       <Box
         sx={{
           bgcolor: 'background.paper',

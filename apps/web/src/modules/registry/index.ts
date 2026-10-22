@@ -23,7 +23,9 @@ export type { ModuleConfig, ModuleRoute };
  *   判断依据：component 源码字符串含 `topems_core/pages` 即远程导入。
  */
 const isMFMode = () => {
-  const mode = (typeof import.meta !== 'undefined' ? import.meta.env?.VITE_DEPLOYMENT_MODE : undefined) as string | undefined;
+  const mode = (
+    typeof import.meta !== 'undefined' ? import.meta.env?.VITE_DEPLOYMENT_MODE : undefined
+  ) as string | undefined;
   if (mode) return mode !== 'static';
   return false;
 };

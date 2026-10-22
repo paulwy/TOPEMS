@@ -181,7 +181,12 @@ const AppRoutes: React.FC = () => {
         {/* G10 修复：/settings 旧路径重定向到 /system/settings（顶栏"系统设置"现指向后者） */}
         <Route
           path='/settings'
-          element={<Navigate to={DASHBOARD_PATHS.systemSettings} replace />}
+          element={
+            <Navigate
+              to={DASHBOARD_PATHS.systemSettings}
+              replace
+            />
+          }
         />
         <Route
           path='/redesign-demo'

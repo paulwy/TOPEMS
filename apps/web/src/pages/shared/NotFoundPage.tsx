@@ -211,9 +211,9 @@ const NotFoundPage: React.FC = () => {
                         >
                           {i18n.t(mod.nameKey || mod.name)}
                         </Typography>
-                        {/* G10 修复：description 与模块名渲染文本相同（或为空）时不显示，
-                            避免"身份管理 身份管理"类重复两行；比较渲染后文本（name/desc
-                            可能在 i18n 加载前后被解析成 key 原文，raw 比较不可靠） */}
+                        {/* G10 fix: hide description when its rendered text equals the module
+                            name (or is empty), avoiding duplicated rows; compare rendered text
+                            (name/desc may resolve to raw keys before i18n loads) */}
                         {(() => {
                           const nameText = i18n.t(mod.nameKey || mod.name);
                           const descText = mod.description
@@ -223,8 +223,7 @@ const NotFoundPage: React.FC = () => {
                           return (
                             <Typography
                               sx={{
-                                fontSize:
-                                  designTokens.typography.fontSize.scale['0.75rem'],
+                                fontSize: designTokens.typography.fontSize.scale['0.75rem'],
                                 color: 'text.secondary',
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',

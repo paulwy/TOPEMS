@@ -85,7 +85,14 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
           aria-hidden='true'
         />
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', minWidth: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            minWidth: 0,
+          }}
+        >
           <span
             className='uppercase-label'
             style={{
