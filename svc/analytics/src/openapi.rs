@@ -32,8 +32,6 @@ use utoipa::OpenApi;
         modules::bi::dataset::get_dataset_preview,
         modules::bi::dataset::query_dataset,
         modules::bi::dataset::test_sql_query,
-        modules::bi::analysis::list_analyses,
-        modules::bi::analysis::create_analysis,
         modules::bi::analytics::get_rs_project_timeline,
         modules::bi::analytics::get_lims_sample_timeline,
         modules::bi::analytics::get_qms_quality_trend,

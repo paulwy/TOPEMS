@@ -1,6 +1,5 @@
 //! BI module - Business Intelligence
 
-pub mod analysis;
 pub mod analytics;
 pub mod chart_service;
 pub mod comparison_analysis;

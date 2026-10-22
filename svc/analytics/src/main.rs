@@ -321,9 +321,6 @@ async fn main() -> anyhow::Result<()> {
             "/widgets/{widget_id}/export",
             post(modules::bi::visualization::export_chart),
         )
-        // Analysis
-        .route("/analysis", get(modules::bi::analysis::list_analyses))
-        .route("/analysis", post(modules::bi::analysis::create_analysis))
         // Comparison Analysis
         .route(
             "/comparison-analysis",

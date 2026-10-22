@@ -268,9 +268,6 @@ pub fn create_protected_routes(app_state: AppState) -> Router {
             "/widgets/{widget_id}/fullscreen",
             get(modules::bi::visualization::get_fullscreen_chart),
         )
-        // Analysis
-        .route("/analysis", get(modules::bi::analysis::list_analyses))
-        .route("/analysis", post(modules::bi::analysis::create_analysis))
         // Comparison Analysis
         .route(
             "/comparison-analysis",
