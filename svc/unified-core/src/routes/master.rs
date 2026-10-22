@@ -70,6 +70,14 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             get(modules::tenant::handlers::get_tenant_features),
         )
         .route(
+            "/tenant/{id}/domains",
+            get(modules::tenant::handlers::get_tenant_domains),
+        )
+        .route(
+            "/tenant/{id}/email-config",
+            get(modules::tenant::handlers::get_tenant_email_config),
+        )
+        .route(
             "/tenant/context",
             get(modules::tenant::handlers::get_current_tenant_context),
         )
@@ -143,6 +151,18 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/tenant/{id}/features/{feature}/disable",
             post(modules::tenant::handlers::disable_tenant_feature),
+        )
+        .route(
+            "/tenant/{id}/domains",
+            post(modules::tenant::handlers::add_tenant_domain),
+        )
+        .route(
+            "/tenant/{id}/domains/{domain}",
+            delete(modules::tenant::handlers::remove_tenant_domain),
+        )
+        .route(
+            "/tenant/{id}/email-config",
+            put(modules::tenant::handlers::update_tenant_email_config),
         )
         .route(
             "/tenant/{id}/users/invite",

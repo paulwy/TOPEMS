@@ -1683,3 +1683,185 @@ pub async fn disable_tenant_feature(
         }
     }
 }
+
+/// 租户域名/邮件配置存储（core_tenant_settings 复用）
+const TENANT_DOMAINS_PREFIX: &str = "tenant_domains_";
+const TENANT_EMAIL_PREFIX: &str = "tenant_email_config_";
+
+async fn tenant_setting_array(
+    state: &AppState,
+    tenant_id: &Uuid,
+    prefix: &str,
+) -> Result<Vec<serde_json::Value>, TopemsError> {
+    let key = format!("{}{}", prefix, tenant_id);
+    let row = sqlx::query(
+        "SELECT setting_value FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
+    )
+    .bind(tenant_id)
+    .bind(&key)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| TopemsError::internal("读取租户域名失败", e))?;
+    match row {
+        Some(r) => {
+            let raw: String = r.get("setting_value");
+            match serde_json::from_str::<serde_json::Value>(&raw) {
+                Ok(serde_json::Value::Array(a)) => Ok(a),
+                _ => Ok(Vec::new()),
+            }
+        }
+        None => Ok(Vec::new()),
+    }
+}
+
+/// `GET /tenant/{id}/domains`
+pub async fn get_tenant_domains(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_array(&state, &tenant_id, TENANT_DOMAINS_PREFIX).await {
+        Ok(a) => Json(CoreResponse::success(
+            serde_json::Value::Array(a),
+            "Tenant domains retrieved",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] get domains failed: {}", e);
+            Json(CoreResponse::error("读取租户域名失败"))
+        }
+    }
+}
+
+/// `POST /tenant/{id}/domains`
+pub async fn add_tenant_domain(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let domain = payload.get("domain").and_then(|v| v.as_str()).unwrap_or("");
+    if domain.is_empty() {
+        return Json(CoreResponse::error("缺少 domain 字段"));
+    }
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_DOMAINS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] add domain read failed: {}", e);
+            return Json(CoreResponse::error("读取租户域名失败"));
+        }
+    };
+    if arr
+        .iter()
+        .any(|d| d.get("domain").and_then(|v| v.as_str()) == Some(domain))
+    {
+        return Json(CoreResponse::error("域名已存在"));
+    }
+    let entry = serde_json::json!({
+        "domain": domain,
+        "verified": false,
+        "created_at": chrono::Utc::now().to_rfc3339(),
+    });
+    arr.push(entry.clone());
+    let key = format!("{}{}", TENANT_DOMAINS_PREFIX, tenant_id);
+    let serialized = serde_json::to_string(&serde_json::Value::Array(arr))
+        .map_err(|e| TopemsError::internal("序列化租户域名失败", e));
+    let serialized = match serialized {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Tenant] add domain serialize failed: {}", e);
+            return Json(CoreResponse::error("写入租户域名失败"));
+        }
+    };
+    if let Err(e) = sqlx::query(
+        r#"
+        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
+        VALUES ($1, $2, $3, FALSE)
+        ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW(), deleted_at = NULL
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(&key)
+    .bind(&serialized)
+    .execute(&state.pool)
+    .await
+    {
+        tracing::error!("[Tenant] add domain write failed: {}", e);
+        return Json(CoreResponse::error("写入租户域名失败"));
+    }
+    Json(CoreResponse::success(entry, "Domain added"))
+}
+
+/// `DELETE /tenant/{id}/domains/{domain}`
+pub async fn remove_tenant_domain(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((tenant_id, domain)): Path<(Uuid, String)>,
+) -> Json<CoreResponse<String>> {
+    let mut arr = match tenant_setting_array(&state, &tenant_id, TENANT_DOMAINS_PREFIX).await {
+        Ok(a) => a,
+        Err(e) => {
+            tracing::error!("[Tenant] remove domain read failed: {}", e);
+            return Json(CoreResponse::error("读取租户域名失败"));
+        }
+    };
+    arr.retain(|d| d.get("domain").and_then(|v| v.as_str()) != Some(domain.as_str()));
+    let key = format!("{}{}", TENANT_DOMAINS_PREFIX, tenant_id);
+    let serialized = match serde_json::to_string(&serde_json::Value::Array(arr)) {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Tenant] remove domain serialize failed: {}", e);
+            return Json(CoreResponse::error("写入租户域名失败"));
+        }
+    };
+    if let Err(e) = sqlx::query(
+        r#"
+        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
+        VALUES ($1, $2, $3, FALSE)
+        ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW(), deleted_at = NULL
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(&key)
+    .bind(&serialized)
+    .execute(&state.pool)
+    .await
+    {
+        tracing::error!("[Tenant] remove domain write failed: {}", e);
+        return Json(CoreResponse::error("写入租户域名失败"));
+    }
+    Json(CoreResponse::success(domain, "Domain removed"))
+}
+
+/// `GET /tenant/{id}/email-config`
+pub async fn get_tenant_email_config(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_get(&state, &tenant_id, TENANT_EMAIL_PREFIX).await {
+        Ok(v) => Json(CoreResponse::success(v, "Tenant email config retrieved")),
+        Err(e) => {
+            tracing::error!("[Tenant] get email config failed: {}", e);
+            Json(CoreResponse::error("读取租户邮件配置失败"))
+        }
+    }
+}
+
+/// `PUT /tenant/{id}/email-config`
+pub async fn update_tenant_email_config(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_put(&state, &tenant_id, TENANT_EMAIL_PREFIX, &payload).await {
+        Ok(()) => Json(CoreResponse::success(
+            payload,
+            "Tenant email config updated",
+        )),
+        Err(e) => {
+            tracing::error!("[Tenant] update email config failed: {}", e);
+            Json(CoreResponse::error("写入租户邮件配置失败"))
+        }
+    }
+}
