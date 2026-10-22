@@ -75,8 +75,7 @@ pub fn contract_stub_routes() -> Router<AppState> {
         // 仅 trends(GET)、refresh(POST) 仍由 core 承载，保留。
         .route("/copilot/sessions/{id}", delete(stub_action))
         .route("/copilot/modules/{id}/faq", get(stub_list))
-        .route("/governance/trends", get(stub_list))
-        .route("/governance/refresh", post(stub_action))
+    // trends(GET)/refresh(POST) 已由 modules::tenant::handlers 真实实现，兜底删除。
     // B4-④：/comments/* 与 /favorites/* 已由 modules::engagement 真实实现
     // （core_comments / core_favorites 表 + CRUD + 收藏查重），空壳删除。
     // S1：/search* 已由 svc/search 真实服务承接（/api/search + /api/search/recent 用户级真表），

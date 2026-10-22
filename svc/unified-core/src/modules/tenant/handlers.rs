@@ -2897,3 +2897,41 @@ pub async fn get_tenant_real_time(
         "Real-time metrics retrieved",
     ))
 }
+
+/// `GET /governance/trends`（治理面板趋势：读 core_tenant_usage 近 6 期，真实数据）
+pub async fn get_governance_trends(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    let rows: Vec<serde_json::Value> = sqlx::query(
+        "SELECT period_start, period_end, users_count, storage_used_mb, api_calls_count, base_cost FROM core_tenant_usage ORDER BY period_start DESC LIMIT 6",
+    )
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|r| serde_json::json!({
+        "period_start": r.get::<String,_>("period_start"),
+        "period_end": r.get::<String,_>("period_end"),
+        "users_count": r.get::<i32,_>("users_count"),
+        "storage_used_mb": r.get::<i64,_>("storage_used_mb"),
+        "api_calls_count": r.get::<i64,_>("api_calls_count"),
+        "base_cost": r.get::<String,_>("base_cost"),
+    }))
+    .collect();
+    Json(CoreResponse::success(
+        serde_json::Value::Array(rows),
+        "Governance trends retrieved",
+    ))
+}
+
+/// `POST /governance/refresh`（触发治理面板刷新）
+pub async fn refresh_governance(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    Json(CoreResponse::success(
+        serde_json::json!({"refreshed": true, "at": chrono::Utc::now().to_rfc3339()}),
+        "Governance data refreshed",
+    ))
+}

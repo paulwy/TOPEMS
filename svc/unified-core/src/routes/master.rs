@@ -138,6 +138,10 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             get(modules::tenant::handlers::get_tenant_real_time),
         )
         .route(
+            "/governance/trends",
+            get(modules::tenant::handlers::get_governance_trends),
+        )
+        .route(
             "/tenant/{id}/security/audit-logs",
             get(modules::tenant::handlers::list_tenant_audit_logs),
         )
@@ -315,6 +319,10 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/tenant/{id}/billing/card",
             delete(modules::tenant::handlers::remove_tenant_card),
+        )
+        .route(
+            "/governance/refresh",
+            post(modules::tenant::handlers::refresh_governance),
         )
         .route(
             "/tenant/{id}/security/sessions/revoke-all",
