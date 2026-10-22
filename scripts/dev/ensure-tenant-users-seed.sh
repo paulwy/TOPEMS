@@ -16,3 +16,24 @@ SELECT gen_random_uuid(), '${TENANT_ID}', m.code, m.name, 'enterprise', true, NO
 FROM (VALUES ('iam','身份与权限'),('crm','客户管理'),('mes','生产执行'),('erp','企业资源'),('bi','商业智能')) AS m(code,name)
 ON CONFLICT DO NOTHING;"
 echo "core_tenant_modules 种子就绪（tenant ${TENANT_ID}）"
+# core_audit_logs 表自愈（请求审计中间件写库依赖；幂等）
+psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+CREATE TABLE IF NOT EXISTS public.core_audit_logs (
+    id UUID PRIMARY KEY,
+    action VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(100) NOT NULL,
+    entity_id UUID,
+    entity_ids JSONB,
+    user_id TEXT,
+    user_name TEXT,
+    request_details JSONB,
+    response_details JSONB,
+    status VARCHAR(20) NOT NULL DEFAULT 'success',
+    error_message TEXT,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_core_audit_logs_time ON public.core_audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_core_audit_logs_user ON public.core_audit_logs(user_id);"
+echo "core_audit_logs 表就绪（请求审计写库）"

@@ -2813,40 +2813,84 @@ pub async fn get_tenant_api_usage(
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
+    // 真实数据源：core_audit_logs（请求审计中间件写入）按租户成员反查聚合
     let total: i64 = sqlx::query(
-        "SELECT COALESCE(SUM(api_calls_count), 0)::bigint AS total FROM core_tenant_usage WHERE tenant_id = $1",
+        "SELECT COUNT(*)::bigint AS total FROM core_audit_logs a
+         JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = $1
+         WHERE a.created_at >= date_trunc('month', now())",
     )
     .bind(tenant_id)
     .fetch_one(&state.pool)
     .await
     .map(|r| r.get::<i64, _>("total"))
     .unwrap_or(0);
+    let breakdown: Vec<serde_json::Value> = sqlx::query(
+        "SELECT action, COUNT(*)::bigint AS cnt FROM core_audit_logs a
+         JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = $1
+         WHERE a.created_at >= date_trunc('month', now())
+         GROUP BY action ORDER BY cnt DESC",
+    )
+    .bind(tenant_id)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|r| serde_json::json!({"action": r.get::<String, _>("action"), "count": r.get::<i64, _>("cnt")}))
+    .collect();
     Json(CoreResponse::success(
-        serde_json::json!({"total_api_calls": total, "breakdown": []}),
+        serde_json::json!({"total_api_calls": total, "breakdown": serde_json::Value::Array(breakdown)}),
         "API usage retrieved",
     ))
 }
 
 /// `GET /tenant/{id}/analytics/activity`（无活动记录表=真实空）
 pub async fn get_tenant_activity(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-    Path(_): Path<Uuid>,
+    Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
+    // 真实数据源：core_audit_logs 近 7 天按日聚合
+    let days: Vec<serde_json::Value> = sqlx::query(
+        "SELECT to_char(date_trunc('day', a.created_at), 'YYYY-MM-DD') AS day, COUNT(*)::bigint AS cnt
+         FROM core_audit_logs a JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = $1
+         WHERE a.created_at >= now() - interval '7 days'
+         GROUP BY 1 ORDER BY 1",
+    )
+    .bind(tenant_id)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|r| serde_json::json!({"date": r.get::<String, _>("day"), "count": r.get::<i64, _>("cnt")}))
+    .collect();
     Json(CoreResponse::success(
-        serde_json::Value::Array(vec![]),
+        serde_json::Value::Array(days),
         "Activity retrieved",
     ))
 }
 
 /// `GET /tenant/{id}/analytics/top-endpoints`（无端点统计表=真实空）
 pub async fn get_tenant_top_endpoints(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-    Path(_): Path<Uuid>,
+    Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
+    // 真实数据源：core_audit_logs 近 7 天按资源类型聚合 TOP 10（中间件无完整 path，entity_type 为资源段）
+    let eps: Vec<serde_json::Value> = sqlx::query(
+        "SELECT entity_type, COUNT(*)::bigint AS cnt FROM core_audit_logs a
+         JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = $1
+         WHERE a.created_at >= now() - interval '7 days'
+         GROUP BY entity_type ORDER BY cnt DESC LIMIT 10",
+    )
+    .bind(tenant_id)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|r| serde_json::json!({"endpoint": r.get::<String, _>("entity_type"), "count": r.get::<i64, _>("cnt")}))
+    .collect();
     Json(CoreResponse::success(
-        serde_json::Value::Array(vec![]),
+        serde_json::Value::Array(eps),
         "Top endpoints retrieved",
     ))
 }
@@ -2887,11 +2931,21 @@ pub async fn get_tenant_real_time(
     .await
     .map(|r| r.get::<i64,_>("count"))
     .unwrap_or(0);
+    let requests_last_minute: i64 = sqlx::query(
+        "SELECT COUNT(*)::bigint AS cnt FROM core_audit_logs a
+         JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = $1
+         WHERE a.created_at >= now() - interval '60 seconds'",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await
+    .map(|r| r.get::<i64, _>("cnt"))
+    .unwrap_or(0);
     Json(CoreResponse::success(
         serde_json::json!({
             "active_users": active,
-            "online_now": 0,
-            "requests_last_minute": 0,
+            "online_now": active,
+            "requests_last_minute": requests_last_minute,
             "timestamp": chrono::Utc::now().to_rfc3339(),
         }),
         "Real-time metrics retrieved",
@@ -2946,14 +3000,17 @@ pub async fn collect_tenant_usage(
         r#"INSERT INTO core_tenant_usage (id, tenant_id, users_count, storage_used_mb, api_calls_count, period_start, period_end, base_cost)
         SELECT gen_random_uuid(), t.id,
                (SELECT COUNT(*) FROM core_tenant_users u WHERE u.tenant_id = t.id AND u.deleted_at IS NULL),
-               0, 0,
+               0,
+               (SELECT COUNT(*) FROM core_audit_logs a JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = t.id
+                WHERE a.created_at >= date_trunc('month', now())),
                date_trunc('month', CURRENT_DATE)::date,
                (date_trunc('month', CURRENT_DATE) + interval '1 month' - interval '1 day')::date,
                0
         FROM core_tenants t
         WHERE t.deleted_at IS NULL AND t.status = 'active'
         ON CONFLICT (tenant_id, period_start) DO UPDATE SET
-          users_count = EXCLUDED.users_count"#,
+          users_count = EXCLUDED.users_count,
+          api_calls_count = EXCLUDED.api_calls_count"#,
     )
     .execute(&state.pool)
     .await;

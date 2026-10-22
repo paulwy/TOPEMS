@@ -3247,3 +3247,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善续批 v1.48（2026-10-22）**：**hrm 主数据最小种子**——ensure-tenant-users-seed.sh（iam.users→core_tenant_users 幂等），collect 后 users_count=2 真实非 0（usage/overview/user-stats 全验证）；**契约台账自动同步**——sync-contract-ledger.py（gate 三数→台账基线行，幂等）。
 
 > **系统完善 v1.49（2026-10-22）**：core_tenant_modules 种子并入 ensure 脚本（首租户 5 模块）——overview active_modules=5 真实化；全量探活 0 5xx + USAGE_COLLECT_OK。
+
+> **系统完善 v1.50（2026-10-22）**：API 请求计数闭环——core_audit_logs 补表（中间件写库静默失败根因）+ analytics 4 面板聚合真实化（api-usage 19/activity/top-endpoints/real-time 9）+ collect api_calls_count 真实化（usage 读回 25）+ NULLIF user_id 修 6 处。
