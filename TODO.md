@@ -3303,3 +3303,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.76（2026-10-23）**：双表统一第五批——112 张 0 行冗余版清理（PROT 版保留：bi.analytics_dashboards/finance.core_finance_*/core.core_plugin_*/ticket.core_ticket_*/mes.batch_records 等）；145→34 组（剩余为设计性多 schema：audit_logs/qa_ehs 双版/schema_defense_ledger 等）；探活 OK + gate 保持。
 
 > **系统完善 v1.77（2026-10-23）**：收口终验快照——gate/探活/RLS/mobile/BFF 全绿，collect 6071 持续增长；lefthook 探活门禁已并入（Gate DP）；本机可闭环项全收口，剩余为外部依赖（生产机/长期观测/CI 环境/排期项）。
+
+> **系统完善 v1.78（2026-10-23）**：DDL 基准口径统一——rebuild_orphan_tables.sql iam/mes.core_* 154 处按实际映射归位（core_plugin→core、core_ticket→ticket、其余→public）；validate 0 Error + gate 保持；v1.70 观察项闭环。

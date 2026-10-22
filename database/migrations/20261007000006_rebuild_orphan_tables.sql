@@ -518,7 +518,7 @@ CREATE TABLE IF NOT EXISTS flow.approvals (
 );
 
 
-CREATE TABLE IF NOT EXISTS iam.core_billing_invoices (
+CREATE TABLE IF NOT EXISTS public.core_billing_invoices (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     subscription_id uuid,
@@ -539,7 +539,7 @@ CREATE TABLE IF NOT EXISTS iam.core_billing_invoices (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_billing_plans (
+CREATE TABLE IF NOT EXISTS public.core_billing_plans (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     code character varying(64) NOT NULL,
     name character varying(128) NOT NULL,
@@ -562,7 +562,7 @@ CREATE TABLE IF NOT EXISTS iam.core_billing_plans (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_chat_members (
+CREATE TABLE IF NOT EXISTS public.core_chat_members (
     room_id uuid NOT NULL,
     user_id uuid NOT NULL,
     role character varying(32) DEFAULT 'member'::character varying,
@@ -570,7 +570,7 @@ CREATE TABLE IF NOT EXISTS iam.core_chat_members (
     joined_at timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_chat_messages (
+CREATE TABLE IF NOT EXISTS public.core_chat_messages (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     room_id uuid NOT NULL,
     sender_id uuid NOT NULL,
@@ -584,7 +584,7 @@ CREATE TABLE IF NOT EXISTS iam.core_chat_messages (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_chat_rooms (
+CREATE TABLE IF NOT EXISTS public.core_chat_rooms (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128),
     room_type character varying(32) DEFAULT 'private'::character varying,
@@ -595,7 +595,7 @@ CREATE TABLE IF NOT EXISTS iam.core_chat_rooms (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_dashboard_refresh_log (
+CREATE TABLE IF NOT EXISTS public.core_dashboard_refresh_log (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     module character varying(64) NOT NULL,
     tenant_id uuid NOT NULL,
@@ -608,7 +608,7 @@ CREATE TABLE IF NOT EXISTS iam.core_dashboard_refresh_log (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_dict_items (
+CREATE TABLE IF NOT EXISTS public.core_dict_items (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     dict_type_id uuid NOT NULL,
     code character varying(100) NOT NULL,
@@ -624,7 +624,7 @@ CREATE TABLE IF NOT EXISTS iam.core_dict_items (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_dict_types (
+CREATE TABLE IF NOT EXISTS public.core_dict_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     code character varying(100) NOT NULL,
     name character varying(200) NOT NULL,
@@ -637,7 +637,7 @@ CREATE TABLE IF NOT EXISTS iam.core_dict_types (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_email_queue (
+CREATE TABLE IF NOT EXISTS public.core_email_queue (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     from_email character varying(256) NOT NULL,
     to_email character varying(256) NOT NULL,
@@ -657,7 +657,7 @@ CREATE TABLE IF NOT EXISTS iam.core_email_queue (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_email_templates (
+CREATE TABLE IF NOT EXISTS public.core_email_templates (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128) NOT NULL,
     subject_template character varying(512) NOT NULL,
@@ -669,7 +669,7 @@ CREATE TABLE IF NOT EXISTS iam.core_email_templates (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_emails (
+CREATE TABLE IF NOT EXISTS public.core_emails (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     from_email character varying(256) NOT NULL,
     to_email character varying(256) NOT NULL,
@@ -686,7 +686,7 @@ CREATE TABLE IF NOT EXISTS iam.core_emails (
     created_at timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_faqs (
+CREATE TABLE IF NOT EXISTS public.core_faqs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     question text NOT NULL,
     answer text NOT NULL,
@@ -700,7 +700,7 @@ CREATE TABLE IF NOT EXISTS iam.core_faqs (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_file_folders (
+CREATE TABLE IF NOT EXISTS public.core_file_folders (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128) NOT NULL,
     parent_id uuid,
@@ -711,7 +711,7 @@ CREATE TABLE IF NOT EXISTS iam.core_file_folders (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_files (
+CREATE TABLE IF NOT EXISTS public.core_files (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(256) NOT NULL,
     original_name character varying(256),
@@ -728,7 +728,7 @@ CREATE TABLE IF NOT EXISTS iam.core_files (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_guide_lessons (
+CREATE TABLE IF NOT EXISTS public.core_guide_lessons (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     guide_id uuid NOT NULL,
     title text NOT NULL,
@@ -741,7 +741,7 @@ CREATE TABLE IF NOT EXISTS iam.core_guide_lessons (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_guide_progress (
+CREATE TABLE IF NOT EXISTS public.core_guide_progress (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     guide_id uuid NOT NULL,
     user_id character varying(255) NOT NULL,
@@ -753,7 +753,7 @@ CREATE TABLE IF NOT EXISTS iam.core_guide_progress (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_guides (
+CREATE TABLE IF NOT EXISTS public.core_guides (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     title text NOT NULL,
     description text DEFAULT ''::text NOT NULL,
@@ -768,7 +768,7 @@ CREATE TABLE IF NOT EXISTS iam.core_guides (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_inter_module_sync (
+CREATE TABLE IF NOT EXISTS public.core_inter_module_sync (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     sync_type character varying(64) NOT NULL,
@@ -788,7 +788,7 @@ CREATE TABLE IF NOT EXISTS iam.core_inter_module_sync (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_login_logs (
+CREATE TABLE IF NOT EXISTS public.core_login_logs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     user_id uuid,
@@ -802,7 +802,7 @@ CREATE TABLE IF NOT EXISTS iam.core_login_logs (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_menu_groups (
+CREATE TABLE IF NOT EXISTS public.core_menu_groups (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     name character varying(200) NOT NULL,
@@ -815,7 +815,7 @@ CREATE TABLE IF NOT EXISTS iam.core_menu_groups (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_menus (
+CREATE TABLE IF NOT EXISTS public.core_menus (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     group_id uuid NOT NULL,
@@ -832,7 +832,7 @@ CREATE TABLE IF NOT EXISTS iam.core_menus (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_migration_history (
+CREATE TABLE IF NOT EXISTS public.core_migration_history (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_name character varying(128) NOT NULL,
     version character varying(64) NOT NULL,
@@ -847,7 +847,7 @@ CREATE TABLE IF NOT EXISTS iam.core_migration_history (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_mobile_offline_records (
+CREATE TABLE IF NOT EXISTS public.core_mobile_offline_records (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     user_id uuid NOT NULL,
@@ -863,7 +863,7 @@ CREATE TABLE IF NOT EXISTS iam.core_mobile_offline_records (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_notification_templates (
+CREATE TABLE IF NOT EXISTS public.core_notification_templates (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128) NOT NULL,
     title_template character varying(256) NOT NULL,
@@ -877,7 +877,7 @@ CREATE TABLE IF NOT EXISTS iam.core_notification_templates (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_notifications (
+CREATE TABLE IF NOT EXISTS public.core_notifications (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     title character varying(256) NOT NULL,
@@ -893,7 +893,7 @@ CREATE TABLE IF NOT EXISTS iam.core_notifications (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_permissions (
+CREATE TABLE IF NOT EXISTS public.core_permissions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     code character varying(128) NOT NULL,
     name character varying(128) NOT NULL,
@@ -904,7 +904,7 @@ CREATE TABLE IF NOT EXISTS iam.core_permissions (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_plugin_categories (
+CREATE TABLE IF NOT EXISTS core.core_plugin_categories (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(64) NOT NULL,
     code character varying(64) NOT NULL,
@@ -918,7 +918,7 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_categories (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_plugin_instances (
+CREATE TABLE IF NOT EXISTS core.core_plugin_instances (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_id uuid NOT NULL,
     runtime_url character varying(512),
@@ -932,7 +932,7 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_instances (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_plugin_permissions (
+CREATE TABLE IF NOT EXISTS core.core_plugin_permissions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_code character varying(64) NOT NULL,
     permission_code character varying(100) NOT NULL,
@@ -944,7 +944,7 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_permissions (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_plugin_pricing (
+CREATE TABLE IF NOT EXISTS core.core_plugin_pricing (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_code character varying(64) NOT NULL,
     plugin_name character varying(128) NOT NULL,
@@ -957,7 +957,7 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_pricing (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_plugin_reviews (
+CREATE TABLE IF NOT EXISTS core.core_plugin_reviews (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_id uuid NOT NULL,
     user_id uuid NOT NULL,
@@ -975,7 +975,7 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_reviews (
     CONSTRAINT core_plugin_reviews_rating_check CHECK (((rating >= 1) AND (rating <= 5)))
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_plugin_versions (
+CREATE TABLE IF NOT EXISTS core.core_plugin_versions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_id uuid NOT NULL,
     version character varying(32) NOT NULL,
@@ -990,7 +990,7 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_versions (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_plugins (
+CREATE TABLE IF NOT EXISTS core.core_plugins (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     code character varying(64) NOT NULL,
     name character varying(128) NOT NULL,
@@ -1026,13 +1026,13 @@ CREATE TABLE IF NOT EXISTS iam.core_plugins (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_role_permissions (
+CREATE TABLE IF NOT EXISTS public.core_role_permissions (
     role_id uuid NOT NULL,
     permission_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_roles (
+CREATE TABLE IF NOT EXISTS public.core_roles (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(64) NOT NULL,
     description text,
@@ -1042,7 +1042,7 @@ CREATE TABLE IF NOT EXISTS iam.core_roles (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_subscriptions (
+CREATE TABLE IF NOT EXISTS public.core_subscriptions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     plan_id uuid NOT NULL,
@@ -1058,7 +1058,7 @@ CREATE TABLE IF NOT EXISTS iam.core_subscriptions (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_tenant_modules (
+CREATE TABLE IF NOT EXISTS public.core_tenant_modules (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     module_code character varying(64) NOT NULL,
@@ -1069,7 +1069,7 @@ CREATE TABLE IF NOT EXISTS iam.core_tenant_modules (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_tenant_plugins (
+CREATE TABLE IF NOT EXISTS core.core_tenant_plugins (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     plugin_id uuid NOT NULL,
@@ -1086,7 +1086,7 @@ CREATE TABLE IF NOT EXISTS iam.core_tenant_plugins (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_tenant_settings (
+CREATE TABLE IF NOT EXISTS public.core_tenant_settings (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     setting_key character varying(128) NOT NULL,
@@ -1096,7 +1096,7 @@ CREATE TABLE IF NOT EXISTS iam.core_tenant_settings (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_tenant_usage (
+CREATE TABLE IF NOT EXISTS public.core_tenant_usage (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     users_count integer DEFAULT 0,
@@ -1112,7 +1112,7 @@ CREATE TABLE IF NOT EXISTS iam.core_tenant_usage (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_tenant_users (
+CREATE TABLE IF NOT EXISTS public.core_tenant_users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     user_id uuid NOT NULL,
@@ -1124,7 +1124,7 @@ CREATE TABLE IF NOT EXISTS iam.core_tenant_users (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_tenants (
+CREATE TABLE IF NOT EXISTS public.core_tenants (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128) NOT NULL,
     code character varying(64) NOT NULL,
@@ -1149,7 +1149,7 @@ CREATE TABLE IF NOT EXISTS iam.core_tenants (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_usage_records (
+CREATE TABLE IF NOT EXISTS public.core_usage_records (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     metric_type character varying(64) NOT NULL,
@@ -1163,13 +1163,13 @@ CREATE TABLE IF NOT EXISTS iam.core_usage_records (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_user_roles (
+CREATE TABLE IF NOT EXISTS public.core_user_roles (
     user_id uuid NOT NULL,
     role_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_users (
+CREATE TABLE IF NOT EXISTS public.core_users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     username character varying(64) NOT NULL,
     email character varying(255) NOT NULL,
@@ -1186,7 +1186,7 @@ CREATE TABLE IF NOT EXISTS iam.core_users (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_workflow_instances (
+CREATE TABLE IF NOT EXISTS public.core_workflow_instances (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     workflow_id uuid NOT NULL,
     title character varying(256) NOT NULL,
@@ -1202,7 +1202,7 @@ CREATE TABLE IF NOT EXISTS iam.core_workflow_instances (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_workflow_tasks (
+CREATE TABLE IF NOT EXISTS public.core_workflow_tasks (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     instance_id uuid NOT NULL,
     node_id character varying(64) NOT NULL,
@@ -1215,7 +1215,7 @@ CREATE TABLE IF NOT EXISTS iam.core_workflow_tasks (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam.core_workflows (
+CREATE TABLE IF NOT EXISTS public.core_workflows (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128) NOT NULL,
     description text,
@@ -1440,7 +1440,7 @@ CREATE TABLE IF NOT EXISTS mes.bom_items (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_billing_invoices (
+CREATE TABLE IF NOT EXISTS public.core_billing_invoices (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     subscription_id uuid,
@@ -1461,7 +1461,7 @@ CREATE TABLE IF NOT EXISTS mes.core_billing_invoices (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_billing_plans (
+CREATE TABLE IF NOT EXISTS public.core_billing_plans (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     code character varying(64) NOT NULL,
     name character varying(128) NOT NULL,
@@ -1484,7 +1484,7 @@ CREATE TABLE IF NOT EXISTS mes.core_billing_plans (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_chat_members (
+CREATE TABLE IF NOT EXISTS public.core_chat_members (
     room_id uuid NOT NULL,
     user_id uuid NOT NULL,
     role character varying(32) DEFAULT 'member'::character varying,
@@ -1492,7 +1492,7 @@ CREATE TABLE IF NOT EXISTS mes.core_chat_members (
     joined_at timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_chat_messages (
+CREATE TABLE IF NOT EXISTS public.core_chat_messages (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     room_id uuid NOT NULL,
     sender_id uuid NOT NULL,
@@ -1506,7 +1506,7 @@ CREATE TABLE IF NOT EXISTS mes.core_chat_messages (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_chat_rooms (
+CREATE TABLE IF NOT EXISTS public.core_chat_rooms (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128),
     room_type character varying(32) DEFAULT 'private'::character varying,
@@ -1517,7 +1517,7 @@ CREATE TABLE IF NOT EXISTS mes.core_chat_rooms (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_dashboard_refresh_log (
+CREATE TABLE IF NOT EXISTS public.core_dashboard_refresh_log (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     module character varying(64) NOT NULL,
     tenant_id uuid NOT NULL,
@@ -1530,7 +1530,7 @@ CREATE TABLE IF NOT EXISTS mes.core_dashboard_refresh_log (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_dict_items (
+CREATE TABLE IF NOT EXISTS public.core_dict_items (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     dict_type_id uuid NOT NULL,
     code character varying(100) NOT NULL,
@@ -1546,7 +1546,7 @@ CREATE TABLE IF NOT EXISTS mes.core_dict_items (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_dict_types (
+CREATE TABLE IF NOT EXISTS public.core_dict_types (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     code character varying(100) NOT NULL,
     name character varying(200) NOT NULL,
@@ -1559,7 +1559,7 @@ CREATE TABLE IF NOT EXISTS mes.core_dict_types (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_email_queue (
+CREATE TABLE IF NOT EXISTS public.core_email_queue (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     from_email text NOT NULL,
     to_email text NOT NULL,
@@ -1579,7 +1579,7 @@ CREATE TABLE IF NOT EXISTS mes.core_email_queue (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_email_templates (
+CREATE TABLE IF NOT EXISTS public.core_email_templates (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128) NOT NULL,
     subject_template character varying(512) NOT NULL,
@@ -1591,7 +1591,7 @@ CREATE TABLE IF NOT EXISTS mes.core_email_templates (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_emails (
+CREATE TABLE IF NOT EXISTS public.core_emails (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     from_email text NOT NULL,
     to_email text NOT NULL,
@@ -1608,7 +1608,7 @@ CREATE TABLE IF NOT EXISTS mes.core_emails (
     created_at timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_faqs (
+CREATE TABLE IF NOT EXISTS public.core_faqs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     question text NOT NULL,
     answer text NOT NULL,
@@ -1622,7 +1622,7 @@ CREATE TABLE IF NOT EXISTS mes.core_faqs (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_file_folders (
+CREATE TABLE IF NOT EXISTS public.core_file_folders (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128) NOT NULL,
     parent_id uuid,
@@ -1633,7 +1633,7 @@ CREATE TABLE IF NOT EXISTS mes.core_file_folders (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_files (
+CREATE TABLE IF NOT EXISTS public.core_files (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(256) NOT NULL,
     original_name character varying(256),
@@ -1650,7 +1650,7 @@ CREATE TABLE IF NOT EXISTS mes.core_files (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_guide_lessons (
+CREATE TABLE IF NOT EXISTS public.core_guide_lessons (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     guide_id uuid NOT NULL,
     title text NOT NULL,
@@ -1663,7 +1663,7 @@ CREATE TABLE IF NOT EXISTS mes.core_guide_lessons (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_guide_progress (
+CREATE TABLE IF NOT EXISTS public.core_guide_progress (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     guide_id uuid NOT NULL,
     user_id character varying(255) NOT NULL,
@@ -1675,7 +1675,7 @@ CREATE TABLE IF NOT EXISTS mes.core_guide_progress (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_guides (
+CREATE TABLE IF NOT EXISTS public.core_guides (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     title text NOT NULL,
     description text DEFAULT ''::text NOT NULL,
@@ -1690,7 +1690,7 @@ CREATE TABLE IF NOT EXISTS mes.core_guides (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_inter_module_sync (
+CREATE TABLE IF NOT EXISTS public.core_inter_module_sync (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     sync_type character varying(64) NOT NULL,
@@ -1710,7 +1710,7 @@ CREATE TABLE IF NOT EXISTS mes.core_inter_module_sync (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_login_logs (
+CREATE TABLE IF NOT EXISTS public.core_login_logs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     user_id uuid,
@@ -1724,7 +1724,7 @@ CREATE TABLE IF NOT EXISTS mes.core_login_logs (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_menu_groups (
+CREATE TABLE IF NOT EXISTS public.core_menu_groups (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     name character varying(200) NOT NULL,
@@ -1737,7 +1737,7 @@ CREATE TABLE IF NOT EXISTS mes.core_menu_groups (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_menus (
+CREATE TABLE IF NOT EXISTS public.core_menus (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     group_id uuid NOT NULL,
@@ -1754,7 +1754,7 @@ CREATE TABLE IF NOT EXISTS mes.core_menus (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_migration_history (
+CREATE TABLE IF NOT EXISTS public.core_migration_history (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_name character varying(128) NOT NULL,
     version character varying(64) NOT NULL,
@@ -1769,7 +1769,7 @@ CREATE TABLE IF NOT EXISTS mes.core_migration_history (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_mobile_offline_records (
+CREATE TABLE IF NOT EXISTS public.core_mobile_offline_records (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     user_id uuid NOT NULL,
@@ -1785,7 +1785,7 @@ CREATE TABLE IF NOT EXISTS mes.core_mobile_offline_records (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_notification_templates (
+CREATE TABLE IF NOT EXISTS public.core_notification_templates (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128) NOT NULL,
     title_template character varying(256) NOT NULL,
@@ -1799,7 +1799,7 @@ CREATE TABLE IF NOT EXISTS mes.core_notification_templates (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_notifications (
+CREATE TABLE IF NOT EXISTS public.core_notifications (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     user_id uuid NOT NULL,
     title character varying(256) NOT NULL,
@@ -1815,7 +1815,7 @@ CREATE TABLE IF NOT EXISTS mes.core_notifications (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_permissions (
+CREATE TABLE IF NOT EXISTS public.core_permissions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     code character varying(128) NOT NULL,
     name character varying(128) NOT NULL,
@@ -1826,7 +1826,7 @@ CREATE TABLE IF NOT EXISTS mes.core_permissions (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_plugin_categories (
+CREATE TABLE IF NOT EXISTS core.core_plugin_categories (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(64) NOT NULL,
     code character varying(64) NOT NULL,
@@ -1840,7 +1840,7 @@ CREATE TABLE IF NOT EXISTS mes.core_plugin_categories (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_plugin_instances (
+CREATE TABLE IF NOT EXISTS core.core_plugin_instances (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_id uuid NOT NULL,
     runtime_url character varying(512),
@@ -1854,7 +1854,7 @@ CREATE TABLE IF NOT EXISTS mes.core_plugin_instances (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_plugin_permissions (
+CREATE TABLE IF NOT EXISTS core.core_plugin_permissions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_code character varying(64) NOT NULL,
     permission_code character varying(100) NOT NULL,
@@ -1866,7 +1866,7 @@ CREATE TABLE IF NOT EXISTS mes.core_plugin_permissions (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_plugin_pricing (
+CREATE TABLE IF NOT EXISTS core.core_plugin_pricing (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_code character varying(64) NOT NULL,
     plugin_name character varying(128) NOT NULL,
@@ -1879,7 +1879,7 @@ CREATE TABLE IF NOT EXISTS mes.core_plugin_pricing (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_plugin_reviews (
+CREATE TABLE IF NOT EXISTS core.core_plugin_reviews (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_id uuid NOT NULL,
     user_id uuid NOT NULL,
@@ -1897,7 +1897,7 @@ CREATE TABLE IF NOT EXISTS mes.core_plugin_reviews (
     CONSTRAINT core_plugin_reviews_rating_check CHECK (((rating >= 1) AND (rating <= 5)))
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_plugin_versions (
+CREATE TABLE IF NOT EXISTS core.core_plugin_versions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_id uuid NOT NULL,
     version character varying(32) NOT NULL,
@@ -1912,7 +1912,7 @@ CREATE TABLE IF NOT EXISTS mes.core_plugin_versions (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_plugins (
+CREATE TABLE IF NOT EXISTS core.core_plugins (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     code character varying(64) NOT NULL,
     name character varying(128) NOT NULL,
@@ -1948,13 +1948,13 @@ CREATE TABLE IF NOT EXISTS mes.core_plugins (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_role_permissions (
+CREATE TABLE IF NOT EXISTS public.core_role_permissions (
     role_id uuid NOT NULL,
     permission_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_roles (
+CREATE TABLE IF NOT EXISTS public.core_roles (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(64) NOT NULL,
     description text,
@@ -1964,7 +1964,7 @@ CREATE TABLE IF NOT EXISTS mes.core_roles (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_subscriptions (
+CREATE TABLE IF NOT EXISTS public.core_subscriptions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     plan_id uuid NOT NULL,
@@ -1980,7 +1980,7 @@ CREATE TABLE IF NOT EXISTS mes.core_subscriptions (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_tenant_modules (
+CREATE TABLE IF NOT EXISTS public.core_tenant_modules (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     module_code character varying(64) NOT NULL,
@@ -1991,7 +1991,7 @@ CREATE TABLE IF NOT EXISTS mes.core_tenant_modules (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_tenant_plugins (
+CREATE TABLE IF NOT EXISTS core.core_tenant_plugins (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     plugin_id uuid NOT NULL,
@@ -2008,7 +2008,7 @@ CREATE TABLE IF NOT EXISTS mes.core_tenant_plugins (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_tenant_settings (
+CREATE TABLE IF NOT EXISTS public.core_tenant_settings (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     setting_key character varying(128) NOT NULL,
@@ -2018,7 +2018,7 @@ CREATE TABLE IF NOT EXISTS mes.core_tenant_settings (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_tenant_usage (
+CREATE TABLE IF NOT EXISTS public.core_tenant_usage (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     users_count integer DEFAULT 0,
@@ -2034,7 +2034,7 @@ CREATE TABLE IF NOT EXISTS mes.core_tenant_usage (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_tenant_users (
+CREATE TABLE IF NOT EXISTS public.core_tenant_users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     user_id uuid NOT NULL,
@@ -2046,7 +2046,7 @@ CREATE TABLE IF NOT EXISTS mes.core_tenant_users (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_tenants (
+CREATE TABLE IF NOT EXISTS public.core_tenants (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128) NOT NULL,
     code character varying(64) NOT NULL,
@@ -2071,7 +2071,7 @@ CREATE TABLE IF NOT EXISTS mes.core_tenants (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_usage_records (
+CREATE TABLE IF NOT EXISTS public.core_usage_records (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
     metric_type character varying(64) NOT NULL,
@@ -2085,13 +2085,13 @@ CREATE TABLE IF NOT EXISTS mes.core_usage_records (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_user_roles (
+CREATE TABLE IF NOT EXISTS public.core_user_roles (
     user_id uuid NOT NULL,
     role_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_users (
+CREATE TABLE IF NOT EXISTS public.core_users (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     username character varying(64) NOT NULL,
     email text NOT NULL,
@@ -2108,7 +2108,7 @@ CREATE TABLE IF NOT EXISTS mes.core_users (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_workflow_instances (
+CREATE TABLE IF NOT EXISTS public.core_workflow_instances (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     workflow_id uuid NOT NULL,
     title character varying(256) NOT NULL,
@@ -2124,7 +2124,7 @@ CREATE TABLE IF NOT EXISTS mes.core_workflow_instances (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_workflow_tasks (
+CREATE TABLE IF NOT EXISTS public.core_workflow_tasks (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     instance_id uuid NOT NULL,
     node_id character varying(64) NOT NULL,
@@ -2137,7 +2137,7 @@ CREATE TABLE IF NOT EXISTS mes.core_workflow_tasks (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes.core_workflows (
+CREATE TABLE IF NOT EXISTS public.core_workflows (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(128) NOT NULL,
     description text,
@@ -6735,169 +6735,169 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_subscription_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_invoices"')) THEN
-        ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_subscription_id_fkey" FOREIGN KEY (subscription_id) REFERENCES iam.core_subscriptions(id);
+        ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_subscription_id_fkey" FOREIGN KEY (subscription_id) REFERENCES public.core_subscriptions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_invoices"')) THEN
-        ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
+        ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_room_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_members"')) THEN
-        ALTER TABLE "iam"."core_chat_members" ADD CONSTRAINT "core_chat_members_room_id_fkey" FOREIGN KEY (room_id) REFERENCES iam.core_chat_rooms(id);
+        ALTER TABLE "iam"."core_chat_members" ADD CONSTRAINT "core_chat_members_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_room_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_messages"')) THEN
-        ALTER TABLE "iam"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_room_id_fkey" FOREIGN KEY (room_id) REFERENCES iam.core_chat_rooms(id);
+        ALTER TABLE "iam"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_items"')) THEN
-        ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_fkey" FOREIGN KEY (dict_type_id) REFERENCES iam.core_dict_types(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_fkey" FOREIGN KEY (dict_type_id) REFERENCES public.core_dict_types(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_parent_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_items"')) THEN
-        ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES iam.core_dict_items(id) ON DELETE SET NULL;
+        ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_dict_items(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_guide_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_lessons"')) THEN
-        ALTER TABLE "iam"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES iam.core_guides(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_progress"')) THEN
-        ALTER TABLE "iam"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES iam.core_guides(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_group_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menus"')) THEN
-        ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_group_id_fkey" FOREIGN KEY (group_id) REFERENCES iam.core_menu_groups(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.core_menu_groups(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_parent_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menus"')) THEN
-        ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES iam.core_menus(id) ON DELETE SET NULL;
+        ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_menus(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_instances"')) THEN
-        ALTER TABLE "iam"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES iam.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_reviews"')) THEN
-        ALTER TABLE "iam"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES iam.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_versions"')) THEN
-        ALTER TABLE "iam"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES iam.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_permission_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_role_permissions"')) THEN
-        ALTER TABLE "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_permission_id_fkey" FOREIGN KEY (permission_id) REFERENCES iam.core_permissions(id);
+        ALTER TABLE "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_permission_id_fkey" FOREIGN KEY (permission_id) REFERENCES public.core_permissions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_role_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_role_permissions"')) THEN
-        ALTER TABLE "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_role_id_fkey" FOREIGN KEY (role_id) REFERENCES iam.core_roles(id);
+        ALTER TABLE "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_plan_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_subscriptions"')) THEN
-        ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES iam.core_billing_plans(id);
+        ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.core_billing_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_subscriptions"')) THEN
-        ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
+        ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_modules"')) THEN
-        ALTER TABLE "iam"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
+        ALTER TABLE "iam"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_plugins"')) THEN
-        ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES iam.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_plugins"')) THEN
-        ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_settings"')) THEN
-        ALTER TABLE "iam"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
+        ALTER TABLE "iam"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_usage"')) THEN
-        ALTER TABLE "iam"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
+        ALTER TABLE "iam"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_users"')) THEN
-        ALTER TABLE "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_usage_records"')) THEN
-        ALTER TABLE "iam"."core_usage_records" ADD CONSTRAINT "core_usage_records_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
+        ALTER TABLE "iam"."core_usage_records" ADD CONSTRAINT "core_usage_records_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_role_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_user_roles"')) THEN
-        ALTER TABLE "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_role_id_fkey" FOREIGN KEY (role_id) REFERENCES iam.core_roles(id);
+        ALTER TABLE "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_user_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_user_roles"')) THEN
-        ALTER TABLE "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES iam.core_users(id);
+        ALTER TABLE "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_workflow_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflow_instances"')) THEN
-        ALTER TABLE "iam"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES iam.core_workflows(id);
+        ALTER TABLE "iam"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES public.core_workflows(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_instance_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflow_tasks"')) THEN
-        ALTER TABLE "iam"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_instance_id_fkey" FOREIGN KEY (instance_id) REFERENCES iam.core_workflow_instances(id);
+        ALTER TABLE "iam"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_instance_id_fkey" FOREIGN KEY (instance_id) REFERENCES public.core_workflow_instances(id);
     END IF;
 END $$;
 DO $$
@@ -6909,181 +6909,181 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_user_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."refresh_tokens"')) THEN
-        ALTER TABLE "iam"."refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_fkey" FOREIGN KEY (user_id) REFERENCES mes.core_users(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sessions_user_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."sessions"')) THEN
-        ALTER TABLE "iam"."sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES mes.core_users(id) ON DELETE CASCADE;
+        ALTER TABLE "iam"."sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_subscription_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
-        ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_subscription_id_fkey" FOREIGN KEY (subscription_id) REFERENCES mes.core_subscriptions(id);
+        ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_subscription_id_fkey" FOREIGN KEY (subscription_id) REFERENCES public.core_subscriptions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
-        ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+        ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_room_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_members"')) THEN
-        ALTER TABLE "mes"."core_chat_members" ADD CONSTRAINT "core_chat_members_room_id_fkey" FOREIGN KEY (room_id) REFERENCES mes.core_chat_rooms(id);
+        ALTER TABLE "mes"."core_chat_members" ADD CONSTRAINT "core_chat_members_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_room_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_messages"')) THEN
-        ALTER TABLE "mes"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_room_id_fkey" FOREIGN KEY (room_id) REFERENCES mes.core_chat_rooms(id);
+        ALTER TABLE "mes"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_items"')) THEN
-        ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_fkey" FOREIGN KEY (dict_type_id) REFERENCES mes.core_dict_types(id) ON DELETE CASCADE;
+        ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_fkey" FOREIGN KEY (dict_type_id) REFERENCES public.core_dict_types(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_parent_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_items"')) THEN
-        ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES mes.core_dict_items(id) ON DELETE SET NULL;
+        ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_dict_items(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_guide_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_lessons"')) THEN
-        ALTER TABLE "mes"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES mes.core_guides(id) ON DELETE CASCADE;
+        ALTER TABLE "mes"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_progress"')) THEN
-        ALTER TABLE "mes"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES mes.core_guides(id) ON DELETE CASCADE;
+        ALTER TABLE "mes"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_group_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menus"')) THEN
-        ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_group_id_fkey" FOREIGN KEY (group_id) REFERENCES mes.core_menu_groups(id) ON DELETE CASCADE;
+        ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.core_menu_groups(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_parent_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menus"')) THEN
-        ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES mes.core_menus(id) ON DELETE SET NULL;
+        ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_menus(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_instances"')) THEN
-        ALTER TABLE "mes"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE "mes"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_reviews"')) THEN
-        ALTER TABLE "mes"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE "mes"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_versions"')) THEN
-        ALTER TABLE "mes"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE "mes"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_permission_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_role_permissions"')) THEN
-        ALTER TABLE "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_permission_id_fkey" FOREIGN KEY (permission_id) REFERENCES mes.core_permissions(id);
+        ALTER TABLE "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_permission_id_fkey" FOREIGN KEY (permission_id) REFERENCES public.core_permissions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_role_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_role_permissions"')) THEN
-        ALTER TABLE "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_role_id_fkey" FOREIGN KEY (role_id) REFERENCES mes.core_roles(id);
+        ALTER TABLE "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_plan_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_subscriptions"')) THEN
-        ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES mes.core_billing_plans(id);
+        ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.core_billing_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_subscriptions"')) THEN
-        ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+        ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_modules"')) THEN
-        ALTER TABLE "mes"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+        ALTER TABLE "mes"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
-        ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
-        ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id) ON DELETE CASCADE;
+        ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_settings"')) THEN
-        ALTER TABLE "mes"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+        ALTER TABLE "mes"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_usage"')) THEN
-        ALTER TABLE "mes"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+        ALTER TABLE "mes"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_users"')) THEN
-        ALTER TABLE "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id) ON DELETE CASCADE;
+        ALTER TABLE "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_usage_records"')) THEN
-        ALTER TABLE "mes"."core_usage_records" ADD CONSTRAINT "core_usage_records_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+        ALTER TABLE "mes"."core_usage_records" ADD CONSTRAINT "core_usage_records_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_role_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_user_roles"')) THEN
-        ALTER TABLE "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_role_id_fkey" FOREIGN KEY (role_id) REFERENCES mes.core_roles(id);
+        ALTER TABLE "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_user_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_user_roles"')) THEN
-        ALTER TABLE "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES mes.core_users(id);
+        ALTER TABLE "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_workflow_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflow_instances"')) THEN
-        ALTER TABLE "mes"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES mes.core_workflows(id);
+        ALTER TABLE "mes"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES public.core_workflows(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_instance_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflow_tasks"')) THEN
-        ALTER TABLE "mes"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_instance_id_fkey" FOREIGN KEY (instance_id) REFERENCES mes.core_workflow_instances(id);
+        ALTER TABLE "mes"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_instance_id_fkey" FOREIGN KEY (instance_id) REFERENCES public.core_workflow_instances(id);
     END IF;
 END $$;
 DO $$
