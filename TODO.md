@@ -3245,3 +3245,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善批次 P0/P1/P2 闭环（2026-10-22，活文档 v1.47，提交 `94549a3c4`）**：**P0 usage 采集器**——新增 POST /api/core/internal/usage/collect（幂等 upsert，31 租户实跑；analytics/usage、trends、overview 出真实数据，顺修 date/base_cost 转 text 500）；**P1 吞错审计**——tenant 5 处 query_as 全列对 core_tenants 列匹配 OK（无漂移）；**P2 写探针**——domain-probe 加 USAGE_COLLECT 校验（unified-core 101 路由 0 5xx）。**nginx 2 warn 核销（v1.46，`531d0762b`）**：http2 已新式无 warn + stapling 自签假 warn（生产 cert 带 OCSP 无 warn）——本机生产验证边界已确认。
 
 > **系统完善续批 v1.48（2026-10-22）**：**hrm 主数据最小种子**——ensure-tenant-users-seed.sh（iam.users→core_tenant_users 幂等），collect 后 users_count=2 真实非 0（usage/overview/user-stats 全验证）；**契约台账自动同步**——sync-contract-ledger.py（gate 三数→台账基线行，幂等）。
+
+> **系统完善 v1.49（2026-10-22）**：core_tenant_modules 种子并入 ensure 脚本（首租户 5 模块）——overview active_modules=5 真实化；全量探活 0 5xx + USAGE_COLLECT_OK。
