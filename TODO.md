@@ -3293,3 +3293,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.71（2026-10-23）**：pdm/flow 缺列修复——public.pdm_products 补 name_en、core_workflows 补 tenant_id（双库幂等）；端点 200，无新 ERROR（v1.61 补列漏网 public 承接表，口径补录）。
 
 > **系统完善 v1.72（2026-10-23）**：双表统一第一批——pm.projects/push public 空壳清理；ehs 空壳删除踩坑（显式 schema 前缀 FROM ehs.qa_ehs_risks）→ 恢复 43 张 + 迁数据 + 补 tenant_id；探活 OK 0 BODY_FAIL；经验：清理前查显式前缀引用；剩余空壳双表待分批。
+
+> **系统完善 v1.73（2026-10-23）**：双表统一第二批——mes.core_* 45 张空壳 + public.barcode_scans 清理（保护清单 564 表比对，FK 链 CASCADE）；探活 OK + gate 保持；剩余 73 组空壳 + 40 组有数据双表待分批。
