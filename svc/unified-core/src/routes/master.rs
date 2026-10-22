@@ -58,6 +58,14 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
             get(modules::tenant::handlers::get_invoices),
         )
         .route(
+            "/tenant/{id}/settings",
+            get(modules::tenant::handlers::get_tenant_settings),
+        )
+        .route(
+            "/tenant/{id}/branding",
+            get(modules::tenant::handlers::get_tenant_branding),
+        )
+        .route(
             "/tenant/context",
             get(modules::tenant::handlers::get_current_tenant_context),
         )
@@ -111,6 +119,14 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/tenant/{id}/suspend",
             post(modules::tenant::handlers::suspend_tenant),
+        )
+        .route(
+            "/tenant/{id}/settings",
+            put(modules::tenant::handlers::update_tenant_settings),
+        )
+        .route(
+            "/tenant/{id}/branding",
+            put(modules::tenant::handlers::update_tenant_branding),
         )
         .route(
             "/tenant/{id}/users/invite",

@@ -4,6 +4,7 @@ use axum::{
     extract::{Extension, Path, Query, State},
     Json,
 };
+use sqlx::Row;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
@@ -1428,5 +1429,120 @@ pub async fn get_tenant_by_slug(
     match tenant {
         Some(t) => Json(CoreResponse::success(t, "Tenant retrieved")),
         None => Json(CoreResponse::error("Tenant not found")),
+    }
+}
+
+/// 租户设置/品牌存储前缀（core_tenant_settings 复用）
+const TENANT_SETTINGS_PREFIX: &str = "tenant_settings_";
+const TENANT_BRANDING_PREFIX: &str = "tenant_branding_";
+
+async fn tenant_setting_get(
+    state: &AppState,
+    tenant_id: &Uuid,
+    prefix: &str,
+) -> Result<serde_json::Value, TopemsError> {
+    let key = format!("{}{}", prefix, tenant_id);
+    let row = sqlx::query(
+        "SELECT setting_value FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
+    )
+    .bind(tenant_id)
+    .bind(&key)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| TopemsError::internal("读取租户配置失败", e))?;
+    match row {
+        Some(r) => {
+            let raw: String = r.get("setting_value");
+            serde_json::from_str(&raw).map_err(|e| TopemsError::internal("解析租户配置失败", e))
+        }
+        // 未配置=默认空对象（settings/branding 语义）
+        None => Ok(serde_json::json!({})),
+    }
+}
+
+async fn tenant_setting_put(
+    state: &AppState,
+    tenant_id: &Uuid,
+    prefix: &str,
+    value: &serde_json::Value,
+) -> Result<(), TopemsError> {
+    let key = format!("{}{}", prefix, tenant_id);
+    let serialized =
+        serde_json::to_string(value).map_err(|e| TopemsError::internal("序列化租户配置失败", e))?;
+    sqlx::query(
+        r#"
+        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
+        VALUES ($1, $2, $3, FALSE)
+        ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW(), deleted_at = NULL
+        "#,
+    )
+    .bind(tenant_id)
+    .bind(&key)
+    .bind(&serialized)
+    .execute(&state.pool)
+    .await
+    .map_err(|e| TopemsError::internal("写入租户配置失败", e))?;
+    Ok(())
+}
+
+/// `GET /tenant/{id}/settings`
+pub async fn get_tenant_settings(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_get(&state, &tenant_id, TENANT_SETTINGS_PREFIX).await {
+        Ok(v) => Json(CoreResponse::success(v, "Tenant settings retrieved")),
+        Err(e) => {
+            tracing::error!("[Tenant] get settings failed: {}", e);
+            Json(CoreResponse::error("读取租户配置失败"))
+        }
+    }
+}
+
+/// `PUT /tenant/{id}/settings`
+pub async fn update_tenant_settings(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_put(&state, &tenant_id, TENANT_SETTINGS_PREFIX, &payload).await {
+        Ok(()) => Json(CoreResponse::success(payload, "Tenant settings updated")),
+        Err(e) => {
+            tracing::error!("[Tenant] update settings failed: {}", e);
+            Json(CoreResponse::error("写入租户配置失败"))
+        }
+    }
+}
+
+/// `GET /tenant/{id}/branding`
+pub async fn get_tenant_branding(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_get(&state, &tenant_id, TENANT_BRANDING_PREFIX).await {
+        Ok(v) => Json(CoreResponse::success(v, "Tenant branding retrieved")),
+        Err(e) => {
+            tracing::error!("[Tenant] get branding failed: {}", e);
+            Json(CoreResponse::error("读取租户品牌配置失败"))
+        }
+    }
+}
+
+/// `PUT /tenant/{id}/branding`
+pub async fn update_tenant_branding(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(tenant_id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<CoreResponse<serde_json::Value>> {
+    match tenant_setting_put(&state, &tenant_id, TENANT_BRANDING_PREFIX, &payload).await {
+        Ok(()) => Json(CoreResponse::success(payload, "Tenant branding updated")),
+        Err(e) => {
+            tracing::error!("[Tenant] update branding failed: {}", e);
+            Json(CoreResponse::error("写入租户品牌配置失败"))
+        }
     }
 }
