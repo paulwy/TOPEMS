@@ -3285,3 +3285,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.67（2026-10-23）**：前端契约消费复核——2653 前端端点 ↔ 6336 后端路由缺口 0（闭合）；核心消费 HTTP 可达（200/422/401/308 无异常）；4111 真 404 为产品排期另档。
 
 > **系统完善 v1.68（2026-10-23）**：生产机部署核销（本机生产态模拟）——8099 生产态实例 production-verify 全链验证通过；nginx 模板语法有效（平台差异仅 epoll/brotli/证书占位，Linux 生产机具备）；systemd 31 unit 模板完整；smoke-prod 就绪。真实生产机接入待 SSH 目标。
+
+> **系统完善 v1.69（2026-10-23）**：nginx 2 warn 模板合规确认（http2 独立指令 + OCSP 链完整）；门禁三件套复验全绿；usage api_calls 3820 持续增长；观察项：public/iam 双 core_tenant_usage（iam 空壳待统一）。
