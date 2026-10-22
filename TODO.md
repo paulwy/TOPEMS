@@ -603,6 +603,7 @@
 - e2e 栈纳入 CI 待 E3 GitHub Billing/CI 恢复（外部阻塞，技术不可决）。
 - 其余域弱 spec（antd 选择器、无真断言）照本范本后续逐个补；空库域（qms/srm/pm/pdm/gis）需先 API 造数才能闭环。
   - **✅ 进展（2026-10-23，第三/四域）**：`wms-inbound.spec.ts`（TC-WMS-001/002 列表+详情断言后端 `order_number`）与 `hrm-employee.spec.ts`（TC-HRM-001/002）照范本整文件重写（旧 wms spec 为 antd 选择器 + `.catch(()=>{})` 吞断言假绿）；真栈 **4/4 绿**。**补测抓到真缺陷并修复**：`WmsInboundOrderPage` 映射漏读真实键 `order_number`/`warehouse_name`（页面曾按行号合成 `IN2026*` 假单号）+ 后端 FSM 状态（created/confirmed/received）未归一全部回落「待入库」→ 修 `mapApiInboundOrders` 补真实键优先、`normalizeInboundStatus` 显式收敛四态（复用既有 label 零新 i18n key，顺手去掉 1 处 `as` 断言）；typecheck/eslint/prettier 全绿。
+  - **✅ 进展（2026-10-23，第五/六域）**：`mes-production-order.spec.ts`（TC-MES-001/002 列表+详情断言后端 `order_no`，数据源 `/api/mes/orders`）与 `erp-asset.spec.ts`（TC-ERP-006/007 断言资产 `name`+`asset_number` 双真实键，防合成假编号）照范本整文件重写；真栈 **4/4 绿**。**补测抓到真缺陷并修复**：`ProductionOrderManagementPage` 适配器把 UI 1 基页码减 1 转 0 基（`params.page - 1`），致翻页错位——第 N 页实际请求第 N-1 页数据（首页侥幸：page=0 被 API 客户端真值检查丢弃，后端缺省页 1 兜底）→ 修回 1 基透传对齐后端 `offset=(page-1)*page_size` 语义；另实测后端对显式 `page=0` 返回 500（OFFSET 负数），属无客户端触发的健壮性缺口，本次未动；typecheck/eslint/prettier 全绿。
 - `test_admin` 未绑业务角色：后续 spec 可改用 admin 登录，或给种子 test_admin 补绑角色。
 
 ---
