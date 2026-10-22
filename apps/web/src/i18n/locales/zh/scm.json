@@ -1061,5 +1061,6 @@
   "scm.scm_incoming_inspection_page.k14": "来料检验",
   "scm.dashboard_page.k37": "库存周转天数",
   "scm.dashboard_page.k38": "周转率",
-  "scm.dashboard_page.k39": "天"
+  "scm.dashboard_page.k39": "天",
+  "scm.purchase_order.k53": "备注"
 }

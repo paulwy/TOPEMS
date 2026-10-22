@@ -1,14 +1,24 @@
-import React from 'react';
-import PurchaseOrderPage from '../erp/PurchaseOrderPage';
+import CrudPage from '@/components/templates/CrudPage';
+import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
+import { purchaseOrderSchema } from '@/schemas/scm';
+import { scmApi } from '@/api/scm';
+import { useTranslation } from 'react-i18next';
+
+const apiAdapter = createCrudPageAdapter(scmApi.purchaseOrders);
 
 /**
- * 供应链采购订单页面
+ * SCM 采购订单页
  *
- * 复用 ERP 采购订单页面的 UI 结构，
- * 后续可根据供应链模块的特定需求进行扩展。
+ * 此前复用 erp/PurchaseOrderPage（接 /api/erp/purchase-orders 空端点，
+ * SCM 65 条真采购单不可见）；改为 schema 驱动，接 scm purchaseOrderApi。
  */
-const ScmPurchaseOrderPage: React.FC = () => {
-  return <PurchaseOrderPage />;
-};
-
-export default ScmPurchaseOrderPage;
+export default function ScmPurchaseOrderPage() {
+  const { t } = useTranslation('scm');
+  return (
+    <CrudPage
+      schema={purchaseOrderSchema}
+      apiAdapter={apiAdapter}
+      breadcrumbs={[{ label: 'SCM' }, { label: t('scm.purchase_order.k7') }]}
+    />
+  );
+}
