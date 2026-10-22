@@ -3305,3 +3305,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.77（2026-10-23）**：收口终验快照——gate/探活/RLS/mobile/BFF 全绿，collect 6071 持续增长；lefthook 探活门禁已并入（Gate DP）；本机可闭环项全收口，剩余为外部依赖（生产机/长期观测/CI 环境/排期项）。
 
 > **系统完善 v1.78（2026-10-23）**：DDL 基准口径统一——rebuild_orphan_tables.sql iam/mes.core_* 154 处按实际映射归位（core_plugin→core、core_ticket→ticket、其余→public）；validate 0 Error + gate 保持；v1.70 观察项闭环。
+
+> **系统完善 v1.79（2026-10-23）**：analytics usage/api-usage 端点核销——实测 /api/core/tenant/{id}/analytics/{usage,api-usage} 均 200 真实数据（v1.44 T2-c 已实现），历史「404 属排期」观察项闭环。
