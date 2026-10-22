@@ -109,10 +109,12 @@ const BudgetManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const budgetHeaderContent = (rows: Record<string, unknown>[], total: number) => {
     const budgets = rows as unknown as Budget[];
-    const totalAmount = budgets.reduce((sum, item) => sum + (item.total_budget || 0), 0);
-    const spentAmount = budgets.reduce((sum, item) => sum + (item.used_amount || 0), 0);
+    // 后端金额字段返回 JSON 字符串（如 "88888.00"），须显式转 number 再汇总，
+    // 否则字符串拼接后 .toFixed 崩溃整页
+    const totalAmount = budgets.reduce((sum, item) => sum + Number(item.total_budget || 0), 0);
+    const spentAmount = budgets.reduce((sum, item) => sum + Number(item.used_amount || 0), 0);
     const exceededCount = budgets.filter(
-      (b) => (b.used_amount || 0) > (b.total_budget || 0)
+      (b) => Number(b.used_amount || 0) > Number(b.total_budget || 0)
     ).length;
     return (
       <Box
@@ -156,7 +158,8 @@ const BudgetManagementPage: React.FC = () => {
   };
   const expenseHeaderContent = (rows: Record<string, unknown>[], total: number) => {
     const expenses = rows as unknown as Expense[];
-    const totalAmount = expenses.reduce((sum, item) => sum + (item.amount || 0), 0);
+    // 同 budget：amount 为 JSON 字符串，须显式转 number
+    const totalAmount = expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
     const pendingCount = expenses.filter((e) => e.status === 'pending').length;
     const completedCount = expenses.filter((e) => e.status === 'completed').length;
     return (

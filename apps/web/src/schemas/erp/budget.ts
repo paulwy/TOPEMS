@@ -19,8 +19,9 @@ const budgetStatusLabelMap: Record<string, string> = {
   cancelled: i18n.t('shared.budget.k4'),
 };
 
-function renderBudgetStatusCell(row: Record<string, unknown>) {
-  const status = String(row.status ?? '');
+function renderBudgetStatusCell(value: unknown) {
+  // toColumnDef 对 fnLength=1 的 renderCell 传字段值而非整行，须用 value 签名
+  const status = String(value ?? '');
   const color = budgetStatusColorMap[status] || 'default';
   const label = budgetStatusLabelMap[status] || status;
   return React.createElement(Chip, {
@@ -32,16 +33,19 @@ function renderBudgetStatusCell(row: Record<string, unknown>) {
   });
 }
 
-function renderDateCell(row: Record<string, unknown>, field: string) {
-  const val = row[field] as string | null | undefined;
-  if (!val) return '-';
-  return new Date(val).toLocaleDateString('zh-CN');
+function renderDateCell(value: string | null | undefined) {
+  // toColumnDef 对 fnLength=1 的 renderCell 传字段值而非整行，须用 value 签名
+  if (!value) return '-';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('zh-CN');
 }
 
-function renderBudgetAmountCell(row: Record<string, unknown>, field: string) {
-  const val = row[field] as number | null | undefined;
-  if (val === undefined || val === null) return '-';
-  return `¥${Number(val).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
+function renderBudgetAmountCell(value: number | string | null | undefined) {
+  // 后端金额字段返回 JSON 字符串（如 "88888.00"），须兼容字符串与数值
+  if (value === undefined || value === null || value === '') return '-';
+  const num = Number(value);
+  if (Number.isNaN(num)) return '-';
+  return `¥${num.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
 }
 
 export const budgetSchema: EntitySchema = {
@@ -95,7 +99,7 @@ export const budgetSchema: EntitySchema = {
       defaultValue: 0,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => renderBudgetAmountCell(row, 'total_budget'),
+      renderCell: (value: unknown) => renderBudgetAmountCell(value as number | string | null),
     },
     {
       name: 'used_amount',
@@ -103,7 +107,7 @@ export const budgetSchema: EntitySchema = {
       type: 'number',
       defaultValue: 0,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => renderBudgetAmountCell(row, 'used_amount'),
+      renderCell: (value: unknown) => renderBudgetAmountCell(value as number | string | null),
     },
     {
       name: 'remaining_amount',
@@ -147,7 +151,7 @@ export const budgetSchema: EntitySchema = {
       readonly: true,
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'created_at'),
+      renderCell: (value: unknown) => renderDateCell(value as string | null),
     },
   ],
 
@@ -252,7 +256,7 @@ export const expenseSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 140,
-      renderCell: (row: Record<string, unknown>) => renderBudgetAmountCell(row, 'amount'),
+      renderCell: (value: unknown) => renderBudgetAmountCell(value as number | string | null),
     },
     {
       name: 'expense_date',
@@ -301,7 +305,7 @@ export const expenseSchema: EntitySchema = {
       readonly: true,
       showInList: false,
       showInDetail: true,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'approved_at'),
+      renderCell: (value: unknown) => renderDateCell(value as string | null),
     },
     {
       name: 'reimbursed_at',
@@ -310,7 +314,7 @@ export const expenseSchema: EntitySchema = {
       readonly: true,
       showInList: false,
       showInDetail: true,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'reimbursed_at'),
+      renderCell: (value: unknown) => renderDateCell(value as string | null),
     },
     {
       name: 'description',
@@ -326,7 +330,7 @@ export const expenseSchema: EntitySchema = {
       readonly: true,
       sortable: true,
       listWidth: 120,
-      renderCell: (row: Record<string, unknown>) => renderDateCell(row, 'created_at'),
+      renderCell: (value: unknown) => renderDateCell(value as string | null),
     },
   ],
 
