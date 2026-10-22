@@ -3279,3 +3279,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.64（2026-10-23）**：剩余域 body 扫发现 mes/teams hidden-500（work_stations 缺表）→ 补建修复；P4 探针扩至 7 端点；核心闭环域表全有（151 缺表为未挂载扩展域不建）。
 
 > **系统完善 v1.65（2026-10-23）**：全域门禁终确认——日志 ERROR 清零、8070 在线、探活/gate/RLS/collect 全绿；本机可闭环系统完善项收口；剩余另档（生产部署 SSH / hrm / 前端 / portal 扩展表）待拍板。
+
+> **系统完善 v1.66（2026-10-23）**：hrm 组织主数据填充（1 公司/4 部门/5 职位/3 员工，绑定 iam 用户，固定 UUID 幂等 + ensure 自愈）；端点全 200 真实数据。

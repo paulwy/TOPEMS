@@ -482,5 +482,29 @@ CREATE TABLE IF NOT EXISTS mes.work_stations (
   name character varying
 );"
 echo "mes.work_stations 就绪"
+# hrm 组织主数据种子（公司/部门/职位/员工，绑定 iam 用户；幂等）
+psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+INSERT INTO hrm.companies (id, tenant_id, organization_id, name, short_name, status, created_at, updated_at)
+SELECT 'a1000000-0000-4000-8000-000000000001','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','TOPEMS 智能制造有限公司','TOPEMS','active',NOW(),NOW()
+WHERE NOT EXISTS (SELECT 1 FROM hrm.companies WHERE id='a1000000-0000-4000-8000-000000000001');
+INSERT INTO hrm.departments (id, tenant_id, organization_id, company_id, name, code, parent_id, status, created_at, updated_at) VALUES
+ ('a1000000-0000-4000-8000-000000000010','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','总经办','HQ',NULL,'active',NOW(),NOW()),
+ ('a1000000-0000-4000-8000-000000000011','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','生产部','PROD','a1000000-0000-4000-8000-000000000010','active',NOW(),NOW()),
+ ('a1000000-0000-4000-8000-000000000012','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','质量部','QA','a1000000-0000-4000-8000-000000000010','active',NOW(),NOW()),
+ ('a1000000-0000-4000-8000-000000000013','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','信息技术部','IT','a1000000-0000-4000-8000-000000000010','active',NOW(),NOW())
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO hrm.positions (id, tenant_id, organization_id, company_id, department_id, name, code, level, status, created_at, updated_at) VALUES
+ ('a1000000-0000-4000-8000-000000000020','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000010','总经理','GM',1,'active',NOW(),NOW()),
+ ('a1000000-0000-4000-8000-000000000021','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000011','生产主管','PROD_MGR',2,'active',NOW(),NOW()),
+ ('a1000000-0000-4000-8000-000000000022','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000012','质量主管','QA_MGR',2,'active',NOW(),NOW()),
+ ('a1000000-0000-4000-8000-000000000023','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000013','系统管理员','SYS_ADMIN',3,'active',NOW(),NOW()),
+ ('a1000000-0000-4000-8000-000000000024','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000013','运维工程师','OPS',4,'active',NOW(),NOW())
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO hrm.employees (id, tenant_id, organization_id, org_id, company_id, department_id, position_id, employee_number, name, user_id, email, phone, gender, hire_date, status, created_at, updated_at) VALUES
+ ('a1000000-0000-4000-8000-000000000030','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000010','a1000000-0000-4000-8000-000000000020','E0001','张总','e8f2a1f4-8f99-4059-b8ca-3a05e50ac6d4','admin@topems.local','13800000001','male','2026-01-01','active',NOW(),NOW()),
+ ('a1000000-0000-4000-8000-000000000031','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000013','a1000000-0000-4000-8000-000000000023','E0002','李工','0d3a14bb-14a7-488e-a3c1-889f0b9c260f','test_admin@topems.local','13800000002','male','2026-01-01','active',NOW(),NOW()),
+ ('a1000000-0000-4000-8000-000000000032','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','82acc468-75dd-4ce7-be27-b6efa65da2c4','a1000000-0000-4000-8000-000000000001','a1000000-0000-4000-8000-000000000013','a1000000-0000-4000-8000-000000000024','E0003','王工','0d3a14bb-14a7-488e-a3c1-889f0b9c260f','ops@topems.local','13800000003','male','2026-02-01','active',NOW(),NOW())
+ON CONFLICT (id) DO NOTHING;"
+echo "hrm 组织主数据就绪（1公司/4部门/5职位/3员工）"
 
 
