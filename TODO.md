@@ -3338,3 +3338,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.81（2026-10-23）**：mes-online 核销——public.capacities 迁数据删冗余（mes 2 行）+ schema_defense_ledger 白名单，mes_guard PASS（编译 0 error）；rust-audit 绿（4 allowed 非阻塞）；探活/contract-gate 复验 OK。CI 11 FAIL 剩：page-audit（44 页待批）+ frontend-test/coverage/code-quality（CI 环境）。
 
 > **系统完善 v1.82（2026-10-23）**：page-audit 92%→95% 达标——16 个简单管理页包 PageContainer（脚本化 + prettier + tsc 0 error）；剩余 28 页复杂自实现（AI/mobile/master/report）登记后续。CI 11 FAIL 剩 2 项（frontend-test/coverage/code-quality 需 CI 环境）。
+
+> **系统完善 v1.84（2026-10-23）**：frontend-test 核销（133/3042 全 PASS）；frontend-coverage 复现 4 失败（route-nav erp-sales-orders 单复数不一致 + 重复 path、TopBar i18n 键、UserManagementPage breadcrumbs）登记修复批次；code-quality 半核销（naming PASS + api_dup 性能瓶颈）。CI 11 FAIL 剩：frontend-coverage 4 失败修复 + code-quality api_dup。
