@@ -7,6 +7,7 @@ use axum::{
 use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
@@ -284,6 +285,7 @@ pub async fn list_job_openings(
 pub async fn create_job_opening(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -299,6 +301,11 @@ pub async fn create_job_opening(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
 
     let result = sqlx::query_as::<_, JobOpening>(
         only_own_schema_query!("hrm", r#"
@@ -320,7 +327,7 @@ pub async fn create_job_opening(
     .bind(&req.salary_max)
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
+    .bind(claims_tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -761,6 +768,7 @@ pub async fn list_candidates(
 pub async fn create_candidate(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -776,6 +784,11 @@ pub async fn create_candidate(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
 
     let result = sqlx::query_as::<_, Candidate>(
         only_own_schema_query!("hrm", r#"
@@ -794,7 +807,7 @@ pub async fn create_candidate(
     .bind(&req.source)
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
+    .bind(claims_tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1110,6 +1123,7 @@ pub async fn list_interviews(
 
 pub async fn create_interview(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -1119,6 +1133,11 @@ pub async fn create_interview(
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
     let round = req.round.unwrap_or(1);
     let duration = req.duration_minutes.unwrap_or(30);
 
@@ -1137,7 +1156,7 @@ pub async fn create_interview(
     .bind(duration)
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
+    .bind(claims_tenant)
     .fetch_one(&mut **txn)
     .await;
 

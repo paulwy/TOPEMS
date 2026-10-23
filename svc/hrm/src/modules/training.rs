@@ -132,6 +132,7 @@ pub async fn list_plans(
 
 pub async fn create_plan(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -141,6 +142,11 @@ pub async fn create_plan(
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
     let code = req.code.unwrap_or_else(|| {
         format!(
             "TP{}{}",
@@ -165,7 +171,7 @@ pub async fn create_plan(
     .bind(req.budget)
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
+    .bind(claims_tenant)
     .fetch_one(&mut **txn)
     .await;
 
@@ -444,6 +450,7 @@ pub async fn list_courses(
 
 pub async fn create_course(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -453,6 +460,11 @@ pub async fn create_course(
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let claims_tenant = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil);
     let code = req.code.unwrap_or_else(|| {
         format!(
             "TC{}{}",
@@ -486,7 +498,7 @@ pub async fn create_course(
     .bind(req.max_participants)
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
+    .bind(claims_tenant)
     .fetch_one(&mut **txn)
     .await;
 
