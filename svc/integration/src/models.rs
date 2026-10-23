@@ -157,6 +157,10 @@ pub struct ErpConnection {
     pub api_url: String,
     pub api_version: Option<String>,
     pub app_key: Option<String>,
+    /// 内部使用字段（DB 行映射 + 出站认证头）。
+    /// 兜底：即便此结构被直接序列化，也绝不把 app_secret 明文写入 JSON；
+    /// 对外响应一律走 `ErpConnectionResponse`（输出掩码 secret_masked）。
+    #[serde(skip_serializing)]
     pub app_secret: Option<String>,
     pub sync_direction: String,
     pub sync_mode: String,
@@ -166,6 +170,71 @@ pub struct ErpConnection {
     pub last_sync_at: Option<chrono::DateTime<chrono::Utc>>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// 将 app_secret 掩码为「前缀****后缀」形式，绝不回显明文。
+/// None/空串 → None（表示未设置 secret，等价 has_secret=false）；
+/// 过短（≤7 位，前后缀会重叠）→ 整体 `****`。
+/// 例：`sk-abcdef1234` → `sk-****1234`。
+pub(crate) fn mask_app_secret(secret: Option<&str>) -> Option<String> {
+    let s = secret?;
+    if s.is_empty() {
+        return None;
+    }
+    let chars: Vec<char> = s.chars().collect();
+    let n = chars.len();
+    if n <= 7 {
+        return Some("****".to_string());
+    }
+    let prefix: String = chars[..3].iter().collect();
+    let suffix: String = chars[n - 4..].iter().collect();
+    Some(format!("{prefix}****{suffix}"))
+}
+
+/// ERP 连接响应 DTO：app_secret 不回显明文，仅输出掩码 `secret_masked`。
+/// 所有出站 list/get/create/update/toggle 响应统一用此类型。
+#[derive(Debug, Serialize)]
+pub struct ErpConnectionResponse {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub name: String,
+    pub r#type: String,
+    pub api_url: String,
+    pub api_version: Option<String>,
+    pub app_key: Option<String>,
+    /// 掩码后的 app_secret（如 `sk-****1234`）；None 表示未设置
+    pub secret_masked: Option<String>,
+    pub sync_direction: String,
+    pub sync_mode: String,
+    pub sync_interval: Option<i32>,
+    pub status: String,
+    pub isactive: bool,
+    pub last_sync_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<ErpConnection> for ErpConnectionResponse {
+    fn from(c: ErpConnection) -> Self {
+        Self {
+            id: c.id,
+            tenant_id: c.tenant_id,
+            name: c.name,
+            r#type: c.r#type,
+            api_url: c.api_url,
+            api_version: c.api_version,
+            app_key: c.app_key,
+            secret_masked: mask_app_secret(c.app_secret.as_deref()),
+            sync_direction: c.sync_direction,
+            sync_mode: c.sync_mode,
+            sync_interval: c.sync_interval,
+            status: c.status,
+            isactive: c.isactive,
+            last_sync_at: c.last_sync_at,
+            created_at: c.created_at,
+            updated_at: c.updated_at,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -501,5 +570,66 @@ mod tests {
         assert_eq!(back.order_number, "WO-999");
         assert_eq!(back.product_name, Some("Gear".to_string()));
         assert_eq!(back.quantity, Some(42.0));
+    }
+
+    // ---- app_secret 响应脱敏（P1-23） ----
+
+    #[test]
+    fn test_mask_app_secret_keeps_prefix_and_suffix() {
+        // 前 3 位前缀 + 后 4 位后缀，中间打码
+        assert_eq!(
+            super::mask_app_secret(Some("sk-abcdef1234")),
+            Some("sk-****1234".to_string())
+        );
+    }
+
+    #[test]
+    fn test_mask_app_secret_edge_cases() {
+        // 未设置 / 空串 → None（等价 has_secret=false）
+        assert_eq!(super::mask_app_secret(None), None);
+        assert_eq!(super::mask_app_secret(Some("")), None);
+        // 过短（前后缀会重叠）→ 整体掩码
+        assert_eq!(super::mask_app_secret(Some("abc")), Some("****".to_string()));
+        assert_eq!(super::mask_app_secret(Some("abcdefg")), Some("****".to_string()));
+        // 刚好可分（8 位）→ 保留前缀 abc + 后缀 efgh
+        assert_eq!(
+            super::mask_app_secret(Some("abcdefgh")),
+            Some("abc****efgh".to_string())
+        );
+    }
+
+    #[test]
+    fn test_erp_connection_response_never_leaks_secret() {
+        use super::ErpConnection;
+        let conn = ErpConnection {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::nil(),
+            name: "demo".to_string(),
+            r#type: "custom".to_string(),
+            api_url: "https://erp.example.com".to_string(),
+            api_version: None,
+            app_key: Some("key-xyz".to_string()),
+            app_secret: Some("sk-supersecretvalue1234".to_string()),
+            sync_direction: "bidirectional".to_string(),
+            sync_mode: "manual".to_string(),
+            sync_interval: Some(60),
+            status: "inactive".to_string(),
+            isactive: false,
+            last_sync_at: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+        let resp = super::ErpConnectionResponse::from(conn);
+        let json = serde_json::to_value(&resp).expect("serialize ErpConnectionResponse");
+        // 响应里不得出现明文字段名 app_secret
+        assert!(json.get("app_secret").is_none(), "响应不得含 app_secret 字段");
+        // secret_masked 必须是掩码，且不得包含明文
+        let masked = json.get("secret_masked").and_then(|v| v.as_str()).unwrap();
+        assert!(
+            !masked.contains("supersecretvalue"),
+            "掩码不得包含明文: {masked}"
+        );
+        assert!(masked.starts_with("sk-"));
+        assert!(masked.ends_with("1234"));
     }
 }

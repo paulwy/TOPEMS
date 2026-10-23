@@ -9,8 +9,8 @@ use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 use crate::models::{
-    AppState, CreateErpConnectionRequest, ErpConnection, TestConnectionRequest,
-    TestConnectionResponse, UpdateErpConnectionRequest,
+    AppState, CreateErpConnectionRequest, ErpConnection, ErpConnectionResponse,
+    TestConnectionRequest, TestConnectionResponse, UpdateErpConnectionRequest,
 };
 
 /// 读取路径租户过滤：超管返回 None（不过滤），普通用户返回其租户 UUID
@@ -42,7 +42,7 @@ fn tenant_for_write(claims: &Claims) -> Uuid {
 pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ErpConnection>>> {
+) -> Json<ApiResponse<Vec<ErpConnectionResponse>>> {
     let tid = tenant_filter(&claims);
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
@@ -55,7 +55,10 @@ pub async fn list_connections(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(rows, "连接列表获取成功")),
+        Ok(rows) => Json(ApiResponse::success(
+            rows.into_iter().map(ErpConnectionResponse::from).collect::<Vec<_>>(),
+            "连接列表获取成功",
+        )),
         Err(e) => {
             tracing::error!("list_connections error: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
@@ -76,7 +79,7 @@ pub async fn get_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ErpConnection>> {
+) -> Json<ApiResponse<ErpConnectionResponse>> {
     let tid = tenant_filter(&claims);
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
@@ -90,7 +93,7 @@ pub async fn get_connection(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(conn)) => Json(ApiResponse::success(conn, "获取成功")),
+        Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "获取成功")),
         Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
@@ -109,7 +112,7 @@ pub async fn create_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateErpConnectionRequest>,
-) -> Json<ApiResponse<ErpConnection>> {
+) -> Json<ApiResponse<ErpConnectionResponse>> {
     let tid = tenant_for_write(&claims);
     let id = Uuid::new_v4();
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
@@ -139,7 +142,7 @@ pub async fn create_connection(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(conn) => Json(ApiResponse::success(conn, "创建成功")),
+        Ok(conn) => Json(ApiResponse::success(conn.into(), "创建成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
     }
 }
@@ -158,7 +161,7 @@ pub async fn update_connection(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateErpConnectionRequest>,
-) -> Json<ApiResponse<ErpConnection>> {
+) -> Json<ApiResponse<ErpConnectionResponse>> {
     let tid = tenant_filter(&claims);
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
@@ -194,7 +197,7 @@ pub async fn update_connection(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(conn)) => Json(ApiResponse::success(conn, "更新成功")),
+        Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }

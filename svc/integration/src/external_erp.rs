@@ -10,7 +10,7 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
-use crate::models::{AppState, ErpConnection, ErpMapping};
+use crate::models::{AppState, ErpConnection, ErpConnectionResponse, ErpMapping};
 
 const TENANT_ID: &str = "default";
 
@@ -57,7 +57,7 @@ pub struct SyncStatistics {
 pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ErpConnection>>> {
+) -> Json<ApiResponse<Vec<ErpConnectionResponse>>> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
@@ -73,7 +73,10 @@ pub async fn list_connections(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(rows, "连接列表获取成功")),
+        Ok(rows) => Json(ApiResponse::success(
+            rows.into_iter().map(ErpConnectionResponse::from).collect::<Vec<_>>(),
+            "连接列表获取成功",
+        )),
         Err(e) => {
             tracing::error!("external_erp list_connections: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
@@ -96,7 +99,7 @@ pub async fn create_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<ErpConnection>> {
+) -> Json<ApiResponse<ErpConnectionResponse>> {
     let id = Uuid::new_v4();
     let name = body
         .get("name")
@@ -164,7 +167,7 @@ pub async fn create_connection(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(conn) => Json(ApiResponse::success(conn, "创建成功")),
+        Ok(conn) => Json(ApiResponse::success(conn.into(), "创建成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
     }
 }
@@ -232,7 +235,7 @@ async fn get_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ErpConnection>> {
+) -> Json<ApiResponse<ErpConnectionResponse>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let tid: Option<&str> = if claims.is_superuser {
         None
@@ -250,7 +253,7 @@ async fn get_connection(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(conn)) => Json(ApiResponse::success(conn, "获取成功")),
+        Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "获取成功")),
         Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
@@ -274,7 +277,7 @@ pub async fn update_connection(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<ErpConnection>> {
+) -> Json<ApiResponse<ErpConnectionResponse>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let name = body
         .get("name")
@@ -312,7 +315,7 @@ pub async fn update_connection(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(conn)) => Json(ApiResponse::success(conn, "更新成功")),
+        Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
@@ -1121,7 +1124,7 @@ pub async fn toggle_connection(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<ErpConnection>> {
+) -> Json<ApiResponse<ErpConnectionResponse>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let enabled = body
         .get("enabled")
@@ -1141,7 +1144,7 @@ pub async fn toggle_connection(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(conn)) => Json(ApiResponse::success(conn, "切换成功")),
+        Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "切换成功")),
         Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("切换失败", e))),
     }
