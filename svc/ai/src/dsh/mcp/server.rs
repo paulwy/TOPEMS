@@ -421,8 +421,14 @@ impl McpServer {
                         )
                     }
                 };
-                // 安全检查：脱敏输出
+                // 安全检查：全局敏感字段脱敏（password/token 等整字段 ***REDACTED***）
                 let sanitized = self.security.sanitize_output(result_value);
+                // Phase D：工具级 sensitive_output 声明——命中字段按前3后4 掩码
+                //（与全局整字段脱敏互补，声明优先于全局兜底）。
+                let sanitized = match self.tools.sensitive_output(&tool_name).await {
+                    Some(decl) => self.security.sanitize_declared_fields(&sanitized, &decl),
+                    None => sanitized,
+                };
                 JsonRpcResponse::success(id, sanitized)
             }
             Err(e) => {
@@ -1211,6 +1217,82 @@ mod tests {
             resp_b.is_success(),
             "finance 角色并发调用 finance.create_voucher 应放行（身份未串扰）"
         );
+    }
+
+    #[tokio::test]
+    async fn test_sensitive_output_declaration_masks_text_embedded_json() {
+        // Phase D：工具声明 sensitive_output 后，输出层对 text 内嵌 JSON 中
+        // 声明字段（id_card）按前3后4 掩码；未声明字段原样保留。
+        use topems_shared_mcp::protocol::SensitiveOutput;
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
+        server
+            .tools
+            .register(
+                "hr.get_employee",
+                "获取员工详情",
+                SchemaBuilder::object().build(),
+                |_| {
+                    let employee = json!({
+                        "employee_id": "E001",
+                        "name": "张三",
+                        "id_card": "130101199001011234",
+                        "phone": "13800001111"
+                    });
+                    Ok(McpToolResult {
+                        content: vec![McpContent::text(employee.to_string())],
+                        is_error: None,
+                    })
+                },
+            )
+            .await;
+        assert!(server
+            .tools
+            .declare_sensitive_output(
+                "hr.get_employee",
+                SensitiveOutput {
+                    fields: vec!["id_card".to_string()],
+                    contains_sensitive: Some(true),
+                }
+            )
+            .await);
+        // 访问器生效
+        assert!(server.tools.sensitive_output("hr.get_employee").await.is_some());
+
+        init_server(&server).await;
+        let resp = server
+            .handle_request(
+                call_tool_req("hr.get_employee", json!({})),
+                Some(AuthenticatedUser::new(
+                    "hr_user",
+                    "tenant1",
+                    vec!["hr".to_string()],
+                )),
+            )
+            .await
+            .unwrap();
+        assert!(resp.is_success(), "工具调用应成功: {:?}", resp.error);
+        let body = resp.result.unwrap();
+        let text = body["content"][0]["text"].as_str().unwrap();
+        // 声明字段已掩码（前3后4），明文身份证号不得出现
+        assert!(text.contains("130****1234"), "应掩码 id_card: {}", text);
+        assert!(!text.contains("130101199001011234"), "明文 id_card 泄漏: {}", text);
+        // 未声明字段原样保留
+        assert!(text.contains("13800001111"), "phone 不应被掩码: {}", text);
+    }
+
+    #[tokio::test]
+    async fn test_sensitive_output_declaration_unknown_tool_noop() {
+        // 对未注册工具声明返回 false；无声明工具输出原样
+        use topems_shared_mcp::protocol::SensitiveOutput;
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
+        assert!(!server
+            .tools
+            .declare_sensitive_output(
+                "unknown.tool",
+                SensitiveOutput::default(),
+            )
+            .await);
+        assert!(server.tools.sensitive_output("unknown.tool").await.is_none());
     }
 
     #[tokio::test]

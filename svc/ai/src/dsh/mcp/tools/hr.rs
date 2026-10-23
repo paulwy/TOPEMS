@@ -10,7 +10,7 @@
 
 use serde_json::{json, Value};
 
-use topems_shared_mcp::protocol::{McpContent, McpToolResult};
+use topems_shared_mcp::protocol::{McpContent, McpToolResult, SensitiveOutput};
 use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
@@ -363,6 +363,18 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                     content: vec![McpContent::text(result.to_string())],
                     is_error: None,
                 })
+            },
+        )
+        .await;
+
+    // Phase D：敏感输出声明——hr.get_employee 返回员工详情（含身份证号/银行卡号），
+    // 输出层对命中字段按前3后4 掩码（与全局 password/token 整字段 REDACTED 兜底互补）。
+    registry
+        .declare_sensitive_output(
+            "hr.get_employee",
+            SensitiveOutput {
+                fields: vec!["id_card".to_string(), "bank_account".to_string()],
+                contains_sensitive: Some(true),
             },
         )
         .await;

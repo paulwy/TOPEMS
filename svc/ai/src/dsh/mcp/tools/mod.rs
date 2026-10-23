@@ -18,7 +18,7 @@ use serde_json::Value;
 use tokio::sync::RwLock;
 
 use topems_shared_auth::service::issue_service_token;
-use topems_shared_mcp::protocol::{McpTool, McpToolResult};
+use topems_shared_mcp::protocol::{McpTool, McpToolResult, SensitiveOutput};
 
 pub mod aps;
 pub mod bi;
@@ -96,6 +96,8 @@ struct RegisteredTool {
     async_handler: Option<AsyncToolHandler>,
     /// 所需权限（可选）
     required_permission: Option<String>,
+    /// 敏感输出声明（Phase D；None = 未声明，走全局敏感字段兜底脱敏）
+    sensitive_output: Option<SensitiveOutput>,
 }
 
 /// MCP Tool Registry
@@ -128,6 +130,7 @@ impl ToolRegistry {
             handler: Arc::new(handler),
             async_handler: None,
             required_permission: None,
+            sensitive_output: None,
         };
 
         self.tools.write().await.insert(name.to_string(), tool);
@@ -160,6 +163,7 @@ impl ToolRegistry {
             handler: sync_handler,
             async_handler: Some(async_handler),
             required_permission: None,
+            sensitive_output: None,
         };
 
         self.tools.write().await.insert(name.to_string(), tool);
@@ -192,6 +196,7 @@ impl ToolRegistry {
             handler: sync_handler,
             async_handler: Some(async_handler),
             required_permission: Some(required_permission.to_string()),
+            sensitive_output: None,
         };
 
         self.tools.write().await.insert(name.to_string(), tool);
@@ -217,6 +222,7 @@ impl ToolRegistry {
             handler: Arc::new(handler),
             async_handler: None,
             required_permission: Some(required_permission.to_string()),
+            sensitive_output: None,
         };
 
         self.tools.write().await.insert(name.to_string(), tool);
@@ -253,6 +259,30 @@ impl ToolRegistry {
             .await
             .get(name)
             .and_then(|t| t.required_permission.clone())
+    }
+
+    /// 声明工具敏感输出（Phase D）：输出层据此对命中字段按前3后4 掩码。
+    /// 未注册工具声明无效（返回 false）；可重复调用覆盖先前声明。
+    pub async fn declare_sensitive_output(
+        &self,
+        name: &str,
+        decl: SensitiveOutput,
+    ) -> bool {
+        let mut tools = self.tools.write().await;
+        let Some(tool) = tools.get_mut(name) else {
+            return false;
+        };
+        tool.sensitive_output = Some(decl);
+        true
+    }
+
+    /// 获取工具敏感输出声明（无声明返回 None）
+    pub async fn sensitive_output(&self, name: &str) -> Option<SensitiveOutput> {
+        self.tools
+            .read()
+            .await
+            .get(name)
+            .and_then(|t| t.sensitive_output.clone())
     }
 
     /// 执行工具

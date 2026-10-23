@@ -129,9 +129,13 @@ pub fn create_routes(
         register_scm_tools(&server_clone, &jwt_secret).await;
         register_iot_tools(&server_clone, &jwt_secret).await;
         register_oa_tools(&server_clone, &jwt_secret).await;
+        // Phase D：嵌入形态（HTTP /mcp）与 stdio 二进制复用同一资源注册表，
+        // 修复 resources/list 双形态漂移——此前嵌入形态漏注册，resources/list 返回空。
+        server_clone.register_resources().await;
         tracing::info!(
-            "MCP Server tools registered: {} tools total",
-            server_clone.tool_registry().len().await
+            "MCP Server tools registered: {} tools total; resources registered: {} total",
+            server_clone.tool_registry().len().await,
+            server_clone.resource_registry().len().await
         );
     });
 

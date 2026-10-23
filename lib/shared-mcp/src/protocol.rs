@@ -101,6 +101,23 @@ pub struct McpResource {
     pub mime_type: Option<String>,
 }
 
+/// 工具敏感输出声明（Phase D）。
+///
+/// 由工具注册时声明（服务端侧），输出层（McpSecurityMiddleware）据此对命中字段
+/// 按「前3后4」风格掩码（与 integration `mask_app_secret` 一致），
+/// 未声明时不影响现有工具行为（向后兼容）。
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SensitiveOutput {
+    /// 需要掩码的字段名列表（任意嵌套深度按 key 命中；字符串值按前3后4 掩码）。
+    /// 例：`["id_card", "bank_account"]`。
+    #[serde(default)]
+    pub fields: Vec<String>,
+    /// 整体输出是否含敏感数据（true：输出层对命中字段强制掩码并记录审计日志）。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contains_sensitive: Option<bool>,
+}
+
 /// MCP 工具执行结果
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -220,5 +237,23 @@ mod tests {
         let content = McpContent::text("hello");
         let json = serde_json::to_string(&content).unwrap();
         assert!(json.contains("hello"));
+    }
+
+    #[test]
+    fn test_sensitive_output_serialization() {
+        // 默认空声明：fields 默认空数组仍序列化（工具注册侧显式构造），
+        // contains_sensitive 缺省不输出（向后兼容）。
+        let decl = SensitiveOutput {
+            fields: vec!["id_card".to_string()],
+            contains_sensitive: Some(true),
+        };
+        let json = serde_json::to_value(&decl).unwrap();
+        assert_eq!(json["fields"][0], "id_card");
+        assert_eq!(json["containsSensitive"], true);
+
+        // 反序列化兼容旧 JSON（无该字段 → Default）
+        let back: SensitiveOutput = serde_json::from_value(serde_json::json!({})).unwrap();
+        assert!(back.fields.is_empty());
+        assert!(back.contains_sensitive.is_none());
     }
 }

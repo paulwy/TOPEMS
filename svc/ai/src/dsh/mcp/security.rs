@@ -19,6 +19,7 @@ use tokio::sync::RwLock;
 use tracing::{info, warn};
 
 use super::tools::ToolExecutionError;
+use topems_shared_mcp::protocol::SensitiveOutput;
 
 /// 最大输入大小（字节）
 const MAX_INPUT_SIZE: usize = 1024 * 1024; // 1 MB
@@ -60,6 +61,36 @@ const SENSITIVE_FIELDS: &[&str] = &[
     "idcard",
     "ip_address",
 ];
+
+/// 将敏感字符串掩码为「前3****后4」形式（Phase D，与 integration `mask_app_secret` 同风格）。
+/// 过短（≤7 位，前后缀会重叠）→ 整体 `****`。
+/// 例：`130101199001011234` → `130****1234`；`sk-abcdef1234` → `sk-****1234`。
+pub fn mask_secret_string(s: &str) -> String {
+    let chars: Vec<char> = s.chars().collect();
+    let n = chars.len();
+    if n <= 7 {
+        return "****".to_string();
+    }
+    // n > 7 ≥ 8，前后缀切片必然合法；用 get 满足 indexing_slicing=deny。
+    let prefix: String = chars.get(..3).unwrap_or(&[]).iter().collect();
+    let suffix: String = chars.get(n - 4..).unwrap_or(&[]).iter().collect();
+    format!("{prefix}****{suffix}")
+}
+
+/// 处理 MCP Text 内容块内嵌 JSON：字符串能解析为 JSON 对象/数组时，对其内层
+/// 声明字段按前3后4 掩码后重新序列化；解析失败（纯文本）原样返回。
+fn mask_inner_json_text(val: &Value, declared: &[String]) -> String {
+    let Some(s) = val.as_str() else {
+        return val.to_string();
+    };
+    let Ok(inner) = serde_json::from_str::<Value>(s) else {
+        return s.to_string();
+    };
+    // 复用同一递归掩码逻辑处理内层 JSON
+    let middleware = McpSecurityMiddleware::new();
+    let masked = middleware.walk_mask_declared(&inner, declared);
+    serde_json::to_string(&masked).unwrap_or_else(|_| s.to_string())
+}
 
 /// 认证用户信息
 #[derive(Debug, Clone)]
@@ -343,6 +374,56 @@ impl McpSecurityMiddleware {
         }
     }
 
+    /// 按工具 sensitive_output 声明脱敏（Phase D）。
+    ///
+    /// 与全局 `SENSITIVE_FIELDS`（整字段 `***REDACTED***`）互补：工具声明的字段
+    /// 按「前3后4」掩码（同 integration `mask_app_secret` 风格），保留可辨认性的
+    /// 同时不回显明文；短值（≤7 字符）整体 `****`。
+    pub fn sanitize_declared_fields(&self, value: &Value, decl: &SensitiveOutput) -> Value {
+        if decl.fields.is_empty() {
+            return value.clone();
+        }
+        let masked = self.walk_mask_declared(value, &decl.fields);
+        if decl.contains_sensitive == Some(true) {
+            warn!(
+                fields = ?decl.fields,
+                "Tool output contains sensitive fields; masked per declaration"
+            );
+        }
+        masked
+    }
+
+    /// 递归遍历：key 命中声明字段名时，字符串值按前3后4 掩码；其余递归。
+    ///
+    /// 业务工具实际输出形态为 `McpContent::Text { text: <json_string> }`（业务 JSON
+    /// 序列化为字符串内嵌），因此 `text` 字符串若能解析为 JSON，同样对其内层 JSON
+    /// 应用声明字段掩码，否则原样保留。
+    fn walk_mask_declared(&self, value: &Value, declared: &[String]) -> Value {
+        match value {
+            Value::Object(map) => {
+                let mut out = serde_json::Map::new();
+                for (key, val) in map {
+                    if declared.contains(key) {
+                        let masked = match val {
+                            Value::String(s) => Value::String(mask_secret_string(s)),
+                            other => other.clone(),
+                        };
+                        out.insert(key.clone(), masked);
+                    } else if key == "text" {
+                        out.insert(key.clone(), Value::String(mask_inner_json_text(val, declared)));
+                    } else {
+                        out.insert(key.clone(), self.walk_mask_declared(val, declared));
+                    }
+                }
+                Value::Object(out)
+            }
+            Value::Array(arr) => {
+                Value::Array(arr.iter().map(|v| self.walk_mask_declared(v, declared)).collect())
+            }
+            _ => value.clone(),
+        }
+    }
+
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 获取当前速率限制状态
     pub async fn get_rate_limit_status(&self, user_id: &str) -> RateLimitStatus {
@@ -492,5 +573,52 @@ mod tests {
         assert!(middleware
             .check_injection_patterns("test", "普通查询请求")
             .is_ok());
+    }
+
+    #[test]
+    fn test_mask_secret_string_style() {
+        // 与 integration mask_app_secret 同风格：前3****后4；过短整体 ****
+        assert_eq!(mask_secret_string("130101199001011234"), "130****1234");
+        assert_eq!(mask_secret_string("sk-abcdef1234"), "sk-****1234");
+        assert_eq!(mask_secret_string("abcdefg"), "****"); // 7 位 → 整体
+        assert_eq!(mask_secret_string(""), "****");
+    }
+
+    #[test]
+    fn test_sanitize_declared_fields_matches_nested() {
+        // Phase D：工具声明字段按前3后4 掩码，未声明字段原样保留；数组逐项生效
+        let middleware = McpSecurityMiddleware::new();
+        let decl = SensitiveOutput {
+            fields: vec!["id_card".to_string(), "bank_account".to_string()],
+            contains_sensitive: Some(true),
+        };
+        let output = serde_json::json!({
+            "name": "张三",
+            "id_card": "130101199001011234",
+            "profile": { "bank_account": "6222021234567890123" },
+            "records": [
+                { "id_card": "320101198505051234" }
+            ],
+            "phone": "13800001111"
+        });
+        let sanitized = middleware.sanitize_declared_fields(&output, &decl);
+        assert_eq!(sanitized["name"], "张三");
+        assert_eq!(sanitized["id_card"], "130****1234");
+        assert_eq!(sanitized["profile"]["bank_account"], "622****0123");
+        assert_eq!(sanitized["records"][0]["id_card"], "320****1234");
+        // 未声明字段不受影响（P2-4：phone 为业务联系字段）
+        assert_eq!(sanitized["phone"], "13800001111");
+    }
+
+    #[test]
+    fn test_sanitize_declared_fields_empty_decl_noop() {
+        let middleware = McpSecurityMiddleware::new();
+        let decl = SensitiveOutput::default();
+        let output = serde_json::json!({"password": "secret123"});
+        // 空声明原样返回（全局脱敏仍由调用方在 handle_tools_call 先执行）
+        assert_eq!(
+            middleware.sanitize_declared_fields(&output, &decl),
+            output
+        );
     }
 }

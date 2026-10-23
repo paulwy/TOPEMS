@@ -19,4 +19,4 @@ pub mod protocol;
 pub mod schema;
 
 pub use jsonrpc::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
-pub use protocol::{McpCapability, McpProtocolVersion};
+pub use protocol::{McpCapability, McpProtocolVersion, SensitiveOutput};
