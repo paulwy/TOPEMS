@@ -137,6 +137,17 @@ pub async fn create_expense(
         return Json(ApiResponse::error(400, "报销编号不能为空"));
     }
 
+    // applicant_name 为 DB NOT NULL 列，缺失时须在入口返回 400，
+    // 否则 NULL 绑定触发约束违反、只能回落到 500（真实错误被 tracing 吞掉）
+    let applicant_name = req
+        .get("applicant_name")
+        .and_then(|v| v.as_str())
+        .map(str::trim)
+        .filter(|s| !s.is_empty());
+    let Some(applicant_name) = applicant_name else {
+        return Json(ApiResponse::error(400, "申请人不能为空"));
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"INSERT INTO expenses (id, expense_number, applicant_name, department_id, expense_type,
@@ -149,7 +160,7 @@ pub async fn create_expense(
     ))
     .bind(id)
     .bind(expense_number)
-    .bind(req.get("applicant_name").and_then(|v| v.as_str()))
+    .bind(applicant_name)
     .bind(
         req.get("department_id")
             .and_then(|v| v.as_str())
@@ -428,18 +439,18 @@ pub async fn list_budgets(
 }
 
 /// 解析创建行的 tenant_id：
-/// - 超管（is_superuser）→ None，落公共行（tenant_id = NULL）；
+/// - 超管（is_superuser）→ 优先使用 `claims.tenant_id`（超管自建数据落在自身租户，
+///   否则 tenant_id=NULL 的行会被按 `claims.tenant_id` 过滤的列表查询吞掉，即"自吞"）；
+///   仅在 claims 无租户时落公共行（tenant_id = NULL）；
 /// - 普通用户 → 必须携带可解析的 claims.tenant_id；缺失或非法直接 400，
 ///   禁止静默落 nil UUID（全零行在 RLS 租户过滤下不可见）。
 fn resolve_create_tenant(claims: &Claims) -> Result<Option<Uuid>, (u16, String)> {
-    if claims.is_superuser {
-        return Ok(None);
-    }
     match claims.tenant_id.as_deref() {
-        None => Err((400, "缺少租户ID".to_string())),
         Some(raw) => Uuid::parse_str(raw)
             .map(Some)
             .map_err(|_| (400, "无效的租户ID".to_string())),
+        None if claims.is_superuser => Ok(None),
+        None => Err((400, "缺少租户ID".to_string())),
     }
 }
 
@@ -1398,4 +1409,57 @@ pub fn create_routes() -> Router<AppState> {
             "/payables/{id}",
             get(get_payable).put(update_payable).delete(delete_payable),
         )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn claims(is_superuser: bool, tenant_id: Option<&str>) -> Claims {
+        Claims {
+            sub: "00000000-0000-0000-0000-0000000000aa".to_string(),
+            username: "u".to_string(),
+            role: "user".to_string(),
+            roles: vec![],
+            permissions: vec![],
+            is_superuser,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: tenant_id.map(str::to_string),
+            department_id: None,
+            position_id: None,
+            position_code: None,
+        }
+    }
+
+    #[test]
+    fn superuser_create_uses_own_tenant() {
+        // 超管自建数据必须落在自身租户，否则 tenant_id=NULL 会被按租户过滤的列表吞掉（自吞）
+        let tid = "00000000-0000-0000-0000-000000000001";
+        let got = resolve_create_tenant(&claims(true, Some(tid)));
+        assert_eq!(got, Ok(Some(Uuid::parse_str(tid).unwrap())));
+    }
+
+    #[test]
+    fn superuser_without_tenant_falls_back_to_public_row() {
+        assert_eq!(resolve_create_tenant(&claims(true, None)), Ok(None));
+    }
+
+    #[test]
+    fn normal_user_requires_tenant() {
+        assert_eq!(
+            resolve_create_tenant(&claims(false, None)),
+            Err((400, "缺少租户ID".to_string()))
+        );
+    }
+
+    #[test]
+    fn invalid_tenant_is_rejected() {
+        assert_eq!(
+            resolve_create_tenant(&claims(false, Some("not-a-uuid"))),
+            Err((400, "无效的租户ID".to_string()))
+        );
+    }
 }

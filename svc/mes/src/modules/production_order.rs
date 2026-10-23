@@ -208,6 +208,15 @@ pub fn validate_state_transition(
     )))
 }
 
+/// 归一化分页参数：page/page_size 来自查询串，调用方可能传 0 或负数。
+/// 直接代入 `(page - 1) * page_size` 会得到负 OFFSET（PostgreSQL 报错 → 500），
+/// 故下限钳到 1，保证任意入参都只回落到第一页而非 500。
+fn normalize_page_params(page: Option<i32>, page_size: Option<i32>) -> (i64, i64) {
+    let page = i64::from(page.unwrap_or(1)).max(1);
+    let page_size = i64::from(page_size.unwrap_or(10)).max(1);
+    (page, page_size)
+}
+
 // ==================== Production Order Handlers ====================
 
 #[utoipa::path(
@@ -238,8 +247,7 @@ pub async fn list_production_orders(
         return e;
     }
 
-    let page = query.page.unwrap_or(1) as i64;
-    let page_size = query.page_size.unwrap_or(10) as i64;
+    let (page, page_size) = normalize_page_params(query.page, query.page_size);
     let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
@@ -1491,6 +1499,18 @@ mod tests {
         roundtrip(&ProductionOrderSource::Manual);
         roundtrip(&ProductionOrderSource::ErpSalesOrder);
         roundtrip(&ProductionOrderSource::Mrp);
+    }
+
+    #[test]
+    fn test_normalize_page_params_defaults_and_clamps() {
+        // 缺省
+        assert_eq!(normalize_page_params(None, None), (1, 10));
+        // 显式 0 / 负数不得产生负 OFFSET（旧实现 page=0 → offset=-10 → SQL 报错 500）
+        assert_eq!(normalize_page_params(Some(0), Some(10)), (1, 10));
+        assert_eq!(normalize_page_params(Some(-3), Some(-5)), (1, 1));
+        assert_eq!(normalize_page_params(Some(0), Some(0)), (1, 1));
+        // 正常值透传
+        assert_eq!(normalize_page_params(Some(2), Some(50)), (2, 50));
     }
 
     #[test]
