@@ -601,7 +601,8 @@ pub async fn approve_order(
         only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
             status = 'approved', remarks = $2, updated_at = $3
-        WHERE id = $1 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
+        WHERE id = $1 AND status = 'pending' AND deleted_at IS NULL
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
@@ -669,6 +670,13 @@ pub async fn approve_order(
                 Json(ApiResponse::success(order.clone(), "采购订单审批通过")),
                 "success",
                 None,
+            )
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            (
+                Json(ApiResponse::error(409, "采购订单当前状态不允许审批")),
+                "conflict",
+                Some("状态冲突：仅 pending 可审批".to_string()),
             )
         }
         Err(e) => {
@@ -793,7 +801,8 @@ pub async fn reject_order(
         only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
             status = 'rejected', remarks = $2, updated_at = $3
-        WHERE id = $1 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
+        WHERE id = $1 AND status = 'pending' AND deleted_at IS NULL
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
@@ -816,6 +825,13 @@ pub async fn reject_order(
                 Json(ApiResponse::success(order.clone(), "采购订单已驳回")),
                 "success",
                 None,
+            )
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            (
+                Json(ApiResponse::error(409, "采购订单当前状态不允许驳回")),
+                "conflict",
+                Some("状态冲突：仅 pending 可驳回".to_string()),
             )
         }
         Err(e) => {

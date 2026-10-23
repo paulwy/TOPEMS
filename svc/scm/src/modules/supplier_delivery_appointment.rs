@@ -969,7 +969,8 @@ pub async fn approve_appointment(
         r#"
         UPDATE scm.supplier_delivery_appointments SET
             status = 'approved', approver = $2, approved_at = $3, remarks = $4, updated_at = $3
-        WHERE id = $1 AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
+        WHERE id = $1 AND status = 'pending' AND deleted_at IS NULL
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
         RETURNING {SELECT_COLUMNS}
         "#
     );
@@ -988,6 +989,11 @@ pub async fn approve_appointment(
             Json(ApiResponse::success(apt.clone(), "供应商送货预约审批通过")),
             "success",
             None,
+        ),
+        Err(sqlx::Error::RowNotFound) => (
+            Json(ApiResponse::error(409, "送货预约当前状态不允许审批")),
+            "conflict",
+            Some("状态冲突：仅 pending 可审批".to_string()),
         ),
         Err(e) => {
             tracing::error!("审批供应商送货预约失败: {}", e);
@@ -1119,7 +1125,8 @@ pub async fn reject_appointment(
         UPDATE scm.supplier_delivery_appointments SET
             status = 'rejected', approver = $2, approved_at = $3,
             rejection_reason = $4, remarks = $5, updated_at = $3
-        WHERE id = $1 AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6::uuid)
+        WHERE id = $1 AND status = 'pending' AND deleted_at IS NULL
+          AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6::uuid)
         RETURNING {SELECT_COLUMNS}
         "#
     );
@@ -1139,6 +1146,11 @@ pub async fn reject_appointment(
             Json(ApiResponse::success(apt.clone(), "供应商送货预约已驳回")),
             "success",
             None,
+        ),
+        Err(sqlx::Error::RowNotFound) => (
+            Json(ApiResponse::error(409, "送货预约当前状态不允许驳回")),
+            "conflict",
+            Some("状态冲突：仅 pending 可驳回".to_string()),
         ),
         Err(e) => {
             tracing::error!("驳回供应商送货预约失败: {}", e);

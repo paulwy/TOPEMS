@@ -180,8 +180,8 @@ async fn main() -> Result<()> {
         }
     };
 
-    // 构建业务路由（各模块 create_routes 自行管理内部状态）
-    let protected_routes = axum::Router::new()
+    // 管理端路由：保留全量 srm:admin 伞码作为硬防线（内部采购/管理人员）。
+    let admin_routes = axum::Router::new()
         .merge(
             create_supplier_routes(
                 ctx.db.clone(),
@@ -200,7 +200,6 @@ async fn main() -> Result<()> {
         .merge(create_bid_price_routes(ctx.db.clone()).await?)
         .merge(create_bidding_routes(ctx.db.clone()).await?)
         .merge(create_tender_routes(ctx.db.clone()).await?)
-        .merge(create_supplier_portal_routes(ctx.db.clone()).await?)
         .merge(create_performance_routes(ctx.db.clone()).await?)
         .merge(create_data_sync_routes(ctx.db.clone(), ctx.event_publisher.clone()).await?)
         .merge(create_inquiry_routes(ctx.db.clone()).await?)
@@ -212,6 +211,18 @@ async fn main() -> Result<()> {
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn(require_permission("srm:admin")));
+
+    // 供应商自助门户路由：从全量 srm:admin 粗粒度伞码放开。
+    // 仅预应用 tenant_middleware；端点内部 check_permission(SupplierRead) 做细粒度校验，
+    // 并按 path supplier_id + tenant_id 限定读自己的数据（管理写操作仍在 admin_routes）。
+    let portal_routes = axum::Router::new()
+        .merge(create_supplier_portal_routes(ctx.db.clone()).await?)
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ));
+
+    let protected_routes = admin_routes.merge(portal_routes);
 
     // 标准健康检查路由 + 插件路由
     let health_state = create_health_state(&ctx, &config);

@@ -978,6 +978,46 @@ pub async fn update_inbound_order_item(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
 
+    // P2 明细更新数量前置校验：received_quantity 非负且不超过应收(expected_quantity)。
+    let expected_qty: Option<f64> = sqlx::query_scalar::<_, f64>(only_own_schema_query!(
+        "wms",
+        r#"
+        SELECT expected_quantity FROM wms.inbound_order_items
+        WHERE order_id = $1 AND id = $2 AND deleted_at IS NULL
+          AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL
+               OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        "#
+    ))
+    .bind(id)
+    .bind(item_id)
+    .fetch_optional(&mut **txn)
+    .await
+    .ok()
+    .flatten();
+
+    match expected_qty {
+        None => {
+            return Json(ApiResponse::error(404, "入库订单明细不存在"));
+        }
+        Some(expected) => {
+            if req.received_quantity < 0.0 {
+                return Json(ApiResponse::error(
+                    400,
+                    &format!("收货数量不能为负: {}", req.received_quantity),
+                ));
+            }
+            if req.received_quantity > expected + f64::EPSILON {
+                return Json(ApiResponse::error(
+                    400,
+                    &format!(
+                        "收货数量超出应收: 应收 {} 实收 {}",
+                        expected, req.received_quantity
+                    ),
+                ));
+            }
+        }
+    }
+
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -1309,6 +1349,75 @@ pub async fn receive_inbound_order(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
     };
+
+    // P2 收货数量前置校验：received_quantity 非负且不超过明细应收(expected_quantity)。
+    // 防 GUC 条件 UPDATE 静默不生效（rows_affected=0）或负数/超收直接落库。
+    // 先按订单查全部明细的应收数量，再逐条校验请求，非法立即 400 不写库。
+    {
+        let line_ids: Vec<Uuid> = items.iter().map(|i| i.item_id).collect();
+        let lines = sqlx::query(only_own_schema_query!(
+            "wms",
+            r#"
+            SELECT id, expected_quantity FROM wms.inbound_order_items
+            WHERE order_id = $1 AND id = ANY($2) AND deleted_at IS NULL
+              AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL
+                   OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            "#
+        ))
+        .bind(id)
+        .bind(&line_ids)
+        .fetch_all(&mut **txn)
+        .await;
+
+        let lines = match lines {
+            Ok(rows) => rows,
+            Err(e) => {
+                tracing::error!("收货校验查询明细失败: {}", e);
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "收货校验失败".to_string(),
+                )));
+            }
+        };
+
+        let mut expected_by_id: std::collections::HashMap<Uuid, f64> =
+            std::collections::HashMap::new();
+        for row in &lines {
+            let lid: Uuid = row.try_get::<Uuid, _>("id").unwrap_or_default();
+            let exp: f64 = row.try_get::<f64, _>("expected_quantity").unwrap_or(0.0);
+            expected_by_id.insert(lid, exp);
+        }
+
+        for item in &items {
+            if item.received_quantity < 0.0 {
+                return Json(ApiResponse::error(
+                    400,
+                    &format!(
+                        "收货数量不能为负: 明细 {} 收到 {}",
+                        item.item_id, item.received_quantity
+                    ),
+                ));
+            }
+            match expected_by_id.get(&item.item_id) {
+                None => {
+                    return Json(ApiResponse::error(
+                        400,
+                        &format!("收货明细不属于该入库单或不存在: {}", item.item_id),
+                    ));
+                }
+                Some(&expected) => {
+                    if item.received_quantity > expected + f64::EPSILON {
+                        return Json(ApiResponse::error(
+                            400,
+                            &format!(
+                                "收货数量超出应收: 明细 {} 应收 {} 实收 {}",
+                                item.item_id, expected, item.received_quantity
+                            ),
+                        ));
+                    }
+                }
+            }
+        }
+    }
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
