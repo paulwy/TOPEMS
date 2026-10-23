@@ -3406,3 +3406,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **验收口径**：完成态验收（progress is_completed=true / InitGate 静默回退 / 新租户按 Claims.tenant_id 落库互不串扰）+ 关联实现索引（P2-1/P2-2/种子/FK 迁移）
 - 复核：contract-gate 2657/6325/0 缺口；活文档变更日志 v1.98 登记
 
+## v1.99 观察项核销：core_tenant_usage 四版统一（2026-10-23）
+- [x] **实证**：v1.69 ④ 观察项「public 与 iam 双 core_tenant_usage」现状实为 4 版（public/iam/flow/mes，全 0 行、全有 RLS 策略）
+- [x] **定性 + 处置**：`iam.core_tenant_usage` 为 v1.70 iam 空壳统一漏网（仅 DDL 基准 06_iam_schema.sql 定义、svc 零显式引用、零 FK）→ DROP（仅主库；prepare 本无）；flow/mes 版被 RLS 迁移 `20261015000076` 显式点名（search_path 兼容层受保护）保留；public 版为 usage 采集写入目标保留
+- [x] **验证**：BFF 8099 `GET /api/core/tenant/{id}/analytics/usage` 200（unified-core 消费路径正常）+ health 200 + contract-gate 0 缺口
+- 活文档变更日志 v1.99 登记
+
+
