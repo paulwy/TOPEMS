@@ -132,13 +132,28 @@ pub async fn dashboard_websocket(
                                                 match msg_type {
                                                     Some("authenticate") => {
                                                         tracing::info!("🔑 Authentication request received for connection {}", connection_id);
-                                                        authenticated = true;
-                                                        match tx.send(Message::Text(r#"{"type":"authenticated","message":"Authentication successful"}"#.to_string().into())).await {
-                                                            Ok(_) => {
-                                                                tracing::info!("✅ Connection {} authenticated successfully", connection_id);
+                                                        // P1-6: 不能仅凭 type=authenticate 即置为已认证，
+                                                        // 必须从消息体取 JWT 并校验（客户端约定：{"type":"authenticate","token":"<JWT>"}）。
+                                                        let token = parsed.get("token").and_then(|v| v.as_str()).unwrap_or_default();
+                                                        match verify_jwt_token(token, &jwt_secret) {
+                                                            Ok(claims) => {
+                                                                tracing::info!("✅ Message token validated: user={}, role={} for connection {}", claims.sub, claims.role, connection_id);
+                                                                authenticated = true;
+                                                                match tx.send(Message::Text(r#"{"type":"authenticated","message":"Authentication successful"}"#.to_string().into())).await {
+                                                                    Ok(_) => {
+                                                                        tracing::info!("✅ Connection {} authenticated successfully", connection_id);
+                                                                    }
+                                                                    Err(e) => {
+                                                                        tracing::error!("❌ Failed to send auth success message to connection {}: {}", connection_id, e);
+                                                                    }
+                                                                }
                                                             }
                                                             Err(e) => {
-                                                                tracing::error!("❌ Failed to send auth success message to connection {}: {}", connection_id, e);
+                                                                tracing::warn!("❌ Message token authentication failed for connection {}: {}", connection_id, e);
+                                                                // 认证失败：保持未认证，回送错误后主动关闭连接，拒绝静默挂起。
+                                                                let _ = tx.send(Message::Text(r#"{"type":"error","message":"Authentication failed"}"#.to_string().into())).await;
+                                                                let _ = tx.send(Message::Close(None)).await;
+                                                                break;
                                                             }
                                                         }
                                                     }

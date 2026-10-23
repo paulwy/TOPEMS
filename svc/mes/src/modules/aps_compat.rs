@@ -10,11 +10,11 @@
 //!
 //! 使用方式:
 //!   1. 在 main.rs 中注册本模块的路由，使用 /api/aps 前缀
-//!   2. 或者在网关层配置 301 重定向
+//!   2. 或者在网关层配置重定向（写方法须用 307，勿用会被缓存的永久重定向）
 
 use axum::{
     extract::OriginalUri,
-    http::StatusCode,
+    http::{Method, StatusCode},
     response::{IntoResponse, Redirect, Response},
     routing::any,
     Router,
@@ -46,31 +46,52 @@ pub fn create_routes() -> Router<AppState> {
         .route("/{*path}", any(redirect_generic))
 }
 
+/// 根据请求方法选择重定向状态码。
+///
+/// P1-5 修复：写方法（POST/PUT/DELETE/PATCH）统一使用 307 Temporary Redirect，
+/// 保留原请求方法与消息体，且不被客户端缓存（本兼容层为临时迁移层，将于 2026-11-28
+/// 移除，绝不能把写请求缓存成永久重定向）。
+///
+/// 安全方法（GET/HEAD/OPTIONS）保留 308 Permanent Redirect：目标 /api/mes/* 在
+/// 兼容层移除后依然存在，永久重定向有助于客户端平滑迁移到新路径，且安全方法无
+/// 方法/消息体语义被改写的风险。
+fn build_redirect(target: &str, method: &Method) -> Response {
+    if method == Method::POST
+        || method == Method::PUT
+        || method == Method::DELETE
+        || method == Method::PATCH
+    {
+        Redirect::temporary(target).into_response()
+    } else {
+        Redirect::permanent(target).into_response()
+    }
+}
+
 /// 通用重定向：将 /api/aps/xxx 重定向到 /api/mes/xxx
-async fn redirect_to_mes(OriginalUri(uri): OriginalUri) -> Response {
+async fn redirect_to_mes(method: Method, OriginalUri(uri): OriginalUri) -> Response {
     let path = uri.path();
     let query = uri.query().map(|q| format!("?{}", q)).unwrap_or_default();
     let new_path = path.replacen("/api/aps", "/api/mes", 1);
     let target = format!("{}{}", new_path, query);
-    Redirect::permanent(&target).into_response()
+    build_redirect(&target, &method)
 }
 
 /// forecasts 特殊重定向：/api/aps/forecasts → /api/mes/demand-forecasts
-async fn redirect_forecasts(OriginalUri(uri): OriginalUri) -> Response {
+async fn redirect_forecasts(method: Method, OriginalUri(uri): OriginalUri) -> Response {
     let path = uri.path();
     let query = uri.query().map(|q| format!("?{}", q)).unwrap_or_default();
     let new_path = path.replacen("/api/aps/forecasts", "/api/mes/demand-forecasts", 1);
     let target = format!("{}{}", new_path, query);
-    Redirect::permanent(&target).into_response()
+    build_redirect(&target, &method)
 }
 
 /// 通用兜底重定向
-async fn redirect_generic(OriginalUri(uri): OriginalUri) -> Response {
+async fn redirect_generic(method: Method, OriginalUri(uri): OriginalUri) -> Response {
     let path = uri.path();
     let query = uri.query().map(|q| format!("?{}", q)).unwrap_or_default();
     let new_path = path.replacen("/api/aps", "/api/mes", 1);
     let target = format!("{}{}", new_path, query);
-    Redirect::permanent(&target).into_response()
+    build_redirect(&target, &method)
 }
 
 /// 返回兼容层信息（用于健康检查和文档）
