@@ -172,7 +172,7 @@ pub async fn list_inbound_orders(
         FROM wms.inbound_orders
         WHERE ($1::text IS NULL OR order_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
-          AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
+          AND ($5::uuid IS NULL OR tenant_id = $5::uuid OR tenant_id IS NULL)
           AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4

@@ -44,7 +44,8 @@
 - [x] **§4 最小业务闭环场景验证（v1.90）** ✅ 实跑：供应商(erp)→采购单(scm)→入库(wms)→检验(qms) 4 环节全 200（supplier_id 关联）；物料环节受限（master-data 8090 未启动 + test 库无 master_data schema，另批补）；4.3 已具备（P2-1 CTA）。4.4 查证：wms/qms tenant_id=001 与 claims 一致（非缺陷），租户B(002) 补建生效，非超管 wms 全 403（权限体系 4.1 联动），超管建单 tenant_id 落 NULL（普通角色不可见）。
 - [x] **§4 联动待办① 权限体系（v1.91）** ✅ 模块级放行：require_module_access + Claims::has_module_permission；wms/erp/scm/qms 独立入口 + 聚合面 15 real_module 伞码→模块级；租户B 4 角色 173 权限 4 环节全链路 200；隔离列表仅见本租户。wms 入库 organization_id 硬编码 001→绑定租户；InboundOrder.tenant_id→Option（超管公共行 500→200）。
 - [x] **§4 联动待办② 前端菜单过滤（v1.92）** ✅ GlobalLayoutV3 叶子级过滤（children 细粒度码逐项，空组隐藏）；MENU_PERMISSIONS 补核心 5 模块 25 条叶子映射；tsc 通过（浏览器实测留待实机）。
-- [ ] **§4 联动待办（剩余）**：① 超管建单公共行可见性（应用层过滤排除 NULL 行，待统一口径）；② 角色种子补全（erp_manager 缺失、<mod>:read/write 总码未配入 manager、其余模块叶子映射补全）；③ 物料主数据（master-data 8090 部署 + test 库补 master_data schema）。
+- [x] **§4 联动待办③ 超管建单公共行可见性（v1.93）** ✅ wms 入库列表过滤对齐 RLS 放行 NULL 公共行（普通用户可见公共行+本租户行，001 行仍隔离；写操作保持排除公共行）。
+- [ ] **§4 联动待办（剩余）**：① 角色种子补全（erp_manager 缺失、<mod>:read/write 总码未配入 manager、其余模块叶子映射补全）；② 物料主数据（master-data 8090 部署 + test 库补 master_data schema）。
 - [x] **业务缺口批1 · 隔离补齐（v1.89）** ✅ 闭环：实证收敛（RD/GIS/币种/项目类型已修复=盘点过时，仅 3 项真实缺口）——PM projects 全仓无正式建表（主库缺表/test 空壳 + name_en/tags/progress 类型错位致列表/创建 500）→ 迁移 `20261023000001` 幂等建表（26 列对齐 Project struct）+ 列表/get/dashboard 补 current_setting 租户过滤 + RLS（tenant_isolation_projects，seed 并入）；ERP bank_accounts 列表/get/delete 补租户过滤（列/INSERT 已具备）；BI analytics_datasets 列表/count 补租户过滤（is_public 放行）。验证：BFF 实跑 PM 创建/列表/get/删除全 200、双租户列表隔离（仅本租户可见）、ERP/BI 列表 200。
 
 > P2 增强/一致性/技术债（空态 CTA、向导租户归属、批量事务、岗位 FK、路由清理、菜单种子、新租户补播、技术债、公共主数据域）见活文档 §3 P2 表，按需认领。

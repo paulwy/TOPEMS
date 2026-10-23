@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.92（前端菜单过滤：核心模块叶子按权限显隐；见文末变更日志） |
+| 版本 | v1.93（超管建单公共行可见性：列表对齐 RLS 放行 NULL 行；见文末变更日志） |
 | 最近更新 | 2026-10-23 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
@@ -372,6 +372,7 @@
 
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
+| 2026-10-23 | v1.93 | 超管建单公共行可见性（§4.4 口径）✅ | wms 入库列表过滤 `AND (tenant_id = $N OR tenant_id IS NULL)` 对齐 RLS 策略（`tenant_id = GUC OR tenant_id IS NULL`）：普通用户可见本租户行 + NULL 公共行（超管建单），租户 A（001）行仍隔离。实测：租户B 列表可见公共行（INB-ADMIN-PUB-001）+ 自身 002 行，001 行不可见。写操作（get/update/delete）保持租户过滤排除公共行（公共行仅读，修改删除仍限超管） |
 | 2026-10-23 | v1.92 | 前端菜单过滤（4.1 剩余）✅ | GlobalLayoutV3 菜单叶子级过滤：children 逐项按 `MENU_PERMISSIONS` 细粒度码过滤（`checkPermission`，超管短路），可见子项为 0 时整组隐藏；`MENU_PERMISSIONS` 补齐核心 5 模块（mes/erp/scm/wms/qms）25 条叶子映射，与各模块 config.ts 路由级 `requiredPermissions` 对齐（`/mes/wip`→`mes:wip:read`、`/qms/eightd`→`qms:eightd:read` 改细）。tsc 通过；浏览器实测普通角色菜单留待实机确认 |
 | 2026-10-23 | v1.91 | 权限体系：模块级放行（4.1 核心）✅ | 新增 `require_module_access` + `Claims::has_module_permission`（`<module>:` 前缀任一权限即放行，超管短路）；wms/erp/scm/qms 独立入口 + 聚合面 15 个 real_module 全局 `<mod>:admin` 伞码→模块级放行。实测：租户B（002）配 wms/scm/qms/erp manager（173 权限）后供应商→采购→入库→检验 4 环节全 200（原全 403）。修复 wms 入库 `organization_id` 硬编码全零 001→绑定 claims 租户（tenant2 建单落 002，列表隔离仅见本租户行）；`InboundOrder.tenant_id` 改 `Option`（超管建单公共行 NULL 解码 500→200）。测试租户B 主数据保留（flow.core_tenants/core_tenant_users/iam.users/core_users+角色，id 已对齐），验证业务数据已清理。角色权限缺口：`erp_manager` 种子缺失（临时建）；`<mod>:write/read` 总码未配入 manager 角色（临时补）；公共行应用层过滤排除待统一口径 |
 | 2026-10-23 | v1.90 | §4 最小业务闭环场景验证 ✅ | 4.2 实跑：供应商(erp) `SUP-CLOSE-001` → 采购单(scm) `PO-CLOSE-001` → 入库(wms) `INB-CLOSE-001` → 检验(qms) `INS-` 自动编号，4 环节全 200（supplier_id 跨模块关联）；物料环节受限（master-data 8090 未启动 + test 库无 master_data schema，另批补）。4.3 已具备（P2-1 checklist CTA）。4.4 查证：wms/qms tenant_id=001 与 claims 一致（非缺陷）；租户B（002）补建后 claims 生效；非超管 wms 全 403（权限体系 4.1 联动）；超管建单 tenant_id 落 NULL（普通角色不可见）。验证数据已清理 |
