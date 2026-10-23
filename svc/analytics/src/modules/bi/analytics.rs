@@ -527,7 +527,10 @@ mod tests {
             assert!(!success(r), "endpoint #{i} should not report success");
             // 消息必须说明无数据源，且不得残留写死 KPI 字段
             let msg = r.0.get("message").and_then(|m| m.as_str()).unwrap_or("");
-            assert!(msg.contains("暂无真实数据源") || msg.contains("无真实数据源"), "endpoint #{i} message: {msg}");
+            assert!(
+                msg.contains("暂无真实数据源") || msg.contains("无真实数据源"),
+                "endpoint #{i} message: {msg}"
+            );
         }
     }
 }

@@ -1000,7 +1000,10 @@ pub async fn confirm_collection(
     let status: String = rec.get("status");
     let invoice_id: Option<Uuid> = rec.get("invoice_id");
     if status == "confirmed" {
-        return Json(ApiResponse::<CollectionOut>::error(409, "回款记录已确认，请勿重复确认"));
+        return Json(ApiResponse::<CollectionOut>::error(
+            409,
+            "回款记录已确认，请勿重复确认",
+        ));
     }
 
     // 原子谓词：AND status != 'confirmed' AND deleted_at IS NULL。
@@ -1019,7 +1022,10 @@ pub async fn confirm_collection(
         Err(e) => return Json(crate::shared::err_resp(e)),
     };
     if affected == 0 {
-        return Json(ApiResponse::<CollectionOut>::error(409, "回款记录已被其他请求确认，请勿重复确认"));
+        return Json(ApiResponse::<CollectionOut>::error(
+            409,
+            "回款记录已被其他请求确认，请勿重复确认",
+        ));
     }
 
     // 回写发票：FOR UPDATE 锁定发票，超收封顶——确认额不得超过应收余额（total - paid）。

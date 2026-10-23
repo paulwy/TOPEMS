@@ -369,10 +369,14 @@ fn init_field_encryption(
 ) -> Option<std::sync::Arc<topems_shared_auth::security::FieldEncryptionService>> {
     use topems_shared_auth::security::KeyManager;
 
-    let raw_key = ["TOPEMS_FIELD_ENCRYPTION_KEY", "SETTINGS_ENCRYPTION_KEY", "ENCRYPTION_KEY"]
-        .iter()
-        .map(|name| std::env::var(name).ok())
-        .find_map(|v| v.filter(|s| !s.is_empty()));
+    let raw_key = [
+        "TOPEMS_FIELD_ENCRYPTION_KEY",
+        "SETTINGS_ENCRYPTION_KEY",
+        "ENCRYPTION_KEY",
+    ]
+    .iter()
+    .map(|name| std::env::var(name).ok())
+    .find_map(|v| v.filter(|s| !s.is_empty()));
 
     let raw_key = match raw_key {
         Some(k) => k,

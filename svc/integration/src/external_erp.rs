@@ -65,7 +65,10 @@ fn ssrf_target_blocked(url: &str) -> bool {
 
 /// 纯函数：给定 URL host（可能带方括号 IPv6）判断是否命中封锁段。
 fn ssrf_host_blocked(host: &str) -> bool {
-    let host = host.trim_start_matches('[').trim_end_matches(']').to_lowercase();
+    let host = host
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .to_lowercase();
     if host == "localhost" || host.ends_with(".localhost") {
         return true;
     }
@@ -76,9 +79,7 @@ fn ssrf_host_blocked(host: &str) -> bool {
             }
             std::net::IpAddr::V6(v6) => {
                 // ::1 回环；:: 未指定；fe80::/10 链路本地（std 未提供 is_link_local，手动判定）
-                v6.is_loopback()
-                    || v6.is_unspecified()
-                    || (v6.segments()[0] & 0xffc0 == 0xfe80)
+                v6.is_loopback() || v6.is_unspecified() || (v6.segments()[0] & 0xffc0 == 0xfe80)
             }
         },
         Err(_) => false, // 域名：本轮不做 DNS 解析（DNS 重绑定风险见后续加固项）
@@ -1712,7 +1713,9 @@ mod ssrf_tests {
 
     #[test]
     fn allows_public_targets() {
-        assert!(!ssrf_target_blocked("https://erp.customer.example.com/api/v1"));
+        assert!(!ssrf_target_blocked(
+            "https://erp.customer.example.com/api/v1"
+        ));
         assert!(!ssrf_target_blocked("http://8.8.8.8:8080/"));
         assert!(!ssrf_target_blocked("http://10.0.0.5:8080/")); // 私网不在本批封锁范围（待产品白名单决策）
     }

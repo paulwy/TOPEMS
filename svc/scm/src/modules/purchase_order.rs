@@ -672,13 +672,11 @@ pub async fn approve_order(
                 None,
             )
         }
-        Err(sqlx::Error::RowNotFound) => {
-            (
-                Json(ApiResponse::error(409, "采购订单当前状态不允许审批")),
-                "conflict",
-                Some("状态冲突：仅 pending 可审批".to_string()),
-            )
-        }
+        Err(sqlx::Error::RowNotFound) => (
+            Json(ApiResponse::error(409, "采购订单当前状态不允许审批")),
+            "conflict",
+            Some("状态冲突：仅 pending 可审批".to_string()),
+        ),
         Err(e) => {
             tracing::error!("审批采购订单失败: {}", e);
             (
@@ -827,13 +825,11 @@ pub async fn reject_order(
                 None,
             )
         }
-        Err(sqlx::Error::RowNotFound) => {
-            (
-                Json(ApiResponse::error(409, "采购订单当前状态不允许驳回")),
-                "conflict",
-                Some("状态冲突：仅 pending 可驳回".to_string()),
-            )
-        }
+        Err(sqlx::Error::RowNotFound) => (
+            Json(ApiResponse::error(409, "采购订单当前状态不允许驳回")),
+            "conflict",
+            Some("状态冲突：仅 pending 可驳回".to_string()),
+        ),
         Err(e) => {
             tracing::error!("驳回采购订单失败: {}", e);
             (

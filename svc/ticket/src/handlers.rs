@@ -376,7 +376,9 @@ impl TicketService {
             }
         }
 
-        self.get_ticket(tenant_id, ticket_id).await.map_err(Into::into)
+        self.get_ticket(tenant_id, ticket_id)
+            .await
+            .map_err(Into::into)
     }
 
     pub async fn add_comment(
@@ -693,9 +695,7 @@ pub async fn update_ticket_handler(
         // 状态机白名单拒绝（非法状态值/非法转移）→ 400
         Err(TopemsError::ValidationFailed(msg)) => Json(ApiResponse::error(400, &msg)),
         // 假 UUID 探测：get_ticket 走 fetch_one RowNotFound → 记录不存在 → 404
-        Err(TopemsError::DatabaseRecordNotFound(_)) => {
-            Json(ApiResponse::error(404, "工单不存在"))
-        }
+        Err(TopemsError::DatabaseRecordNotFound(_)) => Json(ApiResponse::error(404, "工单不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新工单失败", e))),
     }
 }

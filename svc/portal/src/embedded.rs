@@ -211,10 +211,11 @@ pub async fn build_router(
             post(modules::announcements::toggle_announcement_pin),
         );
 
-    let personal_routes = personal_routes.route(
-        "/announcements/pinned",
-        get(modules::announcements::get_pinned_announcements),
-    )
+    let personal_routes = personal_routes
+        .route(
+            "/announcements/pinned",
+            get(modules::announcements::get_pinned_announcements),
+        )
         .route("/settings", get(modules::settings::get_user_settings))
         .route("/settings", put(modules::settings::update_user_settings))
         .route(
