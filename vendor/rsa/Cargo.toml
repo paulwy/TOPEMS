@@ -86,21 +86,8 @@ u64_digit = ["num-bigint/u64_digit"]
 name = "rsa"
 path = "src/lib.rs"
 
-[[test]]
-name = "pkcs1"
-path = "tests/pkcs1.rs"
-
-[[test]]
-name = "pkcs1v15"
-path = "tests/pkcs1v15.rs"
-
-[[test]]
-name = "pkcs8"
-path = "tests/pkcs8.rs"
-
-[[test]]
-name = "proptests"
-path = "tests/proptests.rs"
+# [TOPEMS] vendor 裁剪删除了 tests/ 目录，对应 4 个 [[test]] 条目同步移除，
+# 否则 -p rsa --all-targets target resolution error（指向不存在的测试文件）。
 
 [[bench]]
 name = "key"

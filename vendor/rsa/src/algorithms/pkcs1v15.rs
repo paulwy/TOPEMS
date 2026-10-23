@@ -64,6 +64,9 @@ where
 /// learn whether each instance returned an error then they can decrypt and
 /// forge signatures as if they had the private key. See
 /// `decrypt_session_key` for a way of solving this problem.
+// [TOPEMS] dead_code：Marvin 缓解补丁（PR #702 implicit rejection）后无调用者；
+// 保留以维持补丁 API 完整（vendor 最小改动，勿删函数）。
+#[allow(dead_code)]
 #[inline]
 pub(crate) fn pkcs1v15_encrypt_unpad(em: Vec<u8>, k: usize) -> Result<Vec<u8>> {
     let (valid, out, index) = decrypt_inner(em, k)?;
@@ -244,6 +247,8 @@ pub(crate) fn pkcs1v15_encrypt_unpad_implicit_rejection(
 /// returned in em so that it may be read independently of whether it was valid
 /// in order to maintain constant memory access patterns. If the plaintext was
 /// valid then index contains the index of the original message in em.
+// [TOPEMS] dead_code：随 pkcs1v15_encrypt_unpad 一同无调用者（见上方注释），保留。
+#[allow(dead_code)]
 #[inline]
 fn decrypt_inner(em: Vec<u8>, k: usize) -> Result<(u8, Vec<u8>, u32)> {
     if k < 11 {
