@@ -132,63 +132,21 @@ def _remove_rust_comments(content: str) -> str:
     """
     移除 Rust 代码中的注释（行注释和块注释），用空格替换以保持行号不变
 
-    注意：只移除注释内容，字符串字面量中的 // 或 /* */ 不受影响（简化处理）
+    实现：re.sub 一次性替换，彻底消除原版逐字符 append 产生的千万级临时对象。
+    刻意不做字符串字面量保护——原版的字符串状态机本身有 bug（把生命周期注解
+    `'_`/`'static` 误判为字符串入口，导致后续所有注释都被保留），放弃复刻。
+    本脚本只做路由字符串 `.route("...")` 匹配，该参数永远是双引号字面量，
+    注释内的 `//`/`/*` 不会出现在路由字符串里，风险为零。
     """
-    result = []
-    i = 0
-    n = len(content)
-    in_block_comment = False
-    in_string = False
-    string_char = None
+    # 块注释 /* ... */（跨多行 DOTALL）——替换为等长字符，换行保留
+    def _block_repl(m: re.Match) -> str:
+        s = m.group(0)
+        return "".join(ch if ch == "\n" else " " for ch in s)
 
-    while i < n:
-        if in_block_comment:
-            if content[i:i + 2] == "*/":
-                result.append("  ")
-                in_block_comment = False
-                i += 2
-            else:
-                if content[i] == "\n":
-                    result.append("\n")
-                else:
-                    result.append(" ")
-                i += 1
-            continue
-
-        if in_string:
-            result.append(content[i])
-            if content[i] == "\\" and i + 1 < n:
-                result.append(content[i + 1])
-                i += 2
-                continue
-            if content[i] == string_char:
-                in_string = False
-            i += 1
-            continue
-
-        if content[i:i + 2] == "//":
-            while i < n and content[i] != "\n":
-                result.append(" ")
-                i += 1
-            continue
-
-        if content[i:i + 2] == "/*":
-            in_block_comment = True
-            result.append("  ")
-            i += 2
-            continue
-
-        if content[i] in ('"', "'"):
-            in_string = True
-            string_char = content[i]
-            result.append(content[i])
-            i += 1
-            continue
-
-        result.append(content[i])
-        i += 1
-
-    return "".join(result)
+    content = re.sub(r"/\*.*?\*/", _block_repl, content, flags=re.DOTALL)
+    # 行注释 //... —— 替换为等长空格（不含换行，换行本身保留）
+    content = re.sub(r"//[^\n]*", lambda m: " " * len(m.group(0)), content)
+    return content
 
 
 def _find_function_ranges(content: str) -> List[Tuple[int, int]]:
@@ -279,6 +237,12 @@ def extract_routes_from_file(file_path: str, skip_function_routes: bool = False)
     content_no_comments = _remove_rust_comments(content)
     fn_ranges = _find_function_ranges(content_no_comments) if skip_function_routes else []
 
+    # 预计算原始文件的换行偏移，避免每次 route 匹配做 content[:pos].count("\n") 的 O(n²) 切片
+    import bisect
+    line_starts = [0]
+    for _m in re.finditer(r"\n", content):
+        line_starts.append(_m.end())
+
     route_pattern = re.compile(
         r'\.route\(\s*["\'](/[^"\']+)["\']\s*,\s*([^)]+)\)',
         re.DOTALL,
@@ -288,7 +252,9 @@ def extract_routes_from_file(file_path: str, skip_function_routes: bool = False)
         path = match.group(1)
         method_chain = match.group(2)
 
-        line_num = content[: match.start()].count("\n") + 1
+        # match.start() 是在 content_no_comments 里的偏移；content_no_comments 和 content 等长
+        # （只替换不删除字符），所以直接用 content 的 line_starts 二分
+        line_num = bisect.bisect_right(line_starts, match.start())
 
         if skip_function_routes and _is_inside_function(line_num, fn_ranges):
             continue
