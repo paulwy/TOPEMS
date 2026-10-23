@@ -76,6 +76,8 @@ impl EhsEventHandlers {
         let hazard_no = format!("EHS-HZ-{}", Utc::now().timestamp_subsec_millis());
         let now = Utc::now();
 
+        // 事件总线消费者无 HTTP 会话/租户上下文，落全局集成行（tenant_id=nil，与
+        // /api/internal 编排端点 P1-4 契约一致），超管/运维经 nil 豁免可见
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
              VALUES ($1, $2, 'environment', 'high', $3, 'reported', 'lims_abnormal', 'system', '00000000-0000-0000-0000-000000000000', $4, $4)
@@ -132,6 +134,7 @@ impl EhsEventHandlers {
         let hazard_no = format!("CA-QMS-{}", payload.action_id);
         let now = Utc::now();
 
+        // 事件总线消费者无 HTTP 会话/租户上下文，落全局集成行（tenant_id=nil，同 lims 异常处理器）
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
              VALUES ($1, $2, 'quality_corrective', 'medium', $3, 'reported', 'qms_corrective', 'system', '00000000-0000-0000-0000-000000000000', $4, $4)
@@ -239,6 +242,7 @@ impl EhsEventHandlers {
         .bind(email)
         .bind(department_id)
         .bind(now)
+        // HRM 员工事件跨域同步落全局行（事件消费者无租户会话，同本模块其他处理器契约）
         .bind(uuid::Uuid::nil())
         .fetch_optional(&self.db)
         .await;

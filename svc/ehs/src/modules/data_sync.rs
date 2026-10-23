@@ -1,4 +1,15 @@
 //! EHS Data Sync module - Sync safety data with QMS and LIMS
+//!
+//! 租户隔离判定（P2 制造域 B 审计豁免登记，2026-10-24）：
+//! `ehs.qa_ehs_sync_records` 为**系统级跨服务集成同步日志**（EHS→QMS/LIMS 编排工具
+//! 运维记录），表结构自始无 `tenant_id` 列、无 RLS 策略（见 database/init/10_ehs_schema.sql
+//! 与全部 selfheal 迁移，仅补 deleted_at）。20261006000003_u3_fake_sync_records_cleanup
+//! 已正式下线手动假同步写通道：sync_hazard_to_qms / sync_accident_to_lims / 配置 CRUD /
+//! 批量重试一律返回 501，本模块现存的 list/get/retry/delete 仅用于历史同步记录的运维
+//! 浏览与清理，属全局运维视角而非租户业务数据。
+//! 故此处**不补假租户过滤**（引用不存在的 tenant_id 列会直接破坏查询）；操作面已由
+//! ehs:read / ehs:write / ehs:delete 权限点收敛（运维级），与 lims/qms 同族
+//! qa_*_sync_records 表治理口径一致。
 
 use axum::{
     extract::State,

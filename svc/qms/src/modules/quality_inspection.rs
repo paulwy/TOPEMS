@@ -422,7 +422,7 @@ pub async fn submit_result(
     };
 
     let current = sqlx::query(
-        only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#),
+        only_own_schema_query!("qms", r#"SELECT status, quantity FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#),
     )
     .bind(id.to_string())
     .bind(tenant_opt)
@@ -435,6 +435,16 @@ pub async fn submit_result(
             let current_status = status_opt.as_deref().unwrap_or("");
             if inspection_can_transition(current_status, STATUS_PENDING_AUDIT).is_err() {
                 return Json(ApiResponse::error(400, "当前状态不允许提交结果"));
+            }
+
+            // 数量勾稽校验（P2 制造域 B 审计）：合格数 + 不合格数 不得大于检验总量；
+            // 等于总量为允许边界（全数合格/全数不合格）。
+            let total_qty: BigDecimal = row.get("quantity");
+            if &req.qualified_quantity + &req.unqualified_quantity > total_qty {
+                return Json(ApiResponse::error(
+                    400,
+                    "合格数与不合格数之和不能大于检验总量",
+                ));
             }
 
             let rate = req.qualification_rate.or_else(|| {

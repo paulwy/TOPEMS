@@ -8,6 +8,16 @@
 //! - 隐患集成创建：ehs.qa_ehs_hazards（原直写引用不存在的 public.qa_ehs_hazards
 //!   且含不存在的 tenant_id/related_inspection_id 列 → 修正为实际列，hazard_no UNIQUE 幂等）
 //! - 告警集成创建：ehs.qa_ehs_alerts（原直写表不存在 → 20260831191100 已建表，alert_no UNIQUE 幂等）
+//!
+//! 租户来源（P2 制造域 B 审计，对齐 qms P1-4 跨租户写修复口径）：
+//! 本类 `/api/internal/` 端点为免 JWT 的内网服务间调用——`is_public_path` 对
+//! `/api/internal/` 放行，auth_middleware 不注入 Claims，tenant_middleware 亦跳过
+//! （无会话租户可绑，无法套用 JWT 端点的 Extension<Claims> 派生模式）；编排侧
+//! integration/src/qms_lims_ehs.rs 业务事件 payload 亦不携带 tenant 维度。
+//! 故租户键服务端固定落 `Uuid::nil()`（全局集成行，跨租户基础设施记录，配合 RLS
+//! 的 nil 豁免条件由超管/运维可见），**不信任请求体 tenant_id**（DTO 不接收该字段，
+//! 调用方多余字段由 serde 忽略）——与 qms integration.rs P1-4 契约一致。
+//! 审计项 integration.rs:82 写死 Uuid::nil() 即属此既定契约，非残留缺陷，登记豁免。
 
 use crate::shared::AppState;
 use axum::{extract::State, routing::post, Json, Router};
@@ -79,6 +89,7 @@ pub async fn create_integration_hazard(
     .bind(&reported_by)
     .bind(req.inspection_id)
     .bind(&source)
+    // 全局集成行（免 JWT internal 端点无会话租户，P1-4 契约固定 nil），勿改读请求体 tenant_id
     .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
@@ -132,6 +143,7 @@ pub async fn create_integration_alert(
     let source_system = req.source_system.unwrap_or_else(|| "系统".to_string());
 
     let result = sqlx::query(
+        // tenant_id 内联常量同属 P1-4 全局集成行契约（与上方隐患端点一致）
         "INSERT INTO ehs.qa_ehs_alerts (alert_no, title, alert_type, severity, description, status, source_system, source_id, tenant_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, '00000000-0000-0000-0000-000000000000')
          ON CONFLICT (alert_no) DO UPDATE SET updated_at = NOW()

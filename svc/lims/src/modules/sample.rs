@@ -693,6 +693,18 @@ const LIFECYCLE_STAGES: &[(&str, &str)] = &[
     ("destroyed", "已销毁"),
 ];
 
+/// 样品生命周期合法转移边（P2 制造域 B 审计补 FSM 边校验）：
+/// 严格按 LIFECYCLE_STAGES 顺序逐阶前进——不允许跨阶跳转、回退或同阶空转。
+const SAMPLE_STAGE_EDGES: &[(&str, &str)] = &[
+    ("received", "registered"),
+    ("registered", "testing"),
+    ("testing", "completed"),
+    ("completed", "stored"),
+    ("stored", "retrieved"),
+    ("retrieved", "disposed"),
+    ("disposed", "destroyed"),
+];
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["lims:sample:read"])),
@@ -969,6 +981,32 @@ pub async fn transition_sample_stage(
         Ok(None) => return Json(ApiResponse::error(404, "样品不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
     };
+
+    // FSM 边校验（P2 制造域 B 审计）：当前阶段属于生命周期枚举时，目标阶段必须落在
+    // SAMPLE_STAGE_EDGES 合法边上（409 Conflict 明确报出从/到阶段）。
+    // 当前阶段为历史/外部未知状态（不在枚举内）时不阻断并告警，避免存量数据行为倒退。
+    if LIFECYCLE_STAGES
+        .iter()
+        .any(|(stage, _)| *stage == current_stage)
+    {
+        if !SAMPLE_STAGE_EDGES.contains(&(&current_stage.as_str(), to_stage.as_str())) {
+            return Json(ApiResponse::error(
+                409,
+                &format!(
+                    "样品阶段非法转移：不能从[{}]转到[{}]",
+                    get_stage_name(&current_stage),
+                    get_stage_name(&to_stage)
+                ),
+            ));
+        }
+    } else {
+        tracing::warn!(
+            "样品 {} 当前阶段 [{}] 不在生命周期枚举内，跳过 FSM 边校验（历史/外部状态），目标阶段 [{}]",
+            sample_no,
+            current_stage,
+            to_stage
+        );
+    }
 
     let operator = req.get("operator").and_then(|v| v.as_str());
     let notes = req.get("notes").and_then(|v| v.as_str());
@@ -1318,5 +1356,31 @@ mod tests {
     #[test]
     fn stage_name_unknown_returns_input() {
         assert_eq!(get_stage_name("custom_stage"), "custom_stage");
+    }
+
+    // ---- SAMPLE_STAGE_EDGES FSM 校验（P2 制造域 B）----
+    #[test]
+    fn fsm_legal_edges_all_forward_one_step() {
+        for (from, to) in SAMPLE_STAGE_EDGES {
+            assert!(
+                SAMPLE_STAGE_EDGES.contains(&(*from, *to)),
+                "合法边 {from}→{to} 应被接受"
+            );
+        }
+        // 逐阶前进全覆盖：8 阶段恰有 7 条边
+        assert_eq!(SAMPLE_STAGE_EDGES.len(), LIFECYCLE_STAGES.len() - 1);
+    }
+
+    #[test]
+    fn fsm_rejects_same_stage_and_jumps() {
+        // 同阶空转
+        assert!(!SAMPLE_STAGE_EDGES.contains(&("testing", "testing")));
+        // 跨阶跳转
+        assert!(!SAMPLE_STAGE_EDGES.contains(&("received", "testing")));
+        assert!(!SAMPLE_STAGE_EDGES.contains(&("received", "destroyed")));
+        // 回退
+        assert!(!SAMPLE_STAGE_EDGES.contains(&("completed", "testing")));
+        // 终态后不可再转
+        assert!(!SAMPLE_STAGE_EDGES.contains(&("destroyed", "disposed")));
     }
 }
