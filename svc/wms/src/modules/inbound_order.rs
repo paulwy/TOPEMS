@@ -1348,7 +1348,7 @@ pub async fn receive_inbound_order(
                                           material_code, material_name, specification,
                                           batch_number, quantity, unit, available_quantity,
                                           quality_status, created_at, updated_at, tenant_id)
-                SELECT '00000000-0000-0000-0000-000000000001', i.warehouse_id, io.location_id,
+                SELECT $3, i.warehouse_id, io.location_id,
                        io.material_code, io.material_name, io.specification,
                        io.batch_number, $1, io.unit, $1, 'qualified', NOW(), NOW(), $3
                 FROM wms.inbound_order_items io
@@ -1378,8 +1378,6 @@ pub async fn receive_inbound_order(
             .unwrap_or(0);
             let movement_no = format!("MV-{}-{:06}", now.format("%Y%m%d"), seq + 1);
             let movement_id = Uuid::new_v4();
-            let org_id = uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001")
-                .unwrap_or(uuid::Uuid::nil());
 
             let _ = sqlx::query(only_own_schema_query!(
                 "wms",
@@ -1402,7 +1400,7 @@ pub async fn receive_inbound_order(
             ))
             .bind(movement_id)
             .bind(&movement_no)
-            .bind(org_id)
+            .bind(tenant_id)
             .bind(id.to_string())
             .bind(item.received_quantity)
             .bind(now)

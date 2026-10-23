@@ -235,7 +235,7 @@ pub async fn create_outbound_order(
         INSERT INTO wms.outbound_orders (id, organization_id, order_number, order_type, warehouse_id,
                                         customer_id, order_date, expected_ship_date, total_value,
                                         status, notes, created_at, updated_at, tenant_id)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'sales', $3, $4, $5, $6, $7,
+        VALUES ($1, $11, $2, 'sales', $3, $4, $5, $6, $7,
                'created', $8, $9, $10, $11)
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
@@ -766,7 +766,7 @@ pub async fn create_outbound_order_item(
                                               specification, batch_number, lot_number, serial_number,
                                               requested_quantity, unit, source_location_id, unit_price,
                                               total_value, notes, created_at, updated_at, tenant_id)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        VALUES ($1, $19, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                 $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id, line_number, material_code, material_name, specification, batch_number,
                   requested_quantity, reserved_quantity, picked_quantity, packed_quantity, shipped_quantity, unit,
@@ -1465,7 +1465,9 @@ pub async fn ship_outbound_order(
         .execute(&mut *tx)
         .await;
 
-        let _ = sqlx::query(
+        // P1-10：条件原子 UPDATE（WHERE 可用库存足够才扣减，PG 对命中行隐式加行锁）。
+        // 不再吞掉影响行数：0 行 = 无匹配库存或可用量不足，按业务错误中断整笔发货（tx 随返回自动回滚）。
+        let deduct = sqlx::query(
             only_own_schema_query!("wms", r#"
             UPDATE wms.inventory SET
                 quantity = quantity - $1,
@@ -1473,8 +1475,8 @@ pub async fn ship_outbound_order(
                 updated_at = $2
             WHERE organization_id = (SELECT organization_id FROM wms.outbound_order_items WHERE id = $3)
               AND material_code IN (SELECT material_code FROM wms.outbound_order_items WHERE id = $3)
-            AND quantity >= $1
-            AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
+              AND available_quantity >= $1
+              AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
             "#),
         )
         .bind(item.shipped_quantity)
@@ -1483,6 +1485,27 @@ pub async fn ship_outbound_order(
         .bind(tenant_filter)
         .execute(&mut *tx)
         .await;
+
+        match deduct {
+            Ok(r) if r.rows_affected() == 0 => {
+                tracing::warn!(
+                    "出库发货可用库存不足: item_id={}, 需扣减={}",
+                    item.item_id,
+                    item.shipped_quantity
+                );
+                return Json(ApiResponse::from(TopemsError::BusinessLogic(format!(
+                    "可用库存不足，无法出库（明细 {}，需 {}）",
+                    item.item_id, item.shipped_quantity
+                ))));
+            }
+            Err(e) => {
+                tracing::error!("出库扣减库存失败: {}", e);
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "出库扣减库存失败".to_string(),
+                )));
+            }
+            Ok(_) => {}
+        }
 
         // V19.8: 出库发货时同步写入 inventory_movements
         let seq: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -1496,8 +1519,6 @@ pub async fn ship_outbound_order(
         .unwrap_or(0);
         let movement_no = format!("MV-{}-{:06}", now.format("%Y%m%d"), seq + 1);
         let movement_id = Uuid::new_v4();
-        let org_id = uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001")
-            .unwrap_or(uuid::Uuid::nil());
 
         let _ = sqlx::query(only_own_schema_query!(
             "wms",
@@ -1520,7 +1541,7 @@ pub async fn ship_outbound_order(
         ))
         .bind(movement_id)
         .bind(&movement_no)
-        .bind(org_id)
+        .bind(tenant_filter)
         .bind(id.to_string())
         .bind(item.shipped_quantity)
         .bind(now)
