@@ -1,0 +1,79 @@
+# TOPEMS Gitleaks Config（仓库化，2026-10-24 Phase D）
+# 基线 = .github/workflows/secret-scan.yml 内 inline heredoc 等效内容；
+# 此后 secret-scan.yml 的 "Create if not exists" 兜底步骤成为 no-op，自定义规则永久生效。
+# 文档: https://github.com/gitleaks/gitleaks/blob/master/docs/config/README.md
+
+title = "TOPEMS Gitleaks Config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "topems-jwt-secret"
+description = "JWT Secret"
+regex = '''JWT_SECRET\s*=\s*['"]([^'"]{32,})['"]'''
+tags = ["jwt", "secret"]
+
+[[rules]]
+id = "topems-database-url"
+description = "Database URL with credentials"
+regex = '''postgres://[^:]+:([^@]+)@'''
+tags = ["database", "credentials"]
+
+[[rules]]
+id = "topems-api-key"
+description = "API Key"
+regex = '''(?i)(api[_-]?key|secret[_-]?key)\s*=\s*['"]([a-zA-Z0-9]{32,})['"]'''
+tags = ["api", "key"]
+
+[allowlist]
+description = "TOPEMS 显式豁免（.env* 虽已被 .gitignore 忽略，此处显式加固防误扫）"
+paths = [
+  '''node_modules/''',
+  '''target/''',
+  '''dist/''',
+  '''\.git/''',
+  '''\.sqlx/''',
+  '''pnpm-lock\.yaml''',
+  '''package-lock\.json''',
+  '''\.env''',
+  '''\.env\.''',
+  '''\.env-''',
+  '''tests/e2e/storageState\.json''',
+  '''playwright-report/''',
+  '''test-results/''',
+  '''\.rustc_info\.json''',
+  '''vendor/''',
+  '''docs/''',
+  '''apps/web/e2e/''',
+  '''apps/web/storybook-static/''',
+  '''apps/web/src/i18n/locales/''',
+  '''lib/tests/''',
+  '''tests/performance/''',
+  '''tests/contract/''',
+  '''svc/.*/tests/''',
+  '''artifacts/''',
+  '''审查报告.*\.md''',
+  '''复核报告.*\.md''',
+]
+
+regexes = [
+  '''test-jwt-secret-key-for-testing-only-32chars''',
+  '''e2e-jwt-secret-key-for-testing-only-32chars''',
+  '''topems_e2e_secret''',
+  '''topems_test_secret''',
+  # 本地开发默认口令基线（文档/docker-compose/脚本示例，非生产密钥）
+  '''topems_secret''',
+  '''topems_app_secret''',
+  # 占位符 / 环境变量引用
+  '''<TOPEMS_PG_PASSWORD>''',
+  '''<PASS>''',
+  '''<pw>''',
+  '''\$\{[A-Z_]*PASSWORD\}''',
+  '''\$\{JWT_SECRET[^}]*\}''',
+  # 基线测试/示例值
+  '''my-secret-key-for-signing-test''',
+  '''dGhlIHNhbXBsZSBub25jZQ==''',
+  '''CHANGE_ME_DEPLOY_SEC[^']*''',
+  '''topems_ai_secret''',
+]

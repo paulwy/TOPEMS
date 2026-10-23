@@ -1,6 +1,19 @@
 pre-commit:
   parallel: true
   commands:
+    # [Gate GL] Gitleaks 内容安全第一道（2026-10-24 Phase D 仓库化）
+    # 扫暂存区增量（gitleaks protect --staged），命中即阻断提交；
+    # 本机未装 gitleaks 时降级 SKIP+WARN（brew install gitleaks），不阻塞团队流。
+    # 注：pre-commit 整体 parallel，顺序为视觉排列语义；本钩子不依赖其他钩子产物。
+    gitleaks:
+      tags: security secrets
+      run: |
+        if ! command -v gitleaks >/dev/null 2>&1; then
+          printf '\033[33m[Gate GL] SKIP\033[0m gitleaks 未安装（brew install gitleaks），暂存区密钥扫描跳过；可手动执行 gitleaks protect --staged .\n'
+          exit 0
+        fi
+        gitleaks protect --staged --redact --verbose .
+
     # [Gate SC] Shellcheck 回归防线（P1-1 清零后固化）— 暂存变更模式
     # 无 .sh 变更即秒级跳过；有变更必须 0 告警，否则阻断提交
     shellcheck-changed:
