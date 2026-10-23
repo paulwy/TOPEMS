@@ -530,43 +530,17 @@ pub async fn generate_consolidated_report(
         .and_then(|v| v.as_str())
         .unwrap_or("")
         .to_string();
-    let report_type = req
-        .get("report_type")
-        .and_then(|v| v.as_str())
-        .unwrap_or("balance_sheet")
-        .to_string();
-    let period = req
-        .get("period")
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .to_string();
-    let currency_code = req
-        .get("currency_code")
-        .and_then(|v| v.as_str())
-        .unwrap_or("CNY")
-        .to_string();
-    let eliminate_intercompany = req
-        .get("eliminate_intercompany")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(true);
+    // 合并数据源不在 finance schema：合并范围/抵消规则/合并报表均归 ERP 合并模块
+    // （erp.consolidation_scopes / consolidation_scope_companies / elimination_rules /
+    // consolidation_reports）。原实现返回硬编码 1000 万资产等虚构数字，属数值撒谎，
+    // 现改为显式声明未接入，由调用方转 /api/erp/consolidation/* 取真值。
     Json(ApiResponse::success(
         serde_json::json!({
             "consolidation_id": consolidation_id,
-            "report_type": report_type,
-            "period": period,
-            "currency_code": currency_code,
-            "eliminate_intercompany": eliminate_intercompany,
-            "total_assets": 10000000.00,
-            "total_liabilities": 5000000.00,
-            "total_equity": 5000000.00,
-            "total_revenue": 8000000.00,
-            "total_expense": 6000000.00,
-            "net_income": 2000000.00,
-            "entities_count": 3,
-            "eliminations_count": 5,
-            "generated_at": Utc::now().to_rfc3339(),
+            "success": false,
+            "error": "合并报表尚未接入：数据源归 ERP 合并模块（/api/erp/consolidation/*）",
         }),
-        "合并报表生成成功",
+        "合并报表尚未接入",
     ))
 }
 
@@ -581,32 +555,18 @@ pub async fn get_consolidated_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(consolidation_id): Path<String>,
-    Query(params): Query<ConsolidatedReportQuery>,
+    Query(_params): Query<ConsolidatedReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let report_type = params
-        .report_type
-        .unwrap_or_else(|| "balance_sheet".to_string());
-    let period = params.period.unwrap_or_default();
-    let currency_code = params.currency_code.unwrap_or_else(|| "CNY".to_string());
+    // 同 generate_consolidated_report：无真实数据源，不再返回虚构实体/抵消/合计金额
     Json(ApiResponse::success(
         serde_json::json!({
             "consolidation_id": consolidation_id,
-            "report_type": report_type,
-            "period": period,
-            "currency_code": currency_code,
-            "total_assets": 10000000.00,
-            "total_liabilities": 5000000.00,
-            "total_equity": 5000000.00,
-            "entities": [
-                {"entity_id": "00000000-0000-0000-0000-000000000001", "name": "母公司", "ownership_percentage": 100.0},
-                {"entity_id": "00000000-0000-0000-0000-000000000002", "name": "子公司A", "ownership_percentage": 80.0},
-                {"entity_id": "00000000-0000-0000-0000-000000000003", "name": "子公司B", "ownership_percentage": 60.0},
-            ],
-            "eliminations": [
-                {"description": "内部应收应付抵消", "amount": 500000.00},
-            ],
+            "entities": [],
+            "eliminations": [],
+            "success": false,
+            "error": "合并报表尚未接入：数据源归 ERP 合并模块（/api/erp/consolidation/*）",
         }),
-        "查询成功",
+        "合并报表尚未接入",
     ))
 }
 
@@ -637,83 +597,20 @@ pub async fn get_consolidation_entities(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
-    let include_disabled = params.include_disabled.unwrap_or(false);
-    let now = Utc::now().to_rfc3339();
-    let mut items: Vec<serde_json::Value> = Vec::new();
-    let entities = [
-        (
-            "00000000-0000-0000-0000-000000000001",
-            "集团母公司",
-            "GROUP-001",
-            "holding",
-            100.0_f64,
-            true,
-        ),
-        (
-            "00000000-0000-0000-0000-000000000002",
-            "子公司A",
-            "SUB-001",
-            "subsidiary",
-            80.0,
-            true,
-        ),
-        (
-            "00000000-0000-0000-0000-000000000003",
-            "子公司B",
-            "SUB-002",
-            "subsidiary",
-            60.0,
-            true,
-        ),
-        (
-            "00000000-0000-0000-0000-000000000004",
-            "联营公司C",
-            "ASSOC-001",
-            "associate",
-            30.0,
-            include_disabled,
-        ),
-        (
-            "00000000-0000-0000-0000-000000000005",
-            "合营公司D",
-            "JV-001",
-            "joint_venture",
-            50.0,
-            include_disabled,
-        ),
-    ];
-    for (id, name, code, etype, own, active) in entities.iter() {
-        if !include_disabled && !active {
-            continue;
-        }
-        if let Some(ref pid) = params.parent_id {
-            if *pid != "00000000-0000-0000-0000-000000000001" && id != pid {
-                continue;
-            }
-        }
-        items.push(serde_json::json!({
-            "id": id,
-            "name": name,
-            "code": code,
-            "parent_id": if *id == "00000000-0000-0000-0000-000000000001" { None } else { Some("00000000-0000-0000-0000-000000000001") },
-            "entity_type": etype,
-            "ownership_percentage": own,
-            "currency_code": "CNY",
-            "isactive": active,
-            "created_at": now,
-            "updated_at": now,
-        }));
-    }
-    let total = items.len() as i64;
+    // 合并实体真值在 erp.consolidation_scope_companies（当前 0 行），finance schema 无该表；
+    // 原实现虚构 5 家公司（集团母公司/子公司A/B/联营C/合营D），属数值撒谎，改为空集 + 声明。
+    let total: i64 = 0;
     Json(ApiResponse::success(
         serde_json::json!({
-            "items": items,
+            "items": [],
             "total": total,
             "page": page,
             "page_size": page_size,
             "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
+            "success": false,
+            "error": "合并实体尚未接入：数据源归 ERP 合并模块（/api/erp/consolidation/scopes/companies）",
         }),
-        "查询成功",
+        "合并实体尚未接入",
     ))
 }
 
@@ -731,24 +628,15 @@ pub async fn get_consolidation_entities(
 pub async fn create_consolidation_entity(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-    Json(req): Json<serde_json::Value>,
+    Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let id = Uuid::new_v4();
-    let now = Utc::now().to_rfc3339();
+    // 原实现生成随机 UUID 并回显入参、声称「创建成功」，实际未落库（finance 无该表）
     Json(ApiResponse::success(
         serde_json::json!({
-            "id": id,
-            "name": req.get("name").and_then(|v| v.as_str()).unwrap_or(""),
-            "code": req.get("code").and_then(|v| v.as_str()).unwrap_or(""),
-            "parent_id": req.get("parent_id").and_then(|v| v.as_str()),
-            "entity_type": req.get("entity_type").and_then(|v| v.as_str()).unwrap_or("subsidiary"),
-            "ownership_percentage": req.get("ownership_percentage").and_then(|v| v.as_f64()).unwrap_or(0.0),
-            "currency_code": req.get("currency_code").and_then(|v| v.as_str()).unwrap_or("CNY"),
-            "isactive": true,
-            "created_at": now,
-            "updated_at": now,
+            "success": false,
+            "error": "合并实体尚未接入：请在 ERP 合并模块维护（/api/erp/consolidation/scopes/companies）",
         }),
-        "创建成功",
+        "合并实体尚未接入",
     ))
 }
 
@@ -756,22 +644,15 @@ pub async fn update_consolidation_entity(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(entity_id): Path<String>,
-    Json(req): Json<serde_json::Value>,
+    Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let now = Utc::now().to_rfc3339();
     Json(ApiResponse::success(
         serde_json::json!({
             "id": entity_id,
-            "name": req.get("name").and_then(|v| v.as_str()).unwrap_or(""),
-            "code": req.get("code").and_then(|v| v.as_str()).unwrap_or(""),
-            "parent_id": req.get("parent_id").and_then(|v| v.as_str()),
-            "entity_type": req.get("entity_type").and_then(|v| v.as_str()).unwrap_or("subsidiary"),
-            "ownership_percentage": req.get("ownership_percentage").and_then(|v| v.as_f64()).unwrap_or(0.0),
-            "currency_code": req.get("currency_code").and_then(|v| v.as_str()).unwrap_or("CNY"),
-            "isactive": req.get("isactive").and_then(|v| v.as_bool()).unwrap_or(true),
-            "updated_at": now,
+            "success": false,
+            "error": "合并实体尚未接入：请在 ERP 合并模块维护（/api/erp/consolidation/scopes/companies）",
         }),
-        "更新成功",
+        "合并实体尚未接入",
     ))
 }
 
@@ -780,12 +661,15 @@ pub async fn delete_consolidation_entity(
     Extension(_claims): Extension<Claims>,
     Path(entity_id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    // 原实现未删除任何数据却返回 deleted=true
     Json(ApiResponse::success(
         serde_json::json!({
             "id": entity_id,
-            "deleted": true,
+            "deleted": false,
+            "success": false,
+            "error": "合并实体尚未接入：请在 ERP 合并模块维护（/api/erp/consolidation/scopes/companies）",
         }),
-        "删除成功",
+        "合并实体尚未接入",
     ))
 }
 
@@ -816,61 +700,35 @@ pub async fn get_intercompany_elims(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
-    let now = Utc::now().to_rfc3339();
-    let items = vec![
-        serde_json::json!({
-            "id": Uuid::new_v4(),
-            "consolidation_id": params.consolidation_id.clone().unwrap_or_default(),
-            "period": params.period.clone().unwrap_or_default(),
-            "description": "内部应收应付抵消",
-            "debit_account_code": "1122",
-            "credit_account_code": "2202",
-            "amount": 500000.00,
-            "created_at": now,
-        }),
-        serde_json::json!({
-            "id": Uuid::new_v4(),
-            "consolidation_id": params.consolidation_id.clone().unwrap_or_default(),
-            "period": params.period.unwrap_or_default(),
-            "description": "内部销售收入抵消",
-            "debit_account_code": "6001",
-            "credit_account_code": "6401",
-            "amount": 300000.00,
-            "created_at": now,
-        }),
-    ];
-    let total = items.len() as i64;
+    // 抵消分录真值在 erp.elimination_rules / erp.consolidation_report_lines（当前 0 行）；
+    // 原实现虚构两条分录（50 万/30 万），属数值撒谎，改为空集 + 声明。
+    let total: i64 = 0;
     Json(ApiResponse::success(
         serde_json::json!({
-            "items": items,
+            "items": [],
             "total": total,
             "page": page,
             "page_size": page_size,
             "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
+            "success": false,
+            "error": "内部交易抵消尚未接入：数据源归 ERP 合并模块（/api/erp/consolidation/elimination-rules）",
         }),
-        "查询成功",
+        "内部交易抵消尚未接入",
     ))
 }
 
 pub async fn add_intercompany_elimination(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-    Json(req): Json<serde_json::Value>,
+    Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let id = Uuid::new_v4();
-    let now = Utc::now().to_rfc3339();
+    // 原实现生成随机 UUID 回显入参并声称「创建成功」，实际未落库
     Json(ApiResponse::success(
         serde_json::json!({
-            "id": id,
-            "consolidation_id": req.get("consolidation_id").and_then(|v| v.as_str()).unwrap_or(""),
-            "period": req.get("period").and_then(|v| v.as_str()).unwrap_or(""),
-            "description": req.get("description").and_then(|v| v.as_str()).unwrap_or(""),
-            "debit_account_code": req.get("debit_account_code").and_then(|v| v.as_str()).unwrap_or(""),
-            "credit_account_code": req.get("credit_account_code").and_then(|v| v.as_str()).unwrap_or(""),
-            "amount": req.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0),
-            "created_at": now,
+            "success": false,
+            "error": "内部交易抵消尚未接入：请在 ERP 合并模块维护（/api/erp/consolidation/elimination-rules）",
         }),
-        "创建成功",
+        "内部交易抵消尚未接入",
     ))
 }
 
@@ -894,27 +752,17 @@ pub async fn export_consolidated_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(consolidation_id): Path<String>,
-    Query(params): Query<ConsolidatedExportQuery>,
+    Query(_params): Query<ConsolidatedExportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let report_type = params
-        .report_type
-        .unwrap_or_else(|| "balance_sheet".to_string());
-    let period = params.period.unwrap_or_default();
-    let format = params.format.unwrap_or_else(|| "pdf".to_string());
-    let url = format!(
-        "/exports/consolidated/{}_{}_{}.{}",
-        consolidation_id, report_type, period, format
-    );
+    // 原实现拼出一条并不存在的导出地址并声称「导出成功」（无文件、无存储），属虚构
     Json(ApiResponse::success(
         serde_json::json!({
             "consolidation_id": consolidation_id,
-            "report_type": report_type,
-            "period": period,
-            "format": format,
-            "url": url,
-            "expires_at": Utc::now().to_rfc3339(),
+            "url": "",
+            "success": false,
+            "error": "合并报表导出尚未接入：数据源归 ERP 合并模块（/api/erp/consolidation/*）",
         }),
-        "导出成功",
+        "合并报表导出尚未接入",
     ))
 }
 
