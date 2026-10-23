@@ -292,7 +292,7 @@ function scanR2RealFull(rules) {
     let usedPerm = false;
     for (const f of rsFiles) {
       const c = fs.readFileSync(f, 'utf8');
-      if (/require_permission\s*\(/.test(c)) { usedPerm = true; break; }
+      if (/require_permission\s*\(/.test(c) || /require_module_access\s*\(/.test(c)) { usedPerm = true; break; }
     }
     const missing = (!hasDep || !usedPerm);
     if (missing) hits.push({
