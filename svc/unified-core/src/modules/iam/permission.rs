@@ -87,51 +87,50 @@ fn extract_category(code: &str) -> String {
     code.split(':').next().unwrap_or("other").to_string()
 }
 
-/// PUT /permissions/{id} — 权限定义为系统种子数据，前端契约兜底（待上游支持）
+/// PUT /permissions/{id} — P2-5 诚实 501：权限定义为系统种子数据，
+/// unified-core 无权限定义写入数据源，不再返回假成功回执。
 pub async fn update_permission(
     State(_state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!(
-        "IAM permission update_permission stub called for id: {}",
+        "IAM permission update_permission not-implemented called for id: {}",
         id
     );
-    Json(serde_json::json!({
-        "success": true,
-        "message": "权限更新已记录（待上游支持）",
-        "data": null
-    }))
+    Json(topems_shared_core::response::error_value(
+        501,
+        "权限更新未实现：权限为系统种子数据，unified-core 无权限定义写入数据源（Not Implemented）",
+    ))
 }
 
-/// DELETE /permissions/{id} — 权限定义为系统种子数据，前端契约兜底（待上游支持）
+/// DELETE /permissions/{id} — P2-5 诚实 501：权限定义为系统种子数据，
+/// unified-core 无权限定义写入数据源，不再返回假成功回执。
 pub async fn delete_permission(
     State(_state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!(
-        "IAM permission delete_permission stub called for id: {}",
+        "IAM permission delete_permission not-implemented called for id: {}",
         id
     );
-    Json(serde_json::json!({
-        "success": true,
-        "message": "权限删除已记录（待上游支持）",
-        "data": null
-    }))
+    Json(topems_shared_core::response::error_value(
+        501,
+        "权限删除未实现：权限为系统种子数据，unified-core 无权限定义写入数据源（Not Implemented）",
+    ))
 }
 
-/// POST /permissions — 权限定义为系统种子数据，前端契约兜底（待上游支持）。
-/// 对齐前端 PermissionManagementPage 的 createPermission；与 update/delete 同为
-/// 无副作用占位，避免新建权限时 405。
+/// POST /permissions — P2-5 诚实 501：权限定义为系统种子数据，
+/// unified-core 无权限定义写入数据源，不再返回假成功回执。
+/// 对齐前端 PermissionManagementPage 的 createPermission；路由保留挂载避免 405。
 pub async fn create_permission(
     State(_state): State<AppState>,
     Json(_payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM permission create_permission stub called");
-    Json(serde_json::json!({
-        "success": true,
-        "message": "权限创建已记录（待上游支持）",
-        "data": null
-    }))
+    tracing::info!("IAM permission create_permission not-implemented called");
+    Json(topems_shared_core::response::error_value(
+        501,
+        "权限创建未实现：权限为系统种子数据，unified-core 无权限定义写入数据源（Not Implemented）",
+    ))
 }
 
 /// GET /health — IAM 模块健康检查（前端契约 /api/core/iam/health）
