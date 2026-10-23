@@ -367,7 +367,8 @@ pub struct RealtimeMetricsResponse {
     pub alerts: AlertsRealtime,
 }
 
-fn get_load_averages() -> (f64, f64, f64) {
+// pub(crate)：alert_evaluator.rs 的真实指标快照复用同一套 sysctl/vm_stat 采集
+pub(crate) fn get_load_averages() -> (f64, f64, f64) {
     if let Ok(out) = std::process::Command::new("sysctl")
         .args(["-n", "vm.loadavg"])
         .output()
@@ -386,8 +387,9 @@ fn get_load_averages() -> (f64, f64, f64) {
     (0.0, 0.0, 0.0)
 }
 
+// pub(crate)：alert_evaluator.rs 的真实指标快照复用同一套 vm_stat 采集
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-fn get_memory_usage() -> (f64, f64, f64, f64) {
+pub(crate) fn get_memory_usage() -> (f64, f64, f64, f64) {
     let total_bytes: u64 = std::process::Command::new("sysctl")
         .args(["-n", "hw.memsize"])
         .output()

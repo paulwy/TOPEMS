@@ -1,14 +1,13 @@
-use std::sync::Arc;
-use std::time::{Duration, Instant};
-use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use axum::{
     extract::{Extension, State},
     Router,
 };
+use sqlx::Row;
 
 use crate::AppState;
+use crate::modules::monitor::metrics;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
@@ -28,7 +27,7 @@ pub struct AlertThreshold {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum MetricType {
     CpuUsage,
     MemoryUsage,
@@ -40,7 +39,7 @@ pub enum MetricType {
     DatabasePoolUsage,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum ThresholdOperator {
     GreaterThan,
     GreaterThanOrEqual,
@@ -88,6 +87,90 @@ pub struct MetricSnapshot {
     pub database_pool_usage: f64,
     pub timestamp: chrono::DateTime<chrono::Utc>,
 }
+
+// ==================== 枚举 <-> 数据库短码映射 ====================
+
+impl MetricType {
+    fn as_db(&self) -> &'static str {
+        match self {
+            MetricType::CpuUsage => "cpu_usage",
+            MetricType::MemoryUsage => "memory_usage",
+            MetricType::DiskUsage => "disk_usage",
+            MetricType::ResponseTime => "response_time",
+            MetricType::ErrorRate => "error_rate",
+            MetricType::RequestCount => "request_count",
+            MetricType::ActiveConnections => "active_connections",
+            MetricType::DatabasePoolUsage => "database_pool_usage",
+        }
+    }
+
+    fn from_db(s: &str) -> Option<Self> {
+        match s {
+            "cpu_usage" => Some(MetricType::CpuUsage),
+            "memory_usage" => Some(MetricType::MemoryUsage),
+            "disk_usage" => Some(MetricType::DiskUsage),
+            "response_time" => Some(MetricType::ResponseTime),
+            "error_rate" => Some(MetricType::ErrorRate),
+            "request_count" => Some(MetricType::RequestCount),
+            "active_connections" => Some(MetricType::ActiveConnections),
+            "database_pool_usage" => Some(MetricType::DatabasePoolUsage),
+            _ => None,
+        }
+    }
+}
+
+impl ThresholdOperator {
+    fn as_db(&self) -> &'static str {
+        match self {
+            ThresholdOperator::GreaterThan => "gt",
+            ThresholdOperator::GreaterThanOrEqual => "gte",
+            ThresholdOperator::LessThan => "lt",
+            ThresholdOperator::LessThanOrEqual => "lte",
+            ThresholdOperator::Equal => "eq",
+            ThresholdOperator::NotEqual => "neq",
+        }
+    }
+
+    fn from_db(s: &str) -> Option<Self> {
+        match s {
+            "gt" => Some(ThresholdOperator::GreaterThan),
+            "gte" => Some(ThresholdOperator::GreaterThanOrEqual),
+            "lt" => Some(ThresholdOperator::LessThan),
+            "lte" => Some(ThresholdOperator::LessThanOrEqual),
+            "eq" => Some(ThresholdOperator::Equal),
+            "neq" => Some(ThresholdOperator::NotEqual),
+            _ => None,
+        }
+    }
+}
+
+/// 把 `public.monitor_thresholds` 行映射为 AlertThreshold。
+/// 枚举列无法反序列化时返回 None（调用方按 500 处理，不静默丢弃语义）。
+fn row_to_threshold(row: &sqlx::postgres::PgRow) -> Option<AlertThreshold> {
+    let metric_type: String = row.try_get("metric_type").ok()?;
+    let operator: String = row.try_get("operator").ok()?;
+    Some(AlertThreshold {
+        id: row.try_get("id").ok()?,
+        name: row.try_get("name").unwrap_or_default(),
+        metric_type: MetricType::from_db(&metric_type)?,
+        operator: ThresholdOperator::from_db(&operator)?,
+        threshold_value: row.try_get("threshold_value").unwrap_or(0.0),
+        severity: row
+            .try_get("severity")
+            .unwrap_or_else(|_| "warning".to_string()),
+        service_name: row.try_get("service_name").ok(),
+        enabled: row.try_get("enabled").unwrap_or(true),
+        description: row.try_get("description").ok(),
+        created_at: row.try_get("created_at").unwrap_or_else(|_| chrono::Utc::now()),
+        updated_at: row.try_get("updated_at").unwrap_or_else(|_| chrono::Utc::now()),
+    })
+}
+
+/// 租户过滤 + 软删除的 WHERE 片段（与 monitor_settings / alerts 模块同一约定）。
+const TENANT_SOFT_DELETED: &str =
+    "deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)";
+
+const THRESHOLD_COLUMNS: &str = "id, name, metric_type, operator, threshold_value, severity, service_name, enabled, description, created_at, updated_at";
 
 // ==================== 纯函数（无副作用，便于单元测试） ====================
 
@@ -144,163 +227,80 @@ pub fn threshold_matches_service(
     }
 }
 
-#[allow(dead_code)]
-struct AlertEvaluatorState {
-    thresholds: Vec<AlertThreshold>,
-    last_evaluation: Instant,
-    evaluation_interval: Duration,
-}
-
-pub struct AlertEvaluator {
-    state: Arc<RwLock<AlertEvaluatorState>>,
-}
-
-impl Default for AlertEvaluator {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AlertEvaluator {
-    pub fn new() -> Self {
-        Self {
-            state: Arc::new(RwLock::new(AlertEvaluatorState {
-                thresholds: vec![],
-                last_evaluation: Instant::now(),
-                evaluation_interval: Duration::from_secs(30),
-            })),
-        }
-    }
-
-    pub async fn add_threshold(&self, threshold: AlertThreshold) {
-        let mut state = self.state.write().await;
-        state.thresholds.push(threshold);
-    }
-
-    pub async fn remove_threshold(&self, id: Uuid) {
-        let mut state = self.state.write().await;
-        state.thresholds.retain(|t| t.id != id);
-    }
-
-    pub async fn get_thresholds(&self) -> Vec<AlertThreshold> {
-        let state = self.state.read().await;
-        state.thresholds.clone()
-    }
-
-    pub async fn update_threshold(&self, id: Uuid, updates: ThresholdRequest) {
-        let mut state = self.state.write().await;
-        if let Some(threshold) = state.thresholds.iter_mut().find(|t| t.id == id) {
-            threshold.name = updates.name;
-            threshold.metric_type = updates.metric_type;
-            threshold.operator = updates.operator;
-            threshold.threshold_value = updates.threshold_value;
-            threshold.severity = updates.severity;
-            threshold.service_name = updates.service_name;
-            threshold.enabled = updates.enabled.unwrap_or(threshold.enabled);
-            threshold.description = updates.description;
-            threshold.updated_at = chrono::Utc::now();
-        }
-    }
-
-    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    pub async fn evaluate_metrics(&self, snapshot: &MetricSnapshot) -> Vec<AlertEvaluationResult> {
-        let state = self.state.read().await;
-        let mut results = Vec::new();
-
-        for threshold in &state.thresholds {
-            if !threshold.enabled {
-                continue;
-            }
-
-            if let Some(service_name) = &threshold.service_name {
-                if service_name != &snapshot.service_name {
-                    continue;
-                }
-            }
-
-            let current_value = match threshold.metric_type {
-                MetricType::CpuUsage => snapshot.cpu_usage,
-                MetricType::MemoryUsage => snapshot.memory_usage,
-                MetricType::DiskUsage => snapshot.disk_usage,
-                MetricType::ResponseTime => snapshot.response_time,
-                MetricType::ErrorRate => snapshot.error_rate,
-                MetricType::RequestCount => snapshot.request_count as f64,
-                MetricType::ActiveConnections => snapshot.active_connections as f64,
-                MetricType::DatabasePoolUsage => snapshot.database_pool_usage,
-            };
-
-            let triggered = match threshold.operator {
-                ThresholdOperator::GreaterThan => current_value > threshold.threshold_value,
-                ThresholdOperator::GreaterThanOrEqual => current_value >= threshold.threshold_value,
-                ThresholdOperator::LessThan => current_value < threshold.threshold_value,
-                ThresholdOperator::LessThanOrEqual => current_value <= threshold.threshold_value,
-                ThresholdOperator::Equal => current_value == threshold.threshold_value,
-                ThresholdOperator::NotEqual => current_value != threshold.threshold_value,
-            };
-
-            results.push(AlertEvaluationResult {
-                threshold_id: threshold.id,
-                threshold_name: threshold.name.clone(),
-                metric_type: threshold.metric_type.clone(),
+/// 用一组阈值逐条评估当前快照（纯函数，不做 IO）。
+/// 服务名不匹配的阈值不参与评估，保持与旧行为一致。
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+pub fn evaluate_snapshot(
+    thresholds: &[AlertThreshold],
+    snapshot: &MetricSnapshot,
+) -> Vec<AlertEvaluationResult> {
+    thresholds
+        .iter()
+        .filter(|t| threshold_matches_service(&t.service_name, &snapshot.service_name))
+        .map(|t| {
+            let current_value = extract_metric_value(&t.metric_type, snapshot);
+            AlertEvaluationResult {
+                threshold_id: t.id,
+                threshold_name: t.name.clone(),
+                metric_type: t.metric_type.clone(),
                 current_value,
-                threshold_value: threshold.threshold_value,
-                operator: threshold.operator.clone(),
-                triggered,
-                severity: threshold.severity.clone(),
-                service_name: snapshot.service_name.clone().into(),
-            });
-        }
-
-        results
-    }
-
-    pub async fn run_periodic_evaluation(&self, api_state: AppState, interval_seconds: u64) {
-        let interval = Duration::from_secs(interval_seconds);
-        loop {
-            tokio::time::sleep(interval).await;
-            let _ = self.perform_evaluation(&api_state).await;
-        }
-    }
-
-    async fn perform_evaluation(&self, api_state: &AppState) -> Result<(), ()> {
-        let snapshot = self.collect_metrics(api_state).await;
-        let results = self.evaluate_metrics(&snapshot).await;
-
-        for result in results {
-            if result.triggered {
-                self.trigger_alert(api_state, &result).await;
+                threshold_value: t.threshold_value,
+                operator: t.operator.clone(),
+                triggered: evaluate_threshold(current_value, &t.operator, t.threshold_value),
+                severity: t.severity.clone(),
+                service_name: Some(snapshot.service_name.clone()),
             }
-        }
+        })
+        .collect()
+}
 
-        Ok(())
-    }
+/// 采集 monitor 服务自身的真实指标快照。
+/// - cpu_usage / memory_usage：复用 metrics.rs 的 sysctl vm.loadavg + vm_stat 采集；
+/// - error_rate / request_count / active_connections：来自 SystemMetrics 真实计数器；
+/// - database_pool_usage：来自 sqlx 连接池实时大小；
+/// - disk_usage / response_time：本服务无对应采集器，置 0.0 表示"未采集"，
+///   不再伪造固定数值。
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+fn collect_realtime_snapshot(state: &AppState) -> MetricSnapshot {
+    let (load_1m, _, _) = metrics::get_load_averages();
+    let cpu_cores: f64 = std::process::Command::new("sysctl")
+        .args(["-n", "hw.ncpu"])
+        .output()
+        .ok()
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .and_then(|s| s.trim().parse().ok())
+        .unwrap_or(4.0);
+    let cpu_usage = ((load_1m / cpu_cores) * 100.0).clamp(0.0, 100.0);
 
-    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn collect_metrics(&self, api_state: &AppState) -> MetricSnapshot {
-        MetricSnapshot {
-            service_name: "topems-monitor".to_string(),
-            cpu_usage: 23.5,
-            memory_usage: 45.2,
-            disk_usage: 32.8,
-            response_time: 15.5,
-            error_rate: 0.02,
-            request_count: api_state.metrics.get_request_count(),
-            active_connections: api_state.metrics.get_active_connections(),
-            database_pool_usage: (api_state.pool.size() as f64 - api_state.pool.num_idle() as f64)
-                / api_state.pool.size() as f64
-                * 100.0,
-            timestamp: chrono::Utc::now(),
-        }
-    }
+    let (_, _, _, memory_usage) = metrics::get_memory_usage();
 
-    async fn trigger_alert(&self, _api_state: &AppState, result: &AlertEvaluationResult) {
-        tracing::warn!(
-            "Alert triggered: {} - {} exceeded threshold {} (current: {})",
-            result.threshold_name,
-            format!("{:?}", result.metric_type),
-            result.threshold_value,
-            result.current_value
-        );
+    let request_count = state.metrics.get_request_count();
+    let error_count = state.metrics.get_error_count();
+    let error_rate = if request_count > 0 {
+        (error_count as f64 / request_count as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    let pool_size = state.pool.size();
+    let pool_idle = state.pool.num_idle();
+    let pool_usage = if pool_size > 0 {
+        (pool_size as f64 - pool_idle as f64) / pool_size as f64 * 100.0
+    } else {
+        0.0
+    };
+
+    MetricSnapshot {
+        service_name: "topems-monitor".to_string(),
+        cpu_usage,
+        memory_usage,
+        disk_usage: 0.0,
+        response_time: 0.0,
+        error_rate,
+        request_count,
+        active_connections: state.metrics.get_active_connections(),
+        database_pool_usage: pool_usage,
+        timestamp: chrono::Utc::now(),
     }
 }
 
@@ -314,94 +314,28 @@ impl AlertEvaluator {
     ),
 )]
 pub async fn list_thresholds(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> axum::Json<ApiResponse<Vec<AlertThreshold>>> {
-    let _tenant_id = get_tenant_id_from_claims(&claims);
-    let thresholds = vec![
-        AlertThreshold {
-            id: Uuid::new_v4(),
-            name: "CPU使用率告警".to_string(),
-            metric_type: MetricType::CpuUsage,
-            operator: ThresholdOperator::GreaterThan,
-            threshold_value: 80.0,
-            severity: "warning".to_string(),
-            service_name: None,
-            enabled: true,
-            description: Some("当CPU使用率超过80%时触发告警".to_string()),
-            created_at: chrono::Utc::now() - chrono::Duration::days(7),
-            updated_at: chrono::Utc::now(),
-        },
-        AlertThreshold {
-            id: Uuid::new_v4(),
-            name: "内存使用率告警".to_string(),
-            metric_type: MetricType::MemoryUsage,
-            operator: ThresholdOperator::GreaterThan,
-            threshold_value: 85.0,
-            severity: "error".to_string(),
-            service_name: None,
-            enabled: true,
-            description: Some("当内存使用率超过85%时触发告警".to_string()),
-            created_at: chrono::Utc::now() - chrono::Duration::days(7),
-            updated_at: chrono::Utc::now(),
-        },
-        AlertThreshold {
-            id: Uuid::new_v4(),
-            name: "磁盘使用率告警".to_string(),
-            metric_type: MetricType::DiskUsage,
-            operator: ThresholdOperator::GreaterThan,
-            threshold_value: 90.0,
-            severity: "critical".to_string(),
-            service_name: None,
-            enabled: true,
-            description: Some("当磁盘使用率超过90%时触发告警".to_string()),
-            created_at: chrono::Utc::now() - chrono::Duration::days(7),
-            updated_at: chrono::Utc::now(),
-        },
-        AlertThreshold {
-            id: Uuid::new_v4(),
-            name: "响应时间告警".to_string(),
-            metric_type: MetricType::ResponseTime,
-            operator: ThresholdOperator::GreaterThan,
-            threshold_value: 200.0,
-            severity: "warning".to_string(),
-            service_name: Some("topems-pm".to_string()),
-            enabled: true,
-            description: Some("当响应时间超过200ms时触发告警".to_string()),
-            created_at: chrono::Utc::now() - chrono::Duration::days(3),
-            updated_at: chrono::Utc::now(),
-        },
-        AlertThreshold {
-            id: Uuid::new_v4(),
-            name: "错误率告警".to_string(),
-            metric_type: MetricType::ErrorRate,
-            operator: ThresholdOperator::GreaterThan,
-            threshold_value: 5.0,
-            severity: "error".to_string(),
-            service_name: None,
-            enabled: true,
-            description: Some("当错误率超过5%时触发告警".to_string()),
-            created_at: chrono::Utc::now() - chrono::Duration::days(5),
-            updated_at: chrono::Utc::now(),
-        },
-        AlertThreshold {
-            id: Uuid::new_v4(),
-            name: "数据库连接池告警".to_string(),
-            metric_type: MetricType::DatabasePoolUsage,
-            operator: ThresholdOperator::GreaterThan,
-            threshold_value: 80.0,
-            severity: "warning".to_string(),
-            service_name: None,
-            enabled: true,
-            description: Some("当数据库连接池使用率超过80%时触发告警".to_string()),
-            created_at: chrono::Utc::now() - chrono::Duration::days(2),
-            updated_at: chrono::Utc::now(),
-        },
-    ];
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let filtered = thresholds.into_iter().filter(|t| t.enabled).collect();
-
-    axum::Json(ApiResponse::success(filtered, "获取阈值列表成功"))
+    match sqlx::query(&format!(
+        "SELECT {cols} FROM public.monitor_thresholds
+         WHERE {where} AND enabled = TRUE
+         ORDER BY created_at",
+        cols = THRESHOLD_COLUMNS,
+        where = TENANT_SOFT_DELETED,
+    ))
+    .bind(tenant_id)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => {
+            let thresholds: Vec<AlertThreshold> = rows.iter().filter_map(row_to_threshold).collect();
+            axum::Json(ApiResponse::success(thresholds, "获取阈值列表成功"))
+        }
+        Err(e) => axum::Json(ApiResponse::error(500, &e.to_string())),
+    }
 }
 
 // gate: admin-only
@@ -416,26 +350,37 @@ pub async fn list_thresholds(
     ),
 )]
 pub async fn create_threshold(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::Json(req): axum::Json<ThresholdRequest>,
 ) -> axum::Json<ApiResponse<AlertThreshold>> {
-    let _tenant_id = get_tenant_id_from_claims(&claims);
-    let threshold = AlertThreshold {
-        id: Uuid::new_v4(),
-        name: req.name,
-        metric_type: req.metric_type,
-        operator: req.operator,
-        threshold_value: req.threshold_value,
-        severity: req.severity,
-        service_name: req.service_name,
-        enabled: req.enabled.unwrap_or(true),
-        description: req.description,
-        created_at: chrono::Utc::now(),
-        updated_at: chrono::Utc::now(),
-    };
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
-    axum::Json(ApiResponse::success(threshold, "阈值创建成功"))
+    match sqlx::query(&format!(
+        "INSERT INTO public.monitor_thresholds
+            (tenant_id, name, metric_type, operator, threshold_value, severity, service_name, enabled, description)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING {cols}",
+        cols = THRESHOLD_COLUMNS,
+    ))
+    .bind(tenant_id)
+    .bind(&req.name)
+    .bind(req.metric_type.as_db())
+    .bind(req.operator.as_db())
+    .bind(req.threshold_value)
+    .bind(&req.severity)
+    .bind(&req.service_name)
+    .bind(req.enabled.unwrap_or(true))
+    .bind(&req.description)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(row) => match row_to_threshold(&row) {
+            Some(threshold) => axum::Json(ApiResponse::success(threshold, "阈值创建成功")),
+            None => axum::Json(ApiResponse::error(500, "阈值行反序列化失败")),
+        },
+        Err(e) => axum::Json(ApiResponse::error(500, &e.to_string())),
+    }
 }
 
 #[utoipa::path(
@@ -452,26 +397,30 @@ pub async fn create_threshold(
     ),
 )]
 pub async fn get_threshold(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> axum::Json<ApiResponse<AlertThreshold>> {
-    let _tenant_id = get_tenant_id_from_claims(&claims);
-    let threshold = AlertThreshold {
-        id,
-        name: "CPU使用率告警".to_string(),
-        metric_type: MetricType::CpuUsage,
-        operator: ThresholdOperator::GreaterThan,
-        threshold_value: 80.0,
-        severity: "warning".to_string(),
-        service_name: None,
-        enabled: true,
-        description: Some("当CPU使用率超过80%时触发告警".to_string()),
-        created_at: chrono::Utc::now() - chrono::Duration::days(7),
-        updated_at: chrono::Utc::now(),
-    };
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
-    axum::Json(ApiResponse::success(threshold, "获取阈值详情成功"))
+    match sqlx::query(&format!(
+        "SELECT {cols} FROM public.monitor_thresholds
+         WHERE {where} AND id = $2",
+        cols = THRESHOLD_COLUMNS,
+        where = TENANT_SOFT_DELETED,
+    ))
+    .bind(tenant_id)
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(row)) => match row_to_threshold(&row) {
+            Some(threshold) => axum::Json(ApiResponse::success(threshold, "获取阈值详情成功")),
+            None => axum::Json(ApiResponse::error(500, "阈值行反序列化失败")),
+        },
+        Ok(None) => axum::Json(ApiResponse::error(404, "阈值不存在")),
+        Err(e) => axum::Json(ApiResponse::error(500, &e.to_string())),
+    }
 }
 
 #[utoipa::path(
@@ -489,27 +438,43 @@ pub async fn get_threshold(
     ),
 )]
 pub async fn update_threshold(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     axum::Json(req): axum::Json<ThresholdRequest>,
 ) -> axum::Json<ApiResponse<AlertThreshold>> {
-    let _tenant_id = get_tenant_id_from_claims(&claims);
-    let threshold = AlertThreshold {
-        id,
-        name: req.name,
-        metric_type: req.metric_type,
-        operator: req.operator,
-        threshold_value: req.threshold_value,
-        severity: req.severity,
-        service_name: req.service_name,
-        enabled: req.enabled.unwrap_or(true),
-        description: req.description,
-        created_at: chrono::Utc::now() - chrono::Duration::days(7),
-        updated_at: chrono::Utc::now(),
-    };
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
-    axum::Json(ApiResponse::success(threshold, "阈值更新成功"))
+    match sqlx::query(&format!(
+        "UPDATE public.monitor_thresholds SET
+            name = $3, metric_type = $4, operator = $5, threshold_value = $6,
+            severity = $7, service_name = $8, enabled = $9, description = $10,
+            updated_at = NOW()
+         WHERE {where} AND id = $2
+         RETURNING {cols}",
+        cols = THRESHOLD_COLUMNS,
+        where = TENANT_SOFT_DELETED,
+    ))
+    .bind(tenant_id)
+    .bind(id)
+    .bind(&req.name)
+    .bind(req.metric_type.as_db())
+    .bind(req.operator.as_db())
+    .bind(req.threshold_value)
+    .bind(&req.severity)
+    .bind(&req.service_name)
+    .bind(req.enabled.unwrap_or(true))
+    .bind(&req.description)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(row)) => match row_to_threshold(&row) {
+            Some(threshold) => axum::Json(ApiResponse::success(threshold, "阈值更新成功")),
+            None => axum::Json(ApiResponse::error(500, "阈值行反序列化失败")),
+        },
+        Ok(None) => axum::Json(ApiResponse::error(404, "阈值不存在")),
+        Err(e) => axum::Json(ApiResponse::error(500, &e.to_string())),
+    }
 }
 
 #[utoipa::path(
@@ -526,14 +491,30 @@ pub async fn update_threshold(
     ),
 )]
 pub async fn delete_threshold(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> axum::Json<ApiResponse<serde_json::Value>> {
-    axum::Json(ApiResponse::success(
-        serde_json::json!({"id": id.to_string()}),
-        "阈值删除成功",
+    let tenant_id = get_tenant_id_from_claims(&claims);
+
+    // 软删除：与 alerts 模块一致置 deleted_at，不物理删行
+    match sqlx::query(&format!(
+        "UPDATE public.monitor_thresholds SET deleted_at = NOW(), updated_at = NOW()
+         WHERE {where} AND id = $2",
+        where = TENANT_SOFT_DELETED,
     ))
+    .bind(tenant_id)
+    .bind(id)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(r) if r.rows_affected() > 0 => axum::Json(ApiResponse::success(
+            serde_json::json!({"id": id.to_string()}),
+            "阈值删除成功",
+        )),
+        Ok(_) => axum::Json(ApiResponse::error(404, "阈值不存在")),
+        Err(e) => axum::Json(ApiResponse::error(500, &e.to_string())),
+    }
 }
 
 // gate: admin-only
@@ -546,29 +527,33 @@ pub async fn delete_threshold(
         (status = 200, description = "OK"),
     ),
 )]
-#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn evaluate_thresholds(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
 ) -> axum::Json<ApiResponse<Vec<AlertEvaluationResult>>> {
-    let evaluator = AlertEvaluator::new();
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let snapshot = MetricSnapshot {
-        service_name: "topems-monitor".to_string(),
-        cpu_usage: 23.5,
-        memory_usage: 45.2,
-        disk_usage: 32.8,
-        response_time: 15.5,
-        error_rate: 0.02,
-        request_count: state.metrics.get_request_count(),
-        active_connections: state.metrics.get_active_connections(),
-        database_pool_usage: (state.pool.size() as f64 - state.pool.num_idle() as f64)
-            / state.pool.size() as f64
-            * 100.0,
-        timestamp: chrono::Utc::now(),
+    // 1. 从库加载当前租户启用的阈值（不再使用空内存 Evaluator）
+    let thresholds: Vec<AlertThreshold> = match sqlx::query(&format!(
+        "SELECT {cols} FROM public.monitor_thresholds
+         WHERE {where} AND enabled = TRUE
+         ORDER BY created_at",
+        cols = THRESHOLD_COLUMNS,
+        where = TENANT_SOFT_DELETED,
+    ))
+    .bind(tenant_id)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => rows.iter().filter_map(row_to_threshold).collect(),
+        Err(e) => return axum::Json(ApiResponse::error(500, &e.to_string())),
     };
 
-    let results = evaluator.evaluate_metrics(&snapshot).await;
+    // 2. 采集真实指标快照（CPU/内存/错误率/连接池均为真实采集，无硬编码值）
+    let snapshot = collect_realtime_snapshot(&state);
+
+    // 3. 逐条阈值评估
+    let results = evaluate_snapshot(&thresholds, &snapshot);
 
     axum::Json(ApiResponse::success(results, "阈值评估完成"))
 }
@@ -582,26 +567,11 @@ pub async fn evaluate_thresholds(
         (status = 200, description = "OK"),
     ),
 )]
-#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_metric_snapshot(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> axum::Json<ApiResponse<MetricSnapshot>> {
-    let snapshot = MetricSnapshot {
-        service_name: "topems-monitor".to_string(),
-        cpu_usage: 23.5,
-        memory_usage: 45.2,
-        disk_usage: 32.8,
-        response_time: 15.5,
-        error_rate: 0.02,
-        request_count: state.metrics.get_request_count(),
-        active_connections: state.metrics.get_active_connections(),
-        database_pool_usage: (state.pool.size() as f64 - state.pool.num_idle() as f64)
-            / state.pool.size() as f64
-            * 100.0,
-        timestamp: chrono::Utc::now(),
-    };
-
+    let snapshot = collect_realtime_snapshot(&state);
     axum::Json(ApiResponse::success(snapshot, "获取指标快照成功"))
 }
 
@@ -636,6 +606,22 @@ mod tests {
             active_connections: 50,
             database_pool_usage: 40.0,
             timestamp: Utc::now(),
+        }
+    }
+
+    fn sample_threshold(metric_type: MetricType, operator: ThresholdOperator, value: f64) -> AlertThreshold {
+        AlertThreshold {
+            id: Uuid::new_v4(),
+            name: "测试阈值".to_string(),
+            metric_type,
+            operator,
+            threshold_value: value,
+            severity: "warning".to_string(),
+            service_name: None,
+            enabled: true,
+            description: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         }
     }
 
@@ -900,5 +886,81 @@ mod tests {
     fn test_threshold_matches_service_empty_string() {
         assert!(threshold_matches_service(&Some("".to_string()), ""));
         assert!(!threshold_matches_service(&Some("".to_string()), "svc"));
+    }
+
+    // ---- 枚举 DB 短码往返 ----
+
+    #[test]
+    fn test_metric_type_db_roundtrip() {
+        for mt in [
+            MetricType::CpuUsage,
+            MetricType::MemoryUsage,
+            MetricType::DiskUsage,
+            MetricType::ResponseTime,
+            MetricType::ErrorRate,
+            MetricType::RequestCount,
+            MetricType::ActiveConnections,
+            MetricType::DatabasePoolUsage,
+        ] {
+            assert_eq!(MetricType::from_db(mt.as_db()), Some(mt));
+        }
+        assert_eq!(MetricType::from_db("not_a_metric"), None);
+    }
+
+    #[test]
+    fn test_operator_db_roundtrip() {
+        for op in [
+            ThresholdOperator::GreaterThan,
+            ThresholdOperator::GreaterThanOrEqual,
+            ThresholdOperator::LessThan,
+            ThresholdOperator::LessThanOrEqual,
+            ThresholdOperator::Equal,
+            ThresholdOperator::NotEqual,
+        ] {
+            assert_eq!(ThresholdOperator::from_db(op.as_db()), Some(op));
+        }
+        assert_eq!(ThresholdOperator::from_db("??"), None);
+    }
+
+    // ---- evaluate_snapshot ----
+
+    #[test]
+    fn test_evaluate_snapshot_triggered() {
+        let thresholds = vec![sample_threshold(
+            MetricType::CpuUsage,
+            ThresholdOperator::GreaterThan,
+            40.0,
+        )];
+        let results = evaluate_snapshot(&thresholds, &sample_snapshot());
+        assert_eq!(results.len(), 1);
+        assert!(results[0].triggered);
+        assert_eq!(results[0].current_value, 50.0);
+        assert_eq!(results[0].threshold_value, 40.0);
+    }
+
+    #[test]
+    fn test_evaluate_snapshot_not_triggered() {
+        let thresholds = vec![sample_threshold(
+            MetricType::CpuUsage,
+            ThresholdOperator::GreaterThan,
+            80.0,
+        )];
+        let results = evaluate_snapshot(&thresholds, &sample_snapshot());
+        assert_eq!(results.len(), 1);
+        assert!(!results[0].triggered);
+    }
+
+    #[test]
+    fn test_evaluate_snapshot_service_filtered_out() {
+        let mut t = sample_threshold(MetricType::CpuUsage, ThresholdOperator::GreaterThan, 1.0);
+        t.service_name = Some("topems-other".to_string());
+        let results = evaluate_snapshot(&[t], &sample_snapshot());
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_evaluate_snapshot_empty_thresholds() {
+        let results = evaluate_snapshot(&[], &sample_snapshot());
+        assert!(results.is_empty());
     }
 }
