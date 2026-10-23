@@ -3346,3 +3346,6 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.84（2026-10-23）**：frontend-test 核销（133/3042 全 PASS）；frontend-coverage 复现 4 失败（route-nav erp-sales-orders 单复数不一致 + 重复 path、TopBar i18n 键、UserManagementPage breadcrumbs）登记修复批次；code-quality 半核销（naming PASS + api_dup 性能瓶颈）。CI 11 FAIL 剩：frontend-coverage 4 失败修复 + code-quality api_dup。
 
 > **系统完善 v1.85（2026-10-23）**：frontend-coverage 4 失败全修（erp sales-orders 双 route 收敛 + TopBar i18n 键/测试 mock + UserManagementPage breadcrumbs 断言）→ coverage exit 0。**CI 11 FAIL 累计 11/11 核销**；剩 code-quality api_dup 性能瓶颈（17+ 分钟，待脚本优化）。
+- [ ] **mobile production 6 端点 500 修复**（v1.85 终验发现）：MES /api/mes/production/orders 404 路由缺失 → mobile openapi client 上游 404 透传 500；契约 108/114
+- [ ] **iam.core_roles RLS 策略补齐**（v1.85 终验发现）：iam schema 空壳（iam 空壳表统一待排期），verify-rls 报关键表缺
+- [ ] **mobile SalesOrderCreated 事件 UUID 解析修复**（v1.85 终验发现）：payload id 字符串非 UUID（invalid character: found s at 0），事件处理失败+重试
