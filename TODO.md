@@ -3521,3 +3521,16 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **P1-23 integration secret 脱敏**：响应 DTO ErpConnectionResponse（secret_masked 前3后4掩码）+ serde skip_serializing 兜底；9 出站响应点全转；内部 X-API-Secret 明文保留；写路径 COALESCE 保留原值语义未动；279 passed（+3 脱敏测试）
 - 遗留扩展项（同类超范围残留，Phase D 收口）：wms 9 兄弟模块 `...0001` 硬编码；hrm recruitment×3/training×2 Uuid::nil() 租户
 - 状态：Phase B 8 项已修复待合批提交；Phase C 启动中
+## 审计修复实施登记 Phase C（2026-10-23，第二批 11 项 P1，未提交待合批）
+- [x] **P1-1 master-data 权限门控**：main.rs L72-74 require_permission("master-data:admin") → require_module_access("master-data")（modules/mod.rs 按仓库惯例无需内部门控，qms 同款）；permission-matrix-guard 4/4 全绿（R2 修复后 0）
+- [x] **P1-2/3 ehs 写桩落库**：hazard.rs 6 路由+update_hazard 接真实 SQL（qa_ehs_hazards/rectifications/verifications 三真表，verifier 改取 claims.sub）；safety.rs 路由全换 _db 真实现 + 删 10 假函数 + openapi.rs 同步；HZ/IR-2024001/安全员A 零残留；本地 PG 在线 15 passed
+- [x] **P1-5 mes APS 301→307**：写方法 POST/PUT/DELETE/PATCH → Redirect::temporary(307)；安全方法保留 permanent（已核实 axum 0.8.9 permanent=308，非审计所写 301，308 亦不改写方法）；GET 兼容层拆除前客户端平滑迁移
+- [x] **P1-6 mes WS 认证**：authenticate 分支从消息体取 token verify_jwt_token，失败回 error 并 Close；16 passed
+- [x] **P1-9 WMS 发货事件契约**：删 total_value 填 quantity；改为按发货明细逐条发射真实 material_code/name/unit + shipped_quantity；payload 补 tenant_id（event_types.rs）；scm 消费方 check 通过、shared-event 367 passed
+- [x] **P1-11 rd Decimal 契约**：实证 5432 4 列 numeric(10,2) vs 模型 f64 → 新迁移 `20261023000007_rd_project_members_rate_float8.sql`（幂等 ALTER）+ schema_defense TABLE_DEFS 同步 DOUBLE PRECISION + checksums；validate.sh Errors:0；对齐 erp/pm/scm 先例。遗留：allocation f32↔numeric(5,2) 同类（超范围，Phase D 决策）、UpdateMemberRequest 4 列静默忽略
+- [x] **P1-12 pm 显式租户**：task.rs 6 处 + project_expense.rs 2 处读端点补 GUC 租户谓词（与文件内写路径同形，零签名变更；补漏 list_tasks_by_project 2 处）；524 passed
+- [x] **P1-15 finance 过账并发**：calculate_account_balance 改 tx 内执行 + core_finance_accounts 主行 FOR UPDATE（余额为 ledger SUM 派生值，无原子增量列；跨凭证反向锁死锁为标准行锁权衡）；1086 passed
+- [x] **P1-16 finance 批量回款**：batch_confirm_collections 整批单事务 + 逐笔回写发票 paid_amount + 按余额翻 paid（与单条同口径）；1086 passed
+- [x] **P1-24 integration 假探测**：提取公共 probe_http_url（5s 超时+错误传播），两处 test_connection 统一真实 reqwest 探测；SSRF 白名单属 P2-2 需产品决策标注留待
+- [x] **工程门禁（Phase D 横切线提前项）**：perm-matrix-toolkit R2 正则追加 require_module_access 识别（一行，消除 erp/qms/scm/wms/master-data 5 服务误报）；permission-matrix-guard 4/4 绿
+- 状态：Phase C 11 项已修复待合批提交；Phase D 启动中
