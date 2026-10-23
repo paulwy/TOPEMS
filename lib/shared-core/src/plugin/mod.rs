@@ -40,6 +40,13 @@ pub struct PluginInfo {
 }
 
 /// plugin.yaml 配置文件结构
+///
+/// 合一基准（2026-10-23 Phase D）：
+/// - 运行时注册契约以 [`PluginInfo`] / [`PermissionDef`] 为准（plugin-registry
+///   `/dev/runtime/{code}/register` 实际消费，字段全必填，不得放松）；
+/// - 本结构体面向磁盘工件 `svc/*/plugin.yaml`，向后兼容 27 个现存文件的事实格式：
+///   权限条目用 [`ManifestPermission`]（resource_type/action/description/tier 均可缺省）、
+///   容忍 `permissions: {}` 空对象（ehs/qms/lims/pdm 现存写法）、接受可选 `icon` 字段。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginManifest {
     pub code: String,
@@ -54,14 +61,58 @@ pub struct PluginManifest {
     pub plugin_type: Option<String>,
     #[serde(default)]
     pub author: Option<String>,
+    /// 磁盘工件扩展字段（来源：5/27 现存文件实际使用；运行时注册契约不含）
+    #[serde(default)]
+    pub icon: Option<String>,
     #[serde(default)]
     pub dependencies: Vec<String>,
-    #[serde(default)]
-    pub permissions: Vec<PermissionDef>,
+    #[serde(default, deserialize_with = "deserialize_manifest_permissions")]
+    pub permissions: Vec<ManifestPermission>,
     #[serde(default)]
     pub runtime: Option<serde_json::Value>,
     #[serde(default)]
     pub deployment: Option<serde_json::Value>,
+}
+
+/// plugin.yaml 权限条目（磁盘工件格式）
+///
+/// 与运行时 [`PermissionDef`]（code/name/resource_type/action 全必填）不同，
+/// 现存 plugin.yaml 中 62/202 条目缺 resource_type/action，另有 40 条带 `tier`、
+/// 37 条带 `description`，故此处一律 Option。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ManifestPermission {
+    pub code: String,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub resource_type: Option<String>,
+    #[serde(default)]
+    pub action: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub tier: Option<String>,
+}
+
+/// 容忍 `permissions: []` / `permissions: {}` / `permissions: null` / 缺省
+fn deserialize_manifest_permissions<'de, D>(
+    deserializer: D,
+) -> Result<Vec<ManifestPermission>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    #[derive(serde::Deserialize)]
+    #[serde(untagged)]
+    enum PermissionsWire {
+        Seq(Vec<ManifestPermission>),
+        Map(serde_yaml::Mapping),
+        Null,
+    }
+    match Option::<PermissionsWire>::deserialize(deserializer)? {
+        Some(PermissionsWire::Seq(v)) => Ok(v),
+        // 现存文件兼容写法：permissions: {} / null 视为空权限集
+        Some(PermissionsWire::Map(_)) | Some(PermissionsWire::Null) | None => Ok(Vec::new()),
+    }
 }
 
 impl Default for PluginManifest {
@@ -75,6 +126,7 @@ impl Default for PluginManifest {
             category: None,
             plugin_type: None,
             author: None,
+            icon: None,
             dependencies: Vec::new(),
             permissions: Vec::new(),
             runtime: None,
@@ -652,6 +704,49 @@ version: "1.0"
         assert!(manifest.auth_required, "省略 auth_required 应默认 true");
         assert!(manifest.dependencies.is_empty());
         assert!(manifest.permissions.is_empty());
+        assert!(manifest.icon.is_none());
+    }
+
+    #[test]
+    fn plugin_manifest_serde_permissions_empty_object_compat() {
+        // ehs/qms/lims/pdm 现存写法：permissions: {} 应反序列化为空权限集而非报错
+        let yaml = r#"
+code: ehs
+name: EHS
+version: 1.0.0
+permissions: {}
+"#;
+        let manifest: PluginManifest = serde_yaml::from_str(yaml).unwrap();
+        assert!(
+            manifest.permissions.is_empty(),
+            "permissions: {{}} 应解析为空 Vec"
+        );
+    }
+
+    #[test]
+    fn plugin_manifest_serde_optional_permission_fields_and_icon() {
+        // 现存事实格式：权限条目仅 code/name(+description/tier)，顶层带 icon
+        let yaml = r#"
+code: mes
+name: MES
+version: 1.0.0
+icon: precision_manufacturing
+permissions:
+  - code: mes:read
+    name: 查看
+    description: 查看工单
+    tier: L2
+"#;
+        let manifest: PluginManifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(manifest.icon.as_deref(), Some("precision_manufacturing"));
+        assert_eq!(manifest.permissions.len(), 1);
+        let p = &manifest.permissions[0];
+        assert_eq!(p.code, "mes:read");
+        assert_eq!(p.name.as_deref(), Some("查看"));
+        assert_eq!(p.description.as_deref(), Some("查看工单"));
+        assert_eq!(p.tier.as_deref(), Some("L2"));
+        assert!(p.resource_type.is_none(), "缺省 resource_type 应为 None");
+        assert!(p.action.is_none(), "缺省 action 应为 None");
     }
 
     #[test]

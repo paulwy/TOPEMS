@@ -253,6 +253,33 @@ def main():
         print("✓ plugin.yaml 与 services.yaml / ports.env / main.rs 全部一致")
 
     # ====================================================================
+    # Schema 健全性 lint（warn 级别，不阻塞；2026-10-23 Phase D 三套合一登记）
+    # 基准：lib/shared-core PluginManifest 类型化 schema
+    #   必填: code / name / version；permissions: list 或空对象 {}；
+    #   runtime / deployment: dict（现存 10 文件 runtime 为空 dict，合法）
+    # ====================================================================
+    schema_warnings = []
+    for code, plugin in sorted(plugins.items()):
+        path = plugin.get("_plugin_path", code)
+        for required in ("code", "name", "version"):
+            if not plugin.get(required):
+                schema_warnings.append(f"  {path}: 缺少必填字段 {required}")
+        perms = plugin.get("permissions")
+        if perms is not None and not isinstance(perms, (list, dict)):
+            schema_warnings.append(
+                f"  {path}: permissions 应为 list 或空对象 {{}}，实际 {type(perms).__name__}"
+            )
+        if plugin.get("runtime") is not None and not isinstance(plugin.get("runtime"), dict):
+            schema_warnings.append(f"  {path}: runtime 应为 dict")
+        if plugin.get("deployment") is not None and not isinstance(plugin.get("deployment"), dict):
+            schema_warnings.append(f"  {path}: deployment 应为 dict")
+
+    if schema_warnings:
+        print("\nSchema 警告（仅提示，不阻塞）:")
+        for w in schema_warnings:
+            print(w)
+
+    # ====================================================================
     # 端口范围校验（warn 级别，不阻塞）
     # ====================================================================
     range_warnings = []
