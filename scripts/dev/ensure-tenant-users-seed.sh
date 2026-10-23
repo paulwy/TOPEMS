@@ -99,6 +99,45 @@ BEGIN
   END IF;
 END \$\$;"
 echo "core_files RLS 租户隔离就绪"
+# v1.87 RLS 关键表补齐（幂等）：public.core_roles/core_users + ehs.qa_ehs_hazards（补列+策略），对齐 core_files 宽松格式
+psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
+DO \$\$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='core_roles' AND policyname='tenant_isolation_core_roles') THEN
+    ALTER TABLE public.core_roles ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY tenant_isolation_core_roles ON public.core_roles USING (
+      (current_setting('app.tenant_id', true) IS NULL) OR
+      (current_setting('app.tenant_id', true) = '') OR
+      (current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000') OR
+      (tenant_id IS NULL) OR
+      (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+    );
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='core_users' AND policyname='tenant_isolation_core_users') THEN
+    ALTER TABLE public.core_users ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY tenant_isolation_core_users ON public.core_users USING (
+      (current_setting('app.tenant_id', true) IS NULL) OR
+      (current_setting('app.tenant_id', true) = '') OR
+      (current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000') OR
+      (tenant_id IS NULL) OR
+      (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+    );
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='ehs' AND table_name='qa_ehs_hazards' AND column_name='tenant_id') THEN
+    ALTER TABLE ehs.qa_ehs_hazards ADD COLUMN tenant_id UUID;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='ehs' AND tablename='qa_ehs_hazards' AND policyname='rls_tenant_isolation') THEN
+    ALTER TABLE ehs.qa_ehs_hazards ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY rls_tenant_isolation ON ehs.qa_ehs_hazards USING (
+      (current_setting('app.tenant_id', true) IS NULL) OR
+      (current_setting('app.tenant_id', true) = '') OR
+      (current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000') OR
+      (tenant_id IS NULL) OR
+      (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+    );
+  END IF;
+END \$\$;"
+echo "v1.87 RLS 关键表补齐就绪（core_roles/core_users/ehs.qa_ehs_hazards）"
 # mobile 域补表自愈（契约冒烟 114 端点修复：oa 日程/公告 + push 列 + mes 生产表；幂等）
 psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
 CREATE TABLE IF NOT EXISTS mobile.oa_calendar_events (

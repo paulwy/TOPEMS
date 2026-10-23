@@ -24,7 +24,8 @@ fi
 # 3. 关键域抽样（每域代表表必须有策略）
 # 关键域抽样（每域代表表必须有策略）
 # 平台级系统表（core_tenant_usage/core_audit_logs 跨租户聚合）与 RBAC 表（iam_roles/iam_permissions 全局角色权限）不按租户隔离，不纳入强制清单
-KEY_TABLES="public.core_files iam.core_files ehs.qa_ehs_hazards iam.core_users iam.core_roles"
+# v1.87 校准：主库 iam schema 无 core_* 表（旧清单 iam.core_files/core_users/core_roles 均不存在）→ 指向真实 public 版 + ehs 真实缺口
+KEY_TABLES="public.core_files public.core_roles public.core_users ehs.qa_ehs_hazards"
 MISS=0
 for t in $KEY_TABLES; do
   CNT=$(psql -U topems -d topems -tAc "SELECT COUNT(*) FROM pg_policies WHERE schemaname||'.'||tablename='$t'" )
