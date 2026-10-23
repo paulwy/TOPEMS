@@ -86,7 +86,12 @@ pub async fn list_routes(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -175,7 +180,12 @@ pub async fn create_route(
     Json(req): Json<CreateRouteRequest>,
 ) -> Json<ApiResponse<Route>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims, &headers);
@@ -241,7 +251,12 @@ pub async fn get_route(
     >,
 ) -> Json<ApiResponse<Route>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -300,7 +315,12 @@ pub async fn update_route(
     Json(req): Json<UpdateRouteRequest>,
 ) -> Json<ApiResponse<Route>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -375,7 +395,12 @@ pub async fn delete_route(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query("DELETE FROM tms.tms_routes WHERE id = $1 AND tenant_id = $2")

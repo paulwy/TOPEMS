@@ -131,8 +131,12 @@ pub async fn list_vehicles(
     record_cache_miss("tms", "vehicle", "list");
 
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
-
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let result = sqlx::query_as::<_, Vehicle>(
         r#"
         SELECT id, vehicle_no, plate_number, vehicle_type, capacity, status, carrier_id, notes, tenant_id, created_at, updated_at
@@ -223,7 +227,12 @@ pub async fn create_vehicle(
     Json(req): Json<CreateVehicleRequest>,
 ) -> Json<ApiResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims, &headers);
@@ -310,7 +319,12 @@ pub async fn get_vehicle(
     >,
 ) -> Json<ApiResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -366,7 +380,12 @@ pub async fn update_vehicle(
     Json(req): Json<UpdateVehicleRequest>,
 ) -> Json<ApiResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -460,7 +479,12 @@ pub async fn delete_vehicle(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query("DELETE FROM tms.tms_vehicles WHERE id = $1 AND tenant_id = $2")
@@ -545,7 +569,12 @@ pub async fn submit_inspection(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -567,7 +596,7 @@ pub async fn submit_inspection(
             let result = sqlx::query_as::<_, Vehicle>(
                 r#"
                 UPDATE tms.tms_vehicles SET status = 'maintenance', updated_at = $2
-                WHERE id = $1 AND tenant_id = $3
+                WHERE id = $1 AND tenant_id = $3 AND status = 'active'
                 RETURNING id, vehicle_no, plate_number, vehicle_type, capacity, status, carrier_id, notes, tenant_id, created_at, updated_at
                 "#,
             )
@@ -642,7 +671,12 @@ pub async fn approve_vehicle(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -676,7 +710,7 @@ pub async fn approve_vehicle(
             let result = sqlx::query_as::<_, Vehicle>(
                 r#"
                 UPDATE tms.tms_vehicles SET status = $2, updated_at = $3
-                WHERE id = $1 AND tenant_id = $4
+                WHERE id = $1 AND tenant_id = $4 AND status IN ('maintenance','inactive')
                 RETURNING id, vehicle_no, plate_number, vehicle_type, capacity, status, carrier_id, notes, tenant_id, created_at, updated_at
                 "#,
             )
@@ -754,7 +788,12 @@ pub async fn reject_vehicle(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -776,7 +815,7 @@ pub async fn reject_vehicle(
             let result = sqlx::query_as::<_, Vehicle>(
                 r#"
                 UPDATE tms.tms_vehicles SET status = 'active', updated_at = $2
-                WHERE id = $1 AND tenant_id = $3
+                WHERE id = $1 AND tenant_id = $3 AND status = 'maintenance'
                 RETURNING id, vehicle_no, plate_number, vehicle_type, capacity, status, carrier_id, notes, tenant_id, created_at, updated_at
                 "#,
             )

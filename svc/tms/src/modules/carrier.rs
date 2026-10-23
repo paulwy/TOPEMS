@@ -137,8 +137,12 @@ pub async fn list_carriers(
     record_cache_miss("tms", "carrier", "list");
 
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
-
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let result = sqlx::query_as::<_, Carrier>(
         r#"
         SELECT id, carrier_no, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
@@ -230,7 +234,12 @@ pub async fn create_carrier(
     Json(req): Json<CreateCarrierRequest>,
 ) -> Json<ApiResponse<Carrier>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims, &headers);
@@ -318,7 +327,12 @@ pub async fn get_carrier(
     >,
 ) -> Json<ApiResponse<Carrier>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -375,7 +389,12 @@ pub async fn update_carrier(
     Json(req): Json<UpdateCarrierRequest>,
 ) -> Json<ApiResponse<Carrier>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -470,7 +489,12 @@ pub async fn delete_carrier(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query("DELETE FROM tms.tms_carriers WHERE id = $1 AND tenant_id = $2")
@@ -566,7 +590,12 @@ pub async fn submit_qualification(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Carrier>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Carrier>(&format!(
@@ -626,7 +655,12 @@ pub async fn approve_carrier(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Carrier>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -648,7 +682,7 @@ pub async fn approve_carrier(
             let requires_approval = carrier_requires_approval(&status, "active");
             let result = sqlx::query_as::<_, Carrier>(&format!(
                 r#"UPDATE tms.tms_carriers SET status = 'active', updated_at = $2
-                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                    WHERE id = $1 AND tenant_id = $3 AND status IN ('pending_review','suspended') RETURNING {}"#,
                 carrier_return_columns("$4")
             ))
             .bind(id)
@@ -724,7 +758,12 @@ pub async fn reject_carrier(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Carrier>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -745,7 +784,7 @@ pub async fn reject_carrier(
             }
             let result = sqlx::query_as::<_, Carrier>(&format!(
                 r#"UPDATE tms.tms_carriers SET status = 'rejected', updated_at = $2
-                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                    WHERE id = $1 AND tenant_id = $3 AND status = 'pending_review' RETURNING {}"#,
                 carrier_return_columns("$4")
             ))
             .bind(id)

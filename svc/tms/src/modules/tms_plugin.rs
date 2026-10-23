@@ -135,7 +135,12 @@ pub async fn plugin_health_check(
     >,
 ) -> Json<ApiResponse<()>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     match sqlx::query("SELECT 1").fetch_one(&mut **txn).await {
         Ok(_) => Json(ApiResponse::success((), "Healthy")),
         Err(e) => Json(ApiResponse::from({

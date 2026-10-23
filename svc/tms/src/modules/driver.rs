@@ -134,8 +134,12 @@ pub async fn list_drivers(
     record_cache_miss("tms", "driver", "list");
 
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
-
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let result = sqlx::query_as::<_, Driver>(
         r#"
         SELECT id, driver_no, name, phone, license_no, license_type, status, carrier_id, tenant_id, created_at, updated_at
@@ -226,7 +230,12 @@ pub async fn create_driver(
     Json(req): Json<CreateDriverRequest>,
 ) -> Json<ApiResponse<Driver>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims, &headers);
@@ -313,7 +322,12 @@ pub async fn get_driver(
     >,
 ) -> Json<ApiResponse<Driver>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -369,7 +383,12 @@ pub async fn update_driver(
     Json(req): Json<UpdateDriverRequest>,
 ) -> Json<ApiResponse<Driver>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -444,7 +463,12 @@ pub async fn delete_driver(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query("DELETE FROM tms.tms_drivers WHERE id = $1 AND tenant_id = $2")
@@ -512,7 +536,12 @@ pub async fn submit_verification(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Driver>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -533,7 +562,7 @@ pub async fn submit_verification(
             }
             let result = sqlx::query_as::<_, Driver>(&format!(
                 r#"UPDATE tms.tms_drivers SET status = 'suspended', updated_at = $2
-                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                    WHERE id = $1 AND tenant_id = $3 AND status = 'active' RETURNING {}"#,
                 DRIVER_RETURN
             ))
             .bind(id)
@@ -607,7 +636,12 @@ pub async fn approve_driver(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Driver>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -628,7 +662,7 @@ pub async fn approve_driver(
             }
             let result = sqlx::query_as::<_, Driver>(&format!(
                 r#"UPDATE tms.tms_drivers SET status = 'active', updated_at = $2
-                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                    WHERE id = $1 AND tenant_id = $3 AND status IN ('on_leave','suspended') RETURNING {}"#,
                 DRIVER_RETURN
             ))
             .bind(id)
@@ -702,7 +736,12 @@ pub async fn reject_driver(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Driver>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -724,7 +763,7 @@ pub async fn reject_driver(
             let requires_approval = driver_requires_approval(&status, "inactive");
             let result = sqlx::query_as::<_, Driver>(&format!(
                 r#"UPDATE tms.tms_drivers SET status = 'inactive', updated_at = $2
-                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                    WHERE id = $1 AND tenant_id = $3 AND status IN ('suspended','on_leave') RETURNING {}"#,
                 DRIVER_RETURN
             ))
             .bind(id)

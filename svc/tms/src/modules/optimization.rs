@@ -240,7 +240,12 @@ pub async fn plan_assignment(
     Json(req): Json<AssignmentPlanRequest>,
 ) -> Json<ApiResponse<AssignmentResult>> {
     let mut guard = txn_arc.lock().await;
-    let _txn = guard.as_mut().expect("rls txn missing");
+    let Some(_txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let result = assign_orders_to_drivers(&req.drivers, &req.orders);
     Json(ApiResponse::success(result, "订单分配完成"))
 }
@@ -260,7 +265,12 @@ pub async fn optimize_route_handler(
     Json(req): Json<RouteOptimizeRequest>,
 ) -> Json<ApiResponse<RouteOptimizeResponse>> {
     let mut guard = txn_arc.lock().await;
-    let _txn = guard.as_mut().expect("rls txn missing");
+    let Some(_txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     if req.distances.is_empty() {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
             "距离矩阵不能为空".to_string(),
@@ -297,7 +307,12 @@ pub async fn freight_quote_handler(
     Json(req): Json<FreightQuoteRequest>,
 ) -> Json<ApiResponse<FreightQuote>> {
     let mut guard = txn_arc.lock().await;
-    let _txn = guard.as_mut().expect("rls txn missing");
+    let Some(_txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     if req.distance_km < 0.0
         || req.weight_kg < 0.0
         || req.rate_per_km < 0.0

@@ -115,7 +115,12 @@ pub async fn list_shipments(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -203,7 +208,12 @@ pub async fn create_shipment(
     Json(req): Json<CreateShipmentRequest>,
 ) -> Json<ApiResponse<Shipment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims, &headers);
@@ -278,7 +288,12 @@ pub async fn get_shipment(
     >,
 ) -> Json<ApiResponse<Shipment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -336,7 +351,12 @@ pub async fn update_shipment(
     Json(req): Json<UpdateShipmentRequest>,
 ) -> Json<ApiResponse<Shipment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -421,7 +441,12 @@ pub async fn delete_shipment(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query("DELETE FROM tms.tms_shipments WHERE id = $1 AND tenant_id = $2")
@@ -475,7 +500,12 @@ pub async fn dispatch_shipment(
     >,
 ) -> Json<ApiResponse<Shipment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -500,7 +530,7 @@ pub async fn dispatch_shipment(
                     status = 'in_transit',
                     actual_departure = $2,
                     updated_at = $3
-                WHERE id = $1 AND tenant_id = $4
+                WHERE id = $1 AND tenant_id = $4 AND status = 'pending'
                 RETURNING id, shipment_no, order_id, carrier_id, vehicle_id, driver_id, route_id, origin, destination,
                        status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival,
                        notes, tenant_id, created_at, updated_at
@@ -569,7 +599,12 @@ pub async fn arrive_shipment(
     >,
 ) -> Json<ApiResponse<Shipment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -594,7 +629,7 @@ pub async fn arrive_shipment(
                     status = 'delivered',
                     actual_arrival = $2,
                     updated_at = $3
-                WHERE id = $1 AND tenant_id = $4
+                WHERE id = $1 AND tenant_id = $4 AND status = 'in_transit'
                 RETURNING id, shipment_no, order_id, carrier_id, vehicle_id, driver_id, route_id, origin, destination,
                        status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival,
                        notes, tenant_id, created_at, updated_at
@@ -663,7 +698,12 @@ pub async fn cancel_shipment(
     >,
 ) -> Json<ApiResponse<Shipment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -687,7 +727,7 @@ pub async fn cancel_shipment(
                 UPDATE tms.tms_shipments SET
                     status = 'cancelled',
                     updated_at = $2
-                WHERE id = $1 AND tenant_id = $3
+                WHERE id = $1 AND tenant_id = $3 AND status NOT IN ('delivered','cancelled')
                 RETURNING id, shipment_no, order_id, carrier_id, vehicle_id, driver_id, route_id, origin, destination,
                        status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival,
                        notes, tenant_id, created_at, updated_at
@@ -769,7 +809,12 @@ pub async fn submit_approval(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Shipment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -790,7 +835,7 @@ pub async fn submit_approval(
             }
             let result = sqlx::query_as::<_, Shipment>(&format!(
                 r#"UPDATE tms.tms_shipments SET status = 'pending', updated_at = $2
-                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                    WHERE id = $1 AND tenant_id = $3 AND status = 'draft' RETURNING {}"#,
                 SHIPMENT_RETURN
             ))
             .bind(id)
@@ -864,7 +909,12 @@ pub async fn approve_shipment(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Shipment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -887,7 +937,7 @@ pub async fn approve_shipment(
             let result = sqlx::query_as::<_, Shipment>(
                 &format!(
                     r#"UPDATE tms.tms_shipments SET status = 'in_transit', actual_departure = $2, updated_at = $3
-                    WHERE id = $1 AND tenant_id = $4 RETURNING {}"#,
+                    WHERE id = $1 AND tenant_id = $4 AND status = 'pending' RETURNING {}"#,
                     SHIPMENT_RETURN
                 ),
             )
@@ -964,7 +1014,12 @@ pub async fn reject_shipment(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Shipment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        )));
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -985,7 +1040,7 @@ pub async fn reject_shipment(
             }
             let result = sqlx::query_as::<_, Shipment>(&format!(
                 r#"UPDATE tms.tms_shipments SET status = 'cancelled', updated_at = $2
-                    WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
+                    WHERE id = $1 AND tenant_id = $3 AND status NOT IN ('delivered','cancelled') RETURNING {}"#,
                 SHIPMENT_RETURN
             ))
             .bind(id)
