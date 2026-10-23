@@ -872,10 +872,24 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   }, [setUnread]);
 
   // 将未读数注入消息中心菜单项徽标，0/undefined 时不展示；
-  // P1-4：菜单按权限过滤（无权限映射的 path 恒显示；有映射而用户无权限则整组/项隐藏）
+  // P1-4：菜单按权限过滤（无权限映射的 path 恒显示；有映射而用户无权限则整组/项隐藏；
+  // 叶子级：children 逐项过滤，可见子项为 0 时隐藏整组）
   const items = useMemo<NavItem[]>(
     () =>
       navItems
+        .map((item) => {
+          if (item.children && item.children.length > 0) {
+            const visibleChildren = item.children.filter(
+              (child) =>
+                !child.path ||
+                !MENU_PERMISSIONS[child.path] ||
+                checkPermission(MENU_PERMISSIONS[child.path])
+            );
+            return visibleChildren.length > 0 ? { ...item, children: visibleChildren } : null;
+          }
+          return item;
+        })
+        .filter((item): item is NavItem => item !== null)
         .filter(
           (item) =>
             !item.path ||
