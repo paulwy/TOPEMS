@@ -2016,25 +2016,50 @@ pub async fn dashboard_summary_handler(
     ))
 }
 
-/// GET /tickets/dashboard/trend —— 趋势序列（待上游支持：由 analytics 聚合，先返回空数组）
+/// GET /tickets/dashboard/trend —— 趋势序列（待 analytics 聚合：P2-8 degraded 占位）
+///
+/// 诚实降级：data.items 为空数组（无虚构数据），同时显式返回
+/// `degraded: true` 与 `degraded_reason`，前端可据此展示「待 analytics 聚合」提示。
 pub async fn dashboard_trend_handler() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(json!([]), "趋势"))
+    Json(ApiResponse::success(
+        json!({
+            "items": [],
+            "degraded": true,
+            "degraded_reason": "待 analytics 聚合：趋势序列尚未接入，当前为空数据占位",
+        }),
+        "趋势（degraded：待 analytics 聚合）",
+    ))
 }
 
-/// GET /tickets/dashboard/sla-overview —— SLA 概览（待上游支持，先返回零值）
+/// GET /tickets/dashboard/sla-overview —— SLA 概览（待 analytics 聚合：P2-8 degraded 占位）
+///
+/// 诚实降级：各统计字段保持零值（不虚构 SLA 数据），新增可选 `degraded` /
+/// `degraded_reason` 字段向后兼容（前端忽略未知字段即可）。
 pub async fn dashboard_sla_overview_handler() -> Json<ApiResponse<serde_json::Value>> {
     Json(ApiResponse::success(
         json!({
             "total": 0, "on_time": 0, "breached": 0, "breach_rate": 0.0,
             "avg_resolution_minutes": 0, "avg_response_minutes": 0,
+            "degraded": true,
+            "degraded_reason": "待 analytics 聚合：SLA 统计尚未接入，当前为零值占位",
         }),
-        "SLA概览",
+        "SLA概览（degraded：待 analytics 聚合）",
     ))
 }
 
-/// GET /tickets/dashboard/assignee-load —— 处理人负载（待上游支持，先返回空数组）
+/// GET /tickets/dashboard/assignee-load —— 处理人负载（待 analytics 聚合：P2-8 degraded 占位）
+///
+/// 诚实降级：data.items 为空数组（无虚构负载数据），同时显式返回
+/// `degraded: true` 与 `degraded_reason`，前端可据此展示「待 analytics 聚合」提示。
 pub async fn dashboard_assignee_load_handler() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(json!([]), "处理人负载"))
+    Json(ApiResponse::success(
+        json!({
+            "items": [],
+            "degraded": true,
+            "degraded_reason": "待 analytics 聚合：处理人负载尚未接入，当前为空数据占位",
+        }),
+        "处理人负载（degraded：待 analytics 聚合）",
+    ))
 }
 
 /// GET /tickets/dashboard/my —— 我的工单概览（实时聚合 core_tickets）

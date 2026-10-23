@@ -415,7 +415,10 @@ pub async fn export_report_pdf(
 
     match row {
         Ok(Some(r)) => {
-            // Generate PDF placeholder (in real implementation, use a PDF library)
+            // P2-10 degraded：尚未接入 PDF 渲染库。
+            // 诚实降级——返回报告 JSON 数据作为「PDF 预览占位」，并显式标注
+            // degraded:true / format:"json_placeholder"，前端可据此展示
+            // 「PDF 预览（JSON 占位）」提示；不谎称已生成真实 PDF 文件。
             let report_data = serde_json::json!({
                 "report_no": r.get::<String, _>("report_no"),
                 "sample_no": r.get::<String, _>("sample_no"),
@@ -426,14 +429,16 @@ pub async fn export_report_pdf(
                 "conclusion": r.get::<Option<String>, _>("conclusion"),
             });
 
-            let pdf_url = format!("/reports/{}/pdf", id);
-
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "pdf_url": pdf_url,
+                    "format": "json_placeholder",
+                    "pdf_url": serde_json::Value::Null,
+                    "pdf_available": false,
+                    "degraded": true,
+                    "degraded_reason": "PDF 预览（JSON 占位）：尚未接入 PDF 渲染库，当前返回报告 JSON 数据，非真实 PDF 文件",
                     "report_data": report_data,
                 }),
-                "PDF 导出准备完成",
+                "PDF 预览（JSON 占位，degraded）",
             ))
         }
         Ok(None) => Json(ApiResponse::error(404, "报告不存在")),
