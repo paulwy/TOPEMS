@@ -172,6 +172,62 @@ pub async fn create_connection(
     }
 }
 
+/// 真实 HTTP 连通性探测结果
+#[derive(Debug, Clone)]
+pub(crate) struct ProbeResult {
+    pub success: bool,
+    pub response_time_ms: u64,
+    /// 收到 HTTP 响应时的状态码；连接失败/超时时为 None
+    pub http_status: Option<u16>,
+    pub error_message: Option<String>,
+}
+
+/// 真实 HTTP 连通性探测：对目标 URL 发起 GET 请求，带整体超时。
+/// 成功判定：HTTP 2xx/3xx；连接拒绝 / DNS 失败 / 超时均返回失败（success=false），
+/// 不再出现"仅校验 URL 前缀即报成功"的假探测。
+/// 注意：未做 SSRF 地址白名单/内网封锁（P2-2，需产品决策内网策略）。
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+pub(crate) async fn probe_http_url(api_url: &str, timeout_ms: u64) -> ProbeResult {
+    let start = std::time::Instant::now();
+    let client = match reqwest::Client::builder()
+        .timeout(std::time::Duration::from_millis(timeout_ms))
+        .build()
+    {
+        Ok(c) => c,
+        Err(e) => {
+            return ProbeResult {
+                success: false,
+                response_time_ms: start.elapsed().as_millis() as u64,
+                http_status: None,
+                error_message: Some(format!("HTTP client build failed: {}", e)),
+            };
+        }
+    };
+
+    match client.get(api_url).send().await {
+        Ok(resp) => {
+            let status = resp.status();
+            let success = status.is_success() || status.is_redirection();
+            ProbeResult {
+                success,
+                response_time_ms: start.elapsed().as_millis() as u64,
+                http_status: Some(status.as_u16()),
+                error_message: if success {
+                    None
+                } else {
+                    Some(format!("HTTP {}", status.as_u16()))
+                },
+            }
+        }
+        Err(e) => ProbeResult {
+            success: false,
+            response_time_ms: start.elapsed().as_millis() as u64,
+            http_status: None,
+            error_message: Some(e.to_string()),
+        },
+    }
+}
+
 #[allow(
     clippy::as_conversions,
     clippy::cast_possible_truncation,
@@ -196,39 +252,17 @@ async fn test_connection(
         ));
     }
 
-    // 真实 HTTP 探测（带超时）
-    let start = std::time::Instant::now();
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_millis(timeout_ms))
-        .build()
-        .unwrap();
-
-    let result = client.get(&api_url).send().await;
-    let elapsed = start.elapsed().as_millis() as u64;
-
-    match result {
-        Ok(resp) => {
-            let status = resp.status();
-            let success = status.is_success() || status.is_redirection();
-            Json(ApiResponse::success(
-                serde_json::json!({
-                    "success": success,
-                    "response_time_ms": elapsed,
-                    "http_status": status.as_u16(),
-                    "error_message": if success { None } else { Some(format!("HTTP {}", status.as_u16())) }
-                }),
-                "测试完成",
-            ))
-        }
-        Err(e) => Json(ApiResponse::success(
-            serde_json::json!({
-                "success": false,
-                "response_time_ms": elapsed,
-                "error_message": e.to_string()
-            }),
-            "测试完成",
-        )),
+    // 真实 HTTP 探测（带超时）：与 /erp/connections/test 复用同一实现
+    let probe = probe_http_url(&api_url, timeout_ms).await;
+    let mut body = serde_json::json!({
+        "success": probe.success,
+        "response_time_ms": probe.response_time_ms,
+        "error_message": probe.error_message,
+    });
+    if let Some(code) = probe.http_status {
+        body["http_status"] = serde_json::Value::from(code);
     }
+    Json(ApiResponse::success(body, "测试完成"))
 }
 
 async fn get_connection(

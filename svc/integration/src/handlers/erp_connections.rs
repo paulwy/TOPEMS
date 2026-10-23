@@ -233,7 +233,6 @@ pub async fn delete_connection(
     }
 }
 
-#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["integration:erp_connections:write"])),
@@ -247,20 +246,30 @@ pub async fn test_connection(
     State(_state): State<AppState>,
     Json(req): Json<TestConnectionRequest>,
 ) -> Json<ApiResponse<TestConnectionResponse>> {
-    // 最小可用：模拟连接测试，实际 HTTP 探测可后续扩展
-    let start = std::time::Instant::now();
-    let _timeout = req.timeout.unwrap_or(5000);
-    // 简单校验 URL 格式
-    let success = req.api_url.starts_with("http://") || req.api_url.starts_with("https://");
-    let elapsed = start.elapsed().as_millis() as u64;
-    let resp = TestConnectionResponse {
-        success,
-        response_time_ms: elapsed,
-        error_message: if success {
-            None
-        } else {
-            Some("URL 必须以 http:// 或 https:// 开头".to_string())
+    // URL 格式校验：非 http/https 直接判失败，不发起请求
+    if !req.api_url.starts_with("http://") && !req.api_url.starts_with("https://") {
+        return Json(ApiResponse::success(
+            TestConnectionResponse {
+                success: false,
+                response_time_ms: 0,
+                error_message: Some("URL 必须以 http:// 或 https:// 开头".to_string()),
+            },
+            "测试完成",
+        ));
+    }
+
+    // 真实 HTTP 探测（带超时）：复用 external_erp::probe_http_url，
+    // 与 /external-erp/connections/test 同一实现。超时 / 连接拒绝 / DNS 失败均返回
+    // success=false 并透传错误，不再仅校验 URL 前缀即报成功。
+    // 注：SSRF 地址白名单/内网封锁属 P2-2，待产品决策，本处暂不做。
+    let timeout_ms = req.timeout.unwrap_or(5000);
+    let probe = crate::external_erp::probe_http_url(&req.api_url, timeout_ms).await;
+    Json(ApiResponse::success(
+        TestConnectionResponse {
+            success: probe.success,
+            response_time_ms: probe.response_time_ms,
+            error_message: probe.error_message,
         },
-    };
-    Json(ApiResponse::success(resp, "测试完成"))
+        "测试完成",
+    ))
 }
