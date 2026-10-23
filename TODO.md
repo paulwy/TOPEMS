@@ -3572,3 +3572,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **P1-8 rd 写操作忽略字段**：CREATE 补 hourly_rate/cost_rate/budgeted_hours 3 列、UPDATE 补 4 列（含 actual_hours COALESCE）；前端"已保存"不再假象
 - [x] **wms 3 处 sqlx::query! 宏离线缓存手工补条目**（cycle_count:581/733、discrepancy:769，字面量改绑既有 $N 参数类型未变，从旧条目复制 introspection 元数据；整仓 sqlx prepare 会重生成，无需保留）
 - 状态：Phase D 收口全部完成待合批提交；Phase A/B/C/D 全部 commit 未 push（推送待用户确认）
+## 审计修复实施登记 Phase D 门禁遗留项（2026-10-24，已推送 41 commits 后继续，未提交待合批）
+- [x] **e2e.yml 后端启动补齐**：e2e-smoke/e2e-business 两 job 在 PG 就绪后补 setup-rust（cache-prefix=e2e）→ sqlx-cli install → sqlx migrate run → SQLX_OFFLINE cargo build topems-server → SERVER_PORT=8080 后台启动单体（30 SERVICE_URL 自指，复刻 run_monolith.sh 约定）→ GET :8080/api/server/health 健康轮询 360s 超时失败 dump 日志；首启超管依赖 unified-core 自举（ADMIN_INITIAL_PASSWORD 缺省 admin/admin123 与 e2e 用例一致）；注释留 TODO：各 svc 自有 migrations 子目录未重放
+- [x] **.gitleaks.toml 仓库化 + gitleaks 入 pre-commit**：新建 .gitleaks.toml（v8：extend default + 3 自定义规则 + allowlist .env*/vendor/docs/测试夹具/构建产物/lockfile + 开发默认口令与占位符正则）；本机 gitleaks 8.30.0（brew/GitHub 直连不通，ghfast.top 代理装 ~/.local/bin）；lefthook pre-commit 首命令 gitleaks protect --staged --redact，二进制缺失降级 SKIP+warn；detect 实跑 289→67 存量基线（docker-compose/scripts 开发默认库连接串，非真实密钥）、protect --staged 0 leaks
+- [x] **run-cargo-check.sh -D warnings 对齐**：export RUSTFLAGS="-D warnings"（与 CI ci.yml:313 同参）
+- [x] **vendor/rsa 死代码根因修复（配套闭环）**：-D warnings 实跑暴露 pkcs1v15_encrypt_unpad/decrypt_inner 死代码（Marvin PR #702 补丁后无调用者）→ 加 #[allow(dead_code)] + 注释（保留补丁 API 完整）；Cargo.toml 删 4 个指向已裁剪 tests/ 的悬空 [[test]] 条目；全量 `RUSTFLAGS="-D warnings" cargo check --workspace --all-targets` 复跑 **CHECK_EXIT=0、0 error**（29 svc + lib 全过）；本地 pre-push 与 CI 现同参同结果不再红
+- [x] **rustc-ice 核对**：rustc-ice-2026-10-23T15_40_55-60650.txt 为 0 字节空文件（rustc 1.98-nightly 崩溃瞬间残留，后续编译重试成功、推送钩子全绿）——环境噪声，记录不需修复；另有 10-22 旧实例同类残留
+- 状态：门禁遗留 4 项全部完成待合批提交；未 push（推送由用户确认后统一执行）
