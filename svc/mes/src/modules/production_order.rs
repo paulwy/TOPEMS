@@ -31,6 +31,19 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
+/// v1.85 内部调用放行：无认证（claims.sub 为空，如 mobile service client 直连）
+/// 的请求跳过权限检查，有 token 的请求仍走 check_permission（Web 端防线保留）。
+async fn check_perm_or_internal<T>(
+    db: &sqlx::PgPool,
+    claims: &Claims,
+    permission: &ModulePermission,
+) -> Result<(), axum::Json<ApiResponse<T>>> {
+    if claims.sub.is_empty() {
+        return Ok(());
+    }
+    check_permission(db, claims, permission).await
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -242,7 +255,7 @@ pub async fn list_production_orders(
     Query(query): Query<ListProductionOrdersQuery>,
 ) -> Json<ApiResponse<ListProductionOrdersResponse>> {
     if let Err(e) =
-        check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await
+        check_perm_or_internal(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await
     {
         return e;
     }
@@ -440,7 +453,7 @@ pub async fn create_production_order(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(
+    if let Err(e) = check_perm_or_internal(
         &state.pool,
         &claims,
         &ModulePermission::ProductionOrderWrite,
@@ -605,7 +618,7 @@ pub async fn create_order_from_erp(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateFromErpRequest>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(
+    if let Err(e) = check_perm_or_internal(
         &state.pool,
         &claims,
         &ModulePermission::ProductionOrderWrite,
@@ -745,7 +758,7 @@ pub async fn get_production_order(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
     if let Err(e) =
-        check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await
+        check_perm_or_internal(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await
     {
         return e;
     }
@@ -825,7 +838,7 @@ pub async fn update_production_order(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(
+    if let Err(e) = check_perm_or_internal(
         &state.pool,
         &claims,
         &ModulePermission::ProductionOrderWrite,
@@ -923,7 +936,7 @@ pub async fn delete_production_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(
+    if let Err(e) = check_perm_or_internal(
         &state.pool,
         &claims,
         &ModulePermission::ProductionOrderWrite,
@@ -976,7 +989,7 @@ pub async fn start_production_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(
+    if let Err(e) = check_perm_or_internal(
         &state.pool,
         &claims,
         &ModulePermission::ProductionOrderStart,
@@ -1065,7 +1078,7 @@ pub async fn complete_production_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(
+    if let Err(e) = check_perm_or_internal(
         &state.pool,
         &claims,
         &ModulePermission::ProductionOrderComplete,
@@ -1155,7 +1168,7 @@ pub async fn cancel_production_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(
+    if let Err(e) = check_perm_or_internal(
         &state.pool,
         &claims,
         &ModulePermission::ProductionOrderCancel,
@@ -1242,7 +1255,7 @@ pub async fn release_production_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(
+    if let Err(e) = check_perm_or_internal(
         &state.pool,
         &claims,
         &ModulePermission::ProductionOrderWrite,
@@ -1349,7 +1362,7 @@ pub async fn start_order_approval(
     Path(id): Path<Uuid>,
     Json(req): Json<ApprovalStartRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
+    if let Err(e) = check_perm_or_internal(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
     {
         return e;
     }
@@ -1401,7 +1414,7 @@ pub async fn approve_order(
     Path(id): Path<Uuid>,
     Json(req): Json<ApprovalDecisionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
+    if let Err(e) = check_perm_or_internal(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
     {
         return e;
     }
@@ -1447,7 +1460,7 @@ pub async fn reject_order(
     Path(id): Path<Uuid>,
     Json(req): Json<ApprovalDecisionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
+    if let Err(e) = check_perm_or_internal(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
     {
         return e;
     }
