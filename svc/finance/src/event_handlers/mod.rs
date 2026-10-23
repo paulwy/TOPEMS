@@ -167,9 +167,18 @@ impl FinanceEventHandlers {
             event.trace_id
         );
 
-        let payload: SalesOrderCreatedPayload = event.parse_payload().map_err(|e| {
-            TopemsError::ValidationFailed(format!("解析销售订单创建事件 payload 失败: {}", e))
-        })?;
+        // v1.85 闭环：payload 解析失败属不可恢复消息（重试无法修复），记录日志后跳过 ACK，
+        // 避免 UUID 解析失败等坏事件触发无限重试/ERROR 风暴（与 mobile/crm 消费端同构修复）。
+        let payload: SalesOrderCreatedPayload = match event.parse_payload() {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::error!(
+                    "[finance] 解析销售订单创建事件 payload 失败（不可恢复，跳过）: {}",
+                    e
+                );
+                return Ok(());
+            }
+        };
 
         tracing::info!(
             "[finance] 销售订单创建: {} ({})，客户: {:?}，金额: {:?}",

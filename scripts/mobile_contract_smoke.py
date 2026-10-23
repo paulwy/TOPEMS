@@ -23,6 +23,10 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 API_DIR = os.path.join(BASE, "apps", "mobile", "src", "api")
 # base 探测：8099（生产 monolith 入口）优先，本机 dev 态 8098（unified-core BFF）fallback
 def _probe_base() -> str:
+    # v1.85：允许 MOBILE_BASE_URL 显式指定目标（如本机 dev 态 8098），生产探测仍优先。
+    override = os.environ.get("MOBILE_BASE_URL")
+    if override:
+        return override.rstrip("/")
     for port in (8099, 8098):
         try:
             with urllib.request.urlopen(f"http://localhost:{port}/health", timeout=2) as r:

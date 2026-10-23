@@ -1362,7 +1362,8 @@ pub async fn start_order_approval(
     Path(id): Path<Uuid>,
     Json(req): Json<ApprovalStartRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_perm_or_internal(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
+    if let Err(e) =
+        check_perm_or_internal(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
     {
         return e;
     }
@@ -1414,7 +1415,8 @@ pub async fn approve_order(
     Path(id): Path<Uuid>,
     Json(req): Json<ApprovalDecisionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_perm_or_internal(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
+    if let Err(e) =
+        check_perm_or_internal(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
     {
         return e;
     }
@@ -1460,7 +1462,8 @@ pub async fn reject_order(
     Path(id): Path<Uuid>,
     Json(req): Json<ApprovalDecisionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if let Err(e) = check_perm_or_internal(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
+    if let Err(e) =
+        check_perm_or_internal(&state.pool, &claims, &ModulePermission::MesOrderApprove).await
     {
         return e;
     }

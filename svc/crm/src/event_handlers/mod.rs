@@ -742,10 +742,19 @@ impl CrmEventHandlers {
     /// 幂等按 order_no+tenant_id 去重；order_amount 取应付金额（payable_amount，含税口径），
     /// status 透传 erp 侧真实状态（draft/confirmed/...），tenant_id 优先事件载荷、回退连接上下文。
     async fn handle_sales_order_created(&self, event: Event) -> HandlerResult {
-        let payload: SalesOrderCreatedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| {
-                TopemsError::ValidationFailed(format!("解析 SalesOrderCreated payload 失败: {}", e))
-            })?;
+        // v1.85 闭环：payload 解析失败属不可恢复消息（重试无法修复），记录日志后跳过 ACK，
+        // 避免 UUID 解析失败等坏事件触发无限重试/ERROR 风暴（与 mobile/finance 消费端同构修复）。
+        let payload: SalesOrderCreatedPayload = match serde_json::from_value(event.payload.clone())
+        {
+            Ok(p) => p,
+            Err(e) => {
+                tracing::error!(
+                    "[crm] 解析 SalesOrderCreated payload 失败（不可恢复，跳过）: {}",
+                    e
+                );
+                return Ok(());
+            }
+        };
 
         // 幂等：同租户同单号已同步则跳过
         let order_no = payload.order_no.clone();
