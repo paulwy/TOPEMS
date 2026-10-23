@@ -149,12 +149,12 @@ cat <<'EOF'
   G. 质量链 qms↔lims↔ehs 事件联动（R2 ④ internal 前缀修复后重验）
      路径：svc/qms、svc/lims、svc/ehs 事件订阅链路
      期望：qms 检验事件 → lims 采样联动 → ehs 风险联动（internal 前缀路由正常）
-  H. WS MES 看板推送（独立 svc/mes 提供；BFF :8099 未接线）
-     端点：/ws/mes/dashboard —— 由独立 svc/mes 提供（svc/mes/src/main.rs:259 dashboard_websocket）；
-     模块化单体 :8099 经 U1-b1/U1-b2 移除 unified-core mes 投影后未接线（svc/server/src/main.rs:532 注释登记为
-     "应由 mes_real_module 内嵌 topems_mes::dashboard_ws"的后续项——受 Module 契约 Router<()> 与 State<AuthState>
-     extractor 类型冲突暂缓，观察项登记 TODO）。BFF 核心 WS 保留：/ws/core/notifications、/ws/core/im。
-     期望：独立 mes 服务建立 WS 连接 → 订阅 MES 看板频道 → 工单状态变更实时推送
+  H. WS MES 看板推送（BFF :8099 已接线；独立 svc/mes 亦提供）
+     端点：/ws/mes/dashboard —— BFF 8099 由 mes_real_module 内嵌 dashboard_ws 提供（v1.110 接线，
+     Router<AppState> 独立构造后 with_state 固化再 merge，规避 Module 契约 Router<()> E0308）；
+     独立 svc/mes（svc/mes/src/main.rs:259 dashboard_websocket）同源提供。认证：URL token 自验
+     （auth_middleware 按 is_websocket_path 豁免 /ws/*）。
+     期望：BFF 建立 WS 连接（握手 101）→ 订阅 MES 看板频道 → 工单状态变更实时推送
   （各专项端点详情见 docs/developer/backend/api-design.md 与对应服务源码；
     生产机执行后在本节下方手工补充实测记录）
 EOF

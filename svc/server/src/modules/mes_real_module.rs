@@ -141,6 +141,19 @@ impl MesRealModule {
         let protected_routes = modules::create_routes()
             .layer(axum::middleware::from_fn(require_module_access("mes")))
             .with_state(state.clone());
+
+        // v1.110 BFF WS 接线：/ws/mes/dashboard（对齐独立 svc/mes main.rs:260）。
+        // dashboard_websocket 需 State<AuthState>（AppState: FromRef<AuthState>），
+        // 以独立 Router<AppState> 构造后 with_state 固化，再 merge 进顶层 Router<()>
+        // ——规避 Module 契约 routes() -> Router<()> 的 E0308 限制。
+        // 认证由 URL token 自验；auth_middleware 按 is_websocket_path 豁免 /ws/*。
+        let ws_routes = axum::Router::new()
+            .route(
+                "/ws/mes/dashboard",
+                axum::routing::get(modules::dashboard_ws::dashboard_websocket),
+            )
+            .with_state(state.clone());
+
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
             // APS API 兼容层：/api/aps/* → 转发 mes（与独立部署 main.rs 对齐）
@@ -148,6 +161,7 @@ impl MesRealModule {
                 "/api/aps",
                 modules::aps_compat::create_routes().with_state(state),
             )
+            .merge(ws_routes)
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
                 topems_shared_auth::auth::auth_middleware,

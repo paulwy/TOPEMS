@@ -3446,6 +3446,14 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **迁移**：`20261023000005_analytics_datasets_tenant_rls.sql`（ADD COLUMN IF NOT EXISTS tenant_id + 索引 + ENABLE RLS + tenant_isolation_analytics_datasets FOR ALL 宽松策略；DO 块前置保护，prepare 库无表则跳过）
 - [x] **代码**：读路径 5 处改回 `bi.analytics_datasets`（list/count/get），写路径不变；checksums 已更新（7ac43411）
 - [x] **验证**：smoke **4150/4150 PASS, 0 FAIL**；登录态 POST datasets **201** + GET search **total=1 可见**（写读闭环）；探针已清理（bi 版 0 行）
+
+## v1.110 BFF WS 接线（/ws/mes/dashboard 由 mes_real_module 提供）（2026-10-23）
+- [x] **核销 v1.107 暂缓项**（server Module 契约 Router<()> 与 State<AuthState> extractor E0308 冲突）——**解法**：dashboard_websocket 以**独立 Router<AppState>**（AppState: FromRef<AuthState> 已具备）构造 + `.route("/ws/mes/dashboard")` 后 **with_state 固化 → Router<()>**，再 **merge** 进顶层 Router<()> ——规避契约限制，无需改 Module trait
+- [x] **认证语义对齐独立部署**：URL token 自验（dashboard_ws handler 内 verify_jwt_token）；auth_middleware 按 `is_websocket_path`（`/ws/*` 前缀）豁免——与 svc/mes main.rs:260 同源同语义
+- [x] **代码**：`svc/server/src/modules/mes_real_module.rs` 增加 ws_routes（独立 Router<AppState> + with_state + merge）；`smoke-prod.sh` 层2 H 指引由"未接线"更新为"BFF 8099 已接线"
+- [x] **验证**：WS 握手 **101**（curl Upgrade 头，无 token 亦 101=豁免生效）；WCS **4150/4150 0 FAIL**；smoke-prod **20/0 PASS**（无回归）
+- 活文档变更日志 v1.110 登记
+
 - 活文档变更日志 v1.109 登记
 
 
