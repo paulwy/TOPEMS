@@ -3439,6 +3439,16 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **修复**：`svc/qms/src/modules/quality_inspection.rs` submit_result 成功路径（status→pending_audit）补发布块——对齐 mes ProductionOrderCreated 样板：`state.event_publisher` → `publish_event(EventType::QmsInspectionCompleted, QmsInspectionCompletedPayload)`（字段对齐消费端），失败入 `commit_retry::push_retry_typed("qms", …)`
 - [x] **编译**：`cargo check -p topems-qms` 通过（BigDecimal→f64 用 to_string+parse，无 to_f64 API）
 - [x] **实测边界**：qms 建单 200 落库（qa_quality_inspections tenant=0001）；submit 需租户 claims 账号（本机种子均为 superuser 无租户，超管 submit 404=租户隔离正确，v1.93 口径）；测试单已清理
+- [ ] **（v1.104 修订）**：上条「404=隔离正确」实证为 bug——超管 token 实带 tenant_id=0001（/users/me None 为接口 mask），短路 None+精确匹配致 404——已修复并全链实测闭环，见 v1.104
+
+## v1.104 qms 超管租户短路修复 + 层2 G 全链实测（2026-10-23）
+- [x] **根因实证（推翻 v1.103「404=隔离正确」）**：JWT 解包 admin token → `tenant_id=0001`（超管也带租户）；qms quality_inspection.rs 14 处写路径 handler（update/delete/assign/submit/audit/rework/approve/reject）`is_superuser→None` + SQL 精确 `tenant_id=$N` → 超管操作自己租户记录 no rows 404（GET 用 `($2 IS NULL OR tenant_id=$2)` 兼容式故 200）
+- [x] **修复**：14 处 WHERE 过滤统一改 `($N::uuid IS NULL OR tenant_id = $N)`（超管 None=不过滤=特权语义；非超管精确过滤不变；bind 序列不变）
+- [x] **BFF 正确重启后验证**（注意：首轮 kill 旧 PID 静默失败致验证跑旧代码；须 lsof 确认端口归属新 PID）：层2 G 全链 create→assign(in_progress)→submit(pending_audit)→audit(completed) **全通**；QmsInspectionCompleted 事件发布闭环（event_id 核验）
+- [x] **回归**：cargo check -p topems-qms + qms lib 262 passed
+- [x] **清理**：qa_quality_inspections 2 单、qa_inspection_audits 3 行、QmsInspectionCompleted 事件 1 条
+- [x] **观察项**：qms→lims→ehs 联动订阅器（QmsToLimsSyncTriggered/LimsToEhsTriggered）未见新条目——事件已发布，联动消费行为待生产数据验证
+- 活文档变更日志 v1.104 登记
 - 活文档变更日志 v1.103 登记
 
 
