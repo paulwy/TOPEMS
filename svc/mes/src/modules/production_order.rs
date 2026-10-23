@@ -859,7 +859,7 @@ pub async fn update_production_order(
             workshop_id = COALESCE($7, workshop_id),
             notes = COALESCE($8, notes),
             updated_at = $9
-        WHERE id = $1 AND status = 'pending'
+        WHERE id = $1 AND status = 'pending' AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -949,7 +949,7 @@ pub async fn delete_production_order(
     let result = sqlx::query!(
         r#"
         UPDATE production_orders SET deleted_at = NOW()
-        WHERE id = $1 AND status IN ('pending', 'cancelled')
+        WHERE id = $1 AND status IN ('pending', 'cancelled') AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         "#,
         id,
     )
@@ -1007,7 +1007,7 @@ pub async fn start_production_order(
             status = 'in_progress',
             actual_start_date = $2,
             updated_at = $3
-        WHERE id = $1 AND status = 'released'
+        WHERE id = $1 AND status = 'released' AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1097,7 +1097,7 @@ pub async fn complete_production_order(
             completed_quantity = quantity,
             actual_end_date = $2,
             updated_at = $3
-        WHERE id = $1 AND status = 'in_progress'
+        WHERE id = $1 AND status = 'in_progress' AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1185,7 +1185,7 @@ pub async fn cancel_production_order(
         UPDATE production_orders SET
             status = 'cancelled',
             updated_at = $2
-        WHERE id = $1 AND status IN ('pending', 'released', 'paused')
+        WHERE id = $1 AND status IN ('pending', 'released', 'paused') AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -1272,7 +1272,7 @@ pub async fn release_production_order(
         UPDATE production_orders SET
             status = 'released',
             updated_at = $2
-        WHERE id = $1 AND status = 'pending'
+        WHERE id = $1 AND status = 'pending' AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,

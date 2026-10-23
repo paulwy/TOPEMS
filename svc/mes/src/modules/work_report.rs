@@ -802,7 +802,7 @@ pub async fn update_work_report(
             remark = COALESCE($13, remark),
             status = COALESCE($14, status),
             updated_at = NOW()
-        WHERE id = $15
+        WHERE id = $15 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -898,7 +898,7 @@ pub async fn delete_work_report(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_reports SET deleted_at = NOW() WHERE id = $1
+        UPDATE work_reports SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         "#,
         uuid,
     )
@@ -955,7 +955,7 @@ pub async fn approve_work_report(
             approved_by = $1::uuid,
             approved_at = NOW(),
             updated_at = NOW()
-        WHERE id = $2
+        WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -1049,7 +1049,7 @@ pub async fn reject_work_report(
             approved_by = $1::uuid,
             approval_remark = $2,
             updated_at = NOW()
-        WHERE id = $3
+        WHERE id = $3 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,

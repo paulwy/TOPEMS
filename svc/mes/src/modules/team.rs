@@ -466,7 +466,7 @@ pub async fn create_team(
             r#"
             UPDATE teams SET member_count = (
                 SELECT COUNT(*) FROM team_members WHERE team_id = $1
-            ), updated_at = $2 WHERE id = $1
+            ), updated_at = $2 WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
             "#,
             result.id,
             now,
@@ -524,7 +524,7 @@ pub async fn update_team(
             status = COALESCE($7, status),
             description = COALESCE($8, description),
             updated_at = $9
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
@@ -588,7 +588,7 @@ pub async fn delete_team(
     let result = sqlx::query!(
         r#"
         UPDATE teams SET deleted_at = NOW()
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         "#,
         id,
     )
@@ -723,7 +723,7 @@ pub async fn add_team_member(
         r#"
         UPDATE teams SET member_count = (
             SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND status = 'active'
-        ), updated_at = $2 WHERE id = $1
+        ), updated_at = $2 WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         "#,
         id,
         Utc::now(),
@@ -794,7 +794,7 @@ pub async fn remove_team_member(
             r#"
             UPDATE teams SET member_count = (
                 SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND status = 'active'
-            ), updated_at = $2 WHERE id = $1
+            ), updated_at = $2 WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
             "#,
             id,
             Utc::now(),

@@ -556,7 +556,7 @@ pub async fn update_process_flow(
             unit = COALESCE($7, unit),
             status = COALESCE($8, status),
             updated_at = NOW()
-        WHERE id = $9
+        WHERE id = $9 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING id, code, name, description, version, status,
             route_id, production_line, capacity, unit,
             created_at, updated_at
@@ -623,7 +623,7 @@ pub async fn delete_process_flow(
 
     let result = sqlx::query!(
         r#"
-        UPDATE process_flows SET deleted_at = NOW() WHERE id = $1
+        UPDATE process_flows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         "#,
         uuid,
     )

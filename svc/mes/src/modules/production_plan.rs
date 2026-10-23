@@ -451,7 +451,7 @@ pub async fn submit_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 RETURNING *",
+        "UPDATE production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING *",
     )
     .bind(now)
     .bind(id)
@@ -510,7 +510,7 @@ pub async fn approve_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 RETURNING *",
+        "UPDATE production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING *",
     )
     .bind(now)
     .bind(id)
@@ -569,7 +569,7 @@ pub async fn reject_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 RETURNING *",
+        "UPDATE production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING *",
     )
     .bind(now)
     .bind(id)

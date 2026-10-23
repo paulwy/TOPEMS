@@ -770,7 +770,7 @@ pub async fn update_oee_record(
             operator = COALESCE($14, operator),
             notes = COALESCE($15, notes),
             updated_at = $16
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, equipment_id, record_date,
             planned_production_time, actual_run_time, downtime,
@@ -869,7 +869,7 @@ pub async fn delete_oee_record(
     }
 
     let result = sqlx::query!(
-        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1"#,
+        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')"#,
         id,
     )
     .execute(&state.pool)

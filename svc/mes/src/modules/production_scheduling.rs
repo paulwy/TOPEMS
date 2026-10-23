@@ -676,7 +676,7 @@ pub async fn update_production_schedule(
             status = COALESCE($9, status),
             notes = COALESCE($10, notes),
             updated_at = $11
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, schedule_no, order_id, order_no,
             product_id, product_name, product_code,
@@ -774,7 +774,7 @@ pub async fn delete_production_schedule(
     let result = sqlx::query!(
         r#"
         UPDATE production_schedules SET deleted_at = NOW()
-        WHERE id = $1 AND status IN ('pending', 'cancelled')
+        WHERE id = $1 AND status IN ('pending', 'cancelled') AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         "#,
         id,
     )
@@ -835,7 +835,7 @@ pub async fn adjust_schedule(
                 work_station_id = COALESCE($2, work_station_id),
                 planned_start_time = COALESCE($3, planned_start_time),
                 updated_at = $4
-            WHERE id = $1 AND status IN ('pending', 'in_progress')
+            WHERE id = $1 AND status IN ('pending', 'in_progress') AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
             "#,
             schedule_id,
             req.new_work_station_id,

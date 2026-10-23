@@ -485,7 +485,7 @@ pub async fn update_work_station(
             process_id = COALESCE($8, process_id),
             description = COALESCE($9, description),
             updated_at = $10
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
@@ -536,7 +536,7 @@ pub async fn delete_work_station(
     let result = sqlx::query!(
         r#"
         UPDATE work_stations SET deleted_at = NOW()
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         "#,
         id,
     )
@@ -587,7 +587,7 @@ pub async fn activate_work_station(
         UPDATE work_stations SET
             status = 'active',
             updated_at = $2
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
@@ -645,7 +645,7 @@ pub async fn deactivate_work_station(
         UPDATE work_stations SET
             status = 'inactive',
             updated_at = $2
-        WHERE id = $1 AND status = 'active'
+        WHERE id = $1 AND status = 'active' AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,

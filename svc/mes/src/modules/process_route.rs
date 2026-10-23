@@ -536,7 +536,7 @@ pub async fn update_process_route(
             description = COALESCE($2, description),
             status = COALESCE($3, status),
             updated_at = NOW()
-        WHERE id = $4
+        WHERE id = $4 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING id, route_code AS code, route_name AS name, description, status,
             created_at, updated_at
         "#,
@@ -615,7 +615,7 @@ pub async fn delete_process_route(
 
     let result = sqlx::query!(
         r#"
-        UPDATE process_routes SET deleted_at = NOW() WHERE id = $1
+        UPDATE process_routes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         "#,
         uuid,
     )
@@ -879,7 +879,7 @@ pub async fn update_route_step(
         SET 
             sequence = COALESCE($1, sequence),
             estimated_time_minutes = COALESCE($2, estimated_time_minutes)
-        WHERE id = $3
+        WHERE id = $3 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING id, route_id, process_id, sequence,
             estimated_time_minutes,
             NULL::uuid AS work_station_id, NULL::text AS description, created_at
@@ -1027,7 +1027,7 @@ pub async fn reorder_route_steps(
             r#"
             UPDATE process_route_steps
             SET sequence = $1
-            WHERE id = $2 AND route_id = $3
+            WHERE id = $2 AND route_id = $3 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
             "#,
             (idx + 1) as i32,
             step_uuid,

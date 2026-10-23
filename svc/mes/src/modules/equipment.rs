@@ -504,7 +504,7 @@ pub async fn update_equipment(
             next_maintenance_date = COALESCE($11, next_maintenance_date),
             description = COALESCE($12, description),
             updated_at = $13
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -571,7 +571,7 @@ pub async fn delete_equipment(
     let result = sqlx::query!(
         r#"
         UPDATE equipment SET deleted_at = NOW()
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         "#,
         id,
     )
@@ -628,7 +628,7 @@ pub async fn maintenance_equipment(
             last_maintenance_date = $2,
             next_maintenance_date = $3,
             updated_at = $4
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -1016,7 +1016,7 @@ pub async fn update_maintenance_status(
             status = $2,
             result = COALESCE($3, result),
             updated_at = $4
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING 
             id, equipment_id, maintenance_type, description, maintainer,
             start_time, end_time, cost, result, status, remarks, created_at, updated_at

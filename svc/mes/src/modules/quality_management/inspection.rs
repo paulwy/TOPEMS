@@ -522,7 +522,7 @@ pub async fn update_inspection(
             result = COALESCE($6, result),
             memo = COALESCE($7, memo),
             updated_at = NOW()
-        WHERE id = $8
+        WHERE id = $8 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING
             id, inspection_no, order_id, order_number,
             product_code, product_name, process_id, process_name,
@@ -597,7 +597,7 @@ pub async fn delete_inspection(
 
     let result = sqlx::query!(
         r#"
-        UPDATE quality_inspections SET deleted_at = NOW() WHERE id = $1
+        UPDATE quality_inspections SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         "#,
         uuid,
     )

@@ -606,7 +606,7 @@ pub async fn update_standard(
             effective_date = COALESCE($8, effective_date),
             description = COALESCE($9, description),
             updated_at = NOW()
-        WHERE id = $10
+        WHERE id = $10 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         RETURNING
             id, code, name, product_code, product_name,
             inspection_type, status, version,
@@ -783,7 +783,7 @@ pub async fn delete_standard(
 
     let result = sqlx::query!(
         r#"
-        UPDATE quality_standards SET deleted_at = NOW() WHERE id = $1
+        UPDATE quality_standards SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
         "#,
         uuid,
     )
