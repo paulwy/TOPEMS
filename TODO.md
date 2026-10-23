@@ -3363,6 +3363,6 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.84（2026-10-23）**：frontend-test 核销（133/3042 全 PASS）；frontend-coverage 复现 4 失败（route-nav erp-sales-orders 单复数不一致 + 重复 path、TopBar i18n 键、UserManagementPage breadcrumbs）登记修复批次；code-quality 半核销（naming PASS + api_dup 性能瓶颈）。CI 11 FAIL 剩：frontend-coverage 4 失败修复 + code-quality api_dup。
 
 > **系统完善 v1.85（2026-10-23）**：frontend-coverage 4 失败全修（erp sales-orders 双 route 收敛 + TopBar i18n 键/测试 mock + UserManagementPage breadcrumbs 断言）→ coverage exit 0。**CI 11 FAIL 累计 11/11 核销**；剩 code-quality api_dup 性能瓶颈（17+ 分钟，待脚本优化）。
-- [ ] **mobile production 6 端点 500 修复**（v1.85 终验发现，**执行中**）：根因 mobile MesApi 契约 `/production/orders` vs MES 权威 `/orders` 路径不一致 → 方案 A：MES `production_order.rs` 补别名路由 `.route("/production/orders", get(list_production_orders))` 已改；topems-server 编译中 → 重启 8098 → mobile 契约复跑 114/114
+- [x] **mobile production 6 端点 500 修复**（v1.85 终验发现）：根因 mobile MesApi 契约 `/production/orders` vs MES 权威 `/orders` 路径不一致 → **方案 A 已落地**：MES `production_order.rs` 补别名路由 `.route("/production/orders", get(list_production_orders))`（`2bf2d5f79c`）；**本地复验**：重建 release 单体重启后 `mobile_contract_smoke.py` 全量 **114/114 PASS**、production.ts **6/6 PASS**；生产环境需按 P-1~P-8 部署新二进制后复验关闭
 - [ ] **iam.core_roles RLS 策略补齐**（v1.85 终验发现）：iam schema 空壳（iam 空壳表统一待排期），verify-rls 报关键表缺
 - [ ] **mobile SalesOrderCreated 事件 UUID 解析修复**（v1.85 终验发现）：payload id 字符串非 UUID（invalid character: found s at 0），事件处理失败+重试
