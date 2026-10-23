@@ -880,23 +880,66 @@ async fn reports_center_stats(
         .collect()
     };
 
-    // Role distribution (static placeholder split; 普通用户 uses the real user count,
-    // no more total_users.max(80) fabricated floor).
-    let role_distribution = vec![
-        serde_json::json!({ "name": "系统管理员", "value": 3i64 }),
-        serde_json::json!({ "name": "部门经理",   "value": 12i64 }),
-        serde_json::json!({ "name": "普通用户",   "value": total_users }),
-        serde_json::json!({ "name": "访客用户",   "value": 8i64 }),
-    ];
+    // Role distribution: 真实聚合（public.core_users 无 role 列，角色经
+    // core_user_roles ↔ core_roles 关联）。租户谓词与上方总量查询一致。
+    // 旧版写死 3/12/8（系统管理员/部门经理/访客）占位已下线：查询失败回落空数组，
+    // 绝不保留假数字。
+    let role_distribution: Vec<serde_json::Value> = {
+        use sqlx::Row as _;
+        sqlx::query(
+            r#"
+            SELECT r.name AS role_name, COUNT(u.id) AS user_count
+            FROM core_roles r
+            LEFT JOIN core_user_roles ur ON ur.role_id = r.id
+            LEFT JOIN core_users u ON u.id = ur.user_id AND u.deleted_at IS NULL
+            WHERE r.deleted_at IS NULL
+              AND (r.tenant_id = current_setting('app.tenant_id', true)::uuid
+                   OR current_setting('app.tenant_id', true) = '')
+            GROUP BY r.name
+            ORDER BY user_count DESC, r.name
+            LIMIT 10
+            "#,
+        )
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .map(|row| {
+            let name: String = row.try_get("role_name").unwrap_or_default();
+            let value: i64 = row.try_get("user_count").unwrap_or_default();
+            serde_json::json!({ "name": name, "value": value })
+        })
+        .collect()
+    };
 
-    // Activity type breakdown
-    let activity_types = vec![
-        serde_json::json!({ "name": "登录",     "count": 340i64 + recent_activities }),
-        serde_json::json!({ "name": "数据查询", "count": 180i64 }),
-        serde_json::json!({ "name": "报表导出", "count": 65i64 }),
-        serde_json::json!({ "name": "权限变更", "count": 22i64 }),
-        serde_json::json!({ "name": "系统配置", "count": 14i64 }),
-    ];
+    // Activity type breakdown: 真实聚合（public.audit_logs.action，近 30 天 TOP 10）。
+    // 旧版写死 180/65/22/14（数据查询/报表导出/权限变更/系统配置）占位已下线：
+    // 查询失败回落空数组，绝不回退假分类数字。
+    let activity_types: Vec<serde_json::Value> = {
+        use sqlx::Row as _;
+        sqlx::query(
+            r#"
+            SELECT action AS activity, COUNT(*) AS cnt
+            FROM public.audit_logs
+            WHERE created_at >= NOW() - INTERVAL '30 days'
+              AND (tenant_id = current_setting('app.tenant_id', true)::uuid
+                   OR current_setting('app.tenant_id', true) = '')
+            GROUP BY action
+            ORDER BY cnt DESC, action
+            LIMIT 10
+            "#,
+        )
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .map(|row| {
+            let name: String = row.try_get("activity").unwrap_or_default();
+            let count: i64 = row.try_get("cnt").unwrap_or_default();
+            serde_json::json!({ "name": name, "count": count })
+        })
+        .collect()
+    };
 
     let stats = serde_json::json!({
         "dashboard": {
