@@ -109,8 +109,9 @@ pub fn create_routes(
             "/api/sse/session/{session_id}",
             post(sse::sse_session_handler),
         )
-        // V436: Business Tools 端点 - 统一业务工具API接口
-        .merge(business_tools::business_tools_routes())
+        // [2026-10-24] V436 Business Tools（含 /business-tools/permissions/* 写路由）已从 public_routes
+        // 移至 core_protected_routes（auth_middleware 层内）：standalone 下此前无 auth 层裸奔；
+        // 嵌入模式此前因 public_routes 不入 base_router 而整体丢弃。两形态现均「挂载 + auth」对齐。
         // V440: OpenAPI 文档端点 - 提供 API 文档 JSON 和交互式查看器
         .merge(openapi::openapi_routes());
     // V68.1 A2.2: 插件 proxy 路由（原 handlers::plugin_proxy）暂时下线，后续迁移到 plugin-registry
@@ -198,6 +199,9 @@ pub fn create_routes(
         .merge(automation::automation_routes(state))
         // V68.1 A2.4.1: login_log 路由已合并到 audit::create_routes（统一 require_permission 层）
         .merge(modules::audit::create_routes(state.clone()))
+        // [2026-10-24] V436 Business Tools 端点（/business-tools + permissions/audit 写路由）：
+        // 由 public_routes（无 auth）迁入 auth 层保护集；嵌入模式随之挂载（此前整体丢弃）。
+        .merge(business_tools::business_tools_routes())
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,

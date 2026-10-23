@@ -122,7 +122,8 @@ impl Module for PmRealModule {
     }
 
     fn group(&self) -> ModuleGroup {
-        ModuleGroup::Wms
+        // [2026-10-24 P2-5] 设计文档 §2 erp 组成员（erp/scm/srm/pm/pdm），此前误归 Wms
+        ModuleGroup::Erp
     }
 
     fn routes(&self, _state: ModuleContext) -> Router {

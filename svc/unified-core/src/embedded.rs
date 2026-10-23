@@ -361,10 +361,53 @@ async fn spawn_background_tasks(state: &AppState, pool: sqlx::PgPool) {
 }
 
 /// 初始化字段加密服务
+///
+/// [2026-10-24] 与 standalone `main.rs::init_field_encryption` 对齐：嵌入（monolith）模式
+/// 同样按环境变量初始化 AES-256-GCM 字段加密，避免 settings 模块敏感字段
+/// （SMTP 密码 / API key）在嵌入形态下明文落库。
 fn init_field_encryption(
 ) -> Option<std::sync::Arc<topems_shared_auth::security::FieldEncryptionService>> {
-    // 简化：跳过字段加密初始化
-    None
+    use topems_shared_auth::security::KeyManager;
+
+    let raw_key = ["TOPEMS_FIELD_ENCRYPTION_KEY", "SETTINGS_ENCRYPTION_KEY", "ENCRYPTION_KEY"]
+        .iter()
+        .map(|name| std::env::var(name).ok())
+        .find_map(|v| v.filter(|s| !s.is_empty()));
+
+    let raw_key = match raw_key {
+        Some(k) => k,
+        None => {
+            tracing::warn!(
+                "未配置字段加密密钥（TOPEMS_FIELD_ENCRYPTION_KEY / SETTINGS_ENCRYPTION_KEY / ENCRYPTION_KEY），settings 模块敏感字段将以明文存储"
+            );
+            return None;
+        }
+    };
+
+    let key_b64 = if let Some(stripped) = raw_key.strip_prefix("base64:") {
+        stripped.to_string()
+    } else {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(raw_key.as_bytes());
+        base64::Engine::encode(
+            &base64::engine::general_purpose::STANDARD,
+            hasher.finalize(),
+        )
+    };
+
+    match KeyManager::from_base64_key(&key_b64) {
+        Ok(km) => {
+            tracing::info!("🔐 字段加密服务已启用（AES-256-GCM），settings 模块敏感字段将加密存储");
+            Some(std::sync::Arc::new(
+                topems_shared_auth::security::FieldEncryptionService::new(km),
+            ))
+        }
+        Err(e) => {
+            tracing::warn!("字段加密密钥无效，敏感字段将以明文存储: {}", e);
+            None
+        }
+    }
 }
 
 // ============================================================================

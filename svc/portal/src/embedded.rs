@@ -117,7 +117,12 @@ pub async fn build_router(
 
     let cors = create_cors_layer();
 
-    let protected_routes = Router::new()
+    // ===== 个人端点（2026-10-24 P2-4 修正）：todos / notifications / settings / navigation /
+    // dashboard / announcements(读) / search 等个人数据，任意已认证用户可访问自身数据。
+    // 此前整组被 require_permission("portal:admin") 门控，而该码未绑定任何角色 → REST 全员
+    // 403 实际休眠（前端仅走 GraphQL）。现个人端点仅保留 auth 层；管理类写端点见下方
+    // admin_routes（portal:admin 字典 seed 见迁移 20261020000024，角色绑定按 P0-4 约定留待统一授权）。
+    let personal_routes = Router::new()
         .route("/services", get(modules::services::list_services))
         .route("/todos", get(modules::todos::get_todos))
         .route("/todos", post(modules::todos::add_todo))
@@ -183,7 +188,12 @@ pub async fn build_router(
         .route(
             "/announcements/{id}",
             get(modules::announcements::get_announcement),
-        )
+        );
+
+    // ===== 管理类写端点（portal:admin）：公告管理 + 帮助中心 FAQ/Guide 管理。
+    // portal:admin 已由迁移 20261020000024 补入权限字典；角色绑定属授权变更，按 P0-4
+    // 非破坏约定不擅绑（未绑定时管理写端点对全员 403，与修复前行为一致，不放宽）。
+    let admin_routes = Router::new()
         .route(
             "/announcements",
             post(modules::announcements::create_announcement),
@@ -199,11 +209,12 @@ pub async fn build_router(
         .route(
             "/announcements/{id}/pin",
             post(modules::announcements::toggle_announcement_pin),
-        )
-        .route(
-            "/announcements/pinned",
-            get(modules::announcements::get_pinned_announcements),
-        )
+        );
+
+    let personal_routes = personal_routes.route(
+        "/announcements/pinned",
+        get(modules::announcements::get_pinned_announcements),
+    )
         .route("/settings", get(modules::settings::get_user_settings))
         .route("/settings", put(modules::settings::update_user_settings))
         .route(
@@ -280,9 +291,10 @@ pub async fn build_router(
             "/help/guides/categories",
             get(modules::help::guide::get_guide_categories),
         )
-        .route("/help/guides/{id}", get(modules::help::guide::get_guide))
-        // Help 管理操作（写入操作需要认证；当前 Portal BFF 无细粒度 require_permission，
-        // 后续可基于 Portal 权限体系补充 help:write 守卫）
+        .route("/help/guides/{id}", get(modules::help::guide::get_guide));
+
+    let admin_routes = admin_routes
+        // Help 管理操作：写操作需 portal:admin（2026-10-24 由注释占位升级为实际权限守卫）
         .route("/help/faqs", post(modules::help::faq::create_faq))
         .route(
             "/help/faqs/{id}",
@@ -308,6 +320,22 @@ pub async fn build_router(
             app_state.auth_state.clone(),
             auth_middleware,
         ));
+
+    let personal_routes = personal_routes
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.pool.clone(),
+            rls_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ));
+
+    let protected_routes = personal_routes.merge(admin_routes);
 
     let rate_limit_config = RateLimitConfig::new(200, 60)
         .with_by_user_id(false)

@@ -296,7 +296,8 @@ impl Module for AiRealModule {
     }
 
     fn group(&self) -> ModuleGroup {
-        ModuleGroup::Core
+        // [2026-10-24 P2-5] 与设计文档 §2 / module.rs 分组对齐：ai 属 Ai 组（此前误归 Core）
+        ModuleGroup::Ai
     }
 
     fn routes(&self, _state: ModuleContext) -> Router {

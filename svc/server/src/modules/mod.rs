@@ -8,7 +8,8 @@
 //! 真实服务接入模板：见 `real_service_adapter.rs` 与两个真实模块实现。
 
 // [V2026.08 已合并] aps_real_module 已移除（aps 合并至 mes，由 module-mes 承载）
-#[cfg(feature = "module-advanced")]
+// [2026-10-24] 门控对齐：模块文件内为 #![cfg(feature = "module-ai")]，main.rs 组装亦按 module-ai 门控
+#[cfg(feature = "module-ai")]
 pub mod ai_real_module;
 pub mod analytics_real_module;
 #[cfg(feature = "module-communication")]
