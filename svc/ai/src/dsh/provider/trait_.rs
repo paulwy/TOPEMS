@@ -210,6 +210,12 @@ pub struct LlmResponse {
     /// 调用耗时（毫秒）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub latency_ms: Option<u64>,
+    /// 是否降级响应（P2：Failover 自动降级到 Mock 时显式标记，不静默返回 canned 文本）
+    #[serde(default)]
+    pub degraded: bool,
+    /// 降级原因说明（如 primary 不可用后自动切到 mock 备用）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub degraded_reason: Option<String>,
 }
 
 /// 流式响应 chunk

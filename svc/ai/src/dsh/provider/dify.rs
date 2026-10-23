@@ -185,6 +185,8 @@ impl LlmProvider for DifyProvider {
             completion_tokens: None,
             total_tokens: None,
             latency_ms: None,
+            degraded: false,
+            degraded_reason: None,
         })
     }
 

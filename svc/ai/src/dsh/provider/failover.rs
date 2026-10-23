@@ -53,7 +53,11 @@ impl FailoverProvider {
     }
 }
 
-/// 调用主 Provider，失败时按降级规则切换到备用
+/// 调用主 Provider，失败时按降级规则切换到备用。
+///
+/// P2 显式标记：当备用 Provider 为 Mock 时（自动降级返回 canned 文本），
+/// 响应 meta 必须带 `degraded=true` + `degraded_reason`，不静默返回 mock 内容。
+/// （显式配置 Mock 为主 Provider 的场景不经过本路径，不受影响。）
 async fn ask_with_failover(
     primary: &Arc<dyn LlmProvider>,
     backup: &Arc<dyn LlmProvider>,
@@ -69,7 +73,22 @@ async fn ask_with_failover(
                     e,
                     backup.provider_type()
                 );
-                backup.ask(request).await
+                let mut resp = backup.ask(request).await?;
+                // 自动降级到 Mock → 显式标记，避免调用方误以为是真实模型输出
+                if backup.provider_type() == ProviderType::Mock {
+                    resp.degraded = true;
+                    resp.degraded_reason = Some(format!(
+                        "primary provider {:?} unavailable ({}), auto-fell-back to mock provider",
+                        primary.provider_type(),
+                        e
+                    ));
+                    tracing::warn!(
+                        "Provider failover: degraded=true, response is canned mock text (primary {:?} failed: {})",
+                        primary.provider_type(),
+                        e
+                    );
+                }
+                Ok(resp)
             } else {
                 Err(e)
             }
@@ -106,6 +125,13 @@ impl LlmProvider for FailoverProvider {
                         e,
                         self.backup.provider_type()
                     );
+                    if self.backup.provider_type() == ProviderType::Mock {
+                        tracing::warn!(
+                            "Provider failover (stream): degraded=true, stream is canned mock text (primary {:?} failed: {})",
+                            self.primary.provider_type(),
+                            e
+                        );
+                    }
                     self.backup.ask_stream(request).await
                 } else {
                     Err(e)
@@ -269,6 +295,35 @@ mod tests {
         let fo = FailoverProvider::new(primary, backup);
         let resp = fo.ask(LlmRequest::simple("hi")).await.unwrap();
         assert_eq!(resp.content, "backup-ok");
+    }
+
+    #[tokio::test]
+    async fn test_failover_to_mock_marks_degraded() {
+        // P2：自动降级到 Mock 时响应必须带 degraded 标记，不静默返回 canned 文本
+        let primary: Arc<dyn LlmProvider> = Arc::new(FailingProvider::new(
+            LlmProviderError::Network("boom".into()),
+        ));
+        let backup = mock("mock-canned");
+        let fo = FailoverProvider::new(primary, backup);
+        let resp = fo.ask(LlmRequest::simple("hi")).await.unwrap();
+        assert_eq!(resp.content, "mock-canned");
+        assert!(resp.degraded, "降级到 mock 必须标记 degraded=true");
+        assert!(
+            resp.degraded_reason.as_ref().unwrap().contains("mock"),
+            "degraded_reason 应说明 mock 降级: {:?}",
+            resp.degraded_reason
+        );
+    }
+
+    #[tokio::test]
+    async fn test_no_failover_means_not_degraded() {
+        // 主 Provider 正常时不打 degraded 标记
+        let primary = mock("primary-ok");
+        let backup = mock("backup");
+        let fo = FailoverProvider::new(primary, backup);
+        let resp = fo.ask(LlmRequest::simple("hi")).await.unwrap();
+        assert!(!resp.degraded);
+        assert!(resp.degraded_reason.is_none());
     }
 
     #[tokio::test]

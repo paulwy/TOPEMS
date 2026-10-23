@@ -227,6 +227,8 @@ impl LlmProvider for DeepSeekProvider {
             completion_tokens,
             total_tokens,
             latency_ms: Some(latency_ms),
+            degraded: false,
+            degraded_reason: None,
         })
     }
 

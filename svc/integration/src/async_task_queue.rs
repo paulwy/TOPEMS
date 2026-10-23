@@ -1,3 +1,8 @@
+//! 【已废弃 / 死代码登记 2026-10 P2】本模块无写入方、无消费者、无路由挂载，
+//! 全仓 grep 确认零调用，已从 lib.rs 模块注册中下线（文件保留作参考实现）。
+//! 迁移 database/migrations/20260911000001_async_task_queue.sql 保持不动（已应用链）。
+//! 未来若要重新启用：在 lib.rs 恢复 `pub mod async_task_queue;` 并补路由 + 消费 worker。
+//!
 //! 异步任务队列（持久化）
 //!
 //! 基于数据库的异步任务队列，支持：
@@ -6,6 +11,8 @@
 //! - 重试机制
 //! - 优先级调度
 //! - 租户隔离
+
+#![allow(dead_code)]
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

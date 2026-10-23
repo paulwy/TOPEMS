@@ -214,6 +214,8 @@ impl LlmProvider for OllamaProvider {
             completion_tokens: result.eval_count,
             total_tokens: None,
             latency_ms: Some(latency_ms),
+            degraded: false,
+            degraded_reason: None,
         })
     }
 

@@ -5795,6 +5795,7 @@ dependencies = [
  "topems-shared-observability",
  "tower",
  "tracing",
+ "url",
  "utoipa",
  "uuid",
 ]

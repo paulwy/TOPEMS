@@ -24,6 +24,74 @@ fn tenant_uuid(claims: &Claims) -> Uuid {
         .unwrap_or(Uuid::nil())
 }
 
+// ===== SSRF 基础防护（P2 低风险配套） =====
+//
+// 范围：仅做「回环/链路本地段封锁 + 错误回传脱敏」两项低风险措施。
+// 地址白名单策略（允许哪些内网网段访问 ERP）属产品决策项，暂不自动开启，
+// 标注待产品确认（TODO(product): 内网地址白名单策略）。
+//
+// 若进程配置了出口代理（HTTP_PROXY / HTTPS_PROXY / ALL_PROXY 环境变量），
+// 请求实际发往代理而非直连目标，本地封锁无意义 → 跳过封锁并依赖代理出口策略，
+// 同时打 warn 日志便于审计。
+
+/// 进程是否已配置出口代理（大小写不敏感）
+fn has_egress_proxy() -> bool {
+    for (key, _) in std::env::vars() {
+        let k = key.to_ascii_uppercase();
+        if matches!(k.as_str(), "HTTP_PROXY" | "HTTPS_PROXY" | "ALL_PROXY") {
+            return true;
+        }
+    }
+    false
+}
+
+/// 判断目标 URL 是否命中 SSRF 封锁规则（回环 127.0.0.0/8、::1；
+/// 链路本地 169.254.0.0/16；未指定地址 0.0.0.0；主机名 localhost）。
+/// 走代理时返回 false（跳过封锁，依赖代理策略）。
+fn ssrf_target_blocked(url: &str) -> bool {
+    if has_egress_proxy() {
+        tracing::warn!(
+            "external_erp SSRF: 检测到出口代理环境变量，跳过本地目标封锁，依赖代理出口策略 (url={})",
+            url
+        );
+        return false;
+    }
+    let host = match url::Url::parse(url) {
+        Ok(u) => u.host().map(|h| h.to_string()).unwrap_or_default(),
+        Err(_) => return true, // 无法解析的 URL 一律拒绝
+    };
+    ssrf_host_blocked(&host)
+}
+
+/// 纯函数：给定 URL host（可能带方括号 IPv6）判断是否命中封锁段。
+fn ssrf_host_blocked(host: &str) -> bool {
+    let host = host.trim_start_matches('[').trim_end_matches(']').to_lowercase();
+    if host == "localhost" || host.ends_with(".localhost") {
+        return true;
+    }
+    match host.parse::<std::net::IpAddr>() {
+        Ok(ip) => match ip {
+            std::net::IpAddr::V4(v4) => {
+                v4.is_loopback() || v4.is_link_local() || v4.is_unspecified()
+            }
+            std::net::IpAddr::V6(v6) => {
+                // ::1 回环；:: 未指定；fe80::/10 链路本地（std 未提供 is_link_local，手动判定）
+                v6.is_loopback()
+                    || v6.is_unspecified()
+                    || (v6.segments()[0] & 0xffc0 == 0xfe80)
+            }
+        },
+        Err(_) => false, // 域名：本轮不做 DNS 解析（DNS 重绑定风险见后续加固项）
+    }
+}
+
+/// reqwest 错误原文可能携带内网地址/端口/完整 URL 细节，
+/// 回传客户端前脱敏；原始错误仅落服务端日志。
+fn sanitize_reqwest_error(e: &reqwest::Error) -> String {
+    tracing::warn!("external_erp raw HTTP error (已脱敏，仅服务端可见): {}", e);
+    "HTTP 请求失败（详情已记录服务端日志）".to_string()
+}
+
 // ===== 同步日志模型 =====
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -185,9 +253,20 @@ pub(crate) struct ProbeResult {
 /// 真实 HTTP 连通性探测：对目标 URL 发起 GET 请求，带整体超时。
 /// 成功判定：HTTP 2xx/3xx；连接拒绝 / DNS 失败 / 超时均返回失败（success=false），
 /// 不再出现"仅校验 URL 前缀即报成功"的假探测。
-/// 注意：未做 SSRF 地址白名单/内网封锁（P2-2，需产品决策内网策略）。
+/// SSRF 防护（P2 低风险配套）：封锁回环/链路本地目标；错误原文脱敏后回传，
+/// 不暴露内网地址/端口细节。地址白名单策略待产品确认（见模块头注释）。
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub(crate) async fn probe_http_url(api_url: &str, timeout_ms: u64) -> ProbeResult {
+    // SSRF 目标封锁：回环/链路本地段
+    if ssrf_target_blocked(api_url) {
+        return ProbeResult {
+            success: false,
+            response_time_ms: 0,
+            http_status: None,
+            error_message: Some("目标地址被安全策略拒绝（回环/链路本地段禁止访问）".to_string()),
+        };
+    }
+
     let start = std::time::Instant::now();
     let client = match reqwest::Client::builder()
         .timeout(std::time::Duration::from_millis(timeout_ms))
@@ -199,7 +278,7 @@ pub(crate) async fn probe_http_url(api_url: &str, timeout_ms: u64) -> ProbeResul
                 success: false,
                 response_time_ms: start.elapsed().as_millis() as u64,
                 http_status: None,
-                error_message: Some(format!("HTTP client build failed: {}", e)),
+                error_message: Some(sanitize_reqwest_error(&e)),
             };
         }
     };
@@ -223,7 +302,7 @@ pub(crate) async fn probe_http_url(api_url: &str, timeout_ms: u64) -> ProbeResul
             success: false,
             response_time_ms: start.elapsed().as_millis() as u64,
             http_status: None,
-            error_message: Some(e.to_string()),
+            error_message: Some(sanitize_reqwest_error(&e)),
         },
     }
 }
@@ -603,18 +682,31 @@ async fn get_connection_by_id(
 }
 
 /// 调用 ERP API（支持认证头）
+/// SSRF 防护：请求前封锁回环/链路本地目标；错误信息脱敏，不向调用方回传
+/// 含内网地址/端口/完整 URL 的 reqwest 原文（原文仅落服务端日志）。
 async fn call_erp_api(
     connection: &ErpConnection,
     method: &str,
     path: &str,
     body: Option<&serde_json::Value>,
 ) -> Result<serde_json::Value, TopemsError> {
+    let url = format!("{}{}", connection.api_url.trim_end_matches('/'), path);
+
+    if ssrf_target_blocked(&url) {
+        tracing::warn!("external_erp SSRF blocked: {}", url);
+        return Err(TopemsError::BusinessLogic(
+            "目标地址被安全策略拒绝（回环/链路本地段禁止访问）".to_string(),
+        ));
+    }
+
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
         .build()
-        .map_err(|e| TopemsError::NetworkRequest(format!("HTTP client build failed: {}", e)))?;
+        .map_err(|e| {
+            tracing::warn!("external_erp client build raw error: {}", e);
+            TopemsError::NetworkRequest("HTTP client build failed".to_string())
+        })?;
 
-    let url = format!("{}{}", connection.api_url.trim_end_matches('/'), path);
     let mut request = match method {
         "POST" => client.post(&url),
         "PUT" => client.put(&url),
@@ -642,21 +734,27 @@ async fn call_erp_api(
     let resp = request
         .send()
         .await
-        .map_err(|e| TopemsError::NetworkRequest(format!("HTTP request failed: {}", e)))?;
+        .map_err(|e| TopemsError::NetworkRequest(sanitize_reqwest_error(&e)))?;
     let status = resp.status();
 
     if !status.is_success() {
-        return Err(TopemsError::BusinessLogic(format!(
-            "ERP API returned status {}: {}",
+        // 上游响应体可能含内部地址/路由细节，仅落服务端日志，不回传调用方
+        let upstream_body = resp.text().await.unwrap_or_default();
+        tracing::warn!(
+            "external_erp upstream non-2xx status={} body={}",
             status.as_u16(),
-            resp.text().await.unwrap_or_default()
+            upstream_body
+        );
+        return Err(TopemsError::BusinessLogic(format!(
+            "ERP API returned status {}",
+            status.as_u16()
         )));
     }
 
-    let data: serde_json::Value = resp
-        .json()
-        .await
-        .map_err(|e| TopemsError::ValidationFailed(format!("Failed to parse response: {}", e)))?;
+    let data: serde_json::Value = resp.json().await.map_err(|e| {
+        tracing::warn!("external_erp parse response raw error: {}", e);
+        TopemsError::ValidationFailed("Failed to parse ERP response".to_string())
+    })?;
     Ok(data)
 }
 
@@ -1580,4 +1678,47 @@ pub fn create_routes() -> Router<AppState> {
         .route("/sync-statistics", get(sync_statistics))
         .route("/export/mappings", get(export_mappings))
         .route("/export/sync-logs", get(export_sync_logs))
+}
+
+// ===== SSRF 防护单元测试（纯函数，不触网） =====
+
+#[cfg(test)]
+mod ssrf_tests {
+    use super::*;
+
+    #[test]
+    fn blocks_loopback_ipv4() {
+        assert!(ssrf_host_blocked("127.0.0.1"));
+        assert!(ssrf_host_blocked("127.5.5.5"));
+        assert!(ssrf_target_blocked("http://127.0.0.1:8080/api"));
+        assert!(ssrf_target_blocked("http://127.255.255.1:9000/"));
+    }
+
+    #[test]
+    fn blocks_link_local_and_unspecified() {
+        assert!(ssrf_host_blocked("169.254.169.254")); // 云元数据
+        assert!(ssrf_host_blocked("169.254.1.5"));
+        assert!(ssrf_host_blocked("0.0.0.0"));
+        assert!(ssrf_target_blocked("http://[::1]/admin"));
+    }
+
+    #[test]
+    fn blocks_localhost_hostname() {
+        assert!(ssrf_host_blocked("localhost"));
+        assert!(ssrf_host_blocked("LOCALHOST"));
+        assert!(!ssrf_host_blocked("localhost.internal.example"));
+        assert!(ssrf_target_blocked("http://localhost:3000/erp"));
+    }
+
+    #[test]
+    fn allows_public_targets() {
+        assert!(!ssrf_target_blocked("https://erp.customer.example.com/api/v1"));
+        assert!(!ssrf_target_blocked("http://8.8.8.8:8080/"));
+        assert!(!ssrf_target_blocked("http://10.0.0.5:8080/")); // 私网不在本批封锁范围（待产品白名单决策）
+    }
+
+    #[test]
+    fn rejects_unparseable_url() {
+        assert!(ssrf_target_blocked("not-a-url"));
+    }
 }

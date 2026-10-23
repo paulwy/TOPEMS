@@ -1437,7 +1437,12 @@ pub fn send_email_async(
     });
 }
 
+/// 入队邮件（P2 持久化改造）：
+/// 1. 落库 `core_email_queue`（重启/崩溃不丢；消费后回写状态、失败重试/标记 failed 待人工）；
+/// 2. DashMap 仅作进程内状态镜像（供 get_queue_status/get_queue_stats 即时查询）；
+/// 3. 落库失败时退化为纯内存队列兜底（仍尝试即时发送），并记录 error 日志。
 pub fn queue_email(
+    pool: &PgPool,
     from: String,
     to: String,
     subject: String,
@@ -1449,84 +1454,226 @@ pub fn queue_email(
     let id = Uuid::new_v4().to_string();
     let queued_email = QueuedEmail {
         id: id.clone(),
-        from,
-        to,
-        subject,
-        body,
-        html_body,
-        cc,
-        bcc,
+        from: from.clone(),
+        to: to.clone(),
+        subject: subject.clone(),
+        body: body.clone(),
+        html_body: html_body.clone(),
+        cc: cc.clone(),
+        bcc: bcc.clone(),
         attempts: 0,
         max_attempts: 3,
         created_at: chrono::Utc::now(),
         status: EmailQueueStatus::Pending,
     };
 
+    // DashMap 进程内镜像（供状态查询；落库失败时由 drain_memory_queue 兜底发送）
     EMAIL_QUEUE.insert(id.clone(), queued_email);
-    tracing::info!("Email queued: {}", id);
 
-    process_queue();
+    let pool = pool.clone();
+    let id_for_task = id.clone();
+    tokio::spawn(async move {
+        // 持久化写库（主路径）
+        match sqlx::query(only_own_schema_query!(
+            "public",
+            "INSERT INTO core_email_queue \
+             (id, from_email, to_email, subject, body, html_body, cc, bcc, attempts, max_attempts, status, tenant_id) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, 3, 'pending', $9::uuid)"
+        ))
+        .bind(&id_for_task)
+        .bind(&from)
+        .bind(&to)
+        .bind(&subject)
+        .bind(&body)
+        .bind(&html_body)
+        .bind(cc.unwrap_or_default())
+        .bind(bcc.unwrap_or_default())
+        .bind(Uuid::nil())
+        .execute(&pool)
+        .await
+        {
+            Ok(_) => tracing::info!("Email queued (persisted): {}", id_for_task),
+            Err(e) => {
+                // 落库失败：内存兜底（重启仍会丢，故 error 级别告警），
+                // 后续 process_queue 会经 drain_memory_queue 即时尝试发送
+                tracing::error!(
+                    "邮件入队落库失败（降级内存队列，重启会丢信）: {}",
+                    e
+                );
+            }
+        }
+
+        process_queue(&pool).await;
+    });
 
     id
 }
 
-pub fn process_queue() {
-    tokio::spawn(async move {
-        let pending_emails: Vec<(String, QueuedEmail)> = EMAIL_QUEUE
-            .iter()
-            .filter(|entry| entry.status == EmailQueueStatus::Pending)
-            .map(|entry| (entry.id.clone(), entry.clone()))
-            .collect();
+/// 触发队列消费：DB 持久队列为主，内存镜像兜底。
+pub async fn process_queue(pool: &PgPool) {
+    process_persisted_queue(pool).await;
+    drain_memory_queue().await;
+}
 
-        for (id, mut email) in pending_emails {
-            if let Some(mut entry) = EMAIL_QUEUE.get_mut(&id) {
-                entry.status = EmailQueueStatus::Sending;
-                entry.attempts += 1;
+/// DB 持久队列消费：拉取 pending → 标记 sending → 发送 → 回写状态。
+/// 失败未超 max_attempts 保持 pending（下次入队/下次触发时重发，带服务端即时重试）；
+/// 超过 max_attempts 标记 failed + error_message，待人工重发。
+async fn process_persisted_queue(pool: &PgPool) {
+    type QueueRow = (
+        String,
+        String,
+        String,
+        String,
+        String,
+        Option<String>,
+        Option<Vec<String>>,
+        Option<Vec<String>>,
+        i32,
+        i32,
+    );
+    let rows = match sqlx::query_as::<_, QueueRow>(only_own_schema_query!(
+        "public",
+        "SELECT id, from_email, to_email, subject, body, html_body, cc, bcc, attempts, max_attempts \
+         FROM core_email_queue \
+         WHERE status = 'pending' \
+         ORDER BY created_at ASC \
+         LIMIT 20"
+    ))
+    .fetch_all(pool)
+    .await
+    {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("邮件队列拉取 pending 失败: {}", e);
+            return;
+        }
+    };
+
+    for row in rows {
+        let (id, from, to, subject, body, html_body, cc, bcc, attempts, max_attempts) = row;
+
+        // 标记 sending（防止并发重复发送）
+        let _ = sqlx::query(only_own_schema_query!(
+            "public",
+            "UPDATE core_email_queue SET status = 'sending', updated_at = NOW() WHERE id = $1"
+        ))
+        .bind(&id)
+        .execute(pool)
+        .await;
+
+        match send_email_with_lettre(
+            &from,
+            &to,
+            &subject,
+            &body,
+            html_body.as_deref(),
+            cc.as_ref(),
+            bcc.as_ref(),
+        ) {
+            Ok(_) => {
+                let _ = sqlx::query(only_own_schema_query!(
+                    "public",
+                    "UPDATE core_email_queue SET status = 'sent', sent_at = NOW(), updated_at = NOW() WHERE id = $1"
+                ))
+                .bind(&id)
+                .execute(pool)
+                .await;
+                tracing::info!("Email queued {} sent successfully (persisted)", id);
             }
-
-            email.attempts += 1;
-            email.status = EmailQueueStatus::Sending;
-
-            match send_email_with_lettre(
-                &email.from,
-                &email.to,
-                &email.subject,
-                &email.body,
-                email.html_body.as_deref(),
-                email.cc.as_ref(),
-                email.bcc.as_ref(),
-            ) {
-                Ok(_) => {
-                    if let Some(mut entry) = EMAIL_QUEUE.get_mut(&id) {
-                        entry.status = EmailQueueStatus::Sent;
-                    }
-                    tracing::info!("Email queued {} sent successfully", id);
+            Err(e) => {
+                let next_attempts = attempts + 1;
+                let status = if next_attempts >= max_attempts {
+                    "failed"
+                } else {
+                    "pending"
+                };
+                let _ = sqlx::query(only_own_schema_query!(
+                    "public",
+                    "UPDATE core_email_queue SET attempts = $2, status = $3, error_message = $4, updated_at = NOW() WHERE id = $1"
+                ))
+                .bind(&id)
+                .bind(next_attempts)
+                .bind(status)
+                .bind(e.to_string())
+                .execute(pool)
+                .await;
+                if status == "failed" {
+                    tracing::error!(
+                        "Email queued {} failed after {} attempts (待人工重发): {}",
+                        id,
+                        next_attempts,
+                        e
+                    );
+                } else {
+                    tracing::warn!(
+                        "Email queued {} failed attempt {}/{}: {}",
+                        id,
+                        next_attempts,
+                        max_attempts,
+                        e
+                    );
                 }
-                Err(e) => {
-                    if let Some(mut entry) = EMAIL_QUEUE.get_mut(&id) {
-                        if entry.attempts >= entry.max_attempts {
-                            entry.status = EmailQueueStatus::Failed;
-                            tracing::error!(
-                                "Email queued {} failed after {} attempts: {}",
-                                id,
-                                entry.attempts,
-                                e
-                            );
-                        } else {
-                            entry.status = EmailQueueStatus::Pending;
-                            tracing::warn!(
-                                "Email queued {} failed attempt {}/{}: {}",
-                                id,
-                                entry.attempts,
-                                entry.max_attempts,
-                                e
-                            );
-                        }
+            }
+        }
+    }
+}
+
+/// 内存队列兜底消费（仅在 DB 不可用/落库失败路径下有积压）。
+async fn drain_memory_queue() {
+    let pending_emails: Vec<(String, QueuedEmail)> = EMAIL_QUEUE
+        .iter()
+        .filter(|entry| entry.status == EmailQueueStatus::Pending)
+        .map(|entry| (entry.id.clone(), entry.clone()))
+        .collect();
+
+    for (id, mut email) in pending_emails {
+        if let Some(mut entry) = EMAIL_QUEUE.get_mut(&id) {
+            entry.status = EmailQueueStatus::Sending;
+            entry.attempts += 1;
+        }
+
+        email.attempts += 1;
+        email.status = EmailQueueStatus::Sending;
+
+        match send_email_with_lettre(
+            &email.from,
+            &email.to,
+            &email.subject,
+            &email.body,
+            email.html_body.as_deref(),
+            email.cc.as_ref(),
+            email.bcc.as_ref(),
+        ) {
+            Ok(_) => {
+                if let Some(mut entry) = EMAIL_QUEUE.get_mut(&id) {
+                    entry.status = EmailQueueStatus::Sent;
+                }
+                tracing::info!("Email queued {} sent successfully", id);
+            }
+            Err(e) => {
+                if let Some(mut entry) = EMAIL_QUEUE.get_mut(&id) {
+                    if entry.attempts >= entry.max_attempts {
+                        entry.status = EmailQueueStatus::Failed;
+                        tracing::error!(
+                            "Email queued {} failed after {} attempts: {}",
+                            id,
+                            entry.attempts,
+                            e
+                        );
+                    } else {
+                        entry.status = EmailQueueStatus::Pending;
+                        tracing::warn!(
+                            "Email queued {} failed attempt {}/{}: {}",
+                            id,
+                            entry.attempts,
+                            entry.max_attempts,
+                            e
+                        );
                     }
                 }
             }
         }
-    });
+    }
 }
 
 pub fn get_queue_status(id: &str) -> Option<EmailQueueStatus> {
@@ -2087,9 +2234,16 @@ mod tests {
         assert!(dbg.contains("QueuedEmail"));
     }
 
+    // queue_email 落库路径需要真实 PgPool，离线 CI 下跳过；本地连库后 `cargo test -- --ignored` 可跑
     #[tokio::test]
+    #[ignore = "requires DATABASE_URL (core_email_queue)"]
     async fn test_queue_email_returns_id_and_stats_has_keys() {
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .connect(&std::env::var("DATABASE_URL").unwrap_or_default())
+            .await
+            .unwrap();
         let id = queue_email(
+            &pool,
             "from@x.com".to_string(),
             "to@x.com".to_string(),
             "subject".to_string(),

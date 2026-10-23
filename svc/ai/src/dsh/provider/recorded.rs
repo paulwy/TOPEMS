@@ -120,6 +120,8 @@ impl LlmProvider for RecordingProvider {
                 completion_tokens: None,
                 total_tokens: None,
                 latency_ms: Some(duration_ms),
+                degraded: false,
+                degraded_reason: None,
             }),
             Err(err) => Err(err.clone()),
         };

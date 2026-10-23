@@ -2255,6 +2255,7 @@ async fn send_notification_email(pool: &PgPool, req: &SendNotificationRequest) -
 
     if let Some(email) = email {
         let queue_id = crate::mail::queue_email(
+            pool,
             "system@topems.io".to_string(),
             email,
             req.title.clone(),

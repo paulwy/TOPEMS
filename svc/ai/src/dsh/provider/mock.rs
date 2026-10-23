@@ -64,6 +64,8 @@ impl LlmProvider for MockProvider {
             completion_tokens: Some(20),
             total_tokens: Some(30),
             latency_ms: Some(1),
+            degraded: false,
+            degraded_reason: None,
         })
     }
 
