@@ -59,8 +59,14 @@ impl LimsRealModule {
             tracing::warn!("LIMS 数据库初始化警告（不阻塞）: {}", e);
         }
 
-        // 3. 事件订阅者：lims 的 event_handlers 为 bin-only（main.rs 内 mod），lib 不暴露，跳过
-        //    （独立部署时由 main.rs 启动，此处不重复）
+        // 3. 事件订阅者：lims 的 event_handlers 已由 bin-only 提升为 lib 暴露
+        //    （svc/lims/src/lib.rs `pub mod event_handlers`），单体化与独立部署同源，
+        //    挂载消费循环使质量链联动（qms→lims）自动落库
+        if let Err(e) = topems_lims::event_handlers::start_event_subscribers(ctx.db.clone()).await {
+            tracing::error!("⚠️ lims 事件订阅者启动失败: {}", e);
+        } else {
+            tracing::info!("✅ lims 事件订阅者已挂载（QmsInspectionCompleted / EhsHazardReported）");
+        }
 
         // 4. 健康检查配置
         let health_config = SimpleHealthConfig::new("topems-lims").with_db(ctx.db.clone());

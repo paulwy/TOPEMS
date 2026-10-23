@@ -3423,7 +3423,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ## v1.102 层2 G 质量链实测（2026-10-23）
 - [x] **qms 检验全流程**：create → assign → submit（合格/不合格各 1 条）→ **QmsInspectionCompleted 事件落流**（最新条含检验 id）
 - [x] **lims 联动数据层就绪**：`lims.lims_inspection_records` 表结构/RLS/UNIQUE 与 handler INSERT 完全对齐；模拟消费 INSERT（ON CONFLICT 幂等）成功
-- [ ] **观察项（架构，生产拓扑确认）**：lims/integration `start_event_subscribers` 仅在独立服务 main 启动，BFF 单体未挂载 → 联动不自动落库——双轨合一遗留，待生产机/单体化时挂载消费循环
+- [x] **观察项核销（v1.105）**：lims `start_event_subscribers` 已由 bin-only 提升为 lib 暴露（`svc/lims/src/lib.rs pub mod event_handlers`）并挂载到 BFF 单体（`lims_real_module.rs` build 内调用，对照 crm_real_module 样板）→ 质量链联动（qms→lims）自动落库，端到端实证 submit → QmsInspectionCompleted → lims_inspection_records 自动生成（qualified/100/completed）
 - [x] **数据清理**：qms 检验 2 条 + audits 4 条 + lims 模拟 1 条，全 0 残留
 - 活文档变更日志 v1.102 登记
 
@@ -3456,6 +3456,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **清理**：qa_quality_inspections 2 单、qa_inspection_audits 3 行、QmsInspectionCompleted 事件 1 条
 - [x] **观察项**：qms→lims→ehs 联动订阅器（QmsToLimsSyncTriggered/LimsToEhsTriggered）未见新条目——事件已发布，联动消费行为待生产数据验证
 - 活文档变更日志 v1.104 登记
+
+## v1.105 lims 事件订阅挂载单体 + 质量链自动落库（2026-10-23）
+- [x] **根因**：lims `start_event_subscribers` 为 bin-only（`main.rs` 内 `mod event_handlers`，lib 不暴露）→ BFF 单体无法调用 → 质量链联动（qms→lims）不自动落库（TODO 3426 观察项）
+- [x] **修复**：① `svc/lims/src/lib.rs` 提升 `pub mod event_handlers`（依赖仅 chrono/sqlx/shared，无 bin-only 耦合）② `lims_real_module.rs` build 内挂载 `topems_lims::event_handlers::start_event_subscribers(ctx.db.clone())`（对照 crm_real_module:73 样板）
+- [x] **验证**：`cargo check/build -p topems-server --features module-lims` 通过；BFF 重启（kill -9 确认端口释放）后端到端：建检验单 → assign → submit → **lims_inspection_records 自动落库**（source_inspection_id=检验单 id，qualified/100%/completed）；lims lib 149 passed 无回归
+- [x] **数据清理**：lims 5 条（v1.102-104 测试 + 本轮联动）+ qms 2 单 + audits 4 条 → 0 残留
 - 活文档变更日志 v1.103 登记
 
 
