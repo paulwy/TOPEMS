@@ -89,7 +89,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("employee_id", "UUID NOT NULL"),
             ("role", "VARCHAR(50) NOT NULL DEFAULT 'OTHER'"),
             ("responsibility", "TEXT"),
-            ("allocation", "NUMERIC(5,2) DEFAULT 1.0"),
+            ("allocation", "DOUBLE PRECISION DEFAULT 1.0"),
             ("join_date", "TIMESTAMPTZ NOT NULL"),
             ("leave_date", "TIMESTAMPTZ"),
             ("status", "VARCHAR(50) NOT NULL DEFAULT 'ACTIVE'"),

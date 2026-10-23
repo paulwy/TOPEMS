@@ -77,9 +77,10 @@ pub async fn create_member(
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
         INSERT INTO rs.project_members (
-            id, tenant_id, project_id, employee_id, role, responsibility, allocation, join_date, status
+            id, tenant_id, project_id, employee_id, role, responsibility, allocation, join_date, status,
+            hourly_rate, cost_rate, budgeted_hours
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, tenant_id, project_id, employee_id, role, responsibility, allocation, join_date, leave_date, status, hourly_rate, cost_rate, budgeted_hours, actual_hours, created_at, updated_at
         "#,
     )
@@ -92,6 +93,9 @@ pub async fn create_member(
     .bind(allocation)
     .bind(payload.join_date)
     .bind(status)
+    .bind(payload.hourly_rate)
+    .bind(payload.cost_rate)
+    .bind(payload.budgeted_hours)
     .fetch_one(&mut **txn)
     .await;
 
@@ -270,14 +274,18 @@ pub async fn update_member(
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
         UPDATE rs.project_members
-        SET 
+        SET
             role = COALESCE($2, role),
             responsibility = COALESCE($3, responsibility),
             allocation = COALESCE($4, allocation),
             leave_date = COALESCE($5, leave_date),
             status = COALESCE($6, status),
+            hourly_rate = COALESCE($7, hourly_rate),
+            cost_rate = COALESCE($8, cost_rate),
+            budgeted_hours = COALESCE($9, budgeted_hours),
+            actual_hours = COALESCE($10, actual_hours),
             updated_at = NOW()
-        WHERE id = $1 AND ($7::uuid IS NULL OR tenant_id = $7)
+        WHERE id = $1 AND ($11::uuid IS NULL OR tenant_id = $11)
         RETURNING id, tenant_id, project_id, employee_id, role, responsibility, allocation, join_date, leave_date, status, hourly_rate, cost_rate, budgeted_hours, actual_hours, created_at, updated_at
         "#,
     )
@@ -287,6 +295,10 @@ pub async fn update_member(
     .bind(payload.allocation)
     .bind(payload.leave_date)
     .bind(payload.status.map(|s| s.to_string()))
+    .bind(payload.hourly_rate)
+    .bind(payload.cost_rate)
+    .bind(payload.budgeted_hours)
+    .bind(payload.actual_hours)
     .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
