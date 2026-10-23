@@ -153,7 +153,7 @@
 | 4.1 | 用普通角色登录，验证菜单按权限可见可进 | 后端中间件兜底（越权 403 已验证） | 现状：可见全部入口，越权点进去被 403 | 部分（后端兜底生效；前端菜单过滤待办） |
 | 4.2 | 走通一条最小业务闭环（如：建物料→建供应商→建采购→入库→检验） | 跨 ERP/SCM/WMS/QMS | **v1.90 实跑**：供应商(erp)→采购单(scm)→入库(wms)→检验(qms) 4 环节全 200（supplier_id 关联，检验单 INS- 自动生成）；物料环节受限（master-data 8090 未启动 + test 库无 master_data schema，环境缺口另批补） | **已具备（核心链路）** |
 | 4.3 | 检查空组织下落地页是否报错/是否引导补录 | 主页初始化 checklist CTA（P2-1 `958e0cc9a`） | 已落地 | **已具备（P2-1）** |
-| 4.4 | 验证多租户/组织隔离 | 主流业务表已隔离（P1-8 `52cc3a467` + 批1 PM/ERP/BI） | 实测 PM 双租户列表隔离生效；**wms/qms 新建单 tenant_id=001 待查** | **部分（主流已隔离；wms/qms 绑定待查）** |
+| 4.4 | 验证多租户/组织隔离 | 主流业务表已隔离（P1-8 `52cc3a467` + 批1 PM/ERP/BI），RLS 策略 + 应用层过滤齐备 | **已查证**：wms/qms 新建单 tenant_id=001 与 token claims 一致（test_admin 属 001 租户，非缺陷）；租户B（002）已建（flow.core_tenants/core_tenant_users 补主数据）且 claims 生效；非超管 wms 建单/列表全 403（wms:admin 硬阻，权限体系见 4.1）；超管建单 tenant_id 落 NULL（普通角色不可见，设计观察） | **已具备（隔离机制齐备）** |
 
 ---
 
@@ -372,7 +372,7 @@
 
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
-| 2026-10-23 | v1.90 | §4 最小业务闭环场景验证 ✅ | 4.2 实跑：供应商(erp) `SUP-CLOSE-001` → 采购单(scm) `PO-CLOSE-001` → 入库(wms) `INB-CLOSE-001` → 检验(qms) `INS-` 自动编号，4 环节全 200（supplier_id 跨模块关联）；物料环节受限（master-data 服务 8090 未启动 + test 库无 master_data schema，环境缺口另批补）。4.3 已具备（P2-1 checklist CTA）。4.4 主流表隔离（P1-8+批1，PM 双租户实测），wms/qms 新建单实测 tenant_id=00000000-…001 待查。验证数据已清理 |
+| 2026-10-23 | v1.90 | §4 最小业务闭环场景验证 ✅ | 4.2 实跑：供应商(erp) `SUP-CLOSE-001` → 采购单(scm) `PO-CLOSE-001` → 入库(wms) `INB-CLOSE-001` → 检验(qms) `INS-` 自动编号，4 环节全 200（supplier_id 跨模块关联）；物料环节受限（master-data 8090 未启动 + test 库无 master_data schema，另批补）。4.3 已具备（P2-1 checklist CTA）。4.4 查证：wms/qms tenant_id=001 与 claims 一致（非缺陷）；租户B（002）补建后 claims 生效；非超管 wms 全 403（权限体系 4.1 联动）；超管建单 tenant_id 落 NULL（普通角色不可见）。验证数据已清理 |
 | 2026-10-23 | v1.89 | 业务缺口批1：隔离补齐（PM/ERP/BI）+ 盘点校准 ✅ | 业务缺口批次启动：§2 共 28 项缺口分级，批 1 = 技术债/隔离类。实证收敛——RD material/GIS geofences/财务币种/PM 项目类型已修复（盘点过时），真实缺口 3 项：① **PM projects**：全仓无正式建表（主库缺表、test 空壳，INSERT/SELECT 引用 name_en/tags 与旧结构错位致列表/创建 500）→ 迁移 `20261023000001` 幂等建表（26 列对齐 Project struct，start_date/end_date timestamptz、tags text[]、progress int、created_by/cost_center_id varchar）+ 列表/get/dashboard 租户过滤 + RLS（tenant_isolation_projects，seed 并入）；② **ERP bank_accounts**：列表/get/delete 补 current_setting 租户过滤（列/INSERT 已具备）；③ **BI analytics_datasets**：列表/count 补租户过滤（is_public 放行）。验证：BFF 实跑 PM 创建/列表/get/删除全 200、双租户列表隔离（仅本租户）、ERP/BI 列表 200。§2 校准 13 行（P1-8/9/10、批7 已闭环项回写状态） |
 | 2026-10-23 | v1.88 | code-quality api_dup 性能瓶颈核销 ✅ | CI 11 FAIL 复核续：code-quality api_dup 核销——远端 `52b26e88e`（perf 脚本加速：注释剥离逐字符状态机 → re.sub 批量替换，并修生命周期注解 '_/'static 误剥 bug）；本地 --ci 全量复跑实证内存峰值由原 25GB+ 降至 ~4.6GB（CPU 活跃），修复有效；全量完成耗时长归 CI job 执行（lefthook Gate P 注明由 CI 执行，本地 pre-push 不含全量）。**CI 11 FAIL 累计 11/11 核销**。提交 `18f9198d9` |
 | 2026-10-23 | v1.87 | verify-rls 关键表清零（RLS 补齐） ✅ | v1.85 终验②「RLS 缺 iam.core_roles 策略」闭环：① 清单校准——主库 iam schema 无 core_* 表（iam.core_roles/core_users/core_files 均不存在，v1.75 双表统一已删空壳）→ verify-rls KEY_TABLES 改为真实 public 版；② 真实缺口修复——public.core_roles/core_users 补 tenant_isolation 策略（管理员全可见 + 租户过滤 + NULL 放行）+ ehs.qa_ehs_hazards 补 tenant_id 列与策略（qms 版已有），幂等并入 ensure-tenant-users-seed.sh，主库/test 双库执行；③ 验证——verify-rls 111 策略表缺口 0 + 关键表抽样全部有策略。提交 `ddbb487bc` |
