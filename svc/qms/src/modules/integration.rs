@@ -9,6 +9,13 @@
 //!   修正为 qms 实际列 issue_id；related_issue_type 语义并入 description）
 //! - quality inspection 结果回写（原直写引用不存在的 test_result/test_data/conclusion
 //!   列，修正为 qms 实际列 result/memo）
+//!
+//! 租户来源（P1-4 跨租户写修复）：本类 `/api/internal/` 端点为免 JWT 的内网服务间调用，
+//! auth_middleware 对其放行且不注入 Claims，调用方编排侧也无租户维度。故租户键一律
+//! 不信任请求体 `tenant_id`（DTO 不再接收该字段，调用方多余字段由 serde 忽略），
+//! 与 ehs/lims internal 端点既有契约一致：
+//! - INSERT 落 `Uuid::nil()`（全局集成行，跨租户基础设施记录）；
+//! - UPDATE 仅按业务唯一键 `inspection_no` 定位（该列全局 UNIQUE），不再接受请求体指定租户。
 
 use crate::AppState;
 use axum::{extract::State, routing::post, Json, Router};
@@ -32,7 +39,8 @@ pub fn integration_routes() -> Router<AppState> {
 
 #[derive(Debug, Deserialize)]
 pub struct CreateIntegrationActionRequest {
-    pub tenant_id: Uuid,
+    // 注意：不再接收请求体 tenant_id（P1-4 跨租户写修复）。租户键由服务端固定为
+    // Uuid::nil()，调用方传入的 tenant_id 字段被 serde 忽略。
     pub action_no: String,
     pub title: String,
     pub description: String,
@@ -61,7 +69,7 @@ pub async fn create_integration_action(
             "qms"
         ),
     )
-    .bind(req.tenant_id)
+    .bind(Uuid::nil())
     .bind(&req.action_no)
     .bind(req.issue_id)
     .bind(&req.title)
@@ -91,7 +99,8 @@ pub async fn create_integration_action(
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateInspectionResultRequest {
-    pub tenant_id: Uuid,
+    // 注意：不再接收请求体 tenant_id（P1-4 跨租户写修复）。inspection_no 全局 UNIQUE，
+    // 仅按业务唯一键定位行；调用方传入的 tenant_id 字段被 serde 忽略。
     pub inspection_no: String,
     /// 修正：原直写 test_result+conclusion → qms 实际列 result
     pub result: String,
@@ -107,13 +116,12 @@ pub async fn update_integration_inspection_result(
         "qms",
         "UPDATE qms.qa_quality_inspections
              SET result = $1, memo = COALESCE($2, memo), updated_at = NOW()
-             WHERE tenant_id = $3 AND inspection_no = $4 AND deleted_at IS NULL
+             WHERE inspection_no = $3 AND deleted_at IS NULL
              RETURNING id, inspection_no, result, status",
         "qms"
     ))
     .bind(&req.result)
     .bind(&req.memo)
-    .bind(req.tenant_id)
     .bind(&req.inspection_no)
     .fetch_optional(&state.pool)
     .await;
