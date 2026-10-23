@@ -116,7 +116,7 @@ pub async fn list_datasets(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let query = "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM public.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid OR is_public = true) ORDER BY created_at DESC LIMIT $4 OFFSET $5";
+    let query = "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM bi.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid OR is_public = true) ORDER BY created_at DESC LIMIT $4 OFFSET $5";
     let result = sqlx::query_as::<_, Dataset>(query)
         .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
         .bind(params.status.as_deref())
@@ -129,7 +129,7 @@ pub async fn list_datasets(
     match result {
         Ok(datasets) => {
             let total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM public.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid OR is_public = true)",
+                "SELECT COUNT(*) FROM bi.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid OR is_public = true)",
             )
             .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
             .bind(params.status.as_deref())
@@ -167,7 +167,7 @@ pub async fn get_dataset(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     let result = sqlx::query_as::<_, Dataset>(
-        "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM public.analytics_datasets WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM bi.analytics_datasets WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -456,7 +456,7 @@ pub async fn get_dataset_preview(
     let _limit = params.limit.unwrap_or(10);
 
     let dataset = sqlx::query_as::<_, Dataset>(
-        "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM public.analytics_datasets WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM bi.analytics_datasets WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -514,7 +514,7 @@ pub async fn query_dataset(
     };
     // 取已注册数据集的 sql_query（软删除过滤）
     let sql_query: Option<String> = match sqlx::query_scalar(
-        "SELECT sql_query FROM public.analytics_datasets WHERE id = $1 AND deleted_at IS NULL",
+        "SELECT sql_query FROM bi.analytics_datasets WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(dataset_id)
     .fetch_optional(&state.pool)

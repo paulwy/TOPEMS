@@ -3439,7 +3439,15 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **pm 项目更新 500 修复**：`tags = COALESCE($12::text[], tags)` 与 jsonb 列类型冲突（`COALESCE types text[] and jsonb cannot be matched`）→ `to_jsonb($12::text[])`；create 同型问题一并修（`$16::text[]` → `to_jsonb($16::text[])`）
 - [x] **bi datasets 500 修复**：BI 池 search_path=bi,public → 裸 `analytics_datasets` 解析到 **bi 版（16 列无 tenant_id）**，list SQL 的 tenant_id 条件报错 → 读路径统一 **public 版（17 列含 tenant_id + RLS 策略）**（list/count/get 5 处）；写路径保持 bi 版
 - [x] **验证**：`python3 scripts/web_contract_smoke.py` → **4150/4150 PASS, 0 FAIL**（此前 20 FAIL：mobile 18 + bi 1 + pm 1）
-- [ ] **观察登记**：`analytics_datasets` **双套表归属**（bi 写 / public 读，三套并存 public/bi/analytics 全 0 行；bi 版缺 tenant_id 无 RLS，public 版有 RLS 但写路径被 WITH CHECK 拦需租户上下文）——待统一专项（对齐 ehs 双套表处置）
+
+## v1.109 analytics_datasets 归属统一（bi 版补 tenant_id + RLS）（2026-10-23）
+- [x] **核销 v1.108 观察**：`analytics_datasets` 三套并存（public/bi/analytics）——BI 池 search_path=bi,public 致裸名解析到 bi 版（16 列无 tenant_id、无 RLS），list 租户条件列缺失 500；v1.108 暂以读 public 版规避（写 bi 读 public 错位）
+- [x] **归属决策**：业务写入端在 **bi 版**（insert/update/delete 均 bi.analytics_datasets）；RLS 迁移对三套均建 tenant_isolation_* 策略，唯独 bi.analytics_datasets 漏 tenant_id 列 → **统一 bi 版**（补列 + 同型宽松策略）
+- [x] **迁移**：`20261023000005_analytics_datasets_tenant_rls.sql`（ADD COLUMN IF NOT EXISTS tenant_id + 索引 + ENABLE RLS + tenant_isolation_analytics_datasets FOR ALL 宽松策略；DO 块前置保护，prepare 库无表则跳过）
+- [x] **代码**：读路径 5 处改回 `bi.analytics_datasets`（list/count/get），写路径不变；checksums 已更新（7ac43411）
+- [x] **验证**：smoke **4150/4150 PASS, 0 FAIL**；登录态 POST datasets **201** + GET search **total=1 可见**（写读闭环）；探针已清理（bi 版 0 行）
+- 活文档变更日志 v1.109 登记
+
 
 
 ## v1.107 smoke-prod 层2 H 指引对齐 + BFF WS 接线观察项（2026-10-23）
