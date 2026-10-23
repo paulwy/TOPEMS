@@ -3427,5 +3427,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **数据清理**：测试前缀 mdm_quality_rules 7 条已删（剩 4 条业务数据）；mdm_quality_checks/mdm_governance_suggestions/mdm_ai_suggestions 0 污染
 - 活文档变更日志 v1.101 登记
 
+## v1.102 verify-rls 缺口 2 项清零 + 层2 G/H 实测结论（2026-10-23）
+- [x] **verify-rls 新缺口修复**：复验发现 gis.schema_defense_ledger / gis.track_positions「有策略但 RLS 未启用」（`gis_allow_all_*` PERMISSIVE ALL 宽松全放行，启用无业务影响）→ `ALTER TABLE … ENABLE ROW LEVEL SECURITY`（主库；topems_prepare 无 gis 域）→ **verify-rls 缺口 0（1181 策略表全绿）**
+- [x] **层2 G 质量链实测**：qms→lims→ehs 事件 stream 已接线（QmsInspectionCompleted/QmsToLimsSyncTriggered/LimsToEhsTriggered/EhsAccidentInvestigated 均在），本机 0 数据（无业务活动），链路待生产数据验证
+- [x] **层2 H WS 看板实测结论**：`/ws/mes/dashboard` 已随 mes 镜像模块**设计移除**（unified-core routes/mod.rs:104 注释 U1-b1/D1 §5 选项C）——smoke-prod 层2 H 指引过时；核心 WS 保留（/ws/core/notifications、/ws/core/im）
+- 门禁：contract-gate 0 缺口保持 + verify-rls 1181 全绿
+- 活文档变更日志 v1.102 登记
+
 
 
