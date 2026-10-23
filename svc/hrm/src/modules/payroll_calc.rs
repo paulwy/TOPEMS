@@ -347,13 +347,10 @@ pub fn calculate_monthly_payroll(input: &PayrollInput) -> PayrollResult {
 
 // ============ 从 payroll.rs handler 抽出的纯函数 ============
 
-/// 单个员工 mock 薪资分解（占位逻辑：按员工序号递增基本工资）
+/// 单员工薪资分解（gross/taxes/deductions/net）。
 ///
-/// 对应原 create_payroll_items 中的内联计算：
-///   gross = 5000 + index × 100
-///   taxes = gross × 10%
-///   deductions = gross × 5%
-///   net   = gross - taxes - deductions
+/// 不再使用按序号编造的 mock 实现；gross 由调用方从 hrm.contracts.salary
+/// （active 合同）真实取数，本结构仅承载法定计算结果。
 #[derive(Debug, Clone)]
 pub struct PayrollItemAmounts {
     pub gross: BigDecimal,
@@ -362,18 +359,25 @@ pub struct PayrollItemAmounts {
     pub net: BigDecimal,
 }
 
-pub fn mock_employee_salary_components(employee_index: i32) -> PayrollItemAmounts {
-    let idx = employee_index.max(1);
-    let base = BigDecimal::from(5000);
-    let gross = base + (BigDecimal::from(idx) * BigDecimal::from(100));
+/// 基于真实合同月薪生成单员工薪资分解（法定计算，非编造）。
+///
+/// - `gross`：入参月薪（来自 hrm.contracts.salary，active 合同）；
+/// - `deductions`：社保公积金个人部分（`InsuranceConfig::default()` 默认比例）；
+/// - `taxes`：月度应纳税所得额对应的个税（单月简化口径，`progressive_tax`）；
+/// - `net`：gross - deductions - taxes，不低于 0。
+pub fn payroll_amounts_from_gross(monthly_gross: &BigDecimal) -> PayrollItemAmounts {
+    let zero = BigDecimal::from(0);
+    let gross = if monthly_gross > &zero {
+        monthly_gross.clone()
+    } else {
+        zero.clone()
+    };
 
-    let tax_rate = BigDecimal::from_str("0.1").unwrap_or_else(|_| BigDecimal::from(0));
-    let deduction_rate = BigDecimal::from_str("0.05").unwrap_or_else(|_| BigDecimal::from(0));
-
-    let taxes = &gross * &tax_rate;
-    let deductions = &gross * &deduction_rate;
-    let net_raw = &gross - &taxes - &deductions;
-    let net = net_raw.max(BigDecimal::from(0));
+    let insurance = calculate_insurance(&gross, &InsuranceConfig::default());
+    let taxable = monthly_taxable_income(&gross, &insurance.total_personal, &zero, &zero);
+    let taxes = progressive_tax(&taxable);
+    let deductions = insurance.total_personal;
+    let net = (&gross - &deductions - &taxes).max(zero);
 
     PayrollItemAmounts {
         gross,
@@ -845,68 +849,40 @@ mod tests {
         assert!((gross - 10862.07).abs() < 1.0);
     }
 
-    // ========== mock_employee_salary_components ==========
+    // ========== payroll_amounts_from_gross（真实法定计算，非编造）==========
 
     #[test]
-    fn test_mock_employee_index_1() {
-        let r = mock_employee_salary_components(1);
-        // gross = 5000 + 100 = 5100
-        assert_eq!(r.gross, bd("5100"));
-        // taxes = 5100 × 0.1 = 510
-        assert_eq!(r.taxes, bd("510"));
-        // deductions = 5100 × 0.05 = 255
-        assert_eq!(r.deductions, bd("255"));
-        // net = 5100 - 510 - 255 = 4335
-        assert_eq!(r.net, bd("4335"));
+    fn test_payroll_amounts_from_gross_normal_salary() {
+        // 月薪 10000：社保个人 = 10000 × (0.08+0.02+0.005+0.12) = 2250
+        let r = payroll_amounts_from_gross(&bd("10000"));
+        assert_eq!(r.gross, bd("10000"));
+        let ded = r.deductions.to_f64().unwrap();
+        assert!((ded - 2250.0).abs() < 0.01, "deductions={}", ded);
+        // 应纳税所得额 = 10000 - 5000(起征) - 2250(社保) = 2750；税 = 2750 × 3% = 82.5
+        let tax = r.taxes.to_f64().unwrap();
+        assert!((tax - 82.5).abs() < 0.01, "tax={}", tax);
+        // 实发 = 10000 - 2250 - 82.5 = 7667.5
+        let net = r.net.to_f64().unwrap();
+        assert!((net - 7667.5).abs() < 0.01, "net={}", net);
     }
 
     #[test]
-    fn test_mock_employee_index_0_is_clamped_to_1() {
-        // index 0 → clamp 到 1
-        let r0 = mock_employee_salary_components(0);
-        let r1 = mock_employee_salary_components(1);
-        assert_eq!(r0.gross, r1.gross);
-        assert_eq!(r0.net, r1.net);
+    fn test_payroll_amounts_from_gross_below_threshold_no_tax() {
+        // 月薪 4000 < 5000 起征点 → 个税 = 0
+        let r = payroll_amounts_from_gross(&bd("4000"));
+        assert_eq!(r.taxes, BigDecimal::from(0));
+        assert!(r.net > BigDecimal::from(0));
     }
 
     #[test]
-    fn test_mock_employee_negative_index_clamped() {
-        let rn = mock_employee_salary_components(-5);
-        let r1 = mock_employee_salary_components(1);
-        assert_eq!(rn.gross, r1.gross);
-    }
-
-    #[test]
-    fn test_mock_employee_sum_total_matches_expected() {
-        // 10 员工的 gross 总和：5100 + 5200 + ... + 6000
-        let mut sum_gross = BigDecimal::from(0);
-        let mut sum_net = BigDecimal::from(0);
-        for i in 1..=10 {
-            let r = mock_employee_salary_components(i);
-            sum_gross += &r.gross;
-            sum_net += r.net;
-        }
-        // (5100 + 6000) × 10 / 2 = 55500
-        assert_eq!(sum_gross, bd("55500"));
-        // net = gross × (1 - 0.1 - 0.05) = gross × 0.85
-        let expected_net = bd("55500") * bd("0.85");
-        let diff = (&sum_net - &expected_net)
-            .abs()
-            .to_f64()
-            .unwrap_or(f64::MAX);
-        assert!(diff < 0.01);
-    }
-
-    #[test]
-    fn test_mock_employee_1000_employees_no_panic() {
-        // 大数量循环不 panic
-        let mut total = BigDecimal::from(0);
-        for i in 1..=1000 {
-            let r = mock_employee_salary_components(i);
-            assert!(r.net >= BigDecimal::from(0));
-            total += r.gross;
-        }
-        assert!(total > BigDecimal::from(0));
+    fn test_payroll_amounts_from_gross_zero_or_negative_clamped() {
+        let r0 = payroll_amounts_from_gross(&bd("0"));
+        assert_eq!(r0.gross, BigDecimal::from(0));
+        assert_eq!(r0.taxes, BigDecimal::from(0));
+        assert!(r0.net >= BigDecimal::from(0));
+        let rn = payroll_amounts_from_gross(&bd("-500"));
+        assert_eq!(rn.gross, BigDecimal::from(0));
+        assert!(rn.net >= BigDecimal::from(0));
     }
 
     // ========== estimate_total_payroll ==========

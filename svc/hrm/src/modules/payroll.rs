@@ -13,7 +13,6 @@ fn bd_to_dec(bd: &BigDecimal) -> rust_decimal::Decimal {
 }
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
 use std::str::FromStr;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
@@ -21,9 +20,9 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use crate::modules::payroll_calc::{
-    build_payroll_voucher_entries, estimate_total_payroll, format_voucher_period,
-    generate_voucher_number, mock_employee_salary_components, net_salary_from_deductions,
-    split_deductions_into_social_security, validate_pay_period, PayrollVoucherSummary,
+    build_payroll_voucher_entries, format_voucher_period, generate_voucher_number,
+    net_salary_from_deductions, payroll_amounts_from_gross, split_deductions_into_social_security,
+    validate_pay_period, PayrollVoucherSummary,
 };
 use topems_shared_core::response::ApiResponse;
 
@@ -244,7 +243,8 @@ pub async fn create_payroll_run(
     let result = sqlx::query_as::<_, PayrollRun>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.payroll_runs (id, pay_period, status, total_amount, employee_count, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, 'draft', 0, 0, $3, $4, $5)
+        VALUES ($1, $2, 'draft', 0, 0, $3, $4,
+                COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         "#)
     )
@@ -252,7 +252,6 @@ pub async fn create_payroll_run(
     .bind(&req.pay_period)
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
     .fetch_one(&mut **txn)
     .await;
 
@@ -447,6 +446,15 @@ pub async fn delete_payroll_run(
     response
 }
 
+/// 真实薪资聚合源：在职员工 + 其最新 active 合同薪资（不再编造 employee_id / 金额）。
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct PayrollSourceEmployee {
+    employee_id: Uuid,
+    tenant_id: Uuid,
+    bank_account: Option<String>,
+    gross_salary: BigDecimal,
+}
+
 #[utoipa::path(
     put,
     security(("bearerAuth" = [])),
@@ -462,7 +470,7 @@ pub async fn delete_payroll_run(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn calculate_payroll_run(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -472,16 +480,114 @@ pub async fn calculate_payroll_run(
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
-    let result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+    // 1) 校验 run 存在、处于 draft 且属于当前租户
+    let existing = sqlx::query_as::<_, PayrollRun>(only_own_schema_query!(
         "hrm",
-        "SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'"
+        r#"
+        SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
+        FROM hrm.payroll_runs
+        WHERE id = $1 AND status = 'draft' AND deleted_at IS NULL
+          AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL
+               OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        "#
     ))
-    .fetch_one(&mut **txn)
+    .bind(id)
+    .fetch_optional(&mut **txn)
     .await;
 
-    let emp_count = result.unwrap_or(0);
-    let total_amount = estimate_total_payroll(emp_count, 5000);
+    let existing: Option<PayrollRun> = match existing {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("查询薪资周期失败: {}", e);
+            return Json(ApiResponse::<PayrollRun>::error(500, "查询薪资周期失败"));
+        }
+    };
 
+    if existing.is_none() {
+        return Json(ApiResponse::<PayrollRun>::error(
+            404,
+            "薪资周期不存在或状态不正确",
+        ));
+    }
+
+    // 2) 真实聚合：active 员工 JOIN 最新 active 合同薪资（>0），无合同薪资者不参与发薪（不编造）
+    let employees = sqlx::query_as::<_, PayrollSourceEmployee>(only_own_schema_query!(
+        "hrm",
+        r#"
+        SELECT e.id AS employee_id,
+               e.tenant_id AS tenant_id,
+               e.bank_account AS bank_account,
+               c.salary AS gross_salary
+        FROM hrm.employees e
+        JOIN LATERAL (
+            SELECT c.salary
+            FROM hrm.contracts c
+            WHERE c.employee_id = e.id
+              AND c.status = 'active'
+              AND c.deleted_at IS NULL
+              AND c.salary IS NOT NULL
+              AND c.salary > 0
+            ORDER BY c.created_at DESC
+            LIMIT 1
+        ) c ON TRUE
+        WHERE e.status = 'active'
+          AND e.deleted_at IS NULL
+          AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL
+               OR e.tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        "#
+    ))
+    .fetch_all(&mut **txn)
+    .await;
+
+    let employees = match employees {
+        Ok(rows) => rows,
+        Err(e) => {
+            tracing::error!("聚合在职员工薪资失败: {}", e);
+            return Json(ApiResponse::<PayrollRun>::error(500, "聚合在职员工薪资失败"));
+        }
+    };
+
+    // 3) 逐条用真实法定计算引擎生成明细并落库（错误向上返回，不再 let _ = 吞错）
+    let mut total_gross = BigDecimal::from(0);
+    let mut item_count: i64 = 0;
+    for emp in &employees {
+        let amounts = payroll_amounts_from_gross(&emp.gross_salary);
+        let item_id = Uuid::new_v4();
+        let res = sqlx::query(only_own_schema_query!(
+            "hrm",
+            r#"
+            INSERT INTO hrm.payroll_items (
+                id, payroll_run_id, employee_id, gross_amount, net_amount,
+                deductions, taxes, status, bank_account, created_at, updated_at, tenant_id
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, NOW(), NOW(), $9)
+            "#
+        ))
+        .bind(item_id)
+        .bind(id)
+        .bind(emp.employee_id)
+        .bind(&amounts.gross)
+        .bind(&amounts.net)
+        .bind(&amounts.deductions)
+        .bind(&amounts.taxes)
+        .bind(&emp.bank_account)
+        .bind(emp.tenant_id)
+        .execute(&mut **txn)
+        .await;
+
+        if let Err(e) = res {
+            tracing::error!(
+                "写入薪资明细失败 employee_id={}: {}",
+                emp.employee_id,
+                e
+            );
+            return Json(ApiResponse::<PayrollRun>::error(500, "写入薪资明细失败"));
+        }
+        total_gross += &amounts.gross;
+        item_count += 1;
+    }
+
+    // 4) 汇总回写 run（total/employee_count 来自真实聚合，而非 count×5000 估算）
     let result = sqlx::query_as::<_, PayrollRun>(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.payroll_runs
@@ -491,15 +597,14 @@ pub async fn calculate_payroll_run(
         "#)
     )
     .bind(id)
-    .bind(total_amount)
-    .bind(emp_count)
+    .bind(&total_gross)
+    .bind(item_count as i32)
     .bind(now)
     .fetch_optional(&mut **txn)
     .await;
 
     match result {
         Ok(Some(run)) => {
-            let _ = create_payroll_items(&state.db, id, emp_count as i32).await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -517,41 +622,6 @@ pub async fn calculate_payroll_run(
             Json(ApiResponse::<PayrollRun>::error(500, "计算薪资失败"))
         }
     }
-}
-
-pub async fn create_payroll_items(
-    db: &PgPool,
-    payroll_run_id: Uuid,
-    emp_count: i32,
-) -> Result<(), sqlx::Error> {
-    for i in 1..=emp_count {
-        let item_id = Uuid::new_v4();
-        let emp_id = Uuid::new_v4();
-        let amounts = mock_employee_salary_components(i);
-        let gross_amount = amounts.gross;
-        let taxes = amounts.taxes;
-        let deductions = amounts.deductions;
-        let net_amount = amounts.net;
-
-        let _ = sqlx::query(
-            only_own_schema_query!("hrm", r#"
-            INSERT INTO hrm.payroll_items (id, payroll_run_id, employee_id, gross_amount, net_amount, deductions, taxes, status, created_at, updated_at, tenant_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', NOW(), NOW(), $8)
-            "#)
-        )
-        .bind(item_id)
-        .bind(payroll_run_id)
-        .bind(emp_id)
-        .bind(gross_amount)
-        .bind(net_amount)
-        .bind(deductions)
-        .bind(taxes)
-        .bind(Uuid::nil())
-        .execute(db)
-        .await;
-    }
-
-    Ok(())
 }
 
 #[utoipa::path(
@@ -578,7 +648,30 @@ pub async fn pay_payroll_run(
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
 
-    let _ = sqlx::query(only_own_schema_query!(
+    // 前置校验：仅当该 run 存在真实待发（pending）明细时才允许发放，
+    // 避免把无明细/未计算的 run 直接置为 paid。
+    let pending_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "hrm",
+        r#"
+        SELECT COUNT(*) FROM hrm.payroll_items
+        WHERE payroll_run_id = $1 AND status = 'pending'
+          AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL
+               OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        "#
+    ))
+    .bind(id)
+    .fetch_one(&mut **txn)
+    .await
+    .unwrap_or(0);
+
+    if pending_count == 0 {
+        return Json(ApiResponse::<PayrollRun>::error(
+            400,
+            "无可发放的薪资明细，请先执行薪资计算",
+        ));
+    }
+
+    let items_res = sqlx::query(only_own_schema_query!(
         "hrm",
         r#"
         UPDATE hrm.payroll_items
@@ -590,6 +683,11 @@ pub async fn pay_payroll_run(
     .bind(now)
     .execute(&mut **txn)
     .await;
+
+    if let Err(e) = items_res {
+        tracing::error!("更新薪资明细发放状态失败: {}", e);
+        return Json(ApiResponse::<PayrollRun>::error(500, "发放薪资失败"));
+    }
 
     let result = sqlx::query_as::<_, PayrollRun>(
         only_own_schema_query!("hrm", r#"
@@ -857,7 +955,9 @@ pub async fn create_payroll_detail(
     let result = sqlx::query_as::<_, PayrollDetail>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.payroll_details (id, payroll_item_id, item_type, category, description, amount, created_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(),
+                COALESCE((SELECT tenant_id FROM hrm.payroll_items WHERE id = $2),
+                          COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')))
         RETURNING id, payroll_item_id, item_type, category, description, amount, created_at
         "#)
     )
@@ -867,7 +967,6 @@ pub async fn create_payroll_detail(
     .bind(&req.category)
     .bind(&req.description)
     .bind(&req.amount)
-    .bind(Uuid::nil())
     .fetch_one(&mut **txn)
     .await;
 
