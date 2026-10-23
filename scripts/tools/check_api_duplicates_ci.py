@@ -182,7 +182,10 @@ def _find_function_ranges(content: str) -> List[Tuple[int, int]]:
                 if found_open and brace_count == 0:
                     end_line = j + 1
                     fn_ranges.append((start_line, end_line))
-                    i = j
+                    # 必须跳过到函数结束行的下一行：单行函数（如 `fn _health() {}`）
+                    # 会让 j == i，若写 i = j 则外层循环反复处理同一行，陷入无限循环
+                    # 并把 fn_ranges 撑爆内存
+                    i = j + 1
                     break
                 j += 1
             else:
