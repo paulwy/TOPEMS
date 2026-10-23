@@ -3579,3 +3579,50 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **vendor/rsa 死代码根因修复（配套闭环）**：-D warnings 实跑暴露 pkcs1v15_encrypt_unpad/decrypt_inner 死代码（Marvin PR #702 补丁后无调用者）→ 加 #[allow(dead_code)] + 注释（保留补丁 API 完整）；Cargo.toml 删 4 个指向已裁剪 tests/ 的悬空 [[test]] 条目；全量 `RUSTFLAGS="-D warnings" cargo check --workspace --all-targets` 复跑 **CHECK_EXIT=0、0 error**（29 svc + lib 全过）；本地 pre-push 与 CI 现同参同结果不再红
 - [x] **rustc-ice 核对**：rustc-ice-2026-10-23T15_40_55-60650.txt 为 0 字节空文件（rustc 1.98-nightly 崩溃瞬间残留，后续编译重试成功、推送钩子全绿）——环境噪声，记录不需修复；另有 10-22 旧实例同类残留
 - 状态：门禁遗留 4 项全部完成待合批提交；未 push（推送由用户确认后统一执行）
+## 审计修复实施登记 Phase P2（2026-10-24，第三批 P2 48 项分域收口，未提交待合批）
+### 架构核心
+- [x] **server feature 门控错配**：modules/mod.rs:11 ai_real_module `module-advanced`→`module-ai`（与文件内 cfg/main.rs 三方对齐）
+- [x] **unified-core 嵌入模式字段加密**：embedded.rs 桩 None → standalone 对齐真初始化（TOPEMS_FIELD_ENCRYPTION_KEY/SETTINGS_ENCRYPTION_KEY/ENCRYPTION_KEY 探测+SHA256 派生），SMTP 密码/API key 不再明文落库
+- [x] **standalone business-tools/permissions 写路由**：public_routes（无 auth）→ core_protected_routes（auth 层内），嵌入模式同挂载，两形态对齐（/api/core 前缀，BE-08 登记一致、无调用方）
+- [x] **portal REST 门控**：protected 链拆 personal（取消 portal:admin，任意已认证用户）+/admin（保留，管理写）；权限码已由 20261020000024 seed（P0-4），角色绑定按非破坏约定留待决策
+- [x] **模块组元数据**：ai_real→ModuleGroup::Ai、pdm/pm→Erp（对齐设计文档 §2）
+### 制造域
+- [x] **mes energy_management**：无能耗表（grep 0 命中）→ 7 GET 端点删 rand 合成值改诚实 501（energy_source_unavailable helper，结构体保留待真实采集表）
+- [x] **tms 44 处 expect panic**：expect("rls txn missing") 全改优雅降级（Err→500 Internal，日志）；4 文件（shipment/vehicle/carrier/driver）UPDATE 补 DB 级 status 守卫（rows_affected 语义）
+- [x] **qms submit_result 勾稽**：合格+不合格>总量 → 400（=总量允许）
+- [x] **lims FSM 边校验**：SAMPLE_STAGE_EDGES 常量 + 非法转移 409 + 2 单测（151 passed）
+- [x] **ehs data_sync/integration nil 豁免登记**：qa_ehs_sync_records 无 tenant_id 系统级同步日志（豁免注释）；integration internal 端点对齐 qms P1-4 契约（Uuid::nil() 全局集成行+注释）
+- [ ] **mes UPDATE 租户谓词（缺口）**：work_order 7 处+material_plan 2 处补 GUC 谓词后因 sqlx 离线缓存失配回退——需 DB 环境 cargo sqlx prepare 后重放；另有 ~70 处同类待后续批
+### 供应链域
+- [x] **wms 收货校验**：received_quantity 非负/不超应收/明细归属（400），应用层拦截防 GUC 静默
+- [x] **scm 审批前置门**：purchase_order+supplier_delivery_appointment 补 AND status='pending' AND deleted_at IS NULL + RowNotFound→409（另三处已有）
+- [x] **srm supplier_portal**：admin_routes（srm:admin 保留）/portal_routes（去伞码，内部 srm:read+tenant/supplier_id 隔离）拆分；supplier 账号映射表属 DDL 待后续
+### 财务域
+- [x] **erp 列表 deleted_at**：7 文件 6+1 列表 SELECT 补谓词与 COUNT 对齐
+- [x] **erp 库存**：创建负数 400；update 租户谓词 + available_quantity CASE 重算防盲覆盖
+- [x] **erp 凭证事务**：分录错误不再静默吞（match 错误返回，事务回滚无孤儿草稿）；voucher_no 唯一约束遵循 20261023000020 候选登记（口径待财务确认）
+- [x] **erp 质量修复**：simulate_repair_step 恒返成功删除 → 501 标记 failed（诚实）
+- [x] **analytics 30 个硬编码 KPI**：零 sqlx 全清点 → 无真实数据源（schema 边界 gate 禁读业务表）全部诚实 501/degraded（998 行收口，16 单测+集成测试更新）
+- [x] **reports_center_export 假导出**：routes+main 双副本删假 row_count/placeholder url → 501
+- [x] **RLP 管道**：check_permission 恒真/filter_data 假过滤两 enforcement 端点 → 501（CRUD/validate 保留）；FilteredDataResponse allow(dead_code)
+- [x] **confirm_collection**（finance）：单事务 + FOR UPDATE 锁记录/发票 + AND status!='confirmed' 原子谓词 + rows_affected 0 → 409 + 超收（确认额>应收余额）400，batch 同口径
+- [x] **accounting_subjects**（finance）：创建绑 body.tenant_id → claims 派生
+### 平台域
+- [x] **integration async_task_queue 死代码**：全仓零引用 → mod 注释化+废弃横幅（迁移未动）
+- [x] **external_erp SSRF 配套**：封锁回环/链路本地/未指定段+localhost、错误脱敏（原文仅服务端日志）、上游非 2xx body 不回传；私网白名单标注待产品确认、DNS 重绑定留后续
+- [x] **communication 邮件队列持久化**：复用 core_email_queue 落库（DashMap 仅镜像）+ 失败重试/超 max failed 待人工；210 passed
+- [x] **ai Failover 降级标记**：LlmResponse.degraded + 切 Mock 显式标记/日志（2 新测试）；显式配置 Mock 维持
+- [x] **ticket 状态机**：util.rs 已有 FSM 但从未调用 → update_ticket 接线（非法值/非法转移 400、不存在 404）；main.rs 补 mod util
+- [x] **mobile 条码去编造**：match_barcode 删"测试物品"→ None；扫描仍落库；2 单测更新（250 passed）
+- [x] **search 显式 tenant**：core_files 补 GUC 租户过滤（tenant_id NOT NULL 业务表）；core_users 登记全局身份目录不假过滤
+### 前端 + 数据库
+- [x] **WS 签名密钥源统一**：useWebSocket.ts 删硬编码默认 `'topems-ws-signing-secret'` → VITE_WS_SIGNING_SECRET ?? ''（缺失不签+warn，与后端 jwt_secret 验签 HMAC 口径一致）；vite.config define 同步
+- [x] **4 表 RLS**：新迁移 20261024000001（finance.expense_approvals/scm.incoming_notices/communication.core_notification_templates/ehs.qa_ehs_drill_evaluations 全有 tenant_id → ENABLE+FORCE+策略，无豁免项）
+- [x] **lims CHECK 放宽**：新迁移 20261024000002（qa_lab_samples.status 5→11 值，⊃FSM 全阶段）
+- [x] **迁移撞号修复**：20261023000005_master_data_domain_rls（后并入 9ba0502ff）→ git mv 20261023000009 + checksums 同步；validate.sh Errors=0、check-migrations 重复序号错误消除
+### MCP/基建
+- [x] **MCP HTTP/SSE resources 核对**：SSE 非独立通道（共享 McpServer 注册表），两形态已覆盖，零改动
+- [x] **e2e 迁移子目录**：确认统一源 database/migrations（469 版），删过时 TODO 注释
+- [x] **overrides 过期**：ip-address 10.7.1→10.7.4、@vitest/mocker 4.1.11→4.1.12（根 pnpm.overrides，lockfile 实证）；pnpm audit 两项 0 命中
+- [x] **plugin.yaml 残留核对**：validator 0 告警；permissions:{} 属合一兼容反序列化设计内写法
+- 状态：P2 分域收口完成待合批提交；未 push（推送由用户确认后统一执行）
