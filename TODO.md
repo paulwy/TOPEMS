@@ -3534,3 +3534,41 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **P1-24 integration 假探测**：提取公共 probe_http_url（5s 超时+错误传播），两处 test_connection 统一真实 reqwest 探测；SSRF 白名单属 P2-2 需产品决策标注留待
 - [x] **工程门禁（Phase D 横切线提前项）**：perm-matrix-toolkit R2 正则追加 require_module_access 识别（一行，消除 erp/qms/scm/wms/master-data 5 服务误报）；permission-matrix-guard 4/4 绿
 - 状态：Phase C 11 项已修复待合批提交；Phase D 启动中
+## 审计修复实施登记 Phase D（2026-10-23，第三批收口 + 横切线，未提交待合批）
+### 批次1 租户隔离统一收口
+- [x] **P1-1 wms 9 模块租户硬编码（15 处）**：data_sync/warehouse/wave_pick/inventory/discrepancy/cycle_count/location/inventory_alert/stock_take organization_id 硬编码 `...0001` → 全部改绑会话派生租户参数（复用 outbound 模式）；grep 零业务残留；check/clippy 0 error、541 passed
+- [x] **P1-2 wms 入库事件真实性**：inbound_order.rs 删金额当数量（total_amount→quantity）、按明细逐条发射真实 material_code/name/unit+数量；WmsInventoryItemReceivedPayload 补 tenant_id: Option<Uuid>（与 shipped 对称）；shared-event/scm/finance check 通过
+- [x] **P1-3 wms slotting 占位**：无规则分支删 MOCK-MATERIAL 占位 INSERT，改诚实返回空+degraded:true+提示（不加迁移）
+- [x] **P1-4 hrm 5 处 nil 租户**：recruitment.rs×3/training.rs×2 `.bind(Uuid::nil())` → claims_tenant 派生（对齐 enrollments 模式）；291+21 passed
+- [x] **P1-6 master-data AI 建议租户**：ai_governance_v59.rs 6 处硬编码 → req_tenant_uuid(claims) 绑定；固定 confidence/action 甄别为纯本地启发式无真实 AI 输入 → degraded 标注（保留契约）；451 passed
+- [x] **P1-11 crm analytics 7 端点接真**：empty_with_mock 全删（0 残留），overview/funnel/scoring/forecast/segmentation/billing/recommendation 全部真实落库聚合（opportunities/customers/customer_scores/rfm/sales_forecasts/billing_records/customer_recommendations，按租户过滤）；segmentation 因 customer_segments 无 tenant_id 改 customers×interactions 四象限并标注待产品确认；mock_enabled 恒 false；10 analytics 单测 passed
+### 批次2 事件 payload 真实性
+- [x] **P1-5 pm settlement 事件**：SettlementCreatedPayload/SettlementApprovedPayload tenant_id 绑行真实租户（:150 effective_tenant_id 同源）、approved_by 改 claims.sub 真实操作人（删 "system" 写死）；497+524 passed
+### 批次3 前端可见假数据收口
+- [x] **P1-9 portal 演示模拟器门禁**：新建 is_dev_demo_mode()（APP_ENV 白名单 + TOPEMS_DEMO_MODE opt-in，生产默认关闭）；embedded.rs Redis 降级双分支非 dev 不再启动模拟器（只记 warn）；模拟器内部门禁 + [DEMO] 标记；582 passed
+- [x] **P1-10 portal ai_assist demo seed 门禁**：seed_optimization_demo_data 仅 dev 模式执行
+- [x] **P1-12 finance 对账置信度门控**：classify_match 分强（exact/reference 自动 matched confidence:high）/弱（fuzzy/amount 收集 low_confidence_pairs 不写库需人工确认）；MatchedPair.confidence + MatchResult.low_confidence_pairs 向后兼容；1086 passed
+- [x] **前端摘 CRM Mock（P1-11 配套）**：apps/web 7 页面 mock 判定改读后端 meta.mock_enabled（恒 false → 真实 fetcher）；新 api/crm/analytics.ts 接 7 端点；字段映射适配+诚实空态；mockData.ts（useCrmMock seed=42）整文件删除；typecheck/lint/130+34 tests/build 全绿
+### 批次4 诚实空/501 决策
+- [x] **P2-5 unified-core 权限假成功→501**：iam/permission.rs 三处"已记录（待上游支持）"改诚实 501（success:false+code:501，路由/OpenAPI 保留）
+- [x] **P2-7 unified-core copilot 桩→501**：contract_stubs.rs DELETE sessions/GET faq 改诚实 501 + 删 4 个 dead helper；前端 businessCopilot.ts:214/260 建议改指 svc/ai（待 ai 实现子路径）
+- [x] **P2-8 ticket 看板 degraded**：trend/sla-overview/assignee-load 3 端点加 degraded:true+原因（空数据诚实）
+- [x] **P2-10 lims PDF 占位 degraded**：删伪造 pdf_url，改 format:json_placeholder+degraded:true 标注
+- [x] **P2-9 ai 会话消息维持确认**：无独立消息表（core.ai_conversations 六列），list_messages 诚实空+404，不虚构不加迁移
+- [x] **P2-12 ai Mock provider 维持确认**：配置显式门控（parse_provider_env 仅 mock 配置命中），11 factory tests 通过
+- [x] **P2-6/P2-11 维持确认**：doc/handlers 30 端点已诚实（写 404+list 空）；flow/category.rs:374 空列表诚实（core_workflows 无 category_id 列）
+### 横切线①MCP 基建（s_000p5EKECnS）
+- [x] **resources/list 双形态漂移**：嵌入形态 routes.rs spawn 块漏调 register_resources() → 补上，stdio/HTTP 两形态同注册表（3 业务资源）；159 mcp tests + 10 stdio integration passed
+- [x] **sensitive_output 机制**：协议层 SensitiveOutput{fields,contains_sensitive} + RegisteredTool 声明 + security.rs mask_secret_string（前3后4）作用于 text 内嵌 JSON + server.rs 输出层接线；真实声明落 hr.get_employee（id_card/bank_account）；其余 61 工具字段级声明留后续批
+### 横切线②DB 兜底（s_000p5r0r0n2）
+- [x] **无 tenant_id 表盘点**：5432 全量反查 425 张无 tenant_id（排除设计内全局/平台表后业务表 ~100+ 待产品决策）；crm.customer_segments/customer_recommendations 豁免登记不改结构（待产品确认隔离方案）；发现 crm.core_crm_customers RLS=on/FORCE=on 却无 tenant_id（策略错配已上报）
+- [x] **唯一约束补强**：新迁移 `20261023000020_erp_biz_unique_constraints.sql` 幂等 DO 块补 erp.suppliers(tenant_id,code)/materials(tenant_id,code)/purchase_orders(tenant_id,order_no) 3 约束；SQL 空跑验证幂等；validate.sh Errors:0、check-migrations PASS
+### 横切线③plugin.yaml schema 三套合一（s_000p5r0rEvp）
+- [x] 运行时契约（plugin-registry 消费，零改动）+ 磁盘工件 27×plugin.yaml（CI 校验）+ 类型化 PluginManifest（悬空且与磁盘漂移）→ shared-core PluginManifest 加容忍 permissions deserializer + icon 字段 + validate-plugin-config.py warn 级 schema lint；43 tests 通过
+### 横切线④工程门禁一致性（s_000p5r0rRuw）
+- [x] clippy 本地 lefthook 对齐 CI `-- -D warnings`；迁移门禁补入 lefthook 链（check-migration-names --strict + check-migrations.mjs）；secret-scan.yml 修正 gitleaks 顺序（先建配置后扫描）；留待决策：e2e 后端启动、.gitleaks.toml 仓库化、gitleaks 入 lefthook 前置、run-cargo-check.sh -D warnings
+### 收口随行
+- [x] **P1-7 rd allocation 类型**：f32 → f64（与同表 20261023000007 四列 float8 方案对齐）；schema_defense 同步 DOUBLE PRECISION；新迁移 `20261023000008_rd_project_members_allocation_float8.sql` 幂等 ALTER；13 passed、validate.sh Errors:0
+- [x] **P1-8 rd 写操作忽略字段**：CREATE 补 hourly_rate/cost_rate/budgeted_hours 3 列、UPDATE 补 4 列（含 actual_hours COALESCE）；前端"已保存"不再假象
+- [x] **wms 3 处 sqlx::query! 宏离线缓存手工补条目**（cycle_count:581/733、discrepancy:769，字面量改绑既有 $N 参数类型未变，从旧条目复制 introspection 元数据；整仓 sqlx prepare 会重生成，无需保留）
+- 状态：Phase D 收口全部完成待合批提交；Phase A/B/C/D 全部 commit 未 push（推送待用户确认）
