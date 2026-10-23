@@ -18,7 +18,7 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_mes::{modules, AppState};
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::health::SimpleHealthConfig;
@@ -139,7 +139,7 @@ impl MesRealModule {
 
         // 6. 业务路由（权限中间件 + 开发验证模拟认证）
         let protected_routes = modules::create_routes()
-            .layer(axum::middleware::from_fn(require_permission("mes:admin")))
+            .layer(axum::middleware::from_fn(require_module_access("mes")))
             .with_state(state.clone());
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)

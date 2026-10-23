@@ -12,7 +12,7 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
@@ -120,7 +120,7 @@ impl WmsRealModule {
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
-            .layer(axum::middleware::from_fn(require_permission("wms:admin")))
+            .layer(axum::middleware::from_fn(require_module_access("wms")))
             .with_state(state.clone())
             // V1.3 tier 治理：WMS 模块要求 Basic 及以上订阅层级
             .layer(axum::middleware::from_fn_with_state(

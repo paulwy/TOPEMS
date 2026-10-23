@@ -14,7 +14,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use topems_lims::modules;
 use topems_lims::shared::AppState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::health::SimpleHealthConfig;
@@ -99,7 +99,7 @@ impl LimsRealModule {
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
-            .layer(axum::middleware::from_fn(require_permission("lims:admin")))
+            .layer(axum::middleware::from_fn(require_module_access("lims")))
             .with_state(state);
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)

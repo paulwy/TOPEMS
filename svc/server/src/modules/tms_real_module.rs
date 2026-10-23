@@ -10,7 +10,7 @@
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
@@ -87,7 +87,7 @@ impl TmsRealModule {
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
-            .layer(axum::middleware::from_fn(require_permission("tms:admin")))
+            .layer(axum::middleware::from_fn(require_module_access("tms")))
             .with_state(state);
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)

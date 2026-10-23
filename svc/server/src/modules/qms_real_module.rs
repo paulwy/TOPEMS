@@ -16,7 +16,7 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_qms::shared::AppState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_auth::tenant_middleware;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
@@ -93,7 +93,7 @@ impl QmsRealModule {
                 state.pool.clone(),
                 tenant_middleware(),
             ))
-            .layer(axum::middleware::from_fn(require_permission("qms:admin")))
+            .layer(axum::middleware::from_fn(require_module_access("qms")))
             .with_state(state.clone())
             // V1.3 tier 治理：QMS 模块要求 Basic 及以上订阅层级
             .layer(axum::middleware::from_fn_with_state(

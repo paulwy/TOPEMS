@@ -15,7 +15,7 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_erp::modules::ApiState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_auth::tenant_middleware;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_core::error::Result;
@@ -148,7 +148,7 @@ impl ErpRealModule {
                 api_state.db.clone(),
                 tenant_middleware(),
             ))
-            .layer(axum::middleware::from_fn(require_permission("erp:admin")))
+            .layer(axum::middleware::from_fn(require_module_access("erp")))
             .with_state(api_state.clone());
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)

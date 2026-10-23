@@ -2,7 +2,7 @@
 //!
 //! 将真实 `topems-analytics` 服务（lib 形态）作为模块接入统一入口。
 //! analytics 使用 `routes::create_protected_routes() -> Router`（内部已含
-//! `require_permission("analytics:admin")` + `with_state(AppState)`）。
+//! `require_module_access("analytics")` + `with_state(AppState)`）。
 //!
 //! 由 feature `module-advanced` 门控（master-data 同组挂载）。
 

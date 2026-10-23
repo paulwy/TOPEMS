@@ -12,7 +12,7 @@ use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
 use topems_shared_auth::auth::AuthState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };
@@ -238,7 +238,7 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = Router::new()
         .merge(modules::create_routes())
         .route("/api/health/detailed", get(detailed_health))
-        .layer(axum::middleware::from_fn(require_permission("qms:admin")))
+        .layer(axum::middleware::from_fn(require_module_access("qms")))
         .with_state(api_state.clone())
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),

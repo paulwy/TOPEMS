@@ -272,7 +272,7 @@ pub async fn create_inbound_order(
         INSERT INTO wms.inbound_orders (id, organization_id, order_number, order_type, warehouse_id,
                                        supplier_id, order_date, expected_arrival_date, total_value,
                                        status, notes, created_at, updated_at, tenant_id)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'purchase', $3, $4, $5, $6, $7,
+        VALUES ($1, $12, $2, 'purchase', $3, $4, $5, $6, $7,
                'created', $8, $9, $10, $11)
         RETURNING id, organization_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
@@ -303,6 +303,7 @@ pub async fn create_inbound_order(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(tenant_id.clone())
     .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;

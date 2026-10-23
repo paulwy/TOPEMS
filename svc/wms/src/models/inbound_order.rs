@@ -7,7 +7,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct InboundOrder {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    pub tenant_id: Option<Uuid>,
     pub order_number: String,
     pub order_type: Option<String>,
     pub reference_number: Option<String>,
@@ -103,7 +103,7 @@ mod tests {
     fn sample_inbound_order() -> InboundOrder {
         InboundOrder {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             order_number: "INB-001".into(),
             order_type: Some("standard".into()),
             reference_number: None,

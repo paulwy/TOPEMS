@@ -78,6 +78,58 @@ pub fn require_permission(
     }
 }
 
+/// 模块级放行中间件：拥有 `<module>:` 前缀的任一权限码（或 `all`/`*`、超管）即放行。
+/// 用于将历史 `<module>:admin` 全局伞码过渡为模块级放行，解锁普通业务角色；
+/// 语义上模块内各端点同权，逐端点细粒度化为后续演进方向（见 Claims::has_module_permission）。
+pub fn require_module_access(
+    module: &'static str,
+) -> impl Fn(
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+       + Clone
+       + Send
+       + Sync {
+    move |req: Request<Body>, next: Next| {
+        let module = module;
+        Box::pin(async move {
+            if is_public_path(req.uri().path()) {
+                return next.run(req).await;
+            }
+            let claims = match extract_claims(&req) {
+                Some(c) => c,
+                None => {
+                    return (
+                        StatusCode::UNAUTHORIZED,
+                        [(header::CONTENT_TYPE, "application/json")],
+                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+                    )
+                        .into_response();
+                }
+            };
+
+            if !claims.has_module_permission(module) {
+                tracing::warn!(
+                    "Permission denied: user={}, module={}",
+                    claims.username,
+                    module
+                );
+                return (
+                    StatusCode::FORBIDDEN,
+                    [(header::CONTENT_TYPE, "application/json")],
+                    format!(
+                        r#"{{"success":false,"message":"权限不足：需要 {} 模块权限","code":403}}"#,
+                        module
+                    ),
+                )
+                    .into_response();
+            }
+
+            next.run(req).await
+        })
+    }
+}
+
 pub fn require_role(
     role: &'static str,
 ) -> impl Fn(

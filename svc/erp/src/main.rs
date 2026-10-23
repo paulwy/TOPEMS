@@ -16,7 +16,7 @@ use utoipa::OpenApi;
 
 use models::dict::DictType;
 use modules::ApiState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
@@ -236,7 +236,7 @@ async fn main() -> Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(axum::middleware::from_fn(require_permission("erp:admin")))
+        .layer(axum::middleware::from_fn(require_module_access("erp")))
         .with_state(api_state);
 
     // OpenAPI 文档

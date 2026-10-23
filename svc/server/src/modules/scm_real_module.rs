@@ -13,7 +13,7 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_scm::modules::{create_routes, ApiState};
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
@@ -100,7 +100,7 @@ impl ScmRealModule {
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
-            .layer(axum::middleware::from_fn(require_permission("scm:admin")))
+            .layer(axum::middleware::from_fn(require_module_access("scm")))
             .with_state(state.clone());
 
         // 5. 组装路由：api_prefix + 开发验证模拟认证

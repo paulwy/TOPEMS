@@ -17,7 +17,7 @@ use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_crm::modules::{crm_plugin, ApiState};
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
@@ -140,7 +140,7 @@ impl CrmRealModule {
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
-            .layer(axum::middleware::from_fn(require_permission("crm:admin")))
+            .layer(axum::middleware::from_fn(require_module_access("crm")))
             .with_state(state.clone());
 
         // 8. 组装路由：api_prefix + 插件路由 + 开发验证模拟认证

@@ -14,7 +14,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use topems_ehs::modules;
 use topems_ehs::shared::AppState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_core::health::SimpleHealthConfig;
@@ -111,7 +111,7 @@ impl EhsRealModule {
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
-            .layer(axum::middleware::from_fn(require_permission("ehs:admin")))
+            .layer(axum::middleware::from_fn(require_module_access("ehs")))
             .with_state(state);
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)

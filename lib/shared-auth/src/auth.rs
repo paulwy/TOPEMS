@@ -58,6 +58,19 @@ impl Claims {
             .any(|p| self.permissions.contains(&p.to_string()))
     }
 
+    /// 模块级权限判定：拥有该模块任一权限码（`<module>:` 前缀）即视为可用。
+    /// 兼容 `all`/`*` 通配与超管短路。用于历史 `<module>:admin` 全局伞码的过渡放行，
+    /// 后续逐端点细粒度化后可移除。
+    pub fn has_module_permission(&self, module: &str) -> bool {
+        if self.is_superuser {
+            return true;
+        }
+        let prefix = format!("{}:", module);
+        self.permissions
+            .iter()
+            .any(|p| p == "all" || p == "*" || p.starts_with(&prefix))
+    }
+
     pub fn has_all_permissions(&self, permissions: &[&str]) -> bool {
         if self.is_superuser {
             return true;

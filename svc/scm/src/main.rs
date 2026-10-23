@@ -21,7 +21,7 @@ use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer};
 
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 
 use modules::{scm_plugin, ApiState};
 
@@ -255,7 +255,7 @@ async fn main() -> Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(axum::middleware::from_fn(require_permission("scm:admin")))
+        .layer(axum::middleware::from_fn(require_module_access("scm")))
         .with_state(api_state);
 
     // OpenAPI 文档

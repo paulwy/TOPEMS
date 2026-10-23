@@ -12,7 +12,7 @@ use axum::Router;
 use std::sync::Arc;
 use topems_pdm::modules;
 use topems_pdm::shared::AppState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::health::SimpleHealthConfig;
@@ -82,7 +82,7 @@ impl PdmRealModule {
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
-            .layer(axum::middleware::from_fn(require_permission("pdm:admin")))
+            .layer(axum::middleware::from_fn(require_module_access("pdm")))
             .with_state(state);
 
         // 4. 组装路由：api_prefix + 认证中间件

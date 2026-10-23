@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.90（§4 最小业务闭环实跑：供应商→采购→入库→检验 4 环节 200；见文末变更日志） |
+| 版本 | v1.91（权限体系模块级放行：普通角色全链路可用；见文末变更日志） |
 | 最近更新 | 2026-10-23 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
@@ -150,7 +150,7 @@
 
 | # | 验证动作 | 落点 | 预期 | 状态/备注 |
 |---|---|---|---|---|
-| 4.1 | 用普通角色登录，验证菜单按权限可见可进 | 后端中间件兜底（越权 403 已验证） | 现状：可见全部入口，越权点进去被 403 | 部分（后端兜底生效；前端菜单过滤待办） |
+| 4.1 | 用普通角色登录，验证菜单按权限可见可进 | 后端权限链路：模块级放行（v1.91） | **v1.91 实测**：普通角色（租户B 4 个 manager 角色 173 权限）供应商→采购→入库→检验 4 环节全 200（原全 403）；越权（无权限模块）仍 403；wms 入库 organization_id 硬编码 001→绑定租户 | 部分（后端权限链路已打通；前端菜单过滤待办） |
 | 4.2 | 走通一条最小业务闭环（如：建物料→建供应商→建采购→入库→检验） | 跨 ERP/SCM/WMS/QMS | **v1.90 实跑**：供应商(erp)→采购单(scm)→入库(wms)→检验(qms) 4 环节全 200（supplier_id 关联，检验单 INS- 自动生成）；物料环节受限（master-data 8090 未启动 + test 库无 master_data schema，环境缺口另批补） | **已具备（核心链路）** |
 | 4.3 | 检查空组织下落地页是否报错/是否引导补录 | 主页初始化 checklist CTA（P2-1 `958e0cc9a`） | 已落地 | **已具备（P2-1）** |
 | 4.4 | 验证多租户/组织隔离 | 主流业务表已隔离（P1-8 `52cc3a467` + 批1 PM/ERP/BI），RLS 策略 + 应用层过滤齐备 | **已查证**：wms/qms 新建单 tenant_id=001 与 token claims 一致（test_admin 属 001 租户，非缺陷）；租户B（002）已建（flow.core_tenants/core_tenant_users 补主数据）且 claims 生效；非超管 wms 建单/列表全 403（wms:admin 硬阻，权限体系见 4.1）；超管建单 tenant_id 落 NULL（普通角色不可见，设计观察） | **已具备（隔离机制齐备）** |
@@ -372,6 +372,7 @@
 
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
+| 2026-10-23 | v1.91 | 权限体系：模块级放行（4.1 核心）✅ | 新增 `require_module_access` + `Claims::has_module_permission`（`<module>:` 前缀任一权限即放行，超管短路）；wms/erp/scm/qms 独立入口 + 聚合面 15 个 real_module 全局 `<mod>:admin` 伞码→模块级放行。实测：租户B（002）配 wms/scm/qms/erp manager（173 权限）后供应商→采购→入库→检验 4 环节全 200（原全 403）。修复 wms 入库 `organization_id` 硬编码全零 001→绑定 claims 租户（tenant2 建单落 002，列表隔离仅见本租户行）；`InboundOrder.tenant_id` 改 `Option`（超管建单公共行 NULL 解码 500→200）。测试租户B 主数据保留（flow.core_tenants/core_tenant_users/iam.users/core_users+角色，id 已对齐），验证业务数据已清理。角色权限缺口：`erp_manager` 种子缺失（临时建）；`<mod>:write/read` 总码未配入 manager 角色（临时补）；公共行应用层过滤排除待统一口径 |
 | 2026-10-23 | v1.90 | §4 最小业务闭环场景验证 ✅ | 4.2 实跑：供应商(erp) `SUP-CLOSE-001` → 采购单(scm) `PO-CLOSE-001` → 入库(wms) `INB-CLOSE-001` → 检验(qms) `INS-` 自动编号，4 环节全 200（supplier_id 跨模块关联）；物料环节受限（master-data 8090 未启动 + test 库无 master_data schema，另批补）。4.3 已具备（P2-1 checklist CTA）。4.4 查证：wms/qms tenant_id=001 与 claims 一致（非缺陷）；租户B（002）补建后 claims 生效；非超管 wms 全 403（权限体系 4.1 联动）；超管建单 tenant_id 落 NULL（普通角色不可见）。验证数据已清理 |
 | 2026-10-23 | v1.89 | 业务缺口批1：隔离补齐（PM/ERP/BI）+ 盘点校准 ✅ | 业务缺口批次启动：§2 共 28 项缺口分级，批 1 = 技术债/隔离类。实证收敛——RD material/GIS geofences/财务币种/PM 项目类型已修复（盘点过时），真实缺口 3 项：① **PM projects**：全仓无正式建表（主库缺表、test 空壳，INSERT/SELECT 引用 name_en/tags 与旧结构错位致列表/创建 500）→ 迁移 `20261023000001` 幂等建表（26 列对齐 Project struct，start_date/end_date timestamptz、tags text[]、progress int、created_by/cost_center_id varchar）+ 列表/get/dashboard 租户过滤 + RLS（tenant_isolation_projects，seed 并入）；② **ERP bank_accounts**：列表/get/delete 补 current_setting 租户过滤（列/INSERT 已具备）；③ **BI analytics_datasets**：列表/count 补租户过滤（is_public 放行）。验证：BFF 实跑 PM 创建/列表/get/删除全 200、双租户列表隔离（仅本租户）、ERP/BI 列表 200。§2 校准 13 行（P1-8/9/10、批7 已闭环项回写状态） |
 | 2026-10-23 | v1.88 | code-quality api_dup 性能瓶颈核销 ✅ | CI 11 FAIL 复核续：code-quality api_dup 核销——远端 `52b26e88e`（perf 脚本加速：注释剥离逐字符状态机 → re.sub 批量替换，并修生命周期注解 '_/'static 误剥 bug）；本地 --ci 全量复跑实证内存峰值由原 25GB+ 降至 ~4.6GB（CPU 活跃），修复有效；全量完成耗时长归 CI job 执行（lefthook Gate P 注明由 CI 执行，本地 pre-push 不含全量）。**CI 11 FAIL 累计 11/11 核销**。提交 `18f9198d9` |

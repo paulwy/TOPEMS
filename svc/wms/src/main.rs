@@ -18,7 +18,7 @@ use topems_shared_bootstrap::{
 
 use modules::wms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
 use modules::ApiState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
@@ -248,7 +248,7 @@ async fn main() -> Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(axum::middleware::from_fn(require_permission("wms:admin")))
+        .layer(axum::middleware::from_fn(require_module_access("wms")))
         .with_state(api_state);
 
     // OpenAPI 文档

@@ -11,7 +11,7 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use topems_pm::modules;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_auth::tenant_middleware;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
@@ -86,7 +86,7 @@ impl PmRealModule {
                     ctx.db.clone(),
                     tenant_middleware(),
                 ))
-                .layer(axum::middleware::from_fn(require_permission("pm:admin")));
+                .layer(axum::middleware::from_fn(require_module_access("pm")));
 
         // 5. 组装路由：api_prefix + 统一 JWT 认证（与独立部署一致）
         let routes = axum::Router::new()
