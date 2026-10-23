@@ -934,6 +934,8 @@ pub struct WmsInventoryItemReceivedPayload {
     pub supplier_name: Option<String>,
     pub received_by: Option<Uuid>,
     pub received_at: Option<DateTime<Utc>>,
+    /// 租户上下文（P1-2 补充；旧事件 JSON 缺该字段时按 None 反序列化，向后兼容）
+    pub tenant_id: Option<Uuid>,
 }
 
 /// 仓库间调拨完成事件 Payload

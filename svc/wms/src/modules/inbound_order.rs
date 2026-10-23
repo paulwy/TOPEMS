@@ -1460,57 +1460,112 @@ pub async fn receive_inbound_order(
 
     let (response, status_str, error_msg, response_data) = match order_result {
         Ok(order) => {
-            // P3 事件驱动规范化：入库收货完成后发布 WmsInventoryItemReceived 事件，
-            // 通知 SCM（采购履约）/Finance（应付确认）。仅发布成功收货的订单。
+            // P3 事件驱动规范化：入库收货完成后按收货明细逐条发布 WmsInventoryItemReceived 事件，
+            // 通知 SCM（采购履约）/Finance（应付确认）。
+            // P1-2 修复：数量与物料以收货明细为准，禁止用订单金额(total_amount)填充；
+            // payload 本身为库存项(item)级契约，逐条发射使下游按物料对账/应付确认可用。
             if let Some(ref publisher) = state.event_publisher {
+                // 查询本次收货明细的真实物料字段。inbound_order_items 无 material_id 列，
+                // 与既有 wms.inventory_movements 写入保持一致，material_id 置 None。
+                let line_ids: Vec<Uuid> = items.iter().map(|i| i.item_id).collect();
+                let line_rows = sqlx::query(only_own_schema_query!(
+                    "wms",
+                    r#"
+                    SELECT id, material_code, material_name, unit
+                    FROM wms.inbound_order_items
+                    WHERE order_id = $1 AND id = ANY($2) AND deleted_at IS NULL
+                      AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+                    "#
+                ))
+                .bind(id)
+                .bind(&line_ids)
+                .bind(tenant_id)
+                .fetch_all(&mut **txn)
+                .await;
+
+                let mut lines_by_id: std::collections::HashMap<Uuid, (String, String, String)> =
+                    std::collections::HashMap::new();
+                if let Ok(rows) = line_rows {
+                    for row in rows {
+                        let line_id: Uuid = row.try_get::<Uuid, _>("id").unwrap_or_default();
+                        if line_id.is_nil() {
+                            continue;
+                        }
+                        let material_code: String = row.try_get("material_code").unwrap_or_default();
+                        let material_name: String = row.try_get("material_name").unwrap_or_default();
+                        let unit: String = row.try_get("unit").unwrap_or_default();
+                        lines_by_id.insert(line_id, (material_code, material_name, unit));
+                    }
+                }
+
+                // 与请求中的收货数量配对：每条明细一个事件（真实数量 + 真实物料）。
+                // 与库存入账口径一致：仅 qualified 明细产生入库库存事件。
+                let events: Vec<(String, String, String, f64)> = items
+                    .iter()
+                    .filter_map(|req| {
+                        if req.quality_status != "qualified" {
+                            return None;
+                        }
+                        let (code, name, unit) = lines_by_id.get(&req.item_id)?;
+                        Some((
+                            code.clone(),
+                            name.clone(),
+                            unit.clone(),
+                            req.received_quantity,
+                        ))
+                    })
+                    .collect();
+
                 let publisher = publisher.clone();
                 let inbound_id = order.id;
                 let inbound_no = order.order_number.clone();
                 let warehouse_id = order.warehouse_id;
                 let supplier_id = order.supplier_id;
-                let received_at = order.actual_arrival;
-                let total_qty = order.total_amount.unwrap_or(0.0);
+                let tenant_id = order.tenant_id;
                 let reference_order_id = Some(order.id);
-                let now_val = Utc::now();
+                let received_at_val = order.actual_arrival.or_else(|| Some(Utc::now()));
                 tokio::spawn(async move {
-                    let payload = WmsInventoryItemReceivedPayload {
-                        inbound_id,
-                        inbound_no,
-                        warehouse_id,
-                        warehouse_name: None,
-                        material_id: None,
-                        material_code: String::new(),
-                        material_name: "汇总入库".to_string(),
-                        quantity: total_qty,
-                        unit: None,
-                        quality_status: Some("qualified".to_string()),
-                        reference_order_id,
-                        reference_order_no: None,
-                        supplier_id,
-                        supplier_name: None,
-                        received_by: None,
-                        received_at: received_at.or(Some(now_val)),
-                    };
-                    // D6：业务写事务 tx.commit() 已成功（上），此处仅发布；失败入 ZSET 重试队列。
-                    if let Err(e) = publisher
-                        .publish_event(EventType::WmsInventoryItemReceived, payload.clone())
-                        .await
-                    {
-                        tracing::warn!(
-                            "[wms] WmsInventoryItemReceived 事件发布失败: {}，入重试队列",
-                            e
-                        );
-                        commit_retry::push_retry_typed(
-                            "wms",
-                            EventType::WmsInventoryItemReceived,
-                            &payload,
-                        )
-                        .await;
-                    } else {
-                        tracing::info!(
-                            "[wms] WmsInventoryItemReceived 事件发布成功 - inbound_id={}",
-                            inbound_id
-                        );
+                    for (material_code, material_name, unit, quantity) in events {
+                        let payload = WmsInventoryItemReceivedPayload {
+                            inbound_id,
+                            inbound_no: inbound_no.clone(),
+                            warehouse_id,
+                            warehouse_name: None,
+                            material_id: None,
+                            material_code,
+                            material_name,
+                            quantity,
+                            unit: Some(unit),
+                            quality_status: Some("qualified".to_string()),
+                            reference_order_id,
+                            reference_order_no: None,
+                            supplier_id,
+                            supplier_name: None,
+                            received_by: None,
+                            received_at: received_at_val,
+                            tenant_id,
+                        };
+                        // D6：业务写事务 tx.commit() 已成功（上），此处仅发布；失败入 ZSET 重试队列。
+                        if let Err(e) = publisher
+                            .publish_event(EventType::WmsInventoryItemReceived, payload.clone())
+                            .await
+                        {
+                            tracing::warn!(
+                                "[wms] WmsInventoryItemReceived 事件发布失败: {}，入重试队列",
+                                e
+                            );
+                            commit_retry::push_retry_typed(
+                                "wms",
+                                EventType::WmsInventoryItemReceived,
+                                &payload,
+                            )
+                            .await;
+                        } else {
+                            tracing::info!(
+                                "[wms] WmsInventoryItemReceived 事件发布成功 - inbound_id={}, material_code={}, quantity={}",
+                                inbound_id, payload.material_code, payload.quantity
+                            );
+                        }
                     }
                 });
             }

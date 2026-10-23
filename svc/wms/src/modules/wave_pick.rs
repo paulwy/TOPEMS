@@ -214,7 +214,7 @@ pub async fn create_wave_pick(
                                     warehouse_id, status, priority, batch_id, remarks,
                                     total_items, picked_items, total_quantity, picked_quantity,
                                     created_at, updated_at, tenant_id)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, 'pending', $5, $6, $7, 0, 0, 0, 0, $8, $9, $10)
+        VALUES ($1, $10, $2, $3, $4, 'pending', $5, $6, $7, 0, 0, 0, 0, $8, $9, $10)
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,

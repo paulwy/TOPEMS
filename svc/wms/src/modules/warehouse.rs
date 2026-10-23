@@ -239,7 +239,7 @@ pub async fn create_warehouse(
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.warehouses (id, tenant_id, org_id, organization_id, warehouse_name, warehouse_code, address, manager, contact_phone, status, created_at, updated_at, warehouse_name_en)
-        VALUES ($1, $2, $2, '00000000-0000-0000-0000-000000000001', $3, $4, $5, $6, $7, 'active', $8, $9, $10)
+        VALUES ($1, $2, $2, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10)
         RETURNING id, tenant_id, CASE WHEN $11 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#),
     )

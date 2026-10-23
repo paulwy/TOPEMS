@@ -212,41 +212,21 @@ pub async fn run_optimization(
     .unwrap_or_default();
 
     let suggestion_count: i64;
+    let degraded: bool;
+    let degraded_message: Option<String>;
     if rules.is_empty() {
-        // 无规则：从启用分区生成低频占位建议（不重复插入同物料未决建议）
-        let inserted = sqlx::query!(
-            r#"
-            INSERT INTO wms.slotting_suggestions
-                (tenant_id, warehouse_id, material_id, material_code, material_name,
-                 suggested_location_id, suggested_location_name, reason, score, expected_improvement, status)
-            SELECT z.tenant_id,
-                   z.warehouse_id,
-                   NULL,
-                   'MOCK-MATERIAL',
-                   '待优化物料',
-                   (z.location_ids->>0)::uuid,
-                   z.name,
-                   '默认 frequency 策略候选',
-                   0.5,
-                   0.0,
-                   'pending'
-            FROM wms.slotting_zones z
-            WHERE z.is_active = TRUE
-              AND ($1::uuid IS NULL OR z.warehouse_id = $1)
-              AND NOT EXISTS (
-                  SELECT 1 FROM wms.slotting_suggestions s
-                  WHERE s.warehouse_id = z.warehouse_id
-                    AND s.status = 'pending'
-              )
-            "#,
-            params.warehouse_id,
-        )
-        .execute(&mut **txn)
-        .await
-        .map(|r| r.rows_affected() as i64)
-        .unwrap_or(0);
-        suggestion_count = inserted;
+        // P1-3：无规则时不再插入 MOCK-MATERIAL 占位建议（伪造物料行进入业务表，
+        // 下游 apply/对账会把假数据当真）。诚实返回空结果 + degraded 提示，
+        // 引导先维护启用中的 slotting 规则（不加迁移、不加新列）。
+        suggestion_count = 0;
+        degraded = true;
+        degraded_message = Some(
+            "未启用任何库位优化规则：未生成建议。请先在 /api/wms/slotting/rules 创建并启用规则后再运行。"
+                .to_string(),
+        );
     } else {
+        degraded = false;
+        degraded_message = None;
         // 有规则：按规则数 × 启用分区生成候选（每条规则对应一个分区）
         let inserted = sqlx::query!(
             r#"
@@ -296,8 +276,10 @@ pub async fn run_optimization(
         serde_json::json!({
             "task_id": Uuid::new_v4().to_string(),
             "suggestions_count": suggestion_count,
+            "degraded": degraded,
+            "message": degraded_message,
         }),
-        "success",
+        if degraded { "无启用规则，未生成建议" } else { "success" },
     ))
 }
 

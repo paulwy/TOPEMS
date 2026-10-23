@@ -197,7 +197,7 @@ pub async fn create_location(
     let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.locations (id, warehouse_id, location_code, location_name, location_type, capacity, status, created_at, updated_at, tenant_id, organization_id)
-        VALUES ($1, $2, $3, $4, $5, $6, 'available', $7, $8, $9, '00000000-0000-0000-0000-000000000001')
+        VALUES ($1, $2, $3, $4, $5, $6, 'available', $7, $8, $9, $9)
         RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         "#),
     )
@@ -697,7 +697,7 @@ pub async fn batch_create_locations(
         let result = sqlx::query_as::<_, Location>(
             only_own_schema_query!("wms", r#"
             INSERT INTO wms.locations (id, warehouse_id, location_code, location_name, location_type, capacity, status, created_at, updated_at, tenant_id, organization_id)
-            VALUES ($1, $2, $3, $4, $5, $6, 'available', $7, $8, $9, '00000000-0000-0000-0000-000000000001')
+            VALUES ($1, $2, $3, $4, $5, $6, 'available', $7, $8, $9, $9)
             RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
             "#),
         )

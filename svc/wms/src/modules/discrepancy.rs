@@ -311,7 +311,7 @@ pub async fn create_discrepancy(
             adjustment_quantity, adjustment_status, reason, notes, created_at, updated_at,
             tenant_id, organization_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13, $14, $15, $16, '00000000-0000-0000-0000-000000000001')
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13, $14, $15, $16, $16)
         RETURNING id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
@@ -766,7 +766,7 @@ pub async fn process_stock_take_discrepancies(
                 system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                 adjustment_quantity, adjustment_status, created_at, updated_at, tenant_id, organization_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $9, 'pending', $11, $11, $12, '00000000-0000-0000-0000-000000000001')
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $9, 'pending', $11, $11, $12, $12)
             RETURNING id
             "#,
             discrepancy_id,

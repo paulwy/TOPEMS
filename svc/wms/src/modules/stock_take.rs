@@ -253,7 +253,7 @@ pub async fn create_stock_take(
         INSERT INTO wms.stock_takes (id, organization_id, stock_take_number, stock_take_type,
                                      warehouse_id, location_id, status, planned_date,
                                      remarks, created_at, updated_at, tenant_id)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'full', $3, $4, 'planned', $5, $6, $7, $8, $9)
+        VALUES ($1, $9, $2, 'full', $3, $4, 'planned', $5, $6, $7, $8, $9)
         RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_id, stock_take_number, status,
                   start_time, end_time, remarks, created_at, updated_at
         "#),
@@ -694,7 +694,7 @@ pub async fn start_stock_take(
                                               material_code, material_name, specification,
                                               batch_number, location_id, system_quantity, unit,
                                               quality_status, created_at, updated_at, tenant_id)
-            SELECT uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', $1, ROW_NUMBER() OVER (ORDER BY i.material_code),
+            SELECT uuid_generate_v4(), $3, $1, ROW_NUMBER() OVER (ORDER BY i.material_code),
                    i.material_code, i.material_name, i.specification,
                    i.batch_number, i.location_id, i.quantity, i.unit,
                    i.quality_status, NOW(), NOW(), $3
@@ -921,7 +921,7 @@ pub async fn create_stock_take_item(
                                           system_quantity, counted_quantity, discrepancy_quantity,
                                           discrepancy_type, unit, unit_price, discrepancy_value,
                                           notes, created_at, updated_at, tenant_id)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        VALUES ($1, $18, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
