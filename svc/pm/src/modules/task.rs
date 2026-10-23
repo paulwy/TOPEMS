@@ -99,6 +99,7 @@ pub async fn list_tasks(
     let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(&format!(
         "SELECT {return_cols} FROM pm.pm_tasks
          WHERE deleted_at IS NULL
+           AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            AND ($1::uuid IS NULL OR project_id = $1)
            AND ($2::text IS NULL OR status = $2)
            AND ($3::text IS NULL OR priority = $3)
@@ -115,10 +116,11 @@ pub async fn list_tasks(
     .fetch_all(&pool)
     .await;
 
-    let total: Result<i64, sqlx::Error> =
-        sqlx::query_scalar("SELECT COUNT(*) FROM pm.pm_tasks WHERE deleted_at IS NULL")
-            .fetch_one(&pool)
-            .await;
+    let total: Result<i64, sqlx::Error> = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM pm.pm_tasks WHERE deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+    )
+    .fetch_one(&pool)
+    .await;
 
     match (result, total) {
         (Ok(items), Ok(total)) => Json(ApiResponse::success(
@@ -165,6 +167,7 @@ pub async fn list_tasks_by_project(
     let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(&format!(
         "SELECT {return_cols} FROM pm.pm_tasks
          WHERE project_id = $1 AND deleted_at IS NULL
+           AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            AND ($2::text IS NULL OR status = $2)
          ORDER BY created_at DESC LIMIT $3 OFFSET $4"
     ))
@@ -177,7 +180,7 @@ pub async fn list_tasks_by_project(
     .await;
 
     let total: Result<i64, sqlx::Error> = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pm.pm_tasks WHERE project_id = $1 AND deleted_at IS NULL",
+        "SELECT COUNT(*) FROM pm.pm_tasks WHERE project_id = $1 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(project_id)
     .fetch_one(&pool)
@@ -278,7 +281,7 @@ pub async fn get_task(
     let locale = Locale::from_headers(&headers).as_sql();
     let return_cols = task_return_columns("$2");
     let result: Result<Option<Task>, sqlx::Error> = sqlx::query_as(&format!(
-        "SELECT {return_cols} FROM pm.pm_tasks WHERE id = $1 AND deleted_at IS NULL"
+        "SELECT {return_cols} FROM pm.pm_tasks WHERE id = $1 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
     .bind(locale)
@@ -304,11 +307,12 @@ pub async fn update_task(
     let now = Utc::now();
     // 若仅更新状态，校验状态机（todo/in_progress/review/done/blocked）
     if let Some(to) = &req.status {
-        let from: Result<Option<String>, sqlx::Error> =
-            sqlx::query_scalar("SELECT status FROM pm.pm_tasks WHERE id = $1")
-                .bind(id)
-                .fetch_optional(&pool)
-                .await;
+        let from: Result<Option<String>, sqlx::Error> = sqlx::query_scalar(
+            "SELECT status FROM pm.pm_tasks WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        )
+        .bind(id)
+        .fetch_optional(&pool)
+        .await;
         if let Ok(Some(from)) = from {
             if !task_status_transition_valid(&from, to) {
                 return Json(ApiResponse::error(
