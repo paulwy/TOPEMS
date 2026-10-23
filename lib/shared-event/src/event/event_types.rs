@@ -909,6 +909,8 @@ pub struct WmsInventoryItemShippedPayload {
     pub customer_name: Option<String>,
     pub shipped_by: Option<Uuid>,
     pub shipped_at: Option<DateTime<Utc>>,
+    /// 租户上下文（P1-9 补充；旧事件 JSON 缺该字段时按 None 反序列化，向后兼容）
+    pub tenant_id: Option<Uuid>,
 }
 
 /// 库存入库事件 Payload
