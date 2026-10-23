@@ -379,15 +379,60 @@ pub struct UpdateAbnormalityRequest {
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_exam_plans(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamPlan>>> {
-    tracing::debug!("Listing health exam plans");
-    Json(ApiResponse::success(
-        Vec::<HealthExamPlan>::new(),
-        "获取体检计划列表成功",
-    ))
+    let tenant_filter = if claims.is_superuser {
+        String::from("deleted_at IS NULL")
+    } else {
+        let tid = claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil);
+        format!("deleted_at IS NULL AND tenant_id = '{}'", tid)
+    };
+    let sql = format!(
+        r#"SELECT id::text AS id, plan_no, title, description, exam_type,
+                  plan_date::text AS plan_date, end_date::text AS end_date,
+                  location, hospital, participants_count, status, organizer,
+                  tenant_id::text AS tenant_id
+           FROM ehs.qa_ehs_health_exam_plans WHERE {} ORDER BY plan_date DESC NULLS LAST"#,
+        tenant_filter
+    );
+    let rows = match sqlx::query(&sql).fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list exam plans: {}", e);
+            return Json(ApiResponse::error(500, "体检计划列表获取失败"));
+        }
+    };
+    let list: Vec<HealthExamPlan> = rows
+        .iter()
+        .map(|r| HealthExamPlan {
+            id: r.try_get("id").unwrap_or_default(),
+            plan_no: r.try_get("plan_no").unwrap_or_default(),
+            title: r.try_get("title").unwrap_or_default(),
+            description: r.try_get("description").ok().flatten(),
+            exam_type: r.try_get("exam_type").unwrap_or_default(),
+            plan_date: r.try_get("plan_date").ok().flatten(),
+            end_date: r.try_get("end_date").ok().flatten(),
+            location: r.try_get("location").ok().flatten(),
+            hospital: r.try_get("hospital").ok().flatten(),
+            participants_count: r.try_get("participants_count").ok().flatten(),
+            status: r
+                .try_get("status")
+                .unwrap_or_else(|_| "planned".to_string()),
+            organizer: r.try_get("organizer").ok().flatten(),
+            created_at: None,
+            updated_at: None,
+            tenant_id: Uuid::parse_str(&r.try_get::<String, _>("tenant_id").unwrap_or_default())
+                .unwrap_or_default(),
+        })
+        .collect();
+    tracing::debug!("Listed {} exam plans (real DB)", list.len());
+    Json(ApiResponse::success(list, "获取体检计划列表成功"))
 }
 
 #[utoipa::path(
@@ -400,44 +445,15 @@ pub async fn list_exam_plans(
 )]
 pub async fn create_exam_plan(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    Json(req): Json<CreateExamPlanRequest>,
+    Json(_req): Json<CreateExamPlanRequest>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating health exam plan: {:?}", req);
-    Json(ApiResponse::success(
-        HealthExamPlan {
-            id: uuid::Uuid::new_v4().to_string(),
-            plan_no: format!(
-                "HEP-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            title: req.title,
-            description: req.description,
-            exam_type: req.exam_type,
-            plan_date: req.plan_date,
-            end_date: req.end_date,
-            location: req.location,
-            hospital: req.hospital,
-            participants_count: req.participants_count,
-            status: "planned".to_string(),
-            organizer: req.organizer,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "体检计划创建成功",
+    // 真表 ehs.qa_ehs_health_exam_plans 当前空表，写接口假装成功会制造假数据。
+    tracing::warn!("Exam plan create called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "体检计划数据源尚未启用，写入操作暂不可用",
     ))
 }
 
@@ -453,43 +469,63 @@ pub async fn create_exam_plan(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_exam_plan(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
+    let tenant_clause = if claims.is_superuser {
+        String::from("deleted_at IS NULL")
     } else {
-        claims
+        let tid = claims
             .tenant_id
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil);
+        format!("deleted_at IS NULL AND tenant_id = '{}'", tid)
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting health exam plan: {}", id);
-    Json(ApiResponse::success(
-        HealthExamPlan {
-            id,
-            plan_no: "HEP-2024001".to_string(),
-            title: "2024年度职业健康体检".to_string(),
-            description: Some("全员职业健康体检".to_string()),
-            exam_type: "annual".to_string(),
-            plan_date: Some("2024-05-01".to_string()),
-            end_date: Some("2024-05-31".to_string()),
-            location: Some("市职业健康中心".to_string()),
-            hospital: Some("市职业病防治院".to_string()),
-            participants_count: Some(500),
-            status: "in_progress".to_string(),
-            organizer: Some("人力资源部".to_string()),
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "获取体检计划详情成功",
-    ))
+    let sql = format!(
+        r#"SELECT id::text AS id, plan_no, title, description, exam_type,
+                  plan_date::text AS plan_date, end_date::text AS end_date,
+                  location, hospital, participants_count, status, organizer,
+                  tenant_id::text AS tenant_id
+           FROM ehs.qa_ehs_health_exam_plans WHERE id = $1::uuid AND {}"#,
+        tenant_clause
+    );
+    let row = match sqlx::query(&sql)
+        .bind(&id)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "体检计划不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get exam plan {}: {}", id, e);
+            return Json(ApiResponse::error(500, "体检计划获取失败"));
+        }
+    };
+    let plan = HealthExamPlan {
+        id: row.try_get("id").unwrap_or_default(),
+        plan_no: row.try_get("plan_no").unwrap_or_default(),
+        title: row.try_get("title").unwrap_or_default(),
+        description: row.try_get("description").ok().flatten(),
+        exam_type: row.try_get("exam_type").unwrap_or_default(),
+        plan_date: row.try_get("plan_date").ok().flatten(),
+        end_date: row.try_get("end_date").ok().flatten(),
+        location: row.try_get("location").ok().flatten(),
+        hospital: row.try_get("hospital").ok().flatten(),
+        participants_count: row.try_get("participants_count").ok().flatten(),
+        status: row
+            .try_get("status")
+            .unwrap_or_else(|_| "planned".to_string()),
+        organizer: row.try_get("organizer").ok().flatten(),
+        created_at: None,
+        updated_at: None,
+        tenant_id: Uuid::parse_str(&row.try_get::<String, _>("tenant_id").unwrap_or_default())
+            .unwrap_or_default(),
+    };
+    tracing::debug!("Got exam plan from real DB: {}", id);
+    Json(ApiResponse::success(plan, "获取体检计划详情成功"))
 }
 
 #[utoipa::path(
@@ -506,44 +542,15 @@ pub async fn get_exam_plan(
 )]
 pub async fn update_exam_plan(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-    Json(req): Json<UpdateExamPlanRequest>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+    Json(_req): Json<UpdateExamPlanRequest>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating health exam plan {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        HealthExamPlan {
-            id,
-            plan_no: "HEP-2024001".to_string(),
-            title: req
-                .title
-                .unwrap_or_else(|| "2024年度职业健康体检".to_string()),
-            description: req.description,
-            exam_type: req.exam_type.unwrap_or_else(|| "annual".to_string()),
-            plan_date: req.plan_date,
-            end_date: req.end_date,
-            location: req.location,
-            hospital: req.hospital,
-            participants_count: req.participants_count,
-            status: req.status.unwrap_or_else(|| "planned".to_string()),
-            organizer: Some("人力资源部".to_string()),
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "体检计划更新成功",
+    tracing::warn!("Exam plan update called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "体检计划数据源尚未启用，更新操作暂不可用",
     ))
 }
 
@@ -562,10 +569,13 @@ pub async fn delete_exam_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting health exam plan: {}", id);
-    Json(ApiResponse::success((), "体检计划删除成功"))
+    tracing::warn!("Exam plan delete called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "体检计划数据源尚未启用，删除操作暂不可用",
+    ))
 }
 
 #[utoipa::path(
@@ -576,15 +586,78 @@ pub async fn delete_exam_plan(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_exam_records(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamRecord>>> {
-    tracing::debug!("Listing health exam records");
-    Json(ApiResponse::success(
-        Vec::<HealthExamRecord>::new(),
-        "获取体检记录列表成功",
-    ))
+    let tenant_filter = if claims.is_superuser {
+        String::from("deleted_at IS NULL")
+    } else {
+        let tid = claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil);
+        format!("deleted_at IS NULL AND tenant_id = '{}'", tid)
+    };
+    let sql = format!(
+        r#"SELECT id::text AS id, record_no, plan_id::text AS plan_id, employee_id, employee_name,
+                  department, position, exam_type, exam_date::text AS exam_date,
+                  hospital, overall_result, blood_pressure, heart_rate, vision, hearing,
+                  lung_function, liver_function, kidney_function, blood_routine, urine_routine,
+                  chest_xray, ecg, diagnosis, doctor_advice, doctor,
+                  tenant_id::text AS tenant_id
+           FROM ehs.qa_ehs_health_exam_records WHERE {} ORDER BY exam_date DESC NULLS LAST"#,
+        tenant_filter
+    );
+    let rows = match sqlx::query(&sql).fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list exam records: {}", e);
+            return Json(ApiResponse::error(500, "体检记录列表获取失败"));
+        }
+    };
+    let list: Vec<HealthExamRecord> = rows
+        .iter()
+        .map(|r| HealthExamRecord {
+            id: r.try_get("id").unwrap_or_default(),
+            record_no: r.try_get("record_no").unwrap_or_default(),
+            plan_id: r
+                .try_get::<String, _>("plan_id")
+                .ok()
+                .filter(|s| !s.is_empty()),
+            employee_id: r.try_get("employee_id").unwrap_or_default(),
+            employee_name: r.try_get("employee_name").unwrap_or_default(),
+            department: r.try_get("department").ok().flatten(),
+            position: r.try_get("position").ok().flatten(),
+            exam_type: r.try_get("exam_type").unwrap_or_default(),
+            exam_date: r.try_get("exam_date").ok().flatten(),
+            hospital: r.try_get("hospital").ok().flatten(),
+            overall_result: r.try_get("overall_result").unwrap_or_default(),
+            blood_pressure: r.try_get("blood_pressure").ok().flatten(),
+            heart_rate: r.try_get("heart_rate").ok().flatten(),
+            vision: r.try_get("vision").ok().flatten(),
+            hearing: r.try_get("hearing").ok().flatten(),
+            lung_function: r.try_get("lung_function").ok().flatten(),
+            liver_function: r.try_get("liver_function").ok().flatten(),
+            kidney_function: r.try_get("kidney_function").ok().flatten(),
+            blood_routine: r.try_get("blood_routine").ok().flatten(),
+            urine_routine: r.try_get("urine_routine").ok().flatten(),
+            chest_xray: r.try_get("chest_xray").ok().flatten(),
+            ecg: r.try_get("ecg").ok().flatten(),
+            abnormal_items: None,
+            diagnosis: r.try_get("diagnosis").ok().flatten(),
+            doctor_advice: r.try_get("doctor_advice").ok().flatten(),
+            doctor: r.try_get("doctor").ok().flatten(),
+            attachments: None,
+            created_at: None,
+            updated_at: None,
+            tenant_id: Uuid::parse_str(&r.try_get::<String, _>("tenant_id").unwrap_or_default())
+                .unwrap_or_default(),
+        })
+        .collect();
+    tracing::debug!("Listed {} exam records (real DB)", list.len());
+    Json(ApiResponse::success(list, "获取体检记录列表成功"))
 }
 
 #[utoipa::path(
@@ -597,59 +670,14 @@ pub async fn list_exam_records(
 )]
 pub async fn create_exam_record(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    Json(req): Json<CreateExamRecordRequest>,
+    Json(_req): Json<CreateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating health exam record: {:?}", req);
-    Json(ApiResponse::success(
-        HealthExamRecord {
-            id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!(
-                "HER-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            plan_id: req.plan_id,
-            employee_id: req.employee_id,
-            employee_name: req.employee_name,
-            department: req.department,
-            position: req.position,
-            exam_type: req.exam_type,
-            exam_date: req.exam_date,
-            hospital: req.hospital,
-            overall_result: req.overall_result,
-            blood_pressure: req.blood_pressure,
-            heart_rate: req.heart_rate,
-            vision: req.vision,
-            hearing: req.hearing,
-            lung_function: req.lung_function,
-            liver_function: req.liver_function,
-            kidney_function: req.kidney_function,
-            blood_routine: req.blood_routine,
-            urine_routine: req.urine_routine,
-            chest_xray: req.chest_xray,
-            ecg: req.ecg,
-            abnormal_items: req.abnormal_items,
-            diagnosis: req.diagnosis,
-            doctor_advice: req.doctor_advice,
-            doctor: req.doctor,
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "体检记录创建成功",
+    tracing::warn!("Exam record create called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "体检记录数据源尚未启用，写入操作暂不可用",
     ))
 }
 
@@ -665,58 +693,81 @@ pub async fn create_exam_record(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_exam_record(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
+    let tenant_clause = if claims.is_superuser {
+        String::from("deleted_at IS NULL")
     } else {
-        claims
+        let tid = claims
             .tenant_id
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil);
+        format!("deleted_at IS NULL AND tenant_id = '{}'", tid)
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting health exam record: {}", id);
-    Json(ApiResponse::success(
-        HealthExamRecord {
-            id,
-            record_no: "HER-2024001".to_string(),
-            plan_id: Some("plan-001".to_string()),
-            employee_id: "EMP001".to_string(),
-            employee_name: "张三".to_string(),
-            department: Some("生产部".to_string()),
-            position: Some("操作工".to_string()),
-            exam_type: "annual".to_string(),
-            exam_date: Some("2024-05-15".to_string()),
-            hospital: Some("市职业病防治院".to_string()),
-            overall_result: "abnormal".to_string(),
-            blood_pressure: Some("135/85".to_string()),
-            heart_rate: Some(78),
-            vision: Some("5.0/5.0".to_string()),
-            hearing: Some("正常".to_string()),
-            lung_function: Some("正常".to_string()),
-            liver_function: Some("ALT偏高".to_string()),
-            kidney_function: Some("正常".to_string()),
-            blood_routine: Some("正常".to_string()),
-            urine_routine: Some("正常".to_string()),
-            chest_xray: Some("正常".to_string()),
-            ecg: Some("正常".to_string()),
-            abnormal_items: Some(vec!["肝功能ALT偏高".to_string(), "血压偏高".to_string()]),
-            diagnosis: Some("肝功能异常，建议复查".to_string()),
-            doctor_advice: Some("注意休息，避免饮酒，一个月后复查肝功能".to_string()),
-            doctor: Some("李医生".to_string()),
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "获取体检记录详情成功",
-    ))
+    let sql = format!(
+        r#"SELECT id::text AS id, record_no, plan_id::text AS plan_id, employee_id, employee_name,
+                  department, position, exam_type, exam_date::text AS exam_date,
+                  hospital, overall_result, blood_pressure, heart_rate, vision, hearing,
+                  lung_function, liver_function, kidney_function, blood_routine, urine_routine,
+                  chest_xray, ecg, diagnosis, doctor_advice, doctor,
+                  tenant_id::text AS tenant_id
+           FROM ehs.qa_ehs_health_exam_records WHERE id = $1::uuid AND {}"#,
+        tenant_clause
+    );
+    let row = match sqlx::query(&sql)
+        .bind(&id)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "体检记录不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get exam record {}: {}", id, e);
+            return Json(ApiResponse::error(500, "体检记录获取失败"));
+        }
+    };
+    let rec = HealthExamRecord {
+        id: row.try_get("id").unwrap_or_default(),
+        record_no: row.try_get("record_no").unwrap_or_default(),
+        plan_id: row
+            .try_get::<String, _>("plan_id")
+            .ok()
+            .filter(|s| !s.is_empty()),
+        employee_id: row.try_get("employee_id").unwrap_or_default(),
+        employee_name: row.try_get("employee_name").unwrap_or_default(),
+        department: row.try_get("department").ok().flatten(),
+        position: row.try_get("position").ok().flatten(),
+        exam_type: row.try_get("exam_type").unwrap_or_default(),
+        exam_date: row.try_get("exam_date").ok().flatten(),
+        hospital: row.try_get("hospital").ok().flatten(),
+        overall_result: row.try_get("overall_result").unwrap_or_default(),
+        blood_pressure: row.try_get("blood_pressure").ok().flatten(),
+        heart_rate: row.try_get("heart_rate").ok().flatten(),
+        vision: row.try_get("vision").ok().flatten(),
+        hearing: row.try_get("hearing").ok().flatten(),
+        lung_function: row.try_get("lung_function").ok().flatten(),
+        liver_function: row.try_get("liver_function").ok().flatten(),
+        kidney_function: row.try_get("kidney_function").ok().flatten(),
+        blood_routine: row.try_get("blood_routine").ok().flatten(),
+        urine_routine: row.try_get("urine_routine").ok().flatten(),
+        chest_xray: row.try_get("chest_xray").ok().flatten(),
+        ecg: row.try_get("ecg").ok().flatten(),
+        abnormal_items: None,
+        diagnosis: row.try_get("diagnosis").ok().flatten(),
+        doctor_advice: row.try_get("doctor_advice").ok().flatten(),
+        doctor: row.try_get("doctor").ok().flatten(),
+        attachments: None,
+        created_at: None,
+        updated_at: None,
+        tenant_id: Uuid::parse_str(&row.try_get::<String, _>("tenant_id").unwrap_or_default())
+            .unwrap_or_default(),
+    };
+    tracing::debug!("Got exam record from real DB: {}", id);
+    Json(ApiResponse::success(rec, "获取体检记录详情成功"))
 }
 
 #[utoipa::path(
@@ -733,57 +784,15 @@ pub async fn get_exam_record(
 )]
 pub async fn update_exam_record(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-    Json(req): Json<UpdateExamRecordRequest>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+    Json(_req): Json<UpdateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating health exam record {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        HealthExamRecord {
-            id,
-            record_no: "HER-2024001".to_string(),
-            plan_id: Some("plan-001".to_string()),
-            employee_id: "EMP001".to_string(),
-            employee_name: "张三".to_string(),
-            department: Some("生产部".to_string()),
-            position: Some("操作工".to_string()),
-            exam_type: "annual".to_string(),
-            exam_date: Some("2024-05-15".to_string()),
-            hospital: Some("市职业病防治院".to_string()),
-            overall_result: req.overall_result.unwrap_or_else(|| "normal".to_string()),
-            blood_pressure: req.blood_pressure,
-            heart_rate: req.heart_rate,
-            vision: req.vision,
-            hearing: req.hearing,
-            lung_function: req.lung_function,
-            liver_function: req.liver_function,
-            kidney_function: req.kidney_function,
-            blood_routine: req.blood_routine,
-            urine_routine: req.urine_routine,
-            chest_xray: req.chest_xray,
-            ecg: req.ecg,
-            abnormal_items: req.abnormal_items,
-            diagnosis: req.diagnosis,
-            doctor_advice: req.doctor_advice,
-            doctor: req.doctor,
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "体检记录更新成功",
+    tracing::warn!("Exam record update called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "体检记录数据源尚未启用，更新操作暂不可用",
     ))
 }
 
@@ -802,10 +811,13 @@ pub async fn delete_exam_record(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting health exam record: {}", id);
-    Json(ApiResponse::success((), "体检记录删除成功"))
+    tracing::warn!("Exam record delete called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "体检记录数据源尚未启用，删除操作暂不可用",
+    ))
 }
 
 #[utoipa::path(
@@ -1017,43 +1029,81 @@ pub async fn delete_contraindication(
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_health_statistics(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<HealthStatistics>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting health statistics");
+    let tenant_bind = resolve_health_tenant(&claims).to_string();
+    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+
+    let total_employees: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_employees WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let exam_planned: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_plans WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let exam_completed: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let normal_count: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {} AND overall_result = 'normal'",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let abnormal_count: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {} AND overall_result != 'normal'",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let contraindication_count: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_contraindications WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    tracing::debug!(
+        "Health stats (real DB): employees={}, planned={}, completed={}, normal={}, abnormal={}, contra={}",
+        total_employees, exam_planned, exam_completed, normal_count, abnormal_count, contraindication_count
+    );
+
     Json(ApiResponse::success(
         HealthStatistics {
-            total_employees: 500,
-            exam_planned: 500,
-            exam_completed: 480,
-            normal_count: 420,
-            abnormal_count: 60,
-            contraindication_count: 15,
-            by_department: vec![
-                serde_json::json!({ "department": "生产部", "total": 200, "examined": 195, "abnormal": 30 }),
-                serde_json::json!({ "department": "技术部", "total": 80, "examined": 78, "abnormal": 8 }),
-                serde_json::json!({ "department": "质量部", "total": 50, "examined": 48, "abnormal": 5 }),
-            ],
-            by_abnormality_type: vec![
-                serde_json::json!({ "type": "肝功能异常", "count": 20 }),
-                serde_json::json!({ "type": "血压偏高", "count": 18 }),
-                serde_json::json!({ "type": "听力下降", "count": 12 }),
-                serde_json::json!({ "type": "视力异常", "count": 10 }),
-            ],
+            total_employees: total_employees as i32,
+            exam_planned: exam_planned as i32,
+            exam_completed: exam_completed as i32,
+            normal_count: normal_count as i32,
+            abnormal_count: abnormal_count as i32,
+            contraindication_count: contraindication_count as i32,
+            by_department: Vec::new(),
+            by_abnormality_type: Vec::new(),
 
-            tenant_id,
+            tenant_id: resolve_health_tenant(&claims),
         },
         "获取健康统计成功",
     ))
