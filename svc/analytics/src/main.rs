@@ -931,45 +931,15 @@ async fn reports_center_stats(
 )]
 async fn reports_center_export(
     Path(report_type): Path<String>,
-    State(_state): State<AppState>,
-    Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let format = payload
-        .get("format")
-        .and_then(|v| v.as_str())
-        .unwrap_or("excel");
-    let content_type = match format {
-        "pdf" => "application/pdf",
-        "csv" => "text/csv",
-        _ => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    };
-    let report_name = match report_type.as_str() {
-        "users" => "用户统计报表",
-        "permissions" => "权限审计报表",
-        "activities" => "活动日志报表",
-        _ => "自定义报表",
-    };
-    let ext = if format == "excel" { "xlsx" } else { format };
-    let row_count = match report_type.as_str() {
-        "users" => 156,
-        "permissions" => 87,
-        "activities" => 621,
-        _ => 0,
-    };
-
-    let result = serde_json::json!({
-        "filename": format!("{}_{}.{}", report_name, chrono::Utc::now().format("%Y%m%d%H%M%S"), ext),
-        "format": format,
-        "content_type": content_type,
-        "row_count": row_count,
-        "report_type": report_type,
-        "download_url": format!("/api/bi/reports-center/download/{}/placeholder", report_type),
-        "generated_at": chrono::Utc::now().to_rfc3339(),
-    });
-
-    Json(ApiResponse::success(
-        result,
-        &format!("{} 导出任务已提交", report_name),
+    // 无真实导出引擎：不存在文件生成/落盘与下载通道。此前返回写死的 row_count
+    // (156/87/621) 与 placeholder download_url 属假导出，已下线，诚实返回 501。
+    Json(ApiResponse::error(
+        501,
+        &format!(
+            "报表中心导出（{}）尚未实现真实文件生成与落盘下载，已停止返回伪造的 row_count 与 placeholder download_url；待导出引擎接入后再启用。",
+            report_type
+        ),
     ))
 }
 

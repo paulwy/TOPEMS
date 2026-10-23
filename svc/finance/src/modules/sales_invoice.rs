@@ -972,43 +972,80 @@ pub async fn confirm_collection(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let pool = &state.pool;
 
-    let rec = match sqlx::query(
-        "SELECT amount, (SELECT si.id FROM finance.sales_invoices si WHERE si.invoice_number = erc.invoice_no AND si.tenant_id = erc.tenant_id) AS invoice_id, status FROM finance.erp_collection_records erc
-         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
-    )
-    .bind(id)
-    .bind(tenant_id)
-    .fetch_optional(pool)
-    .await
-    {
-        Ok(Some(r)) => (r.get::<Decimal, _>("amount"), r.get::<Option<Uuid>, _>("invoice_id"), r.get::<String, _>("status")),
-        Ok(None) => return Json(ApiResponse::<CollectionOut>::error(404, "回款记录不存在")),
-        Err(e) => return Json(crate::shared::err_resp(e)),
-    };
-    let (amount, invoice_id, status) = rec;
-    if status == "confirmed" {
-        return Json(ApiResponse::<CollectionOut>::error(409, "已确认"));
-    }
-
+    // 整段在单事务内完成：FOR UPDATE 锁定回款记录 + 关联发票余额，
+    // 消除先读后写的 TOCTOU 窗口；并在 UPDATE 上叠加原子谓词防并发重复确认，
+    // 回写发票前校验确认额不得超过应收余额（超收封顶）。
     let mut tx = match pool.begin().await {
         Ok(t) => t,
         Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
-    if let Err(e) = sqlx::query(
+    let rec = match sqlx::query(
+        "SELECT erc.amount, erc.status,
+                (SELECT si.id FROM finance.sales_invoices si WHERE si.invoice_number = erc.invoice_no AND si.tenant_id = erc.tenant_id) AS invoice_id
+         FROM finance.erp_collection_records erc
+         WHERE erc.id = $1 AND erc.tenant_id = $2 AND erc.deleted_at IS NULL
+         FOR UPDATE",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&mut *tx)
+    .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::<CollectionOut>::error(404, "回款记录不存在")),
+        Err(e) => return Json(crate::shared::err_resp(e)),
+    };
+    let amount: Decimal = rec.get("amount");
+    let status: String = rec.get("status");
+    let invoice_id: Option<Uuid> = rec.get("invoice_id");
+    if status == "confirmed" {
+        return Json(ApiResponse::<CollectionOut>::error(409, "回款记录已确认，请勿重复确认"));
+    }
+
+    // 原子谓词：AND status != 'confirmed' AND deleted_at IS NULL。
+    // 并发下另一事务已确认时 rows_affected=0，显式拒绝（409），不再静默成功。
+    let affected = match sqlx::query(
         "UPDATE finance.erp_collection_records
          SET status = 'confirmed', confirmed_at = NOW(), updated_at = NOW()
-         WHERE id = $1 AND tenant_id = $2",
+         WHERE id = $1 AND tenant_id = $2 AND status != 'confirmed' AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)
     .execute(&mut *tx)
     .await
     {
-        return Json(crate::shared::err_resp(e));
+        Ok(r) => r.rows_affected(),
+        Err(e) => return Json(crate::shared::err_resp(e)),
+    };
+    if affected == 0 {
+        return Json(ApiResponse::<CollectionOut>::error(409, "回款记录已被其他请求确认，请勿重复确认"));
     }
 
+    // 回写发票：FOR UPDATE 锁定发票，超收封顶——确认额不得超过应收余额（total - paid）。
     if let Some(inv_id) = invoice_id {
+        let inv = match sqlx::query(
+            "SELECT total_amount, paid_amount FROM finance.sales_invoices
+             WHERE id = $1 AND tenant_id = $2 FOR UPDATE",
+        )
+        .bind(inv_id)
+        .bind(tenant_id)
+        .fetch_optional(&mut *tx)
+        .await
+        {
+            Ok(Some(r)) => r,
+            Ok(None) => return Json(ApiResponse::<CollectionOut>::error(404, "关联发票不存在")),
+            Err(e) => return Json(crate::shared::err_resp(e)),
+        };
+        let total: Decimal = inv.get("total_amount");
+        let paid: Decimal = inv.get("paid_amount");
+        let balance = total - paid;
+        if amount > balance {
+            return Json(ApiResponse::<CollectionOut>::error(
+                400,
+                &format!("确认金额 {} 超过应收余额 {}，拒绝超收", amount, balance),
+            ));
+        }
         if let Err(e) = sqlx::query(
             "UPDATE finance.sales_invoices
              SET paid_amount = paid_amount + $3,
@@ -1091,6 +1128,35 @@ pub async fn batch_confirm_collections(
             failed += 1;
             continue;
         }
+        let invoice_id: Option<Uuid> = row.get("invoice_id");
+        let amount: Decimal = row.get("amount");
+
+        // 超收封顶（与单条 confirm_collection 同口径）：确认额不得超过应收余额。
+        // 超限则该笔计失败，不写 erc 也不回写发票，避免半写。
+        if let Some(inv_id) = invoice_id {
+            let inv = match sqlx::query(
+                "SELECT total_amount, paid_amount FROM finance.sales_invoices
+                 WHERE id = $1 AND tenant_id = $2 FOR UPDATE",
+            )
+            .bind(inv_id)
+            .bind(tenant_id)
+            .fetch_optional(&mut *tx)
+            .await
+            {
+                Ok(Some(r)) => r,
+                Ok(None) => {
+                    failed += 1;
+                    continue;
+                }
+                Err(e) => return Json(crate::shared::err_resp(e)),
+            };
+            let total: Decimal = inv.get("total_amount");
+            let paid: Decimal = inv.get("paid_amount");
+            if amount > total - paid {
+                failed += 1;
+                continue;
+            }
+        }
 
         let affected = match sqlx::query(
             "UPDATE finance.erp_collection_records
@@ -1112,8 +1178,6 @@ pub async fn batch_confirm_collections(
         }
 
         // 回写发票：与单条 confirm_collection 相同语句
-        let invoice_id: Option<Uuid> = row.get("invoice_id");
-        let amount: Decimal = row.get("amount");
         if let Some(inv_id) = invoice_id {
             if let Err(e) = sqlx::query(
                 "UPDATE finance.sales_invoices

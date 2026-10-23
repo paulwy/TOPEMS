@@ -8,11 +8,12 @@
 //! 前端无页面调用本模块端点，下线无回归。
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_auth::{get_tenant_id_from_claims, Claims};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -245,8 +246,11 @@ pub async fn get_accounting_subject(
 )]
 pub async fn create_accounting_subject(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAccountingSubjectRequest>,
 ) -> Json<ApiResponse<AccountingSubject>> {
+    // 租户由认证 claims 派生（对齐仓内其他写路径），不再信任请求体 tenant_id，防越权跨租户写入。
+    let tenant_id = get_tenant_id_from_claims(&claims);
     let org_id = Uuid::new_v4();
     let level = req.level.unwrap_or(1);
     let is_cash_flow = req.is_cash_flow.unwrap_or(false);
@@ -269,7 +273,7 @@ pub async fn create_accounting_subject(
         .bind(&req.description)
         .bind(is_cash_flow)
         .bind(&status)
-        .bind(req.tenant_id)
+        .bind(tenant_id)
         .fetch_one(&state.pool)
         .await
     {

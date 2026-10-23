@@ -1,9 +1,29 @@
-//! Analytics summary handlers
-//! Provides mock data for BI dashboard analytics
+//! Analytics summary handlers（P2 财务域 B 反掺假收口）
+//!
+//! 历史：本文件曾对 ~30 个领域 KPI 端点返回写死的 mock 数字（活跃项目 42、质检通过率
+//! 96.8%、生产批次 128、实验室样本 856……），零 sqlx 查询、零数据源。
+//!
+//! 现状（诚实收口）：analytics 服务运行在 `bi` schema，受 schema 边界 gate 约束，不可直读
+//! `rs.* / lims.* / qms.* / ehs.* / srm.* / pdm.*` 等业务库表；库内也无对应领域的 BI 物化视图
+//! （仅有 `bi.org_stats` 一个组织快照）。因此这些领域 KPI **无真实聚合数据源**。
+//!
+//! 处置：所有端点统一返回 **501/degraded**（`error_value(501, ...)`），不再返回写死 KPI。
+//! 待对应领域数据接入 BI 数据集（bi_datasets 白名单 + 租户过滤）后再接真。
+//! 仅 `reports_center_stats`（routes.rs）等有真实 IAM/审计表的端点保留真实聚合。
 
 use axum::{extract::Path, Json};
-use chrono::Utc;
 use serde_json::Value;
+
+/// 领域 KPI 降级响应：无真实数据源时诚实返回 501，绝不回写死数字。
+fn degraded_analytics(domain: &str) -> Json<Value> {
+    Json(topems_shared_core::response::error_value(
+        501,
+        &format!(
+            "{}领域分析暂无真实数据源：analytics 服务（schema=bi）受 schema 边界限制不可直读该领域业务表，已停止返回写死的 KPI 数字；待对应领域数据接入 BI 数据集后再启用。",
+            domain
+        ),
+    ))
+}
 
 /// Get module-specific analytics
 #[utoipa::path(
@@ -23,19 +43,21 @@ use serde_json::Value;
     ),
 )]
 pub async fn get_module_analytics(Path(module_id): Path<String>) -> Json<Value> {
-    let result = match module_id.as_str() {
-        "development" | "rs" => get_development_analytics().await,
-        "quality" | "qms" => get_quality_analytics().await,
-        "production" | "pdm" => get_production_analytics().await,
-        "laboratory" | "lims" => get_laboratory_analytics().await,
-        "ehs" => get_ehs_analytics().await,
-        "srm" => get_srm_analytics().await,
-        _ => Json(topems_shared_core::response::error_value(
-            400,
-            &format!("Unknown module: {}", module_id),
-        )),
+    let domain = match module_id.as_str() {
+        "development" | "rs" => "研发(RS)",
+        "quality" | "qms" => "质量(QMS)",
+        "production" | "pdm" => "生产(PDM)",
+        "laboratory" | "lims" => "实验室(LIMS)",
+        "ehs" => "EHS",
+        "srm" => "供应商(SRM)",
+        _ => {
+            return Json(topems_shared_core::response::error_value(
+                400,
+                &format!("Unknown module: {}", module_id),
+            ))
+        }
     };
-    result
+    degraded_analytics(domain)
 }
 
 /// Get summary dashboard analytics
@@ -53,68 +75,7 @@ pub async fn get_module_analytics(Path(module_id): Path<String>) -> Json<Value> 
     ),
 )]
 pub async fn get_summary_analytics() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "key_metrics": [
-                {
-                    "title": "活跃项目",
-                    "value": 42,
-                    "unit": "个",
-                    "change": 12.5,
-                    "change_type": "increase",
-                    "icon": "folder"
-                },
-                {
-                    "title": "质检通过率",
-                    "value": 96.8,
-                    "unit": "%",
-                    "change": 2.3,
-                    "change_type": "increase",
-                    "icon": "check-circle"
-                },
-                {
-                    "title": "生产批次",
-                    "value": 128,
-                    "unit": "批",
-                    "change": -5.2,
-                    "change_type": "decrease",
-                    "icon": "package"
-                },
-                {
-                    "title": "实验室样本",
-                    "value": 856,
-                    "unit": "个",
-                    "change": 18.7,
-                    "change_type": "increase",
-                    "icon": "flask"
-                }
-            ],
-            "recent_activities": [
-                {
-                    "id": 1,
-                    "type": "project",
-                    "title": "新研发项目启动",
-                    "time": "2小时前"
-                },
-                {
-                    "id": 2,
-                    "type": "quality",
-                    "title": "质检报告已提交",
-                    "time": "4小时前"
-                },
-                {
-                    "id": 3,
-                    "type": "production",
-                    "title": "生产批次完成",
-                    "time": "6小时前"
-                }
-            ],
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取汇总数据成功"
-    }))
+    degraded_analytics("汇总(Summary)")
 }
 
 /// Get development analytics (研发)
@@ -132,36 +93,7 @@ pub async fn get_summary_analytics() -> Json<Value> {
     ),
 )]
 pub async fn get_development_analytics() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "total_projects": 156,
-            "active_projects": 42,
-            "completed_projects": 98,
-            "project_status_distribution": {
-                "in_progress": 42,
-                "pending_approval": 12,
-                "completed": 98,
-                "cancelled": 4
-            },
-            "monthly_new_projects": [
-                {"month": "2026-01", "count": 8},
-                {"month": "2026-02", "count": 12},
-                {"month": "2026-03", "count": 15},
-                {"month": "2026-04", "count": 10},
-                {"month": "2026-05", "count": 18},
-                {"month": "2026-06", "count": 14}
-            ],
-            "project_type_distribution": {
-                "research": 45,
-                "development": 78,
-                "improvement": 33
-            },
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取研发分析数据成功"
-    }))
+    degraded_analytics("研发(Development)")
 }
 
 /// Get quality analytics (质量)
@@ -179,32 +111,7 @@ pub async fn get_development_analytics() -> Json<Value> {
     ),
 )]
 pub async fn get_quality_analytics() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "total_inspections": 1248,
-            "passed_inspections": 1208,
-            "failed_inspections": 40,
-            "pass_rate": 96.8,
-            "quality_trend": [
-                {"month": "2026-01", "pass_rate": 94.2},
-                {"month": "2026-02", "pass_rate": 95.1},
-                {"month": "2026-03", "pass_rate": 96.3},
-                {"month": "2026-04", "pass_rate": 95.8},
-                {"month": "2026-05", "pass_rate": 97.1},
-                {"month": "2026-06", "pass_rate": 96.8}
-            ],
-            "defect_types": {
-                "material": 15,
-                "process": 12,
-                "equipment": 8,
-                "other": 5
-            },
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取质量分析数据成功"
-    }))
+    degraded_analytics("质量(Quality)")
 }
 
 /// Get production analytics (生产)
@@ -222,31 +129,7 @@ pub async fn get_quality_analytics() -> Json<Value> {
     ),
 )]
 pub async fn get_production_analytics() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "total_production_batches": 256,
-            "completed_batches": 198,
-            "in_progress_batches": 58,
-            "production_efficiency": 87.5,
-            "daily_output": [
-                {"date": "2026-06-16", "output": 1250},
-                {"date": "2026-06-17", "output": 1380},
-                {"date": "2026-06-18", "output": 1420},
-                {"date": "2026-06-19", "output": 1290},
-                {"date": "2026-06-20", "output": 1450},
-                {"date": "2026-06-21", "output": 1320}
-            ],
-            "product_line_usage": {
-                "line_a": 85.2,
-                "line_b": 78.6,
-                "line_c": 92.1
-            },
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取生产分析数据成功"
-    }))
+    degraded_analytics("生产(Production)")
 }
 
 /// Get laboratory analytics (实验室)
@@ -264,29 +147,7 @@ pub async fn get_production_analytics() -> Json<Value> {
     ),
 )]
 pub async fn get_laboratory_analytics() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "total_samples": 856,
-            "completed_tests": 724,
-            "pending_tests": 132,
-            "instrument_usage_rate": 82.5,
-            "test_type_distribution": {
-                "chemical": 312,
-                "physical": 245,
-                "microbiological": 178,
-                "other": 121
-            },
-            "turnaround_time": {
-                "avg_hours": 24.5,
-                "max_hours": 72.0,
-                "min_hours": 4.0
-            },
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取实验室分析数据成功"
-    }))
+    degraded_analytics("实验室(Laboratory)")
 }
 
 /// Get analytics overview
@@ -304,106 +165,12 @@ pub async fn get_laboratory_analytics() -> Json<Value> {
     ),
 )]
 pub async fn get_analytics_overview() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "development": {
-                "active_projects": 42,
-                "completion_rate": 62.8
-            },
-            "quality": {
-                "pass_rate": 96.8,
-                "total_inspections": 1248
-            },
-            "production": {
-                "efficiency": 87.5,
-                "active_batches": 58
-            },
-            "laboratory": {
-                "pending_tests": 132,
-                "avg_turnaround_hours": 24.5
-            },
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取分析概览成功"
-    }))
+    degraded_analytics("分析概览(Overview)")
 }
 
-/// Get analytics report
+/// Get analytics report（报告列表历史亦为写死条目，统一降级）
 pub async fn get_analytics_report() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "items": [
-                {
-                    "id": "1",
-                    "name": "研发项目进度报告",
-                    "category": "development",
-                    "type": "project",
-                    "status": "generated",
-                    "generated_at": "2026-07-03T10:30:00Z",
-                    "period": "weekly",
-                    "description": "本周研发项目进度汇总报告"
-                },
-                {
-                    "id": "2",
-                    "name": "质量检测周报",
-                    "category": "quality",
-                    "type": "inspection",
-                    "status": "generated",
-                    "generated_at": "2026-07-03T09:00:00Z",
-                    "period": "weekly",
-                    "description": "本周质量检测数据分析报告"
-                },
-                {
-                    "id": "3",
-                    "name": "生产效率月报",
-                    "category": "production",
-                    "type": "production",
-                    "status": "generating",
-                    "generated_at": "2026-07-01T00:00:00Z",
-                    "period": "monthly",
-                    "description": "本月生产效率分析报告"
-                },
-                {
-                    "id": "4",
-                    "name": "实验室测试统计",
-                    "category": "laboratory",
-                    "type": "laboratory",
-                    "status": "generated",
-                    "generated_at": "2026-07-02T16:00:00Z",
-                    "period": "daily",
-                    "description": "今日实验室测试统计报告"
-                },
-                {
-                    "id": "5",
-                    "name": "供应商绩效评估",
-                    "category": "srm",
-                    "type": "supplier",
-                    "status": "generated",
-                    "generated_at": "2026-06-30T17:00:00Z",
-                    "period": "monthly",
-                    "description": "本月供应商绩效评估报告"
-                },
-                {
-                    "id": "6",
-                    "name": "EHS安全周报",
-                    "category": "ehs",
-                    "type": "safety",
-                    "status": "generated",
-                    "generated_at": "2026-07-03T11:00:00Z",
-                    "period": "weekly",
-                    "description": "本周环境健康安全报告"
-                }
-            ],
-            "total": 6,
-            "page": 1,
-            "pageSize": 20
-        },
-        "message": "获取分析报告列表成功"
-    }))
+    degraded_analytics("分析报告列表(Report)")
 }
 
 /// Get SRM analytics (供应商管理)
@@ -415,33 +182,7 @@ pub async fn get_analytics_report() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_srm_analytics() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "total_suppliers": 156,
-            "active_suppliers": 138,
-            "new_suppliers": 12,
-            "supplier_rating_distribution": {
-                "excellent": 45,
-                "good": 78,
-                "medium": 28,
-                "poor": 5
-            },
-            "delivery_on_time_rate": 94.2,
-            "quality_compliance_rate": 97.5,
-            "monthly_new_suppliers": [
-                {"month": "2026-01", "count": 3},
-                {"month": "2026-02", "count": 5},
-                {"month": "2026-03", "count": 2},
-                {"month": "2026-04", "count": 4},
-                {"month": "2026-05", "count": 6},
-                {"month": "2026-06", "count": 3}
-            ],
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取供应商管理分析数据成功"
-    }))
+    degraded_analytics("供应商(SRM)")
 }
 
 /// Get EHS analytics (环境健康安全)
@@ -453,33 +194,7 @@ pub async fn get_srm_analytics() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_ehs_analytics() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "total_incidents": 24,
-            "safety_accidents": 8,
-            "environmental_incidents": 6,
-            "health_issues": 10,
-            "safety_compliance_rate": 98.5,
-            "training_completion_rate": 96.2,
-            "incident_trend": [
-                {"month": "2026-01", "count": 5},
-                {"month": "2026-02", "count": 4},
-                {"month": "2026-03", "count": 3},
-                {"month": "2026-04", "count": 6},
-                {"month": "2026-05", "count": 4},
-                {"month": "2026-06", "count": 2}
-            ],
-            "risk_level_distribution": {
-                "high": 3,
-                "medium": 12,
-                "low": 45
-            },
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取环境健康安全分析数据成功"
-    }))
+    degraded_analytics("EHS")
 }
 
 // ==================== RS (Research & Development) Analytics ====================
@@ -493,21 +208,7 @@ pub async fn get_ehs_analytics() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_rs_summary() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "total_projects": 156,
-            "active_projects": 42,
-            "completed_projects": 98,
-            "cancelled_projects": 16,
-            "total_budget": 125000000,
-            "used_budget": 87500000,
-            "avg_completion_rate": 62.8,
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取研发汇总数据成功"
-    }))
+    degraded_analytics("研发汇总(RS)")
 }
 
 /// Get RS project timeline
@@ -519,23 +220,7 @@ pub async fn get_rs_summary() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_rs_project_timeline() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "timeline": [
-                {"date": "2026-01-01", "projects_started": 8, "projects_completed": 6},
-                {"date": "2026-02-01", "projects_started": 12, "projects_completed": 8},
-                {"date": "2026-03-01", "projects_started": 15, "projects_completed": 10},
-                {"date": "2026-04-01", "projects_started": 10, "projects_completed": 12},
-                {"date": "2026-05-01", "projects_started": 18, "projects_completed": 14},
-                {"date": "2026-06-01", "projects_started": 14, "projects_completed": 16},
-                {"date": "2026-07-01", "projects_started": 6, "projects_completed": 8}
-            ],
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取研发项目时间线成功"
-    }))
+    degraded_analytics("研发项目时间线(RS)")
 }
 
 /// Get RS experiment success rate
@@ -547,29 +232,7 @@ pub async fn get_rs_project_timeline() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_rs_experiment_success_rate() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "overall_success_rate": 82.5,
-            "monthly_success_rate": [
-                {"month": "2026-01", "success_rate": 78.2},
-                {"month": "2026-02", "success_rate": 80.5},
-                {"month": "2026-03", "success_rate": 83.1},
-                {"month": "2026-04", "success_rate": 81.8},
-                {"month": "2026-05", "success_rate": 85.3},
-                {"month": "2026-06", "success_rate": 82.5}
-            ],
-            "experiment_type_distribution": {
-                "chemical": {"total": 245, "success": 210, "rate": 85.7},
-                "biological": {"total": 186, "success": 145, "rate": 77.9},
-                "mechanical": {"total": 128, "success": 115, "rate": 89.8},
-                "software": {"total": 95, "success": 88, "rate": 92.6}
-            },
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取研发实验成功率成功"
-    }))
+    degraded_analytics("研发实验成功率(RS)")
 }
 
 /// Get RS material usage
@@ -581,32 +244,7 @@ pub async fn get_rs_experiment_success_rate() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_rs_material_usage() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "total_materials": 528,
-            "materials_in_stock": 312,
-            "materials_consumed": 216,
-            "top_materials": [
-                {"name": "原材料A", "consumed": 45, "unit": "kg"},
-                {"name": "原材料B", "consumed": 38, "unit": "kg"},
-                {"name": "试剂C", "consumed": 28, "unit": "l"},
-                {"name": "耗材D", "consumed": 24, "unit": "件"},
-                {"name": "设备配件E", "consumed": 18, "unit": "个"}
-            ],
-            "monthly_consumption": [
-                {"month": "2026-01", "consumption": 3200, "unit": "kg"},
-                {"month": "2026-02", "consumption": 2800, "unit": "kg"},
-                {"month": "2026-03", "consumption": 3500, "unit": "kg"},
-                {"month": "2026-04", "consumption": 3100, "unit": "kg"},
-                {"month": "2026-05", "consumption": 3800, "unit": "kg"},
-                {"month": "2026-06", "consumption": 3400, "unit": "kg"}
-            ],
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取研发物料使用成功"
-    }))
+    degraded_analytics("研发物料使用(RS)")
 }
 
 /// Get RS project ranking
@@ -618,25 +256,7 @@ pub async fn get_rs_material_usage() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_rs_project_ranking() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "top_projects": [
-                {"rank": 1, "name": "新一代产品研发", "budget": 25000000, "progress": 78, "team_size": 24},
-                {"rank": 2, "name": "核心技术攻关", "budget": 18000000, "progress": 65, "team_size": 18},
-                {"rank": 3, "name": "工艺优化项目", "budget": 12000000, "progress": 92, "team_size": 12},
-                {"rank": 4, "name": "新材料研发", "budget": 15000000, "progress": 45, "team_size": 16},
-                {"rank": 5, "name": "质量改进计划", "budget": 8000000, "progress": 88, "team_size": 8}
-            ],
-            "bottom_projects": [
-                {"rank": 1, "name": "长期研究项目A", "budget": 5000000, "progress": 12, "team_size": 4},
-                {"rank": 2, "name": "探索性研究B", "budget": 3000000, "progress": 8, "team_size": 3}
-            ],
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取研发项目排名成功"
-    }))
+    degraded_analytics("研发项目排名(RS)")
 }
 
 // ==================== LIMS Analytics ====================
@@ -650,21 +270,7 @@ pub async fn get_rs_project_ranking() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_lims_summary() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "total_samples": 856,
-            "completed_tests": 724,
-            "pending_tests": 132,
-            "total_instruments": 24,
-            "active_instruments": 22,
-            "instrument_usage_rate": 82.5,
-            "avg_turnaround_hours": 24.5,
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取实验室汇总数据成功"
-    }))
+    degraded_analytics("实验室汇总(LIMS)")
 }
 
 /// Get LIMS sample timeline
@@ -676,23 +282,7 @@ pub async fn get_lims_summary() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_lims_sample_timeline() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "timeline": [
-                {"date": "2026-06-25", "samples_received": 45, "samples_completed": 38},
-                {"date": "2026-06-26", "samples_received": 52, "samples_completed": 45},
-                {"date": "2026-06-27", "samples_received": 38, "samples_completed": 50},
-                {"date": "2026-06-28", "samples_received": 48, "samples_completed": 42},
-                {"date": "2026-06-29", "samples_received": 55, "samples_completed": 48},
-                {"date": "2026-06-30", "samples_received": 28, "samples_completed": 35},
-                {"date": "2026-07-01", "samples_received": 32, "samples_completed": 30}
-            ],
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取实验室样本时间线成功"
-    }))
+    degraded_analytics("实验室样本时间线(LIMS)")
 }
 
 /// Get LIMS test pass rate
@@ -704,29 +294,7 @@ pub async fn get_lims_sample_timeline() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_lims_test_pass_rate() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "overall_pass_rate": 96.2,
-            "monthly_pass_rate": [
-                {"month": "2026-01", "pass_rate": 94.8},
-                {"month": "2026-02", "pass_rate": 95.5},
-                {"month": "2026-03", "pass_rate": 96.1},
-                {"month": "2026-04", "pass_rate": 95.9},
-                {"month": "2026-05", "pass_rate": 96.8},
-                {"month": "2026-06", "pass_rate": 96.2}
-            ],
-            "test_type_pass_rate": {
-                "chemical": 97.5,
-                "physical": 95.8,
-                "microbiological": 94.2,
-                "metallurgical": 98.1
-            },
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取实验室测试通过率成功"
-    }))
+    degraded_analytics("实验室测试通过率(LIMS)")
 }
 
 /// Get LIMS instrument usage
@@ -738,25 +306,7 @@ pub async fn get_lims_test_pass_rate() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_lims_instrument_usage() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "instruments": [
-                {"name": "气相色谱仪", "usage_rate": 92.5, "running_hours": 168, "maintenance_due": false},
-                {"name": "液相色谱仪", "usage_rate": 88.3, "running_hours": 154, "maintenance_due": false},
-                {"name": "质谱仪", "usage_rate": 85.6, "running_hours": 148, "maintenance_due": true},
-                {"name": "原子吸收仪", "usage_rate": 78.2, "running_hours": 136, "maintenance_due": false},
-                {"name": "紫外分光光度计", "usage_rate": 95.8, "running_hours": 172, "maintenance_due": false},
-                {"name": "红外光谱仪", "usage_rate": 68.5, "running_hours": 118, "maintenance_due": false}
-            ],
-            "average_usage_rate": 84.8,
-            "total_running_hours": 906,
-            "instruments_needing_maintenance": 1,
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取实验室仪器使用情况成功"
-    }))
+    degraded_analytics("实验室仪器使用(LIMS)")
 }
 
 /// Get LIMS sample status distribution
@@ -768,27 +318,7 @@ pub async fn get_lims_instrument_usage() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_lims_sample_status_distribution() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "distribution": [
-                {"status": "received", "count": 45, "percentage": 5.3},
-                {"status": "registered", "count": 32, "percentage": 3.7},
-                {"status": "testing", "count": 85, "percentage": 9.9},
-                {"status": "completed", "count": 624, "percentage": 72.9},
-                {"status": "reviewing", "count": 45, "percentage": 5.3},
-                {"status": "reported", "count": 25, "percentage": 2.9}
-            ],
-            "by_priority": {
-                "high": {"total": 186, "completed": 168, "rate": 90.3},
-                "medium": {"total": 452, "completed": 398, "rate": 88.1},
-                "low": {"total": 218, "completed": 158, "rate": 72.5}
-            },
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取实验室样本状态分布成功"
-    }))
+    degraded_analytics("实验室样本状态分布(LIMS)")
 }
 
 // ==================== QMS Analytics ====================
@@ -802,21 +332,7 @@ pub async fn get_lims_sample_status_distribution() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_qms_summary() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "total_inspections": 1248,
-            "passed_inspections": 1208,
-            "failed_inspections": 40,
-            "pass_rate": 96.8,
-            "total_issues": 156,
-            "open_issues": 28,
-            "resolved_issues": 128,
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取质量管理汇总数据成功"
-    }))
+    degraded_analytics("质量汇总(QMS)")
 }
 
 /// Get QMS quality trend
@@ -828,23 +344,7 @@ pub async fn get_qms_summary() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_qms_quality_trend() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "trend": [
-                {"month": "2026-01", "pass_rate": 94.2, "total_inspections": 185},
-                {"month": "2026-02", "pass_rate": 95.1, "total_inspections": 192},
-                {"month": "2026-03", "pass_rate": 96.3, "total_inspections": 210},
-                {"month": "2026-04", "pass_rate": 95.8, "total_inspections": 205},
-                {"month": "2026-05", "pass_rate": 97.1, "total_inspections": 228},
-                {"month": "2026-06", "pass_rate": 96.8, "total_inspections": 228}
-            ],
-            "target_pass_rate": 98.0,
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取质量管理趋势成功"
-    }))
+    degraded_analytics("质量趋势(QMS)")
 }
 
 /// Get QMS issue distribution
@@ -856,32 +356,7 @@ pub async fn get_qms_quality_trend() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_qms_issue_distribution() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "by_type": [
-                {"type": "critical", "count": 8, "percentage": 5.1},
-                {"type": "major", "count": 32, "percentage": 20.5},
-                {"type": "minor", "count": 68, "percentage": 43.6},
-                {"type": "improvement", "count": 48, "percentage": 30.8}
-            ],
-            "by_category": [
-                {"category": "product", "count": 65, "percentage": 41.7},
-                {"category": "process", "count": 45, "percentage": 28.9},
-                {"category": "service", "count": 28, "percentage": 17.9},
-                {"category": "system", "count": 18, "percentage": 11.5}
-            ],
-            "by_status": {
-                "open": 28,
-                "in_progress": 45,
-                "resolved": 65,
-                "closed": 18
-            },
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取质量管理问题分布成功"
-    }))
+    degraded_analytics("质量问题分布(QMS)")
 }
 
 // ==================== EHS Analytics ====================
@@ -895,27 +370,7 @@ pub async fn get_qms_issue_distribution() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_ehs_risk_distribution() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "by_level": [
-                {"level": "high", "count": 3, "percentage": 5.0},
-                {"level": "medium", "count": 12, "percentage": 20.0},
-                {"level": "low", "count": 45, "percentage": 75.0}
-            ],
-            "by_category": [
-                {"category": "safety", "high": 2, "medium": 5, "low": 18, "total": 25},
-                {"category": "environmental", "high": 1, "medium": 4, "low": 15, "total": 20},
-                {"category": "health", "high": 0, "medium": 3, "low": 12, "total": 15}
-            ],
-            "total_risks": 60,
-            "mitigated_risks": 48,
-            "unmitigated_risks": 12,
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取EHS风险分布成功"
-    }))
+    degraded_analytics("EHS风险分布")
 }
 
 /// Get EHS incident trend
@@ -927,24 +382,7 @@ pub async fn get_ehs_risk_distribution() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_ehs_incident_trend() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "trend": [
-                {"month": "2026-01", "safety": 3, "environmental": 1, "health": 1, "total": 5},
-                {"month": "2026-02", "safety": 2, "environmental": 1, "health": 1, "total": 4},
-                {"month": "2026-03", "safety": 1, "environmental": 1, "health": 1, "total": 3},
-                {"month": "2026-04", "safety": 3, "environmental": 2, "health": 1, "total": 6},
-                {"month": "2026-05", "safety": 2, "environmental": 1, "health": 1, "total": 4},
-                {"month": "2026-06", "safety": 1, "environmental": 1, "health": 0, "total": 2}
-            ],
-            "year_to_date_total": 24,
-            "target_reduction": 15,
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取EHS事件趋势成功"
-    }))
+    degraded_analytics("EHS事件趋势")
 }
 
 // ==================== SRM Analytics ====================
@@ -958,25 +396,7 @@ pub async fn get_ehs_incident_trend() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_srm_supplier_ranking() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "top_suppliers": [
-                {"rank": 1, "name": "优质供应商A", "score": 98.5, "total_orders": 125, "total_amount": 5800000},
-                {"rank": 2, "name": "优质供应商B", "score": 96.8, "total_orders": 98, "total_amount": 4200000},
-                {"rank": 3, "name": "优质供应商C", "score": 95.2, "total_orders": 85, "total_amount": 3500000},
-                {"rank": 4, "name": "优质供应商D", "score": 93.8, "total_orders": 72, "total_amount": 2800000},
-                {"rank": 5, "name": "优质供应商E", "score": 92.5, "total_orders": 65, "total_amount": 2400000}
-            ],
-            "bottom_suppliers": [
-                {"rank": 1, "name": "待改进供应商X", "score": 65.2, "total_orders": 12, "total_amount": 450000},
-                {"rank": 2, "name": "待改进供应商Y", "score": 58.8, "total_orders": 8, "total_amount": 280000}
-            ],
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取供应商排名成功"
-    }))
+    degraded_analytics("供应商排名(SRM)")
 }
 
 /// Get SRM order timeline
@@ -988,23 +408,7 @@ pub async fn get_srm_supplier_ranking() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_srm_order_timeline() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "timeline": [
-                {"date": "2026-06-25", "orders_created": 15, "orders_completed": 12, "total_amount": 850000},
-                {"date": "2026-06-26", "orders_created": 18, "orders_completed": 15, "total_amount": 980000},
-                {"date": "2026-06-27", "orders_created": 12, "orders_completed": 18, "total_amount": 720000},
-                {"date": "2026-06-28", "orders_created": 20, "orders_completed": 16, "total_amount": 1100000},
-                {"date": "2026-06-29", "orders_created": 16, "orders_completed": 14, "total_amount": 890000},
-                {"date": "2026-06-30", "orders_created": 8, "orders_completed": 10, "total_amount": 450000},
-                {"date": "2026-07-01", "orders_created": 10, "orders_completed": 8, "total_amount": 580000}
-            ],
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取采购订单时间线成功"
-    }))
+    degraded_analytics("采购订单时间线(SRM)")
 }
 
 // ==================== PDM Analytics ====================
@@ -1018,20 +422,7 @@ pub async fn get_srm_order_timeline() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_pdm_summary() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "total_products": 256,
-            "active_products": 198,
-            "discontinued_products": 58,
-            "total_batches": 1258,
-            "completed_batches": 1024,
-            "in_progress_batches": 234,
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取产品数据管理汇总成功"
-    }))
+    degraded_analytics("产品数据汇总(PDM)")
 }
 
 /// Get PDM production trend
@@ -1043,22 +434,7 @@ pub async fn get_pdm_summary() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_pdm_production_trend() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "trend": [
-                {"month": "2026-01", "batches": 185, "output": 125000, "yield_rate": 95.2},
-                {"month": "2026-02", "batches": 168, "output": 112000, "yield_rate": 94.8},
-                {"month": "2026-03", "batches": 210, "output": 140000, "yield_rate": 96.1},
-                {"month": "2026-04", "batches": 195, "output": 130000, "yield_rate": 95.5},
-                {"month": "2026-05", "batches": 225, "output": 150000, "yield_rate": 96.8},
-                {"month": "2026-06", "batches": 275, "output": 183000, "yield_rate": 96.2}
-            ],
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取产品生产趋势成功"
-    }))
+    degraded_analytics("产品生产趋势(PDM)")
 }
 
 /// Get PDM batch status distribution
@@ -1070,25 +446,7 @@ pub async fn get_pdm_production_trend() -> Json<Value> {
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
 pub async fn get_pdm_batch_status_distribution() -> Json<Value> {
-    Json(serde_json::json!({
-        "code": 0,
-        "success": true,
-        "data": {
-            "distribution": [
-                {"status": "pending", "count": 45, "percentage": 3.6},
-                {"status": "in_progress", "count": 234, "percentage": 18.6},
-                {"status": "completed", "count": 1024, "percentage": 81.4},
-                {"status": "cancelled", "count": 55, "percentage": 4.4}
-            ],
-            "by_product_line": [
-                {"line": "产品线A", "total": 520, "completed": 445, "rate": 85.6},
-                {"line": "产品线B", "total": 425, "completed": 358, "rate": 84.2},
-                {"line": "产品线C", "total": 313, "completed": 221, "rate": 70.6}
-            ],
-            "generated_at": Utc::now().to_rfc3339()
-        },
-        "message": "获取批次状态分布成功"
-    }))
+    degraded_analytics("批次状态分布(PDM)")
 }
 
 #[cfg(test)]
@@ -1103,12 +461,9 @@ mod tests {
             .and_then(|s| s.as_bool())
             .unwrap_or(false)
     }
-    fn data(v: &Json<Value>) -> &Value {
-        v.0.get("data").expect("data field present")
-    }
 
     #[tokio::test]
-    async fn module_dispatch_known_aliases_all_resolve() {
+    async fn module_dispatch_known_aliases_return_501_degraded() {
         for alias in [
             "development",
             "rs",
@@ -1122,13 +477,8 @@ mod tests {
             "srm",
         ] {
             let r = get_module_analytics(Path(alias.to_string())).await;
-            assert_eq!(
-                code(&r),
-                0,
-                "alias '{}' should dispatch to a known module",
-                alias
-            );
-            assert!(success(&r), "alias '{}' should return success", alias);
+            assert_eq!(code(&r), 501, "alias '{}' should degrade to 501", alias);
+            assert!(!success(&r), "alias '{}' should not report success", alias);
         }
     }
 
@@ -1139,187 +489,45 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn summary_has_four_key_metrics_with_full_shape() {
-        let r = get_summary_analytics().await;
-        assert_eq!(code(&r), 0);
-        let d = data(&r);
-        let km = d
-            .get("key_metrics")
-            .and_then(|x| x.as_array())
-            .expect("key_metrics array");
-        assert_eq!(km.len(), 4);
-        for m in km {
-            for key in ["title", "value", "unit", "change", "change_type", "icon"] {
-                assert!(m.get(key).is_some(), "metric missing field '{}'", key);
-            }
-        }
-        assert!(d.get("recent_activities").is_some());
-        assert!(d.get("generated_at").is_some());
-    }
-
-    #[tokio::test]
-    async fn development_analytics_structure() {
-        let r = get_development_analytics().await;
-        assert_eq!(code(&r), 0);
-        let d = data(&r);
-        assert_eq!(d.get("total_projects").and_then(|x| x.as_i64()), Some(156));
-        assert_eq!(d.get("active_projects").and_then(|x| x.as_i64()), Some(42));
-        assert_eq!(
-            d.get("completed_projects").and_then(|x| x.as_i64()),
-            Some(98)
-        );
-        let sdist = d
-            .get("project_status_distribution")
-            .expect("status distribution");
-        for key in ["in_progress", "pending_approval", "completed", "cancelled"] {
-            assert!(sdist.get(key).is_some(), "missing '{}'", key);
-        }
-        let monthly = d
-            .get("monthly_new_projects")
-            .and_then(|x| x.as_array())
-            .expect("monthly array");
-        assert_eq!(monthly.len(), 6);
-        let ptype = d
-            .get("project_type_distribution")
-            .expect("type distribution");
-        for key in ["research", "development", "improvement"] {
-            assert!(ptype.get(key).is_some(), "missing '{}'", key);
-        }
-    }
-
-    #[tokio::test]
-    async fn quality_analytics_structure() {
-        let r = get_quality_analytics().await;
-        assert_eq!(code(&r), 0);
-        let d = data(&r);
-        assert_eq!(d.get("pass_rate").and_then(|x| x.as_f64()), Some(96.8));
-        assert_eq!(
-            d.get("total_inspections").and_then(|x| x.as_i64()),
-            Some(1248)
-        );
-        assert_eq!(
-            d.get("passed_inspections").and_then(|x| x.as_i64()),
-            Some(1208)
-        );
-        assert_eq!(
-            d.get("failed_inspections").and_then(|x| x.as_i64()),
-            Some(40)
-        );
-        let trend = d
-            .get("quality_trend")
-            .and_then(|x| x.as_array())
-            .expect("quality trend");
-        assert_eq!(trend.len(), 6);
-        let defects = d.get("defect_types").expect("defect types");
-        for key in ["material", "process", "equipment", "other"] {
-            assert!(defects.get(key).is_some(), "missing '{}'", key);
-        }
-    }
-
-    #[tokio::test]
-    async fn production_analytics_structure() {
-        let r = get_production_analytics().await;
-        assert_eq!(code(&r), 0);
-        let d = data(&r);
-        assert_eq!(
-            d.get("total_production_batches").and_then(|x| x.as_i64()),
-            Some(256)
-        );
-        assert_eq!(
-            d.get("completed_batches").and_then(|x| x.as_i64()),
-            Some(198)
-        );
-        assert_eq!(
-            d.get("in_progress_batches").and_then(|x| x.as_i64()),
-            Some(58)
-        );
-        assert_eq!(
-            d.get("production_efficiency").and_then(|x| x.as_f64()),
-            Some(87.5)
-        );
-        let daily = d
-            .get("daily_output")
-            .and_then(|x| x.as_array())
-            .expect("daily output");
-        assert_eq!(daily.len(), 6);
-        let plu = d.get("product_line_usage").expect("product line usage");
-        for key in ["line_a", "line_b", "line_c"] {
-            assert!(plu.get(key).is_some(), "missing '{}'", key);
-        }
-    }
-
-    #[tokio::test]
-    async fn laboratory_analytics_structure() {
-        let r = get_laboratory_analytics().await;
-        assert_eq!(code(&r), 0);
-        let d = data(&r);
-        assert_eq!(d.get("total_samples").and_then(|x| x.as_i64()), Some(856));
-        assert_eq!(d.get("completed_tests").and_then(|x| x.as_i64()), Some(724));
-        assert_eq!(d.get("pending_tests").and_then(|x| x.as_i64()), Some(132));
-        assert_eq!(
-            d.get("instrument_usage_rate").and_then(|x| x.as_f64()),
-            Some(82.5)
-        );
-        let ttype = d
-            .get("test_type_distribution")
-            .expect("test type distribution");
-        for key in ["chemical", "physical", "microbiological", "other"] {
-            assert!(ttype.get(key).is_some(), "missing '{}'", key);
-        }
-        let t = d.get("turnaround_time").expect("turnaround time");
-        for key in ["avg_hours", "max_hours", "min_hours"] {
-            assert!(t.get(key).is_some(), "missing '{}'", key);
-        }
-    }
-
-    #[tokio::test]
-    async fn analytics_overview_structure() {
-        let r = get_analytics_overview().await;
-        assert_eq!(code(&r), 0);
-        let d = data(&r);
-        for key in ["development", "quality", "production"] {
-            assert!(d.get(key).is_some(), "missing '{}'", key);
-        }
-        assert_eq!(
-            d.get("development")
-                .and_then(|x| x.get("active_projects"))
-                .and_then(|x| x.as_i64()),
-            Some(42)
-        );
-        assert_eq!(
-            d.get("quality")
-                .and_then(|x| x.get("pass_rate"))
-                .and_then(|x| x.as_f64()),
-            Some(96.8)
-        );
-    }
-
-    #[tokio::test]
-    async fn srm_and_ehs_analytics_well_formed() {
-        let r = get_srm_analytics().await;
-        assert_eq!(code(&r), 0);
-        assert!(success(&r));
-        assert!(data(&r).is_object());
-
-        let r2 = get_ehs_analytics().await;
-        assert_eq!(code(&r2), 0);
-        let d2 = data(&r2);
-        assert_eq!(d2.get("total_incidents").and_then(|x| x.as_i64()), Some(24));
-        assert!(d2.get("incident_trend").is_some());
-    }
-
-    #[tokio::test]
-    async fn rs_lims_qms_pdm_summaries_all_well_formed() {
+    async fn all_domain_kpi_endpoints_degrade_to_501_no_fake_numbers() {
+        // 全部领域 KPI 端点必须返回 501/degraded，不得再返回写死的 200 + KPI 数字。
         let cases: Vec<Json<Value>> = vec![
+            get_summary_analytics().await,
+            get_development_analytics().await,
+            get_quality_analytics().await,
+            get_production_analytics().await,
+            get_laboratory_analytics().await,
+            get_analytics_overview().await,
+            get_analytics_report().await,
+            get_srm_analytics().await,
+            get_ehs_analytics().await,
             get_rs_summary().await,
+            get_rs_project_timeline().await,
+            get_rs_experiment_success_rate().await,
+            get_rs_material_usage().await,
+            get_rs_project_ranking().await,
             get_lims_summary().await,
+            get_lims_sample_timeline().await,
+            get_lims_test_pass_rate().await,
+            get_lims_instrument_usage().await,
+            get_lims_sample_status_distribution().await,
             get_qms_summary().await,
+            get_qms_quality_trend().await,
+            get_qms_issue_distribution().await,
+            get_ehs_risk_distribution().await,
+            get_ehs_incident_trend().await,
+            get_srm_supplier_ranking().await,
+            get_srm_order_timeline().await,
             get_pdm_summary().await,
+            get_pdm_production_trend().await,
+            get_pdm_batch_status_distribution().await,
         ];
-        for r in cases {
-            assert_eq!(code(&r), 0, "summary should return code 0");
-            assert!(success(&r), "summary should succeed");
-            assert!(data(&r).is_object());
+        for (i, r) in cases.iter().enumerate() {
+            assert_eq!(code(r), 501, "endpoint #{i} should degrade to 501");
+            assert!(!success(r), "endpoint #{i} should not report success");
+            // 消息必须说明无数据源，且不得残留写死 KPI 字段
+            let msg = r.0.get("message").and_then(|m| m.as_str()).unwrap_or("");
+            assert!(msg.contains("暂无真实数据源") || msg.contains("无真实数据源"), "endpoint #{i} message: {msg}");
         }
     }
 }

@@ -1,129 +1,80 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
-#[tokio::test]
-async fn test_get_summary_analytics_response() {
-    let result = topems_analytics::modules::bi::analytics::get_summary_analytics().await;
+// P2 财务域 B：领域 KPI 端点已从"写死 mock KPI"收口为诚实 501/degraded（无真实数据源）。
+// 测试随之改为断言降级契约：code=501、success=false、消息说明无数据源，不得再断言写死字段。
 
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-    assert!(json["data"].is_object());
-    assert!(json["message"].as_str().unwrap_or("").contains("成功"));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("key_metrics"));
-    assert!(data["key_metrics"].is_array());
-    assert!(data.contains_key("recent_activities"));
-    assert!(data["recent_activities"].is_array());
+/// 断言"领域分析端点已降级为 501、不再返回伪造 KPI"。
+fn assert_degraded(json: &serde_json::Value) {
+    assert_eq!(json["code"], 501);
+    assert!(!json["success"].as_bool().unwrap_or(true));
+    let msg = json["message"].as_str().unwrap_or("");
+    assert!(
+        msg.contains("暂无真实数据源"),
+        "message should state no real data source, got: {msg}"
+    );
 }
 
 #[tokio::test]
-async fn test_get_module_analytics_development() {
+async fn test_get_summary_analytics_response_degrades() {
+    let result = topems_analytics::modules::bi::analytics::get_summary_analytics().await;
+    assert_degraded(&result.0);
+}
+
+#[tokio::test]
+async fn test_get_module_analytics_development_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("development".to_string()),
     )
     .await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-    assert!(json["data"].is_object());
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("total_projects"));
-    assert!(data.contains_key("active_projects"));
-    assert!(data.contains_key("project_status_distribution"));
-    assert!(data.contains_key("monthly_new_projects"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_module_analytics_quality() {
+async fn test_get_module_analytics_quality_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("quality".to_string()),
     )
     .await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-    assert!(json["data"].is_object());
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("total_inspections"));
-    assert!(data.contains_key("pass_rate"));
-    assert!(data.contains_key("quality_trend"));
-    assert!(data.contains_key("defect_types"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_module_analytics_production() {
+async fn test_get_module_analytics_production_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("production".to_string()),
     )
     .await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("total_production_batches"));
-    assert!(data.contains_key("production_efficiency"));
-    assert!(data.contains_key("daily_output"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_module_analytics_laboratory() {
+async fn test_get_module_analytics_laboratory_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("laboratory".to_string()),
     )
     .await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("total_samples"));
-    assert!(data.contains_key("instrument_usage_rate"));
-    assert!(data.contains_key("test_type_distribution"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_module_analytics_ehs() {
+async fn test_get_module_analytics_ehs_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("ehs".to_string()),
     )
     .await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("total_incidents"));
-    assert!(data.contains_key("safety_compliance_rate"));
-    assert!(data.contains_key("incident_trend"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_module_analytics_srm() {
+async fn test_get_module_analytics_srm_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("srm".to_string()),
     )
     .await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("total_suppliers"));
-    assert!(data.contains_key("delivery_on_time_rate"));
-    assert!(data.contains_key("supplier_rating_distribution"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_module_analytics_invalid_module() {
+async fn test_get_module_analytics_invalid_module_returns_400() {
     let result = topems_analytics::modules::bi::analytics::get_module_analytics(
         axum::extract::Path("invalid_module".to_string()),
     )
@@ -132,129 +83,52 @@ async fn test_get_module_analytics_invalid_module() {
     let json = result.0;
     assert_eq!(json["code"], 400);
     assert!(!json["success"].as_bool().unwrap_or(true));
-    assert!(json["data"].is_null());
 }
 
 #[tokio::test]
-async fn test_get_analytics_overview() {
+async fn test_get_analytics_overview_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_analytics_overview().await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("development"));
-    assert!(data.contains_key("quality"));
-    assert!(data.contains_key("production"));
-    assert!(data.contains_key("laboratory"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_analytics_report() {
+async fn test_get_analytics_report_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_analytics_report().await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("items"));
-    assert!(data["items"].is_array());
-    assert!(data.contains_key("total"));
-    assert!(data.contains_key("page"));
-    assert!(data.contains_key("pageSize"));
-
-    let items = data["items"].as_array().unwrap();
-    assert!(!items.is_empty());
-
-    for item in items {
-        assert!(item.as_object().unwrap().contains_key("id"));
-        assert!(item.as_object().unwrap().contains_key("name"));
-        assert!(item.as_object().unwrap().contains_key("category"));
-        assert!(item.as_object().unwrap().contains_key("status"));
-    }
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_rs_summary() {
+async fn test_get_rs_summary_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_rs_summary().await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("total_projects"));
-    assert!(data.contains_key("active_projects"));
-    assert!(data.contains_key("total_budget"));
-    assert!(data.contains_key("avg_completion_rate"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_lims_summary() {
+async fn test_get_lims_summary_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_lims_summary().await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("total_samples"));
-    assert!(data.contains_key("instrument_usage_rate"));
-    assert!(data.contains_key("avg_turnaround_hours"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_qms_summary() {
+async fn test_get_qms_summary_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_qms_summary().await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("total_inspections"));
-    assert!(data.contains_key("pass_rate"));
-    assert!(data.contains_key("total_issues"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_pdm_summary() {
+async fn test_get_pdm_summary_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_pdm_summary().await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("total_products"));
-    assert!(data.contains_key("total_batches"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_ehs_risk_distribution() {
+async fn test_get_ehs_risk_distribution_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_ehs_risk_distribution().await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("by_level"));
-    assert!(data["by_level"].is_array());
-    assert!(data.contains_key("total_risks"));
+    assert_degraded(&result.0);
 }
 
 #[tokio::test]
-async fn test_get_srm_supplier_ranking() {
+async fn test_get_srm_supplier_ranking_degrades() {
     let result = topems_analytics::modules::bi::analytics::get_srm_supplier_ranking().await;
-
-    let json = result.0;
-    assert_eq!(json["code"], 0);
-    assert!(json["success"].as_bool().unwrap_or(false));
-
-    let data = json["data"].as_object().unwrap();
-    assert!(data.contains_key("top_suppliers"));
-    assert!(data.contains_key("bottom_suppliers"));
+    assert_degraded(&result.0);
 }

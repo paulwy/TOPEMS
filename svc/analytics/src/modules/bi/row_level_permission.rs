@@ -124,6 +124,7 @@ pub struct FilterDataRequest {
 }
 
 #[derive(Debug, Serialize)]
+#[allow(dead_code)] // filter_data 已下线为 501（RLP enforcement 未接线），保留结构仅作 schema 登记
 pub struct FilteredDataResponse {
     pub datasource_id: Uuid,
     pub table_name: String,
@@ -589,72 +590,27 @@ pub async fn validate_permission(
     operation_id = "filter_data",
     responses((status = 200, description = "OK")),
 )]
-#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn filter_data(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Json(req): Json<FilterDataRequest>,
 ) -> Json<serde_json::Value> {
-    info!(
-        "Filtering data for user: {} on table: {}",
-        req.user_id, req.table_name
-    );
-
     if let Err(e) = validate_table_name(&req.table_name) {
         warn!("Invalid table name '{}': {}", req.table_name, e);
         return Json(topems_shared_core::response::error_value(
-            500,
+            400,
             &format!("Invalid table name: {}", e),
         ));
     }
-
-    let page = req.page.unwrap_or(1);
-    let page_size = req.page_size.unwrap_or(50);
-    let offset = (page - 1) * page_size;
-
-    // S1.1: table_name 已由 validate_table_name 做字符白名单校验；
-    // LIMIT/OFFSET 走参数化绑定，杜绝数值拼接注入。
-    // 性能优化：使用 SELECT 1 代替 SELECT *，因为结果只用于计数，不使用列数据
-    let query = format!("SELECT 1 FROM {} LIMIT $1 OFFSET $2", req.table_name);
-
-    let data_result = sqlx::query(&query)
-        .bind(page_size)
-        .bind(offset)
-        .fetch_all(&state.pool)
-        .await;
-
-    match data_result {
-        Ok(rows) => {
-            let data: Vec<serde_json::Value> = rows
-                .iter()
-                .map(|_| {
-                    let mut map = serde_json::Map::new();
-                    map.insert("id".to_string(), serde_json::Value::Null);
-                    serde_json::Value::Object(map)
-                })
-                .collect();
-
-            let total = data.len() as i64;
-
-            Json(serde_json::json!({
-                "success": true,
-                "message": "Filter data",
-                "data": FilteredDataResponse {
-                    datasource_id: req.datasource_id,
-                    table_name: req.table_name,
-                    user_id: req.user_id,
-                    data,
-                    applied_filters: vec![],
-                    total,
-                    page,
-                    page_size,
-                }
-            }))
-        }
-        Err(e) => Json(topems_shared_core::response::error_value(
-            500,
-            &format!("Failed to filter data: {}", e),
-        )),
-    }
+    // RLP 规则未注入实际查询执行层：此前 SELECT 1 + applied_filters=[] 属假过滤
+    // （返回空过滤集的空数据）。已停止返回伪造结果，诚实 501（enforcement 未接线，规则仅做管理存储）。
+    warn!(
+        "filter_data called but RLP enforcement not wired for table '{}'; returning 501",
+        req.table_name
+    );
+    Json(topems_shared_core::response::error_value(
+        501,
+        "行级权限数据过滤尚未在查询执行层接线：规则条件未注入实际 SQL，已停止返回伪造的过滤结果；当前规则仅做管理存储。",
+    ))
 }
 
 #[utoipa::path(
@@ -738,21 +694,16 @@ pub async fn check_permission(
     State(_state): State<AppState>,
     Query(params): Query<CheckPermissionQuery>,
 ) -> Json<serde_json::Value> {
-    info!(
-        "Checking permission for resource: {} - {}",
-        params.resource_type, params.resource_id
+    // RLP 尚未在数据查询执行层接线：规则仅做管理存储，未对任何查询做行级过滤。
+    // 此前恒返 hasPermission=true 属权限判定造假，已停止，诚实返回 501。
+    warn!(
+        "check_permission called but RLP enforcement not wired (resource {} {} {}); returning 501",
+        params.resource_type, params.resource_id, params.permission
     );
-
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Check permission",
-        "data": {
-            "hasPermission": true,
-            "resourceType": params.resource_type,
-            "resourceId": params.resource_id,
-            "permission": params.permission,
-        }
-    }))
+    Json(topems_shared_core::response::error_value(
+        501,
+        "行级权限（RLP）尚未在数据查询执行层接线生效：当前仅为规则管理存储，未对查询结果做行级过滤；不再返回恒真的权限判定。",
+    ))
 }
 
 #[derive(Debug, Deserialize)]
