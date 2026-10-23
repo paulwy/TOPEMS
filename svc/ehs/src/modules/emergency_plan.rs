@@ -608,16 +608,9 @@ pub async fn list_plan_categories(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    tracing::debug!("Listing plan categories");
-    let categories = vec![
-        serde_json::json!({ "code": "fire", "name": "火灾", "icon": "flame" }),
-        serde_json::json!({ "code": "leak", "name": "泄漏", "icon": "droplet" }),
-        serde_json::json!({ "code": "poisoning", "name": "中毒", "icon": "alert-triangle" }),
-        serde_json::json!({ "code": "natural_disaster", "name": "自然灾害", "icon": "cloud-lightning" }),
-        serde_json::json!({ "code": "injury", "name": "人员伤亡", "icon": "activity" }),
-        serde_json::json!({ "code": "environmental", "name": "环境污染", "icon": "wind" }),
-    ];
-    Json(ApiResponse::success(categories, "获取预案分类成功"))
+    // 预案分类无持久化字典表，声明式 501。
+    tracing::warn!("Emergency plan categories data source not yet enabled");
+    Json(ApiResponse::error(501, "预案分类数据源尚未启用"))
 }
 
 /// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。

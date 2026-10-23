@@ -2128,16 +2128,8 @@ pub async fn list_regulation_categories(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    tracing::debug!("Listing regulation categories");
-    let categories = vec![
-        serde_json::json!({ "code": "law", "name": "法律" }),
-        serde_json::json!({ "code": "regulation", "name": "行政法规" }),
-        serde_json::json!({ "code": "local_regulation", "name": "地方法规" }),
-        serde_json::json!({ "code": "department_rule", "name": "部门规章" }),
-        serde_json::json!({ "code": "standard", "name": "标准" }),
-        serde_json::json!({ "code": "policy", "name": "政策文件" }),
-    ];
-    Json(ApiResponse::success(categories, "获取法规分类成功"))
+    tracing::warn!("Environmental regulation categories data source not yet enabled");
+    Json(ApiResponse::error(501, "法规分类数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -2152,16 +2144,8 @@ pub async fn list_monitor_types(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    tracing::debug!("Listing monitor types");
-    let types = vec![
-        serde_json::json!({ "code": "wastewater", "name": "废水监测" }),
-        serde_json::json!({ "code": "wastegas", "name": "废气监测" }),
-        serde_json::json!({ "code": "noise", "name": "噪声监测" }),
-        serde_json::json!({ "code": "solid_waste", "name": "固废监测" }),
-        serde_json::json!({ "code": "soil", "name": "土壤监测" }),
-        serde_json::json!({ "code": "groundwater", "name": "地下水监测" }),
-    ];
-    Json(ApiResponse::success(types, "获取监测类型成功"))
+    tracing::warn!("Environmental monitor types data source not yet enabled");
+    Json(ApiResponse::error(501, "监测类型数据源尚未启用"))
 }
 
 /// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
