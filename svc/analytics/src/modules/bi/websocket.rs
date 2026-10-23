@@ -2,17 +2,20 @@
 
 use axum::{
     extract::{Path, Query, State, WebSocketUpgrade},
-    response::IntoResponse,
+    http::StatusCode,
+    response::{IntoResponse, Response},
 };
 use futures::{sink::SinkExt, stream::StreamExt};
 use serde::Deserialize;
 use sqlx::types::Uuid;
+use sqlx::Row as _;
 use tokio::time::{interval, Duration};
 use tracing::{info, warn};
 
 use crate::modules::bi::chart_service::{ChartQuery, ChartService, ChartType};
 use crate::modules::bi::widget::WIDGET_CACHE;
 use crate::shared::AppState;
+use topems_shared_auth::auth::{verify_jwt_token, Claims};
 
 /// WebSocket 连接 query 参数：`?token=<JWT>`（与 mes/communication WS 模式一致）
 #[derive(Debug, Deserialize)]
@@ -34,16 +37,33 @@ pub async fn dashboard_websocket(
     Path(dashboard_id): Path<Uuid>,
     Query(params): Query<WsQueryParams>,
     ws: WebSocketUpgrade,
-) -> impl IntoResponse {
+) -> Response {
     info!(
         "WebSocket connection requested for dashboard: {}",
         dashboard_id
     );
-    let jwt_secret = state.auth_state.jwt_secret.clone();
-    let token = params.token;
-    ws.on_upgrade(move |socket| {
-        handle_dashboard_socket(socket, state, dashboard_id, jwt_secret, token)
-    })
+
+    // P1-13: 订阅前强制认证——无 token / JWT 校验失败直接拒绝升级（401），
+    // 不建立 WebSocket、不下发任何看板数据。路由挂在 stateful_public（浏览器 WS
+    // 无法携带 Authorization 头，沿用 ?token= 查询参数模式，鉴权在升级层完成）。
+    let claims = match params.token {
+        Some(tok) => match verify_jwt_token(&tok, &state.auth_state.jwt_secret) {
+            Ok(c) => c,
+            Err(e) => {
+                warn!(
+                    "WS dashboard auth rejected: dashboard={}, err={}",
+                    dashboard_id, e
+                );
+                return StatusCode::UNAUTHORIZED.into_response();
+            }
+        },
+        None => {
+            warn!("WS dashboard missing token: dashboard={}", dashboard_id);
+            return StatusCode::UNAUTHORIZED.into_response();
+        }
+    };
+
+    ws.on_upgrade(move |socket| handle_dashboard_socket(socket, state, dashboard_id, claims))
 }
 
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
@@ -51,28 +71,33 @@ async fn handle_dashboard_socket(
     socket: axum::extract::ws::WebSocket,
     state: AppState,
     dashboard_id: Uuid,
-    jwt_secret: String,
-    token: Option<String>,
+    claims: Claims,
 ) {
     info!(
         "WebSocket connection established for dashboard: {}",
         dashboard_id
     );
 
-    // 认证：URL token 校验（与 mes/communication WS 一致的软认证模式）
-    let _authenticated = if let Some(tok) = token {
-        topems_shared_auth::auth::verify_jwt_token(&tok, &jwt_secret).is_ok()
-    } else {
-        false
-    };
+    // P1-13: 订阅者租户上下文（与 tenant_middleware 同口径：超管/服务/无 tenant claims
+    // → nil UUID，RLS 全局豁免；普通用户按 claims.tenant_id 隔离看板数据）。
+    let tenant_id = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
 
     let (mut sender, mut receiver) = socket.split();
 
-    // Verify dashboard exists
-    let dashboard = match sqlx::query!(
-        r#"SELECT id, name, auto_refresh_enabled, auto_refresh_interval FROM analytics_dashboards WHERE id = $1"#,
-        dashboard_id,
+    // P1-13: 看板归属校验——仅允许订阅者本租户看板 / 公开看板（is_public），
+    // 超管（tenant_id = nil）不受限；软删过滤。非归属一律 not found，不泄露存在性。
+    let dashboard_row = match sqlx::query(
+        r#"SELECT id, name, auto_refresh_enabled, auto_refresh_interval
+           FROM analytics_dashboards
+           WHERE id = $1 AND deleted_at IS NULL
+             AND (tenant_id = $2 OR $2 = '00000000-0000-0000-0000-000000000000' OR is_public = TRUE)"#,
     )
+    .bind(dashboard_id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await
     {
@@ -93,7 +118,7 @@ async fn handle_dashboard_socket(
         }
     };
 
-    if dashboard.is_none() {
+    let Some(row) = dashboard_row else {
         let _ = sender
             .send(axum::extract::ws::Message::Text(
                 serde_json::json!({
@@ -105,13 +130,15 @@ async fn handle_dashboard_socket(
             ))
             .await;
         return;
-    }
-
-    let Some(dashboard) = dashboard else {
-        return;
     };
-    let refresh_interval = if dashboard.auto_refresh_enabled.unwrap_or(false) {
-        dashboard.auto_refresh_interval.unwrap_or(30) as u64
+    let dashboard_name: String = row.try_get("name").unwrap_or_default();
+    let auto_refresh_enabled: Option<bool> = row
+        .try_get("auto_refresh_enabled")
+        .ok()
+        .flatten();
+    let auto_refresh_interval: Option<i32> = row.try_get("auto_refresh_interval").ok().flatten();
+    let refresh_interval = if auto_refresh_enabled.unwrap_or(false) {
+        auto_refresh_interval.unwrap_or(30) as u64
     } else {
         30
     };
@@ -120,7 +147,7 @@ async fn handle_dashboard_socket(
     let init_msg = serde_json::json!({
         "type": "connected",
         "dashboard_id": dashboard_id,
-        "dashboard_name": dashboard.name,
+        "dashboard_name": dashboard_name,
         "refresh_interval": refresh_interval,
         "timestamp": chrono::Utc::now().to_rfc3339(),
     });

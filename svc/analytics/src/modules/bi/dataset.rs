@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::{get, post},
     Json, Router,
 };
@@ -11,6 +11,7 @@ use sqlx::Row;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::{ApiResponse, ListResponse};
 
@@ -500,6 +501,7 @@ pub async fn get_dataset_preview(
 )]
 pub async fn query_dataset(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(params): Json<DatasetQueryParams>,
 ) -> Json<serde_json::Value> {
     let dataset_id = match params.dataset_id {
@@ -542,10 +544,11 @@ pub async fn query_dataset(
     };
     let limit = params.limit.unwrap_or(100).clamp(1, 500);
     let offset = params.offset.unwrap_or(0).max(0);
+    let tenant_id = tenant_id_from_claims(&claims);
     let started = std::time::Instant::now();
     match tokio::time::timeout(
         std::time::Duration::from_secs(15),
-        execute_bi_sql(&state.pool, &sql, limit, offset),
+        execute_bi_sql(&state.pool, &sql, limit, offset, tenant_id),
     )
     .await
     {
@@ -584,6 +587,104 @@ pub async fn query_dataset(
         (status = 200, description = "SQL query test result", body = serde_json::Value),
     ),
 )]
+/// P1-17: 保守提取只读 SQL 中 FROM/JOIN 引用的表（支持 `schema.table` 限定）。
+///
+/// 括号子查询（`FROM (SELECT ...)`）不解析——子查询内的物理表引用可能漏检；
+/// 漏检方向为「少拦」，纵深兜底由连接级 RLS GUC + BEGIN READ ONLY 事务提供。
+fn extract_sql_tables(sql: &str) -> Vec<(Option<String>, String)> {
+    let lower = sql.to_ascii_lowercase();
+    let mut out = Vec::new();
+    let tokens: Vec<&str> = lower.split_whitespace().collect();
+    for pair in tokens.windows(2) {
+        if pair[0] == "from" || pair[0] == "join" {
+            let ident = pair[1]
+                .trim_end_matches([',', ';'])
+                .trim_end_matches(')');
+            if ident.is_empty() || ident.starts_with('(') {
+                continue;
+            }
+            let mut parts = ident.split('.');
+            match (parts.next(), parts.next(), parts.next()) {
+                (Some(schema), Some(table), None) => {
+                    out.push((Some(schema.to_string()), table.to_string()));
+                }
+                (Some(table), None, None) => out.push((None, table.to_string())),
+                _ => {}
+            }
+        }
+    }
+    out
+}
+
+/// P1-17: test-sql 只读执行的表/schema 白名单（复用 S1.3 `EnforceMode` 语义）。
+///
+/// - `Off`: 不校验；
+/// - `Warn`（默认）: 违规仅 `warn!` 日志，不拦截（生产过渡期）；
+/// - `Strict`: 违规直接拒绝。
+///
+/// 规则：
+/// 1) schema 显式限定仅允许 `bi` / `public`（跨 schema 边界访问拒绝）；
+/// 2) 表名必须已在 `bi_datasets` 白名单注册表中登记且 active
+///    （与 `dataset_whitelist::validate_columns` 同一张注册表）。
+async fn check_bi_sql_allowed(
+    pool: &sqlx::PgPool,
+    sql: &str,
+) -> Result<(), TopemsError> {
+    use super::dataset_whitelist::EnforceMode;
+    let mode = EnforceMode::from_env();
+    if matches!(mode, EnforceMode::Off) {
+        return Ok(());
+    }
+    let tables = extract_sql_tables(sql);
+    if tables.is_empty() {
+        return Ok(());
+    }
+    const ALLOWED_SCHEMAS: [&str; 2] = ["bi", "public"];
+    let bad_schemas: Vec<&str> = tables
+        .iter()
+        .filter_map(|(s, _)| s.as_deref().filter(|s| !ALLOWED_SCHEMAS.contains(s)))
+        .collect();
+    // 复用 S1.3 注册表：bi_datasets(table_name, column_name, is_active)
+    let registered: Vec<String> =
+        sqlx::query_scalar::<_, String>(r#"SELECT DISTINCT table_name FROM bi_datasets WHERE is_active = TRUE"#)
+            .fetch_all(pool)
+            .await
+            .unwrap_or_default();
+    let missing: Vec<&str> = tables
+        .iter()
+        .map(|(_, t)| t.as_str())
+        .filter(|t| !registered.iter().any(|r| r == t))
+        .collect();
+    if bad_schemas.is_empty() && missing.is_empty() {
+        return Ok(());
+    }
+    warn!(
+        "BI SQL 白名单拦截候选：违规 schema={:?}，未注册表={:?}（已注册表: {:?}，模式: {:?}）",
+        bad_schemas, missing, registered, mode
+    );
+    if matches!(mode, EnforceMode::Strict) {
+        Err(TopemsError::BusinessLogic(format!(
+            "SQL 引用了未授权的表/schema：{}",
+            if !missing.is_empty() {
+                missing.join(", ")
+            } else {
+                bad_schemas.join(", ")
+            }
+        )))
+    } else {
+        Ok(())
+    }
+}
+
+/// 与 tenant_middleware 同口径：普通用户取 claims.tenant_id；超管/服务/缺失 → nil UUID。
+fn tenant_id_from_claims(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil)
+}
+
 /// 在 BI 只读上下文执行用户 SQL：
 /// 1) `BEGIN READ ONLY` 强制只读事务（写语句被 PG 拒绝，双保险）；
 /// 2) 子查询包装 `SELECT json_agg(to_json(t)) FROM (SELECT * FROM (<sql>) __src LIMIT 100) t`
@@ -591,6 +692,9 @@ pub async fn query_dataset(
 ///    不能放最外层——聚合在 LIMIT 之前完成，外层 LIMIT 对聚合结果无影响）；
 /// 3) 结果由 PG 原生 JSON 化（数字/文本/bool/null/时间/jsonb 均正确），无需 Rust 手工解码；
 /// 4) 15s 超时保护。
+/// P1-17 加固：执行前 (a) 表/schema 白名单（复用 S1.3 EnforceMode + bi_datasets 注册表）；
+/// (b) 在本连接只读事务内 `set_config('app.tenant_id', …, true)` 建立租户上下文，
+///     使目标表的 RLS 策略按订阅者租户过滤（超管/无 tenant claims → nil UUID）。
 /// 返回 (columns, data)；columns 取自结果首行对象键（空结果返回空数组）；
 /// data 为对象数组（每行 {列名: 值}），与前端 SqlTestResult 契约一致。
 async fn execute_bi_sql(
@@ -598,6 +702,7 @@ async fn execute_bi_sql(
     sql: &str,
     limit: i64,
     offset: i64,
+    tenant_id: Uuid,
 ) -> Result<(Vec<String>, Vec<serde_json::Value>), TopemsError> {
     // 友好预检：非只读语句（非 SELECT/WITH 开头）提前给出明确提示；
     // 真正拦截仍由「子查询语法层 + BEGIN READ ONLY」双层保证（WITH 内的 data-modifying CTE 由只读事务兜底）。
@@ -611,6 +716,8 @@ async fn execute_bi_sql(
             "仅支持只读查询（SQL 须以 SELECT 或 WITH 开头）".to_string(),
         ));
     }
+    // P1-17: 表/schema 白名单（off/warn/strict，BI_WHITELIST_ENFORCE）
+    check_bi_sql_allowed(pool, sql).await?;
     let mut conn = pool
         .acquire()
         .await
@@ -619,6 +726,16 @@ async fn execute_bi_sql(
         .execute(&mut *conn)
         .await
         .map_err(|e| TopemsError::internal("只读事务开启失败", e))?;
+    // P1-17: 连接级租户上下文（与 tenant_middleware / BI datasource 同口径：
+    // set_config is_local=true，仅作用于本只读事务；随 ROLLBACK 一并丢弃，不污染池连接）。
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(tenant_id.to_string())
+        .execute(&mut *conn)
+        .await
+    {
+        let _ = sqlx::query("ROLLBACK").execute(&mut *conn).await;
+        return Err(TopemsError::internal("租户上下文设置失败", e));
+    }
     let outcome = async {
         // limit/offset 为 i64 数字（调用方 clamp/校验），直接格式化拼接无注入风险
         let wrapped = format!(
@@ -673,6 +790,7 @@ async fn execute_bi_sql(
 )]
 pub async fn test_sql_query(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<TestSqlQueryRequest>,
 ) -> Json<serde_json::Value> {
     let sql = req.sql.trim();
@@ -683,9 +801,10 @@ pub async fn test_sql_query(
             "message": "SQL 不能为空",
         }));
     }
+    let tenant_id = tenant_id_from_claims(&claims);
     match tokio::time::timeout(
         std::time::Duration::from_secs(15),
-        execute_bi_sql(&state.pool, sql, 100, 0),
+        execute_bi_sql(&state.pool, sql, 100, 0, tenant_id),
     )
     .await
     {

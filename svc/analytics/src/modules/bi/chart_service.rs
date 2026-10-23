@@ -401,7 +401,7 @@ impl ChartService {
     /// - 标识符已由 `validate_identifier` 做字符白名单 + 危险子字串拦截，不存在注入面；
     /// - `to_jsonb()` 把任意标量（int/text/timestamptz/uuid/numeric…）统一转成 JSON，
     ///   避免逐类型解码；
-    /// - 租户隔离依赖请求级 `app.current_tenant` GUC（服务 enable_rls=true），与 BI 层
+    /// - 租户隔离依赖请求级 `app.tenant_id` GUC（服务 enable_rls=true），与 BI 层
     ///   其它读路径一致；本通用查询不臆测目标表是否含 tenant_id 列，故不硬编码谓词。
     /// - 任何失败（表不存在 / 列不存在 / SQL 错误）一律记 warn 并返回空集，绝不回退到假数据。
     async fn query_real_dataset(

@@ -691,14 +691,14 @@ pub async fn reports_center_stats(
         i64, i64, i64, i64, i64,
     )>(r#"
         SELECT
-            (SELECT COUNT(*) FROM core_users WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_users,
+            (SELECT COUNT(*) FROM core_users WHERE tenant_id = current_setting('app.tenant_id', true)::uuid OR current_setting('app.tenant_id', true) = '') AS total_users,
             (SELECT COUNT(*) FROM core_users WHERE last_login_at >= NOW() - INTERVAL '30 days'
-               AND (tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '')) AS active_users,
-            (SELECT COUNT(*) FROM core_roles WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_roles,
+               AND (tenant_id = current_setting('app.tenant_id', true)::uuid OR current_setting('app.tenant_id', true) = '')) AS active_users,
+            (SELECT COUNT(*) FROM core_roles WHERE tenant_id = current_setting('app.tenant_id', true)::uuid OR current_setting('app.tenant_id', true) = '') AS total_roles,
             -- core_permissions is a shared global table (public.core_permissions has NO tenant_id column)
             (SELECT COUNT(*) FROM core_permissions) AS total_permissions,
             (SELECT COUNT(*) FROM public.audit_logs WHERE created_at >= NOW() - INTERVAL '7 days'
-               AND (tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '')) AS recent_activities
+               AND (tenant_id = current_setting('app.tenant_id', true)::uuid OR current_setting('app.tenant_id', true) = '')) AS recent_activities
     "#).fetch_one(&state.pool).await.unwrap_or((0, 0, 0, 0, 0));
 
     // 组织计数（BE-02 方案 A）：hrm 组织数据对 analytics（schema=bi，boundary allow=[]）不可裸引，
@@ -716,7 +716,7 @@ pub async fn reports_center_stats(
     // 近 6 个月真实用户增长（数据来源表：core_users）：
     //   新增用户 = core_users.created_at 分月计数；
     //   活跃用户 = core_users.last_login_at 分月计数。
-    // 租户谓词与上方总量查询一致（app.current_tenant GUC / 超管空串）。
+    // 租户谓词与上方总量查询一致（app.tenant_id GUC / 超管空串）。
     // 查询失败返回空数组，绝不回退到随机假数据。
     let user_growth: Vec<serde_json::Value> = {
         use sqlx::Row as _;
@@ -734,13 +734,13 @@ pub async fn reports_center_stats(
                 months.month AS month,
                 (SELECT COUNT(*) FROM core_users u
                    WHERE to_char(u.created_at, 'YYYY-MM') = months.month
-                     AND (u.tenant_id = current_setting('app.current_tenant', true)::uuid
-                          OR current_setting('app.current_tenant', true) = '')) AS new_users,
+                     AND (u.tenant_id = current_setting('app.tenant_id', true)::uuid
+                          OR current_setting('app.tenant_id', true) = '')) AS new_users,
                 (SELECT COUNT(*) FROM core_users u
                    WHERE u.last_login_at IS NOT NULL
                      AND to_char(u.last_login_at, 'YYYY-MM') = months.month
-                     AND (u.tenant_id = current_setting('app.current_tenant', true)::uuid
-                          OR current_setting('app.current_tenant', true) = '')) AS active_users
+                     AND (u.tenant_id = current_setting('app.tenant_id', true)::uuid
+                          OR current_setting('app.tenant_id', true) = '')) AS active_users
             FROM months
             ORDER BY months.month
             "#,
