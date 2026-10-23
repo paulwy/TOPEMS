@@ -10,7 +10,7 @@
 
 use serde_json::{json, Value};
 
-use topems_shared_mcp::protocol::{McpContent, McpToolResult};
+use topems_shared_mcp::protocol::{McpContent, McpToolResult, SensitiveOutput};
 use topems_shared_mcp::schema::SchemaBuilder;
 
 use super::super::server::McpServer;
@@ -150,6 +150,19 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                     content: vec![McpContent::text(supplier.to_string())],
                     is_error: None,
                 })
+            },
+        )
+        .await;
+
+    // Phase D 收尾：敏感输出声明——scm.get_supplier 返回供应商银行账户
+    // （bank_account.account_number + swift_code，真实数据形态，含 mock 降级路径），
+    // 输出层按前3后4 掩码；业务联系方式（contact_phone/contact_email/address）按 P2-4 保留。
+    registry
+        .declare_sensitive_output(
+            "scm.get_supplier",
+            SensitiveOutput {
+                fields: vec!["account_number".to_string(), "swift_code".to_string()],
+                contains_sensitive: Some(true),
             },
         )
         .await;
@@ -611,6 +624,88 @@ mod tests {
         } else {
             panic!("Expected text content");
         }
+    }
+
+    #[tokio::test]
+    async fn test_get_supplier_sensitive_output_masked() {
+        // Phase D 收尾：scm.get_supplier 声明敏感输出后，输出层对降级 mock 路径
+        // 的银行账号按前3后4 掩码（真实 API 同结构）；业务联系方式按 P2-4 保留。
+        use crate::dsh::mcp::security::AuthenticatedUser;
+        use topems_shared_mcp::jsonrpc::JsonRpcRequest;
+
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
+        register_scm_tools(&server, "test-secret").await;
+
+        // 声明已注册且字段正确
+        let decl = server
+            .tool_registry()
+            .sensitive_output("scm.get_supplier")
+            .await;
+        assert!(decl.is_some(), "scm.get_supplier 应已声明敏感输出");
+        assert_eq!(
+            decl.unwrap().fields,
+            vec!["account_number".to_string(), "swift_code".to_string()]
+        );
+
+        // 全链路：初始化 + 带身份调用（走输出层脱敏接线）
+        server
+            .handle_request(
+                JsonRpcRequest::new(
+                    "initialize",
+                    json!(1),
+                    Some(json!({
+                        "protocolVersion": "2025-03-26",
+                        "capabilities": {},
+                        "clientInfo": { "name": "test", "version": "1.0" }
+                    })),
+                ),
+                None,
+            )
+            .await;
+        server
+            .handle_request(
+                JsonRpcRequest::notification("notifications/initialized", None),
+                None,
+            )
+            .await;
+        let resp = server
+            .handle_request(
+                JsonRpcRequest::new(
+                    "tools/call",
+                    json!(2),
+                    Some(json!({
+                        "name": "scm.get_supplier",
+                        "arguments": { "supplier_id": "SUP-0001" }
+                    })),
+                ),
+                Some(AuthenticatedUser::new(
+                    "scm_user",
+                    "tenant1",
+                    vec!["scm:read".to_string()],
+                )),
+            )
+            .await
+            .unwrap();
+        assert!(resp.is_success(), "工具调用应成功: {:?}", resp.error);
+        let body = resp.result.unwrap();
+        let text = body["content"][0]["text"].as_str().unwrap();
+        // mock 值 4000020009000123456 → 400****3456；swift ICBKCNBJSZN → ICB****JSZN
+        assert!(
+            text.contains("400****3456"),
+            "应掩码 account_number: {}",
+            text
+        );
+        assert!(
+            !text.contains("4000020009000123456"),
+            "明文账号泄漏: {}",
+            text
+        );
+        assert!(text.contains("ICB****JSZN"), "应掩码 swift_code: {}", text);
+        assert!(
+            text.contains("13800138001"),
+            "contact_phone 应保留（P2-4）: {}",
+            text
+        );
     }
 
     #[tokio::test]
