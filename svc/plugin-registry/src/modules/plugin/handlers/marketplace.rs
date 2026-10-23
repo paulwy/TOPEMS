@@ -119,6 +119,18 @@ pub async fn list_categories(
     Json(CoreResponse::success(categories, "Categories retrieved"))
 }
 
+const PLUGIN_CATEGORIES: [&str; 9] = [
+    "manufacturing",
+    "quality",
+    "analytics",
+    "supply-chain",
+    "hr",
+    "crm",
+    "ai",
+    "gis",
+    "devtools",
+];
+
 /// List plugins with filters
 #[allow(
     clippy::as_conversions,
@@ -136,24 +148,27 @@ pub async fn list_plugins(
     let page_size = filters.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut where_clauses = vec!["is_published = true".to_string()];
+    let category = filters
+        .category
+        .as_deref()
+        .filter(|c| PLUGIN_CATEGORIES.contains(c));
+    let search_pattern = filters.search.as_ref().map(|s| {
+        let mut pattern = String::from("%");
+        pattern.push_str(s);
+        pattern.push('%');
+        pattern
+    });
+    let is_free = filters.is_free;
 
-    if let Some(ref cat) = filters.category {
-        where_clauses.push(format!("category = '{}'", cat));
-    }
-
-    if let Some(ref search) = filters.search {
-        where_clauses.push(format!(
-            "(name ILIKE '%{}%' OR description ILIKE '%{}%')",
-            search, search
-        ));
-    }
-
-    if let Some(is_free) = filters.is_free {
-        where_clauses.push(format!("is_free = {}", is_free));
-    }
-
-    let where_clause = where_clauses.join(" AND ");
+    let total: (i64,) = sqlx::query_as(
+        "SELECT COUNT(*) FROM core.core_plugins WHERE is_published = true AND ($1::text IS NULL OR category = $1) AND ($2::text IS NULL OR (name ILIKE $2 OR description ILIKE $2)) AND ($3::boolean IS NULL OR is_free = $3)",
+    )
+    .bind(category)
+    .bind(search_pattern.as_deref())
+    .bind(is_free)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or((0,));
 
     let sort_order = match filters.sort_by.as_deref() {
         Some("popular") => "install_count DESC",
@@ -163,22 +178,19 @@ pub async fn list_plugins(
         _ => "install_count DESC",
     };
 
-    let total: (i64,) = sqlx::query_as(&format!(
-        "SELECT COUNT(*) FROM core.core_plugins WHERE {}",
-        where_clause
-    ))
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or((0,));
-
     let locale = Locale::from_headers(&headers).as_sql();
-    let plugins: Vec<Plugin> = match sqlx::query_as::<_, Plugin>(&format!(
-        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE {} ORDER BY {} LIMIT {} OFFSET {}",
-        where_clause, sort_order, page_size, offset
-    ))
-    .bind(locale)
-    .fetch_all(&state.pool)
-    .await
+    let mut sql = String::from("SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND ($2::text IS NULL OR category = $2) AND ($3::text IS NULL OR (name ILIKE $3 OR description ILIKE $3)) AND ($4::boolean IS NULL OR is_free = $4) ORDER BY ");
+    sql.push_str(sort_order);
+    sql.push_str(" LIMIT $5 OFFSET $6");
+    let plugins: Vec<Plugin> = match sqlx::query_as::<_, Plugin>(&sql)
+        .bind(locale)
+        .bind(category)
+        .bind(search_pattern.as_deref())
+        .bind(is_free)
+        .bind(page_size as i64)
+        .bind(offset as i64)
+        .fetch_all(&state.pool)
+        .await
     {
         Ok(p) => p,
         Err(e) => {

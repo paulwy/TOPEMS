@@ -802,6 +802,18 @@ pub async fn deactivate_my_plugin(
     deactivate_plugin_inner(state, tenant_id, plugin_code).await
 }
 
+const PLUGIN_CATEGORIES: [&str; 9] = [
+    "manufacturing",
+    "quality",
+    "analytics",
+    "supply-chain",
+    "hr",
+    "crm",
+    "ai",
+    "gis",
+    "devtools",
+];
+
 /// Get available plugins for tenant (with ownership status)
 #[utoipa::path(
     get,
@@ -828,29 +840,23 @@ pub async fn get_available_plugins(
     );
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let category = filters.category.as_ref();
-    let search = filters.search.as_ref();
+    let category = filters
+        .category
+        .as_deref()
+        .filter(|c| PLUGIN_CATEGORIES.contains(c));
+    let search_pattern = filters.search.as_ref().map(|s| {
+        let mut pattern = String::from("%");
+        pattern.push_str(s);
+        pattern.push('%');
+        pattern
+    });
 
-    let mut where_clauses = vec!["is_published = true".to_string()];
-
-    if let Some(ref cat) = category {
-        where_clauses.push(format!("category = '{}'", cat));
-    }
-
-    if let Some(ref s) = search {
-        where_clauses.push(format!(
-            "(name ILIKE '%{}%' OR description ILIKE '%{}%')",
-            s, s
-        ));
-    }
-
-    let where_clause = where_clauses.join(" AND ");
-
-    let plugins: Vec<Plugin> = sqlx::query_as(&format!(
-        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE {} ORDER BY is_featured DESC, install_count DESC LIMIT 50",
-        where_clause
-    ))
+    let plugins: Vec<Plugin> = sqlx::query_as(
+        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND ($2::text IS NULL OR category = $2) AND ($3::text IS NULL OR (name ILIKE $3 OR description ILIKE $3)) ORDER BY is_featured DESC, install_count DESC LIMIT 50",
+    )
     .bind(locale)
+    .bind(category)
+    .bind(search_pattern.as_deref())
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
