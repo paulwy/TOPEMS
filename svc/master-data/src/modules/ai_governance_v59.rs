@@ -6,14 +6,27 @@
 //! - 智能匹配 (IntelligentMatcher): 多策略匹配（精确/模糊/语义/复合）、匹配结果审核
 //! - 自动分类 (AutoClassifier): 规则+ML混合分类、分类模型管理、分类结果审核
 
-use axum::{extract::Path, extract::Query, extract::State, Json};
+use axum::{extract::Path, extract::Query, extract::State, Extension, Json};
 use serde::Deserialize;
 use sqlx::PgPool;
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
+use uuid::Uuid;
 
 use crate::shared::AppState;
+
+/// 会话租户解析：对齐物料写路径（`Extension<Claims>`），缺失/非法 → nil。
+/// 与 RLS `current_setting('app.tenant_id')` 的空值兜底（全放行）语义一致，
+/// 不再写死 `00000000-...-000000000001` 这种伪租户。
+fn req_tenant_uuid(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| s.parse::<Uuid>().ok())
+        .unwrap_or_else(Uuid::nil)
+}
 
 macro_rules! db_exec {
     ($e:expr) => {
@@ -64,12 +77,16 @@ struct GovernanceAIEngine;
 impl GovernanceAIEngine {
     async fn generate_suggestions(
         db: &PgPool,
+        tenant_id: Uuid,
         entity_type: &str,
         entity_id: &str,
     ) -> Result<Vec<GovernanceSuggestionV59>, TopemsError> {
         let now = chrono::Utc::now().to_rfc3339();
         let mut suggestions = Vec::new();
 
+        // DEGRADED（说明项）：当前服务无真实 AI/LLM 推理通道（master-data 内无 AI 客户端调用），
+        // 以下三条为本地确定性规则启发式（rule-based heuristic），description/confidence/action
+        // 均为固定启发式权重与文案，并非模型输出。待接入真实 AI 服务后整体替换；在接入前不得当作 ML 结果对外宣称。
         suggestions.push(GovernanceSuggestionV59 {
             id: uuid::Uuid::new_v4().to_string(),
             r#type: GovernanceSuggestionType::QualityIssue,
@@ -115,7 +132,7 @@ impl GovernanceAIEngine {
         for sg in &suggestions {
             sqlx::query(
                 "INSERT INTO master_data.mdm_ai_suggestions (id, type, entity_type, entity_id, description, confidence, action, created_at, tenant_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, '00000000-0000-0000-0000-000000000001')
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                  ON CONFLICT (id) DO NOTHING",
             )
             .bind(&sg.id)
@@ -126,6 +143,7 @@ impl GovernanceAIEngine {
             .bind(sg.confidence)
             .bind(&sg.action)
             .bind(&sg.created_at)
+            .bind(tenant_id)
             .execute(db)
             .await?;
         }
@@ -272,6 +290,7 @@ struct IntelligentMatcher;
 impl IntelligentMatcher {
     async fn create_match_rule(
         db: &PgPool,
+        tenant_id: Uuid,
         name: String,
         rule_type: MatchRuleType,
         field_config: serde_json::Value,
@@ -279,7 +298,7 @@ impl IntelligentMatcher {
     ) -> Result<MatchRule, TopemsError> {
         let row = sqlx::query(
             "INSERT INTO master_data.mdm_match_rules (id, name, rule_type, field_config, threshold, enabled, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, TRUE, '00000000-0000-0000-0000-000000000001')
+             VALUES ($1, $2, $3, $4, $5, TRUE, $6)
              RETURNING id, name, rule_type, field_config, threshold, enabled",
         )
         .bind(uuid::Uuid::new_v4().to_string())
@@ -287,6 +306,7 @@ impl IntelligentMatcher {
         .bind(match_rule_type_str(&rule_type))
         .bind(&field_config)
         .bind(threshold)
+        .bind(tenant_id)
         .fetch_one(db)
         .await?;
         Ok(match_rule_from_row(&row))
@@ -304,6 +324,7 @@ impl IntelligentMatcher {
 
     async fn match_entities(
         db: &PgPool,
+        tenant_id: Uuid,
         source_id: &str,
         target_id: &str,
         _entity_type: &str,
@@ -356,7 +377,7 @@ impl IntelligentMatcher {
         for mr in &results {
             sqlx::query(
                 "INSERT INTO master_data.mdm_match_results (id, source_id, target_id, match_score, match_type, confidence, status, matched_at, tenant_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, '00000000-0000-0000-0000-000000000001')
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                  ON CONFLICT (id) DO NOTHING",
             )
             .bind(&mr.id)
@@ -367,6 +388,7 @@ impl IntelligentMatcher {
             .bind(mr.confidence)
             .bind(match_status_str(&mr.status))
             .bind(&mr.matched_at)
+            .bind(tenant_id)
             .execute(db)
             .await?;
         }
@@ -496,6 +518,7 @@ struct AutoClassifier;
 impl AutoClassifier {
     async fn create_classifier(
         db: &PgPool,
+        tenant_id: Uuid,
         name: String,
         entity_type: String,
         categories: Vec<String>,
@@ -503,7 +526,7 @@ impl AutoClassifier {
     ) -> Result<ClassificationModel, TopemsError> {
         let row = sqlx::query(
             "INSERT INTO master_data.mdm_classification_models (id, name, entity_type, categories, algorithm, accuracy, status, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, 0.85, 'active', '00000000-0000-0000-0000-000000000001')
+             VALUES ($1, $2, $3, $4, $5, 0.85, 'active', $6)
              RETURNING id, name, entity_type, categories, algorithm, accuracy, status",
         )
         .bind(uuid::Uuid::new_v4().to_string())
@@ -511,6 +534,7 @@ impl AutoClassifier {
         .bind(&entity_type)
         .bind(serde_json::to_value(&categories).unwrap_or_default())
         .bind(classification_algo_str(&algorithm))
+        .bind(tenant_id)
         .fetch_one(db)
         .await?;
         Ok(classification_model_from_row(&row))
@@ -528,6 +552,7 @@ impl AutoClassifier {
 
     async fn classify_entity(
         db: &PgPool,
+        tenant_id: Uuid,
         entity_type: &str,
         entity_id: &str,
     ) -> Result<ClassificationResult, TopemsError> {
@@ -576,7 +601,7 @@ impl AutoClassifier {
         let alternatives = serde_json::Value::Array(result.alternatives.clone());
         sqlx::query(
             "INSERT INTO master_data.mdm_classification_results (id, entity_id, category, confidence, alternatives, classified_at, tenant_id)
-             VALUES ($1, $2, $3, $4, $5, $6, '00000000-0000-0000-0000-000000000001')
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
              ON CONFLICT (id) DO NOTHING",
         )
         .bind(&result.id)
@@ -585,6 +610,7 @@ impl AutoClassifier {
         .bind(result.confidence)
         .bind(&alternatives)
         .bind(&result.classified_at)
+        .bind(tenant_id)
         .execute(db)
         .await?;
 
@@ -686,16 +712,18 @@ impl AutoClassifier {
 
     async fn update_rules(
         db: &PgPool,
+        tenant_id: Uuid,
         rules: Vec<serde_json::Value>,
     ) -> Result<Vec<serde_json::Value>, TopemsError> {
         let value = serde_json::Value::Array(rules);
         let row = sqlx::query(
             "INSERT INTO master_data.mdm_classifier_rules (id, rules, tenant_id)
-             VALUES ('default', $1, '00000000-0000-0000-0000-000000000001')
+             VALUES ('default', $1, $2)
              ON CONFLICT (id) DO UPDATE SET rules = EXCLUDED.rules
              RETURNING rules",
         )
         .bind(&value)
+        .bind(tenant_id)
         .fetch_one(db)
         .await?;
         Ok(row
@@ -879,11 +907,16 @@ pub struct UpdateRulesRequest {
 )]
 pub async fn analyze(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeRequest>,
 ) -> Json<ApiResponse<Vec<GovernanceSuggestionV59>>> {
-    let suggestions = db_exec!(
-        GovernanceAIEngine::generate_suggestions(&state.db, &req.entity_type, &req.entity_id).await
-    );
+    let suggestions = db_exec!(GovernanceAIEngine::generate_suggestions(
+        &state.db,
+        req_tenant_uuid(&claims),
+        &req.entity_type,
+        &req.entity_id
+    )
+    .await);
     Json(ApiResponse::success(suggestions, "数据治理分析完成"))
 }
 #[utoipa::path(
@@ -1028,6 +1061,7 @@ pub async fn train_model(
 )]
 pub async fn create_match_rule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMatchRuleRequest>,
 ) -> Json<ApiResponse<MatchRule>> {
     let rule_type = match parse_match_rule_type(&req.rule_type) {
@@ -1040,6 +1074,7 @@ pub async fn create_match_rule(
     let rule = db_exec!(
         IntelligentMatcher::create_match_rule(
             &state.db,
+            req_tenant_uuid(&claims),
             req.name,
             rule_type,
             req.field_config,
@@ -1077,13 +1112,18 @@ pub async fn get_match_rules(State(state): State<AppState>) -> Json<ApiResponse<
 )]
 pub async fn match_entities(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<MatchEntitiesRequest>,
 ) -> Json<ApiResponse<Vec<MatchResult>>> {
     let entity_type = req.entity_type.as_deref().unwrap_or("unknown");
-    let results = db_exec!(
-        IntelligentMatcher::match_entities(&state.db, &req.source_id, &req.target_id, entity_type)
-            .await
-    );
+    let results = db_exec!(IntelligentMatcher::match_entities(
+        &state.db,
+        req_tenant_uuid(&claims),
+        &req.source_id,
+        &req.target_id,
+        entity_type
+    )
+    .await);
     Json(ApiResponse::success(results, "实体匹配完成"))
 }
 
@@ -1208,6 +1248,7 @@ pub async fn get_match_stats(State(state): State<AppState>) -> Json<ApiResponse<
 )]
 pub async fn create_classifier(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateClassifierRequest>,
 ) -> Json<ApiResponse<ClassificationModel>> {
     let algorithm = req
@@ -1216,16 +1257,15 @@ pub async fn create_classifier(
         .and_then(parse_classification_algo)
         .unwrap_or(ClassificationAlgorithm::RuleBased);
 
-    let model = db_exec!(
-        AutoClassifier::create_classifier(
-            &state.db,
-            req.name,
-            req.entity_type,
-            req.categories,
-            algorithm
-        )
-        .await
-    );
+    let model = db_exec!(AutoClassifier::create_classifier(
+        &state.db,
+        req_tenant_uuid(&claims),
+        req.name,
+        req.entity_type,
+        req.categories,
+        algorithm
+    )
+    .await);
     Json(ApiResponse::success(model, "分类器已创建"))
 }
 
@@ -1262,9 +1302,16 @@ pub async fn get_classifiers(
 )]
 pub async fn classify_entity(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((entity_type, id)): Path<(String, String)>,
 ) -> Json<ApiResponse<ClassificationResult>> {
-    let result = db_exec!(AutoClassifier::classify_entity(&state.db, &entity_type, &id).await);
+    let result = db_exec!(AutoClassifier::classify_entity(
+        &state.db,
+        req_tenant_uuid(&claims),
+        &entity_type,
+        &id
+    )
+    .await);
     Json(ApiResponse::success(result, "分类完成"))
 }
 
@@ -1372,11 +1419,17 @@ pub async fn get_classification_stats(
 )]
 pub async fn update_classifier_rules(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateRulesRequest>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let _ = id;
-    let rules = db_exec!(AutoClassifier::update_rules(&state.db, req.rules).await);
+    let rules = db_exec!(AutoClassifier::update_rules(
+        &state.db,
+        req_tenant_uuid(&claims),
+        req.rules
+    )
+    .await);
     Json(ApiResponse::success(rules, "分类规则已更新"))
 }
 
