@@ -598,15 +598,62 @@ pub async fn delete_material(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_stock_records(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<StockRecord>>> {
-    tracing::debug!("Listing stock records");
-    Json(ApiResponse::success(
-        Vec::<StockRecord>::new(),
-        "获取出入库记录列表成功",
-    ))
+    let tenant_filter = if claims.is_superuser {
+        String::from("deleted_at IS NULL")
+    } else {
+        let tid = claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil);
+        format!("deleted_at IS NULL AND tenant_id = '{}'", tid)
+    };
+    let sql = format!(
+        r#"SELECT id::text AS id, record_no, material_id::text AS material_id, material_name,
+                  record_type, quantity, unit, batch_no, related_order, operator,
+                  operation_time::text AS operation_time, from_location, to_location,
+                  recipient, remarks
+           FROM ehs.qa_ehs_stock_records WHERE {} ORDER BY operation_time DESC NULLS LAST"#,
+        tenant_filter
+    );
+    let rows = match sqlx::query(&sql).fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list stock records: {}", e);
+            return Json(ApiResponse::error(500, "出入库记录列表获取失败"));
+        }
+    };
+    let list: Vec<StockRecord> = rows
+        .iter()
+        .map(|r| StockRecord {
+            id: r.try_get("id").unwrap_or_default(),
+            record_no: r.try_get("record_no").unwrap_or_default(),
+            material_id: r
+                .try_get::<String, _>("material_id")
+                .ok()
+                .unwrap_or_default(),
+            material_name: r.try_get("material_name").unwrap_or_default(),
+            record_type: r.try_get("record_type").unwrap_or_default(),
+            quantity: r.try_get("quantity").unwrap_or_default(),
+            unit: r.try_get("unit").ok().flatten(),
+            batch_no: r.try_get("batch_no").ok().flatten(),
+            related_order: r.try_get("related_order").ok().flatten(),
+            operator: r.try_get("operator").ok().flatten(),
+            operation_time: r.try_get("operation_time").ok().flatten(),
+            from_location: r.try_get("from_location").ok().flatten(),
+            to_location: r.try_get("to_location").ok().flatten(),
+            recipient: r.try_get("recipient").ok().flatten(),
+            remarks: r.try_get("remarks").ok().flatten(),
+            created_at: None,
+            tenant_id: Uuid::nil(),
+        })
+        .collect();
+    tracing::debug!("Listed {} stock records (real DB)", list.len());
+    Json(ApiResponse::success(list, "获取出入库记录列表成功"))
 }
 
 #[utoipa::path(
@@ -621,45 +668,65 @@ pub async fn list_stock_records(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_stock_record(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<StockRecord>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
+    let tenant_clause = if claims.is_superuser {
+        String::from("deleted_at IS NULL")
     } else {
-        claims
+        let tid = claims
             .tenant_id
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil);
+        format!("deleted_at IS NULL AND tenant_id = '{}'", tid)
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting stock record: {}", id);
-    Json(ApiResponse::success(
-        StockRecord {
-            id,
-            record_no: "SI-2024001".to_string(),
-            material_id: "material-001".to_string(),
-            material_name: "浓硫酸".to_string(),
-            record_type: "in".to_string(),
-            quantity: 100.0,
-            unit: Some("kg".to_string()),
-            batch_no: Some("B2024001".to_string()),
-            related_order: Some("PO-2024001".to_string()),
-            operator: Some("仓库管理员".to_string()),
-            operation_time: Some(chrono::Utc::now().to_rfc3339()),
-            from_location: Some("供应商".to_string()),
-            to_location: Some("危险品仓库A区".to_string()),
-            recipient: None,
-            remarks: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "获取出入库记录详情成功",
-    ))
+    let sql = format!(
+        r#"SELECT id::text AS id, record_no, material_id::text AS material_id, material_name,
+                  record_type, quantity, unit, batch_no, related_order, operator,
+                  operation_time::text AS operation_time, from_location, to_location,
+                  recipient, remarks
+           FROM ehs.qa_ehs_stock_records WHERE id = $1::uuid AND {}"#,
+        tenant_clause
+    );
+    let row = match sqlx::query(&sql)
+        .bind(&id)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "出入库记录不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get stock record {}: {}", id, e);
+            return Json(ApiResponse::error(500, "出入库记录获取失败"));
+        }
+    };
+    let rec = StockRecord {
+        id: row.try_get("id").unwrap_or_default(),
+        record_no: row.try_get("record_no").unwrap_or_default(),
+        material_id: row
+            .try_get::<String, _>("material_id")
+            .ok()
+            .unwrap_or_default(),
+        material_name: row.try_get("material_name").unwrap_or_default(),
+        record_type: row.try_get("record_type").unwrap_or_default(),
+        quantity: row.try_get("quantity").unwrap_or_default(),
+        unit: row.try_get("unit").ok().flatten(),
+        batch_no: row.try_get("batch_no").ok().flatten(),
+        related_order: row.try_get("related_order").ok().flatten(),
+        operator: row.try_get("operator").ok().flatten(),
+        operation_time: row.try_get("operation_time").ok().flatten(),
+        from_location: row.try_get("from_location").ok().flatten(),
+        to_location: row.try_get("to_location").ok().flatten(),
+        recipient: row.try_get("recipient").ok().flatten(),
+        remarks: row.try_get("remarks").ok().flatten(),
+        created_at: None,
+        tenant_id: Uuid::nil(),
+    };
+    tracing::debug!("Got stock record from real DB: {}", id);
+    Json(ApiResponse::success(rec, "获取出入库记录详情成功"))
 }
 
 #[utoipa::path(
@@ -720,50 +787,106 @@ pub async fn get_material_msds(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_material_statistics(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<MaterialStatistics>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting material statistics");
+    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+
+    let total_materials: i32 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    // low_stock: current_stock IS NOT NULL AND min_stock IS NOT NULL AND current_stock < min_stock
+    let low_stock_count: i32 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND current_stock IS NOT NULL AND min_stock IS NOT NULL AND current_stock < min_stock",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    // over_stock: current_stock > max_stock
+    let over_stock_count: i32 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND current_stock IS NOT NULL AND max_stock IS NOT NULL AND current_stock > max_stock",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    // expired: materials with status = 'expired' (status column)
+    let expired_count: i32 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND status = 'expired'",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    // by_category GROUP BY
+    let by_category: Vec<serde_json::Value> = sqlx::query(&format!(
+        "SELECT category, COUNT(*)::int AS cnt FROM ehs.qa_ehs_hazardous_materials WHERE {} GROUP BY category ORDER BY cnt DESC",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default()
+    .iter()
+    .map(|r| {
+        let cat: String = r.try_get("category").unwrap_or_default();
+        let cnt: i32 = r.try_get("cnt").unwrap_or(0);
+        serde_json::json!({ "category": cat, "count": cnt })
+    })
+    .collect();
+
+    // by_hazard_level GROUP BY
+    let by_hazard_level: Vec<serde_json::Value> = sqlx::query(&format!(
+        "SELECT hazard_level, COUNT(*)::int AS cnt FROM ehs.qa_ehs_hazardous_materials WHERE {} AND hazard_level IS NOT NULL GROUP BY hazard_level ORDER BY cnt DESC",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default()
+    .iter()
+    .map(|r| {
+        let level: String = r.try_get("hazard_level").unwrap_or_default();
+        let cnt: i32 = r.try_get("cnt").unwrap_or(0);
+        serde_json::json!({ "level": level, "count": cnt })
+    })
+    .collect();
+
+    // monthly_in_out: qa_ehs_stock_records 0 行空 → 诚实空数组
+    let monthly_in_out: Vec<serde_json::Value> = Vec::new();
+
+    tracing::debug!(
+        "Material stats (real DB): total={}, low={}, over={}, expired={}, categories={}, hazard_levels={}",
+        total_materials, low_stock_count, over_stock_count, expired_count,
+        by_category.len(), by_hazard_level.len()
+    );
+
     Json(ApiResponse::success(
         MaterialStatistics {
-            total_materials: 45,
-            total_stock_value: Some(1250000.0),
-            low_stock_count: 5,
-            over_stock_count: 3,
-            expired_count: 2,
-            by_category: vec![
-                serde_json::json!({ "category": "flammable", "name": "易燃", "count": 15 }),
-                serde_json::json!({ "category": "explosive", "name": "易爆", "count": 5 }),
-                serde_json::json!({ "category": "toxic", "name": "有毒", "count": 12 }),
-                serde_json::json!({ "category": "corrosive", "name": "腐蚀", "count": 8 }),
-                serde_json::json!({ "category": "oxidizing", "name": "氧化", "count": 5 }),
-            ],
-            by_hazard_level: vec![
-                serde_json::json!({ "level": "low", "name": "低危", "count": 10 }),
-                serde_json::json!({ "level": "medium", "name": "中危", "count": 25 }),
-                serde_json::json!({ "level": "high", "name": "高危", "count": 10 }),
-            ],
-            monthly_in_out: vec![
-                serde_json::json!({ "month": "1月", "in": 500, "out": 300 }),
-                serde_json::json!({ "month": "2月", "in": 450, "out": 280 }),
-                serde_json::json!({ "month": "3月", "in": 600, "out": 400 }),
-                serde_json::json!({ "month": "4月", "in": 550, "out": 350 }),
-                serde_json::json!({ "month": "5月", "in": 480, "out": 420 }),
-                serde_json::json!({ "month": "6月", "in": 520, "out": 380 }),
-            ],
-
-            tenant_id,
+            total_materials,
+            total_stock_value: None, // inventory 表空，无 stock_value
+            low_stock_count,
+            over_stock_count,
+            expired_count,
+            by_category,
+            by_hazard_level,
+            monthly_in_out,
+            tenant_id: resolve_material_tenant(&claims),
         },
         "获取危险品统计成功",
     ))
@@ -781,18 +904,9 @@ pub async fn list_material_categories(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    tracing::debug!("Listing material categories");
-    let categories = vec![
-        serde_json::json!({ "code": "flammable", "name": "易燃" }),
-        serde_json::json!({ "code": "explosive", "name": "易爆" }),
-        serde_json::json!({ "code": "toxic", "name": "有毒" }),
-        serde_json::json!({ "code": "corrosive", "name": "腐蚀" }),
-        serde_json::json!({ "code": "oxidizing", "name": "氧化性" }),
-        serde_json::json!({ "code": "compressed_gas", "name": "压缩气体" }),
-        serde_json::json!({ "code": "radioactive", "name": "放射性" }),
-        serde_json::json!({ "code": "miscellaneous", "name": "其他" }),
-    ];
-    Json(ApiResponse::success(categories, "获取危险品分类成功"))
+    // 危险品分类无持久化配置源；待建字典表后再接真。
+    tracing::warn!("Material categories data source not yet enabled");
+    Json(ApiResponse::error(501, "危险品分类数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -807,10 +921,13 @@ pub async fn create_material_category(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    Json(req): Json<serde_json::Value>,
+    Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::debug!("Creating material category: {:?}", req);
-    Json(ApiResponse::success(req, "危险品分类创建成功"))
+    tracing::warn!("Material category create called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "危险品分类数据源尚未启用，写入操作暂不可用",
+    ))
 }
 
 pub fn ghs_hazard_class(health: Option<u8>, flamm: Option<u8>, phys: Option<u8>) -> &'static str {
@@ -927,8 +1044,8 @@ pub async fn update_stock_record(
     axum::extract::Path(_id): axum::extract::Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<StockRecord>> {
-    // 待上游支持：出入库记录当前为只读桩，无按 ID 更新通道。
-    Json(ApiResponse::error(404, "出入库记录不存在"))
+    tracing::warn!("Stock record update called but data source not yet enabled");
+    Json(ApiResponse::error(501, "出入库记录数据源尚未启用"))
 }
 
 pub async fn delete_stock_record(
@@ -937,7 +1054,11 @@ pub async fn delete_stock_record(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success((), "出入库记录删除成功"))
+    tracing::warn!("Stock record delete called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "出入库记录数据源尚未启用，删除操作暂不可用",
+    ))
 }
 
 pub async fn get_msds_by_id(
@@ -974,7 +1095,11 @@ pub async fn delete_msds_by_id(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success((), "MSDS 删除成功"))
+    tracing::warn!("MSDS delete called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "MSDS 数据源尚未启用，删除操作暂不可用",
+    ))
 }
 
 pub async fn update_material_category(
@@ -984,8 +1109,11 @@ pub async fn update_material_category(
     axum::extract::Path(_id): axum::extract::Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    // 待上游支持：危险品分类当前为内存字典，无按 ID 持久化更新通道。
-    Json(ApiResponse::error(404, "危险品分类不存在"))
+    tracing::warn!("Material category update called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "危险品分类数据源尚未启用，更新操作暂不可用",
+    ))
 }
 
 pub async fn delete_material_category(
@@ -994,7 +1122,11 @@ pub async fn delete_material_category(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success((), "危险品分类删除成功"))
+    tracing::warn!("Material category delete called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "危险品分类数据源尚未启用，删除操作暂不可用",
+    ))
 }
 
 /// 解析请求租户：超管 → nil UUID；否则取 claims.tenant_id。
