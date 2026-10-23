@@ -179,7 +179,7 @@ async fn create_settlement(
             if let Some(ref publisher) = state.event_publisher {
                 let payload = SettlementCreatedPayload {
                     id,
-                    tenant_id: Uuid::nil(),
+                    tenant_id,
                     project_id,
                     settlement_no: s.settlement_no.clone().unwrap_or_else(|| "".to_string()),
                     settlement_type: s.settlement_type.clone(),
@@ -268,8 +268,14 @@ async fn update_settlement(
 async fn approve_settlement(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Settlement>> {
     let now = Utc::now();
+    // 与 INSERT 同源：superuser 会话回退默认租户，普通用户取会话租户；
+    // 操作人取 JWT 真实 sub（与 pdm created_by 写法一致），不再写死 "system"。
+    let tenant_id = effective_tenant_id(&ctx, &claims);
+    let approved_by = claims.sub.clone();
     let settlement = sqlx::query_as::<_, Settlement>(only_own_schema_query!(
         "pm",
         "UPDATE pm.settlements SET
@@ -287,8 +293,8 @@ async fn approve_settlement(
             if let Some(ref publisher) = state.event_publisher {
                 let payload = SettlementApprovedPayload {
                     id,
-                    tenant_id: Uuid::nil(),
-                    approved_by: "system".to_string(),
+                    tenant_id,
+                    approved_by,
                     approved_at: now,
                 };
                 let et = EventType::SettlementApproved;
