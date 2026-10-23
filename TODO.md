@@ -1,4 +1,20 @@
 
+## MCP 接口修复（2026-10-23）📌 待办
+
+> 源自 `MCP修复方案-2026-10-23.md`（P0×1 / P1×3 / P2×7）。原则：先修根因再提交，lefthook 全跑，不绕过门禁。
+
+- [x] **P0 · HTTP 并发用户上下文串扰** ✅ 完成：user 从全局单值改为随请求传递——`handle_request` 增 user 参数、`mcp_auth_middleware` 解析 JWT 写入 axum extensions、SSE 会话绑定连接用户（session_user）、stdio 恒传 None；删除 set_user/apply_auth/current_user；新增并发隔离测试 `test_concurrent_users_no_context_leak`；cargo check 0 error，dsh::mcp 165 passed / mcp_stdio_integration 8 passed
+- [ ] **P1-1 · stdio 业务工具全拒**：`MCP_STDIO_SUBJECT` 环境变量注入身份（fail-closed），同步对接文档与 e2e 脚本
+- [ ] **P1-2 · resources/read 权限**：接入 `check_tool_permission`（crm/erp/finance → crm:read/erp:read/finance:read）+ resolver 统一 TypedServiceClient
+- [ ] **P1-3 · MCP 端点限流**：`/mcp` 纳入 rate_limit_layer + `handle_tools_call` 调 `check_rate_limit`（含 MCP_RATE_LIMIT_PER_MINUTE 覆盖）
+- [ ] **P2-1 · stdio 双实现合一**：bin 改用 `run_stdio`（统一 MAX_LINE_BYTES=1MiB）
+- [ ] **P2-2 · Schema 参数校验**：`validate_tool_input` 按工具 input_schema 校验 required/type
+- [ ] **P2-3 · 注入检测误伤收窄**：删除 `--`/`INSERT INTO`/`UPDATE.*SET` 等误伤面大的字面量
+- [ ] **P2-4 · 输出脱敏误伤修复**：email/phone/address 改工具级声明，读类工具保留联系方式
+- [ ] **P2-5 · 死代码清理**：`dsh/mcp_security/mod.rs` + `dsh/governance/mcp_security.rs` 二选一（接入治理或删除，先 grep 消费方）
+- [ ] **P2-6 · shutdown 状态实现**：新增 `shutdown` 方法处理（state → Shutdown）
+- [ ] **P2-7 · 认证双通道统一**：业务工具与资源统一 TypedServiceClient（service token）
+
 ---
 
 ## 系统启用与查漏补缺（活文档 · 2026-10-20）📌
@@ -612,6 +628,7 @@
   - **✅ 进展（2026-10-23，第十五域）**：`pdm-product.spec.ts`（TC-PDM-001/002 列表双真实键 `product_no`+`name` + 详情弹窗 input 值断言，数据源 `/api/pdm/products`，信封键 `products`）新建——空库域补测第三批。**造数**：pdm products 空库（total=0）→ API 造 1 条标记记录 `PDM-PRD-2099`/`E2E产品2099`（必填真键 `product_no`，传 `code` 会 422 反序列化失败）；真栈 **2/2 绿**，双阴性对照（`PDM_NOT_EXIST_XXX`、`PDM_NOT_EXIST_NAME_XXX`）均按预期变红。**补测抓到真缺陷并修复**：前端 `Product` 类型/schema 键 `code` 与后端真键 `product_no` 全链错位——列表编号列空渲（schema `code` 列读不到值）+ 前端创建产品必 422（`CreateProductRequest.code` 缺后端必填 `product_no`）→ 三处对齐：`api/pdm/index.ts` 类型（`Product`/`CreateProductRequest`/`UpdateProductRequest` 改 `product_no`）、`schemas/pdm/product.ts`（字段/columns/searchFields/form fields 四处）、`ProductPage` 搜索过滤 + `PdmBomPage` 下拉展示；typecheck 全绿。
   - **✅ 进展（2026-10-23，第十六域）**：`gis-device.spec.ts`（TC-GIS-001/002 列表双真实键 `device_code`+`device_name` + 编辑弹窗 input 值断言，数据源 `/api/gis/devices`，信封键 `items`）新建——空库域补测末批；gis devices 非空库（1 条真记录 `GPS-TRUCK-001`/`运输卡车001`）无需造数，locations 仍空库未覆盖。页面为 React useQuery 自管理表格（非 CrudPage），详情即行内首个图标按钮（编辑 Pencil）打开的自建 Dialog，TextField 无 name 属性须按 label（设备编码/设备名称）定位断言 `toHaveValue`。真栈 **2/2 绿**，双阴性对照（stash 修复 → 列表/弹窗双红；错断言值 `GPS-TRUCK-001-NEG` → 双红）均按预期。**补测抓到真缺陷并修复**：`api/gis/devices.ts` 四个方法错用根 `apiClient`（其 `get/post/put/delete` 一律委托 core 子客户端，baseURL=`/api/core`）+ 全路径 `/api/gis/devices` → 浏览器实际请求 `/api/core/api/gis/devices` 恒 404，页面「数据加载失败」表格恒空（curl 直测正路径 200 难察觉）；同目录兄弟文件（business/device/fence 等）均正确使用 `apiClient.gis` + 相对路径 → 对齐：`list/create/update/remove` 全改 `apiClient.gis` + `/devices` 相对路径，泛型按 `TypedAxiosInstance` 默认 `R=ApiResponse<T>` 传内层类型；typecheck 全绿。
   - **✅ 进展（2026-10-23，D4 data-testid 补充批）**：照 D4 遗留建议「e2e 已覆盖路径优先补」，在共享模板层一次补齐高杠杆锚点（全 CrudPage 域受益，非逐页铺改）：① `CrudPage` 内置行操作补 `key`（view/edit/delete）→ `ListPageTemplate` 行操作 IconButton 渲染 `data-testid=row-action-{key}`（aria-label 保留，旧 getByRole 定位不破坏）；② 头部 actions 类型补可选 `testId` 并透传渲染，CrudPage 新建/导入/导出传 `crud-create-btn`/`crud-import-btn`/`crud-export-btn`，ListPageTemplate crud 模式内置新建钮同样补 `crud-create-btn`（注：CrudPage 默认 `showHeaderTitle=false` 时头部不渲染、新建钮不在 DOM，属既有产品形态未动）；③ `FormBuilder` 提交/重置钮补 `form-submit-btn`/`form-reset-btn`（view 模式不渲染提交钮）；④ gis `DevicePage`（自管理表格非 CrudPage）补 `device-edit-btn`/`device-delete-btn`/`device-create-btn`。spec 侧：`gis-device.spec.ts` 编辑定位由脆弱的 `getByRole('button').first()` 换 `getByTestId('device-edit-btn')`；`d4-testid.spec.ts` 新增用例断言 SRM 供应商列表 `row-action-view/edit` + 编辑弹窗 `form-submit-btn/reset-btn`（取消关闭不提交）。真栈 **7/7 绿**（d4 5 + gis 2）；阴性对照（stash 5 个组件文件）新增 d4 用例与 TC-GIS-002 双双变红，恢复后复绿；typecheck/eslint 0 error。
+  - **✅ 进展（2026-10-23，批11/12 登记的后端缺陷核销）**：三项「备查未动」缺陷全部真栈复现 → 修复 → 复验：① `POST /api/finance/expenses` 缺 `applicant_name` 时 DB NOT NULL 约束违反回落 500（实测 `code=500 费用报销创建失败`）→ 入口校验（trim 后非空）返回 400「申请人不能为空」；② 超管创建 `tenant_id` 落 NULL（实测插入 `PROBE-2099` 后 `tenant_id` 为空、列表 `total=1` 不可见=自吞）→ `resolve_create_tenant` 改为优先用 `claims.tenant_id`，仅在 claims 无租户时落公共行；③ `GET /api/mes/orders?page=0` → offset=`(0-1)*10=-10` 负 OFFSET PG 报错回落 500（实测 `code=500 获取生产工单列表失败`）→ 抽出 `normalize_page_params` 将 page/page_size 下限钳到 1，任意入参回落首页。单测：finance `operational::tests` 4/4、mes `test_normalize_page_params_defaults_and_clamps` 1/1 全过；`cargo test` 定向跑通（未放宽既有 27 门禁）。
 - `test_admin` 未绑业务角色：后续 spec 可改用 admin 登录，或给种子 test_admin 补绑角色。
 
 ---

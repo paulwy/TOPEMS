@@ -131,8 +131,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             is_notification
         );
 
-        // 4. 调用 server.handle_request 处理
-        let response = server.handle_request(request).await;
+        // stdio 通道无认证注入，恒为匿名会话（None）：业务工具由 check_tool_permission 匿名保护拒绝。
+        let response = server.handle_request(request, None).await;
 
         // 5. 将响应序列化为 JSON 写入 stdout（通知不需要响应）
         if let Some(resp) = response {

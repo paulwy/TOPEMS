@@ -16,7 +16,7 @@
 //! - JSON-RPC 通知（无响应，返回 202 Accepted）
 //! - SSE 流式传输（endpoint 事件 + 心跳）
 
-use axum::extract::{Query, State};
+use axum::extract::{Extension, Query, State};
 use axum::http::StatusCode;
 use axum::response::{
     sse::{Event, KeepAlive, Sse},
@@ -31,17 +31,25 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::sync::RwLock;
 
+use super::security::AuthenticatedUser;
 use super::server::McpServer;
 
 /// MCP Server 共享状态
 pub type McpServerState = Arc<McpServer>;
+
+/// SSE 会话（绑定连接建立时的认证用户，P0：身份随会话隔离，避免跨会话串扰）
+#[derive(Clone)]
+struct SseSession {
+    tx: mpsc::UnboundedSender<Value>,
+    user: Option<AuthenticatedUser>,
+}
 
 /// SSE 会话管理器
 ///
 /// 管理活动的 SSE 会话，将 POST /mcp 的响应路由到对应的 SSE 连接。
 #[derive(Clone, Default)]
 pub struct SseSessionManager {
-    sessions: Arc<RwLock<HashMap<String, mpsc::UnboundedSender<Value>>>>,
+    sessions: Arc<RwLock<HashMap<String, SseSession>>>,
 }
 
 impl SseSessionManager {
@@ -52,22 +60,40 @@ impl SseSessionManager {
         }
     }
 
-    /// 注册新会话，返回 session_id 和接收端
-    pub async fn register(&self) -> (String, mpsc::UnboundedReceiver<Value>) {
+    /// 注册新会话，返回 session_id 和接收端；绑定连接建立时的认证用户
+    pub async fn register(
+        &self,
+        user: Option<AuthenticatedUser>,
+    ) -> (String, mpsc::UnboundedReceiver<Value>) {
         let session_id = uuid::Uuid::new_v4().to_string();
         let (tx, rx) = mpsc::unbounded_channel();
-        self.sessions.write().await.insert(session_id.clone(), tx);
+        self.sessions.write().await.insert(
+            session_id.clone(),
+            SseSession {
+                tx,
+                user,
+            },
+        );
         tracing::info!(session_id = %session_id, "SSE session registered");
         (session_id, rx)
     }
 
     /// 向会话发送消息
     pub async fn send(&self, session_id: &str, message: Value) -> bool {
-        if let Some(tx) = self.sessions.read().await.get(session_id) {
-            tx.send(message).is_ok()
+        if let Some(session) = self.sessions.read().await.get(session_id) {
+            session.tx.send(message).is_ok()
         } else {
             false
         }
+    }
+
+    /// 获取会话绑定的认证用户（不存在返回 None）
+    pub async fn session_user(&self, session_id: &str) -> Option<AuthenticatedUser> {
+        self.sessions
+            .read()
+            .await
+            .get(session_id)
+            .and_then(|s| s.user.clone())
     }
 
     /// 注销会话
@@ -134,6 +160,7 @@ pub struct McpQueryParams {
 pub async fn handle_mcp_request(
     State(state): State<McpAppState>,
     Query(params): Query<McpQueryParams>,
+    Extension(user): Extension<Option<AuthenticatedUser>>,
     Json(body): Json<Value>,
 ) -> Response {
     // 解析 JSON-RPC 请求
@@ -150,8 +177,15 @@ pub async fn handle_mcp_request(
         }
     };
 
+    // P0：身份随请求传递。带 session_id 时优先使用 SSE 会话绑定的用户（连接建立时的身份），
+    // 其次使用本请求 Authorization 头解析的身份；不再读写服务器共享状态。
+    let user = match &params.session_id {
+        Some(sid) => state.sse_manager.session_user(sid).await.or_else(|| user.clone()),
+        None => user,
+    };
+
     // 处理请求
-    match state.server.handle_request(request).await {
+    match state.server.handle_request(request, user).await {
         Some(response) => {
             let response_value = serde_json::to_value(&response).unwrap_or(serde_json::json!({}));
 
@@ -195,9 +229,10 @@ pub async fn handle_mcp_request(
 )]
 pub async fn handle_mcp_sse(
     State(state): State<McpAppState>,
+    Extension(user): Extension<Option<AuthenticatedUser>>,
 ) -> Sse<impl futures::stream::Stream<Item = Result<Event, std::convert::Infallible>>> {
-    // 注册新会话
-    let (session_id, mut rx) = state.sse_manager.register().await;
+    // 注册新会话，绑定连接建立时的认证用户（P0：SSE 会话身份隔离）
+    let (session_id, mut rx) = state.sse_manager.register(user).await;
     let session_id_clone = session_id.clone();
     let manager = state.sse_manager.clone();
 
@@ -256,15 +291,19 @@ pub fn create_mcp_routes(server: McpServerState, jwt_secret: impl Into<String>) 
         .with_state(state)
 }
 
-/// MCP 认证中间件：从 Authorization 头解析 Bearer JWT 建立用户上下文。
+/// MCP 认证中间件：从 Authorization 头解析 Bearer JWT 建立用户上下文，写入请求扩展。
 /// 强制认证——无/无效 Bearer 一律 401 拒绝（含 system.* 工具），有效 token 放行。
-/// （P3 安全强化：MCP 端点不再允许匿名访问）
+/// 身份随请求扩展传递（P0：不再写服务器共享状态，修复并发身份串扰）。
 async fn mcp_auth_middleware(
     State(state): State<McpAppState>,
-    req: axum::extract::Request,
+    mut req: axum::extract::Request,
     next: axum::middleware::Next,
 ) -> Response {
-    if !state.server.apply_auth(req.headers()).await {
+    let user = state.server.parse_bearer(req.headers());
+    let authed = user.is_some();
+    // 恒写入（含 None），保证下游 Extension<Option<AuthenticatedUser>> 提取必然成功
+    req.extensions_mut().insert(user);
+    if !authed {
         return Response::builder()
             .status(axum::http::StatusCode::UNAUTHORIZED)
             .header("content-type", "application/json")
@@ -450,7 +489,7 @@ mod tests {
         let manager = SseSessionManager::new();
         assert_eq!(manager.active_count().await, 0);
 
-        let (session_id, mut rx) = manager.register().await;
+        let (session_id, mut rx) = manager.register(None).await;
         assert_eq!(manager.active_count().await, 1);
         assert!(!session_id.is_empty());
 

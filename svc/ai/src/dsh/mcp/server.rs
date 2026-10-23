@@ -56,7 +56,7 @@ pub enum ServerState {
 ///     })),
 /// );
 ///
-/// let response = server.handle_request(request).await.unwrap();
+/// let response = server.handle_request(request, None).await.unwrap();
 /// assert!(response.is_success());
 /// # }
 /// ```
@@ -76,8 +76,6 @@ pub struct McpServer {
     protocol_version: McpProtocolVersion,
     /// 安全中间件
     security: McpSecurityMiddleware,
-    /// 当前用户上下文（权限继承：无权限用户无法调用受限工具）
-    user: Arc<RwLock<Option<AuthenticatedUser>>>,
     jwt_secret: String,
 }
 
@@ -96,22 +94,14 @@ impl McpServer {
             resources: ResourceRegistry::new(),
             protocol_version: McpProtocolVersion::default(),
             security: McpSecurityMiddleware::new(),
-            user: Arc::new(RwLock::new(None)),
             jwt_secret: jwt_secret.into(),
         }
     }
 
-    /// 设置当前用户上下文（外部 Agent 对接时注入认证用户；不设置则视为匿名）
-    pub async fn set_user(&self, user: Option<AuthenticatedUser>) {
-        *self.user.write().await = user;
-    }
-
-    /// 从 HTTP Authorization 头解析 Bearer JWT，建立当前用户上下文。
-    /// 无 token / 无效 token → 匿名（None），由 check_tool_permission 拒绝业务工具。
-    /// 从请求头解析 Bearer JWT 建立用户上下文，返回是否认证成功。
-    /// 强制认证模式下由 HTTP 中间件据此拒绝未认证请求（P3 安全强化）。
-    pub async fn apply_auth(&self, headers: &axum::http::HeaderMap) -> bool {
-        let user = headers
+    /// 从 HTTP Authorization 头解析 Bearer JWT，返回用户上下文（无 token / 无效 token → None）。
+    /// 纯解析，不写任何共享状态；由调用方决定身份注入方式（P0：身份随请求传递，不再落全局）。
+    pub fn parse_bearer(&self, headers: &axum::http::HeaderMap) -> Option<AuthenticatedUser> {
+        headers
             .get(axum::http::header::AUTHORIZATION)
             .and_then(|h| h.to_str().ok())
             .and_then(|h| h.strip_prefix("Bearer "))
@@ -121,27 +111,28 @@ impl McpServer {
                 tenant_id: c.tenant_id.clone().unwrap_or_default(),
                 roles: c.roles,
                 username: c.username,
-            });
-        let authed = user.is_some();
-        *self.user.write().await = user;
-        authed
+            })
     }
 
-    /// 获取当前用户上下文
-    pub async fn current_user(&self) -> Option<AuthenticatedUser> {
-        self.user.read().await.clone()
+    /// 获取服务间认证密钥（HTTP 中间件解析 Bearer JWT 时使用）
+    pub fn jwt_secret(&self) -> &str {
+        &self.jwt_secret
     }
 
-    /// 检查当前用户是否有权限调用指定工具（权限继承）
+    /// 检查当前用户是否有权限调用指定工具（权限继承，身份由调用方传入，不读共享状态）
     ///
     /// - 匿名会话（无用户上下文）→ 仅放行 system.* 安全工具，业务工具一律拒绝
     ///   （防止未认证用户通过 MCP 通道枚举/读取业务数据）
     /// - 工具无权限要求 → 放行
     /// - 工具要求权限但无用户上下文 → 拒绝（匿名不可调用受限工具）
     /// - 工具要求权限且用户缺该权限 → 拒绝
-    async fn check_tool_permission(&self, tool_name: &str) -> Result<(), ToolExecutionError> {
+    async fn check_tool_permission(
+        &self,
+        user: Option<&AuthenticatedUser>,
+        tool_name: &str,
+    ) -> Result<(), ToolExecutionError> {
         // 匿名保护：无认证会话仅放行 system.* 安全工具（业务工具默认拒绝，兜底权限声明缺失）
-        if self.user.read().await.is_none() && !tool_name.starts_with("system.") {
+        if user.is_none() && !tool_name.starts_with("system.") {
             return Err(ToolExecutionError::PermissionDenied(format!(
                 "Anonymous session; tool '{}' requires authentication",
                 tool_name
@@ -151,11 +142,10 @@ impl McpServer {
         let Some(permission) = required else {
             return Ok(());
         };
-        let user = self.user.read().await.clone();
         match user {
             Some(u) => {
                 self.security
-                    .check_permission(&u, tool_name, Some(&permission))
+                    .check_permission(u, tool_name, Some(&permission))
                     .await
             }
             None => Err(ToolExecutionError::PermissionDenied(format!(
@@ -198,7 +188,13 @@ impl McpServer {
     /// 处理 JSON-RPC 请求
     ///
     /// 根据请求方法路由到对应的处理函数。
-    pub async fn handle_request(&self, request: JsonRpcRequest) -> Option<JsonRpcResponse> {
+    /// `user` 为当前请求的认证用户上下文（匿名传 None），由调用方注入，
+    /// 不再读写服务器共享状态（P0：修复并发身份串扰）。
+    pub async fn handle_request(
+        &self,
+        request: JsonRpcRequest,
+        user: Option<AuthenticatedUser>,
+    ) -> Option<JsonRpcResponse> {
         // 通知（无 ID）不需要响应
         if request.is_notification() {
             self.handle_notification(&request).await;
@@ -224,7 +220,7 @@ impl McpServer {
         match request.method.as_str() {
             "initialize" => Some(self.handle_initialize(id, request.params).await),
             "tools/list" => Some(self.handle_tools_list(id).await),
-            "tools/call" => Some(self.handle_tools_call(id, request.params).await),
+            "tools/call" => Some(self.handle_tools_call(id, request.params, user).await),
             "resources/list" => Some(self.handle_resources_list(id).await),
             "resources/read" => Some(self.handle_resources_read(id, request.params).await),
             "ping" => Some(JsonRpcResponse::success(id, json!({}))),
@@ -323,7 +319,12 @@ impl McpServer {
     }
 
     /// 处理 tools/call 请求
-    async fn handle_tools_call(&self, id: Value, params: Option<Value>) -> JsonRpcResponse {
+    async fn handle_tools_call(
+        &self,
+        id: Value,
+        params: Option<Value>,
+        user: Option<AuthenticatedUser>,
+    ) -> JsonRpcResponse {
         let params = match params {
             Some(p) => p,
             None => {
@@ -364,8 +365,8 @@ impl McpServer {
             return JsonRpcResponse::error(id, JsonRpcError::app_error(code, message, None));
         }
 
-        // 权限继承：无权限用户无法调用受限工具
-        if let Err(e) = self.check_tool_permission(&tool_name).await {
+        // 权限继承：无权限用户无法调用受限工具（身份随请求传入，不读共享状态）
+        if let Err(e) = self.check_tool_permission(user.as_ref(), &tool_name).await {
             let (code, message) = match e {
                 ToolExecutionError::PermissionDenied(_) => (-32001, e.to_string()),
                 _ => (-32000, e.to_string()),
@@ -494,11 +495,11 @@ mod tests {
                 "clientInfo": { "name": "test", "version": "1.0" }
             })),
         );
-        server.handle_request(init_request).await;
+        server.handle_request(init_request, None).await;
         let notif = JsonRpcRequest::notification("notifications/initialized", None);
-        server.handle_request(notif).await;
+        server.handle_request(notif, None).await;
         let request = JsonRpcRequest::new("resources/list", json!(1), None);
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
         let body = response.result.clone().unwrap();
         assert_eq!(
             body.get("resources")
@@ -532,9 +533,9 @@ mod tests {
                 "clientInfo": { "name": "test", "version": "1.0" }
             })),
         );
-        server.handle_request(init_request).await;
+        server.handle_request(init_request, None).await;
         let notif = JsonRpcRequest::notification("notifications/initialized", None);
-        server.handle_request(notif).await;
+        server.handle_request(notif, None).await;
         let request = JsonRpcRequest::new(
             "resources/read",
             json!(2),
@@ -542,7 +543,7 @@ mod tests {
                 json!({"uri": "crm://customers/nonexistent-00000000-0000-0000-0000-000000000000"}),
             ),
         );
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
         assert!(!response.is_success());
     }
 
@@ -560,11 +561,11 @@ mod tests {
                 "clientInfo": { "name": "test", "version": "1.0" }
             })),
         );
-        server.handle_request(init_request).await;
+        server.handle_request(init_request, None).await;
         let notif = JsonRpcRequest::notification("notifications/initialized", None);
-        server.handle_request(notif).await;
+        server.handle_request(notif, None).await;
         let request = JsonRpcRequest::new("resources/read", json!(3), Some(json!({})));
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
         assert!(!response.is_success());
     }
 
@@ -586,9 +587,9 @@ mod tests {
                 "clientInfo": { "name": "test", "version": "1.0" }
             })),
         );
-        server.handle_request(init_request).await;
+        server.handle_request(init_request, None).await;
         let notif = JsonRpcRequest::notification("notifications/initialized", None);
-        server.handle_request(notif).await;
+        server.handle_request(notif, None).await;
 
         let id = std::env::var("ERP_SAMPLE_ORDER_ID").unwrap_or_default();
         if id.is_empty() {
@@ -600,7 +601,7 @@ mod tests {
             json!(2),
             Some(json!({"uri": format!("erp://sales_orders/{}", id)})),
         );
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
         assert!(response.is_success(), "resources/read 应成功读取真实订单");
         let body = response.result.clone().unwrap();
         let contents = body.get("contents").and_then(|v| v.as_array()).unwrap();
@@ -631,16 +632,16 @@ mod tests {
                 "clientInfo": { "name": "test", "version": "1.0" }
             })),
         );
-        server.handle_request(init_request).await;
+        server.handle_request(init_request, None).await;
         let notif = JsonRpcRequest::notification("notifications/initialized", None);
-        server.handle_request(notif).await;
+        server.handle_request(notif, None).await;
 
         let request = JsonRpcRequest::new(
             "resources/read",
             json!(2),
             Some(json!({"uri": format!("crm://customers/{}", id)})),
         );
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
         assert!(response.is_success(), "resources/read 应成功读取真实客户");
         let body = response.result.clone().unwrap();
         let contents = body.get("contents").and_then(|v| v.as_array()).unwrap();
@@ -671,16 +672,16 @@ mod tests {
                 "clientInfo": { "name": "test", "version": "1.0" }
             })),
         );
-        server.handle_request(init_request).await;
+        server.handle_request(init_request, None).await;
         let notif = JsonRpcRequest::notification("notifications/initialized", None);
-        server.handle_request(notif).await;
+        server.handle_request(notif, None).await;
 
         let request = JsonRpcRequest::new(
             "resources/read",
             json!(2),
             Some(json!({"uri": format!("finance://vouchers/{}", id)})),
         );
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
         assert!(response.is_success(), "resources/read 应成功读取真实凭证");
         let body = response.result.clone().unwrap();
         let contents = body.get("contents").and_then(|v| v.as_array()).unwrap();
@@ -708,7 +709,7 @@ mod tests {
             })),
         );
 
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
         assert!(response.is_success());
         assert_eq!(server.state().await, ServerState::Initializing);
     }
@@ -727,11 +728,11 @@ mod tests {
                 "clientInfo": { "name": "test", "version": "1.0" }
             })),
         );
-        server.handle_request(init_request).await;
+        server.handle_request(init_request, None).await;
 
         // initialized notification
         let notif = JsonRpcRequest::notification("notifications/initialized", None);
-        server.handle_request(notif).await;
+        server.handle_request(notif, None).await;
 
         assert_eq!(server.state().await, ServerState::Running);
     }
@@ -741,7 +742,7 @@ mod tests {
         let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
 
         let request = JsonRpcRequest::new("tools/list", json!(1), None);
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
 
         // 未初始化时应该返回错误
         assert!(!response.is_success());
@@ -762,15 +763,15 @@ mod tests {
                 "clientInfo": { "name": "test", "version": "1.0" }
             })),
         );
-        server.handle_request(init_request).await;
+        server.handle_request(init_request, None).await;
 
         // initialized notification
         let notif = JsonRpcRequest::notification("notifications/initialized", None);
-        server.handle_request(notif).await;
+        server.handle_request(notif, None).await;
 
         // tools/list
         let request = JsonRpcRequest::new("tools/list", json!(2), None);
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
         assert!(response.is_success());
 
         let result = response.result.unwrap();
@@ -793,12 +794,12 @@ mod tests {
                 "clientInfo": { "name": "test", "version": "1.0" }
             })),
         );
-        server.handle_request(init_request).await;
+        server.handle_request(init_request, None).await;
         server
-            .handle_request(JsonRpcRequest::notification(
-                "notifications/initialized",
+            .handle_request(
+                JsonRpcRequest::notification("notifications/initialized", None),
                 None,
-            ))
+            )
             .await;
 
         // tools/call system.ping
@@ -807,7 +808,7 @@ mod tests {
             json!(2),
             Some(json!({ "name": "system.ping", "arguments": {} })),
         );
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
         assert!(response.is_success());
     }
 
@@ -825,16 +826,16 @@ mod tests {
                 "clientInfo": { "name": "test", "version": "1.0" }
             })),
         );
-        server.handle_request(init_request).await;
+        server.handle_request(init_request, None).await;
         server
-            .handle_request(JsonRpcRequest::notification(
-                "notifications/initialized",
+            .handle_request(
+                JsonRpcRequest::notification("notifications/initialized", None),
                 None,
-            ))
+            )
             .await;
 
         let request = JsonRpcRequest::new("nonexistent/method", json!(2), None);
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
         assert!(!response.is_success());
     }
 
@@ -852,16 +853,16 @@ mod tests {
                 "clientInfo": { "name": "test", "version": "1.0" }
             })),
         );
-        server.handle_request(init_request).await;
+        server.handle_request(init_request, None).await;
         server
-            .handle_request(JsonRpcRequest::notification(
-                "notifications/initialized",
+            .handle_request(
+                JsonRpcRequest::notification("notifications/initialized", None),
                 None,
-            ))
+            )
             .await;
 
         let request = JsonRpcRequest::new("ping", json!(2), None);
-        let response = server.handle_request(request).await.unwrap();
+        let response = server.handle_request(request, None).await.unwrap();
         assert!(response.is_success());
     }
     // ===== 权限继承验证（2.3 外部 Agent 对接）=====
@@ -873,21 +874,24 @@ mod tests {
 
     async fn init_server(server: &McpServer) {
         server
-            .handle_request(JsonRpcRequest::new(
-                "initialize",
-                json!(1),
-                Some(json!({
-                    "protocolVersion": "2025-03-26",
-                    "capabilities": {},
-                    "clientInfo": { "name": "test", "version": "1.0" }
-                })),
-            ))
+            .handle_request(
+                JsonRpcRequest::new(
+                    "initialize",
+                    json!(1),
+                    Some(json!({
+                        "protocolVersion": "2025-03-26",
+                        "capabilities": {},
+                        "clientInfo": { "name": "test", "version": "1.0" }
+                    })),
+                ),
+                None,
+            )
             .await;
         server
-            .handle_request(JsonRpcRequest::notification(
-                "notifications/initialized",
+            .handle_request(
+                JsonRpcRequest::notification("notifications/initialized", None),
                 None,
-            ))
+            )
             .await;
     }
 
@@ -905,10 +909,13 @@ mod tests {
         let server = setup_finance_permission_server().await;
         init_server(&server).await;
         let resp = server
-            .handle_request(call_tool_req(
-                "finance.create_voucher",
-                json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
-            ))
+            .handle_request(
+                call_tool_req(
+                    "finance.create_voucher",
+                    json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
+                ),
+                None,
+            )
             .await
             .unwrap();
         assert!(!resp.is_success(), "匿名用户应被拒绝调用受限工具");
@@ -921,18 +928,19 @@ mod tests {
         // 仅 crm 角色的用户无 finance:write 权限 → 拒绝
         let server = setup_finance_permission_server().await;
         init_server(&server).await;
-        server
-            .set_user(Some(AuthenticatedUser::new(
-                "user1",
-                "tenant1",
-                vec!["crm".to_string()],
-            )))
-            .await;
+        let user = Some(AuthenticatedUser::new(
+            "user1",
+            "tenant1",
+            vec!["crm".to_string()],
+        ));
         let resp = server
-            .handle_request(call_tool_req(
-                "finance.create_voucher",
-                json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
-            ))
+            .handle_request(
+                call_tool_req(
+                    "finance.create_voucher",
+                    json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
+                ),
+                user,
+            )
             .await
             .unwrap();
         assert!(!resp.is_success(), "无 finance 权限用户应被拒绝");
@@ -944,18 +952,19 @@ mod tests {
         // finance 角色拥有 finance:write 权限 → 放行
         let server = setup_finance_permission_server().await;
         init_server(&server).await;
-        server
-            .set_user(Some(AuthenticatedUser::new(
-                "finance_user",
-                "tenant1",
-                vec!["finance".to_string()],
-            )))
-            .await;
+        let user = Some(AuthenticatedUser::new(
+            "finance_user",
+            "tenant1",
+            vec!["finance".to_string()],
+        ));
         let resp = server
-            .handle_request(call_tool_req(
-                "finance.create_voucher",
-                json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
-            ))
+            .handle_request(
+                call_tool_req(
+                    "finance.create_voucher",
+                    json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
+                ),
+                user,
+            )
             .await
             .unwrap();
         assert!(resp.is_success(), "finance 角色用户应可创建凭证");
@@ -966,18 +975,19 @@ mod tests {
         // admin 拥有所有权限 → 放行
         let server = setup_finance_permission_server().await;
         init_server(&server).await;
-        server
-            .set_user(Some(AuthenticatedUser::new(
-                "admin1",
-                "tenant1",
-                vec!["admin".to_string()],
-            )))
-            .await;
+        let user = Some(AuthenticatedUser::new(
+            "admin1",
+            "tenant1",
+            vec!["admin".to_string()],
+        ));
         let resp = server
-            .handle_request(call_tool_req(
-                "finance.create_voucher",
-                json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
-            ))
+            .handle_request(
+                call_tool_req(
+                    "finance.create_voucher",
+                    json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
+                ),
+                user,
+            )
             .await
             .unwrap();
         assert!(resp.is_success(), "admin 用户应可创建凭证");
@@ -989,20 +999,67 @@ mod tests {
         // 角色 finance 前缀匹配通过；P2-4 细粒度权限声明后业务工具均有 required_permission）
         let server = setup_finance_permission_server().await;
         init_server(&server).await;
-        server
-            .set_user(Some(AuthenticatedUser::new(
-                "crm_user",
-                "tenant1",
-                vec!["crm".to_string(), "finance".to_string()],
-            )))
-            .await;
+        let user = Some(AuthenticatedUser::new(
+            "crm_user",
+            "tenant1",
+            vec!["crm".to_string(), "finance".to_string()],
+        ));
         let resp = server
-            .handle_request(call_tool_req(
-                "finance.list_receivables",
-                json!({"page": 1, "page_size": 5}),
-            ))
+            .handle_request(
+                call_tool_req(
+                    "finance.list_receivables",
+                    json!({"page": 1, "page_size": 5}),
+                ),
+                user,
+            )
             .await
             .unwrap();
         assert!(resp.is_success(), "无权限要求工具不应被权限检查拦截");
+    }
+
+    #[tokio::test]
+    async fn test_concurrent_users_no_context_leak() {
+        // P0 回归：并发请求各自携带身份，权限判定互不串扰。
+        // 修复前 user 为共享全局单值，A/B 并发会互相覆盖 → 越权或误拒。
+        let server = setup_finance_permission_server().await;
+        init_server(&server).await;
+
+        let user_a = Some(AuthenticatedUser::new(
+            "crm_user",
+            "tenant1",
+            vec!["crm".to_string()],
+        ));
+        let user_b = Some(AuthenticatedUser::new(
+            "finance_user",
+            "tenant1",
+            vec!["finance".to_string()],
+        ));
+
+        let (r_a, r_b) = tokio::join!(
+            server.handle_request(
+                call_tool_req(
+                    "finance.create_voucher",
+                    json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
+                ),
+                user_a,
+            ),
+            server.handle_request(
+                call_tool_req(
+                    "finance.create_voucher",
+                    json!({"voucher_date": "2026-09-13", "summary": "test", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
+                ),
+                user_b,
+            ),
+        );
+        let (resp_a, resp_b) = (r_a.unwrap(), r_b.unwrap());
+        assert!(
+            !resp_a.is_success(),
+            "crm 角色并发调用 finance.create_voucher 应被拒绝（身份未串扰）"
+        );
+        assert_eq!(resp_a.error.as_ref().unwrap().code, -32001);
+        assert!(
+            resp_b.is_success(),
+            "finance 角色并发调用 finance.create_voucher 应放行（身份未串扰）"
+        );
     }
 }

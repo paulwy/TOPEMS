@@ -56,7 +56,8 @@ where
             }
         };
 
-        if let Some(response) = server.handle_request(request).await {
+        // stdio 通道无认证注入，恒为匿名会话（None）：业务工具由 check_tool_permission 匿名保护拒绝。
+        if let Some(response) = server.handle_request(request, None).await {
             write_line(&mut writer, &response).await?;
         }
     }
