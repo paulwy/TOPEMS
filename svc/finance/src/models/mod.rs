@@ -1325,6 +1325,10 @@ pub struct ReconciliationSummary {
 #[derive(Debug, Clone, Serialize)]
 pub struct MatchResult {
     pub matched_pairs: Vec<MatchedPair>,
+    /// 低置信度匹配建议（fuzzy/amount 等仅金额+松日期配对）：
+    /// 未自动 mark_matched，仅作响应标注，需人工确认后才落 matched。
+    #[serde(default)]
+    pub low_confidence_pairs: Vec<MatchedPair>,
     pub unmatched_bank: Vec<ReconciliationItem>,
     pub unmatched_erp: Vec<ReconciliationItem>,
 }
@@ -1335,6 +1339,14 @@ pub struct MatchedPair {
     pub erp_item_id: Uuid,
     pub amount: Decimal,
     pub match_type: String,
+    /// 匹配置信度门控："high" = 强键匹配已自动落库 matched；
+    /// "low" = 弱匹配建议（low_confidence），未写库，需人工确认。
+    #[serde(default = "default_confidence")]
+    pub confidence: String,
+}
+
+fn default_confidence() -> String {
+    "high".to_string()
 }
 
 #[derive(Debug, Clone, Deserialize, utoipa::IntoParams)]

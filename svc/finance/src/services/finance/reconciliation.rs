@@ -210,6 +210,9 @@ impl ReconciliationService {
         let mut matched_bank_ids = Vec::new();
         let mut matched_erp_ids = Vec::new();
 
+        // 第一轮：仅高置信度匹配（exact/reference 强键）自动 mark_matched。
+        // 弱匹配（fuzzy/amount：仅金额+松日期配对，不同业务流水同额即可能错配）
+        // 不在此落库，统一在收集完强匹配与拆分匹配后作为 low_confidence 建议返回，转人工确认。
         for bank_item in &bank_items {
             for erp_item in &erp_items {
                 if matched_bank_ids.contains(&bank_item.id)
@@ -218,18 +221,19 @@ impl ReconciliationService {
                     continue;
                 }
 
-                let match_type = self.classify_match(bank_item, erp_item);
-                if match_type.is_some() {
-                    let mt = match_type.unwrap();
-                    self.mark_matched(bank_item.id, erp_item.id).await?;
-                    matched_pairs.push(MatchedPair {
-                        bank_item_id: bank_item.id,
-                        erp_item_id: erp_item.id,
-                        amount: bank_item.amount,
-                        match_type: mt,
-                    });
-                    matched_bank_ids.push(bank_item.id);
-                    matched_erp_ids.push(erp_item.id);
+                if let Some(mt) = self.classify_match(bank_item, erp_item) {
+                    if Self::is_high_confidence_match(&mt) {
+                        self.mark_matched(bank_item.id, erp_item.id).await?;
+                        matched_pairs.push(MatchedPair {
+                            bank_item_id: bank_item.id,
+                            erp_item_id: erp_item.id,
+                            amount: bank_item.amount,
+                            match_type: mt,
+                            confidence: "high".to_string(),
+                        });
+                        matched_bank_ids.push(bank_item.id);
+                        matched_erp_ids.push(erp_item.id);
+                    }
                 }
             }
         }
@@ -249,9 +253,43 @@ impl ReconciliationService {
                     erp_item_id: erp_item.id,
                     amount: bank_item.amount,
                     match_type: "split".to_string(),
+                    confidence: "high".to_string(),
                 });
                 matched_bank_ids.push(bank_item.id);
                 matched_erp_ids.push(erp_item.id);
+            }
+        }
+
+        // 第三轮：对仍未配对的项收集低置信度匹配建议（fuzzy/amount）。
+        // 仅做响应标注（low_confidence），不写库、不改 match_status，
+        // 等待人工确认后再落 matched；未 mark_matched 故重复执行不会重复扣减。
+        let mut low_confidence_pairs = Vec::new();
+        for bank_item in &bank_items {
+            if matched_bank_ids.contains(&bank_item.id) {
+                continue;
+            }
+            for erp_item in &erp_items {
+                if matched_erp_ids.contains(&erp_item.id) {
+                    continue;
+                }
+                if low_confidence_pairs
+                    .iter()
+                    .any(|p: &MatchedPair| p.erp_item_id == erp_item.id)
+                {
+                    continue;
+                }
+                if let Some(mt) = self.classify_match(bank_item, erp_item) {
+                    if !Self::is_high_confidence_match(&mt) {
+                        low_confidence_pairs.push(MatchedPair {
+                            bank_item_id: bank_item.id,
+                            erp_item_id: erp_item.id,
+                            amount: bank_item.amount,
+                            match_type: mt,
+                            confidence: "low".to_string(),
+                        });
+                        break; // 每个银行流水至多产出一条弱匹配建议
+                    }
+                }
             }
         }
 
@@ -270,13 +308,22 @@ impl ReconciliationService {
 
         Ok(MatchResult {
             matched_pairs,
+            low_confidence_pairs,
             unmatched_bank,
             unmatched_erp,
         })
     }
 
-    /// 分类匹配 - 返回匹配的置信度类型
-    /// 返回 None 表示不匹配；Some("exact"/"fuzzy"/"reference"/"amount"/"date_loose") 表示匹配类型
+    /// 高置信度匹配（自动 mark_matched 落库）：
+    /// exact（金额+紧日期±1天/名称高相似/单据号一致）与 reference（单据号=发票号强键）。
+    /// 其余 fuzzy/amount 类（仅金额+松日期配对）一律视为 low_confidence，只建议不自动匹配。
+    fn is_high_confidence_match(match_type: &str) -> bool {
+        matches!(match_type, "exact" | "reference")
+    }
+
+    /// 分类匹配 - 返回匹配类型
+    /// 返回 None 表示不匹配；Some("exact"/"reference"/"fuzzy"/"amount") 表示匹配类型。
+    /// 其中 exact/reference 为高置信度自动匹配；fuzzy/amount 为低置信度建议（需人工确认）。
     fn classify_match(
         &self,
         bank_item: &ReconciliationItem,
