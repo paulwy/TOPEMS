@@ -14,13 +14,8 @@
 //! - 通知（无 id 字段）不需要响应
 //! - EOF 表示客户端关闭连接，服务器退出
 
-use std::io::{BufRead, Write};
-
-use serde_json::Value;
-
-use topems_shared_mcp::jsonrpc::JsonRpcRequest;
-
 use topems_ai::dsh::mcp::security::AuthenticatedUser;
+use topems_ai::dsh::mcp::stdio::run_stdio;
 use topems_ai::dsh::mcp::{
     register_aps_tools, register_bi_tools, register_crm_tools, register_cs_tools,
     register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools,
@@ -124,71 +119,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         _ => None,
     };
 
-    // 3. 从 stdin 逐行读取 JSON-RPC 请求
-    let stdin = std::io::stdin();
-    let mut reader = std::io::BufReader::new(stdin.lock());
-    let mut stdout = std::io::stdout();
-
+    // 4. 运行 stdio 传输循环（P2-1：与 stdio.rs 统一实现——MAX_LINE_BYTES=1MiB 行长度保护、
+    //    NDJSON 逐行解析、通知无响应；身份为 MCP_STDIO_SUBJECT 注入值或匿名 None）
     tracing::info!("MCP stdio server ready, waiting for requests on stdin...");
-
-    let mut line = String::new();
-    loop {
-        line.clear();
-        let bytes_read = reader.read_line(&mut line)?;
-
-        // EOF — 客户端关闭连接
-        if bytes_read == 0 {
-            tracing::info!("EOF received, client disconnected. Shutting down.");
-            break;
-        }
-
-        let trimmed = line.trim();
-        if trimmed.is_empty() {
-            continue;
-        }
-
-        // 解析 JSON-RPC 请求
-        let request: JsonRpcRequest = match serde_json::from_str(trimmed) {
-            Ok(req) => req,
-            Err(e) => {
-                tracing::error!("Failed to parse JSON-RPC request: {}", e);
-                let error_response = serde_json::json!({
-                    "jsonrpc": "2.0",
-                    "id": null,
-                    "error": {
-                        "code": -32700,
-                        "message": "Parse error",
-                        "data": e.to_string()
-                    }
-                });
-                writeln!(stdout, "{}", error_response)?;
-                stdout.flush()?;
-                continue;
-            }
-        };
-
-        let method = request.method.clone();
-        let is_notification = request.is_notification();
-        tracing::debug!(
-            "Received request: method={}, is_notification={}",
-            method,
-            is_notification
-        );
-
-        // stdio 通道身份：MCP_STDIO_SUBJECT 注入的身份（若有），否则匿名（None）——
-        // 匿名会话业务工具由 check_tool_permission 拒绝（-32001，fail-closed）。
-        let response = server.handle_request(request, stdio_user.clone()).await;
-
-        // 5. 将响应序列化为 JSON 写入 stdout（通知不需要响应）
-        if let Some(resp) = response {
-            let resp_json: Value = serde_json::to_value(&resp)?;
-            writeln!(stdout, "{}", resp_json)?;
-            stdout.flush()?;
-            tracing::debug!("Response sent for method={}", method);
-        } else {
-            tracing::debug!("Notification processed, no response: method={}", method);
-        }
-    }
+    run_stdio(&server, stdio_user, tokio::io::stdin(), tokio::io::stdout()).await?;
 
     tracing::info!("TOPEMS MCP stdio server shutdown complete.");
     Ok(())

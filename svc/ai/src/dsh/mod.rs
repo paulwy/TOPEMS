@@ -40,7 +40,6 @@ pub mod governance;
 pub mod governance_dashboard;
 pub mod knowledge_graph;
 pub mod mcp;
-pub mod mcp_security;
 pub mod memory;
 pub mod multi_agent;
 pub mod permission;

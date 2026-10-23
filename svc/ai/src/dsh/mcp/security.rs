@@ -23,24 +23,16 @@ use super::tools::ToolExecutionError;
 /// 最大输入大小（字节）
 const MAX_INPUT_SIZE: usize = 1024 * 1024; // 1 MB
 
-/// 注入检测模式列表
+/// 注入检测模式列表（P2-3：仅保留高风险语句级模式，统一子串匹配语义；
+/// 删除 `--`/`;--`/`INSERT INTO`/`CREATE TABLE` 等误伤面大的字面量——
+/// 业务文本（备注、客户名等）含 `--`、`SELECT` 等单词时不应被误拒）
 const INJECTION_PATTERNS: &[&str] = &[
     "DROP TABLE",
     "DELETE FROM",
     "DROP DATABASE",
     "EXEC(",
     "xp_cmdshell",
-    "--",
-    ";--",
     "UNION SELECT",
-    "INSERT INTO",
-    "UPDATE.*SET",
-    "ALTER TABLE",
-    "CREATE TABLE",
-    "TRUNCATE TABLE",
-    "INFORMATION_SCHEMA",
-    "sysobjects",
-    "syscolumns",
     "WAITFOR DELAY",
     "BENCHMARK(",
     "SLEEP(",
@@ -48,6 +40,9 @@ const INJECTION_PATTERNS: &[&str] = &[
 ];
 
 /// 敏感字段列表（需要脱敏）
+/// P2-4：收窄到高风险凭据/身份字段；email/phone/mobile/address/location 等业务联系字段
+/// 是工具核心价值（如 get_customer_profile 返回联系方式），移出全局脱敏，
+/// 不再被 ***REDACTED*** 误伤。
 const SENSITIVE_FIELDS: &[&str] = &[
     "password",
     "passwd",
@@ -61,13 +56,8 @@ const SENSITIVE_FIELDS: &[&str] = &[
     "cvv",
     "ssn",
     "social_security",
-    "phone",
-    "mobile",
-    "email",
     "id_card",
     "idcard",
-    "address",
-    "location",
     "ip_address",
 ];
 
@@ -454,9 +444,10 @@ mod tests {
         let sanitized = middleware.sanitize_output(output);
         assert_eq!(sanitized["username"], "testuser");
         assert_eq!(sanitized["password"], "***REDACTED***");
-        assert_eq!(sanitized["email"], "***REDACTED***");
-        assert_eq!(sanitized["profile"]["phone"], "***REDACTED***");
-        assert_eq!(sanitized["profile"]["address"], "***REDACTED***");
+        // P2-4：email/phone/address 为业务联系字段（工具核心价值），移出全局脱敏
+        assert_eq!(sanitized["email"], "test@example.com");
+        assert_eq!(sanitized["profile"]["phone"], "1234567890");
+        assert_eq!(sanitized["profile"]["address"], "123 Main St");
     }
 
     #[tokio::test]
@@ -483,5 +474,20 @@ mod tests {
         assert!(middleware
             .check_injection_patterns("test", "DELETE FROM users WHERE id=1")
             .is_err());
+    }
+
+    #[test]
+    fn test_injection_patterns_allow_normal_business_text() {
+        // P2-3：正常业务文本（含 --、SELECT、INSERT 等单词/符号）不应被误拒
+        let middleware = McpSecurityMiddleware::new();
+        assert!(middleware
+            .check_injection_patterns("test", "客户备注：2026-09-13 -- 重点客户，需跟进 SELECT 相关信息")
+            .is_ok());
+        assert!(middleware
+            .check_injection_patterns("test", "INSERT INTO 提及的合同条款已归档")
+            .is_ok());
+        assert!(middleware
+            .check_injection_patterns("test", "普通查询请求")
+            .is_ok());
     }
 }

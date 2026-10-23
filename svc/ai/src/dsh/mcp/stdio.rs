@@ -8,6 +8,7 @@ use std::io;
 use serde_json::{json, Value};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
+use super::security::AuthenticatedUser;
 use super::server::McpServer;
 use topems_shared_mcp::jsonrpc::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 
@@ -24,8 +25,12 @@ fn parse_error_response(detail: Value) -> JsonRpcResponse {
 /// Reads one JSON-RPC message per line from `reader`, dispatches to the
 /// server, and writes responses (one per line) to `writer`. Notifications
 /// (requests without an id) produce no output.
+///
+/// `user` 为 stdio 会话身份（P1-1 MCP_STDIO_SUBJECT 注入；None → 匿名，
+/// 业务工具由权限检查拒绝，fail-closed）。P2-1：stdio 双实现合一，统一走本实现。
 pub async fn run_stdio<R, W>(
     server: &McpServer,
+    user: Option<AuthenticatedUser>,
     reader: R,
     mut writer: W,
 ) -> Result<(), std::io::Error>
@@ -56,8 +61,8 @@ where
             }
         };
 
-        // stdio 通道无认证注入，恒为匿名会话（None）：业务工具由 check_tool_permission 匿名保护拒绝。
-        if let Some(response) = server.handle_request(request, None).await {
+        // 身份随请求传递（stdio 单进程：MCP_STDIO_SUBJECT 注入的身份或匿名 None）
+        if let Some(response) = server.handle_request(request, user.clone()).await {
             write_line(&mut writer, &response).await?;
         }
     }
@@ -93,7 +98,7 @@ mod tests {
         drop(client_w); // EOF on the server read side
 
         // Run the loop in-place (no spawn, so no 'static requirement).
-        run_stdio(server, server_r, server_w).await.unwrap();
+        run_stdio(server, None, server_r, server_w).await.unwrap();
 
         // Read all output until EOF.
         let mut buf = String::new();

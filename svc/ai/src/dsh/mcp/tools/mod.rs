@@ -17,6 +17,7 @@ use std::sync::Arc;
 use serde_json::Value;
 use tokio::sync::RwLock;
 
+use topems_shared_auth::service::issue_service_token;
 use topems_shared_mcp::protocol::{McpTool, McpToolResult};
 
 pub mod aps;
@@ -313,7 +314,57 @@ pub fn service_base_url(env_var: &str, default_port: u16) -> String {
     std::env::var(env_var).unwrap_or_else(|_| format!("http://localhost:{}", default_port))
 }
 
+// ===== P2-7：服务间认证统一 =====
+// http_call（裸 HTTP 通道）此前不带 Authorization 头，绕过服务间认证。
+// 现在与 TypedServiceClient 同一密钥体系：签发 ai-service 身份 service token 并自动附加/续签。
+// 工具级权限校验（check_tool_permission）仍在 ai 侧执行；service token 用于下游身份信任与 RLS 豁免。
+
+/// 服务间认证状态
+struct ServiceAuth {
+    jwt_secret: String,
+    token: String,
+    issued_at: std::time::Instant,
+}
+
+/// 模块级 service token（幂等初始化，到期自动重签）
+static SERVICE_AUTH: std::sync::OnceLock<std::sync::RwLock<Option<ServiceAuth>>> =
+    std::sync::OnceLock::new();
+
+/// 初始化服务间认证（幂等）：存储签发密钥并签发首个 service token。
+/// 由 `McpServer::new` 调用（bin / routes / 测试统一生效）。
+pub fn init_service_token(jwt_secret: &str) {
+    let lock = SERVICE_AUTH.get_or_init(|| std::sync::RwLock::new(None));
+    let mut guard = lock.write().unwrap_or_else(|p| p.into_inner());
+    if guard.is_none() {
+        *guard = Some(ServiceAuth {
+            jwt_secret: jwt_secret.to_string(),
+            token: issue_service_token(jwt_secret, "ai-service", &[], Some(3600))
+                .unwrap_or_default(),
+            issued_at: std::time::Instant::now(),
+        });
+    }
+}
+
+/// 获取当前 service token（距签发 >50 分钟自动重签，规避 1h TTL 过期）
+fn service_token() -> Option<String> {
+    let lock = SERVICE_AUTH.get()?;
+    let mut guard = lock.write().unwrap_or_else(|p| p.into_inner());
+    let auth = guard.as_mut()?;
+    if auth.issued_at.elapsed().as_secs() > 3000 {
+        auth.token = issue_service_token(
+            &auth.jwt_secret,
+            "ai-service",
+            &[],
+            Some(3600),
+        )
+        .unwrap_or_default();
+        auth.issued_at = std::time::Instant::now();
+    }
+    Some(auth.token.clone())
+}
+
 /// 纯同步 HTTP 请求（GET/POST），返回响应 JSON 的 data 字段；失败返回 None（调用方降级）
+/// P2-7：自动附加 ai-service 身份 service token（Authorization: Bearer），统一服务间认证。
 pub fn http_call(base: &str, method: &str, path: &str, body: Option<Value>) -> Option<Value> {
     use std::io::{Read, Write};
     use std::net::TcpStream;
@@ -334,17 +385,21 @@ pub fn http_call(base: &str, method: &str, path: &str, body: Option<Value>) -> O
     let _ = conn.set_read_timeout(Some(std::time::Duration::from_secs(5)));
     let _ = conn.set_write_timeout(Some(std::time::Duration::from_secs(5)));
 
+    let auth_line = service_token()
+        .map(|t| format!("Authorization: Bearer {}\r\n", t))
+        .unwrap_or_default();
+
     let (request, body_bytes) = if matches!(method, "POST" | "PUT" | "DELETE") {
         let b = body.unwrap_or(Value::Null).to_string();
         let req = format!(
-            "{} {} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
-            method, path_full, host, b.len()
+            "{} {} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\n{}Content-Length: {}\r\nConnection: close\r\n\r\n",
+            method, path_full, host, auth_line, b.len()
         );
         (req, b)
     } else {
         let req = format!(
-            "GET {} HTTP/1.1\r\nHost: {}\r\nConnection: close\r\n\r\n",
-            path_full, host
+            "GET {} HTTP/1.1\r\nHost: {}\r\n{}Connection: close\r\n\r\n",
+            path_full, host, auth_line
         );
         (req, String::new())
     };

@@ -7,13 +7,13 @@
 - [x] **P1-1 · stdio 业务工具全拒** ✅ 完成：`MCP_STDIO_SUBJECT` 环境变量注入身份（fail-closed，缺失/解析失败保持匿名）；对接文档（Cursor/Claude Desktop/Claude Code 配置 + 环境变量表 + 安全说明）与 e2e 脚本同步（注入 admin 后业务工具成功 + 匿名保护 -32001 断言）；集成测试新增 `test_stdio_subject_injection_enables_business_tools` / `test_stdio_subject_invalid_json_stays_anonymous`（10/10 通过）
 - [x] **P1-2 · resources/read 权限** ✅ 完成（权限部分）：接入权限检查（匿名拒绝 -32001；crm/erp/finance → crm:read/erp:read/finance:read）；新增 `test_resources_read_permission_enforced`。⚠️ 认证通道统一（resolver 改 TypedServiceClient）并入 P2-7 全量处理
 - [x] **P1-3 · MCP 端点限流** ✅ 完成：`/mcp`、`/mcp/sse` 复用 rate_limiter 纳入限流（按 IP 5000/60s）+ `handle_tools_call` 调 `check_rate_limit`（按用户，默认 60/min，`MCP_RATE_LIMIT_PER_MINUTE` 可覆盖）
-- [ ] **P2-1 · stdio 双实现合一**：bin 改用 `run_stdio`（统一 MAX_LINE_BYTES=1MiB）
-- [ ] **P2-2 · Schema 参数校验**：`validate_tool_input` 按工具 input_schema 校验 required/type
-- [ ] **P2-3 · 注入检测误伤收窄**：删除 `--`/`INSERT INTO`/`UPDATE.*SET` 等误伤面大的字面量
-- [ ] **P2-4 · 输出脱敏误伤修复**：email/phone/address 改工具级声明，读类工具保留联系方式
-- [ ] **P2-5 · 死代码清理**：`dsh/mcp_security/mod.rs` + `dsh/governance/mcp_security.rs` 二选一（接入治理或删除，先 grep 消费方）
-- [ ] **P2-6 · shutdown 状态实现**：新增 `shutdown` 方法处理（state → Shutdown）
-- [ ] **P2-7 · 认证双通道统一**：业务工具与资源统一 TypedServiceClient（service token）
+- [x] **P2-1 · stdio 双实现合一** ✅ 完成：bin 改用 `run_stdio`（tokio async，统一 MAX_LINE_BYTES=1MiB、通知无响应、身份随请求传递），删除 bin 内重复 sync 循环
+- [x] **P2-2 · Schema 参数校验** ✅ 完成：`handle_tools_call` 按工具 input_schema 校验 required 缺失/类型不匹配（`validate_args_against_schema`，轻量 JSON Schema 子集）
+- [x] **P2-3 · 注入检测误伤收窄** ✅ 完成：删除 `--`/`;--`/`INSERT INTO`/`CREATE TABLE` 等误伤面大的字面量，仅保留语句级高风险模式；新增正常业务文本不误拒测试
+- [x] **P2-4 · 输出脱敏误伤修复** ✅ 完成：email/phone/mobile/address/location 移出全局脱敏（业务联系方式保留），仅脱敏高风险凭据/身份字段（password/token/卡号/证件号等）
+- [x] **P2-5 · 死代码清理** ✅ 完成：删除 `dsh/mcp_security/`（McpSecurityEngine）+ `dsh/governance/mcp_security.rs`（McpSecurityGovernance）——grep 确认零生产消费，仅自身测试；清理 mod.rs 声明与 re-export
+- [x] **P2-6 · shutdown 状态实现** ✅ 完成：新增 `shutdown` 方法处理（state → Shutdown，后续请求返回未初始化错误）
+- [x] **P2-7 · 认证双通道统一** ✅ 完成：`http_call` 统一附加 ai-service 身份 service token（OnceLock 幂等初始化 + 50 分钟自动重签，规避 1h TTL），与 TypedServiceClient 同一密钥体系；`McpServer::new` 自动初始化，51 处 http_call 调用点零改动受益
 
 ---
 

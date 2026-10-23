@@ -86,6 +86,9 @@ impl McpServer {
         version: impl Into<String>,
         jwt_secret: impl Into<String>,
     ) -> Self {
+        let jwt_secret_string = jwt_secret.into();
+        // P2-7：初始化服务间认证（http_call 统一附加 service token，幂等）
+        crate::dsh::mcp::tools::init_service_token(&jwt_secret_string);
         Self {
             name: name.into(),
             version: version.into(),
@@ -94,7 +97,7 @@ impl McpServer {
             resources: ResourceRegistry::new(),
             protocol_version: McpProtocolVersion::default(),
             security: McpSecurityMiddleware::new(),
-            jwt_secret: jwt_secret.into(),
+            jwt_secret: jwt_secret_string,
         }
     }
 
@@ -224,6 +227,13 @@ impl McpServer {
             "resources/list" => Some(self.handle_resources_list(id).await),
             "resources/read" => Some(self.handle_resources_read(id, request.params, user).await),
             "ping" => Some(JsonRpcResponse::success(id, json!({}))),
+            // P2-6：shutdown——置 Shutdown 状态（后续请求返回未初始化错误），
+            // 供运维/客户端优雅关闭；stdio EOF 仍为主关闭路径。
+            "shutdown" => {
+                tracing::info!("MCP server shutdown requested");
+                *self.state.write().await = ServerState::Shutdown;
+                Some(JsonRpcResponse::success(id, json!({})))
+            }
             _ => Some(JsonRpcResponse::error(
                 id,
                 JsonRpcError::method_not_found(&request.method),
@@ -365,6 +375,18 @@ impl McpServer {
             return JsonRpcResponse::error(id, JsonRpcError::app_error(code, message, None));
         }
 
+        // P2-2：按工具 input_schema 校验参数（required 缺失、类型不匹配）。
+        // 未注册工具在 validate_tool_input 已报 NotFound，此处仅对已注册工具生效。
+        if let Some(tool_def) = self.tools.get_tool(&tool_name).await {
+            if let Err(msg) = Self::validate_args_against_schema(&tool_def.input_schema, &arguments)
+            {
+                return JsonRpcResponse::error(
+                    id,
+                    JsonRpcError::invalid_params(Some(json!({"error": msg}))),
+                );
+            }
+        }
+
         // 权限继承：无权限用户无法调用受限工具（身份随请求传入，不读共享状态）
         if let Err(e) = self.check_tool_permission(user.as_ref(), &tool_name).await {
             let (code, message) = match e {
@@ -487,6 +509,73 @@ impl McpServer {
                 id,
                 JsonRpcError::app_error(-32002, format!("Resource not found: {}", uri), None),
             ),
+        }
+    }
+
+    /// 轻量 JSON Schema 子集校验（P2-2）：required 字段缺失、properties 类型不匹配。
+    /// 覆盖 type/required/properties.type；unknown type 不校验（向后兼容）。
+    fn validate_args_against_schema(schema: &Value, args: &Value) -> Result<(), String> {
+        if !args.is_object() {
+            return Ok(());
+        }
+        let Some(schema_obj) = schema.as_object() else {
+            return Ok(());
+        };
+
+        // required 字段缺失（含显式 null）
+        if let Some(required) = schema_obj.get("required").and_then(|v| v.as_array()) {
+            for field in required.iter().filter_map(|v| v.as_str()) {
+                if args.get(field).is_none_or(|v| v.is_null()) {
+                    return Err(format!("Missing required argument: '{}'", field));
+                }
+            }
+        }
+
+        // properties 类型匹配
+        if let Some(props) = schema_obj.get("properties").and_then(|v| v.as_object()) {
+            for (key, def) in props {
+                let Some(value) = args.get(key) else { continue };
+                if value.is_null() {
+                    continue;
+                }
+                let Some(expected) = def.get("type").and_then(|v| v.as_str()) else {
+                    continue;
+                };
+                let ok = match expected {
+                    "string" => value.is_string(),
+                    "number" => value.is_number(),
+                    "integer" => value.is_i64() || value.is_u64(),
+                    "boolean" => value.is_boolean(),
+                    "array" => value.is_array(),
+                    "object" => value.is_object(),
+                    _ => true,
+                };
+                if !ok {
+                    return Err(format!(
+                        "Argument '{}' has invalid type: expected {}, got {}",
+                        key,
+                        expected,
+                        Self::json_type_name(value)
+                    ));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn json_type_name(value: &Value) -> &'static str {
+        if value.is_null() {
+            "null"
+        } else if value.is_boolean() {
+            "boolean"
+        } else if value.is_number() {
+            "number"
+        } else if value.is_string() {
+            "string"
+        } else if value.is_array() {
+            "array"
+        } else {
+            "object"
         }
     }
 
