@@ -3420,5 +3420,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **nginx 核查**：brew nginx -t 语法 OK；仓库 `deploy/nginx/topems.conf` upstream=localhost:8099 + map 路由表已随双轨合一关闭（残留 0，v1.69 模板合规延续）
 - [x] **不可本机实跑项（如实标注）**：install.sh/update.sh/rollback.sh 依赖 systemd/systemctl（macOS 无；容器内已验 EXIT=0）；生产 nginx reload（目标机）；Windows 部署（WSL2）——留生产机批
 
+## v1.101 mdm_crud_integration 13 failed 核销（2026-10-23）
+- [x] **根因实证**：`make_test_state` dummy 连接池（接真表前"handler 不实际访问数据库"夹具遗留）——quality_v51 接真表后 handler 实际访问 DB → 全部 DB 型 handler 500（assertion left=500 right=200），list/check 空结果断言失败
+- [x] **修复**：`make_test_state` 连接串改读 `DATABASE_URL`（未设置回退 dummy 保持编译期可用）
+- [x] **验证**：`cargo test -p topems-master-data --test mdm_crud_integration`（DATABASE_URL=live DB）→ **22 passed / 0 failed**（原 9/13）；lib 单测 451 passed 无回归
+- [x] **数据清理**：测试前缀 mdm_quality_rules 7 条已删（剩 4 条业务数据）；mdm_quality_checks/mdm_governance_suggestions/mdm_ai_suggestions 0 污染
+- 活文档变更日志 v1.101 登记
+
 
 

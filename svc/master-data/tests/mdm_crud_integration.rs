@@ -26,10 +26,14 @@ use topems_master_data::shared::AppState;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::health::SystemMetrics;
 
-/// 构造测试用 AppState（使用惰性连接的 PgPool，handler 不实际访问数据库）
+/// 构造测试用 AppState（惰性连接 PgPool）。
+/// 接真表后 quality_v51 handler 实际访问数据库，故连接串读 DATABASE_URL（真实库），
+/// 未设置时回退 dummy（仅编译期/无库环境跑纯逻辑测试用）。
 fn make_test_state() -> AppState {
+    let db_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://dummy:dummy@localhost:5432/dummy".to_string());
     let pool = PgPoolOptions::new()
-        .connect_lazy("postgres://dummy:dummy@localhost:5432/dummy")
+        .connect_lazy(&db_url)
         .expect("Failed to create lazy pool");
     AppState {
         db: pool,
