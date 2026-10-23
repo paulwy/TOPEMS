@@ -14,6 +14,7 @@ mod openapi;
 mod schema_defense;
 pub mod sla_service;
 mod ticket_ext;
+mod util;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

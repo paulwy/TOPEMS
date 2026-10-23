@@ -94,6 +94,9 @@ async fn query_projection(
 async fn search_users(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
     let keyword_like = format!("%{}%", keyword);
 
+    // 表归属（DB 分片侦察）：unqualified `core_users` 命中 public.core_users，
+    // gis.core_users 不存在。该表为跨租户共享的全局身份目录（sessions/refresh_tokens
+    // 均 FK 引用 public.core_users），按设计全局检索，不做 tenant 过滤——避免"假过滤"。
     let rows: Vec<UserSearchRow> = match sqlx::query_as(
         r#"SELECT id, username, email, full_name, status
            FROM core_users
@@ -195,10 +198,16 @@ async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRe
 async fn search_documents(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
     let keyword_like = format!("%{}%", keyword);
 
+    // 表归属：unqualified `core_files` 命中 public.core_files（tenant_id uuid NOT NULL，
+    // 业务租户隔离表）。显式按 app.tenant_id 过滤，与 query_projection 同款 COALESCE 语义；
+    // 未设置租户上下文时回退零 UUID（仅命中全局/无归属文件）。
     let rows: Vec<DocumentSearchRow> = match sqlx::query_as(
         r#"SELECT id, name, path, mime_type
            FROM core_files
-           WHERE name ILIKE $1 OR path ILIKE $1
+           WHERE (name ILIKE $1 OR path ILIKE $1)
+             AND tenant_id = COALESCE(
+                 NULLIF(current_setting('app.tenant_id', true), '')::uuid,
+                 '00000000-0000-0000-0000-000000000000')
            ORDER BY created_at DESC
            LIMIT $2"#,
     )

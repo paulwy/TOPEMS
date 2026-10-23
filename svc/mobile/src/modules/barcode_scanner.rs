@@ -298,14 +298,9 @@ fn match_barcode(
         }
     }
 
-    let mock_item = serde_json::json!({
-        "item_code": barcode,
-        "item_name": "测试物品",
-        "item_type": "inventory",
-        "barcode_type": barcode_type,
-    });
-
-    (Some(mock_item), Some("view_detail".to_string()), None)
+    // 诚实收口：mobile schema 边界内无物品/资产主数据表可按条码反查，
+    // 不再编造"测试物品"。非 QR 类条码不声称命中任何物品，也不给假 action。
+    (None, None, None)
 }
 
 #[utoipa::path(
@@ -786,15 +781,17 @@ mod tests {
     }
 
     #[test]
-    fn test_match_barcode_default_view_detail() {
+    fn test_match_barcode_default_no_fabricated_item() {
+        // 非 QR 类条码在无物品主数据时应诚实返回 None，不得编造"测试物品"
         let (matched, action, _) = match_barcode("ABC123", "CODE_128");
-        assert!(matched.is_some());
-        assert_eq!(action, Some("view_detail".to_string()));
+        assert!(matched.is_none());
+        assert!(action.is_none());
     }
 
     #[test]
-    fn test_match_barcode_non_qr_default() {
-        let (matched, _, _) = match_barcode("4006381333931", "EAN_13");
-        assert!(matched.is_some());
+    fn test_match_barcode_non_qr_no_fabricated_item() {
+        let (matched, action, _) = match_barcode("4006381333931", "EAN_13");
+        assert!(matched.is_none());
+        assert!(action.is_none());
     }
 }

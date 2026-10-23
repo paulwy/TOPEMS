@@ -271,9 +271,24 @@ impl TicketService {
         ticket_id: Uuid,
         user_id: Option<Uuid>,
         req: UpdateTicketRequest,
-    ) -> Result<Ticket, sqlx::Error> {
+    ) -> Result<Ticket, TopemsError> {
         let existing = self.get_ticket(tenant_id, ticket_id).await?;
         let now = Utc::now();
+
+        // 状态机白名单：仅允许合法状态值与合法状态转移，非法转移直接拒绝。
+        if let Some(new_status) = req.status.as_deref() {
+            // 先校验状态值本身是否为已知枚举
+            TicketStatus::from_str(new_status)?;
+            // 再校验 from -> to 是否为合法转移（同状态转移恒允许）
+            if new_status != existing.status.as_str()
+                && !crate::util::is_valid_ticket_status_transition(&existing.status, new_status)
+            {
+                return Err(TopemsError::ValidationFailed(format!(
+                    "非法工单状态转移: {} -> {}",
+                    existing.status, new_status
+                )));
+            }
+        }
 
         let resolved_at =
             if req.status.as_deref() == Some("resolved") && existing.resolved_at.is_none() {
@@ -361,7 +376,7 @@ impl TicketService {
             }
         }
 
-        self.get_ticket(tenant_id, ticket_id).await
+        self.get_ticket(tenant_id, ticket_id).await.map_err(Into::into)
     }
 
     pub async fn add_comment(
@@ -675,8 +690,12 @@ pub async fn update_ticket_handler(
 
     match service.update_ticket(tenant_id, id, user_id, req).await {
         Ok(ticket) => Json(ApiResponse::success(ticket, "工单更新成功")),
-        // 假 UUID 探测：get_ticket 走 fetch_one RowNotFound → 内层 404（HTTP200）
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工单不存在")),
+        // 状态机白名单拒绝（非法状态值/非法转移）→ 400
+        Err(TopemsError::ValidationFailed(msg)) => Json(ApiResponse::error(400, &msg)),
+        // 假 UUID 探测：get_ticket 走 fetch_one RowNotFound → 记录不存在 → 404
+        Err(TopemsError::DatabaseRecordNotFound(_)) => {
+            Json(ApiResponse::error(404, "工单不存在"))
+        }
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新工单失败", e))),
     }
 }

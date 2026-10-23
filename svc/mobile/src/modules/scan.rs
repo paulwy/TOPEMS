@@ -217,11 +217,9 @@ pub async fn scan_barcode(
         barcode: payload.barcode.clone(),
         decoded_data: payload.barcode.clone(),
         scan_type: scan_type.clone(),
-        matched_item: Some(serde_json::json!({
-            "item_code": payload.barcode,
-            "item_name": "测试物品",
-            "item_type": "inventory"
-        })),
+        // 诚实收口：mobile schema 无物品/资产主数据表可按条码反查，
+        // 不再编造"测试物品"。扫描事件本身照常落库，但不声称命中任何物品。
+        matched_item: None,
         timestamp: Utc::now(),
     };
 
