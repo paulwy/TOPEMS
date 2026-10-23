@@ -4,9 +4,10 @@
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    Json,
+    Extension, Json,
 };
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_success, ApiResponse};
 use topems_shared_core::TopemsError;
@@ -210,14 +211,14 @@ pub async fn get_material(
 
 pub async fn create_material(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaterialRequest>,
 ) -> Json<ApiResponse<Material>> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
     let row: Option<Material> = match sqlx::query_as(
         r#"INSERT INTO master_data.materials
             (material_code, material_name, name_en, material_type, specification, unit, uom_id, status, description, tenant_id, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, '00000000-0000-0000-0000-000000000000')
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, '00000000-0000-0000-0000-000000000000'), '00000000-0000-0000-0000-000000000000')
            RETURNING id::text, material_code, material_name, material_type, specification, unit, uom_id::text, status, description, created_at::text, updated_at::text"#,
     )
     .bind(&req.material_code)
@@ -229,7 +230,7 @@ pub async fn create_material(
     .bind(req.uom_id)
     .bind(&status)
     .bind(&req.description)
-    .bind(req_tenant_id(&headers))
+    .bind(claims.tenant_id.as_deref().and_then(|s| s.parse::<Uuid>().ok()))
     .fetch_optional(&state.db)
     .await
     {

@@ -862,12 +862,12 @@ pub async fn create_inbound_order_item(
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
-        INSERT INTO wms.inbound_order_items (id, organization_id, order_id, line_number,
+        INSERT INTO wms.inbound_order_items (id, organization_id, org_id, order_id, line_number,
                                              material_code, material_name, material_type,
                                              specification, batch_number, lot_number, serial_number,
                                              expected_quantity, unit, location_id, unit_price,
                                              total_value, notes, created_at, updated_at, tenant_id)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        VALUES ($1, $20, $20, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                 $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id, line_number, material_code, material_name, specification, batch_number,
                   expected_quantity, received_quantity, rejected_quantity, unit,
@@ -893,6 +893,7 @@ pub async fn create_inbound_order_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(tenant_id.clone())
     .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;

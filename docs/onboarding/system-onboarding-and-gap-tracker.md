@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.96（物料主数据：master_data.materials 建表 + 物料 API 实跑；见文末变更日志） |
+| 版本 | v1.97（§4 五环节全链路串联：物料→供应商→采购→入库→检验，物料 id 关联；见文末变更日志） |
 | 最近更新 | 2026-10-23 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
@@ -151,7 +151,7 @@
 | # | 验证动作 | 落点 | 预期 | 状态/备注 |
 |---|---|---|---|---|
 | 4.1 | 用普通角色登录，验证菜单按权限可见可进 | 后端权限链路（v1.91 模块级放行）+ 前端菜单过滤（v1.92） | **v1.91 实测**：普通角色（租户B 4 个 manager 角色 173 权限）供应商→采购→入库→检验 4 环节全 200（原全 403）；越权仍 403。**v1.92**：GlobalLayoutV3 叶子级菜单过滤（children 逐项按 MENU_PERMISSIONS 细粒度码过滤，空组隐藏）；MENU_PERMISSIONS 补齐核心 5 模块叶子映射（mes/erp/scm/wms/qms 25 条，与各模块 config.ts requiredPermissions 对齐） | 已具备（后端实跑 + 前端过滤代码落地 tsc 通过；浏览器实测普通角色菜单留待实机确认） |
-| 4.2 | 走通一条最小业务闭环（如：建物料→建供应商→建采购→入库→检验） | 跨 ERP/SCM/WMS/QMS | **v1.90-v1.97 实跑**：物料(master-data)→供应商(erp)→采购单(scm)→入库(wms)→检验(qms) 5 环节全 200（supplier_id 关联，检验单 INS- 自动生成；物料建表见 v1.96，RLS + 15 handler 租户隔离见 v1.97） | **已具备（全链路）** |
+| 4.2 | 物料→供应商→采购→入库→检验五环节全链路 | 跨 ERP/SCM/WMS/QMS/master-data | **v1.90-v1.97 实跑**：物料(master-data)→供应商(erp)→采购单(scm)→入库(wms)→检验(qms) 5 环节全 200（物料 id 关联：检验 `product_id`=物料 id、入库明细 `material_code`=物料码；supplier_id 关联；tenant2 全链路落 002；RLS + handler 显式租户隔离见 v1.97；物料建表见 v1.96） | **已具备（五环节全链路）** |
 | 4.3 | 检查空组织下落地页是否报错/是否引导补录 | 主页初始化 checklist CTA（P2-1 `958e0cc9a`） | 已落地 | **已具备（P2-1）** |
 | 4.4 | 验证多租户/组织隔离 | 主流业务表已隔离（P1-8 `52cc3a467` + 批1 PM/ERP/BI），RLS 策略 + 应用层过滤齐备 | **已查证**：wms/qms 新建单 tenant_id=001 与 token claims 一致（test_admin 属 001 租户，非缺陷）；租户B（002）已建（flow.core_tenants/core_tenant_users 补主数据）且 claims 生效；非超管 wms 建单/列表全 403（wms:admin 硬阻，权限体系见 4.1）；超管建单 tenant_id 落 NULL（普通角色不可见，设计观察） | **已具备（隔离机制齐备）** |
 
@@ -374,7 +374,7 @@
 |---|---|---|---|
 | 2026-10-23 | v1.99 | 观察项核销：core_tenant_usage 四版统一 ✅ | 核销 v1.69 ④「public 与 iam 双 core_tenant_usage 待统一」：实证现状实为 **4 版并存**（public/iam/flow/mes，全部 0 行、全部有 tenant_isolation 策略）。定性——`iam.core_tenant_usage` = v1.70 iam 空壳统一漏网（仅 `database/init/06_iam_schema.sql` DDL 基准定义、svc 无显式引用、无 FK 依赖）→ **DROP**（仅主库 topems；topems_prepare 本无此表）；`flow.core_tenant_usage`/`mes.core_tenant_usage` 被 RLS 迁移 `20261015000076` 显式点名（unified-core search_path 兼容层，受保护）保留；`public.core_tenant_usage` 为 usage 采集写入目标保留。验证：BFF 8099 usage 端点 200（`/api/core/tenant/{id}/analytics/usage`）、health 200、contract-gate 0 缺口 |
 | 2026-10-23 | v1.98 | 空租户首次初始化引导文档 ✅ | 补齐活文档文档缺口：新增 `docs/getting-started/first-run-initialization.md`——空租户/首次端到端初始化（建组织→建部门→建岗位→绑管理员→完成）五步流程 + IAM 建号联动（P1-1 直建/回绑两方式）+ 全端点请求/响应示例（progress/company/departments/positions/admin/complete，字段对齐 `svc/hrm/src/modules/setup.rs`）+ 完成态验收 + 关联实现索引（P2-1 InitChecklistPanel/P2-2 租户归属/种子与 FK 迁移）。契约静态门禁复核：contract-gate 2657/6325/0 缺口 |
-| 2026-10-23 | v1.97 | §4 物料环节 RLS + 15 handler 显式租户隔离 ✅ | 接 v1.96 建表：补 RLS 迁移 `20261023000002`（materials/uoms/samples 三表 tenant_isolation_* 宽松策略，与 master_data 域 81 表一致，topems + topems_prepare 双库应用）；master_data.rs 15 handler 显式租户隔离（读路径 list/get 加 `($N::uuid='00000000-0000-0000-0000-000000000000'::uuid OR tenant_id=$N::uuid)`，写路径 create 落 x-tenant-id 头租户、update/delete 加租户条件，GUC 兜底废弃——rls_middleware 独占连接与 handler 池连接不同致 GUC 不生效，全站同类写路径靠显式参数/Claims）。验证：BFF 8099 实跑三实体 CRUD 全 200；双租户隔离断言——list(0001)=仅本租户、list(越权 c51c3a73)=0、list(nil)=全量、越权 update/delete/get=404、DB 落库 tenant_id=0001 正确；测试数据已清理。至此 §4 闭环 5 环节（物料→供应商→采购→入库→检验）全 200 |
+| 2026-10-23 | v1.97 | §4 五环节全链路串联 + 物料环节 RLS/租户隔离 ✅ | 五环节（物料→供应商→采购→入库→检验）全 200：**用新建物料 id 关联**（检验 `product_id`=物料 id、入库明细 `material_code`=物料码；tenant2 全链路落 002）。前置修复：① master-data 聚合面权限对齐 v1.91（`require_module_access("master-data")`，种子补 `master-data:read/write` 绑定 scm/wms manager）；② master-data 补挂 tenant 中间件；③ create_material 改 claims 绑定租户（此前靠 GUC 事务级丢失落 000）；④ wms 入库明细 INSERT 补 `org_id` 列 + organization_id 动态化（此前硬编码 0001/org_id 未填 500）。另：master-data 域三表 RLS 策略 + 15 handler 显式租户隔离（读路径 list/get 加 nil 豁免租户条件、写路径 create 落租户、GUC 兜底废弃），双租户隔离断言通过 |
 | 2026-10-23 | v1.96 | 物料主数据（§4 物料环节）✅ | `database/migrations/20261023000003_master_data_materials_table.sql` 建 `master_data.materials`（对齐 Material 模型 + CreateMaterialRequest：uom_id UUID、tenant_id 默认 000 系统级）；物料 API 实测：POST/GET `/api/master-data/master-data/materials` 200（MAT-CLOSE-001 建单+列表+DB 落库）。§4.2 物料环节环境制约解除（此前 master_data.materials 表缺） |
 | 2026-10-23 | v1.95 | 前端菜单叶子映射全模块覆盖 ✅ | `MENU_PERMISSIONS` 扩至 114 条：第二批 crm/srm/ehs/pdm/tms 16 条 + 第三批 admin/asset/bi/doc/finance/gis/hrm/lims/pm/rd 34 条；`/pdm/bom`→`pdm:bom:read`、`/pdm/process`→`pdm:process:read` 改细。navItems 全部 path 已覆盖（comm 差集为空），tsc 通过；无精确码的叶子用近似码（`/admin/monitor`→`admin:debug:read`、`/hrm/organization`→`hrm:department:read`） |
 | 2026-10-23 | v1.94 | 角色/权限种子幂等迁移 ✅ | `database/migrations/20261023000002_iam_seed_manager_role_permissions.sql`：① 字典补缺 `<mod>:read/write` 8 码；② `erp_manager` 角色（nil 系统级，对齐 qms/scm/wms manager）+ 001 版 tenant 统一 nil；③ 4 manager 绑定 read/write 总码（补 `qms:write`）；④ 清理 v1.91 手工交叉绑定（scm_manager 的 wms:*、wms_manager 的 scm:* 共 4 条）。幂等验证：test 库重跑 0 变更；tenant2 复核：wms 建单 200（tenant 002）、token 权限 176（含 4 模块总码） |
