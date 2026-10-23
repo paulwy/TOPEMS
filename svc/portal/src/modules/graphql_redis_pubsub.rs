@@ -10,6 +10,28 @@ use crate::modules::graphql_event_bus::{
 
 // ==================== V39.0 Phase 9: Redis PubSub 后端 + 降级模式 ====================
 
+/// P1-9: dev/演示模式判定（演示事件模拟器与 demo seed 仅在此模式启动）。
+///
+/// 白名单显式开启，生产默认关闭——Redis 不可用或监听失败时，绝不向用户正式
+/// 通知流静默推送演示数据。命中任一即视为 dev：
+/// - `APP_ENV` 为 `development|dev|local|test|e2e`（大小写不敏感；对齐 shared-core
+///   `Config::env` 语义与 CI `APP_ENV: test/e2e` 惯例）
+/// - 显式开关 `TOPEMS_DEMO_MODE=1|true|on`（对齐 analytics `TOPEMS_BI_DEMO_MODE`
+///   opt-in 惯例，便于本地/演示环境强制开启）
+///
+/// 未设置或其他值（含 `production`）一律视为非 dev。
+pub fn is_dev_demo_mode() -> bool {
+    let env_hit = matches!(
+        std::env::var("APP_ENV").as_deref().map(str::to_lowercase),
+        Ok(ref e) if matches!(e.as_str(), "development" | "dev" | "local" | "test" | "e2e")
+    );
+    let flag_hit = matches!(
+        std::env::var("TOPEMS_DEMO_MODE").as_deref(),
+        Ok("1") | Ok("true") | Ok("TRUE") | Ok("on") | Ok("ON")
+    );
+    env_hit || flag_hit
+}
+
 /// 尝试连接 Redis PubSub
 ///
 /// 通过发布一个 HealthCheck 事件来验证 Redis 连接是否可用。
@@ -141,11 +163,19 @@ pub fn try_start_redis_listener(event_bus: Arc<EventBus>) -> bool {
     true
 }
 
-/// 启动演示事件模拟器（Redis 不可用时的降级模式）
+/// 启动演示事件模拟器（Redis 不可用时的降级模式；P1-9：仅 dev/演示模式）
 ///
 /// 每 30 秒向所有 4 个新频道发布模拟事件，用于演示和测试。
+/// 非 dev 模式（`is_dev_demo_mode()` 为 false）直接拒绝启动，生产环境保持
+/// 纯内存广播，不向用户通知流注入演示数据。
 pub fn start_demo_simulator(event_bus: Arc<EventBus>) {
-    tracing::info!("[event-bus] 启动演示事件模拟器（每 30 秒发布模拟事件）");
+    if !is_dev_demo_mode() {
+        tracing::warn!(
+            "[event-bus] start_demo_simulator 被非 dev 模式调用，拒绝启动（生产不注入演示数据）"
+        );
+        return;
+    }
+    tracing::info!("[event-bus] 启动演示事件模拟器（dev 模式；每 30 秒发布标记为 [DEMO] 的模拟事件）");
 
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
@@ -170,12 +200,13 @@ pub fn start_demo_simulator(event_bus: Arc<EventBus>) {
                 serde_json::to_value(&md_event).unwrap_or_default(),
             );
 
-            // 模拟通知事件
+            // 模拟通知事件（payload 显式带 [DEMO] 标记，与真实通知区分）
             let notif_event = NotificationEventGql {
                 id: format!("notif-demo-{}", ts),
                 user_id: "demo-user".to_string(),
-                title: format!("演示通知 #{}", counter),
-                content: "这是一条来自演示模拟器的通知事件".to_string(),
+                title: format!("[DEMO] 演示通知 #{}", counter),
+                content: "这是一条来自演示模拟器的通知事件（dev 演示数据，非真实用户通知）"
+                    .to_string(),
                 notification_type: "info".to_string(),
                 timestamp: now.clone(),
             };
@@ -188,7 +219,7 @@ pub fn start_demo_simulator(event_bus: Arc<EventBus>) {
             let wf_event = WorkflowTaskEventGql {
                 task_id: format!("task-demo-{}", ts),
                 assignee_id: "demo-user".to_string(),
-                instance_title: format!("演示工作流任务 #{}", counter),
+                instance_title: format!("[DEMO] 演示工作流任务 #{}", counter),
                 priority: "medium".to_string(),
                 status: "pending".to_string(),
                 timestamp: now.clone(),

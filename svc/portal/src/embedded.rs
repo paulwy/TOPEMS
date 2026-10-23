@@ -86,18 +86,29 @@ pub async fn build_router(
     // V33.0 Portal BFF Phase 3: GraphQL 聚合层
     let graphql_schema = modules::graphql_schema::build_schema(app_state.clone());
 
-    // V39.0 Phase 9: 启动事件总线后端（Redis PubSub 或降级为内存广播 + 演示模拟器）
+    // V39.0 Phase 9: 启动事件总线后端（Redis PubSub 或降级为内存广播；
+    // P1-9：演示模拟器仅 dev/演示模式启动，生产 Redis 故障时降级为纯内存广播并告警）
     {
         let event_bus = modules::graphql_schema::global_event_bus().clone();
         tokio::spawn(async move {
             if modules::graphql_schema::try_redis_pubsub().await {
                 if !modules::graphql_schema::try_start_redis_listener(event_bus.clone()) {
-                    tracing::warn!("⚠️ Redis 监听启动失败，降级为演示模拟器");
-                    modules::graphql_schema::start_demo_simulator(event_bus);
+                    if modules::graphql_schema::is_dev_demo_mode() {
+                        tracing::warn!("⚠️ Redis 监听启动失败，dev 模式下降级为演示模拟器");
+                        modules::graphql_schema::start_demo_simulator(event_bus);
+                    } else {
+                        tracing::warn!(
+                            "⚠️ Redis 监听启动失败（生产）：降级为纯内存广播，不启动演示模拟器"
+                        );
+                    }
                 }
-            } else {
-                tracing::info!("📡 Redis 不可用，启动演示事件模拟器（每 30 秒模拟事件）");
+            } else if modules::graphql_schema::is_dev_demo_mode() {
+                tracing::info!("📡 Redis 不可用（dev 模式），启动演示事件模拟器（每 30 秒模拟事件）");
                 modules::graphql_schema::start_demo_simulator(event_bus);
+            } else {
+                tracing::warn!(
+                    "⚠️ Redis 不可用（生产）：降级为纯内存广播（事件仅单实例内分发），不启动演示模拟器"
+                );
             }
         });
     }

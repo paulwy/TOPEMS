@@ -1738,6 +1738,13 @@ pub fn get_ai_optimization_stats() -> AiOptimizationStatsGql {
 
 /// V43.0: 初始化 V43.0 AI 辅助功能（在 build_schema 中调用）
 pub fn init_ai_assistance() {
-    seed_optimization_demo_data();
+    // P1-10: demo 查询 seed 仅 dev/演示模式写入查询健康存储；
+    // 生产跳过 seed，绝不在健康统计中静默混入 demo 数据。
+    if crate::modules::graphql_schema::is_dev_demo_mode() {
+        tracing::info!("[ai-assist] dev 模式：写入 demo 查询优化示例数据（demo_customer_list/demo_dashboard/demo_voucher_detail）");
+        seed_optimization_demo_data();
+    } else {
+        tracing::info!("[ai-assist] 非 dev 模式：跳过 demo 查询 seed（生产不注入演示数据）");
+    }
     let _ = generate_cache_recommendations();
 }
