@@ -14,6 +14,7 @@ use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_event::event::{commit_retry, EventType, QmsInspectionCompletedPayload};
 
 const STATUS_IN_PROGRESS: &str = "in_progress";
 const STATUS_PENDING_AUDIT: &str = "pending_audit";
@@ -463,6 +464,54 @@ pub async fn submit_result(
                     let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_inspection_audits (tenant_id, inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6, $7)"#)).bind(tenant_id).bind(id).bind(current_status).bind(STATUS_PENDING_AUDIT).bind("submit").bind(inspector).bind(None::<String>)
                     .execute(&state.pool)
                     .await;
+
+                    // 发布 QmsInspectionCompleted 事件（质量链联动：integration 订阅 → lims 采样 / ehs 风险）
+                    if let Some(ref publisher) = state.event_publisher {
+                        let publisher = publisher.clone();
+                        let eid = data.id.clone();
+                        let eno = data.inspection_no.clone();
+                        let pid = data.product_id;
+                        let pname = data.product_name.clone();
+                        let res = data.result.clone().unwrap_or_default();
+                        let rate = data
+                            .qualification_rate
+                            .as_ref()
+                            .map(|b| b.to_string().parse::<f64>().unwrap_or(0.0));
+                        let insp = data.inspector.clone().unwrap_or_default();
+                        tokio::spawn(async move {
+                            let Ok(eid_uuid) = uuid::Uuid::parse_str(&eid) else {
+                                tracing::warn!(
+                                    "[qms] QmsInspectionCompleted 发布跳过：非法 inspection_id={}",
+                                    eid
+                                );
+                                return;
+                            };
+                            let payload = QmsInspectionCompletedPayload {
+                                inspection_id: eid_uuid,
+                                inspection_no: eno,
+                                product_id: pid,
+                                product_name: pname,
+                                result: res,
+                                qualification_rate: rate,
+                                inspector: insp,
+                            };
+                            let et = EventType::QmsInspectionCompleted;
+                            match publisher.publish_event(et, &payload).await {
+                                Ok(_) => tracing::info!(
+                                    "[qms] QmsInspectionCompleted 事件发布成功 - inspection_id={}",
+                                    eid
+                                ),
+                                Err(e) => {
+                                    tracing::warn!(
+                                        "[qms] QmsInspectionCompleted 事件发布失败: {}，入重试队列",
+                                        e
+                                    );
+                                    commit_retry::push_retry_typed("qms", et, &payload).await;
+                                }
+                            }
+                        });
+                    }
+
                     Json(ApiResponse::success(data, "提交检查结果成功"))
                 }
                 Err(e) => {

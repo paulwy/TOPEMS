@@ -3434,5 +3434,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 门禁：contract-gate 0 缺口保持 + verify-rls 1181 全绿
 - 活文档变更日志 v1.102 登记
 
+## v1.103 qms QmsInspectionCompleted 发布端补全（2026-10-23）
+- [x] **承 v1.102 更精确实证**：qms 侧**从未发布** QmsInspectionCompleted——全 svc 无该事件 XADD 写入方、stream XLEN=0、integration 消费端（qms_lims_ehs.rs）空转（v1.102「链路待生产数据验证」实为发布端缺失）
+- [x] **修复**：`svc/qms/src/modules/quality_inspection.rs` submit_result 成功路径（status→pending_audit）补发布块——对齐 mes ProductionOrderCreated 样板：`state.event_publisher` → `publish_event(EventType::QmsInspectionCompleted, QmsInspectionCompletedPayload)`（字段对齐消费端），失败入 `commit_retry::push_retry_typed("qms", …)`
+- [x] **编译**：`cargo check -p topems-qms` 通过（BigDecimal→f64 用 to_string+parse，无 to_f64 API）
+- [x] **实测边界**：qms 建单 200 落库（qa_quality_inspections tenant=0001）；submit 需租户 claims 账号（本机种子均为 superuser 无租户，超管 submit 404=租户隔离正确，v1.93 口径）；测试单已清理
+- 活文档变更日志 v1.103 登记
+
 
 
