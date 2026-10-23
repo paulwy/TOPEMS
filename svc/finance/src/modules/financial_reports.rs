@@ -2043,44 +2043,70 @@ pub async fn get_business_overview(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let period = params.get("period").cloned().unwrap_or_else(|| {
+    // 凭证表 period 存 YYYYMM，前端可能传 YYYY-MM，统一去符号按 YYYYMM 精确匹配
+    let period_raw = params.get("period").cloned().unwrap_or_else(|| {
         let now = Utc::now();
         now.format("%Y-%m").to_string()
     });
+    let period: String = period_raw.chars().filter(|c| c.is_ascii_digit()).collect();
 
     let voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
-        "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE period = $1 AND deleted_at IS NULL"
+        "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"
     ))
     .bind(&period)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let total_debit: Decimal = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COALESCE(SUM(total_debit), 0) FROM finance.core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"),
-    )
-    .bind(&period)
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or(Decimal::ZERO);
-
-    let subject_count: i64 = sqlx::query_scalar(only_own_schema_query!(
+    // 按科目类型聚合已过账凭证的借/贷方金额，由此派生四张统计卡
+    // income → 收入；expense+cost → 费用；asset → 资产；liability → 负债
+    let type_rows: Vec<(String, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
         "finance",
-        "SELECT COUNT(*) FROM finance.core_finance_accounts WHERE status = 'active'"
+        r#"SELECT a.account_type::text,
+                  COALESCE(SUM(l.debit), 0),
+                  COALESCE(SUM(l.credit), 0)
+           FROM finance.core_finance_voucher_lines l
+           JOIN finance.core_finance_vouchers v ON v.id = l.voucher_id
+           JOIN finance.core_finance_accounts a ON a.id = l.account_id
+           WHERE v.period = $1 AND v.status = 'posted' AND v.deleted_at IS NULL
+           GROUP BY a.account_type"#
     ))
-    .fetch_one(&state.pool)
+    .bind(&period)
+    .fetch_all(&state.pool)
     .await
-    .unwrap_or(0);
+    .unwrap_or_default();
+
+    let mut total_revenue = Decimal::ZERO;
+    let mut total_expenses = Decimal::ZERO;
+    let mut total_assets = Decimal::ZERO;
+    let mut total_liabilities = Decimal::ZERO;
+    let mut total_debit = Decimal::ZERO;
+    let mut total_credit = Decimal::ZERO;
+
+    for (acct_type, debit, credit) in type_rows {
+        total_debit += debit;
+        total_credit += credit;
+        match acct_type.as_str() {
+            "income" => total_revenue += credit,
+            "expense" | "cost" => total_expenses += debit,
+            "asset" => total_assets += debit - credit,
+            "liability" => total_liabilities += credit - debit,
+            _ => {}
+        }
+    }
+    let net_profit = total_revenue - total_expenses;
 
     Json(ApiResponse::success(
         serde_json::json!({
             "period": period,
             "voucher_count": voucher_count,
             "total_debit": total_debit,
-            "total_credit": total_debit,
-            "active_subjects": subject_count,
-            "net_profit": 0.0,
+            "total_credit": total_credit,
+            "total_assets": total_assets,
+            "total_liabilities": total_liabilities,
+            "total_revenue": total_revenue,
+            "net_profit": net_profit,
         }),
         "查询成功",
     ))
