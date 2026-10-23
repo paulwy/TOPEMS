@@ -121,6 +121,80 @@ jobs:
             sleep 1
           done
 
+      # ── [2026-10-24 Phase D] Rust 后端启动补齐（此前 e2e 零后端，API 全打 :8080 无服务）──
+      # 最小可用口径：setup-rust → 顶层迁移链 sqlx migrate → cargo build topems-server
+      # → 模块化单体起于 SERVER_PORT=8080（对齐既有 API_BASE_URL，免改测试侧）→ 健康轮询。
+      # 未覆盖（留 TODO，随后续批次补）：
+      #   ①各 svc 自有 migrations 子目录的 up-replay（CI migration-test job 口径）；
+      #   ②首启超管依赖 unified-core 启动自举（未设 ADMIN_INITIAL_PASSWORD 时弱默认 admin/admin123，
+      #     见 svc/unified-core/src/modules/iam/mod.rs:439；e2e 用例 E2E_USERNAME/E2E_PASSWORD 即此口径）。
+      - name: Setup Rust toolchain
+        uses: ./.github/actions/setup-rust
+        with:
+          cache-prefix: "e2e-nightly-2026-07-01"
+
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
+
+      - name: Apply top-level migrations
+        run: sqlx migrate run --source database/migrations --database-url "$DATABASE_URL"
+
+      - name: Build backend (topems-server monolith)
+        run: SQLX_OFFLINE=true cargo build -p topems-server
+
+      - name: Start backend on :8080
+        # 服务间 SERVICE_URL 统一指向单体自身（复刻 scripts/run_monolith.sh 内嵌模式约定）。
+        env:
+          SERVER_PORT: "8080"
+          DB_MAX_CONNECTIONS: "8"
+          SEARCH_PATH: "flow, mobile, rs, erp, public, iam, shared"
+          MONOLITH_SERVICE_URL: http://localhost:8080
+          CRM_SERVICE_URL: http://localhost:8080
+          ERP_SERVICE_URL: http://localhost:8080
+          FEEDBACK_SERVICE_URL: http://localhost:8080
+          FILE_SERVICE_URL: http://localhost:8080
+          FINANCE_SERVICE_URL: http://localhost:8080
+          HRM_SERVICE_URL: http://localhost:8080
+          IAM_SERVICE_URL: http://localhost:8080
+          AI_SERVICE_URL: http://localhost:8080
+          BI_SERVICE_URL: http://localhost:8080
+          COMMUNICATION_SERVICE_URL: http://localhost:8080
+          EHS_SERVICE_URL: http://localhost:8080
+          GIS_SERVICE_URL: http://localhost:8080
+          INTEGRATION_SERVICE_URL: http://localhost:8080
+          LIMS_SERVICE_URL: http://localhost:8080
+          MASTER_DATA_SERVICE_URL: http://localhost:8080
+          MES_SERVICE_URL: http://localhost:8080
+          MOBILE_SERVICE_URL: http://localhost:8080
+          PDM_SERVICE_URL: http://localhost:8080
+          PM_SERVICE_URL: http://localhost:8080
+          PORTAL_SERVICE_URL: http://localhost:8080
+          RD_SERVICE_URL: http://localhost:8080
+          SCM_SERVICE_URL: http://localhost:8080
+          SRM_SERVICE_URL: http://localhost:8080
+          DOC_SERVICE_URL: http://localhost:8080
+          MONITOR_SERVICE_URL: http://localhost:8080
+          NOTIFICATION_SERVICE_URL: http://localhost:8080
+          QMS_SERVICE_URL: http://localhost:8080
+          SEARCH_SERVICE_URL: http://localhost:8080
+          TICKET_SERVICE_URL: http://localhost:8080
+          WMS_SERVICE_URL: http://localhost:8080
+          WORKFLOW_SERVICE_URL: http://localhost:8080
+        run: nohup ./target/debug/topems-server > /tmp/topems-server.log 2>&1 &
+
+      - name: Wait for backend health
+        run: |
+          for i in $(seq 1 72); do
+            if curl -sf http://localhost:8080/api/server/health >/dev/null; then
+              echo "✅ backend healthy after ~$((i * 5))s"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "❌ backend not healthy in 360s; log tail:"
+          tail -120 /tmp/topems-server.log
+          exit 1
+
       - name: Run E2E tests (smoke)
         working-directory: tests/e2e
         env:
@@ -211,6 +285,73 @@ jobs:
         run: |
           npm install
           npx playwright install --with-deps chromium
+
+      # ── [2026-10-24 Phase D] 同 e2e-smoke：补 Rust 后端于 :8080 ──
+      - name: Setup Rust toolchain
+        uses: ./.github/actions/setup-rust
+        with:
+          cache-prefix: "e2e-nightly-2026-07-01"
+
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
+
+      - name: Apply top-level migrations
+        run: sqlx migrate run --source database/migrations --database-url "$DATABASE_URL"
+
+      - name: Build backend (topems-server monolith)
+        run: SQLX_OFFLINE=true cargo build -p topems-server
+
+      - name: Start backend on :8080
+        env:
+          SERVER_PORT: "8080"
+          DB_MAX_CONNECTIONS: "8"
+          SEARCH_PATH: "flow, mobile, rs, erp, public, iam, shared"
+          MONOLITH_SERVICE_URL: http://localhost:8080
+          CRM_SERVICE_URL: http://localhost:8080
+          ERP_SERVICE_URL: http://localhost:8080
+          FEEDBACK_SERVICE_URL: http://localhost:8080
+          FILE_SERVICE_URL: http://localhost:8080
+          FINANCE_SERVICE_URL: http://localhost:8080
+          HRM_SERVICE_URL: http://localhost:8080
+          IAM_SERVICE_URL: http://localhost:8080
+          AI_SERVICE_URL: http://localhost:8080
+          BI_SERVICE_URL: http://localhost:8080
+          COMMUNICATION_SERVICE_URL: http://localhost:8080
+          EHS_SERVICE_URL: http://localhost:8080
+          GIS_SERVICE_URL: http://localhost:8080
+          INTEGRATION_SERVICE_URL: http://localhost:8080
+          LIMS_SERVICE_URL: http://localhost:8080
+          MASTER_DATA_SERVICE_URL: http://localhost:8080
+          MES_SERVICE_URL: http://localhost:8080
+          MOBILE_SERVICE_URL: http://localhost:8080
+          PDM_SERVICE_URL: http://localhost:8080
+          PM_SERVICE_URL: http://localhost:8080
+          PORTAL_SERVICE_URL: http://localhost:8080
+          RD_SERVICE_URL: http://localhost:8080
+          SCM_SERVICE_URL: http://localhost:8080
+          SRM_SERVICE_URL: http://localhost:8080
+          DOC_SERVICE_URL: http://localhost:8080
+          MONITOR_SERVICE_URL: http://localhost:8080
+          NOTIFICATION_SERVICE_URL: http://localhost:8080
+          QMS_SERVICE_URL: http://localhost:8080
+          SEARCH_SERVICE_URL: http://localhost:8080
+          TICKET_SERVICE_URL: http://localhost:8080
+          WMS_SERVICE_URL: http://localhost:8080
+          WORKFLOW_SERVICE_URL: http://localhost:8080
+        run: nohup ./target/debug/topems-server > /tmp/topems-server.log 2>&1 &
+
+      - name: Wait for backend health
+        run: |
+          for i in $(seq 1 72); do
+            if curl -sf http://localhost:8080/api/server/health >/dev/null; then
+              echo "✅ backend healthy after ~$((i * 5))s"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "❌ backend not healthy in 360s; log tail:"
+          tail -120 /tmp/topems-server.log
+          exit 1
 
       - name: Run E2E tests (business flows)
         working-directory: tests/e2e
