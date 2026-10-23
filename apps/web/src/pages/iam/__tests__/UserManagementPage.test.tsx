@@ -74,11 +74,12 @@ describe('UserManagementPage', () => {
     expect(headings.length).toBeGreaterThan(0);
   });
 
-  it('renders breadcrumbs', () => {
+  it('renders page structure', () => {
     renderWithProviders(<UserManagementPage />);
 
-    // 面包屑应该显示首页和身份管理
-    expect(screen.getByText('首页')).toBeInTheDocument();
-    expect(screen.getByText('身份管理')).toBeInTheDocument();
+    // G1: 面包屑统一由 AppShell 自动渲染（ListPageTemplate 不再渲染 header breadcrumbs），
+    // 组件级测试断言页面标题与核心结构
+    const headings = screen.getAllByText('用户管理');
+    expect(headings.length).toBeGreaterThan(0);
   });
 });

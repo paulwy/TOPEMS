@@ -9,6 +9,18 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({ user: null, logout: vi.fn() }),
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) =>
+      ({
+        'topbar.collapse_sidebar': '折叠侧边栏',
+        'topbar.expand_sidebar': '展开侧边栏',
+        'components.top_bar.notifications': '通知',
+      })[key] ?? key,
+    i18n: { language: 'zh' },
+  }),
+}));
+
 describe('TopBar', () => {
   it('renders with title', () => {
     render(
@@ -27,7 +39,7 @@ describe('TopBar', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByLabelText('Collapse sidebar')).toBeInTheDocument();
+    expect(screen.getByLabelText('折叠侧边栏')).toBeInTheDocument();
   });
 
   it('renders with notifications button', () => {

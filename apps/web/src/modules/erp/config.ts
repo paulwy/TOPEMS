@@ -267,20 +267,6 @@ const purchaseOrderRoute: RouteConfigV2<PurchaseOrderPageProps> = {
   tier: 'basic',
 };
 
-const salesOrderRoute: RouteConfigV2<SalesOrderPageProps> = {
-  path: ERP_PATHS.salesOrder,
-  element: lazyWithRetry(() => import('@/pages/erp/SalesOrderPage'), 'SalesOrderPage'),
-  module: 'erp',
-  code: 'erp-sales-order',
-  title: i18n.t('erp.nav.erp-sales-order'),
-  titleKey: 'erp.nav.erp-sales-order',
-  template: 'list',
-  group: 'process',
-  requiredPermissions: ['erp:sales_order:read', 'erp:dashboard:read'],
-  action: 'read',
-  tier: 'basic',
-};
-
 const financialReportRoute: RouteConfigV2<FinancialReportPageProps> = {
   path: ERP_PATHS.financialReport,
   element: lazyWithRetry(() => import('@/pages/erp/FinancialReportPage'), 'FinancialReportPage'),
@@ -559,7 +545,6 @@ export const erpModuleConfig: RouteModuleConfig = {
     inventoryManagementRoute,
     materialManagementRoute,
     purchaseOrderRoute,
-    salesOrderRoute,
     financialReportRoute,
     dictManagementRoute,
     databaseManagementRoute,
@@ -690,15 +675,15 @@ export const erpNavConfig: ModuleNavConfig = {
       crossModuleRef: true, // overlaps with SCM(scm-purchase-orders), SRM(srm-order) -- purchase order domain
     },
     {
-      code: 'erp-sales-order',
-      label: i18n.t('erp.nav.erp-sales-order'),
-      labelKey: 'erp.nav.erp-sales-order',
+      code: 'erp-sales-orders',
+      label: i18n.t('erp.nav.erp-sales-orders'),
+      labelKey: 'erp.nav.erp-sales-orders',
       icon: 'FileText',
-      path: ERP_PATHS.salesOrder,
+      path: ERP_PATHS.salesOrders,
       permission: 'erp:sales_order:read',
       order: 2,
       group: 'process',
-      description: i18n.t('erp.nav.erp-sales-order_desc'),
+      description: i18n.t('erp.nav.erp-sales-orders_desc'),
       crossModuleRef: true, // overlaps with CRM(crm-sales-funnel) -- sales domain
     },
     {
