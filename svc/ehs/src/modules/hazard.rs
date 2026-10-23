@@ -573,17 +573,56 @@ pub async fn update_hazard(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Hazard>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = resolve_hazard_tenant(&claims);
+    let tenant_bind = tenant_id.to_string();
     tracing::debug!("Updating hazard {}: {:?}", id, req);
+
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    macro_rules! set_str {
+        ($col:expr, $key:expr) => {
+            if let Some(v) = req.get($key).and_then(|x| x.as_str()) {
+                sets.push(format!("{} = ${}", $col, params.len() + 1));
+                params.push(v.to_string());
+            }
+        };
+    }
+    set_str!("title", "title");
+    set_str!("description", "description");
+    set_str!("category", "category");
+    set_str!("level", "level");
+    set_str!("source", "source");
+    set_str!("location", "location");
+    set_str!("status", "status");
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.qa_ehs_hazards
+        SET {set_clause}
+        WHERE id = ${id_idx}::uuid
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, hazard_no, title, description, category, level, source,
+                  location, reported_by, reported_at::TEXT AS reported_at, status,
+                  inspection_id::text AS inspection_id,
+                  created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query.bind(&id).bind(&tenant_bind).fetch_optional(&state.pool).await {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "隐患不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update hazard: {}", e);
+            return Json(ApiResponse::error(500, "隐患更新失败"));
+        }
+    };
 
     let cache_key = hazard_cache_key(tenant_id, &id);
     state.hazard_cache.remove(&cache_key).await;
@@ -600,29 +639,7 @@ pub async fn update_hazard(
             .await;
     }
 
-    Json(ApiResponse::success(
-        Hazard {
-            id: id.clone(),
-            hazard_no: "HZ-2024001".to_string(),
-            title: "消防通道堵塞".to_string(),
-            description: Some("生产车间A区消防通道被货物堵塞".to_string()),
-            category: "消防".to_string(),
-            level: "medium".to_string(),
-            source: "inspection".to_string(),
-            location: Some("生产车间A区".to_string()),
-            reported_by: Some("安全员A".to_string()),
-            reported_at: Some(chrono::Utc::now().to_rfc3339()),
-            status: "rectifying".to_string(),
-            inspection_id: Some("IR-2024001".to_string()),
-            approval_workflow_id: None,
-            approval_status: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "隐患更新成功",
-    ))
+    Json(ApiResponse::success(hazard_from_row(&row), "隐患更新成功"))
 }
 
 // gate: admin-only
@@ -698,23 +715,40 @@ pub async fn start_hazard_approval(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<StartApprovalRequest>,
 ) -> Json<ApiResponse<Hazard>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = resolve_hazard_tenant(&claims);
+    let tenant_bind = tenant_id.to_string();
     tracing::info!(
         "Starting approval for hazard {}: workflow_id={}",
         id,
         req.workflow_id
     );
 
-    let workflow_client = state.workflow_client;
+    // 真实状态流转：identified/reported → pending_approval
+    let upd = sqlx::query(
+        r#"
+        UPDATE ehs.qa_ehs_hazards
+        SET status = 'pending_approval', updated_at = now()
+        WHERE id = $1::uuid
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+        "#,
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .execute(&state.pool)
+    .await;
+    match upd {
+        Ok(r) if r.rows_affected() == 0 => {
+            return Json(ApiResponse::error(404, "隐患不存在"));
+        }
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Failed to start hazard approval: {}", e);
+            return Json(ApiResponse::error(500, "启动隐患审批失败"));
+        }
+    }
+
+    let workflow_client = state.workflow_client.clone();
     let id_clone = id.clone();
     tokio::spawn(async move {
         let request = CreateInstanceRequest {
@@ -734,28 +768,16 @@ pub async fn start_hazard_approval(
         }
     });
 
-    Json(ApiResponse::success(
-        Hazard {
-            id,
-            hazard_no: "HZ-2024001".to_string(),
-            title: "消防通道堵塞".to_string(),
-            description: Some("生产车间A区消防通道被货物堵塞".to_string()),
-            category: "消防".to_string(),
-            level: "medium".to_string(),
-            source: "inspection".to_string(),
-            location: Some("生产车间A区".to_string()),
-            reported_by: Some("安全员A".to_string()),
-            reported_at: Some(chrono::Utc::now().to_rfc3339()),
-            status: "pending_approval".to_string(),
-            inspection_id: Some("IR-2024001".to_string()),
-            approval_workflow_id: Some(req.workflow_id.to_string()),
-            approval_status: Some("pending".to_string()),
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "隐患审批流程已启动",
-    ))
+    match fetch_hazard_row(&state, &id, &tenant_bind).await {
+        Ok(Some(row)) => {
+            let mut hazard = hazard_from_row(&row);
+            hazard.approval_workflow_id = Some(req.workflow_id.to_string());
+            hazard.approval_status = Some("pending".to_string());
+            Json(ApiResponse::success(hazard, "隐患审批流程已启动"))
+        }
+        Ok(None) => Json(ApiResponse::error(404, "隐患不存在")),
+        Err((code, msg)) => Json(ApiResponse::error(code, msg)),
+    }
 }
 
 #[utoipa::path(
@@ -772,42 +794,40 @@ pub async fn close_hazard(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Hazard>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = resolve_hazard_tenant(&claims);
+    let tenant_bind = tenant_id.to_string();
     tracing::info!("Closing hazard: {}", id);
+    let upd = sqlx::query(
+        r#"
+        UPDATE ehs.qa_ehs_hazards
+        SET status = 'closed', updated_at = now()
+        WHERE id = $1::uuid
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+        "#,
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .execute(&state.pool)
+    .await;
+    match upd {
+        Ok(r) if r.rows_affected() == 0 => {
+            return Json(ApiResponse::error(404, "隐患不存在"));
+        }
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Failed to close hazard: {}", e);
+            return Json(ApiResponse::error(500, "关闭隐患失败"));
+        }
+    }
     let cache_key = hazard_cache_key(tenant_id, &id);
     state.hazard_cache.remove(&cache_key).await;
     state.hazard_cache.clear_l1();
-    Json(ApiResponse::success(
-        Hazard {
-            id: id.clone(),
-            hazard_no: "HZ-2024001".to_string(),
-            title: "消防通道堵塞".to_string(),
-            description: None,
-            category: "消防".to_string(),
-            level: "medium".to_string(),
-            source: "inspection".to_string(),
-            location: None,
-            reported_by: None,
-            reported_at: None,
-            status: "closed".to_string(),
-            inspection_id: None,
-            approval_workflow_id: None,
-            approval_status: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "隐患已关闭",
-    ))
+    match fetch_hazard_row(&state, &id, &tenant_bind).await {
+        Ok(Some(row)) => Json(ApiResponse::success(hazard_from_row(&row), "隐患已关闭")),
+        Ok(None) => Json(ApiResponse::error(404, "隐患不存在")),
+        Err((code, msg)) => Json(ApiResponse::error(code, msg)),
+    }
 }
 
 pub async fn create_rectification(
@@ -817,30 +837,81 @@ pub async fn create_rectification(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = resolve_hazard_tenant(&claims);
+    let tenant_bind = tenant_id.to_string();
     tracing::debug!("Creating rectification for hazard {}: {:?}", id, req);
+
+    // 兼容前端字段：description（或 measures）/ responsible / deadline
+    let description = req
+        .get("description")
+        .and_then(|v| v.as_str())
+        .or_else(|| req.get("measures").and_then(|v| v.as_str()))
+        .unwrap_or("整改措施")
+        .to_string();
+    let responsible = req
+        .get("responsible")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let deadline = req
+        .get("deadline")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    let row = sqlx::query(
+        r#"
+        INSERT INTO ehs.qa_ehs_hazard_rectifications
+            (hazard_id, description, responsible, deadline, status, progress, tenant_id)
+        VALUES ($1::uuid, $2, $3, $4::date, 'pending', 0, $5)
+        RETURNING id::text AS id, hazard_id::text AS hazard_id, description, responsible,
+                  deadline::text AS deadline, status, progress,
+                  started_at::text AS started_at, completed_at::text AS completed_at,
+                  created_at::text AS created_at, updated_at::text AS updated_at
+        "#,
+    )
+    .bind(&id)
+    .bind(&description)
+    .bind(&responsible)
+    .bind(&deadline)
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await;
+    let row = match row {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create rectification: {}", e);
+            return Json(ApiResponse::error(500, "整改方案创建失败"));
+        }
+    };
+
+    // 隐患进入整改中
+    let _ = sqlx::query(
+        "UPDATE ehs.qa_ehs_hazards SET status = 'rectifying', updated_at = now() \
+         WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) \
+         AND deleted_at IS NULL",
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .execute(&state.pool)
+    .await;
+
     let cache_key = hazard_cache_key(tenant_id, &id);
     state.hazard_cache.remove(&cache_key).await;
     state.hazard_cache.clear_l1();
+
     Json(ApiResponse::success(
         serde_json::json!({
-            "id": uuid::Uuid::new_v4().to_string(),
-            "hazard_id": id,
-            "measures": req.get("measures").and_then(|v| v.as_str()).unwrap_or("整改措施"),
-            "responsible": req.get("responsible").and_then(|v| v.as_str()).unwrap_or("安全部"),
-            "deadline": req.get("deadline").and_then(|v| v.as_str()),
-            "status": "pending",
+            "id": row.try_get::<String, _>("id").unwrap_or_default(),
+            "hazard_id": row.try_get::<String, _>("hazard_id").unwrap_or_default(),
+            "description": row.try_get::<String, _>("description").unwrap_or_default(),
+            "responsible": row.try_get::<Option<String>, _>("responsible").ok().flatten(),
+            "deadline": row.try_get::<Option<String>, _>("deadline").ok().flatten(),
+            "status": row.try_get::<String, _>("status").unwrap_or_else(|_| "pending".to_string()),
+            "progress": row.try_get::<i32, _>("progress").unwrap_or(0),
+            "started_at": row.try_get::<Option<String>, _>("started_at").ok().flatten(),
+            "completed_at": row.try_get::<Option<String>, _>("completed_at").ok().flatten(),
+            "created_at": row.try_get::<String, _>("created_at").unwrap_or_default(),
+            "updated_at": row.try_get::<String, _>("updated_at").unwrap_or_default(),
             "tenant_id": tenant_id.to_string(),
-            "created_at": chrono::Utc::now().to_rfc3339(),
         }),
         "整改方案创建成功",
     ))
@@ -853,28 +924,73 @@ pub async fn update_rectification(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = resolve_hazard_tenant(&claims);
+    let tenant_bind = tenant_id.to_string();
     tracing::debug!("Updating rectification for hazard {}: {:?}", id, req);
+
+    let description = req
+        .get("description")
+        .and_then(|v| v.as_str())
+        .or_else(|| req.get("measures").and_then(|v| v.as_str()));
+    let responsible = req.get("responsible").and_then(|v| v.as_str());
+    let deadline = req.get("deadline").and_then(|v| v.as_str());
+    let progress = req.get("progress").and_then(|v| v.as_i64());
+    let status = req.get("status").and_then(|v| v.as_str());
+
+    let row = sqlx::query(
+        r#"
+        UPDATE ehs.qa_ehs_hazard_rectifications
+        SET description = COALESCE($2, description),
+            responsible = COALESCE($3, responsible),
+            deadline = COALESCE($4::date, deadline),
+            progress = COALESCE($5, progress),
+            status = COALESCE($6, status),
+            started_at = COALESCE(started_at, now()),
+            updated_at = now()
+        WHERE hazard_id = $1::uuid
+          AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $7)
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, hazard_id::text AS hazard_id, description, responsible,
+                  deadline::text AS deadline, status, progress,
+                  started_at::text AS started_at, completed_at::text AS completed_at,
+                  created_at::text AS created_at, updated_at::text AS updated_at
+        "#,
+    )
+    .bind(&id)
+    .bind(description)
+    .bind(responsible)
+    .bind(deadline)
+    .bind(progress)
+    .bind(status)
+    .bind(&tenant_bind)
+    .fetch_optional(&state.pool)
+    .await;
+    let row = match row {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "整改方案不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update rectification: {}", e);
+            return Json(ApiResponse::error(500, "整改方案更新失败"));
+        }
+    };
+
     let cache_key = hazard_cache_key(tenant_id, &id);
     state.hazard_cache.remove(&cache_key).await;
     state.hazard_cache.clear_l1();
+
     Json(ApiResponse::success(
         serde_json::json!({
-            "id": uuid::Uuid::new_v4().to_string(),
-            "hazard_id": id,
-            "measures": req.get("measures").and_then(|v| v.as_str()).unwrap_or("整改措施"),
-            "responsible": req.get("responsible").and_then(|v| v.as_str()).unwrap_or("安全部"),
-            "status": "in_progress",
-            "updated_at": chrono::Utc::now().to_rfc3339(),
+            "id": row.try_get::<String, _>("id").unwrap_or_default(),
+            "hazard_id": row.try_get::<String, _>("hazard_id").unwrap_or_default(),
+            "description": row.try_get::<String, _>("description").unwrap_or_default(),
+            "responsible": row.try_get::<Option<String>, _>("responsible").ok().flatten(),
+            "deadline": row.try_get::<Option<String>, _>("deadline").ok().flatten(),
+            "status": row.try_get::<String, _>("status").unwrap_or_else(|_| "in_progress".to_string()),
+            "progress": row.try_get::<i32, _>("progress").unwrap_or(0),
+            "started_at": row.try_get::<Option<String>, _>("started_at").ok().flatten(),
+            "completed_at": row.try_get::<Option<String>, _>("completed_at").ok().flatten(),
+            "created_at": row.try_get::<String, _>("created_at").unwrap_or_default(),
+            "updated_at": row.try_get::<String, _>("updated_at").unwrap_or_default(),
             "tenant_id": tenant_id.to_string(),
         }),
         "整改方案更新成功",
@@ -888,23 +1004,51 @@ pub async fn submit_rectification(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = resolve_hazard_tenant(&claims);
+    let tenant_bind = tenant_id.to_string();
     tracing::info!("Submitting rectification for hazard: {}", id);
+
+    let upd = sqlx::query(
+        r#"
+        UPDATE ehs.qa_ehs_hazard_rectifications
+        SET status = 'submitted', completed_at = now(), updated_at = now()
+        WHERE hazard_id = $1::uuid
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+        "#,
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .execute(&state.pool)
+    .await;
+    match upd {
+        Ok(r) if r.rows_affected() == 0 => {
+            return Json(ApiResponse::error(404, "整改方案不存在"));
+        }
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("Failed to submit rectification: {}", e);
+            return Json(ApiResponse::error(500, "整改提交失败"));
+        }
+    }
+
+    // 隐患流转至待验收
+    let _ = sqlx::query(
+        "UPDATE ehs.qa_ehs_hazards SET status = 'pending_verification', updated_at = now() \
+         WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) \
+         AND deleted_at IS NULL",
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .execute(&state.pool)
+    .await;
+
     let cache_key = hazard_cache_key(tenant_id, &id);
     state.hazard_cache.remove(&cache_key).await;
     state.hazard_cache.clear_l1();
+
     Json(ApiResponse::success(
         serde_json::json!({
-            "id": uuid::Uuid::new_v4().to_string(),
             "hazard_id": id,
             "status": "submitted",
             "submitted_at": chrono::Utc::now().to_rfc3339(),
@@ -921,28 +1065,77 @@ pub async fn verify_hazard(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = resolve_hazard_tenant(&claims);
+    let tenant_bind = tenant_id.to_string();
     tracing::debug!("Verifying hazard {}: {:?}", id, req);
+
+    // 验收人优先取请求体，缺省取当前登录用户 claims.sub（不再硬编码 test_admin）
+    let verifier = req
+        .get("verifier")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| claims.sub.clone());
+    let result = req
+        .get("result")
+        .and_then(|v| v.as_str())
+        .unwrap_or("passed")
+        .to_string();
+    let remarks = req
+        .get("remarks")
+        .or_else(|| req.get("comment"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    let row = sqlx::query(
+        r#"
+        INSERT INTO ehs.qa_ehs_hazard_verifications
+            (hazard_id, verifier, result, remarks, verified_at, tenant_id)
+        VALUES ($1::uuid, $2, $3, $4, now(), $5)
+        RETURNING id::text AS id, hazard_id::text AS hazard_id, verifier, result, remarks,
+                  verified_at::text AS verified_at, created_at::text AS created_at
+        "#,
+    )
+    .bind(&id)
+    .bind(&verifier)
+    .bind(&result)
+    .bind(&remarks)
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await;
+    let row = match row {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to verify hazard: {}", e);
+            return Json(ApiResponse::error(500, "隐患验收失败"));
+        }
+    };
+
+    // 验收结论驱动隐患状态流转：passed→closed，否则退回 rectifying
+    let next_status = if result == "passed" { "closed" } else { "rectifying" };
+    let _ = sqlx::query(
+        "UPDATE ehs.qa_ehs_hazards SET status = $3, updated_at = now() \
+         WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) \
+         AND deleted_at IS NULL",
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .bind(next_status)
+    .execute(&state.pool)
+    .await;
+
     let cache_key = hazard_cache_key(tenant_id, &id);
     state.hazard_cache.remove(&cache_key).await;
     state.hazard_cache.clear_l1();
+
     Json(ApiResponse::success(
         serde_json::json!({
-            "id": uuid::Uuid::new_v4().to_string(),
-            "hazard_id": id,
-            "verifier": "test_admin",
-            "result": req.get("result").and_then(|v| v.as_str()).unwrap_or("passed"),
-            "comment": req.get("comment").and_then(|v| v.as_str()),
-            "verified_at": chrono::Utc::now().to_rfc3339(),
+            "id": row.try_get::<String, _>("id").unwrap_or_default(),
+            "hazard_id": row.try_get::<String, _>("hazard_id").unwrap_or_default(),
+            "verifier": row.try_get::<Option<String>, _>("verifier").ok().flatten(),
+            "result": row.try_get::<String, _>("result").unwrap_or_default(),
+            "remarks": row.try_get::<Option<String>, _>("remarks").ok().flatten(),
+            "verified_at": row.try_get::<String, _>("verified_at").unwrap_or_default(),
+            "created_at": row.try_get::<String, _>("created_at").unwrap_or_default(),
             "tenant_id": tenant_id.to_string(),
         }),
         "隐患验证完成",
@@ -1363,6 +1556,95 @@ fn safety_hazard_from_row(r: &sqlx::postgres::PgRow) -> SafetyHazard {
         updated_at: r.try_get::<String, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
+}
+
+/// ehs.qa_ehs_hazards 行 → Hazard（生命周期路由复用：审批/关闭/整改/验收回读）
+fn hazard_from_row(row: &sqlx::postgres::PgRow) -> Hazard {
+    Hazard {
+        id: row.try_get::<String, _>("id").unwrap_or_default(),
+        hazard_no: row.try_get::<String, _>("hazard_no").unwrap_or_default(),
+        title: row.try_get::<String, _>("title").unwrap_or_default(),
+        description: row
+            .try_get::<Option<String>, _>("description")
+            .ok()
+            .flatten(),
+        category: row
+            .try_get::<Option<String>, _>("category")
+            .ok()
+            .flatten()
+            .unwrap_or_default(),
+        level: row
+            .try_get::<Option<String>, _>("level")
+            .ok()
+            .flatten()
+            .unwrap_or_default(),
+        source: row
+            .try_get::<Option<String>, _>("source")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "inspection".to_string()),
+        location: row
+            .try_get::<Option<String>, _>("location")
+            .ok()
+            .flatten(),
+        reported_by: row
+            .try_get::<Option<String>, _>("reported_by")
+            .ok()
+            .flatten(),
+        reported_at: row
+            .try_get::<Option<String>, _>("reported_at")
+            .ok()
+            .flatten(),
+        status: row
+            .try_get::<Option<String>, _>("status")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "reported".to_string()),
+        inspection_id: row
+            .try_get::<Option<String>, _>("inspection_id")
+            .ok()
+            .flatten(),
+        approval_workflow_id: None,
+        approval_status: None,
+        created_at: row
+            .try_get::<Option<String>, _>("created_at")
+            .ok()
+            .flatten(),
+        updated_at: row
+            .try_get::<Option<String>, _>("updated_at")
+            .ok()
+            .flatten(),
+        tenant_id: uuid::Uuid::nil(),
+    }
+}
+
+/// 回读单条隐患行（按 id + 租户），返回 None=不存在/软删。
+async fn fetch_hazard_row(
+    state: &crate::shared::AppState,
+    id: &str,
+    tenant_bind: &str,
+) -> Result<Option<sqlx::postgres::PgRow>, (u16, &'static str)> {
+    let row = sqlx::query(
+        r#"
+        SELECT id::text AS id, hazard_no, title, description, category, level, source,
+               location, reported_by, reported_at::TEXT AS reported_at, status,
+               inspection_id::text AS inspection_id,
+               created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+        FROM ehs.qa_ehs_hazards
+        WHERE id = $1::uuid
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_bind)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to fetch hazard {}: {}", id, e);
+        (500, "获取隐患失败")
+    })?;
+    Ok(row)
 }
 
 // ---- hazard 详情子资源接真（/hazards/{hazardId}/assessments|controls）----
