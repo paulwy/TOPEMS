@@ -3502,3 +3502,22 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 
 
 
+
+## 审计修复实施登记 Phase A（2026-10-23，依据《TOPEMS全项目测试与审计报告-2026-10-23.md》第七节）
+- [x] **P0-1 plugin-registry SQL 注入**（`419770343`）：marketplace.rs/tenant_plugins.rs 的 category/search/page_size/offset 全改 $n 绑定参数 + 9 码枚举白名单；cargo check/clippy 0 error、单测 249 passed
+- [x] **P1-27 dompurify critical XSS**（`90f2cf31d`）：apps/web dompurify 3.4.16→3.4.17 + 根 overrides 锁定；web typecheck exit 0
+- [x] **P1-28 deny.toml 许可白名单**（`c6c80ae84`）：allow 补 bzip2-1.0.6；cargo deny check licenses exit 0
+- [x] **P1-26 迁移版本号冲突**（`171672f3c`）：3 对重复时间戳后并入方改 000013/000014/000005（git mv 保历史）+ database/checksums.txt 同步；check-migrations.mjs pass:true、validate.sh Errors:0
+- [x] **P1-25 前端 lint 清零**（`ec796b3fb`）：387 warnings→0（no-explicit-any 370 消化=源码 83 精修类型 + 测试 287 unknown 字面替换 + 5 处局部 disable 附逆变/上游约束原因）；pnpm lint exit 0、pnpm typecheck exit 0
+- 状态：Phase A 完成并提交（5 commits，未 push）；Phase B/C/D 分批推进中
+## 审计修复实施登记 Phase B（2026-10-23，第一批 12 项 P1，未提交待合批）
+- [x] **P1-7/8/10 WMS 租户硬编码与库存扣减**：outbound/inbound 三处 organization_id 硬编码 `...0001` → claims 派生 Option<Uuid>；inventory_movements 流水 tenant_id 改绑；扣库存 guard `available_quantity>=` + rows_affected 0 行报 400（条件原子 UPDATE 隐式行锁，不加 FOR UPDATE）；check/clippy 0 error、542 passed
+- [x] **P1-21/22 gis WS 鉴权与设备上报**：Subscribe 前强制 JWT 校验+device_code 租户过滤（超管 NULL 放行）；handle_device_socket 连接先验设备 active+归属；report_device_location 强制 Bearer JWT + 归属校验 + 非 active 403；check/clippy 0 error。待产品确认：devices 无 token 列（IoT 设备级凭证需迁移加列）
+- [x] **P1-4 qms 跨租户写**：/api/internal/ 命中 is_public_path 白名单（auth 不注入 Claims，加 Extension 会 500）——与 ehs/lims 兄弟端点对齐：DTO 去 tenant_id、INSERT 绑 nil、UPDATE 按全局唯一 inspection_no 定位（同时修复原先恒 404 死回写）；check/clippy 0 error
+- [x] **P1-17/18/13 analytics 租户隔离**：GUC 名确认 `app.tenant_id`（迁移 20261015000082 证据链）18 处统一；test-sql 强制 SET GUC + 复用 dataset_whitelist 白名单（EnforceMode 默认 warn）；WS 看板升级前强制 JWT + 看板租户谓词；check/clippy 0 error、lib 314 passed（2 个 DB 集成失败为本地库 schema 状态：dashboards 无列 DEFAULT、bi 表数 9<10，待 DB 重建转绿）
+- [x] **P1-19 hrm 发薪真实聚合**：数据源判定=真实聚合（active 员工 + contracts.salary 最新 active 合同）；删 mock_employee_salary_components 编造函数；calculate 接 JOIN LATERAL 真实员工+法定计算（社保/个税引擎既有）；pay 加 pending 明细门；根表 tenant 从会话 GUC、子表从父行继承；check/clippy 0 error、72 passed（+3 新测试）
+- [x] **P1-20 monitor 阈值落库**：新增迁移 `20261023000006_monitor_thresholds_table.sql` + checksums 登记；alert_evaluator CRUD 全走库（tenant 过滤+软删）、删虚构内存 Evaluator 与 23.5% 等快照、evaluate 接真实采集（sysctl loadavg/vm_stat/连接池）；validate.sh Errors:0；140 passed
+- [x] **P1-14 finance report_center 接真**：资产负债表/利润表/财务分析落库真实聚合（core_finance_accounts+core_finance_ledger，含上期/去年同期）；现金流量表增强版/多期对比/导出无数据源 → 诚实 501（前端零消费影响）；1086 passed
+- [x] **P1-23 integration secret 脱敏**：响应 DTO ErpConnectionResponse（secret_masked 前3后4掩码）+ serde skip_serializing 兜底；9 出站响应点全转；内部 X-API-Secret 明文保留；写路径 COALESCE 保留原值语义未动；279 passed（+3 脱敏测试）
+- 遗留扩展项（同类超范围残留，Phase D 收口）：wms 9 兄弟模块 `...0001` 硬编码；hrm recruitment×3/training×2 Uuid::nil() 租户
+- 状态：Phase B 8 项已修复待合批提交；Phase C 启动中
