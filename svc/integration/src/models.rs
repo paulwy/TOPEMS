@@ -589,8 +589,14 @@ mod tests {
         assert_eq!(super::mask_app_secret(None), None);
         assert_eq!(super::mask_app_secret(Some("")), None);
         // 过短（前后缀会重叠）→ 整体掩码
-        assert_eq!(super::mask_app_secret(Some("abc")), Some("****".to_string()));
-        assert_eq!(super::mask_app_secret(Some("abcdefg")), Some("****".to_string()));
+        assert_eq!(
+            super::mask_app_secret(Some("abc")),
+            Some("****".to_string())
+        );
+        assert_eq!(
+            super::mask_app_secret(Some("abcdefg")),
+            Some("****".to_string())
+        );
         // 刚好可分（8 位）→ 保留前缀 abc + 后缀 efgh
         assert_eq!(
             super::mask_app_secret(Some("abcdefgh")),
@@ -622,7 +628,10 @@ mod tests {
         let resp = super::ErpConnectionResponse::from(conn);
         let json = serde_json::to_value(&resp).expect("serialize ErpConnectionResponse");
         // 响应里不得出现明文字段名 app_secret
-        assert!(json.get("app_secret").is_none(), "响应不得含 app_secret 字段");
+        assert!(
+            json.get("app_secret").is_none(),
+            "响应不得含 app_secret 字段"
+        );
         // secret_masked 必须是掩码，且不得包含明文
         let masked = json.get("secret_masked").and_then(|v| v.as_str()).unwrap();
         assert!(

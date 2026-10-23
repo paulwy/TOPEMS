@@ -615,7 +615,12 @@ pub async fn update_hazard(
     for p in &params {
         query = query.bind(p);
     }
-    let row = match query.bind(&id).bind(&tenant_bind).fetch_optional(&state.pool).await {
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
         Ok(Some(r)) => r,
         Ok(None) => return Json(ApiResponse::error(404, "隐患不存在")),
         Err(e) => {
@@ -1111,7 +1116,11 @@ pub async fn verify_hazard(
     };
 
     // 验收结论驱动隐患状态流转：passed→closed，否则退回 rectifying
-    let next_status = if result == "passed" { "closed" } else { "rectifying" };
+    let next_status = if result == "passed" {
+        "closed"
+    } else {
+        "rectifying"
+    };
     let _ = sqlx::query(
         "UPDATE ehs.qa_ehs_hazards SET status = $3, updated_at = now() \
          WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) \
@@ -1583,10 +1592,7 @@ fn hazard_from_row(row: &sqlx::postgres::PgRow) -> Hazard {
             .ok()
             .flatten()
             .unwrap_or_else(|| "inspection".to_string()),
-        location: row
-            .try_get::<Option<String>, _>("location")
-            .ok()
-            .flatten(),
+        location: row.try_get::<Option<String>, _>("location").ok().flatten(),
         reported_by: row
             .try_get::<Option<String>, _>("reported_by")
             .ok()

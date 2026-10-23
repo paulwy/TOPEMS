@@ -688,8 +688,9 @@ pub async fn start_stock_take(
     .await;
 
     if let Ok(warehouse_id) = warehouse_id_result {
-        let _ = sqlx::query(
-            only_own_schema_query!("wms", r#"
+        let _ = sqlx::query(only_own_schema_query!(
+            "wms",
+            r#"
             INSERT INTO wms.stock_take_items (id, organization_id, stock_take_id, line_number,
                                               material_code, material_name, specification,
                                               batch_number, location_id, system_quantity, unit,
@@ -700,15 +701,18 @@ pub async fn start_stock_take(
                    i.quality_status, NOW(), NOW(), $3
             FROM wms.inventory i
             WHERE i.warehouse_id = $2 AND i.deleted_at IS NULL
-            "#),
-        )
+            "#
+        ))
         .bind(id)
         .bind(warehouse_id)
         // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
         .bind(if claims.is_superuser {
             None
         } else {
-            claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|s| Uuid::parse_str(s).ok())
         })
         .execute(&mut *tx)
         .await;

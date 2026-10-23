@@ -132,10 +132,7 @@ async fn handle_dashboard_socket(
         return;
     };
     let dashboard_name: String = row.try_get("name").unwrap_or_default();
-    let auto_refresh_enabled: Option<bool> = row
-        .try_get("auto_refresh_enabled")
-        .ok()
-        .flatten();
+    let auto_refresh_enabled: Option<bool> = row.try_get("auto_refresh_enabled").ok().flatten();
     let auto_refresh_interval: Option<i32> = row.try_get("auto_refresh_interval").ok().flatten();
     let refresh_interval = if auto_refresh_enabled.unwrap_or(false) {
         auto_refresh_interval.unwrap_or(30) as u64

@@ -175,7 +175,9 @@ pub fn start_demo_simulator(event_bus: Arc<EventBus>) {
         );
         return;
     }
-    tracing::info!("[event-bus] 启动演示事件模拟器（dev 模式；每 30 秒发布标记为 [DEMO] 的模拟事件）");
+    tracing::info!(
+        "[event-bus] 启动演示事件模拟器（dev 模式；每 30 秒发布标记为 [DEMO] 的模拟事件）"
+    );
 
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));

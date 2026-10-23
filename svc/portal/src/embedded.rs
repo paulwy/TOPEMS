@@ -103,7 +103,9 @@ pub async fn build_router(
                     }
                 }
             } else if modules::graphql_schema::is_dev_demo_mode() {
-                tracing::info!("📡 Redis 不可用（dev 模式），启动演示事件模拟器（每 30 秒模拟事件）");
+                tracing::info!(
+                    "📡 Redis 不可用（dev 模式），启动演示事件模拟器（每 30 秒模拟事件）"
+                );
                 modules::graphql_schema::start_demo_simulator(event_bus);
             } else {
                 tracing::warn!(

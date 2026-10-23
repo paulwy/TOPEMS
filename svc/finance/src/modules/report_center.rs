@@ -230,7 +230,10 @@ pub fn generate_balance_sheet(
 
     // 流动 / 非流动拆分（按真实科目编码段）
     let (current_asset_items, non_current_asset_items): (Vec<&BalanceItem>, Vec<&BalanceItem>) =
-        current.assets.iter().partition(|i| is_current_asset(&i.account_code));
+        current
+            .assets
+            .iter()
+            .partition(|i| is_current_asset(&i.account_code));
     let (current_liab_items, non_current_liab_items): (Vec<&BalanceItem>, Vec<&BalanceItem>) =
         current
             .liabilities
@@ -264,9 +267,7 @@ pub fn generate_balance_sheet(
         non_current_liabilities.iter().map(|i| i.amount).sum();
 
     // 去年同期来自真实账务聚合，无则为 0（同比按 0 安全退化，绝不按固定百分比编造）
-    let last_year_total_assets = last_year
-        .map(|b| b.total_assets)
-        .unwrap_or(Decimal::ZERO);
+    let last_year_total_assets = last_year.map(|b| b.total_assets).unwrap_or(Decimal::ZERO);
     let last_year_total_liabilities = last_year
         .map(|b| b.total_liabilities)
         .unwrap_or(Decimal::ZERO);
@@ -1265,15 +1266,39 @@ mod tests {
         let cur = BalanceSheet {
             period: "2025-08".into(),
             assets: vec![
-                BalanceItem { account_code: "1001".into(), account_name: "货币资金".into(), amount: Decimal::from(1000) },
-                BalanceItem { account_code: "1401".into(), account_name: "存货".into(), amount: Decimal::from(500) },
-                BalanceItem { account_code: "1601".into(), account_name: "固定资产".into(), amount: Decimal::from(2000) },
+                BalanceItem {
+                    account_code: "1001".into(),
+                    account_name: "货币资金".into(),
+                    amount: Decimal::from(1000),
+                },
+                BalanceItem {
+                    account_code: "1401".into(),
+                    account_name: "存货".into(),
+                    amount: Decimal::from(500),
+                },
+                BalanceItem {
+                    account_code: "1601".into(),
+                    account_name: "固定资产".into(),
+                    amount: Decimal::from(2000),
+                },
             ],
             liabilities: vec![
-                BalanceItem { account_code: "2001".into(), account_name: "短期借款".into(), amount: Decimal::from(300) },
-                BalanceItem { account_code: "2501".into(), account_name: "长期借款".into(), amount: Decimal::from(700) },
+                BalanceItem {
+                    account_code: "2001".into(),
+                    account_name: "短期借款".into(),
+                    amount: Decimal::from(300),
+                },
+                BalanceItem {
+                    account_code: "2501".into(),
+                    account_name: "长期借款".into(),
+                    amount: Decimal::from(700),
+                },
             ],
-            equity: vec![BalanceItem { account_code: "4001".into(), account_name: "实收资本".into(), amount: Decimal::from(2500) }],
+            equity: vec![BalanceItem {
+                account_code: "4001".into(),
+                account_name: "实收资本".into(),
+                amount: Decimal::from(2500),
+            }],
             total_assets: Decimal::from(3500),
             total_liabilities: Decimal::from(1000),
             total_equity: Decimal::from(2500),
@@ -1296,7 +1321,11 @@ mod tests {
     fn balance_period_and_last_year_from_real_data() {
         let cur = BalanceSheet {
             period: "2025-08".into(),
-            assets: vec![BalanceItem { account_code: "1001".into(), account_name: "货币资金".into(), amount: Decimal::from(1100) }],
+            assets: vec![BalanceItem {
+                account_code: "1001".into(),
+                account_name: "货币资金".into(),
+                amount: Decimal::from(1100),
+            }],
             liabilities: vec![],
             equity: vec![],
             total_assets: Decimal::from(1100),
@@ -1305,7 +1334,11 @@ mod tests {
         };
         let prev = BalanceSheet {
             period: "2025-07".into(),
-            assets: vec![BalanceItem { account_code: "1001".into(), account_name: "货币资金".into(), amount: Decimal::from(1000) }],
+            assets: vec![BalanceItem {
+                account_code: "1001".into(),
+                account_name: "货币资金".into(),
+                amount: Decimal::from(1000),
+            }],
             ..empty_balance_sheet("2025-07")
         };
         let ly = BalanceSheet {
@@ -1327,10 +1360,22 @@ mod tests {
     fn income_items_from_real_ledger_and_eps_zero() {
         let cur = IncomeStatement {
             period: "2025-08".into(),
-            revenues: vec![IncomeItem { account_code: "6001".into(), account_name: "主营业务收入".into(), amount: Decimal::from(-8000) }],
+            revenues: vec![IncomeItem {
+                account_code: "6001".into(),
+                account_name: "主营业务收入".into(),
+                amount: Decimal::from(-8000),
+            }],
             expenses: vec![
-                IncomeItem { account_code: "6401".into(), account_name: "主营业务成本".into(), amount: Decimal::from(4000) },
-                IncomeItem { account_code: "6601".into(), account_name: "销售费用".into(), amount: Decimal::from(500) },
+                IncomeItem {
+                    account_code: "6401".into(),
+                    account_name: "主营业务成本".into(),
+                    amount: Decimal::from(4000),
+                },
+                IncomeItem {
+                    account_code: "6601".into(),
+                    account_name: "销售费用".into(),
+                    amount: Decimal::from(500),
+                },
             ],
             total_revenue: Decimal::from(-8000),
             total_expense: Decimal::from(4500),
@@ -1351,7 +1396,11 @@ mod tests {
     fn income_previous_yoy_from_real_previous() {
         let cur = IncomeStatement {
             period: "2025-08".into(),
-            revenues: vec![IncomeItem { account_code: "6001".into(), account_name: "收入".into(), amount: Decimal::from(-1100) }],
+            revenues: vec![IncomeItem {
+                account_code: "6001".into(),
+                account_name: "收入".into(),
+                amount: Decimal::from(-1100),
+            }],
             expenses: vec![],
             total_revenue: Decimal::from(-1100),
             total_expense: Decimal::ZERO,
@@ -1359,7 +1408,11 @@ mod tests {
         };
         let prev = IncomeStatement {
             period: "2025-07".into(),
-            revenues: vec![IncomeItem { account_code: "6001".into(), account_name: "收入".into(), amount: Decimal::from(-1000) }],
+            revenues: vec![IncomeItem {
+                account_code: "6001".into(),
+                account_name: "收入".into(),
+                amount: Decimal::from(-1000),
+            }],
             ..empty_income_statement("2025-07")
         };
         let r = generate_income_statement("2025-08", &cur, Some(&prev));
@@ -1473,7 +1526,7 @@ mod tests {
             total_asset_turnover: Decimal::from(2), // >= 1.0 -> +20
             gross_margin: Decimal::ZERO,
             net_margin: Decimal::from(20), // >= 15 -> +12
-            roe: Decimal::from(25),       // >= 20 -> +18
+            roe: Decimal::from(25),        // >= 20 -> +18
             roa: Decimal::from(10),
             revenue_growth_rate: Decimal::from(30), // >= 20 -> +10
             net_profit_growth_rate: Decimal::from(30), // >= 20 -> +10

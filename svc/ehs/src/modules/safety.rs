@@ -35,7 +35,10 @@ pub fn create_routes() -> Router<AppState> {
                 .put(update_record_db)
                 .delete(delete_record_db),
         )
-        .route("/checks", get(list_safety_checks_db).post(create_safety_check))
+        .route(
+            "/checks",
+            get(list_safety_checks_db).post(create_safety_check),
+        )
         .route(
             "/checks/{id}",
             get(get_safety_check_db)
@@ -880,7 +883,11 @@ pub async fn get_record_db(
         WHERE record_id::text = $1
         ORDER BY created_at ASC
     "#;
-    let items: Vec<RecordItem> = match sqlx::query(items_sql).bind(&id).fetch_all(&state.pool).await {
+    let items: Vec<RecordItem> = match sqlx::query(items_sql)
+        .bind(&id)
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(rows) => rows
             .iter()
             .map(|r| RecordItem {
@@ -891,7 +898,9 @@ pub async fn get_record_db(
                 item_category: r
                     .try_get("item_category")
                     .unwrap_or_else(|_| "general".to_string()),
-                result: r.try_get("result").unwrap_or_else(|_| "pending".to_string()),
+                result: r
+                    .try_get("result")
+                    .unwrap_or_else(|_| "pending".to_string()),
                 remarks: r.try_get("remarks").ok().flatten(),
                 tenant_id,
             })
@@ -903,7 +912,11 @@ pub async fn get_record_db(
     };
 
     Json(ApiResponse::success(
-        InspectionRecordDetail { record, items, tenant_id },
+        InspectionRecordDetail {
+            record,
+            items,
+            tenant_id,
+        },
         "获取检查记录成功",
     ))
 }
@@ -986,7 +999,12 @@ pub async fn get_safety_check_db(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql).bind(&id).bind(&tenant_bind).fetch_optional(&state.pool).await {
+    let row = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
         Ok(Some(r)) => r,
         Ok(None) => return Json(ApiResponse::error(404, "安全检查不存在")),
         Err(e) => {
@@ -994,7 +1012,10 @@ pub async fn get_safety_check_db(
             return Json(ApiResponse::error(500, "获取安全检查失败"));
         }
     };
-    Json(ApiResponse::success(safety_check_to_json(&row), "获取安全检查成功"))
+    Json(ApiResponse::success(
+        safety_check_to_json(&row),
+        "获取安全检查成功",
+    ))
 }
 
 #[utoipa::path(
@@ -1061,7 +1082,12 @@ pub async fn update_safety_check_db(
     for p in &params {
         query = query.bind(p);
     }
-    let row = match query.bind(&id).bind(&tenant_bind).fetch_optional(&state.pool).await {
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
         Ok(Some(r)) => r,
         Ok(None) => return Json(ApiResponse::error(404, "安全检查不存在")),
         Err(e) => {
@@ -1069,7 +1095,10 @@ pub async fn update_safety_check_db(
             return Json(ApiResponse::error(500, "安全检查更新失败"));
         }
     };
-    Json(ApiResponse::success(safety_check_to_json(&row), "安全检查更新成功"))
+    Json(ApiResponse::success(
+        safety_check_to_json(&row),
+        "安全检查更新成功",
+    ))
 }
 
 #[utoipa::path(
@@ -1094,7 +1123,12 @@ pub async fn delete_safety_check_db(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql).bind(&id).bind(&tenant_bind).execute(&state.pool).await {
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete safety check: {}", e);

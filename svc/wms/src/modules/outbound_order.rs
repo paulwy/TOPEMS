@@ -1631,8 +1631,10 @@ pub async fn ship_outbound_order(
                         if line_id.is_nil() {
                             continue;
                         }
-                        let material_code: String = row.try_get("material_code").unwrap_or_default();
-                        let material_name: String = row.try_get("material_name").unwrap_or_default();
+                        let material_code: String =
+                            row.try_get("material_code").unwrap_or_default();
+                        let material_name: String =
+                            row.try_get("material_name").unwrap_or_default();
                         let unit: String = row.try_get("unit").unwrap_or_default();
                         lines_by_id.insert(line_id, (material_code, material_name, unit));
                     }

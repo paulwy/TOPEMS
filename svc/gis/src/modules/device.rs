@@ -604,7 +604,10 @@ pub async fn report_device_location(
         .and_then(|h| h.strip_prefix("Bearer "))
         .map(str::to_string);
     let Some(jwt) = jwt else {
-        return Json(ApiResponse::error(401, "未认证：缺少 Authorization Bearer token"));
+        return Json(ApiResponse::error(
+            401,
+            "未认证：缺少 Authorization Bearer token",
+        ));
     };
     let claims = match verify_jwt_token(&jwt, &auth_state.jwt_secret) {
         Ok(claims) => claims,

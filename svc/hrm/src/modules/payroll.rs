@@ -543,7 +543,10 @@ pub async fn calculate_payroll_run(
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("聚合在职员工薪资失败: {}", e);
-            return Json(ApiResponse::<PayrollRun>::error(500, "聚合在职员工薪资失败"));
+            return Json(ApiResponse::<PayrollRun>::error(
+                500,
+                "聚合在职员工薪资失败",
+            ));
         }
     };
 
@@ -576,11 +579,7 @@ pub async fn calculate_payroll_run(
         .await;
 
         if let Err(e) = res {
-            tracing::error!(
-                "写入薪资明细失败 employee_id={}: {}",
-                emp.employee_id,
-                e
-            );
+            tracing::error!("写入薪资明细失败 employee_id={}: {}", emp.employee_id, e);
             return Json(ApiResponse::<PayrollRun>::error(500, "写入薪资明细失败"));
         }
         total_gross += &amounts.gross;

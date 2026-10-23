@@ -208,8 +208,9 @@ pub async fn create_wave_pick(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
 
-    let result = sqlx::query_as::<_, WavePick>(
-        only_own_schema_query!("wms", r#"
+    let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
+        "wms",
+        r#"
         INSERT INTO wms.wave_picks (id, organization_id, wave_pick_number, wave_pick_type,
                                     warehouse_id, status, priority, batch_id, remarks,
                                     total_items, picked_items, total_quantity, picked_quantity,
@@ -219,8 +220,8 @@ pub async fn create_wave_pick(
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
                   total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
-        "#),
-    )
+        "#
+    ))
     .bind(id)
     .bind(&req.wave_pick_number)
     .bind(&req.wave_pick_type)

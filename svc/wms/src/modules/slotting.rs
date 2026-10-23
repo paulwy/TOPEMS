@@ -279,7 +279,11 @@ pub async fn run_optimization(
             "degraded": degraded,
             "message": degraded_message,
         }),
-        if degraded { "无启用规则，未生成建议" } else { "success" },
+        if degraded {
+            "无启用规则，未生成建议"
+        } else {
+            "success"
+        },
     ))
 }
 

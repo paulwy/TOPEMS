@@ -1245,18 +1245,24 @@ mod tests {
                 },
             )
             .await;
+        assert!(
+            server
+                .tools
+                .declare_sensitive_output(
+                    "hr.get_employee",
+                    SensitiveOutput {
+                        fields: vec!["id_card".to_string()],
+                        contains_sensitive: Some(true),
+                    }
+                )
+                .await
+        );
+        // 访问器生效
         assert!(server
             .tools
-            .declare_sensitive_output(
-                "hr.get_employee",
-                SensitiveOutput {
-                    fields: vec!["id_card".to_string()],
-                    contains_sensitive: Some(true),
-                }
-            )
-            .await);
-        // 访问器生效
-        assert!(server.tools.sensitive_output("hr.get_employee").await.is_some());
+            .sensitive_output("hr.get_employee")
+            .await
+            .is_some());
 
         init_server(&server).await;
         let resp = server
@@ -1275,7 +1281,11 @@ mod tests {
         let text = body["content"][0]["text"].as_str().unwrap();
         // 声明字段已掩码（前3后4），明文身份证号不得出现
         assert!(text.contains("130****1234"), "应掩码 id_card: {}", text);
-        assert!(!text.contains("130101199001011234"), "明文 id_card 泄漏: {}", text);
+        assert!(
+            !text.contains("130101199001011234"),
+            "明文 id_card 泄漏: {}",
+            text
+        );
         // 未声明字段原样保留
         assert!(text.contains("13800001111"), "phone 不应被掩码: {}", text);
     }
@@ -1285,14 +1295,17 @@ mod tests {
         // 对未注册工具声明返回 false；无声明工具输出原样
         use topems_shared_mcp::protocol::SensitiveOutput;
         let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
-        assert!(!server
+        assert!(
+            !server
+                .tools
+                .declare_sensitive_output("unknown.tool", SensitiveOutput::default(),)
+                .await
+        );
+        assert!(server
             .tools
-            .declare_sensitive_output(
-                "unknown.tool",
-                SensitiveOutput::default(),
-            )
-            .await);
-        assert!(server.tools.sensitive_output("unknown.tool").await.is_none());
+            .sensitive_output("unknown.tool")
+            .await
+            .is_none());
     }
 
     #[tokio::test]

@@ -910,13 +910,15 @@ pub async fn analyze(
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeRequest>,
 ) -> Json<ApiResponse<Vec<GovernanceSuggestionV59>>> {
-    let suggestions = db_exec!(GovernanceAIEngine::generate_suggestions(
-        &state.db,
-        req_tenant_uuid(&claims),
-        &req.entity_type,
-        &req.entity_id
-    )
-    .await);
+    let suggestions = db_exec!(
+        GovernanceAIEngine::generate_suggestions(
+            &state.db,
+            req_tenant_uuid(&claims),
+            &req.entity_type,
+            &req.entity_id
+        )
+        .await
+    );
     Json(ApiResponse::success(suggestions, "数据治理分析完成"))
 }
 #[utoipa::path(
@@ -1116,14 +1118,16 @@ pub async fn match_entities(
     Json(req): Json<MatchEntitiesRequest>,
 ) -> Json<ApiResponse<Vec<MatchResult>>> {
     let entity_type = req.entity_type.as_deref().unwrap_or("unknown");
-    let results = db_exec!(IntelligentMatcher::match_entities(
-        &state.db,
-        req_tenant_uuid(&claims),
-        &req.source_id,
-        &req.target_id,
-        entity_type
-    )
-    .await);
+    let results = db_exec!(
+        IntelligentMatcher::match_entities(
+            &state.db,
+            req_tenant_uuid(&claims),
+            &req.source_id,
+            &req.target_id,
+            entity_type
+        )
+        .await
+    );
     Json(ApiResponse::success(results, "实体匹配完成"))
 }
 
@@ -1257,15 +1261,17 @@ pub async fn create_classifier(
         .and_then(parse_classification_algo)
         .unwrap_or(ClassificationAlgorithm::RuleBased);
 
-    let model = db_exec!(AutoClassifier::create_classifier(
-        &state.db,
-        req_tenant_uuid(&claims),
-        req.name,
-        req.entity_type,
-        req.categories,
-        algorithm
-    )
-    .await);
+    let model = db_exec!(
+        AutoClassifier::create_classifier(
+            &state.db,
+            req_tenant_uuid(&claims),
+            req.name,
+            req.entity_type,
+            req.categories,
+            algorithm
+        )
+        .await
+    );
     Json(ApiResponse::success(model, "分类器已创建"))
 }
 
@@ -1305,13 +1311,10 @@ pub async fn classify_entity(
     Extension(claims): Extension<Claims>,
     Path((entity_type, id)): Path<(String, String)>,
 ) -> Json<ApiResponse<ClassificationResult>> {
-    let result = db_exec!(AutoClassifier::classify_entity(
-        &state.db,
-        req_tenant_uuid(&claims),
-        &entity_type,
-        &id
-    )
-    .await);
+    let result = db_exec!(
+        AutoClassifier::classify_entity(&state.db, req_tenant_uuid(&claims), &entity_type, &id)
+            .await
+    );
     Json(ApiResponse::success(result, "分类完成"))
 }
 
@@ -1424,12 +1427,9 @@ pub async fn update_classifier_rules(
     Json(req): Json<UpdateRulesRequest>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let _ = id;
-    let rules = db_exec!(AutoClassifier::update_rules(
-        &state.db,
-        req_tenant_uuid(&claims),
-        req.rules
-    )
-    .await);
+    let rules = db_exec!(
+        AutoClassifier::update_rules(&state.db, req_tenant_uuid(&claims), req.rules).await
+    );
     Json(ApiResponse::success(rules, "分类规则已更新"))
 }
 

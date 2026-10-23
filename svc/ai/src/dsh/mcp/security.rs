@@ -410,16 +410,21 @@ impl McpSecurityMiddleware {
                         };
                         out.insert(key.clone(), masked);
                     } else if key == "text" {
-                        out.insert(key.clone(), Value::String(mask_inner_json_text(val, declared)));
+                        out.insert(
+                            key.clone(),
+                            Value::String(mask_inner_json_text(val, declared)),
+                        );
                     } else {
                         out.insert(key.clone(), self.walk_mask_declared(val, declared));
                     }
                 }
                 Value::Object(out)
             }
-            Value::Array(arr) => {
-                Value::Array(arr.iter().map(|v| self.walk_mask_declared(v, declared)).collect())
-            }
+            Value::Array(arr) => Value::Array(
+                arr.iter()
+                    .map(|v| self.walk_mask_declared(v, declared))
+                    .collect(),
+            ),
             _ => value.clone(),
         }
     }
@@ -616,9 +621,6 @@ mod tests {
         let decl = SensitiveOutput::default();
         let output = serde_json::json!({"password": "secret123"});
         // 空声明原样返回（全局脱敏仍由调用方在 handle_tools_call 先执行）
-        assert_eq!(
-            middleware.sanitize_declared_fields(&output, &decl),
-            output
-        );
+        assert_eq!(middleware.sanitize_declared_fields(&output, &decl), output);
     }
 }

@@ -56,7 +56,9 @@ pub async fn list_connections(
     .await
     {
         Ok(rows) => Json(ApiResponse::success(
-            rows.into_iter().map(ErpConnectionResponse::from).collect::<Vec<_>>(),
+            rows.into_iter()
+                .map(ErpConnectionResponse::from)
+                .collect::<Vec<_>>(),
             "连接列表获取成功",
         )),
         Err(e) => {

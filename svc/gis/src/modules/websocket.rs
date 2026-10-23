@@ -262,7 +262,8 @@ async fn handle_socket(
                                             .await;
                                         }
                                         Some(claims) => {
-                                            let tenant_filter: Option<Uuid> = if claims.is_superuser {
+                                            let tenant_filter: Option<Uuid> = if claims.is_superuser
+                                            {
                                                 None
                                             } else {
                                                 claims
@@ -430,11 +431,7 @@ async fn handle_device_socket(
         },
     };
     if let Some(reason) = reject_reason {
-        tracing::warn!(
-            "设备 WS 拒绝连接 {}: {}",
-            device_code,
-            reason
-        );
+        tracing::warn!("设备 WS 拒绝连接 {}: {}", device_code, reason);
         let _ = socket.send(Message::Close(None)).await;
         return;
     }

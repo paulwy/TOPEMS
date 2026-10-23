@@ -263,11 +263,7 @@ impl ToolRegistry {
 
     /// 声明工具敏感输出（Phase D）：输出层据此对命中字段按前3后4 掩码。
     /// 未注册工具声明无效（返回 false）；可重复调用覆盖先前声明。
-    pub async fn declare_sensitive_output(
-        &self,
-        name: &str,
-        decl: SensitiveOutput,
-    ) -> bool {
+    pub async fn declare_sensitive_output(&self, name: &str, decl: SensitiveOutput) -> bool {
         let mut tools = self.tools.write().await;
         let Some(tool) = tools.get_mut(name) else {
             return false;

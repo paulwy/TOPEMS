@@ -6,8 +6,8 @@ use axum::{
 };
 use sqlx::Row;
 
-use crate::AppState;
 use crate::modules::monitor::metrics;
+use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
@@ -161,14 +161,17 @@ fn row_to_threshold(row: &sqlx::postgres::PgRow) -> Option<AlertThreshold> {
         service_name: row.try_get("service_name").ok(),
         enabled: row.try_get("enabled").unwrap_or(true),
         description: row.try_get("description").ok(),
-        created_at: row.try_get("created_at").unwrap_or_else(|_| chrono::Utc::now()),
-        updated_at: row.try_get("updated_at").unwrap_or_else(|_| chrono::Utc::now()),
+        created_at: row
+            .try_get("created_at")
+            .unwrap_or_else(|_| chrono::Utc::now()),
+        updated_at: row
+            .try_get("updated_at")
+            .unwrap_or_else(|_| chrono::Utc::now()),
     })
 }
 
 /// 租户过滤 + 软删除的 WHERE 片段（与 monitor_settings / alerts 模块同一约定）。
-const TENANT_SOFT_DELETED: &str =
-    "deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)";
+const TENANT_SOFT_DELETED: &str = "deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)";
 
 const THRESHOLD_COLUMNS: &str = "id, name, metric_type, operator, threshold_value, severity, service_name, enabled, description, created_at, updated_at";
 
@@ -331,7 +334,8 @@ pub async fn list_thresholds(
     .await
     {
         Ok(rows) => {
-            let thresholds: Vec<AlertThreshold> = rows.iter().filter_map(row_to_threshold).collect();
+            let thresholds: Vec<AlertThreshold> =
+                rows.iter().filter_map(row_to_threshold).collect();
             axum::Json(ApiResponse::success(thresholds, "获取阈值列表成功"))
         }
         Err(e) => axum::Json(ApiResponse::error(500, &e.to_string())),
@@ -609,7 +613,11 @@ mod tests {
         }
     }
 
-    fn sample_threshold(metric_type: MetricType, operator: ThresholdOperator, value: f64) -> AlertThreshold {
+    fn sample_threshold(
+        metric_type: MetricType,
+        operator: ThresholdOperator,
+        value: f64,
+    ) -> AlertThreshold {
         AlertThreshold {
             id: Uuid::new_v4(),
             name: "测试阈值".to_string(),

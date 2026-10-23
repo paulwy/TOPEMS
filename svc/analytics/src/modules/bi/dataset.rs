@@ -597,9 +597,7 @@ fn extract_sql_tables(sql: &str) -> Vec<(Option<String>, String)> {
     let tokens: Vec<&str> = lower.split_whitespace().collect();
     for pair in tokens.windows(2) {
         if pair[0] == "from" || pair[0] == "join" {
-            let ident = pair[1]
-                .trim_end_matches([',', ';'])
-                .trim_end_matches(')');
+            let ident = pair[1].trim_end_matches([',', ';']).trim_end_matches(')');
             if ident.is_empty() || ident.starts_with('(') {
                 continue;
             }
@@ -626,10 +624,7 @@ fn extract_sql_tables(sql: &str) -> Vec<(Option<String>, String)> {
 /// 1) schema 显式限定仅允许 `bi` / `public`（跨 schema 边界访问拒绝）；
 /// 2) 表名必须已在 `bi_datasets` 白名单注册表中登记且 active
 ///    （与 `dataset_whitelist::validate_columns` 同一张注册表）。
-async fn check_bi_sql_allowed(
-    pool: &sqlx::PgPool,
-    sql: &str,
-) -> Result<(), TopemsError> {
+async fn check_bi_sql_allowed(pool: &sqlx::PgPool, sql: &str) -> Result<(), TopemsError> {
     use super::dataset_whitelist::EnforceMode;
     let mode = EnforceMode::from_env();
     if matches!(mode, EnforceMode::Off) {
@@ -645,11 +640,12 @@ async fn check_bi_sql_allowed(
         .filter_map(|(s, _)| s.as_deref().filter(|s| !ALLOWED_SCHEMAS.contains(s)))
         .collect();
     // 复用 S1.3 注册表：bi_datasets(table_name, column_name, is_active)
-    let registered: Vec<String> =
-        sqlx::query_scalar::<_, String>(r#"SELECT DISTINCT table_name FROM bi_datasets WHERE is_active = TRUE"#)
-            .fetch_all(pool)
-            .await
-            .unwrap_or_default();
+    let registered: Vec<String> = sqlx::query_scalar::<_, String>(
+        r#"SELECT DISTINCT table_name FROM bi_datasets WHERE is_active = TRUE"#,
+    )
+    .fetch_all(pool)
+    .await
+    .unwrap_or_default();
     let missing: Vec<&str> = tables
         .iter()
         .map(|(_, t)| t.as_str())
