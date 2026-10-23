@@ -51,6 +51,7 @@ allow = [
   "0BSD",
   "Unlicense",
   "MPL-2.0",
+  "bzip2-1.0.6",
 ]
 # 许可证置信度阈值（0-1），低于此值会 warn
 confidence-threshold = 0.8
