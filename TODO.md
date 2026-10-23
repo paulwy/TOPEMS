@@ -3370,3 +3370,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 > **系统完善 v1.86（2026-10-23）**：push 门禁 USAGE_COLLECT_FAIL 修复——审计表分裂根因（unified-core mw 写 public.audit_logs，shared-auth audit_logger 与 tenant 查询用 core_audit_logs 且 test 库从未建表）+ unified-core embedded SEARCH_PATH=flow,public 致无前缀表解析到 flow 兼容层（flow.core_files 缺 tenant_id）+ v1.50 遗留 TEXT 列 NULLIF cast 在 uuid 列报错 → 统一 public.audit_logs（audit_logger INSERT/tenant 查询/seed 建表对齐）+ usage collect 表引用显式 public + JOIN 改 a.user_id 直连；实测 usage collect success + DOMAIN_PROBE_OK，随 05845c9d1 推送
 
 > **系统完善 v1.87（2026-10-23）**：verify-rls 关键表清零——① 清单校准（iam.core_roles/core_users/core_files 主库不存在 → public 版）；② public.core_roles/core_users 补 tenant_isolation 策略 + ehs.qa_ehs_hazards 补 tenant_id 列与策略（幂等，并入 ensure-tenant-users-seed.sh，主库/test 双库执行）；③ 验证 111 策略表缺口 0 + 关键表抽样全部有策略
+
+> **系统完善 v1.88（2026-10-23）**：code-quality api_dup 性能瓶颈核销——远端 `52b26e88e`（perf 脚本加速：注释剥离逐字符状态机 → re.sub 批量替换，修生命周期注解 '_/'static 误剥 bug）。本地实证：`check_api_duplicates_ci.py --ci` 全量复跑内存峰值由原 25GB+ 降至 ~4.6GB（CPU 活跃），修复有效；全量完成耗时长归 CI job 执行（lefthook Gate P 注明由 CI 执行，本地 pre-push 不含全量）。**CI 11 FAIL 累计 11/11 核销**
