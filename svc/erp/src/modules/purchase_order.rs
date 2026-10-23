@@ -76,9 +76,10 @@ pub async fn list_purchase_orders(
         let status = status_filter.clone();
 
         sqlx::query_as::<_, PurchaseOrder>(
-            only_own_schema_query!("erp", r#"SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at 
-               FROM erp.purchase_orders 
-               WHERE (order_no ILIKE $1 OR supplier_name ILIKE $1)
+            only_own_schema_query!("erp", r#"SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at
+               FROM erp.purchase_orders
+               WHERE deleted_at IS NULL
+                 AND (order_no ILIKE $1 OR supplier_name ILIKE $1)
                  AND ($2 = '' OR status = $2)
                ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)
         )
@@ -90,7 +91,7 @@ pub async fn list_purchase_orders(
         .await
     } else {
         sqlx::query_as::<_, PurchaseOrder>(
-            only_own_schema_query!("erp", "SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.purchase_orders ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, order_no, supplier_id, supplier_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.purchase_orders WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -109,7 +110,7 @@ pub async fn list_purchase_orders(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.purchase_orders WHERE (order_no ILIKE $1 OR supplier_name ILIKE $1) AND ($2 = '' OR status = $2)"#)
+        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.purchase_orders WHERE deleted_at IS NULL AND (order_no ILIKE $1 OR supplier_name ILIKE $1) AND ($2 = '' OR status = $2)"#)
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_else(|| "%%".to_string()))
     .bind(status_filter.as_deref().unwrap_or(""))

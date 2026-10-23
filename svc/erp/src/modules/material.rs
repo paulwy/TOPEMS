@@ -130,7 +130,8 @@ pub async fn list_materials(
         sqlx::query_as::<_, Material>(
             only_own_schema_query!("erp", r#"SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at
                FROM erp.materials
-               WHERE (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1)
+               WHERE deleted_at IS NULL
+                 AND (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1)
                  AND ($2 = '' OR status = $2)
                  AND ($3 = '' OR category = $3)
                ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)
@@ -144,7 +145,7 @@ pub async fn list_materials(
         .await
     } else {
         sqlx::query_as::<_, Material>(
-            only_own_schema_query!("erp", "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at FROM erp.materials ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at FROM erp.materials WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)

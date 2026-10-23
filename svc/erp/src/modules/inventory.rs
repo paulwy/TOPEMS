@@ -68,9 +68,10 @@ pub async fn list_inventory(
         let status = status_filter.clone();
 
         sqlx::query_as::<_, Inventory>(
-            only_own_schema_query!("erp", r#"SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at 
-               FROM erp.inventory 
-               WHERE (material_code ILIKE $1 OR material_name ILIKE $1 OR location_code ILIKE $1)
+            only_own_schema_query!("erp", r#"SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at
+               FROM erp.inventory
+               WHERE deleted_at IS NULL
+                 AND (material_code ILIKE $1 OR material_name ILIKE $1 OR location_code ILIKE $1)
                  AND ($2 = '' OR status = $2)
                ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)
         )
@@ -82,7 +83,7 @@ pub async fn list_inventory(
         .await
     } else {
         sqlx::query_as::<_, Inventory>(
-            only_own_schema_query!("erp", "SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at FROM erp.inventory ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at FROM erp.inventory WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -199,6 +200,12 @@ pub async fn create_inventory(
         return e;
     }
 
+    if body.quantity < 0.0 {
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "库存数量不能为负数".to_string(),
+        )));
+    }
+
     let material_result = sqlx::query_as::<_, (String, String, String)>(only_own_schema_query!(
         "erp",
         "SELECT code, name, unit FROM erp.materials WHERE id = $1"
@@ -289,8 +296,25 @@ pub async fn update_inventory(
         return e;
     }
 
+    if let Some(q) = body.quantity {
+        if q < 0.0 {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "库存数量不能为负数".to_string(),
+            )));
+        }
+    }
+
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let result = sqlx::query_as::<_, Inventory>(
-        only_own_schema_query!("erp", "UPDATE erp.inventory SET warehouse_id = COALESCE($1, warehouse_id), location_code = COALESCE($2, location_code), quantity = COALESCE($3, quantity), available_quantity = COALESCE($3, available_quantity), unit_price = COALESCE($4, unit_price), total_amount = COALESCE($4, unit_price) * COALESCE($3, quantity), batch_no = COALESCE($5, batch_no), expire_date = COALESCE($6, expire_date), status = COALESCE($7, status), updated_at = NOW() WHERE id = $8 RETURNING id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "UPDATE erp.inventory SET warehouse_id = COALESCE($1, warehouse_id), location_code = COALESCE($2, location_code), quantity = COALESCE($3, quantity), available_quantity = CASE WHEN $3 IS NOT NULL THEN $3 - reserved_quantity ELSE available_quantity END, unit_price = COALESCE($4, unit_price), total_amount = COALESCE($4, unit_price) * COALESCE($3, quantity), batch_no = COALESCE($5, batch_no), expire_date = COALESCE($6, expire_date), status = COALESCE($7, status), updated_at = NOW() WHERE id = $8 AND deleted_at IS NULL AND ($9::uuid IS NULL OR tenant_id = $9::uuid) RETURNING id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at"),
     )
     .bind(body.warehouse_id)
     .bind(body.location_code)
@@ -300,6 +324,7 @@ pub async fn update_inventory(
     .bind(body.expire_date)
     .bind(body.status)
     .bind(id)
+    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 

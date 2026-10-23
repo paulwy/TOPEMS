@@ -933,14 +933,16 @@ pub async fn create_repair_workflow(
         workflows.push(workflow.clone());
     }
 
-    // 如果自动执行且不需要审批，立即执行
+    // 如果自动执行且不需要审批，标记为降级（无真实数据源，不模拟成功）
     if auto_execute && !requires_approval {
-        execute_repair_workflow_internal(workflow.id.clone()).await;
-        let workflows = store.repair_workflows.lock().await;
+        let mut workflows = store.repair_workflows.lock().await;
+        if let Some(wf) = workflows.iter_mut().find(|w| w.id == workflow.id) {
+            wf.status = "failed".to_string();
+        }
         if let Some(wf) = workflows.iter().find(|w| w.id == workflow.id) {
             return Json(ApiResponse::success(
                 wf.clone(),
-                "修复工作流创建并自动执行完成",
+                "修复工作流创建成功（自动修复未启用：无持久化数据源，501 degraded）",
             ));
         }
     }
@@ -981,99 +983,22 @@ pub async fn execute_repair_workflow(
         }
     }
 
-    execute_repair_workflow_internal(id.clone()).await;
-
-    let store = get_quality_loop_store();
-    let workflows = store.repair_workflows.lock().await;
-    match workflows.iter().find(|w| w.id == id) {
-        Some(wf) => Json(ApiResponse::success(wf.clone(), "修复工作流执行完成")),
-        None => Json(ApiResponse::error(404, "未找到修复工作流")),
-    }
-}
-
-#[allow(
-    clippy::as_conversions,
-    clippy::cast_possible_truncation,
-    clippy::cast_possible_wrap
-)]
-/// 内部：执行修复工作流（模拟 SQL UPDATE 占位实现）
-#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
-async fn execute_repair_workflow_internal(workflow_id: String) {
+    // 诚实降级：当前质量修复工作流无真实数据表（erp_master_data_quality_tickets /
+    // repair_workflows 均为内存 OnceLock 存储），不具备落库修复能力。
+    // 返回 501 而非模拟成功，避免误报修复完成。
     let store = get_quality_loop_store();
     let mut workflows = store.repair_workflows.lock().await;
-
-    let pos = match workflows.iter().position(|w| w.id == workflow_id) {
-        Some(p) => p,
-        None => return,
-    };
-
-    workflows[pos].status = "executing".to_string();
-
-    let steps_count = workflows[pos].steps.len();
-    let mut fields_changed: u32 = 0;
-    let mut all_success = true;
-
-    for i in 0..steps_count {
-        workflows[pos].current_step = i as i32;
-        let step = &mut workflows[pos].steps[i];
-        step.status = "executing".to_string();
-        step.executed_at = Some(chrono::Utc::now());
-
-        // 模拟修复步骤执行（占位实现：SQL UPDATE）
-        let success = simulate_repair_step(&step.action, &step.target_field);
-
-        if success {
-            step.status = "completed".to_string();
-            fields_changed += 1;
-        } else {
-            step.status = "failed".to_string();
-            step.error_message = Some(format!("修复步骤失败: {}", step.step_name));
-            all_success = false;
-            break;
+    if let Some(pos) = workflows.iter().position(|w| w.id == id) {
+        if let Some(wf) = workflows.get_mut(pos) {
+            wf.status = "failed".to_string();
         }
+        Json(ApiResponse::error(
+            501,
+            "自动修复暂不可用：质量修复工作流尚未接入真实数据表，请联系管理员手动处理",
+        ))
+    } else {
+        Json(ApiResponse::error(404, "未找到修复工作流"))
     }
-
-    let now = chrono::Utc::now();
-    workflows[pos].executed_at = Some(now);
-    workflows[pos].current_step = steps_count as i32;
-    workflows[pos].status = if all_success { "completed" } else { "failed" }.to_string();
-    workflows[pos].result = Some(RepairResult {
-        success: all_success,
-        fields_changed,
-        before_value: serde_json::json!({}),
-        after_value: serde_json::json!({}),
-        verification_passed: all_success,
-        message: if all_success {
-            format!("修复完成，共修改 {} 个字段", fields_changed)
-        } else {
-            "修复过程中部分步骤失败".to_string()
-        },
-    });
-
-    // 如果修复成功，更新关联工单状态为待审核
-    if all_success {
-        let ticket_id = workflows[pos].ticket_id.clone();
-        drop(workflows);
-
-        let mut tickets = store.tickets.lock().await;
-        if let Some(tpos) = tickets.iter().position(|t| t.id == ticket_id) {
-            tickets[tpos].status = QualityTicketStatus::PendingReview;
-            tickets[tpos].resolved_at = Some(now);
-            tickets[tpos].updated_at = now;
-            tickets[tpos].history.push(TicketHistoryEntry {
-                action: "auto_repaired".to_string(),
-                actor: "repair_engine".to_string(),
-                comment: Some("自动修复工作流执行完成".to_string()),
-                timestamp: now,
-            });
-        }
-    }
-}
-
-/// 模拟修复步骤执行（占位实现）
-fn simulate_repair_step(action: &str, target_field: &str) -> bool {
-    let _ = (action, target_field);
-    true
 }
 
 /// V42.0 AC-14: 执行单个修复步骤
@@ -1107,21 +1032,15 @@ pub async fn execute_repair_step(
     }
 
     let step = &mut workflows[pos].steps[step_index];
-    step.status = "executing".to_string();
+    step.status = "failed".to_string();
     step.executed_at = Some(chrono::Utc::now());
+    step.error_message =
+        Some("单步修复未启用：无持久化数据源，修复引擎暂不可用（501 degraded）".to_string());
 
-    let action = step.action.clone();
-    let target_field = step.target_field.clone();
-    let success = simulate_repair_step(&action, &target_field);
-
-    if success {
-        step.status = "completed".to_string();
-    } else {
-        step.status = "failed".to_string();
-        step.error_message = Some("步骤执行失败".to_string());
-    }
-
-    Json(ApiResponse::success(step.clone(), "修复步骤执行完成"))
+    Json(ApiResponse::error(
+        501,
+        "单步修复暂不可用：质量修复尚未接入真实数据表，请联系管理员手动处理",
+    ))
 }
 
 /// V42.0 AC-14: 审批修复工作流

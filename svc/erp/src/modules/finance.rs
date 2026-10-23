@@ -107,7 +107,7 @@ pub async fn create_voucher(
         Ok(_) => {
             for entry in req.entries {
                 let item_id = Uuid::new_v4();
-                let _ = sqlx::query(
+                let entry_result = sqlx::query(
                     r#"INSERT INTO erp.voucher_items
                        (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, department_id, created_at, updated_at, tenant_id)
                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"#,
@@ -126,6 +126,14 @@ pub async fn create_voucher(
                 .bind(tenant_id.unwrap_or_else(Uuid::nil))
                 .execute(&mut **txn)
                 .await;
+
+                if let Err(e) = entry_result {
+                    tracing::error!("[erp] 凭证明细插入失败，回滚凭证: {}", e);
+                    return Json(ApiResponse::from(TopemsError::internal(
+                        "创建凭证明细失败",
+                        e,
+                    )));
+                }
             }
 
             tracing::info!(

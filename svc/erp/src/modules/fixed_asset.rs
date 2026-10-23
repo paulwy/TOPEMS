@@ -124,12 +124,13 @@ pub async fn list_fixed_assets(
     let result = sqlx::query_as::<_, FixedAsset>(only_own_schema_query!(
         "erp",
         r#"
-        SELECT id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
-               original_value, accumulated_depreciation, net_value, depreciation_method, 
-               useful_life_months, depreciation_period, department_id, 
+        SELECT id, asset_code, asset_name, asset_type, asset_category, purchase_date,
+               original_value, accumulated_depreciation, net_value, depreciation_method,
+               useful_life_months, depreciation_period, department_id,
                location, status, created_at, updated_at
         FROM erp.fixed_assets
-        WHERE ($1::text IS NULL OR asset_code ILIKE $1 OR asset_name ILIKE $1)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR asset_code ILIKE $1 OR asset_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR asset_type = $3)
           AND ($4::uuid IS NULL OR department_id = $4)

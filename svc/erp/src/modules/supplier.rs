@@ -129,7 +129,8 @@ pub async fn list_suppliers(
         sqlx::query_as::<_, Supplier>(
             only_own_schema_query!("erp", r#"SELECT id, code, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at
                FROM erp.suppliers
-               WHERE (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1)
+               WHERE deleted_at IS NULL
+                 AND (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1)
                  AND ($2 = '' OR status = $2)
                  AND ($3 = '' OR supplier_type = $3)
                ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)
@@ -144,7 +145,7 @@ pub async fn list_suppliers(
         .await
     } else {
         sqlx::query_as::<_, Supplier>(
-            only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM erp.suppliers ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM erp.suppliers WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)

@@ -103,9 +103,10 @@ pub async fn list_sales_orders(
         let status = status_filter.clone();
 
         sqlx::query_as::<_, SalesOrder>(
-            only_own_schema_query!("erp", r#"SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at 
-               FROM erp.sales_orders 
-               WHERE (order_no ILIKE $1 OR customer_name ILIKE $1)
+            only_own_schema_query!("erp", r#"SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at
+               FROM erp.sales_orders
+               WHERE deleted_at IS NULL
+                 AND (order_no ILIKE $1 OR customer_name ILIKE $1)
                  AND ($2 = '' OR status = $2)
                ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)
         )
@@ -117,7 +118,7 @@ pub async fn list_sales_orders(
         .await
     } else {
         sqlx::query_as::<_, SalesOrder>(
-            only_own_schema_query!("erp", "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.sales_orders ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, order_no, customer_id, customer_name, order_date, delivery_date, total_amount, tax_amount, discount_amount, payable_amount, status, remark, created_at, updated_at FROM erp.sales_orders WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
