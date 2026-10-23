@@ -19,6 +19,8 @@
   --json        输出 JSON 格式结果
   --service     只检查指定服务（可多次指定）
   --strict      严格模式，命名不规范也报错
+  --no-baseline 忽略基线文件，报告全部重复
+  --update-baseline  用当前扫描结果重写基线文件
 """
 
 import os
@@ -35,6 +37,10 @@ from typing import Dict, List, Tuple, Optional
 
 SVC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "svc")
 SVC_DIR = os.path.normpath(SVC_DIR)
+
+# 基线文件：固化存量误报，避免门禁一启动就红；仅新增重复才判失败
+# 行格式：intra|<service>|<METHOD> <path>|<count>   /   cross|<METHOD> <normalized_path>|<service_count>
+BASELINE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "api_duplicates_baseline.txt")
 
 # 命名规范检查时忽略的路径前缀（这些是基础路径或特殊用途路径）
 IGNORE_PATHS_FOR_NAMING = [
@@ -684,6 +690,94 @@ def check_naming_conventions(services: Dict[str, Dict]) -> List[Dict]:
 
 
 # ============================================================
+# 基线（存量误报固定）
+# ============================================================
+
+
+def intra_baseline_key(dup: Dict) -> str:
+    return f"intra|{dup['service']}|{dup['method']} {dup['path']}"
+
+
+def cross_baseline_key(dup: Dict) -> str:
+    return f"cross|{dup['method']} {dup['normalized_path']}"
+
+
+def load_baseline(path: str = BASELINE_FILE) -> Dict[str, int]:
+    """
+    读取基线文件，返回 {key: 基线计数}；文件不存在返回空字典
+    """
+    baseline: Dict[str, int] = {}
+    if not os.path.isfile(path):
+        return baseline
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.rsplit("|", 1)
+                if len(parts) != 2:
+                    continue
+                key, count = parts[0], parts[1].strip()
+                baseline[key] = int(count) if count.isdigit() else 0
+    except Exception as e:
+        print(f"Warning: 基线文件读取失败（按无基线处理）: {e}", file=sys.stderr)
+        return {}
+    return baseline
+
+
+def save_baseline(
+    intra_dups: List[Dict], cross_error_dups: List[Dict], path: str = BASELINE_FILE
+) -> None:
+    """
+    用当前扫描结果覆盖基线文件（按 key 排序，便于 diff 审阅）
+    """
+    entries = {}
+    for dup in intra_dups:
+        entries[intra_baseline_key(dup)] = dup["count"]
+    for dup in cross_error_dups:
+        entries[cross_baseline_key(dup)] = dup["service_count"]
+    lines = ["# API 重复基线（由 --update-baseline 生成，勿手改）"]
+    lines += [f"{k}|{entries[k]}" for k in sorted(entries)]
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+def split_by_baseline(
+    intra_dups: List[Dict], cross_error_dups: List[Dict], baseline: Dict[str, int]
+) -> Tuple[List[Dict], List[Dict], List[Dict], int, List[str]]:
+    """
+    按基线拆分：新增（需失败）与存量（放行）
+
+    返回：(new_intra, new_cross, baselined, baselined_count, stale_keys)
+    - 命中基线且当前计数 <= 基线计数 → 存量放行
+    - 命中基线但计数变大 → 新增（多出来的重复必须解释）
+    """
+    new_intra, new_cross, baselined = [], [], []
+    stale_keys = []
+
+    for dup in intra_dups:
+        key = intra_baseline_key(dup)
+        if key in baseline and dup["count"] <= baseline[key]:
+            baselined.append(dup)
+        else:
+            new_intra.append(dup)
+
+    for dup in cross_error_dups:
+        key = cross_baseline_key(dup)
+        if key in baseline and dup["service_count"] <= baseline[key]:
+            baselined.append(dup)
+        else:
+            new_cross.append(dup)
+
+    current_keys = {intra_baseline_key(d) for d in intra_dups} | {
+        cross_baseline_key(d) for d in cross_error_dups
+    }
+    stale_keys = sorted(set(baseline) - current_keys)
+    return new_intra, new_cross, baselined, len(baselined), stale_keys
+
+
+# ============================================================
 # 输出格式
 # ============================================================
 
@@ -695,6 +789,7 @@ def format_human_readable(
     cross_info_dups: List[Dict],
     naming_violations: List[Dict],
     strict: bool = False,
+    baselined_count: int = 0,
 ) -> str:
     """
     格式化人类可读的输出
@@ -709,6 +804,8 @@ def format_human_readable(
     total_routes = sum(len(s["routes"]) for s in services.values())
     lines.append(f"扫描服务数: {total_services}")
     lines.append(f"扫描路由数: {total_routes}")
+    if baselined_count:
+        lines.append(f"基线放行（存量误报）: {baselined_count} 条")
     lines.append("")
 
     # 1. 服务内重复路由
@@ -910,6 +1007,16 @@ CI 集成示例（GitLab CI）：
         action="store_true",
         help="严格模式：命名规范违规也视为错误",
     )
+    parser.add_argument(
+        "--no-baseline",
+        action="store_true",
+        help="忽略基线文件，报告全部重复",
+    )
+    parser.add_argument(
+        "--update-baseline",
+        action="store_true",
+        help=f"将当前扫描到的重复写入基线文件 {os.path.basename(BASELINE_FILE)}",
+    )
 
     args = parser.parse_args()
 
@@ -927,8 +1034,27 @@ CI 集成示例（GitLab CI）：
     cross_error_dups, cross_info_dups = check_cross_service_duplicates(services)
     naming_violations = check_naming_conventions(services)
 
+    # 基线过滤：只让「新增重复」判失败，存量误报放行
+    baselined_count = 0
+    if args.update_baseline:
+        save_baseline(intra_dups, cross_error_dups)
+        baselined_count = len(intra_dups) + len(cross_error_dups)
+        new_intra_dups, new_cross_error_dups = [], []
+        print(f"已更新基线: {BASELINE_FILE}（{baselined_count} 条）", file=sys.stderr)
+    elif args.no_baseline:
+        new_intra_dups, new_cross_error_dups = intra_dups, cross_error_dups
+    else:
+        new_intra_dups, new_cross_error_dups, _, baselined_count, stale_keys = (
+            split_by_baseline(intra_dups, cross_error_dups, load_baseline())
+        )
+        if stale_keys:
+            print(
+                f"提示: 基线中 {len(stale_keys)} 条已不再出现，可执行 --update-baseline 回收",
+                file=sys.stderr,
+            )
+
     # 计算错误数（只计算 error 级别的，info 级别的通用路径不计算）
-    error_count = len(intra_dups) + len(cross_error_dups)
+    error_count = len(new_intra_dups) + len(new_cross_error_dups)
     if args.strict:
         error_count += len(naming_violations)
 
@@ -936,20 +1062,38 @@ CI 集成示例（GitLab CI）：
     if args.json:
         # JSON 模式
         result = build_json_result(
-            services, intra_dups, cross_error_dups, cross_info_dups, naming_violations, args.strict
+            services,
+            new_intra_dups,
+            new_cross_error_dups,
+            cross_info_dups,
+            naming_violations,
+            args.strict,
         )
+        result["summary"]["baselined"] = baselined_count
         print(json.dumps(result, indent=2, ensure_ascii=False))
     elif args.ci:
         # CI 模式：只有错误时才输出
         if error_count > 0:
             output = format_human_readable(
-                services, intra_dups, cross_error_dups, cross_info_dups, naming_violations, args.strict
+                services,
+                new_intra_dups,
+                new_cross_error_dups,
+                cross_info_dups,
+                naming_violations,
+                args.strict,
+                baselined_count,
             )
             print(output)
     else:
         # 正常模式：总是输出
         output = format_human_readable(
-            services, intra_dups, cross_error_dups, cross_info_dups, naming_violations, args.strict
+            services,
+            new_intra_dups,
+            new_cross_error_dups,
+            cross_info_dups,
+            naming_violations,
+            args.strict,
+            baselined_count,
         )
         print(output)
 
