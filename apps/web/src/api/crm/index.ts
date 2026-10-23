@@ -37,7 +37,15 @@
   ["GET","/crm/rfm/customer/:id"],
   ["POST","/crm/forecast/predict"],
   ["GET","/crm/forecast/methods"],
-  ["POST","/crm/forecast/evaluate"]
+  ["POST","/crm/forecast/evaluate"],
+  ["GET","/crm/dashboard"],
+  ["GET","/crm/dashboard/overview"],
+  ["GET","/crm/analytics/funnel"],
+  ["GET","/crm/analytics/scoring"],
+  ["GET","/crm/analytics/forecast"],
+  ["GET","/crm/analytics/segmentation"],
+  ["GET","/crm/analytics/billing"],
+  ["GET","/crm/analytics/recommendation"]
 ]
 */
 
@@ -57,29 +65,31 @@ import { customerSegmentationApi, customerRecommendationApi } from './segmentati
 import { returnsApi } from './returns';
 import { crmAuditApi } from './crmAudit';
 import { salesFunnelApi } from './salesFunnel';
+import { crmAnalyticsApi } from './analytics';
 
 export * from './types';
-export { useCrmMock } from './mockData';
+export { crmAnalyticsApi } from './analytics';
 export type {
   Period,
-  CrmKpis,
-  ForecastPoint,
-  ForecastSeries,
-  ScoreBuckets,
-  RfmBuckets,
-  SegmentPoint,
-  BillingTopItem,
-  BillingStatusSlice,
-  AgingBucket,
-  DashboardData,
-  FunnelData,
-  ScoringData,
-  ForecastData,
-  SegmentationData,
+  AnalyticsMeta,
+  AnalyticsEnvelope,
+  OverviewData,
+  OverviewNameValue,
+  FunnelStageRow,
+  FunnelAnalyticsData,
+  ScoringAnalyticsData,
+  ForecastSeriesRow,
+  ForecastAnalyticsData,
+  SegmentationQuadrantRow,
+  SegmentationAnalyticsData,
+  BillingStatusRow,
+  BillingTopCustomerRow,
+  BillingAgingRow,
   BillingAnalyticsData,
-  RecommendationData,
-  CrmMockShape,
-} from './mockData';
+  RecommendationByTypeRow,
+  RecommendationRecentRow,
+  RecommendationAnalyticsData,
+} from './analytics';
 
 export { customerApi, tagApi } from './customer';
 export { crmDashboardApi } from './dashboard';
@@ -111,6 +121,7 @@ export const crmApi = {
   returns: returnsApi,
   audit: crmAuditApi,
   salesFunnel: salesFunnelApi,
+  analytics: crmAnalyticsApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.crm.get('/health');

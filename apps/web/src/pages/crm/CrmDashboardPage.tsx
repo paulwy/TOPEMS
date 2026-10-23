@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Target, TrendingUp, Users, Clock, DollarSign, Package } from 'lucide-react';
+import { Target, TrendingUp, Users, DollarSign, Package } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type {
   StatCardConfig,
@@ -9,24 +9,9 @@ import type {
 } from '@/components/templates/DashboardTemplate';
 import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
-import { useCrmDashboardSchema } from '@/schemas/crm';
-import { useCrmMock, type DashboardData, type Period } from '@/api/crm';
-import { Box, Chip, MenuItem, Select, type SelectChangeEvent } from '@mui/material';
+import { crmAnalyticsApi, type Period } from '@/api/crm';
+import { Box, MenuItem, Select, type SelectChangeEvent } from '@mui/material';
 import i18n from '@/i18n';
-
-const MockBadge: React.FC<{ enabled: boolean }> = ({ enabled }) => {
-  const { t } = useTranslation();
-  if (!enabled) return null;
-  return (
-    <Chip
-      label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_dashboard_page.mock_0')}
-      color='warning'
-      size='small'
-      variant='outlined'
-      sx={{ fontWeight: 600 }}
-    />
-  );
-};
 
 const PeriodSelector: React.FC<{
   period: Period;
@@ -58,174 +43,104 @@ const PeriodSelector: React.FC<{
 
 const CrmDashboardPage: React.FC = () => {
   const { t } = useTranslation();
-  const schema = useCrmDashboardSchema();
   const [period, setPeriod] = useState<Period>('MTD');
 
-  const { data: mockData, mockEnabled } = useCrmMock<DashboardData>({ period });
-
-  const { data: serverData, isLoading: loading } = useQuery<DashboardData | null>({
-    queryKey: ['crm-dashboard', period],
-    queryFn: async () => {
-      await schema.loader?.();
-      return (window as unknown as { crmStats?: DashboardData | null }).crmStats ?? null;
-    },
+  // 真实聚合：GET /api/crm/dashboard/overview（meta.mock_enabled 恒 false，不再有本地 mock 兜底）
+  const overviewQuery = useQuery({
+    queryKey: ['crm-analytics-overview', period],
+    queryFn: () => crmAnalyticsApi.getOverview(period),
     staleTime: 5 * 60 * 1000,
-    initialData: mockEnabled ? mockData : undefined,
-    enabled: !mockEnabled && !!schema.loader,
   });
-
-  const dashboardData = mockEnabled
-    ? mockData
-    : (serverData ?? (schema.statCards || schema.charts ? undefined : mockData));
+  const overview = overviewQuery.data?.data;
+  const loading = overviewQuery.isLoading || overviewQuery.isFetching;
 
   const statCards = useMemo<StatCardConfig[]>(() => {
-    const kpis = dashboardData?.kpis;
-    const cardsFromSchema =
-      schema.statCards?.map((sc) => {
-        const value = typeof sc.value === 'function' ? sc.value() : sc.value;
-        const iconMap: Record<string, React.ReactNode> = {
-          Target: <Target size={24} />,
-          TrendingUp: <TrendingUp size={24} />,
-          Users: <Users size={24} />,
-          Clock: <Clock size={24} />,
-        };
-        return {
-          title: t(`crm.dashboard.${sc.id}`),
-          value: value as string | number,
-          icon: iconMap[sc.icon as string] ?? <Target size={24} />,
-          color: sc.color,
-          trend: sc.trend,
-          loading,
-        } as StatCardConfig;
-      }) ?? [];
-
-    if (mockEnabled || kpis) {
-      return [
-        {
-          title: t('crm.dashboard.kpi_customers') || i18n.t('pages.crm_dashboard_page.k5'),
-          value: kpis?.customers ?? 120,
-          icon: <Users size={24} />,
-          color: 'primary',
-          trend: { value: 8.2, label: '↑' },
-          loading,
-        },
-        {
-          title: t('crm.dashboard.kpi_open_opps') || i18n.t('pages.crm_dashboard_page.k6'),
-          value: kpis?.openOpps ?? 40,
-          icon: <Target size={24} />,
-          color: 'info',
-          trend: { value: 5.1, label: '↑' },
-          loading,
-        },
-        {
-          title: t('crm.dashboard.kpi_win_rate') || i18n.t('pages.crm_dashboard_page.k7'),
-          value: `${((kpis?.winRate ?? 0.42) * 100).toFixed(0)}%`,
-          icon: <TrendingUp size={24} />,
-          color: 'success',
-          trend: { value: 2.3, label: '↑' },
-          loading,
-        },
-        {
-          title: t('crm.dashboard.kpi_new_signed') || i18n.t('pages.crm_dashboard_page.k8'),
-          value: `¥${(kpis?.newSignedMtd ?? 2_380_000).toLocaleString()}`,
-          icon: <DollarSign size={24} />,
-          color: 'warning',
-          trend: { value: 12.6, label: '↑' },
-          loading,
-        },
-        {
-          title: t('crm.dashboard.kpi_active_contacts') || i18n.t('pages.crm_dashboard_page.k9'),
-          value: kpis?.activeContacts ?? 60,
-          icon: <Users size={24} />,
-          color: 'secondary',
-          trend: { value: 3.8, label: '↑' },
-          loading,
-        },
-        {
-          title: t('crm.dashboard.kpi_pending_returns') || i18n.t('pages.crm_dashboard_page.k10'),
-          value: kpis?.pendingReturns ?? 18,
-          icon: <Package size={24} />,
-          color: 'error',
-          trend: { value: 1.5, label: '↓' },
-          loading,
-        },
-      ] as unknown as StatCardConfig[];
-    }
-    return cardsFromSchema;
-  }, [schema.statCards, loading, t, mockEnabled, dashboardData]);
+    const winRate =
+      overview && overview.total_opportunities > 0
+        ? (overview.won_opportunities / overview.total_opportunities) * 100
+        : 0;
+    return [
+      {
+        title: t('crm.dashboard.kpi_customers') || i18n.t('pages.crm_dashboard_page.k5'),
+        value: overview?.total_customers ?? 0,
+        icon: <Users size={24} />,
+        color: 'primary',
+        loading,
+      },
+      {
+        title: t('crm.dashboard.kpi_open_opps') || i18n.t('pages.crm_dashboard_page.k6'),
+        value: overview?.open_opportunities ?? 0,
+        icon: <Target size={24} />,
+        color: 'info',
+        loading,
+      },
+      {
+        title: t('crm.dashboard.kpi_win_rate') || i18n.t('pages.crm_dashboard_page.k7'),
+        value: `${winRate.toFixed(0)}%`,
+        icon: <TrendingUp size={24} />,
+        color: 'success',
+        loading,
+      },
+      // 后端 overview 无“本月新签金额”字段：诚实显示 ¥0（缺口，待后端补聚合）
+      {
+        title: t('crm.dashboard.kpi_new_signed') || i18n.t('pages.crm_dashboard_page.k8'),
+        value: '¥0',
+        icon: <DollarSign size={24} />,
+        color: 'warning',
+        loading,
+      },
+      // 后端无独立“活跃联系人”，以活跃客户数替代展示
+      {
+        title: t('crm.dashboard.kpi_active_contacts') || i18n.t('pages.crm_dashboard_page.k9'),
+        value: overview?.active_customers ?? 0,
+        icon: <Users size={24} />,
+        color: 'secondary',
+        loading,
+      },
+      // 后端 overview 无“待处理退货”字段：诚实显示 0（缺口）
+      {
+        title: t('crm.dashboard.kpi_pending_returns') || i18n.t('pages.crm_dashboard_page.k10'),
+        value: 0,
+        icon: <Package size={24} />,
+        color: 'error',
+        loading,
+      },
+    ];
+  }, [overview, loading, t]);
 
   const charts = useMemo<ChartConfig[]>(() => {
-    const chartsFromSchema =
-      schema.charts?.map((ch) => {
-        const rawData =
-          typeof ch.data === 'function'
-            ? (ch.data as () => Array<Record<string, unknown>>)()
-            : (ch.data as Array<Record<string, unknown>>);
-        return {
-          title: t(`crm.dashboard.${ch.id}`),
-          type: ch.type,
-          data: (rawData ?? []) as Array<Record<string, unknown>>,
-          xField: 'name',
-          yField: 'value',
-          height: ch.height,
-          loading,
-        };
-      }) ?? [];
-
-    if (mockEnabled || dashboardData) {
-      return [
-        {
-          id: 'funnel-bar',
-          title: t('crm.dashboard.chart_funnel') || i18n.t('pages.crm_dashboard_page.k11'),
-          type: 'bar' as const,
-          data:
-            dashboardData?.funnel?.map((f) => ({
-              name: f.stage,
-              value: f.count,
-              amount: f.amount,
-            })) ?? [],
-          xField: 'name',
-          yField: 'value',
-          height: 280,
-          loading,
-        },
-        {
-          id: 'forecast-line',
-          title: t('crm.dashboard.chart_forecast') || i18n.t('pages.crm_dashboard_page.k12'),
-          type: 'line' as const,
-          data:
-            dashboardData?.forecastSeries?.actual?.map((a, i) => ({
-              month: a.month,
-              actual: a.value,
-              weighted: dashboardData.forecastSeries.weightedPipeline[i]?.value ?? 0,
-              target: dashboardData.forecastSeries.target[i]?.value ?? 0,
-            })) ?? [],
-          xField: 'month',
-          yField: 'actual',
-          height: 280,
-          loading,
-        },
-        {
-          id: 'scoring-donut',
-          title: t('crm.dashboard.chart_scoring') || i18n.t('pages.crm_dashboard_page.k13'),
-          type: 'pie' as const,
-          data: dashboardData?.buckets
-            ? ([
-                { name: 'A', value: dashboardData.buckets.A },
-                { name: 'B', value: dashboardData.buckets.B },
-                { name: 'C', value: dashboardData.buckets.C },
-                { name: 'D', value: dashboardData.buckets.D },
-              ] as Array<Record<string, unknown>>)
-            : [],
-          xField: 'name',
-          yField: 'value',
-          height: 280,
-          loading,
-        },
-      ] as unknown as ChartConfig[];
-    }
-    return chartsFromSchema;
-  }, [schema.charts, loading, t, mockEnabled, dashboardData]);
+    const stages = overview?.opportunity_stages ?? [];
+    return [
+      {
+        title: t('crm.dashboard.chart_funnel') || i18n.t('pages.crm_dashboard_page.k11'),
+        type: 'bar' as const,
+        data: stages.map((s) => ({ name: s.name, value: s.value })),
+        xField: 'name',
+        yField: 'value',
+        height: 280,
+        loading,
+      },
+      // overview 不返回预测/评分分布：空态占位（数据缺口，待后端或前端聚合补）
+      {
+        title: t('crm.dashboard.chart_forecast') || i18n.t('pages.crm_dashboard_page.k12'),
+        type: 'line' as const,
+        data: [],
+        xField: 'month',
+        yField: 'actual',
+        height: 280,
+        loading,
+      },
+      {
+        title: t('crm.dashboard.chart_scoring') || i18n.t('pages.crm_dashboard_page.k13'),
+        type: 'pie' as const,
+        data: [],
+        xField: 'name',
+        yField: 'value',
+        height: 280,
+        loading,
+      },
+    ] as ChartConfig[];
+  }, [overview, loading, t]);
 
   return (
     <PageContainer
@@ -236,7 +151,6 @@ const CrmDashboardPage: React.FC = () => {
       autoBreadcrumbs
       headerActions={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <MockBadge enabled={mockEnabled} />
           <PeriodSelector
             period={period}
             onChange={setPeriod}
@@ -247,7 +161,7 @@ const CrmDashboardPage: React.FC = () => {
       <DashboardTemplate
         autoTitle={false}
         title=''
-        emptyState={{ show: !loading && !serverData }}
+        emptyState={{ show: !loading && !overview }}
         statCards={statCards}
         charts={charts as unknown as ChartCard[]}
         chartCols={3}

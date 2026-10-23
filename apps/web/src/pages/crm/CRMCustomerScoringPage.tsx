@@ -3,17 +3,16 @@ import React from 'react';
 import { Box, Chip, LinearProgress, Paper, Typography, Button } from '@mui/material';
 import { Star, TrendingUp, TrendingDown, Minus, Calculator } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { customerScoringSchema } from '@/schemas/crm';
-import { crmApi, useCrmMock } from '@/api/crm';
-import type { CustomerScore, ScoreFactor, ScoringData, Period } from '@/api/crm';
+import { crmApi, crmAnalyticsApi } from '@/api/crm';
+import type { CustomerScore, ScoreFactor } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { CRM_PATHS } from '@/modules/crm/config';
-import i18n from '@/i18n';
 
 // ============ 辅助函数 ============
 
@@ -120,8 +119,15 @@ const CRMCustomerScoringPage: React.FC = () => {
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
-  const [period] = React.useState<Period>('MTD');
-  const { data: mockScoring, mockEnabled } = useCrmMock<ScoringData>({ period });
+
+  // 真实聚合：GET /api/crm/analytics/scoring → { distribution:[{name,value}], rfm:[{name,value}] }
+  // distribution.name 为评分等级（A/B/C/D/unknown）；rfm.name 为 RFM 分群名（后端不保证 9 固定键）。
+  const scoringAnalyticsQuery = useQuery({
+    queryKey: ['crm-analytics-scoring'],
+    queryFn: () => crmAnalyticsApi.getScoring(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const rfmRows = scoringAnalyticsQuery.data?.data?.rfm ?? [];
 
   // ============ API 适配器 ============
 
@@ -285,93 +291,17 @@ const CRMCustomerScoringPage: React.FC = () => {
       C: scores.filter((s) => s.score_level === 'C').length,
       D: scores.filter((s) => s.score_level === 'D').length,
     };
-    const gradeDistribution = mockEnabled ? mockScoring.distribution : fromList;
+    const gradeDistribution = fromList;
 
-    const rfm = mockScoring.rfm;
-    const rfmLabels: Array<{
-      key: keyof typeof rfm;
-      label: string;
-      color: string;
-      bgColor: string;
-    }> = [
-      {
-        key: 'recencyHigh',
-        label:
-          t('crm.customerScoring.rfm_recency_high') || i18n.t('pages.crm_customer_scoring_page.k0'),
-        color: 'success.main',
-        bgColor: 'success.light',
-      },
-      {
-        key: 'recencyMedium',
-        label:
-          t('crm.customerScoring.rfm_recency_med') || i18n.t('pages.crm_customer_scoring_page.k1'),
-        color: 'primary.main',
-        bgColor: 'primary.light',
-      },
-      {
-        key: 'recencyLow',
-        label:
-          t('crm.customerScoring.rfm_recency_low') || i18n.t('pages.crm_customer_scoring_page.k2'),
-        color: 'warning.main',
-        bgColor: 'warning.light',
-      },
-      {
-        key: 'frequencyHigh',
-        label:
-          t('crm.customerScoring.rfm_freq_high') || i18n.t('pages.crm_customer_scoring_page.k3'),
-        color: 'success.main',
-        bgColor: 'success.light',
-      },
-      {
-        key: 'frequencyMedium',
-        label:
-          t('crm.customerScoring.rfm_freq_med') || i18n.t('pages.crm_customer_scoring_page.k4'),
-        color: 'primary.main',
-        bgColor: 'primary.light',
-      },
-      {
-        key: 'frequencyLow',
-        label:
-          t('crm.customerScoring.rfm_freq_low') || i18n.t('pages.crm_customer_scoring_page.k5'),
-        color: 'warning.main',
-        bgColor: 'warning.light',
-      },
-      {
-        key: 'monetaryHigh',
-        label:
-          t('crm.customerScoring.rfm_mon_high') || i18n.t('pages.crm_customer_scoring_page.k6'),
-        color: 'success.main',
-        bgColor: 'success.light',
-      },
-      {
-        key: 'monetaryMedium',
-        label: t('crm.customerScoring.rfm_mon_med') || i18n.t('pages.crm_customer_scoring_page.k7'),
-        color: 'primary.main',
-        bgColor: 'primary.light',
-      },
-      {
-        key: 'monetaryLow',
-        label: t('crm.customerScoring.rfm_mon_low') || i18n.t('pages.crm_customer_scoring_page.k8'),
-        color: 'warning.main',
-        bgColor: 'warning.light',
-      },
+    // 后端 rfm 形状为 [{name: segment, value: count}]，不保证固定 9 键：按返回行动态渲染。
+    const rfmPalette: Array<{ color: string; bgColor: string }> = [
+      { color: 'success.main', bgColor: 'success.light' },
+      { color: 'primary.main', bgColor: 'primary.light' },
+      { color: 'warning.main', bgColor: 'warning.light' },
     ];
 
     return (
       <Box sx={{ mb: 2 }}>
-        {mockEnabled && (
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            <Chip
-              label={
-                t('crm.common.mock_demo_badge') || i18n.t('pages.crm_customer_scoring_page.mock_9')
-              }
-              color='warning'
-              size='small'
-              variant='outlined'
-              sx={{ fontWeight: 600 }}
-            />
-          </Box>
-        )}
         <Box
           sx={{
             display: 'grid',
@@ -408,24 +338,27 @@ const CRMCustomerScoringPage: React.FC = () => {
             bgColor='error.light'
           />
         </Box>
-        {mockEnabled && (
+        {rfmRows.length > 0 && (
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: 'repeat(3, 1fr)', md: 'repeat(9, 1fr)' },
+              gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
               gap: 1.5,
               mb: 3,
             }}
           >
-            {rfmLabels.map(({ key, label, color, bgColor }) => (
-              <StatCard
-                key={key}
-                label={label}
-                value={rfm[key]}
-                color={color}
-                bgColor={bgColor}
-              />
-            ))}
+            {rfmRows.map((row, i) => {
+              const palette = rfmPalette[i % rfmPalette.length];
+              return (
+                <StatCard
+                  key={row.name}
+                  label={row.name}
+                  value={row.value}
+                  color={palette.color}
+                  bgColor={palette.bgColor}
+                />
+              );
+            })}
           </Box>
         )}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>

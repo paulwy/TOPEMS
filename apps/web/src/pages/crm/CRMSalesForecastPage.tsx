@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Button, Chip } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { Plus, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { crmApi, useCrmMock, type ForecastData, type Period } from '@/api/crm';
+import { crmApi, crmAnalyticsApi, type Period, type ForecastSeriesRow } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
@@ -44,43 +44,32 @@ const CRMSalesForecastPage: React.FC = () => {
   const { t } = useTranslation();
   const [timeRange, _setTimeRange] = useState('monthly');
   const [period, setPeriod] = useState<Period>('MTD');
-  const { data: mockForecast, mockEnabled } = useCrmMock<ForecastData>({ period });
 
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
-  const forecastsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.CRM.SALES_FORECAST, timeRange],
-    queryFn: async () => {
-      const response = await crmApi.salesForecast.list({
-        period_type: timeRange as 'monthly' | 'quarterly' | 'yearly',
-      });
-      return response.data?.items || [];
-    },
-
+  // 真实聚合：GET /api/crm/analytics/forecast → { series:[{period,period_type,predicted_amount,actual_amount,confidence_level,trend}] }
+  // 后端无独立 status 字段：以 actual_amount>0 推断为已完成，否则为已生成（诚实近似）。
+  const analyticsForecastQuery = useQuery({
+    queryKey: [...QUERY_KEYS.CRM.SALES_FORECAST, timeRange, period],
+    queryFn: () => crmAnalyticsApi.getForecast(period),
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
 
-  const forecasts = useMemo(() => forecastsQuery.data || [], [forecastsQuery]);
-  const series = mockForecast?.series;
-  const mockForecastRows = series
-    ? series.actual.map((a, i) => ({
-        period: a.month,
-        predicted_amount: series.weightedPipeline[i]?.value ?? 0,
-        actual_amount: a.value,
-        confidencelevel: 0.72,
-        status: i < series.actual.length - 1 ? 'completed' : 'generated',
-        trend: '↑',
-      }))
-    : [];
-  const displayForecasts = mockEnabled
-    ? (mockForecastRows as unknown as typeof forecasts)
-    : forecasts;
+  const seriesRows: ForecastSeriesRow[] = analyticsForecastQuery.data?.data?.series ?? [];
+  const displayForecasts = seriesRows.map((row) => ({
+    period: row.period,
+    predicted_amount: row.predicted_amount,
+    actual_amount: row.actual_amount,
+    confidence_level: row.confidence_level,
+    trend: row.trend,
+    status: row.actual_amount > 0 ? ('completed' as const) : ('generated' as const),
+  }));
 
   const generateMutation = useMutation({
     mutationFn: async () => {
       const now = new Date();
-      const period =
+      const periodLabel =
         timeRange === 'monthly'
           ? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
           : timeRange === 'quarterly'
@@ -88,7 +77,7 @@ const CRMSalesForecastPage: React.FC = () => {
             : `${now.getFullYear()}`;
       return crmApi.salesForecast.generate({
         period_type: timeRange as 'monthly' | 'quarterly' | 'yearly',
-        period,
+        period: periodLabel,
       });
     },
     onSuccess: () => {
@@ -118,25 +107,25 @@ const CRMSalesForecastPage: React.FC = () => {
   };
 
   const loading =
-    (!mockEnabled && (forecastsQuery.isLoading || forecastsQuery.isFetching)) ||
+    analyticsForecastQuery.isLoading ||
+    analyticsForecastQuery.isFetching ||
     generateMutation.isPending;
 
   const summary = useMemo(() => {
-    if (mockEnabled && mockForecast) {
-      return mockForecast.summary;
-    }
     return {
-      totalPredicted: forecasts.reduce((sum, f) => sum + f.predicted_amount, 0),
-      totalActual: forecasts.reduce((sum, f) => sum + (f.actual_amount || 0), 0),
+      totalPredicted: displayForecasts.reduce((sum, f) => sum + f.predicted_amount, 0),
+      totalActual: displayForecasts.reduce((sum, f) => sum + f.actual_amount, 0),
       averageConfidence:
-        forecasts.length > 0
+        displayForecasts.length > 0
           ? Math.round(
-              (forecasts.reduce((sum, f) => sum + f.confidence_level, 0) / forecasts.length) * 100
+              (displayForecasts.reduce((sum, f) => sum + f.confidence_level, 0) /
+                displayForecasts.length) *
+                100
             )
           : 0,
-      completedCount: forecasts.filter((f) => f.status === 'completed').length,
+      completedCount: displayForecasts.filter((f) => f.status === 'completed').length,
     };
-  }, [forecasts, mockEnabled, mockForecast]);
+  }, [analyticsForecastQuery.data, t]);
 
   const statCards = useMemo<StatCard[]>(
     () => [
@@ -164,45 +153,25 @@ const CRMSalesForecastPage: React.FC = () => {
       {
         id: 'completed-count',
         title: t('crm.salesForecast.stat_completed'),
-        value: `${summary.completedCount} / ${forecasts.length}`,
+        value: `${summary.completedCount} / ${displayForecasts.length}`,
         icon: <Calendar sx={{ width: 24, height: 24 }} />,
         gradient: [ct.warning.main, ct.warning.dark] as [string, string],
       },
     ],
-    [summary, forecasts.length, t]
+    [summary, displayForecasts.length, t]
   );
 
   const charts = useMemo<ChartConfig[]>(() => {
-    const comparisonData =
-      mockEnabled && series
-        ? series.actual.flatMap((a, i) => [
-            { name: a.month, value: a.value * 10_000, type: 'actual' as const },
-            {
-              name: a.month,
-              value: (series.weightedPipeline[i]?.value ?? 0) * 10_000,
-              type: 'weighted' as const,
-            },
-            {
-              name: a.month,
-              value: (series.target[i]?.value ?? 0) * 10_000,
-              type: 'target' as const,
-            },
-          ])
-        : forecasts.flatMap((f) => [
-            { name: f.period, value: f.predicted_amount, type: 'predicted' },
-            { name: f.period, value: f.actual_amount || 0, type: 'actual' },
-          ]);
+    // 后端 analytics/forecast 无 target/weighted 第三系列：仅画 predicted vs actual（诚实两线）。
+    const comparisonData = displayForecasts.flatMap((f) => [
+      { name: f.period, value: f.predicted_amount, type: 'predicted' },
+      { name: f.period, value: f.actual_amount || 0, type: 'actual' },
+    ]);
 
-    const confidenceData =
-      mockEnabled && series
-        ? series.actual.map((a, i) => ({
-            name: a.month,
-            value: 65 + Math.round((i % 5) * 6),
-          }))
-        : forecasts.map((f) => ({
-            name: f.period,
-            value: Math.round(f.confidence_level * 100),
-          }));
+    const confidenceData = displayForecasts.map((f) => ({
+      name: f.period,
+      value: Math.round(f.confidence_level * 100),
+    }));
 
     return [
       {
@@ -224,7 +193,7 @@ const CRMSalesForecastPage: React.FC = () => {
         height: 288,
       },
     ];
-  }, [forecasts, t, mockEnabled, series]);
+  }, [displayForecasts, t]);
 
   const tables = useMemo<DataTable[]>(
     () => [
@@ -265,15 +234,6 @@ const CRMSalesForecastPage: React.FC = () => {
 
   const customToolbar = (
     <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 2 }}>
-      {mockEnabled && (
-        <Chip
-          label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_sales_forecast_page.mock_4')}
-          color='warning'
-          size='small'
-          variant='outlined'
-          sx={{ fontWeight: 600 }}
-        />
-      )}
       <Button
         variant='contained'
         startIcon={<Plus />}
@@ -305,7 +265,7 @@ const CRMSalesForecastPage: React.FC = () => {
         timeRangeOptions={timeRangeOptions}
         timeRange={period}
         onTimeRangeChange={(v) => setPeriod(v as Period)}
-        onRefresh={() => forecastsQuery.refetch()}
+        onRefresh={() => analyticsForecastQuery.refetch()}
         showExport={false}
         showRefresh={true}
         showTimeRange={true}

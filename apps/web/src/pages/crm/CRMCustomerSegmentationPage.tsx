@@ -8,24 +8,31 @@ import { useTranslation } from 'react-i18next';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { customerSegmentationSchema } from '@/schemas/crm';
-import { crmApi, useCrmMock } from '@/api/crm';
+import { crmApi, crmAnalyticsApi } from '@/api/crm';
 import type {
   CustomerSegment,
   CreateSegmentRequest,
   SegmentCriteria,
-  SegmentationData,
-  Period,
+  SegmentationQuadrantRow,
 } from '@/api/crm';
 import { CRM_PATHS } from '@/modules/crm/config';
 import i18n from '@/i18n';
+import { useQuery } from '@tanstack/react-query';
 
 // ============ 组件 ============
 
 const CRMCustomerSegmentationPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [period] = React.useState<Period>('MTD');
-  const { data: mockSeg, mockEnabled } = useCrmMock<SegmentationData>({ period });
+
+  // 真实聚合：GET /api/crm/analytics/segmentation → { quadrants:[{value_band, activity_band, customer_count}] }
+  // 后端只给四象限桶聚合（无逐点 value/activity/name）：气泡按象限锚点落位，大小∝客户数。
+  const segAnalyticsQuery = useQuery({
+    queryKey: ['crm-analytics-segmentation'],
+    queryFn: () => crmAnalyticsApi.getSegmentation(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const quadrantRows: SegmentationQuadrantRow[] = segAnalyticsQuery.data?.data?.quadrants ?? [];
 
   // ============ API 适配器 ============
 
@@ -222,32 +229,10 @@ const CRMCustomerSegmentationPage: React.FC = () => {
               )
             : 0,
       };
-      const summary = mockEnabled ? mockSeg.summary : realSummary;
-
-      const quadrants = mockSeg.quadrants;
-      const quadrantColors: Record<number, string> = {
-        0: 'success.main',
-        1: 'primary.main',
-        2: 'warning.main',
-        3: 'error.main',
-      };
+      const summary = realSummary;
 
       return (
         <Box sx={{ mb: 3 }}>
-          {mockEnabled && (
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Chip
-                label={
-                  t('crm.common.mock_demo_badge') ||
-                  i18n.t('pages.crm_customer_segmentation_page.mock_0')
-                }
-                color='warning'
-                size='small'
-                variant='outlined'
-                sx={{ fontWeight: 600 }}
-              />
-            </Box>
-          )}
           <Box
             sx={{
               display: 'grid',
@@ -360,7 +345,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
             </Box>
           </Box>
 
-          {mockEnabled && (
+          {quadrantRows.length > 0 && (
             <Paper
               variant='outlined'
               sx={{ p: 3, mb: 3, position: 'relative' }}
@@ -456,29 +441,32 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     i18n.t('pages.crm_customer_segmentation_page.k5')}
                 </Box>
                 <Box sx={{ position: 'absolute', inset: 0 }}>
-                  {quadrants.map((p) => {
-                    const q =
-                      p.value >= 50 && p.activity >= 50
-                        ? 0
-                        : p.value >= 50 && p.activity < 50
-                          ? 1
-                          : p.value < 50 && p.activity >= 50
-                            ? 2
-                            : 3;
-                    const left = `${8 + (p.activity / 100) * 84}%`;
-                    const top = `${8 + ((100 - p.value) / 100) * 84}%`;
+                  {quadrantRows.map((row) => {
+                    const valueHigh = row.value_band === 'high_value';
+                    const activityHigh = row.activity_band === 'high_activity';
+                    const left = activityHigh ? '75%' : '25%';
+                    const top = valueHigh ? '25%' : '75%';
+                    const color =
+                      valueHigh && activityHigh
+                        ? 'success.main'
+                        : valueHigh
+                          ? 'primary.main'
+                          : activityHigh
+                            ? 'warning.main'
+                            : 'error.main';
+                    const size = 20 + Math.min(row.customer_count, 40);
                     return (
                       <Box
-                        key={p.id}
+                        key={`${row.value_band}/${row.activity_band}`}
                         sx={{
                           position: 'absolute',
                           left,
                           top,
                           transform: 'translate(-50%, -50%)',
-                          width: 20 + p.size,
-                          height: 20 + p.size,
+                          width: size,
+                          height: size,
                           borderRadius: '50%',
-                          bgcolor: quadrantColors[q],
+                          bgcolor: color,
                           opacity: 0.7,
                           display: 'flex',
                           alignItems: 'center',
@@ -489,9 +477,9 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                           border: '2px solid var(--color-primary-foreground)',
                           boxShadow: 1,
                         }}
-                        title={`${p.name}${i18n.t('pages.crm_customer_segmentation_page.k6')}${p.value}${i18n.t('pages.crm_customer_segmentation_page.k7')}${p.activity}`}
+                        title={`${row.value_band}/${row.activity_band}: ${row.customer_count}`}
                       >
-                        {p.size}
+                        {row.customer_count}
                       </Box>
                     );
                   })}
@@ -523,7 +511,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
         </Box>
       );
     },
-    [t, mockEnabled, mockSeg]
+    [t, quadrantRows]
   );
 
   return (

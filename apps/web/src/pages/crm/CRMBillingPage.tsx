@@ -15,9 +15,8 @@ import { useQuery } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
-import { crmApi, useCrmMock } from '@/api/crm';
-import type { CrmMockShape } from '@/api/crm/mockData';
-import type { BillingRecord, BillingAnalyticsData, Period } from '@/api/crm';
+import { crmApi, crmAnalyticsApi } from '@/api/crm';
+import type { BillingRecord, Period } from '@/api/crm';
 import { billingSchema } from '@/schemas/crm';
 
 const statusColorMap: Record<string, { main: string; light: string }> = {
@@ -25,45 +24,61 @@ const statusColorMap: Record<string, { main: string; light: string }> = {
   pending: { main: 'warning.main', light: 'warning.light' },
   overdue: { main: 'error.main', light: 'error.light' },
 };
+const neutralColor = { main: 'text.secondary', light: 'grey.200' };
 
 const CRMBillingPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
   const [period] = useState<Period>('MTD');
-  const { data: mockData, mockEnabled } = useCrmMock<CrmMockShape>({ period });
-  // useCrmMock 返回整棵 CrmMockShape（含 dashboard/funnel/scoring/forecast/segmentation/billing），
-  // 本页消费 billing 分支
-  const mockBilling = mockData.billing;
 
-  const { data: stats, isLoading: statsLoading } = useQuery<BillingAnalyticsData['summary']>({
-    queryKey: ['crm', 'billing', 'stats'],
-    queryFn: async () => {
-      const response = await crmApi.billing.list();
-      const items = response.data?.items || [];
-      return {
-        totalAmount: items.reduce((sum, r) => sum + (r.amount || 0), 0),
-        paidAmount: items
-          .filter((r) => r.status === 'paid')
-          .reduce((sum, r) => sum + (r.amount || 0), 0),
-        pendingAmount: items
-          .filter((r) => r.status === 'pending')
-          .reduce((sum, r) => sum + (r.amount || 0), 0),
-        overdueAmount: items
-          .filter((r) => r.status === 'overdue')
-          .reduce((sum, r) => sum + (r.amount || 0), 0),
-        totalCount: items.length,
-        paidCount: items.filter((r) => r.status === 'paid').length,
-        pendingCount: items.filter((r) => r.status === 'pending').length,
-        overdueCount: items.filter((r) => r.status === 'overdue').length,
-      };
-    },
-    initialData: mockEnabled ? mockBilling.summary : undefined,
-    enabled: !mockEnabled,
+  // 真实聚合：GET /api/crm/analytics/billing → { status_pie:[{status,count,amount}], top_customers:[{name,value}], aging:[{name,value(=count)}] }
+  const billingAnalyticsQuery = useQuery({
+    queryKey: ['crm-analytics-billing', period],
+    queryFn: () => crmAnalyticsApi.getBilling(period),
+    staleTime: 5 * 60 * 1000,
   });
+  const analytics = billingAnalyticsQuery.data?.data;
 
-  const displayStats = mockEnabled ? mockBilling.summary : stats;
-  const loading = !mockEnabled && statsLoading;
+  // 状态饼与汇总（后端 status_pie 形状 {status,count,amount} 与前端一致，直接消费）
+  const statusPie = analytics?.status_pie ?? [];
+  const summary = useMemo(() => {
+    const findAmount = (s: string) => statusPie.find((x) => x.status === s)?.amount ?? 0;
+    const findCount = (s: string) => statusPie.find((x) => x.status === s)?.count ?? 0;
+    return {
+      totalAmount: statusPie.reduce((sum, x) => sum + x.amount, 0),
+      paidAmount: findAmount('paid'),
+      pendingAmount: findAmount('pending'),
+      overdueAmount: findAmount('overdue'),
+      totalCount: statusPie.reduce((sum, x) => sum + x.count, 0),
+      paidCount: findCount('paid'),
+      pendingCount: findCount('pending'),
+      overdueCount: findCount('overdue'),
+    };
+  }, [statusPie]);
+
+  // Top10：后端只给 {name,value}，无单笔状态 → status 留空走中性色（诚实降级）
+  const top10 = useMemo(
+    () =>
+      (analytics?.top_customers ?? []).map((x) => ({
+        customerName: x.name,
+        amount: x.value,
+        status: undefined as 'paid' | 'pending' | 'overdue' | undefined,
+      })),
+    [analytics]
+  );
+  // 账龄桶：后端只聚合 count，无金额 → amount 置 0，进度条按 count 绘制（诚实降级）
+  const agingBuckets = useMemo(
+    () =>
+      (analytics?.aging ?? []).map((x) => ({
+        bucket: x.name,
+        count: x.value,
+        amount: 0,
+      })),
+    [analytics]
+  );
+  const displayStats = summary;
+  const loading = billingAnalyticsQuery.isLoading || billingAnalyticsQuery.isFetching;
 
   const cards = useMemo(
     () => [
@@ -95,11 +110,9 @@ const CRMBillingPage: React.FC = () => {
     [t, displayStats]
   );
 
-  const top10 = mockBilling.top10;
-  const statusPie = mockBilling.statusPie;
-  const agingBuckets = mockBilling.agingBuckets;
   const totalPieAmount = statusPie.reduce((s, x) => s + x.amount, 0) || 1;
-  const maxAgingAmount = Math.max(...agingBuckets.map((b) => b.amount), 1);
+  // 账龄桶后端只聚合 count：进度条按 count 相对最大值绘制（amount 恒 0，见上方注释）
+  const maxAgingCount = Math.max(...agingBuckets.map((b) => b.count), 1);
 
   const apiAdapter = useMemo<CrudApiAdapter<BillingRecord>>(
     () => ({
@@ -143,17 +156,6 @@ const CRMBillingPage: React.FC = () => {
     <PageContainer
       title={t('crm.billing.title')}
       subtitle={t('crm.billing.subtitle')}
-      headerActions={
-        mockEnabled ? (
-          <Chip
-            label={t('crm.common.mock_demo_badge') || i18n.t('pages.crm_billing_page.mock_0')}
-            color='warning'
-            size='small'
-            variant='outlined'
-            sx={{ fontWeight: 600 }}
-          />
-        ) : null
-      }
     >
       <Stack spacing={3}>
         <Stack
@@ -338,7 +340,7 @@ const CRMBillingPage: React.FC = () => {
                           </Box>
                           <LinearProgress
                             variant='determinate'
-                            value={(b.amount / maxAgingAmount) * 100}
+                            value={(b.count / maxAgingCount) * 100}
                             sx={{ height: 8, borderRadius: 4 }}
                           />
                         </Box>
@@ -359,7 +361,8 @@ const CRMBillingPage: React.FC = () => {
                   </Typography>
                   <Stack spacing={1.5}>
                     {top10.map((item, idx) => {
-                      const c = statusColorMap[item.status] || statusColorMap.pending;
+                      // 后端 top_customers 无状态字段：无 status 时走中性灰
+                      const c = statusColorMap[item.status ?? ''] || neutralColor;
                       const maxTop = top10[0]?.amount || 1;
                       return (
                         <Box
@@ -394,7 +397,11 @@ const CRMBillingPage: React.FC = () => {
                             />
                           </Box>
                           <Chip
-                            label={t(`crm.billing.status_${item.status}`) || item.status}
+                            label={
+                              item.status
+                                ? t(`crm.billing.status_${item.status}`) || item.status
+                                : '—'
+                            }
                             size='small'
                             sx={{
                               bgcolor: c.light,
@@ -441,7 +448,7 @@ const CRMBillingPage: React.FC = () => {
                     </Box>
                     <LinearProgress
                       variant='determinate'
-                      value={(b.amount / maxAgingAmount) * 100}
+                      value={(b.count / maxAgingCount) * 100}
                       sx={{ height: 10, borderRadius: 5 }}
                     />
                   </Paper>
