@@ -493,7 +493,11 @@ impl McpServer {
                 ),
             );
         };
-        if let Err(e) = self.security.check_permission(&user, &uri, Some(permission)).await {
+        if let Err(e) = self
+            .security
+            .check_permission(&user, &uri, Some(permission))
+            .await
+        {
             let (code, message) = match &e {
                 ToolExecutionError::PermissionDenied(msg) => (-32001, msg.clone()),
                 _ => (-32000, e.to_string()),

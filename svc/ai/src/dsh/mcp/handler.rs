@@ -67,13 +67,10 @@ impl SseSessionManager {
     ) -> (String, mpsc::UnboundedReceiver<Value>) {
         let session_id = uuid::Uuid::new_v4().to_string();
         let (tx, rx) = mpsc::unbounded_channel();
-        self.sessions.write().await.insert(
-            session_id.clone(),
-            SseSession {
-                tx,
-                user,
-            },
-        );
+        self.sessions
+            .write()
+            .await
+            .insert(session_id.clone(), SseSession { tx, user });
         tracing::info!(session_id = %session_id, "SSE session registered");
         (session_id, rx)
     }
@@ -180,7 +177,11 @@ pub async fn handle_mcp_request(
     // P0：身份随请求传递。带 session_id 时优先使用 SSE 会话绑定的用户（连接建立时的身份），
     // 其次使用本请求 Authorization 头解析的身份；不再读写服务器共享状态。
     let user = match &params.session_id {
-        Some(sid) => state.sse_manager.session_user(sid).await.or_else(|| user.clone()),
+        Some(sid) => state
+            .sse_manager
+            .session_user(sid)
+            .await
+            .or_else(|| user.clone()),
         None => user,
     };
 

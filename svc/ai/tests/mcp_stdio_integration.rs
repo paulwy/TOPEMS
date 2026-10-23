@@ -24,7 +24,9 @@ use serde_json::{json, Value};
 ///
 /// 内部创建一个持续运行的读取线程，将所有读取到的 JSON 响应发送到通道中。
 /// 这样可以避免读取超时后线程仍在运行、消耗后续响应的竞态条件问题。
-fn spawn_mcp_stdio(subject: Option<&str>) -> (
+fn spawn_mcp_stdio(
+    subject: Option<&str>,
+) -> (
     std::process::Child,
     std::process::ChildStdin,
     mpsc::Receiver<Value>,
@@ -627,7 +629,11 @@ fn test_stdio_subject_invalid_json_stays_anonymous() {
     let resp = read_response(&rx);
     assert_eq!(resp["id"], 2);
     let code = resp["error"]["code"].as_i64().unwrap_or(0);
-    assert_eq!(code, -32001, "注入解析失败应保持匿名，业务工具被拒绝: {:?}", resp);
+    assert_eq!(
+        code, -32001,
+        "注入解析失败应保持匿名，业务工具被拒绝: {:?}",
+        resp
+    );
 
     drop(stdin);
     let _ = child.wait();

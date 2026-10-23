@@ -968,13 +968,14 @@ pub fn create_routes(
     // MCP 客户端（如 Cursor）通过这些端点进行 JSON-RPC 通信
     // P1-3：MCP 端点纳入统一限流（复用同一 rate_limiter，按 IP 5000/60s，防滥用/DoS；
     //       协议层另有按用户 check_rate_limit 兜底）
-    let mcp_router = create_mcp_routes(mcp_server, mcp_jwt_secret).layer(axum::middleware::from_fn({
-        let mw = rate_limiter;
-        move |req, next| {
-            let mw = mw.clone();
-            async move { rate_limit_middleware(mw, req, next).await }
-        }
-    }));
+    let mcp_router =
+        create_mcp_routes(mcp_server, mcp_jwt_secret).layer(axum::middleware::from_fn({
+            let mw = rate_limiter;
+            move |req, next| {
+                let mw = mw.clone();
+                async move { rate_limit_middleware(mw, req, next).await }
+            }
+        }));
     let app = app.merge(mcp_router);
 
     // ai 自管全部中间件（不走 build_application），手动补 /metrics 鉴权层（最外层）。

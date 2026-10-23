@@ -481,7 +481,10 @@ mod tests {
         // P2-3：正常业务文本（含 --、SELECT、INSERT 等单词/符号）不应被误拒
         let middleware = McpSecurityMiddleware::new();
         assert!(middleware
-            .check_injection_patterns("test", "客户备注：2026-09-13 -- 重点客户，需跟进 SELECT 相关信息")
+            .check_injection_patterns(
+                "test",
+                "客户备注：2026-09-13 -- 重点客户，需跟进 SELECT 相关信息"
+            )
             .is_ok());
         assert!(middleware
             .check_injection_patterns("test", "INSERT INTO 提及的合同条款已归档")

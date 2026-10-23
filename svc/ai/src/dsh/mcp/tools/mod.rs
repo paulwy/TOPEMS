@@ -351,13 +351,8 @@ fn service_token() -> Option<String> {
     let mut guard = lock.write().unwrap_or_else(|p| p.into_inner());
     let auth = guard.as_mut()?;
     if auth.issued_at.elapsed().as_secs() > 3000 {
-        auth.token = issue_service_token(
-            &auth.jwt_secret,
-            "ai-service",
-            &[],
-            Some(3600),
-        )
-        .unwrap_or_default();
+        auth.token = issue_service_token(&auth.jwt_secret, "ai-service", &[], Some(3600))
+            .unwrap_or_default();
         auth.issued_at = std::time::Instant::now();
     }
     Some(auth.token.clone())
