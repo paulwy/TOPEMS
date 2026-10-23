@@ -37,6 +37,12 @@ pub fn create_routes() -> Router<AppState> {
             "/orders",
             get(list_production_orders).post(create_production_order),
         )
+        // v1.85 别名路由：mobile MesApi 契约路径为 /production/orders，
+        // MES 权威路径为 /orders，补别名兼容层对齐契约（后续契约统一时收敛）
+        .route(
+            "/production/orders",
+            get(list_production_orders).post(create_production_order),
+        )
         .route("/orders/from-erp", post(create_order_from_erp))
         .route(
             "/orders/{id}",
