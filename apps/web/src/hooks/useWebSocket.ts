@@ -7,7 +7,17 @@ import {
   DEFAULT_RECONNECT_STRATEGY,
 } from '@/utils/websocketOptimizer';
 
-const WS_SIGNING_SECRET = import.meta.env.VITE_WS_SIGNING_SECRET || 'topems-ws-signing-secret';
+// 签名密钥源与后端 unified-core ws.rs 验签统一：后端以 jwt_secret 为 HMAC-SHA256 key
+// （lib/shared-auth::sign_message）。前端必须通过 VITE_WS_SIGNING_SECRET 注入与后端
+// 相同的密钥值；缺失时按后端策略降级——不携带签名（后端对未签消息仅 warn 不拒绝），
+// 绝不使用硬编码默认值：硬编码默认与生产 jwt_secret 不一致会导致验签失败/签名告警。
+const WS_SIGNING_SECRET: string = import.meta.env.VITE_WS_SIGNING_SECRET ?? '';
+
+if (!WS_SIGNING_SECRET) {
+  logger.warn(
+    '[WebSocket] VITE_WS_SIGNING_SECRET 未配置：WS 消息将不携带签名（须与后端 jwt_secret 一致方可通过验签）'
+  );
+}
 
 async function generateSignature(message: string): Promise<string> {
   if (!WS_SIGNING_SECRET) return '';

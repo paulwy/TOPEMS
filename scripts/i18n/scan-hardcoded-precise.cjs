@@ -31,6 +31,9 @@ const WHITELIST_FILES = [
   // lib/reactQuery.ts：FALLBACK_TEXTS 为 React 渲染周期外的刻意兜底文本
   // （safeTranslate 键缺失/异常时的中文 fallback，注释见文件头），非 UI 硬编码
   'lib/reactQuery.ts',
+  // hooks/useWebSocket.ts：WS 签名密钥缺失时的开发期 logger.warn 日志文案
+  // （提示配置 VITE_WS_SIGNING_SECRET，非 UI 渲染文案，不进 i18n）
+  'hooks/useWebSocket.ts',
   // 以下为基线债豁免（2026-10-08）：
   // SystemSettingsPage：defaultSettings 为模块级表单默认示例值（公司名/地址/发件人等占位），非 UI 文案
   'pages/admin/SystemSettingsPage.tsx',

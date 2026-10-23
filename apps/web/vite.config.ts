@@ -1153,8 +1153,10 @@ export default defineConfig(({ mode }) => {
     'process.env.NEXT_PUBLIC_WS_URL': JSON.stringify(
       process.env.VITE_WS_URL || 'ws://localhost:8080/ws'
     ),
+    // WS 签名密钥无硬编码默认：与后端 jwt_secret 对齐，构建期未注入则为空串
+    // （运行端不签消息，后端对未签消息仅告警不拒绝）。禁止恢复 'topems-ws-signing-secret' 默认。
     'process.env.NEXT_PUBLIC_WS_SIGNING_SECRET': JSON.stringify(
-      process.env.VITE_WS_SIGNING_SECRET || 'topems-ws-signing-secret'
+      process.env.VITE_WS_SIGNING_SECRET ?? ''
     ),
   },
   optimizeDeps: {
