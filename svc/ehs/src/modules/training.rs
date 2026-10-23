@@ -1048,21 +1048,62 @@ pub async fn delete_certificate(
     Json(ApiResponse::success((), "培训证书删除成功"))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_training_statistics(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "total_trainings": 0,
-            "total_plans": 0,
-            "total_records": 0,
-            "total_certificates": 0,
-            "completion_rate": 0.0,
-        }),
-        "获取培训统计成功",
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+
+    let total_trainings: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE {}",
+        tc
     ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let total_plans: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.training_programs WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let total_records: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.training_records WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let total_certificates: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_training_certificates WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let completion_rate = if total_trainings > 0 {
+        (total_records as f64 / total_trainings as f64).min(1.0)
+    } else {
+        0.0
+    };
+
+    let obj = serde_json::json!({
+        "total_trainings": total_trainings,
+        "total_plans": total_plans,
+        "total_records": total_records,
+        "total_certificates": total_certificates,
+        "completion_rate": completion_rate,
+    });
+    Json(ApiResponse::success(obj, "获取培训统计成功"))
 }
 
 #[derive(Debug, Deserialize)]
