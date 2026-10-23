@@ -10,6 +10,12 @@ set -u
 # 与 .cargo/config.toml 注释结论一致（2026-10-02 已移除，此处曾遗漏）
 export SQLX_OFFLINE=true
 
+# [2026-10-24 Phase D] 与 CI cargo-check job 对齐严格度：RUSTFLAGS="-D warnings"
+# （ci.yml: RUSTFLAGS="-D warnings" cargo check --workspace --all-targets）。
+# 此前本地 pre-push 无 -D，存量 warning 本地放行、CI 红。注意 RUSTFLAGS 对
+# build script/proc-macro 同源生效；报错文件归属由下方 base/本次归类逻辑提示。
+export RUSTFLAGS="-D warnings"
+
 OUT="$(mktemp /tmp/cargo-check-XXXXXX.log)"
 cargo check --workspace 2>&1 | tee "$OUT"
 RC="${PIPESTATUS[0]}"
