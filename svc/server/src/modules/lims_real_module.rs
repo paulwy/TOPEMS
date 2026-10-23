@@ -65,7 +65,9 @@ impl LimsRealModule {
         if let Err(e) = topems_lims::event_handlers::start_event_subscribers(ctx.db.clone()).await {
             tracing::error!("⚠️ lims 事件订阅者启动失败: {}", e);
         } else {
-            tracing::info!("✅ lims 事件订阅者已挂载（QmsInspectionCompleted / EhsHazardReported）");
+            tracing::info!(
+                "✅ lims 事件订阅者已挂载（QmsInspectionCompleted / EhsHazardReported）"
+            );
         }
 
         // 4. 健康检查配置

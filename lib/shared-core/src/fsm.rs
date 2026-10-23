@@ -105,7 +105,13 @@ impl FsmDef {
     pub fn can_transition(&self, from: &str, to: &str) -> Result<(), FsmError> {
         match check_pair(from, to, self.transitions, self.terminal, self.states) {
             Ok(()) => Ok(()),
-            Err(_) => check_pair(from, to, self.approval_transitions, self.terminal, self.states),
+            Err(_) => check_pair(
+                from,
+                to,
+                self.approval_transitions,
+                self.terminal,
+                self.states,
+            ),
         }
     }
 

@@ -272,7 +272,7 @@ async fn create_project(
             risk_level, priority, tags, parent_id, workspace_id, tenant_id, created_by,
             created_at, updated_at, name_en
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16::text[], $17, $18, $19, $20, $21, $22, $23)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, to_jsonb($16::text[]), $17, $18, $19, $20, $21, $22, $23)
         ON CONFLICT (code) DO NOTHING
         RETURNING id,
                   CASE WHEN $24 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
@@ -485,7 +485,7 @@ async fn update_project(
             benefit_target = COALESCE($9, benefit_target),
             risk_level = COALESCE($10, risk_level),
             priority = COALESCE($11, priority),
-            tags = COALESCE($12::text[], tags),
+            tags = COALESCE(to_jsonb($12::text[]), tags),
             parent_id = COALESCE($13, parent_id),
             workspace_id = COALESCE($14, workspace_id),
             name_en = COALESCE($15, name_en),

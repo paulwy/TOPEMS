@@ -3434,6 +3434,14 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **数据清理**：qms 2 单 + audits 6 条 → 0 残留；QmsToLimsSyncTriggered/LimsToEhsTriggered 按条件联动（全合格单不触发）如实标注
 - 活文档变更日志 v1.106 登记
 
+## v1.108 web 契约 4150/4150 0 FAIL 收口（2026-10-23）
+- [x] **BFF 重启至最新二进制**（协作 v1.105 lims 挂载/v1.106 fsm 代码未编译进旧进程）：mobile approvals 18 FAIL 全消（旧二进制问题）；顺带补 cargo fmt 协作代码 2 处（fsm.rs/lims_real_module.rs，pre-push fmt-check 拦截）
+- [x] **pm 项目更新 500 修复**：`tags = COALESCE($12::text[], tags)` 与 jsonb 列类型冲突（`COALESCE types text[] and jsonb cannot be matched`）→ `to_jsonb($12::text[])`；create 同型问题一并修（`$16::text[]` → `to_jsonb($16::text[])`）
+- [x] **bi datasets 500 修复**：BI 池 search_path=bi,public → 裸 `analytics_datasets` 解析到 **bi 版（16 列无 tenant_id）**，list SQL 的 tenant_id 条件报错 → 读路径统一 **public 版（17 列含 tenant_id + RLS 策略）**（list/count/get 5 处）；写路径保持 bi 版
+- [x] **验证**：`python3 scripts/web_contract_smoke.py` → **4150/4150 PASS, 0 FAIL**（此前 20 FAIL：mobile 18 + bi 1 + pm 1）
+- [ ] **观察登记**：`analytics_datasets` **双套表归属**（bi 写 / public 读，三套并存 public/bi/analytics 全 0 行；bi 版缺 tenant_id 无 RLS，public 版有 RLS 但写路径被 WITH CHECK 拦需租户上下文）——待统一专项（对齐 ehs 双套表处置）
+
+
 ## v1.107 smoke-prod 层2 H 指引对齐 + BFF WS 接线观察项（2026-10-23）
 - [x] **v1.102 观察项核销**：smoke-prod.sh 层2 H 指引过时（原文"unified-core WS 端点（mes_real_module 投影提供）"——U1-b1/U1-b2 已移除 unified-core mes 投影）→ 已修正为：`/ws/mes/dashboard` 由**独立 svc/mes** 提供（main.rs:259 dashboard_websocket）；BFF :8099 未接线如实标注（main.rs:532 注释登记"应由 mes_real_module 内嵌 topems_mes::dashboard_ws"）；BFF 核心 WS 保留 /ws/core/notifications、/ws/core/im
 - [ ] **观察项（接线暂缓）**：BFF :8099 恢复 /ws/mes/dashboard —— 尝试接线受阻：Module 契约要求 `Router<()>`（routes 字段 Router），而 `dashboard_websocket` 用 `State<AuthState>` extractor 需 `AuthState: FromRef<S>`；Router<()> 上 route 报 Handler 约束（S fallback ()），子路由带 state（Router<AppState>）nest 后整体类型变 Router<AppState> 与 Module 契约冲突（E0308）。属 server 侧接线类型改造（改 Module 契约/统一 state），暂缓并如实登记——生产拓扑由独立 svc/mes:8030 提供该 WS，无功能缺口
