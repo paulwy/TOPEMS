@@ -3434,6 +3434,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **数据清理**：qms 2 单 + audits 6 条 → 0 残留；QmsToLimsSyncTriggered/LimsToEhsTriggered 按条件联动（全合格单不触发）如实标注
 - 活文档变更日志 v1.106 登记
 
+## v1.107 smoke-prod 层2 H 指引对齐 + BFF WS 接线观察项（2026-10-23）
+- [x] **v1.102 观察项核销**：smoke-prod.sh 层2 H 指引过时（原文"unified-core WS 端点（mes_real_module 投影提供）"——U1-b1/U1-b2 已移除 unified-core mes 投影）→ 已修正为：`/ws/mes/dashboard` 由**独立 svc/mes** 提供（main.rs:259 dashboard_websocket）；BFF :8099 未接线如实标注（main.rs:532 注释登记"应由 mes_real_module 内嵌 topems_mes::dashboard_ws"）；BFF 核心 WS 保留 /ws/core/notifications、/ws/core/im
+- [ ] **观察项（接线暂缓）**：BFF :8099 恢复 /ws/mes/dashboard —— 尝试接线受阻：Module 契约要求 `Router<()>`（routes 字段 Router），而 `dashboard_websocket` 用 `State<AuthState>` extractor 需 `AuthState: FromRef<S>`；Router<()> 上 route 报 Handler 约束（S fallback ()），子路由带 state（Router<AppState>）nest 后整体类型变 Router<AppState> 与 Module 契约冲突（E0308）。属 server 侧接线类型改造（改 Module 契约/统一 state），暂缓并如实登记——生产拓扑由独立 svc/mes:8030 提供该 WS，无功能缺口
+- 活文档变更日志 v1.107 登记
+
 ## v1.101 mdm_crud_integration 13 failed 核销（2026-10-23）
 - [x] **根因实证**：`make_test_state` dummy 连接池（接真表前"handler 不实际访问数据库"夹具遗留）——quality_v51 接真表后 handler 实际访问 DB → 全部 DB 型 handler 500（assertion left=500 right=200），list/check 空结果断言失败
 - [x] **修复**：`make_test_state` 连接串改读 `DATABASE_URL`（未设置回退 dummy 保持编译期可用）
