@@ -4,8 +4,8 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.9（P1-2/P2-1/P1-8/P2-2/P2-4 DB FK 五项闭环；见文末变更日志） |
-| 最近更新 | 2026-10-21 |
+| 版本 | v1.88（v1.86-88 闭环：审计表统一/RLS 关键表补齐/api_dup 核销；见文末变更日志） |
+| 最近更新 | 2026-10-23 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
 | 仓库 | `/Users/xingzhai/TOPEMS`（Rust 多服务 monolith + `apps/web` React，分支 main） |
@@ -372,6 +372,9 @@
 
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
+| 2026-10-23 | v1.88 | code-quality api_dup 性能瓶颈核销 ✅ | CI 11 FAIL 复核续：code-quality api_dup 核销——远端 `52b26e88e`（perf 脚本加速：注释剥离逐字符状态机 → re.sub 批量替换，并修生命周期注解 '_/'static 误剥 bug）；本地 --ci 全量复跑实证内存峰值由原 25GB+ 降至 ~4.6GB（CPU 活跃），修复有效；全量完成耗时长归 CI job 执行（lefthook Gate P 注明由 CI 执行，本地 pre-push 不含全量）。**CI 11 FAIL 累计 11/11 核销**。提交 `18f9198d9` |
+| 2026-10-23 | v1.87 | verify-rls 关键表清零（RLS 补齐） ✅ | v1.85 终验②「RLS 缺 iam.core_roles 策略」闭环：① 清单校准——主库 iam schema 无 core_* 表（iam.core_roles/core_users/core_files 均不存在，v1.75 双表统一已删空壳）→ verify-rls KEY_TABLES 改为真实 public 版；② 真实缺口修复——public.core_roles/core_users 补 tenant_isolation 策略（管理员全可见 + 租户过滤 + NULL 放行）+ ehs.qa_ehs_hazards 补 tenant_id 列与策略（qms 版已有），幂等并入 ensure-tenant-users-seed.sh，主库/test 双库执行；③ 验证——verify-rls 111 策略表缺口 0 + 关键表抽样全部有策略。提交 `ddbb487bc` |
+| 2026-10-23 | v1.86 | push 门禁 USAGE_COLLECT_FAIL 修复（审计表统一） ✅ | pre-push domain-probe USAGE_COLLECT_FAIL 根因三层：① 审计表分裂——unified-core middleware 写 public.audit_logs，shared-auth audit_logger 与 tenant 查询用 core_audit_logs（test 库从未建表）；② SEARCH_PATH=flow,public（unified-core embedded 设置）致无前缀表解析到 flow 兼容层（flow.core_files 缺 tenant_id）；③ v1.50 遗留 TEXT 列 NULLIF(a.user_id,'')::uuid cast 在 uuid 列报错。修复：统一 public.audit_logs（audit_logger INSERT / tenant 查询 / seed 建表对齐）+ usage collect 表引用显式 public + JOIN 改 a.user_id 直连。实测 usage collect success + DOMAIN_PROBE_OK（0 5xx）。提交 `05845c9d1` |
 | 2026-10-23 | v1.85 | 终验发现（登记待批）| v1.85 收口终验快照：DOMAIN_PROBE_OK（0 5xx）+ contract-gate 2657/6336/0 ✅；**3 项新发现**——① **mobile production 域 6 端点 500（handler_error）**：根因 MES `/api/mes/production/orders` 404（路由缺失，mobile openapi client 上游 404 透传），契约 114 现 108/114；② **RLS 缺 iam.core_roles 策略**（iam schema 空壳，iam 空壳表统一待排期项，verify-rls 报关键表缺）；③ **mobile 事件 SalesOrderCreated payload UUID 解析失败**（`invalid character: found s at 0`，payload id 字符串非 UUID）。均登记独立批次，待本机闭环。提交 `TBD` |
 | 2026-10-23 | v1.85 | frontend-coverage 修复核销 ✅ | CI 11 FAIL 复核续：**4 失败全修**——① route-nav `/erp/sales-orders` 双 route 重复（旧 SalesOrderPage + redesign ErpSalesOrderRedesignPage 同 path，code 单复数不一致）→ 删旧版 route（routes 数组+定义）+ nav code 统一复数 `erp-sales-orders`（label/labelKey/desc/path 同步复数）+ GlobalLayoutV3 sidebar id 同步；② TopBar「Collapse sidebar」label 缺失（i18n 键 topbar.collapse_sidebar 无翻译 + 测试无 mock）→ 补 zh/en.json topbar 段 + 测试补 react-i18next mock（断言 zh 值 折叠侧边栏）；③ UserManagementPage breadcrumbs 断言过时（G1 面包屑由 AppShell 自动渲染，ListPageTemplate 不再渲染 header breadcrumbs）→ 测试改断言页面结构。复验：route-nav 11/11 PASS、tsc 0 error、i18n-quality 7-in-1 PASS、**frontend-coverage 全量 exit 0**。**CI 11 FAIL 累计 11/11 核销**（code-quality 半核销 naming PASS + api_dup 性能瓶颈登记待优化）。提交 `TBD` |
 | 2026-10-23 | v1.84 | frontend-test 核销 ✅ / coverage 暴露 4 失败 ⏳ | CI 11 FAIL 复核续：**frontend-test 核销**——`pnpm --filter topems-portal test:unit` 本机 133 files / 3042 tests 全 PASS（26.5s，CI 5 shard 单机全量等价）。**frontend-coverage 复现 CI FAIL**——vitest --coverage 4 个真实失败（非阈值，阈值仅 1%）：① route-nav-alignment `/erp/sales-orders` route 生成 code `erp-sales-orders` vs nav code `erp-sales-order`（单复数不一致，routes/v2 生成 code 覆盖 config code）；② 同路径跨模块重复（/erp/sales-orders ×2）；③ TopBar「Collapse sidebar」label 缺失（aria-label 为 i18n 键 `topbar.collapse_sidebar` 未解析）；④ UserManagementPage breadcrumbs（待单独定位）→ 登记修复批次，不擅改。CI 11 FAIL 已核销 10/11（code-quality 半核销：naming PASS + api_dup 性能瓶颈）；剩 frontend-coverage 4 失败修复 + code-quality api_dup。提交 `TBD` |
