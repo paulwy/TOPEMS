@@ -816,15 +816,61 @@ pub async fn delete_exam_record(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_contraindications(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Contraindication>>> {
-    tracing::debug!("Listing contraindications");
-    Json(ApiResponse::success(
-        Vec::<Contraindication>::new(),
-        "获取职业禁忌症列表成功",
-    ))
+    let tenant_filter = if claims.is_superuser {
+        String::from("deleted_at IS NULL")
+    } else {
+        let tid = claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil);
+        format!("deleted_at IS NULL AND tenant_id = '{}'", tid)
+    };
+    let sql = format!(
+        r#"SELECT id::text AS id, employee_id, employee_name, department, position,
+                  contraindication_type, description, diagnosed_at::text AS diagnosed_at,
+                  hospital, status, work_restriction, advised_position,
+                  follow_up_date::text AS follow_up_date, remarks,
+                  tenant_id::text AS tenant_id
+           FROM ehs.qa_ehs_contraindications WHERE {} ORDER BY diagnosed_at DESC NULLS LAST"#,
+        tenant_filter
+    );
+    let rows = match sqlx::query(&sql).fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list contraindications: {}", e);
+            return Json(ApiResponse::error(500, "职业禁忌症列表获取失败"));
+        }
+    };
+    let list: Vec<Contraindication> = rows
+        .iter()
+        .map(|r| Contraindication {
+            id: r.try_get("id").unwrap_or_default(),
+            employee_id: r.try_get("employee_id").unwrap_or_default(),
+            employee_name: r.try_get("employee_name").unwrap_or_default(),
+            department: r.try_get("department").ok().flatten(),
+            position: r.try_get("position").ok().flatten(),
+            contraindication_type: r.try_get("contraindication_type").unwrap_or_default(),
+            description: r.try_get("description").ok().flatten(),
+            diagnosed_at: r.try_get("diagnosed_at").ok().flatten(),
+            hospital: r.try_get("hospital").ok().flatten(),
+            status: r.try_get("status").unwrap_or_else(|_| "active".to_string()),
+            work_restriction: r.try_get("work_restriction").ok().flatten(),
+            advised_position: r.try_get("advised_position").ok().flatten(),
+            follow_up_date: r.try_get("follow_up_date").ok().flatten(),
+            remarks: r.try_get("remarks").ok().flatten(),
+            created_at: None,
+            updated_at: None,
+            tenant_id: Uuid::parse_str(&r.try_get::<String, _>("tenant_id").unwrap_or_default())
+                .unwrap_or_default(),
+        })
+        .collect();
+    tracing::debug!("Listed {} contraindications (real DB)", list.len());
+    Json(ApiResponse::success(list, "获取职业禁忌症列表成功"))
 }
 
 #[utoipa::path(
@@ -837,43 +883,15 @@ pub async fn list_contraindications(
 )]
 pub async fn create_contraindication(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    Json(req): Json<CreateContraindicationRequest>,
+    Json(_req): Json<CreateContraindicationRequest>,
 ) -> Json<ApiResponse<Contraindication>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating contraindication: {:?}", req);
-    Json(ApiResponse::success(
-        Contraindication {
-            id: uuid::Uuid::new_v4().to_string(),
-            employee_id: req.employee_id,
-            employee_name: req.employee_name,
-            department: req.department,
-            position: req.position,
-            contraindication_type: req.contraindication_type,
-            description: req.description,
-            diagnosed_at: req.diagnosed_at,
-            hospital: req.hospital,
-            status: "active".to_string(),
-            work_restriction: req.work_restriction,
-            advised_position: req.advised_position,
-            follow_up_date: req.follow_up_date,
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "职业禁忌症创建成功",
+    // ehs.qa_ehs_contraindications 为空表，写接口假装成功会制造假数据；诚实返回 501。
+    tracing::warn!("Contraindication create called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "职业禁忌症数据源尚未启用，写入操作暂不可用",
     ))
 }
 
@@ -886,44 +904,66 @@ pub async fn create_contraindication(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_contraindication(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Contraindication>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
+    let tenant_clause = if claims.is_superuser {
+        String::from("deleted_at IS NULL")
     } else {
-        claims
+        let tid = claims
             .tenant_id
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil);
+        format!("deleted_at IS NULL AND tenant_id = '{}'", tid)
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting contraindication: {}", id);
-    Json(ApiResponse::success(
-        Contraindication {
-            id,
-            employee_id: "EMP-001".to_string(),
-            employee_name: "测试员工".to_string(),
-            department: Some("生产部".to_string()),
-            position: Some("操作工".to_string()),
-            contraindication_type: "noise".to_string(),
-            description: Some("职业禁忌症（内存桩数据）".to_string()),
-            diagnosed_at: Some(chrono::Utc::now().to_rfc3339()),
-            hospital: Some("职业病防治院".to_string()),
-            status: "active".to_string(),
-            work_restriction: Some("限制接触噪声岗位".to_string()),
-            advised_position: Some("调岗至文员".to_string()),
-            follow_up_date: None,
-            remarks: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "获取职业禁忌症成功",
-    ))
+    let sql = format!(
+        r#"SELECT id::text AS id, employee_id, employee_name, department, position,
+                  contraindication_type, description, diagnosed_at::text AS diagnosed_at,
+                  hospital, status, work_restriction, advised_position,
+                  follow_up_date::text AS follow_up_date, remarks,
+                  tenant_id::text AS tenant_id
+           FROM ehs.qa_ehs_contraindications WHERE id = $1::uuid AND {}"#,
+        tenant_clause
+    );
+    let row = match sqlx::query(&sql)
+        .bind(&id)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "职业禁忌症不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get contraindication {}: {}", id, e);
+            return Json(ApiResponse::error(500, "职业禁忌症获取失败"));
+        }
+    };
+    let contra = Contraindication {
+        id: row.try_get("id").unwrap_or_default(),
+        employee_id: row.try_get("employee_id").unwrap_or_default(),
+        employee_name: row.try_get("employee_name").unwrap_or_default(),
+        department: row.try_get("department").ok().flatten(),
+        position: row.try_get("position").ok().flatten(),
+        contraindication_type: row.try_get("contraindication_type").unwrap_or_default(),
+        description: row.try_get("description").ok().flatten(),
+        diagnosed_at: row.try_get("diagnosed_at").ok().flatten(),
+        hospital: row.try_get("hospital").ok().flatten(),
+        status: row
+            .try_get("status")
+            .unwrap_or_else(|_| "active".to_string()),
+        work_restriction: row.try_get("work_restriction").ok().flatten(),
+        advised_position: row.try_get("advised_position").ok().flatten(),
+        follow_up_date: row.try_get("follow_up_date").ok().flatten(),
+        remarks: row.try_get("remarks").ok().flatten(),
+        created_at: None,
+        updated_at: None,
+        tenant_id: Uuid::parse_str(&row.try_get::<String, _>("tenant_id").unwrap_or_default())
+            .unwrap_or_default(),
+    };
+    tracing::debug!("Got contraindication from real DB: {}", id);
+    Json(ApiResponse::success(contra, "获取职业禁忌症成功"))
 }
 
 #[utoipa::path(
@@ -937,43 +977,15 @@ pub async fn get_contraindication(
 )]
 pub async fn update_contraindication(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-    Json(req): Json<CreateContraindicationRequest>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+    Json(_req): Json<CreateContraindicationRequest>,
 ) -> Json<ApiResponse<Contraindication>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating contraindication {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        Contraindication {
-            id,
-            employee_id: req.employee_id,
-            employee_name: req.employee_name,
-            department: req.department,
-            position: req.position,
-            contraindication_type: req.contraindication_type,
-            description: req.description,
-            diagnosed_at: req.diagnosed_at,
-            hospital: req.hospital,
-            status: "active".to_string(),
-            work_restriction: req.work_restriction,
-            advised_position: req.advised_position,
-            follow_up_date: req.follow_up_date,
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "职业禁忌症更新成功",
+    tracing::warn!("Contraindication update called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "职业禁忌症数据源尚未启用，更新操作暂不可用",
     ))
 }
 
@@ -989,10 +1001,13 @@ pub async fn delete_contraindication(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting contraindication: {}", id);
-    Json(ApiResponse::success((), "职业禁忌症删除成功"))
+    tracing::warn!("Contraindication delete called but data source not yet enabled");
+    Json(ApiResponse::error(
+        501,
+        "职业禁忌症数据源尚未启用，删除操作暂不可用",
+    ))
 }
 
 #[utoipa::path(
