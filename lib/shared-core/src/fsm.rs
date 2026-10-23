@@ -99,9 +99,14 @@ pub struct FsmDef {
 impl FsmDef {
     /// 校验 `from -> to` 迁移是否合法。
     ///
-    /// 等价于 `check_pair(from, to, self.transitions, self.terminal, self.states)`。
+    /// 含审批迁移（`approval_transitions`）：审批迁移本身合法，是否需走审批流程由
+    /// `requires_approval` 单独判定。修复：此前仅查 `transitions`，导致审核类 handler
+    /// （如 qms audit: pending_audit→completed）误判"当前状态不允许此操作"（400）。
     pub fn can_transition(&self, from: &str, to: &str) -> Result<(), FsmError> {
-        check_pair(from, to, self.transitions, self.terminal, self.states)
+        match check_pair(from, to, self.transitions, self.terminal, self.states) {
+            Ok(()) => Ok(()),
+            Err(_) => check_pair(from, to, self.approval_transitions, self.terminal, self.states),
+        }
     }
 
     /// 判断 `from -> to` 是否需要审批。

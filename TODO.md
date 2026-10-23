@@ -3427,6 +3427,13 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **数据清理**：qms 检验 2 条 + audits 4 条 + lims 模拟 1 条，全 0 残留
 - 活文档变更日志 v1.102 登记
 
+## v1.106 FSM approval 迁移语义修复（2026-10-23）
+- [x] **实证缺陷**：qms 检验 audit（pending_audit→completed）实跑 400"当前状态不允许此操作"——`FsmDef::can_transition` 仅查 `transitions`、不含 `approval_transitions`（pending_audit→completed/rejected 定义在 approval_transitions）；`fsm_test.rs:9` 断言（is_ok）与实现矛盾
+- [x] **修复**：`lib/shared-core/src/fsm.rs` can_transition 合并 approval_transitions（审批迁移本身合法，需审批由 `requires_approval` 单独判定）
+- [x] **验证**：shared-core 6 + qms lib **262 passed**；BFF 重启后层2 G audit **200**（DB completed + audit 记录链 assign/submit/approve 完整）、QmsInspectionCompleted 事件=该单
+- [x] **数据清理**：qms 2 单 + audits 6 条 → 0 残留；QmsToLimsSyncTriggered/LimsToEhsTriggered 按条件联动（全合格单不触发）如实标注
+- 活文档变更日志 v1.106 登记
+
 ## v1.101 mdm_crud_integration 13 failed 核销（2026-10-23）
 - [x] **根因实证**：`make_test_state` dummy 连接池（接真表前"handler 不实际访问数据库"夹具遗留）——quality_v51 接真表后 handler 实际访问 DB → 全部 DB 型 handler 500（assertion left=500 right=200），list/check 空结果断言失败
 - [x] **修复**：`make_test_state` 连接串改读 `DATABASE_URL`（未设置回退 dummy 保持编译期可用）
