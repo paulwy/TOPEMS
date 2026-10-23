@@ -3260,7 +3260,10 @@ export function ListPageTemplate<
   return (
     <Box {...props}>
       {/* 页面头部：标题、操作按钮（G1: 面包屑统一由 AppShell 自动面包屑渲染） */}
-      {title && (
+      {(title ||
+        primaryActionButton ||
+        (actions && actions.length > 0) ||
+        (effectiveActions && effectiveActions.length > 0)) && (
         <Box
           sx={{
             px: { xs: 2, sm: 3 },
