@@ -234,3 +234,60 @@ python3 scripts/mcp\_stdio\_e2e\_test.py
 * **匿名保护（P1-1）**：stdio 未注入 `MCP_STDIO_SUBJECT` 时业务工具一律 -32001（fail-closed），仅 `system.*` 可用；注入身份后工具级权限检查（roles → required_permission）生效，admin/super_admin 拥有全部权限
 
 * 生产环境建议通过 `MCP_TOOL_PERMISSIONS` 环境变量限制敏感工具（如 create\_voucher /create\_purchase\_order）
+
+---
+
+## 外部 MCP 消费（DSH 作为 Client）——Phase 1 POC（2026-10-24）
+
+DSH 除向外部 AI IDE 暴露工具面（上述 server 角色）外，还可作为 **MCP Client** 消费外部
+MCP server 的工具，挂入共享 ToolRegistry 后由 AgentOrchestrator / 外部 AI IDE 透明调用。
+
+### 架构
+
+```text
+外部 MCP server (stdio)
+        │  spawn 子进程 + NDJSON JSON-RPC（initialize / tools/list / tools/call）
+        ▼
+McpClient (svc/ai/src/dsh/mcp/client.rs)
+        │  握手 → 工具探测 → 调用转发（Arc<Mutex<Option<McpClient>>> 串行化单管道）
+        ▼
+register_external_tools (svc/ai/src/dsh/mcp/external.rs)
+        │  工具以 ext.<server>.<tool> 命名挂入共享 ToolRegistry
+        ▼
+DSH AgentOrchestrator / 外部 AI IDE（统一工具面，零改动）
+```
+
+### 配置（白名单，fail-open）
+
+环境变量 `MCP_EXTERNAL_SERVERS`，JSON 数组（缺失/空/解析失败 → 不启用，仅 warn 不阻断启动）：
+
+```json
+[
+  {
+    "name": "toy",
+    "command": "python3",
+    "args": ["scripts/tools/mcp_mock_external_server.py"],
+    "env": [{ "key": "KEY", "value": "VALUE" }]
+  }
+]
+```
+
+* `name`：命名空间前缀，工具挂载名为 `ext.<name>.<tool>`
+* `command`/`args`：子进程启动命令（stdio 传输）
+* `env`：可选，注入子进程环境
+
+### 测试
+
+* 单元：`dsh::mcp::client`（2）+ `dsh::mcp::external`（3）
+* 集成：`cargo test -p topems-ai --test mcp_external_client_integration`（4/4）——真实 spawn
+  mock 外部 server（`scripts/tools/mcp_mock_external_server.py`，greet/echo 2 工具），覆盖
+  握手/探测/调用、注册挂载透明调用、不可达 server 跳过（fail-open）、空配置 noop
+
+### 安全模型与边界（POC）
+
+* **白名单**：仅显式配置的 server 会被连接，无自动发现
+* **命名空间隔离**：`ext.<server>.<tool>` 避免与本地 66 工具命名冲突
+* **不可信结果**：外部工具输出默认透传；Phase 2 计划叠加 `source=external` 标记 + 结果消毒
+  （复用 sensitive_output 机制）+ 审计日志
+* **传输**：Phase 1 仅 stdio（子进程沙箱天然隔离）；HTTP/SSE 传输与第三方开放属 Phase 3（需产品决策）
+* **日志透传**：外部 server 的 stderr 透传主进程 stderr，便于排障

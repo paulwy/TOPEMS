@@ -9,10 +9,10 @@ use std::sync::Arc;
 
 use crate::dsh::mcp::{
     create_mcp_routes, register_aps_tools, register_bi_tools, register_crm_tools,
-    register_cs_tools, register_ehs_tools, register_erp_tools, register_finance_tools,
-    register_hr_tools, register_iot_tools, register_lims_tools, register_mes_tools,
-    register_oa_tools, register_pm_tools, register_qms_tools, register_scm_tools,
-    register_wms_tools, McpServer,
+    register_cs_tools, register_ehs_tools, register_erp_tools, register_external_tools,
+    register_finance_tools, register_hr_tools, register_iot_tools, register_lims_tools,
+    register_mes_tools, register_oa_tools, register_pm_tools, register_qms_tools,
+    register_scm_tools, register_wms_tools, McpServer,
 };
 
 use axum::{
@@ -132,10 +132,18 @@ pub fn create_routes(
         // Phase D：嵌入形态（HTTP /mcp）与 stdio 二进制复用同一资源注册表，
         // 修复 resources/list 双形态漂移——此前嵌入形态漏注册，resources/list 返回空。
         server_clone.register_resources().await;
+        // DSH 消费外部 MCP（Phase 1 POC）：MCP_EXTERNAL_SERVERS 白名单配置，
+        // 工具以 ext.<server>.<tool> 挂入共享 ToolRegistry，AgentOrchestrator 透明可调。
+        let external_count = register_external_tools(
+            &server_clone,
+            &std::env::var("MCP_EXTERNAL_SERVERS").unwrap_or_default(),
+        )
+        .await;
         tracing::info!(
-            "MCP Server tools registered: {} tools total; resources registered: {} total",
+            "MCP Server tools registered: {} tools total; resources registered: {} total; external tools: {}",
             server_clone.tool_registry().len().await,
-            server_clone.resource_registry().len().await
+            server_clone.resource_registry().len().await,
+            external_count
         );
     });
 

@@ -18,9 +18,10 @@ use topems_ai::dsh::mcp::security::AuthenticatedUser;
 use topems_ai::dsh::mcp::stdio::run_stdio;
 use topems_ai::dsh::mcp::{
     register_aps_tools, register_bi_tools, register_crm_tools, register_cs_tools,
-    register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools,
-    register_iot_tools, register_lims_tools, register_mes_tools, register_oa_tools,
-    register_pm_tools, register_qms_tools, register_scm_tools, register_wms_tools, McpServer,
+    register_ehs_tools, register_erp_tools, register_external_tools, register_finance_tools,
+    register_hr_tools, register_iot_tools, register_lims_tools, register_mes_tools,
+    register_oa_tools, register_pm_tools, register_qms_tools, register_scm_tools,
+    register_wms_tools, McpServer,
 };
 
 /// `MCP_STDIO_SUBJECT` 环境变量格式：JSON 对象 `{ user_id, tenant_id, roles }`
@@ -86,6 +87,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     server.register_resources().await;
     let resource_count = server.resource_registry().len().await;
     tracing::info!("Resources registered: {} resources total", resource_count);
+
+    // 3.5 DSH 消费外部 MCP（Phase 1 POC）：MCP_EXTERNAL_SERVERS 白名单配置
+    let external_count = register_external_tools(
+        &server,
+        &std::env::var("MCP_EXTERNAL_SERVERS").unwrap_or_default(),
+    )
+    .await;
+    tracing::info!("External tools registered: {external_count} total");
 
     let tool_count = server.tool_registry().len().await;
     tracing::info!("All tools registered: {} tools total", tool_count);

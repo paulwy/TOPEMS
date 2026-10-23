@@ -10,6 +10,8 @@
 //! ├── mod.rs     # MCP 模块入口
 //! ├── server.rs  # McpServer 核心（请求路由、初始化管理）
 //! ├── handler.rs # axum handler（HTTP/SSE 传输）
+//! ├── client.rs  # McpClient（stdio 传输，DSH 消费外部 MCP server）
+//! ├── external.rs# 外部 MCP server 注册器（ext.<server>.<tool> 挂入 ToolRegistry）
 //! └── tools/     # ToolRegistry + 业务工具
 //!     ├── mod.rs  # ToolRegistry（工具注册和执行）
 //!     ├── crm.rs  # CRM 业务工具
@@ -18,6 +20,8 @@
 
 #![allow(unused_imports)]
 
+pub mod client;
+pub mod external;
 pub mod handler;
 pub mod resources;
 pub mod security;
@@ -25,6 +29,7 @@ pub mod server;
 pub mod stdio;
 pub mod tools;
 
+pub use external::register_external_tools;
 pub use handler::create_mcp_routes;
 pub use server::{McpServer, ServerState};
 pub use tools::{
