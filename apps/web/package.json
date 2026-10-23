@@ -102,7 +102,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.21",
     "docx-preview": "^0.3.7",
-    "dompurify": "^3.4.16",
+    "dompurify": "^3.4.17",
     "eventemitter3": "^5.0.4",
     "exceljs": "^4.4.0",
     "i18next": "^26.3.1",
