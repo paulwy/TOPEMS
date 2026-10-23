@@ -3420,6 +3420,13 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **nginx 核查**：brew nginx -t 语法 OK；仓库 `deploy/nginx/topems.conf` upstream=localhost:8099 + map 路由表已随双轨合一关闭（残留 0，v1.69 模板合规延续）
 - [x] **不可本机实跑项（如实标注）**：install.sh/update.sh/rollback.sh 依赖 systemd/systemctl（macOS 无；容器内已验 EXIT=0）；生产 nginx reload（目标机）；Windows 部署（WSL2）——留生产机批
 
+## v1.102 层2 G 质量链实测（2026-10-23）
+- [x] **qms 检验全流程**：create → assign → submit（合格/不合格各 1 条）→ **QmsInspectionCompleted 事件落流**（最新条含检验 id）
+- [x] **lims 联动数据层就绪**：`lims.lims_inspection_records` 表结构/RLS/UNIQUE 与 handler INSERT 完全对齐；模拟消费 INSERT（ON CONFLICT 幂等）成功
+- [ ] **观察项（架构，生产拓扑确认）**：lims/integration `start_event_subscribers` 仅在独立服务 main 启动，BFF 单体未挂载 → 联动不自动落库——双轨合一遗留，待生产机/单体化时挂载消费循环
+- [x] **数据清理**：qms 检验 2 条 + audits 4 条 + lims 模拟 1 条，全 0 残留
+- 活文档变更日志 v1.102 登记
+
 ## v1.101 mdm_crud_integration 13 failed 核销（2026-10-23）
 - [x] **根因实证**：`make_test_state` dummy 连接池（接真表前"handler 不实际访问数据库"夹具遗留）——quality_v51 接真表后 handler 实际访问 DB → 全部 DB 型 handler 500（assertion left=500 right=200），list/check 空结果断言失败
 - [x] **修复**：`make_test_state` 连接串改读 `DATABASE_URL`（未设置回退 dummy 保持编译期可用）
