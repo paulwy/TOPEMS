@@ -3413,4 +3413,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **验证**：BFF 8099 `GET /api/core/tenant/{id}/analytics/usage` 200（unified-core 消费路径正常）+ health 200 + contract-gate 0 缺口
 - 活文档变更日志 v1.99 登记
 
+## v1.100 本机等价部署实跑（2026-10-23）
+- [x] **smoke-prod.sh 本机实跑 PASS（20 通过 / 0 失败）**：`SMOKE_ADMIN=admin SMOKE_PASS=admin123 bash scripts/deploy/smoke-prod.sh --base http://127.0.0.1:8099`——层1A 登录+users/me 200、层1B 15 域 /health 全 200（core/erp/hrm/finance/mes/qms/lims/ehs/bi/pm/portal/wms/scm/srm/rd）、层1C BI test-sql/query 路由可达、层1D 插件 /health 200
+- [x] **层2 E 财务借贷平衡实测**：POST /api/finance/vouchers 建借贷平衡凭证（记2026100001）→ GET 查询 debit=credit=10000 **balanced=True**（decimal 无漂移）→ DELETE 200 + DB 0 行（VoucherType 枚举为小写 general/payment/receipt/transfer）
+- [x] **层2 F 工单下达事件化实测**：POST /api/mes/orders 建工单（MO202610233424）→ PUT /orders/{id}/release **status=released** → 事件链验证：`topems:stream:events:ProductionOrderCreated` 最新条 = 该工单（payload 完整 event_id/source=topems-mes/order_no/occurred_at）→ DB 清理 0 行（released 态 API 拒绝删除=业务约束正确，测试数据按惯例 DB 直删）
+- [x] **nginx 核查**：brew nginx -t 语法 OK；仓库 `deploy/nginx/topems.conf` upstream=localhost:8099 + map 路由表已随双轨合一关闭（残留 0，v1.69 模板合规延续）
+- [x] **不可本机实跑项（如实标注）**：install.sh/update.sh/rollback.sh 依赖 systemd/systemctl（macOS 无；容器内已验 EXIT=0）；生产 nginx reload（目标机）；Windows 部署（WSL2）——留生产机批
+
+
 
