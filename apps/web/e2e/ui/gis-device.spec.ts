@@ -26,8 +26,8 @@ async function pageLoginAsSuperAdmin(page: import('@playwright/test').Page): Pro
  * 证明接的是真数据。
  *
  * 注意：该页非 CrudPage，为 React useQuery 自管理表格；无「查看」详情弹窗，
- * 详情以行内首个图标按钮（编辑 Pencil）打开的自建 Dialog 为准，TextField 无
- * name 属性、须按 label（设备编码/设备名称）定位并断言 input value。
+ * 详情以行内编辑按钮（data-testid=device-edit-btn，Pencil）打开的自建 Dialog
+ * 为准，TextField 无 name 属性、须按 label（设备编码/设备名称）定位并断言 input value。
  *
  * 前置：真后端栈已起（scripts/dev/run-e2e-stack.sh login），API_URL 指向 8099。
  */
@@ -87,9 +87,12 @@ test.describe('GIS 设备注册数据流（真后端断言）', () => {
     await navigateTo(page, '/gis/devices');
     await expect(page.locator('body')).toContainText(device.device_code, { timeout: 10000 });
 
-    // 打开真记录所在行的编辑弹窗（行内操作首个图标按钮为编辑 Pencil，
+    // 打开真记录所在行的编辑弹窗（行内操作编辑按钮 device-edit-btn，
     // 自建 Dialog + TextField，openEdit 把 row 键填入 form，断言 input value）
-    await page.locator('tr', { hasText: device.device_code }).getByRole('button').first().click();
+    await page
+      .locator('tr', { hasText: device.device_code })
+      .getByTestId('device-edit-btn')
+      .click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible({ timeout: 5000 });
     await expect(dialog.getByLabel('设备编码')).toHaveValue(device.device_code, { timeout: 5000 });
