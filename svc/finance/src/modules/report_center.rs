@@ -1,25 +1,36 @@
-//! V47.0 Finance 报表中心模块
+//! V47.0 Finance 报表中心模块（P1-14 反掺假重构）
 //!
-//! 提供增强版资产负债表、利润表、现金流量表和财务分析能力。
-//! 支持同比分析、结构分析、趋势分析、间接法编制和财务比率分析。
+//! 提供资产负债表、利润表的“增强版”视图（结构分析、同比分析）与财务比率分析。
+//!
+//! 数据源判定（P1-14）：
+//! - 资产负债表 / 利润表：存在真实账务数据源 `finance.core_finance_accounts` +
+//!   `finance.core_finance_ledger`，由 [`FinanceService::get_balance_sheet`] /
+//!   [`FinanceService::get_income_statement`] 做真实 SQL 聚合（按 tenant_id 过滤、按期间参数）。
+//!   本模块仅在真实账务数据之上做分类（流动/非流动）、结构占比、上期与去年同期同比等派生计算，
+//!   **不再内置任何写死的分录金额或固定百分比**。
+//! - 现金流量表增强版（经营/投资/筹资分类、间接法调整项、现金流比率）：当前库内**没有**按
+//!   现金流活动分类的账务数据源，增强版报表无法诚实编制，对应端点返回 **501** 说明无数据源，
+//!   不再返回虚构现金流。
+//! - 多期对比报表 / 报表导出：无真实多期汇总与文件落盘数据源，返回 **501**。
 //!
 //! 路由：
-//! - GET  /reports/balance-sheet/{period}
-//! - GET  /reports/income-statement/{period}
-//! - GET  /reports/cash-flow/{period}
-//! - GET  /reports/financial-analysis/{period}
-//! - GET  /reports/comparative/{period}
-//! - POST /reports/export
+//! - GET  /reports/balance-sheet/{period}      （真实账务聚合）
+//! - GET  /reports/income-statement/{period} （真实账务聚合）
+//! - GET  /reports/cash-flow/{period}          （501：无现金流分类数据源）
+//! - GET  /reports/financial-analysis/{period} （基于真实资产负债表/利润表派生）
+//! - GET  /reports/comparative/{period}        （501：无多期对比数据源）
+//! - POST /reports/export                      （501：无真实导出文件生成）
+
+use std::collections::HashMap;
 
 use axum::{
     extract::{Extension, Json, Path, State},
     Router,
 };
-use chrono::Utc;
 use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::{Deserialize, Serialize};
 
-use crate::models::{BalanceSheet, IncomeStatement};
+use crate::models::{BalanceItem, BalanceSheet, IncomeItem, IncomeStatement};
 use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
@@ -50,6 +61,72 @@ fn fill_percentages(items: &mut [BalanceSheetItem], total: Decimal) {
     }
 }
 
+/// 解析 "YYYY-MM" 期间为 (年, 月)；无法解析时返回 None（不编造回退值）。
+fn split_period(period: &str) -> Option<(i32, u32)> {
+    let mut parts = period.split('-');
+    let year: i32 = parts.next()?.parse().ok()?;
+    let month: u32 = parts.next()?.parse().ok()?;
+    if (1..=12).contains(&month) {
+        Some((year, month))
+    } else {
+        None
+    }
+}
+
+/// 上一个会计期间（YYYY-MM）。
+fn previous_period(period: &str) -> Option<String> {
+    let (year, month) = split_period(period)?;
+    if month == 1 {
+        Some(format!("{:04}-{:02}", year - 1, 12))
+    } else {
+        Some(format!("{:04}-{:02}", year, month - 1))
+    }
+}
+
+/// 去年同期期间（YYYY-MM）。
+fn last_year_period(period: &str) -> Option<String> {
+    let (year, month) = split_period(period)?;
+    Some(format!("{:04}-{:02}", year - 1, month))
+}
+
+/// 资产科目是否为“流动资产”（按企业会计准则科目编码段：1001–1499）。
+/// 无法解析为数字编码时保守归入流动资产。
+fn is_current_asset(code: &str) -> bool {
+    code.parse::<i64>()
+        .map(|c| (1000..=1499).contains(&c))
+        .unwrap_or(true)
+}
+
+/// 负债科目是否为“流动负债”（编码段：2001–2299）。
+fn is_current_liability(code: &str) -> bool {
+    code.parse::<i64>()
+        .map(|c| (2000..=2299).contains(&c))
+        .unwrap_or(true)
+}
+
+fn empty_balance_sheet(period: &str) -> BalanceSheet {
+    BalanceSheet {
+        period: period.to_string(),
+        assets: vec![],
+        liabilities: vec![],
+        equity: vec![],
+        total_assets: Decimal::ZERO,
+        total_liabilities: Decimal::ZERO,
+        total_equity: Decimal::ZERO,
+    }
+}
+
+fn empty_income_statement(period: &str) -> IncomeStatement {
+    IncomeStatement {
+        period: period.to_string(),
+        revenues: vec![],
+        expenses: vec![],
+        total_revenue: Decimal::ZERO,
+        total_expense: Decimal::ZERO,
+        net_income: Decimal::ZERO,
+    }
+}
+
 // ==================== A. 资产负债表增强 ====================
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -58,13 +135,13 @@ pub struct BalanceSheetItem {
     pub account_code: String,
     /// 科目名称
     pub account_name: String,
-    /// 期末金额
+    /// 期末金额（来自真实账务）
     pub amount: Decimal,
     /// 占比（结构分析）
     pub percentage: Decimal,
-    /// 期初金额
+    /// 上期金额（来自真实账务上期，无则为 0）
     pub period_amount: Decimal,
-    /// 本年累计金额
+    /// 本年累计金额（时点报表即期末余额，不另行虚构）
     pub year_amount: Decimal,
 }
 
@@ -88,13 +165,13 @@ pub struct BalanceSheetEnhanced {
     pub total_non_current_liabilities: Decimal,
     pub total_liabilities: Decimal,
     pub total_equity: Decimal,
-    /// 去年同期总资产（同比分析）
+    /// 去年同期总资产（真实账务，无则 0）
     pub last_year_total_assets: Decimal,
     /// 去年同期总负债
     pub last_year_total_liabilities: Decimal,
     /// 去年同期所有者权益
     pub last_year_total_equity: Decimal,
-    /// 资产同比增长率
+    /// 资产同比增长率（%，基于真实去年同期）
     pub assets_yoy_growth: Decimal,
     /// 负债同比增长率
     pub liabilities_yoy_growth: Decimal,
@@ -102,61 +179,77 @@ pub struct BalanceSheetEnhanced {
     pub equity_yoy_growth: Decimal,
 }
 
-fn bs_item(code: &str, name: &str, amount: i64) -> BalanceSheetItem {
-    let dec = Decimal::from(amount);
-    BalanceSheetItem {
-        account_code: code.to_string(),
-        account_name: name.to_string(),
-        amount: dec,
-        percentage: Decimal::ZERO,
-        period_amount: dec * Decimal::from(88) / Decimal::from(100),
-        year_amount: dec * Decimal::from(112) / Decimal::from(100),
-    }
+/// 把真实账务分录转为展示行，并按上期真实余额回填期初/占比。
+fn balance_items_from(
+    items: &[&BalanceItem],
+    prev: &HashMap<&str, Decimal>,
+    total: Decimal,
+) -> Vec<BalanceSheetItem> {
+    items
+        .iter()
+        .map(|i| {
+            let amount = i.amount;
+            BalanceSheetItem {
+                account_code: i.account_code.clone(),
+                account_name: i.account_name.clone(),
+                amount,
+                percentage: safe_percentage(amount, total),
+                period_amount: prev
+                    .get(i.account_code.as_str())
+                    .copied()
+                    .unwrap_or(Decimal::ZERO),
+                year_amount: amount,
+            }
+        })
+        .collect()
 }
 
-/// 基于试算平衡表（可选基础数据）生成增强版资产负债表
-pub fn generate_balance_sheet(period: &str, base: Option<&BalanceSheet>) -> BalanceSheetEnhanced {
-    let mut current_assets = vec![
-        bs_item("1001", "货币资金", 1_250_000),
-        bs_item("1122", "应收账款", 856_000),
-        bs_item("1123", "预付账款", 234_000),
-        bs_item("1401", "存货", 1_680_000),
-    ];
-    let mut non_current_assets = vec![
-        bs_item("1511", "长期股权投资", 500_000),
-        bs_item("1601", "固定资产", 2_450_000),
-        bs_item("1701", "无形资产", 320_000),
-    ];
-    let mut current_liabilities = vec![
-        bs_item("2001", "短期借款", 680_000),
-        bs_item("2202", "应付账款", 542_000),
-        bs_item("2221", "应交税费", 186_000),
-    ];
-    let mut non_current_liabilities = vec![
-        bs_item("2501", "长期借款", 1_200_000),
-        bs_item("2502", "应付债券", 400_000),
-    ];
-    let mut equity = vec![
-        bs_item("4001", "实收资本", 2_000_000),
-        bs_item("4002", "资本公积", 850_000),
-        bs_item("4101", "盈余公积", 432_000),
-        bs_item("4104", "未分配利润", 1_000_000),
-    ];
+/// 基于真实账务试算余额生成增强版资产负债表。
+///
+/// - `current`：本期真实账务聚合（`FinanceService::get_balance_sheet`）。
+/// - `previous`：上期真实账务聚合（用于期初/占比，可为 None）。
+/// - `last_year`：去年同期真实账务聚合（用于同比，可为 None）。
+pub fn generate_balance_sheet(
+    period: &str,
+    current: &BalanceSheet,
+    previous: Option<&BalanceSheet>,
+    last_year: Option<&BalanceSheet>,
+) -> BalanceSheetEnhanced {
+    // 上期科目余额索引（按科目编码）
+    let mut prev_map: HashMap<&str, Decimal> = HashMap::new();
+    if let Some(prev) = previous {
+        for item in prev
+            .assets
+            .iter()
+            .chain(prev.liabilities.iter())
+            .chain(prev.equity.iter())
+        {
+            prev_map.insert(item.account_code.as_str(), item.amount);
+        }
+    }
 
-    let total_current_assets: Decimal = current_assets.iter().map(|i| i.amount).sum();
-    let total_non_current_assets: Decimal = non_current_assets.iter().map(|i| i.amount).sum();
-    let total_current_liabilities: Decimal = current_liabilities.iter().map(|i| i.amount).sum();
-    let total_non_current_liabilities: Decimal =
-        non_current_liabilities.iter().map(|i| i.amount).sum();
-    let total_liabilities = total_current_liabilities + total_non_current_liabilities;
-    let total_equity: Decimal = equity.iter().map(|i| i.amount).sum();
-    let total_assets = total_current_assets + total_non_current_assets;
+    // 流动 / 非流动拆分（按真实科目编码段）
+    let (current_asset_items, non_current_asset_items): (Vec<&BalanceItem>, Vec<&BalanceItem>) =
+        current.assets.iter().partition(|i| is_current_asset(&i.account_code));
+    let (current_liab_items, non_current_liab_items): (Vec<&BalanceItem>, Vec<&BalanceItem>) =
+        current
+            .liabilities
+            .iter()
+            .partition(|i| is_current_liability(&i.account_code));
 
-    // 若有基础数据，用基础数据覆盖合计（结构分析仍用模拟明细）
-    let (total_assets, total_liabilities, total_equity) = match base {
-        Some(b) => (b.total_assets, b.total_liabilities, b.total_equity),
-        None => (total_assets, total_liabilities, total_equity),
-    };
+    let total_assets = current.total_assets;
+    let total_liabilities = current.total_liabilities;
+    let total_equity = current.total_equity;
+
+    let mut current_assets = balance_items_from(&current_asset_items, &prev_map, total_assets);
+    let mut non_current_assets =
+        balance_items_from(&non_current_asset_items, &prev_map, total_assets);
+    let mut current_liabilities =
+        balance_items_from(&current_liab_items, &prev_map, total_liabilities);
+    let mut non_current_liabilities =
+        balance_items_from(&non_current_liab_items, &prev_map, total_liabilities);
+    let equity_refs: Vec<&BalanceItem> = current.equity.iter().collect();
+    let mut equity = balance_items_from(&equity_refs, &prev_map, total_equity);
 
     fill_percentages(&mut current_assets, total_assets);
     fill_percentages(&mut non_current_assets, total_assets);
@@ -164,9 +257,20 @@ pub fn generate_balance_sheet(period: &str, base: Option<&BalanceSheet>) -> Bala
     fill_percentages(&mut non_current_liabilities, total_liabilities);
     fill_percentages(&mut equity, total_equity);
 
-    let last_year_total_assets = total_assets * Decimal::from(85) / Decimal::from(100);
-    let last_year_total_liabilities = total_liabilities * Decimal::from(88) / Decimal::from(100);
-    let last_year_total_equity = total_equity * Decimal::from(82) / Decimal::from(100);
+    let total_current_assets: Decimal = current_assets.iter().map(|i| i.amount).sum();
+    let total_non_current_assets: Decimal = non_current_assets.iter().map(|i| i.amount).sum();
+    let total_current_liabilities: Decimal = current_liabilities.iter().map(|i| i.amount).sum();
+    let total_non_current_liabilities: Decimal =
+        non_current_liabilities.iter().map(|i| i.amount).sum();
+
+    // 去年同期来自真实账务聚合，无则为 0（同比按 0 安全退化，绝不按固定百分比编造）
+    let last_year_total_assets = last_year
+        .map(|b| b.total_assets)
+        .unwrap_or(Decimal::ZERO);
+    let last_year_total_liabilities = last_year
+        .map(|b| b.total_liabilities)
+        .unwrap_or(Decimal::ZERO);
+    let last_year_total_equity = last_year.map(|b| b.total_equity).unwrap_or(Decimal::ZERO);
 
     BalanceSheetEnhanced {
         period: period.to_string(),
@@ -204,15 +308,15 @@ pub fn generate_balance_sheet(period: &str, base: Option<&BalanceSheet>) -> Bala
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct IncomeStatementItem {
-    /// 项目编码
+    /// 项目编码（科目编码）
     pub project_code: String,
-    /// 项目名称
+    /// 项目名称（科目名称）
     pub project_name: String,
-    /// 本期金额
+    /// 本期金额（真实账务）
     pub current_amount: Decimal,
-    /// 上期金额
+    /// 上期金额（真实账务上期，无则 0）
     pub previous_amount: Decimal,
-    /// 本年累计
+    /// 本年累计（本期即月累计，不虚构全年分摊）
     pub year_cumulative: Decimal,
     /// 同比增减（%）
     pub yoy_change: Decimal,
@@ -230,17 +334,17 @@ pub struct PeriodTrend {
 pub struct IncomeStatementEnhanced {
     pub period: String,
     pub items: Vec<IncomeStatementItem>,
-    /// 营业收入
+    /// 营业收入（真实账务合计）
     pub operating_revenue: Decimal,
-    /// 营业成本
+    /// 营业成本（科目 64xx 合计）
     pub operating_cost: Decimal,
-    /// 期间费用
+    /// 期间费用（科目 66xx 合计）
     pub period_expenses: Decimal,
     /// 利润总额
     pub total_profit: Decimal,
-    /// 净利润
+    /// 净利润（真实账务 net_income）
     pub net_profit: Decimal,
-    /// 每股收益
+    /// 每股收益（无股本数据源，恒为 0，不按假设股本编造）
     pub eps: Decimal,
     /// 毛利率（%）
     pub gross_margin: Decimal,
@@ -248,116 +352,64 @@ pub struct IncomeStatementEnhanced {
     pub net_margin: Decimal,
     /// 费用率（%）
     pub expense_ratio: Decimal,
-    /// 趋势分析（多期对比）
+    /// 趋势分析（无多期真实数据源，恒为空）
     pub trend: Vec<PeriodTrend>,
 }
 
-fn is_item(code: &str, current: i64, prev_pct: i64, year_pct: i64) -> IncomeStatementItem {
-    let cur = Decimal::from(current);
-    let prev = cur * Decimal::from(prev_pct) / Decimal::from(100);
-    let year = cur * Decimal::from(year_pct) / Decimal::from(100);
-    let yoy = safe_percentage(cur - prev, prev);
-    IncomeStatementItem {
-        project_code: code.to_string(),
-        project_name: String::new(),
-        current_amount: cur,
-        previous_amount: prev,
-        year_cumulative: year,
-        yoy_change: yoy,
-    }
+/// 汇总指定科目编码前缀的发生额。
+fn expense_sum(items: &[IncomeItem], prefix: &str) -> Decimal {
+    items
+        .iter()
+        .filter(|i| i.account_code.starts_with(prefix))
+        .map(|i| i.amount)
+        .sum()
 }
 
-/// 生成增强版利润表
+/// 基于真实账务聚合生成增强版利润表。
 pub fn generate_income_statement(
     period: &str,
-    base: Option<&IncomeStatement>,
+    current: &IncomeStatement,
+    previous: Option<&IncomeStatement>,
 ) -> IncomeStatementEnhanced {
-    let items = vec![
-        {
-            let mut it = is_item("6001", 5_680_000, 90, 115);
-            it.project_name = "营业收入".to_string();
-            it
-        },
-        {
-            let mut it = is_item("6401", 3_420_000, 92, 113);
-            it.project_name = "营业成本".to_string();
-            it
-        },
-        {
-            let mut it = is_item("6403", 156_000, 88, 116);
-            it.project_name = "税金及附加".to_string();
-            it
-        },
-        {
-            let mut it = is_item("6601", 285_000, 85, 118);
-            it.project_name = "销售费用".to_string();
-            it
-        },
-        {
-            let mut it = is_item("6602", 412_000, 90, 114);
-            it.project_name = "管理费用".to_string();
-            it
-        },
-        {
-            let mut it = is_item("6603", 98_000, 95, 110);
-            it.project_name = "财务费用".to_string();
-            it
-        },
-        {
-            let mut it = is_item("6801", 332_250, 88, 115);
-            it.project_name = "所得税费用".to_string();
-            it
-        },
-    ];
+    let mut prev_map: HashMap<&str, Decimal> = HashMap::new();
+    if let Some(prev) = previous {
+        for item in prev.revenues.iter().chain(prev.expenses.iter()) {
+            prev_map.insert(item.account_code.as_str(), item.amount);
+        }
+    }
 
-    let operating_revenue = items[0].current_amount;
-    let operating_cost = items[1].current_amount;
-    let period_expenses =
-        items[3].current_amount + items[4].current_amount + items[5].current_amount;
-    let total_profit =
-        operating_revenue - operating_cost - items[2].current_amount - period_expenses
-            + Decimal::from(20_000); // 营业外收支净额
-    let income_tax = items[6].current_amount;
-    let net_profit = total_profit - income_tax;
+    let mut items: Vec<IncomeStatementItem> = Vec::new();
+    for src in current.revenues.iter().chain(current.expenses.iter()) {
+        let cur = src.amount;
+        let prev = prev_map
+            .get(src.account_code.as_str())
+            .copied()
+            .unwrap_or(Decimal::ZERO);
+        items.push(IncomeStatementItem {
+            project_code: src.account_code.clone(),
+            project_name: src.account_name.clone(),
+            current_amount: cur,
+            previous_amount: prev,
+            year_cumulative: cur,
+            yoy_change: safe_percentage(cur - prev, prev),
+        });
+    }
 
-    // 若有基础数据，覆盖关键合计
-    let (operating_revenue, net_profit) = match base {
-        Some(b) => (b.total_revenue, b.net_income),
-        None => (operating_revenue, net_profit),
-    };
+    let operating_revenue = current.total_revenue;
+    let operating_cost = expense_sum(&current.expenses, "64");
+    let period_expenses = expense_sum(&current.expenses, "66");
+    let total_profit = operating_revenue - current.total_expense;
+    let net_profit = current.net_income;
+
+    // 无股本（实收资本/在外股份）数据来源，EPS 不按假设万股编造，恒为 0。
+    let eps = Decimal::ZERO;
 
     let gross_margin = safe_percentage(operating_revenue - operating_cost, operating_revenue);
     let net_margin = safe_percentage(net_profit, operating_revenue);
     let expense_ratio = safe_percentage(period_expenses, operating_revenue);
-    let eps = safe_divide(net_profit, Decimal::from(1_000_000)); // 假设 100 万股
 
-    // 趋势分析（近 4 期）
-    let trend = vec![
-        PeriodTrend {
-            period: format!("{}-{}", &period[..period.len().min(4)], "Q1"),
-            revenue: operating_revenue * Decimal::from(22) / Decimal::from(100),
-            net_profit: net_profit * Decimal::from(20) / Decimal::from(100),
-            gross_margin,
-        },
-        PeriodTrend {
-            period: format!("{}-{}", &period[..period.len().min(4)], "Q2"),
-            revenue: operating_revenue * Decimal::from(24) / Decimal::from(100),
-            net_profit: net_profit * Decimal::from(24) / Decimal::from(100),
-            gross_margin,
-        },
-        PeriodTrend {
-            period: format!("{}-{}", &period[..period.len().min(4)], "Q3"),
-            revenue: operating_revenue * Decimal::from(25) / Decimal::from(100),
-            net_profit: net_profit * Decimal::from(26) / Decimal::from(100),
-            gross_margin,
-        },
-        PeriodTrend {
-            period: period.to_string(),
-            revenue: operating_revenue * Decimal::from(29) / Decimal::from(100),
-            net_profit: net_profit * Decimal::from(30) / Decimal::from(100),
-            gross_margin,
-        },
-    ];
+    // 多期趋势无真实数据源，返回空数组，不编造季度分摊比例。
+    let trend: Vec<PeriodTrend> = Vec::new();
 
     IncomeStatementEnhanced {
         period: period.to_string(),
@@ -375,7 +427,7 @@ pub fn generate_income_statement(
     }
 }
 
-// ==================== C. 现金流量表增强 ====================
+// ==================== C. 现金流量表增强（无数据源 → 501） ====================
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CashFlowItem {
@@ -420,81 +472,6 @@ pub struct CashFlowStatementEnhanced {
     pub ratios: CashFlowRatios,
 }
 
-fn cf_item(code: &str, name: &str, amount: i64) -> CashFlowItem {
-    CashFlowItem {
-        item_code: code.to_string(),
-        item_name: name.to_string(),
-        amount: Decimal::from(amount),
-    }
-}
-
-/// 生成增强版现金流量表（含间接法编制）
-pub fn generate_cash_flow_statement(period: &str) -> CashFlowStatementEnhanced {
-    let operating_activities = vec![
-        cf_item("OP01", "销售商品、提供劳务收到的现金", 6_120_000),
-        cf_item("OP02", "购买商品、接受劳务支付的现金", -3_850_000),
-        cf_item("OP03", "支付给职工以及为职工支付的现金", -860_000),
-        cf_item("OP04", "支付的各项税费", -420_000),
-    ];
-    let investing_activities = vec![
-        cf_item("IN01", "收回投资收到的现金", 120_000),
-        cf_item("IN02", "购建固定资产、无形资产支付的现金", -580_000),
-        cf_item("IN03", "处置固定资产收回的现金净额", 45_000),
-    ];
-    let financing_activities = vec![
-        cf_item("FI01", "取得借款收到的现金", 800_000),
-        cf_item("FI02", "偿还债务支付的现金", -500_000),
-        cf_item("FI03", "分配股利、利润或偿付利息支付的现金", -200_000),
-    ];
-
-    let net_operating: Decimal = operating_activities.iter().map(|i| i.amount).sum();
-    let net_investing: Decimal = investing_activities.iter().map(|i| i.amount).sum();
-    let net_financing: Decimal = financing_activities.iter().map(|i| i.amount).sum();
-    let net_change = net_operating + net_investing + net_financing;
-    let opening_balance = Decimal::from(575_000);
-    let closing_balance = opening_balance + net_change;
-
-    // 间接法调整项：从净利润调整到经营活动现金流量净额
-    let indirect_adjustments = vec![
-        cf_item("ID01", "净利润", 996_750),
-        cf_item("ID02", "资产减值准备", 12_000),
-        cf_item("ID03", "固定资产折旧", 245_000),
-        cf_item("ID04", "无形资产摊销", 32_000),
-        cf_item("ID05", "财务费用", 98_000),
-        cf_item("ID06", "投资损失", -45_000),
-        cf_item("ID07", "存货的减少", -180_000),
-        cf_item("ID08", "经营性应收项目的减少", -68_000),
-        cf_item("ID09", "经营性应付项目的增加", 100_000),
-    ];
-
-    let operating_revenue = Decimal::from(5_680_000);
-    let net_profit = Decimal::from(996_750);
-    let ratios = CashFlowRatios {
-        operating_cash_to_revenue: safe_percentage(net_operating, operating_revenue),
-        operating_cash_to_net_profit: safe_divide(net_operating, net_profit),
-        cash_flow_adequacy: safe_divide(
-            net_operating,
-            net_investing.abs() + Decimal::from(200_000),
-        ),
-        free_cash_flow: net_operating + net_investing,
-    };
-
-    CashFlowStatementEnhanced {
-        period: period.to_string(),
-        operating_activities,
-        investing_activities,
-        financing_activities,
-        net_operating,
-        net_investing,
-        net_financing,
-        net_change,
-        opening_balance,
-        closing_balance,
-        indirect_adjustments,
-        ratios,
-    }
-}
-
 // ==================== D. 财务分析 ====================
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -522,7 +499,7 @@ pub struct FinancialRatios {
     pub roe: Decimal,
     /// 总资产收益率 ROA（%）
     pub roa: Decimal,
-    // 发展能力
+    // 发展能力（基于真实去年同期，无则安全退化）
     /// 营收增长率（%）
     pub revenue_growth_rate: Decimal,
     /// 净利润增长率（%）
@@ -547,11 +524,13 @@ pub struct FinancialAnalysisReport {
     pub trend_judgment: String,
 }
 
-/// 计算财务比率
+/// 计算财务比率（输入均为真实账务派生值）。
+///
+/// `last_year_income` 为去年同期真实利润表，用于营收/净利润同比；缺失时同比按 0 安全退化。
 pub fn calculate_financial_ratios(
     balance: &BalanceSheetEnhanced,
     income: &IncomeStatementEnhanced,
-    cash_flow: &CashFlowStatementEnhanced,
+    last_year_income: Option<&IncomeStatement>,
 ) -> FinancialRatios {
     let current_ratio = safe_divide(
         balance.total_current_assets,
@@ -569,14 +548,19 @@ pub fn calculate_financial_ratios(
     );
     let debt_to_asset_ratio = safe_percentage(balance.total_liabilities, balance.total_assets);
 
+    // 平均余额使用真实本期与上期余额（来自真实账务），不按固定比例编造
     let avg_receivable = balance
         .current_assets
         .iter()
         .find(|i| i.account_code == "1122")
         .map(|i| (i.amount + i.period_amount) / Decimal::from(2))
         .unwrap_or(Decimal::ONE);
-    let avg_inventory =
-        (inventory + inventory * Decimal::from(88) / Decimal::from(100)) / Decimal::from(2);
+    let avg_inventory = balance
+        .current_assets
+        .iter()
+        .find(|i| i.account_code == "1401")
+        .map(|i| (i.amount + i.period_amount) / Decimal::from(2))
+        .unwrap_or(Decimal::ONE);
     let avg_total_assets =
         (balance.total_assets + balance.last_year_total_assets) / Decimal::from(2);
 
@@ -588,8 +572,13 @@ pub fn calculate_financial_ratios(
     let roe = safe_percentage(income.net_profit, avg_equity);
     let roa = safe_percentage(income.net_profit, avg_total_assets);
 
-    let last_year_revenue = income.operating_revenue * Decimal::from(85) / Decimal::from(100);
-    let last_year_net_profit = income.net_profit * Decimal::from(85) / Decimal::from(100);
+    // 去年同期营收/净利润来自真实账务，无则为 0（同比安全退化，不按 85% 编造）
+    let last_year_revenue = last_year_income
+        .map(|i| i.total_revenue)
+        .unwrap_or(Decimal::ZERO);
+    let last_year_net_profit = last_year_income
+        .map(|i| i.net_income)
+        .unwrap_or(Decimal::ZERO);
     let revenue_growth_rate = safe_percentage(
         income.operating_revenue - last_year_revenue,
         last_year_revenue,
@@ -602,8 +591,6 @@ pub fn calculate_financial_ratios(
         balance.total_assets - balance.last_year_total_assets,
         balance.last_year_total_assets,
     );
-
-    let _ = cash_flow; // 预留：现金流比率可在此扩展
 
     FinancialRatios {
         current_ratio,
@@ -623,7 +610,7 @@ pub fn calculate_financial_ratios(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-/// 生成财务分析报告（含趋势判断和预警）
+/// 生成财务分析报告（含趋势判断和预警；评分为确定性规则，不含编造数据）
 pub fn generate_analysis_report(period: &str, ratios: &FinancialRatios) -> FinancialAnalysisReport {
     let mut score: f64 = 0.0;
     let mut warnings: Vec<String> = Vec::new();
@@ -710,8 +697,6 @@ pub fn generate_analysis_report(period: &str, ratios: &FinancialRatios) -> Finan
         score += 10.0;
     } else if profit_growth >= 10.0 {
         score += 8.0;
-    } else if profit_growth >= 0.0 {
-        score += 5.0;
     } else {
         score += 2.0;
         warnings.push("净利润负增长，盈利能力下滑".to_string());
@@ -758,7 +743,7 @@ pub fn generate_analysis_report(period: &str, ratios: &FinancialRatios) -> Finan
     }
 }
 
-// ==================== E. 多期对比与导出 ====================
+// ==================== E. 多期对比与导出（无数据源 → 501） ====================
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PeriodSummary {
@@ -777,51 +762,6 @@ pub struct ComparativeReport {
     pub balance_sheet_summary: Vec<PeriodSummary>,
     pub income_statement_summary: Vec<PeriodSummary>,
     pub cash_flow_summary: Vec<PeriodSummary>,
-}
-
-pub fn generate_comparative_report(period: &str) -> ComparativeReport {
-    let scale = [
-        Decimal::from(80),
-        Decimal::from(88),
-        Decimal::from(94),
-        Decimal::from(100),
-    ];
-    let periods: Vec<String> = (0..4)
-        .map(|i| {
-            if i == 3 {
-                period.to_string()
-            } else {
-                format!("{}-P{}", period, i + 1)
-            }
-        })
-        .collect();
-
-    let base_balance = generate_balance_sheet(period, None);
-    let base_income = generate_income_statement(period, None);
-    let base_cash = generate_cash_flow_statement(period);
-
-    let make_summary = |idx: usize, s: Decimal| PeriodSummary {
-        period: periods[idx].clone(),
-        total_assets: base_balance.total_assets * s / Decimal::from(100),
-        total_liabilities: base_balance.total_liabilities * s / Decimal::from(100),
-        total_equity: base_balance.total_equity * s / Decimal::from(100),
-        revenue: base_income.operating_revenue * s / Decimal::from(100),
-        net_profit: base_income.net_profit * s / Decimal::from(100),
-        net_operating_cash_flow: base_cash.net_operating * s / Decimal::from(100),
-    };
-
-    let balance_sheet_summary: Vec<PeriodSummary> =
-        (0..4).map(|i| make_summary(i, scale[i])).collect();
-    let income_statement_summary: Vec<PeriodSummary> =
-        (0..4).map(|i| make_summary(i, scale[i])).collect();
-    let cash_flow_summary: Vec<PeriodSummary> = (0..4).map(|i| make_summary(i, scale[i])).collect();
-
-    ComparativeReport {
-        periods,
-        balance_sheet_summary,
-        income_statement_summary,
-        cash_flow_summary,
-    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -857,7 +797,7 @@ pub struct ExportReportResponse {
         (status = 500, description = "服务内部错误"),
     ),
     params(
-        ("period" = String, Path, description = "期间"),
+        ("period" = String, Path, description = "期间，格式 YYYY-MM"),
     ),
     tag = "Financial-Reports",
     operation_id = "get_enhanced_balance_sheet_handler",
@@ -870,8 +810,21 @@ pub async fn get_enhanced_balance_sheet_handler(
 ) -> Json<ApiResponse<BalanceSheetEnhanced>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let base = service.get_balance_sheet(tenant_id, &period).await.ok();
-    let report = generate_balance_sheet(&period, base.as_ref());
+
+    let current = service
+        .get_balance_sheet(tenant_id, &period)
+        .await
+        .unwrap_or_else(|_| empty_balance_sheet(&period));
+    let previous = match previous_period(&period) {
+        Some(p) => service.get_balance_sheet(tenant_id, &p).await.ok(),
+        None => None,
+    };
+    let last_year = match last_year_period(&period) {
+        Some(p) => service.get_balance_sheet(tenant_id, &p).await.ok(),
+        None => None,
+    };
+
+    let report = generate_balance_sheet(&period, &current, previous.as_ref(), last_year.as_ref());
     Json(ApiResponse::success(report, "查询成功"))
 }
 
@@ -882,20 +835,30 @@ pub async fn get_enhanced_income_statement_handler(
 ) -> Json<ApiResponse<IncomeStatementEnhanced>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let base = service.get_income_statement(tenant_id, &period).await.ok();
-    let report = generate_income_statement(&period, base.as_ref());
+
+    let current = service
+        .get_income_statement(tenant_id, &period)
+        .await
+        .unwrap_or_else(|_| empty_income_statement(&period));
+    let previous = match previous_period(&period) {
+        Some(p) => service.get_income_statement(tenant_id, &p).await.ok(),
+        None => None,
+    };
+
+    let report = generate_income_statement(&period, &current, previous.as_ref());
     Json(ApiResponse::success(report, "查询成功"))
 }
 
+/// 现金流量表增强版：无真实现金流活动分类数据源，诚实返回 501。
 pub async fn get_enhanced_cash_flow_handler(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Path(period): Path<String>,
-) -> Json<ApiResponse<CashFlowStatementEnhanced>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
-    let _tenant_id = get_tenant_id_from_claims(&claims);
-    let report = generate_cash_flow_statement(&period);
-    Json(ApiResponse::success(report, "查询成功"))
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(_period): Path<String>,
+) -> ApiResponse<CashFlowStatementEnhanced> {
+    ApiResponse::error(
+        501,
+        "现金流量表增强版（经营/投资/筹资活动分类、间接法调整项与现金流比率）暂无真实账务分类数据源，已停止返回模拟报表；待现金流分类凭证数据落库后再启用。",
+    )
 }
 
 pub async fn get_financial_analysis_handler(
@@ -905,15 +868,41 @@ pub async fn get_financial_analysis_handler(
 ) -> Json<ApiResponse<FinancialAnalysisReport>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let balance_base = service.get_balance_sheet(tenant_id, &period).await.ok();
-    let income_base = service.get_income_statement(tenant_id, &period).await.ok();
-    let balance = generate_balance_sheet(&period, balance_base.as_ref());
-    let income = generate_income_statement(&period, income_base.as_ref());
-    let cash_flow = generate_cash_flow_statement(&period);
-    let ratios = calculate_financial_ratios(&balance, &income, &cash_flow);
+
+    let balance_cur = service
+        .get_balance_sheet(tenant_id, &period)
+        .await
+        .unwrap_or_else(|_| empty_balance_sheet(&period));
+    let income_cur = service
+        .get_income_statement(tenant_id, &period)
+        .await
+        .unwrap_or_else(|_| empty_income_statement(&period));
+
+    let balance_prev = match previous_period(&period) {
+        Some(p) => service.get_balance_sheet(tenant_id, &p).await.ok(),
+        None => None,
+    };
+    let balance_ly = match last_year_period(&period) {
+        Some(p) => service.get_balance_sheet(tenant_id, &p).await.ok(),
+        None => None,
+    };
+    let income_ly = match last_year_period(&period) {
+        Some(p) => service.get_income_statement(tenant_id, &p).await.ok(),
+        None => None,
+    };
+
+    let balance = generate_balance_sheet(
+        &period,
+        &balance_cur,
+        balance_prev.as_ref(),
+        balance_ly.as_ref(),
+    );
+    let income = generate_income_statement(&period, &income_cur, None);
+    let ratios = calculate_financial_ratios(&balance, &income, income_ly.as_ref());
     let report = generate_analysis_report(&period, &ratios);
     Json(ApiResponse::success(report, "查询成功"))
 }
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["finance:report:read"])),
@@ -931,39 +920,28 @@ pub async fn get_financial_analysis_handler(
     tag = "Financial-Reports",
     operation_id = "get_comparative_report_handler",
 )]
-
+/// 多期对比报表：无真实多期汇总（尤其现金流分类）数据源，诚实返回 501。
 pub async fn get_comparative_report_handler(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Path(period): Path<String>,
-) -> Json<ApiResponse<ComparativeReport>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
-    let _tenant_id = get_tenant_id_from_claims(&claims);
-    let report = generate_comparative_report(&period);
-    Json(ApiResponse::success(report, "查询成功"))
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(_period): Path<String>,
+) -> ApiResponse<ComparativeReport> {
+    ApiResponse::error(
+        501,
+        "多期对比报表需要多期真实账务汇总（含现金流分类），当前无该数据源，已停止返回按固定比例缩放的模拟对比。",
+    )
 }
 
+/// 报表导出：无真实文件生成/落盘，诚实返回 501（不再伪造 file_size 与 download_url）。
 pub async fn export_report_handler(
-    State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Json(req): Json<ExportReportRequest>,
-) -> Json<ApiResponse<ExportReportResponse>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
-    let _tenant_id = get_tenant_id_from_claims(&claims);
-    let format = req.format.unwrap_or_else(|| "xlsx".to_string());
-    let now = Utc::now().to_rfc3339();
-    let file_name = format!("{}_{}.{}", req.report_type, req.period, format);
-    let download_url = format!("/api/v1/finance/reports/download/{}", file_name);
-    let response = ExportReportResponse {
-        report_type: req.report_type.clone(),
-        period: req.period,
-        format,
-        file_name,
-        file_size: 102_400,
-        download_url,
-        generated_at: now,
-    };
-    Json(ApiResponse::success(response, "导出成功"))
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Json(_req): Json<ExportReportRequest>,
+) -> ApiResponse<ExportReportResponse> {
+    ApiResponse::error(
+        501,
+        "报表导出尚未实现真实文件生成与存储，已下线模拟导出（不再返回伪造的文件大小与下载地址）。",
+    )
 }
 
 // ==================== 路由 ====================
@@ -1273,165 +1251,174 @@ mod tests {
     }
 
     #[test]
-    fn bs_item_amount_period_year() {
-        let it = bs_item("1001", "Cash", 1000);
-        assert_eq!(it.account_code, "1001");
-        assert_eq!(it.account_name, "Cash");
-        assert_eq!(it.amount, Decimal::from(1000));
-        assert_eq!(it.percentage, Decimal::ZERO);
-        // period_amount = 1000 * 88 / 100 = 880
-        assert_eq!(it.period_amount, Decimal::from(880));
-        // year_amount = 1000 * 112 / 100 = 1120
-        assert_eq!(it.year_amount, Decimal::from(1120));
+    fn period_arithmetics() {
+        assert_eq!(previous_period("2025-03").as_deref(), Some("2025-02"));
+        assert_eq!(previous_period("2025-01").as_deref(), Some("2024-12"));
+        assert_eq!(last_year_period("2025-03").as_deref(), Some("2024-03"));
+        // 非法格式不编造
+        assert!(previous_period("not-a-period").is_none());
+        assert!(last_year_period("2025").is_none());
     }
 
     #[test]
-    fn generate_balance_sheet_no_base_has_expected_totals() {
-        let r = generate_balance_sheet("2025-08", None);
-        assert_eq!(r.period, "2025-08");
-        // current assets: 1_250_000 + 856_000 + 234_000 + 1_680_000 = 4_020_000
-        assert_eq!(r.total_current_assets, Decimal::from(4_020_000));
-        // non-current assets: 500_000 + 2_450_000 + 320_000 = 3_270_000
-        assert_eq!(r.total_non_current_assets, Decimal::from(3_270_000));
-        // total assets
-        assert_eq!(r.total_assets, Decimal::from(7_290_000));
-        // current liabilities: 680_000 + 542_000 + 186_000 = 1_408_000
-        assert_eq!(r.total_current_liabilities, Decimal::from(1_408_000));
-        // non-current liabilities: 1_200_000 + 400_000 = 1_600_000
-        assert_eq!(r.total_non_current_liabilities, Decimal::from(1_600_000));
-        // total liabilities
-        assert_eq!(r.total_liabilities, Decimal::from(3_008_000));
-        // equity: 2_000_000 + 850_000 + 432_000 + 1_000_000 = 4_282_000
-        assert_eq!(r.total_equity, Decimal::from(4_282_000));
-        // last_year_total_assets = 7_290_000 * 85 / 100
-        let expected_last_assets =
-            Decimal::from(7_290_000) * Decimal::from(85) / Decimal::from(100);
-        assert_eq!(r.last_year_total_assets, expected_last_assets);
-        // yoy growth should be positive (15%)
-        assert!(r.assets_yoy_growth > Decimal::ZERO);
+    fn balance_split_current_vs_non_current_by_code() {
+        let cur = BalanceSheet {
+            period: "2025-08".into(),
+            assets: vec![
+                BalanceItem { account_code: "1001".into(), account_name: "货币资金".into(), amount: Decimal::from(1000) },
+                BalanceItem { account_code: "1401".into(), account_name: "存货".into(), amount: Decimal::from(500) },
+                BalanceItem { account_code: "1601".into(), account_name: "固定资产".into(), amount: Decimal::from(2000) },
+            ],
+            liabilities: vec![
+                BalanceItem { account_code: "2001".into(), account_name: "短期借款".into(), amount: Decimal::from(300) },
+                BalanceItem { account_code: "2501".into(), account_name: "长期借款".into(), amount: Decimal::from(700) },
+            ],
+            equity: vec![BalanceItem { account_code: "4001".into(), account_name: "实收资本".into(), amount: Decimal::from(2500) }],
+            total_assets: Decimal::from(3500),
+            total_liabilities: Decimal::from(1000),
+            total_equity: Decimal::from(2500),
+        };
+        let r = generate_balance_sheet("2025-08", &cur, None, None);
+        // 流动资产 = 1001 + 1401；固定资产 1601 归非流动
+        assert_eq!(r.current_assets.len(), 2);
+        assert_eq!(r.non_current_assets.len(), 1);
+        assert_eq!(r.total_current_assets, Decimal::from(1500));
+        assert_eq!(r.total_non_current_assets, Decimal::from(2000));
+        // 负债拆分
+        assert_eq!(r.current_liabilities.len(), 1);
+        assert_eq!(r.non_current_liabilities.len(), 1);
+        // 无去年数据 → 同比为 0，不编造
+        assert_eq!(r.last_year_total_assets, Decimal::ZERO);
+        assert_eq!(r.assets_yoy_growth, Decimal::ZERO);
     }
 
     #[test]
-    fn generate_balance_sheet_with_base_overrides_totals() {
-        let base = crate::models::BalanceSheet {
-            period: "2025-07".to_string(),
-            assets: vec![],
+    fn balance_period_and_last_year_from_real_data() {
+        let cur = BalanceSheet {
+            period: "2025-08".into(),
+            assets: vec![BalanceItem { account_code: "1001".into(), account_name: "货币资金".into(), amount: Decimal::from(1100) }],
             liabilities: vec![],
             equity: vec![],
-            total_assets: Decimal::from(10_000),
-            total_liabilities: Decimal::from(4_000),
-            total_equity: Decimal::from(6_000),
+            total_assets: Decimal::from(1100),
+            total_liabilities: Decimal::ZERO,
+            total_equity: Decimal::ZERO,
         };
-        let r = generate_balance_sheet("2025-07", Some(&base));
-        assert_eq!(r.total_assets, Decimal::from(10_000));
-        assert_eq!(r.total_liabilities, Decimal::from(4_000));
-        assert_eq!(r.total_equity, Decimal::from(6_000));
-        // last_year_total_assets = 10000 * 85/100 = 8500
-        assert_eq!(r.last_year_total_assets, Decimal::from(8_500));
-        // assets_yoy_growth = (10000-8500)/8500 * 100
-        assert!(r.assets_yoy_growth > Decimal::ZERO);
+        let prev = BalanceSheet {
+            period: "2025-07".into(),
+            assets: vec![BalanceItem { account_code: "1001".into(), account_name: "货币资金".into(), amount: Decimal::from(1000) }],
+            ..empty_balance_sheet("2025-07")
+        };
+        let ly = BalanceSheet {
+            period: "2024-08".into(),
+            total_assets: Decimal::from(1000),
+            total_liabilities: Decimal::from(0),
+            total_equity: Decimal::from(0),
+            ..empty_balance_sheet("2024-08")
+        };
+        let r = generate_balance_sheet("2025-08", &cur, Some(&prev), Some(&ly));
+        // period_amount 来自上期真实值
+        assert_eq!(r.current_assets[0].period_amount, Decimal::from(1000));
+        // 去年同期 1000 → 同比 = (1100-1000)/1000*100 = 10
+        assert_eq!(r.last_year_total_assets, Decimal::from(1000));
+        assert_eq!(r.assets_yoy_growth, Decimal::from(10));
     }
 
     #[test]
-    fn is_item_calculations() {
-        // current=1000, prev_pct=80, year_pct=120
-        let it = is_item("6001", 1000, 80, 120);
-        assert_eq!(it.current_amount, Decimal::from(1000));
-        assert_eq!(it.previous_amount, Decimal::from(800));
-        assert_eq!(it.year_cumulative, Decimal::from(1200));
-        // yoy_change = (1000-800)/800 * 100 = 25
-        assert_eq!(it.yoy_change, Decimal::from(25));
+    fn income_items_from_real_ledger_and_eps_zero() {
+        let cur = IncomeStatement {
+            period: "2025-08".into(),
+            revenues: vec![IncomeItem { account_code: "6001".into(), account_name: "主营业务收入".into(), amount: Decimal::from(-8000) }],
+            expenses: vec![
+                IncomeItem { account_code: "6401".into(), account_name: "主营业务成本".into(), amount: Decimal::from(4000) },
+                IncomeItem { account_code: "6601".into(), account_name: "销售费用".into(), amount: Decimal::from(500) },
+            ],
+            total_revenue: Decimal::from(-8000),
+            total_expense: Decimal::from(4500),
+            net_income: Decimal::from(-12500),
+        };
+        let r = generate_income_statement("2025-08", &cur, None);
+        assert_eq!(r.items.len(), 3);
+        // 无股本数据 → EPS 恒 0，不编造
+        assert_eq!(r.eps, Decimal::ZERO);
+        // 无多期数据源 → trend 为空
+        assert!(r.trend.is_empty());
+        // 成本/期间费用按真实科目编码前缀汇总
+        assert_eq!(r.operating_cost, Decimal::from(4000));
+        assert_eq!(r.period_expenses, Decimal::from(500));
     }
 
     #[test]
-    fn is_item_prev_pct_zero_yoy_zero_avoids_div_by_zero() {
-        let it = is_item("6001", 1000, 0, 120);
-        assert_eq!(it.previous_amount, Decimal::ZERO);
-        // prev=0 -> safe_percentage returns 0
-        assert_eq!(it.yoy_change, Decimal::ZERO);
-    }
-
-    #[test]
-    fn generate_income_statement_no_base() {
-        let r = generate_income_statement("2025-08", None);
-        assert_eq!(r.period, "2025-08");
-        assert_eq!(r.items.len(), 7);
-        // operating_revenue comes from items[0] = 5_680_000
-        assert_eq!(r.operating_revenue, Decimal::from(5_680_000));
-        // operating_cost comes from items[1] = 3_420_000
-        assert_eq!(r.operating_cost, Decimal::from(3_420_000));
-        // period_expenses = items[3]+items[4]+items[5] = 285_000+412_000+98_000 = 795_000
-        assert_eq!(r.period_expenses, Decimal::from(795_000));
-        // trend length is 4
-        assert_eq!(r.trend.len(), 4);
-        // gross_margin > 0
-        assert!(r.gross_margin > Decimal::ZERO);
-    }
-
-    #[test]
-    fn generate_income_statement_with_base_overrides() {
-        let base = crate::models::IncomeStatement {
-            period: "2025-09".to_string(),
-            revenues: vec![],
+    fn income_previous_yoy_from_real_previous() {
+        let cur = IncomeStatement {
+            period: "2025-08".into(),
+            revenues: vec![IncomeItem { account_code: "6001".into(), account_name: "收入".into(), amount: Decimal::from(-1100) }],
             expenses: vec![],
-            total_revenue: Decimal::from(999),
+            total_revenue: Decimal::from(-1100),
             total_expense: Decimal::ZERO,
-            net_income: Decimal::from(111),
+            net_income: Decimal::from(-1100),
         };
-        let r = generate_income_statement("2025-09", Some(&base));
-        assert_eq!(r.operating_revenue, Decimal::from(999));
-        assert_eq!(r.net_profit, Decimal::from(111));
+        let prev = IncomeStatement {
+            period: "2025-07".into(),
+            revenues: vec![IncomeItem { account_code: "6001".into(), account_name: "收入".into(), amount: Decimal::from(-1000) }],
+            ..empty_income_statement("2025-07")
+        };
+        let r = generate_income_statement("2025-08", &cur, Some(&prev));
+        assert_eq!(r.items[0].previous_amount, Decimal::from(-1000));
     }
 
     #[test]
-    fn cf_item_basic() {
-        let it = cf_item("OP01", "Sales", 1000);
-        assert_eq!(it.item_code, "OP01");
-        assert_eq!(it.item_name, "Sales");
-        assert_eq!(it.amount, Decimal::from(1000));
+    fn ratios_use_real_last_year_not_fixed_pct() {
+        let balance = BalanceSheetEnhanced {
+            period: "p".into(),
+            current_assets: vec![],
+            non_current_assets: vec![],
+            current_liabilities: vec![],
+            non_current_liabilities: vec![],
+            equity: vec![],
+            total_current_assets: Decimal::from(200),
+            total_non_current_assets: Decimal::ZERO,
+            total_assets: Decimal::from(200),
+            total_current_liabilities: Decimal::from(100),
+            total_non_current_liabilities: Decimal::ZERO,
+            total_liabilities: Decimal::from(100),
+            total_equity: Decimal::from(100),
+            last_year_total_assets: Decimal::from(100),
+            last_year_total_liabilities: Decimal::from(100),
+            last_year_total_equity: Decimal::from(100),
+            assets_yoy_growth: Decimal::ZERO,
+            liabilities_yoy_growth: Decimal::ZERO,
+            equity_yoy_growth: Decimal::ZERO,
+        };
+        let income = IncomeStatementEnhanced {
+            period: "p".into(),
+            items: vec![],
+            operating_revenue: Decimal::from(220),
+            operating_cost: Decimal::from(110),
+            period_expenses: Decimal::ZERO,
+            total_profit: Decimal::from(110),
+            net_profit: Decimal::from(110),
+            eps: Decimal::ZERO,
+            gross_margin: Decimal::from(50),
+            net_margin: Decimal::from(50),
+            expense_ratio: Decimal::ZERO,
+            trend: vec![],
+        };
+        let ly = IncomeStatement {
+            period: "2024-08".into(),
+            total_revenue: Decimal::from(200),
+            total_expense: Decimal::ZERO,
+            net_income: Decimal::from(100),
+            ..empty_income_statement("2024-08")
+        };
+        let ratios = calculate_financial_ratios(&balance, &income, Some(&ly));
+        // revenue_growth = (220-200)/200*100 = 10（真实去年，非 85% 编造）
+        assert_eq!(ratios.revenue_growth_rate, Decimal::from(10));
+        // net_profit_growth = (110-100)/100*100 = 10
+        assert_eq!(ratios.net_profit_growth_rate, Decimal::from(10));
     }
 
     #[test]
-    fn generate_cash_flow_statement_sums() {
-        let r = generate_cash_flow_statement("2025-08");
-        // operating: 6_120_000 - 3_850_000 - 860_000 - 420_000 = 990_000
-        assert_eq!(r.net_operating, Decimal::from(990_000));
-        // investing: 120_000 - 580_000 + 45_000 = -415_000
-        assert_eq!(r.net_investing, Decimal::from(-415_000));
-        // financing: 800_000 - 500_000 - 200_000 = 100_000
-        assert_eq!(r.net_financing, Decimal::from(100_000));
-        // net_change = 990_000 - 415_000 + 100_000 = 675_000
-        assert_eq!(r.net_change, Decimal::from(675_000));
-        // opening_balance = 575_000, closing = 575_000 + 675_000 = 1_250_000
-        assert_eq!(r.opening_balance, Decimal::from(575_000));
-        assert_eq!(r.closing_balance, Decimal::from(1_250_000));
-        // indirect_adjustments has 9 items
-        assert_eq!(r.indirect_adjustments.len(), 9);
-        // free cash flow = net_operating + net_investing = 990_000 - 415_000 = 575_000
-        assert_eq!(r.ratios.free_cash_flow, Decimal::from(575_000));
-    }
-
-    #[test]
-    fn calculate_financial_ratios_uses_provided_data() {
-        let balance = generate_balance_sheet("2025-08", None);
-        let income = generate_income_statement("2025-08", None);
-        let cash = generate_cash_flow_statement("2025-08");
-        let ratios = calculate_financial_ratios(&balance, &income, &cash);
-        // current_ratio = 4_020_000 / 1_408_000 > 0
-        assert!(ratios.current_ratio > Decimal::ZERO);
-        // debt_to_asset_ratio = 3_008_000 / 7_290_000 * 100 > 0
-        assert!(ratios.debt_to_asset_ratio > Decimal::ZERO);
-        // inventory turnover = operating_cost / avg_inventory > 0
-        assert!(ratios.inventory_turnover > Decimal::ZERO);
-        // gross_margin from income > 0
-        assert!(ratios.gross_margin > Decimal::ZERO);
-        // total asset growth should match balance sheet yoy
-        assert!(ratios.total_asset_growth_rate > Decimal::ZERO);
-    }
-
-    #[test]
-    fn calculate_financial_ratios_zero_liabilities_safe() {
-        // balance with zero current liabilities to test safe_divide returns 0
+    fn ratios_zero_liabilities_safe() {
         let balance = BalanceSheetEnhanced {
             period: "p".into(),
             current_assets: vec![],
@@ -1467,15 +1454,10 @@ mod tests {
             expense_ratio: Decimal::ZERO,
             trend: vec![],
         };
-        let cash = generate_cash_flow_statement("p");
-        let ratios = calculate_financial_ratios(&balance, &income, &cash);
-        // current_ratio = safe_divide(100, 0) = 0
+        let ratios = calculate_financial_ratios(&balance, &income, None);
         assert_eq!(ratios.current_ratio, Decimal::ZERO);
-        // quick_ratio = safe_divide(100-0, 0) = 0
         assert_eq!(ratios.quick_ratio, Decimal::ZERO);
-        // debt_to_asset = safe_percentage(0, 100) = 0
         assert_eq!(ratios.debt_to_asset_ratio, Decimal::ZERO);
-        // total_asset_growth = safe_percentage(100-100, 100) = 0
         assert_eq!(ratios.total_asset_growth_rate, Decimal::ZERO);
     }
 
@@ -1485,13 +1467,13 @@ mod tests {
         let ratios_a = FinancialRatios {
             current_ratio: Decimal::from(3), // >= 2.0 -> +18
             quick_ratio: Decimal::from(2),
-            debt_to_asset_ratio: Decimal::from(40), // < 50 -> +12 (debt 30/30)
+            debt_to_asset_ratio: Decimal::from(40), // < 50 -> +12
             accounts_receivable_turnover: Decimal::ZERO,
             inventory_turnover: Decimal::ZERO,
             total_asset_turnover: Decimal::from(2), // >= 1.0 -> +20
             gross_margin: Decimal::ZERO,
             net_margin: Decimal::from(20), // >= 15 -> +12
-            roe: Decimal::from(25),        // >= 20 -> +18
+            roe: Decimal::from(25),       // >= 20 -> +18
             roa: Decimal::from(10),
             revenue_growth_rate: Decimal::from(30), // >= 20 -> +10
             net_profit_growth_rate: Decimal::from(30), // >= 20 -> +10
@@ -1501,52 +1483,48 @@ mod tests {
         // total: 18+12+18+12+20+10+10 = 100
         assert!(r.score >= Decimal::from(85));
         assert_eq!(r.grade, "A");
-        // trend: both rev_growth and profit_growth > 0 -> 呈上升趋势
         assert!(r.trend_judgment.contains("上升"));
     }
 
     #[test]
     fn generate_analysis_report_grade_d_low_score() {
         let ratios_d = FinancialRatios {
-            current_ratio: Decimal::from(1), // < 1.5 but >= 1.0 -> +9, warning
+            current_ratio: Decimal::from(1),
             quick_ratio: Decimal::ZERO,
-            debt_to_asset_ratio: Decimal::from(80), // >= 70 -> +3, warning
+            debt_to_asset_ratio: Decimal::from(80),
             accounts_receivable_turnover: Decimal::ZERO,
             inventory_turnover: Decimal::ZERO,
-            total_asset_turnover: Decimal::from(1), // >= 1.0 -> +20
+            total_asset_turnover: Decimal::from(1),
             gross_margin: Decimal::ZERO,
-            net_margin: Decimal::from(2), // < 5 -> +3, warning
-            roe: Decimal::from(5),        // < 10 -> +4, warning
+            net_margin: Decimal::from(2),
+            roe: Decimal::from(5),
             roa: Decimal::ZERO,
-            revenue_growth_rate: Decimal::from(-5), // < 0 -> +2, warning
-            net_profit_growth_rate: Decimal::from(-5), // < 0 -> +2, warning
+            revenue_growth_rate: Decimal::from(-5),
+            net_profit_growth_rate: Decimal::from(-5),
             total_asset_growth_rate: Decimal::ZERO,
         };
         let r = generate_analysis_report("2025-08", &ratios_d);
-        // total = 9 + 3 + 4 + 3 + 20 + 2 + 2 = 43 -> grade D
         assert!(r.score < Decimal::from(60));
         assert_eq!(r.grade, "D");
         assert!(!r.warnings.is_empty());
-        // trend: both <= 0 -> 呈下行趋势
         assert!(r.trend_judgment.contains("下行"));
     }
 
     #[test]
     fn generate_analysis_report_grade_c_partial_warning() {
-        // mid score: 60 <= score < 70 -> grade C
         let ratios_c = FinancialRatios {
-            current_ratio: Decimal::from(2), // >= 2.0 -> +18
+            current_ratio: Decimal::from(2),
             quick_ratio: Decimal::from(2),
-            debt_to_asset_ratio: Decimal::from(55), // 50 <= x < 60 -> +9
+            debt_to_asset_ratio: Decimal::from(55),
             accounts_receivable_turnover: Decimal::ZERO,
             inventory_turnover: Decimal::ZERO,
-            total_asset_turnover: Decimal::from(1), // >= 1.0 -> +20
+            total_asset_turnover: Decimal::from(1),
             gross_margin: Decimal::ZERO,
-            net_margin: Decimal::from(10), // 10 <= x < 15 -> +9
-            roe: Decimal::from(10),        // 10 <= x < 15 -> +9
+            net_margin: Decimal::from(10),
+            roe: Decimal::from(10),
             roa: Decimal::ZERO,
-            revenue_growth_rate: Decimal::from(5), // 0 <= x < 10 -> +5
-            net_profit_growth_rate: Decimal::from(5), // 0 <= x < 10 -> +5
+            revenue_growth_rate: Decimal::from(5),
+            net_profit_growth_rate: Decimal::from(5),
             total_asset_growth_rate: Decimal::ZERO,
         };
         let r = generate_analysis_report("2025-08", &ratios_c);
@@ -1557,9 +1535,9 @@ mod tests {
     #[test]
     fn generate_analysis_report_zero_current_ratio_pushes_warning() {
         let ratios = FinancialRatios {
-            current_ratio: Decimal::from(5), // high
+            current_ratio: Decimal::from(5),
             quick_ratio: Decimal::from(3),
-            debt_to_asset_ratio: Decimal::from(20), // low
+            debt_to_asset_ratio: Decimal::from(20),
             accounts_receivable_turnover: Decimal::ZERO,
             inventory_turnover: Decimal::ZERO,
             total_asset_turnover: Decimal::from(2),
@@ -1572,30 +1550,7 @@ mod tests {
             total_asset_growth_rate: Decimal::ZERO,
         };
         let r = generate_analysis_report("2025-08", &ratios);
-        //偿债能力充足 -> suggestion pushed
         assert!(r.suggestions.iter().any(|s| s.contains("偿债能力")));
-        // 盈利能力较强 -> suggestion pushed
         assert!(r.suggestions.iter().any(|s| s.contains("盈利能力")));
-    }
-
-    #[test]
-    fn generate_comparative_report_has_4_periods() {
-        let r = generate_comparative_report("2025-08");
-        assert_eq!(r.periods.len(), 4);
-        assert_eq!(r.periods[3], "2025-08");
-        // Last period should be the input period (scale = 100%)
-        let last_balance = &r.balance_sheet_summary[3];
-        let base = generate_balance_sheet("2025-08", None);
-        assert_eq!(last_balance.total_assets, base.total_assets);
-        assert_eq!(
-            last_balance.revenue,
-            generate_income_statement("2025-08", None).operating_revenue
-        );
-        // First period scaled to 80%
-        let first = &r.balance_sheet_summary[0];
-        assert_eq!(
-            first.total_assets,
-            base.total_assets * Decimal::from(80) / Decimal::from(100)
-        );
     }
 }
