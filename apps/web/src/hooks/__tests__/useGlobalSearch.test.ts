@@ -587,7 +587,7 @@ describe('useGlobalSearch', () => {
     it('should abort pending request when hook unmounts', async () => {
       const mockNavigate = vi.fn();
       const { searchApi } = await import('@/api/search');
-      let resolvePromise: (value: any) => void;
+      let resolvePromise: (value: unknown) => void;
       const pendingPromise = new Promise<unknown>((resolve) => {
         resolvePromise = resolve;
       });

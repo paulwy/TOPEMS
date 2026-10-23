@@ -67,7 +67,7 @@ vi.mock('@tanstack/react-query', () => ({
       error: null,
     };
   }),
-  useMutation: vi.fn().mockImplementation((options: any) => {
+  useMutation: vi.fn().mockImplementation((options: unknown) => {
     const result = {
       ...mockMutationFactory(),
       ...(options?.onSuccess ? { onSuccess: options.onSuccess } : {}),
@@ -85,7 +85,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useNotificationStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: unknown) =>
     selector
       ? selector({
           addNotification: vi.fn(),

@@ -73,12 +73,6 @@ interface PurchaseOrderPageProps {
   filters?: Record<string, unknown>;
 }
 
-interface SalesOrderPageProps {
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, unknown>;
-}
-
 interface FinancialReportPageProps {}
 
 interface DictManagementPageProps {}

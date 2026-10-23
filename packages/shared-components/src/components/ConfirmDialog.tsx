@@ -18,6 +18,7 @@ import {
   Button,
   type SxProps,
   type Theme,
+  type PaperProps,
 } from '@mui/material';
 import {
   AlertCircle,
@@ -280,12 +281,12 @@ export default function ConfirmDialog({
       open={isOpen}
       onClose={closable && !isLoading ? onClose : undefined}
       maxWidth={MAX_WIDTH_MAP[size]}
-      PaperComponent={({ children: dialogChildren, ref: _paperComponentRef, ...paperProps }: any) => (
+      PaperComponent={({ children: dialogChildren, ref: _paperComponentRef, ...paperProps }: PaperProps & { ref?: React.Ref<HTMLElement> }) => (
         // eslint-disable-next-line jsx-a11y/no-static-element-interactions
         <div
           ref={paperRef as React.RefObject<HTMLDivElement>}
           onMouseDown={handleMouseDown}
-          {...paperProps}
+          {...(paperProps as unknown as Record<string, unknown>)}
           style={{
             ...paperSx,
             ...(((paperProps as Record<string, unknown>).sx as Record<string, unknown>) || {}),

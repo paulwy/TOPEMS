@@ -86,10 +86,10 @@ vi.mock('@/modules/mobile/config', () => ({
 }));
 
 vi.mock('lucide-react', () => ({
-  Package: (props: any) => null,
-  Users: (props: any) => null,
-  DollarSign: (props: any) => null,
-  FileText: (props: any) => null,
+  Package: (props: unknown) => null,
+  Users: (props: unknown) => null,
+  DollarSign: (props: unknown) => null,
+  FileText: (props: unknown) => null,
 }));
 
 vi.mock('@/lib/reactQuery', () => ({
@@ -173,7 +173,7 @@ describe('UseMobileApproval', () => {
     it('handleTabChange should update activeTab', () => {
       const { result } = renderHook(() => useMobileApproval());
       act(() => {
-        result.current.handleTabChange({} as any, 1);
+        result.current.handleTabChange({} as unknown, 1);
       });
       expect(result.current.activeTab).toBe(1);
     });

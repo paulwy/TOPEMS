@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 
-type EventHandler<T = any> = (data: T) => void;
+type EventHandler<T = unknown> = (data: T) => void;
 
 interface EventListeners {
   [eventName: string]: Set<EventHandler>;
@@ -13,12 +13,12 @@ export class EventBus {
     if (!this.listeners[eventName]) {
       this.listeners[eventName] = new Set();
     }
-    this.listeners[eventName].add(handler);
+    this.listeners[eventName].add(handler as EventHandler<unknown>);
   }
 
   off<T = unknown>(eventName: string, handler: EventHandler<T>): void {
     if (this.listeners[eventName]) {
-      this.listeners[eventName].delete(handler);
+      this.listeners[eventName].delete(handler as EventHandler<unknown>);
     }
   }
 

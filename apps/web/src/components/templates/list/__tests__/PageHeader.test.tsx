@@ -11,7 +11,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@topems/shared-components', () => ({
-  BackButton: ({ onClick, href, ...rest }: any) => (
+  BackButton: ({ onClick, href, ...rest }: unknown) => (
     <button
       data-testid='back-button'
       onClick={onClick}

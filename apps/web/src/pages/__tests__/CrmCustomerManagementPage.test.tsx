@@ -64,10 +64,10 @@ vi.mock('@/store', () => {
   };
 
   return {
-    useNotificationStore: vi.fn((selector?: any) =>
+    useNotificationStore: vi.fn((selector?: unknown) =>
       selector ? selector(notificationState) : notificationState
     ),
-    useAuthStore: vi.fn((selector?: any) => (selector ? selector(authState) : authState)),
+    useAuthStore: vi.fn((selector?: unknown) => (selector ? selector(authState) : authState)),
     useThemeStore: vi.fn(() => ({
       theme: 'light',
       setTheme: vi.fn(),

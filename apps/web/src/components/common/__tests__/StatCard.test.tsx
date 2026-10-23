@@ -6,12 +6,14 @@ import { renderWithProviders } from '@/__tests__/test-utils';
 import { StatCardBase, MetricCard } from '../StatCard';
 
 vi.mock('@/store', () => ({
-  useNotificationStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: unknown) =>
     selector
       ? selector({ addNotification: vi.fn(), notifications: [] })
       : { addNotification: vi.fn(), notifications: [] }
   ),
-  useAuthStore: vi.fn((selector?: any) => (selector ? selector({ user: null }) : { user: null })),
+  useAuthStore: vi.fn((selector?: unknown) =>
+    selector ? selector({ user: null }) : { user: null }
+  ),
 }));
 
 describe('StatCardBase', () => {

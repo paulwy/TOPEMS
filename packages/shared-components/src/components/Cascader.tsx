@@ -167,7 +167,7 @@ const Cascader: React.FC<CascaderProps> = ({
               maxHeight: 480,
             },
           },
-        } as any}
+        }}
       >
         <Box sx={{ display: 'flex', height: '100%' }}>
           <Box sx={{ width: 240, overflowY: 'auto', borderRight: '1px solid rgba(0,0,0,0.1)' }}>

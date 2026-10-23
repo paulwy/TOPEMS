@@ -97,8 +97,8 @@ export interface ExportResult {
  */
 export type ExportDataFn = (
   format: string,
-  columns: ColumnDef<any, any>[],
-  rows: any[]
+  columns: ColumnDef<unknown, unknown>[],
+  rows: unknown[]
 ) => Promise<ExportResult> | ExportResult;
 
 /**
@@ -348,8 +348,8 @@ const saveColumnVisibility = (key: string, visibility: VisibilityState): void =>
   }
 };
 
-function exportToCSV<TData>(
-  columns: ColumnDef<TData, any>[],
+function exportToCSV<TData, TValue = unknown>(
+  columns: ColumnDef<TData, TValue>[],
   data: TData[],
   fileName: string = 'export'
 ): ExportResult {
@@ -389,8 +389,8 @@ function exportToCSV<TData>(
   }
 }
 
-function exportToExcel<TData>(
-  columns: ColumnDef<TData, any>[],
+function exportToExcel<TData, TValue = unknown>(
+  columns: ColumnDef<TData, TValue>[],
   data: TData[],
   fileName: string = 'export'
 ): ExportResult {
@@ -670,7 +670,7 @@ export function MobileCardView<TData>({
 // ============ 虚拟滚动行数据 ============
 
 interface VirtualRowData {
-  rows: Row<any>[];
+  rows: Row<unknown>[];
   getRowKey: (data: unknown) => string;
   onRowClick?: (data: unknown) => void;
   isSelected: string[];
@@ -782,7 +782,7 @@ function DataTableVirtualRow({ index, style, data }: ListChildComponentProps<Vir
             </IconButton>
           </TableCell>
         )}
-        {row.getVisibleCells().map((cell: Cell<any, any>) => (
+        {row.getVisibleCells().map((cell: Cell<unknown, unknown>) => (
           <TableCell
             key={cell.id}
             sx={{
@@ -810,7 +810,7 @@ function EditCellComponent({
   onSaveEdit,
   inlineEditMode,
 }: {
-  cell: Cell<any, any>;
+  cell: Cell<unknown, unknown>;
   editValue: unknown;
   currentValue: unknown;
   rowKey: string;
@@ -1043,6 +1043,9 @@ export function DataTable<TData, TValue>({
     }
   }, [columnVisibility, persistColumnConfig, columnConfigKey]);
 
+  // TanStack Table 的 useReactTable 返回的函数不可被 React Compiler 安全记忆化，
+  // 这是官方已知的不兼容点，此处保持既有调用方式不变（仅跳过该编译期告警）。
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
@@ -1189,7 +1192,7 @@ export function DataTable<TData, TValue>({
 
       if (customExportData) {
         const rows = table.getFilteredRowModel().rows.map((r) => r.original);
-        const result = customExportData(format, columns, rows);
+        const result = customExportData(format, columns as unknown as ColumnDef<unknown, unknown>[], rows);
         if ('then' in result && typeof (result as Promise<ExportResult>).then === 'function') {
           (result as Promise<ExportResult>).then(handleResult);
         } else {
@@ -1277,14 +1280,14 @@ export function DataTable<TData, TValue>({
     ]
   );
 
-  const renderRow = (row: Row<any>, rowIndex: number) => {
-    const rowKey = getRowKey(row.original);
+  const renderRow = (row: Row<unknown>, rowIndex: number) => {
+    const rowKey = getRowKey(row.original as TData);
     const isExpanded = expandedRows.has(rowKey);
 
     return (
       <React.Fragment key={row.id}>
         <TableRow
-          onClick={() => onRowClick?.(row.original)}
+          onClick={() => onRowClick?.(row.original as TData)}
           sx={{
             cursor: onRowClick ? 'pointer' : 'default',
             '&:hover': {
@@ -1308,7 +1311,7 @@ export function DataTable<TData, TValue>({
             >
               <Checkbox
                 checked={isSelected.includes(rowKey)}
-                onChange={() => handleSelectRow(row.original)}
+                onChange={() => handleSelectRow(row.original as TData)}
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
               />
             </TableCell>
@@ -1343,7 +1346,7 @@ export function DataTable<TData, TValue>({
                 size='small'
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
-                  handleRowExpand(row.original);
+                  handleRowExpand(row.original as TData);
                 }}
                 aria-label={isExpanded ? mergedLabels.collapseLabel : mergedLabels.expandLabel}
               >
@@ -1355,7 +1358,7 @@ export function DataTable<TData, TValue>({
               </IconButton>
             </TableCell>
           )}
-          {row.getVisibleCells().map((cell: Cell<any, any>) => {
+          {row.getVisibleCells().map((cell: Cell<unknown, unknown>) => {
             const isEditable = enableInlineEdit && editableColumns.includes(cell.id);
             const isEditing =
               editingRowId === rowKey && (inlineEditMode === 'row' || editingCellId === cell.id);
@@ -1380,7 +1383,7 @@ export function DataTable<TData, TValue>({
                     onEditChange={handleEditChange}
                     onSaveEdit={() => {
                       if (inlineEditMode === 'cell') {
-                        handleSaveEdit(row.original, rowKey);
+                        handleSaveEdit(row.original as TData, rowKey);
                       }
                     }}
                     inlineEditMode={inlineEditMode}
@@ -1423,7 +1426,7 @@ export function DataTable<TData, TValue>({
                 <IconButton
                   size='small'
                   color='success'
-                  onClick={() => handleSaveEdit(row.original, rowKey)}
+                  onClick={() => handleSaveEdit(row.original as TData, rowKey)}
                   aria-label={mergedLabels.saveAriaLabel}
                 >
                   <Save style={{ width: 16, height: 16 }} />
@@ -1457,7 +1460,7 @@ export function DataTable<TData, TValue>({
                 borderTopColor: 'divider',
               }}
             >
-              {expandedRowRender(row.original)}
+              {expandedRowRender(row.original as TData)}
             </TableCell>
           </TableRow>
         )}

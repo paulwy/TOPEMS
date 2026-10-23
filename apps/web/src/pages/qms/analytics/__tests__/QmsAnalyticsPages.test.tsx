@@ -17,7 +17,7 @@ vi.mock('react-i18next', () => {
       i18n: { language: 'zh' },
     }),
     initReactI18next: { type: '3rdParty', init: () => {} },
-    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: unknown }) =>
       i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
   };
 });

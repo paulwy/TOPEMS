@@ -133,7 +133,9 @@ const SystemSettingsPage: React.FC = () => {
 
   const saveMutation = useMutation({
     mutationFn: (newSettings: SettingsType) =>
-      systemSettingApi.updateSystemConfig(newSettings as any),
+      systemSettingApi.updateSystemConfig(
+        newSettings as unknown as Parameters<typeof systemSettingApi.updateSystemConfig>[0]
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       pushToast('success', t('admin.system_settings_page.save_success'));
@@ -146,7 +148,7 @@ const SystemSettingsPage: React.FC = () => {
     saveMutation.mutate(settings);
   };
 
-  const updateField = (tab: TabKey, field: string, value: any) => {
+  const updateField = (tab: TabKey, field: string, value: string | number | boolean) => {
     setSettings((prev) => ({
       ...prev,
       [tab]: {

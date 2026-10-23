@@ -144,7 +144,7 @@ vi.mock('recharts', async () => {
   const React = await import('react');
   const passthrough =
     (name: string) =>
-    ({ children, ..._rest }: any) =>
+    ({ children, ..._rest }: unknown) =>
       React.createElement('div', { 'data-testid': name }, children);
   return {
     ResponsiveContainer: passthrough('ResponsiveContainer'),

@@ -40,13 +40,13 @@ export interface ComponentMeta {
 }
 
 export interface RegisteredComponent {
-  component: React.ComponentType<any>;
+  component: React.ComponentType<Record<string, unknown>>;
   meta: ComponentMeta;
 }
 
 const components: Record<string, RegisteredComponent> = {};
 
-export function registerComponent(id: string, component: React.ComponentType<any>, meta: Omit<ComponentMeta, 'id' | 'name'>): void {
+export function registerComponent(id: string, component: React.ComponentType<Record<string, unknown>>, meta: Omit<ComponentMeta, 'id' | 'name'>): void {
   if (components[id]) {
     console.warn(`Component ${id} is already registered, it will be overwritten`);
   }
@@ -81,7 +81,7 @@ export function getAllComponents(): Record<string, RegisteredComponent> {
 }
 
 componentMetas.forEach((meta) => {
-  const componentMap: Record<string, React.ComponentType<any>> = {
+  const componentMap = {
     StatusBadge,
     LoadingSpinner,
     LoadingOverlay,
@@ -121,7 +121,7 @@ componentMetas.forEach((meta) => {
     DataTable,
     MobileCardView,
     PageContainer,
-  };
+  } as unknown as Record<string, React.ComponentType<Record<string, unknown>>>;
   const component = componentMap[meta.id];
   if (component) {
     registerComponent(meta.id, component, {

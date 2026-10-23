@@ -46,14 +46,40 @@ export interface User {
  * 将 snake_case API 响应映射为 User 类型
  * @param apiResponse 来自 API 的原始响应（snake_case）
  */
-export const mapApiUserToUser = (apiResponse: Record<string, any>): User => {
+/** 后端返回的原始用户响应（snake_case，字段松散） */
+interface RawApiUserResponse {
+  id?: string;
+  username?: string;
+  email?: string;
+  name?: string;
+  real_name?: string;
+  full_name?: string;
+  isActive?: boolean;
+  status?: string;
+  permissions?: string[];
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
+  avatar?: string;
+  phone?: string;
+  department_id?: string;
+  departmentId?: string;
+  position_id?: string;
+  positionId?: string;
+  role?: string;
+  roles?: string[];
+  is_superuser?: boolean;
+}
+
+export const mapApiUserToUser = (apiResponse: RawApiUserResponse): User => {
   return {
-    id: apiResponse.id,
-    username: apiResponse.username,
-    email: apiResponse.email,
-    name: apiResponse.name || apiResponse.real_name || apiResponse.full_name || apiResponse.username,
-    realName: apiResponse.real_name || apiResponse.full_name || apiResponse.username,
-    status: apiResponse.isActive === false ? 'inactive' : (apiResponse.status || 'active'),
+    id: apiResponse.id ?? '',
+    username: apiResponse.username ?? '',
+    email: apiResponse.email ?? '',
+    name: apiResponse.name || apiResponse.real_name || apiResponse.full_name || apiResponse.username || '',
+    realName: apiResponse.real_name || apiResponse.full_name || apiResponse.username || '',
+    status: apiResponse.isActive === false ? 'inactive' : ((apiResponse.status || 'active') as User['status']),
     permissions: apiResponse.permissions || [],
     createdAt: apiResponse.created_at || apiResponse.createdAt || new Date().toISOString(),
     updatedAt: apiResponse.updated_at || apiResponse.updatedAt || new Date().toISOString(),

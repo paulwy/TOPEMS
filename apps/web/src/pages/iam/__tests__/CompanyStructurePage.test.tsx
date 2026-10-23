@@ -83,7 +83,7 @@ vi.mock('react-i18next', () => ({
     type: '3rdParty',
     init: vi.fn(),
   },
-  Trans: ({ children }: any) => children,
+  Trans: ({ children }: unknown) => children,
 }));
 
 const mockMutate = vi.fn();
@@ -104,7 +104,7 @@ vi.mock('@/hooks', () => ({
 }));
 
 vi.mock('@/components/common', () => ({
-  PageContainer: ({ children, title, subtitle }: any) => (
+  PageContainer: ({ children, title, subtitle }: unknown) => (
     <div data-testid='page-container'>
       <h1>{title}</h1>
       {subtitle && <p>{subtitle}</p>}
@@ -114,10 +114,10 @@ vi.mock('@/components/common', () => ({
 }));
 
 vi.mock('@/components/common/DataTable', () => ({
-  DataTable: ({ columns, data }: any) => (
+  DataTable: ({ columns, data }: unknown) => (
     <div data-testid='data-table'>
       <span data-testid='data-table-row-count'>{data?.length || 0}</span>
-      {data?.map((row: any) => (
+      {data?.map((row: unknown) => (
         <div
           key={row.id}
           data-testid={`row-${row.id}`}
@@ -130,7 +130,7 @@ vi.mock('@/components/common/DataTable', () => ({
 }));
 
 vi.mock('@topems/shared-components', () => ({
-  ConfirmDialog: ({ isOpen, title, message, onClose, onConfirm }: any) => {
+  ConfirmDialog: ({ isOpen, title, message, onClose, onConfirm }: unknown) => {
     if (!isOpen) return null;
     return (
       <div
@@ -147,11 +147,11 @@ vi.mock('@topems/shared-components', () => ({
 }));
 
 vi.mock('lucide-react', async (importOriginal) => {
-  const actual: any = await importOriginal();
+  const actual: unknown = await importOriginal();
   const React = require('react');
   const mockIcon =
     (name: string) =>
-    ({ size: _s, color: _c, ...rest }: any = {}) =>
+    ({ size: _s, color: _c, ...rest }: unknown = {}) =>
       React.createElement('svg', { 'data-testid': `icon-${name}`, ...rest });
   const allKeys = Object.keys(actual).filter((k) => k[0] === k[0].toUpperCase() && k !== 'default');
   const out: Record<string, unknown> = {};
@@ -228,12 +228,12 @@ describe('CompanyStructurePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockMutate.mockReset();
-    (useCompanyRelations as any).mockReturnValue({
+    (useCompanyRelations as unknown).mockReturnValue({
       data: { data: relations },
       isLoading: false,
     });
-    (useCompanyTree as any).mockReturnValue({ data: { data: tree }, isLoading: false });
-    (useDeleteCompanyRelation as any).mockReturnValue({ mutate: mockMutate });
+    (useCompanyTree as unknown).mockReturnValue({ data: { data: tree }, isLoading: false });
+    (useDeleteCompanyRelation as unknown).mockReturnValue({ mutate: mockMutate });
   });
 
   it('renders page container with title and subtitle', () => {

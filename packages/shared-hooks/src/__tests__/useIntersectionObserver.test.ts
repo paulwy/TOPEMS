@@ -47,7 +47,7 @@ function simulateEntry(entry: Partial<IntersectionObserverEntry>) {
 
 describe('useIntersectionObserver', () => {
   beforeEach(() => {
-    vi.stubGlobal('IntersectionObserver', MockIntersectionObserver as any);
+    vi.stubGlobal('IntersectionObserver', MockIntersectionObserver as unknown);
     lastCallback = null;
     lastOptions = null;
     mockCalls.length = 0;
@@ -223,7 +223,7 @@ describe('useIntersectionObserver', () => {
 
 describe('useInView', () => {
   beforeEach(() => {
-    vi.stubGlobal('IntersectionObserver', MockIntersectionObserver as any);
+    vi.stubGlobal('IntersectionObserver', MockIntersectionObserver as unknown);
     lastCallback = null;
     mockCalls.length = 0;
   });

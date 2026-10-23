@@ -32,6 +32,9 @@ import i18n from '@/i18n';
  * @template TUpdate 更新入参类型，默认 Partial<T>
  */
 export interface CrudApi<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
+  // 受函数参数逆变限制，list 的入参必须保持宽松：各 API 客户端 list 形参类型不一致，
+  // Record<string, unknown> 无法接收更具体的参数类型，此处保留 any 是有意为之。
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   list: (params?: any) => Promise<ApiResponse<unknown>>;
   create: (data: TCreate) => Promise<ApiResponse<T>>;
   update: (id: string, data: TUpdate) => Promise<ApiResponse<T>>;

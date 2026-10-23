@@ -7,7 +7,7 @@ import { ListEmptyState } from '../EmptyState';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
 vi.mock('@topems/shared-components', () => ({
-  EmptyState: ({ title, description, action, icon }: any) => (
+  EmptyState: ({ title, description, action, icon }: unknown) => (
     <div data-testid='empty-state'>
       {icon}
       <span>{title}</span>
@@ -15,7 +15,7 @@ vi.mock('@topems/shared-components', () => ({
       {action && <button onClick={action.onClick}>{action.label}</button>}
     </div>
   ),
-  ErrorEmptyState: ({ error, onRetry }: any) => (
+  ErrorEmptyState: ({ error, onRetry }: unknown) => (
     <div data-testid='error-empty-state'>
       <span>{error}</span>
       {onRetry && <button onClick={onRetry}>重试</button>}

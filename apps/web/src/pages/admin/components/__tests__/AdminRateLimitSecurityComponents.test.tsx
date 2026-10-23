@@ -21,7 +21,7 @@ vi.mock('react-i18next', () => {
       i18nMap[k] = v as string;
     }
   }
-  const t = (key: string, options?: any) => {
+  const t = (key: string, options?: unknown) => {
     let base = i18nMap[key] ?? key;
     if (options === undefined || options === null) return base;
     let didReplace = false;
@@ -60,7 +60,7 @@ vi.mock('react-i18next', () => {
   return {
     useTranslation: () => ({ t, i18n: { language: 'zh' } }),
     initReactI18next: { type: '3rdParty', init: () => {} },
-    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: unknown }) =>
       i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
   };
 });
@@ -80,7 +80,7 @@ vi.mock('@/i18n', () => {
       i18nMap[k] = v as string;
     }
   }
-  const t = (key: string, options?: any) => {
+  const t = (key: string, options?: unknown) => {
     let base = i18nMap[key] ?? key;
     if (options === undefined || options === null) return base;
     let didReplace = false;

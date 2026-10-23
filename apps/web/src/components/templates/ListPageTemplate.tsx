@@ -1,4 +1,3 @@
-import { designTokens } from '@topems/tokens';
 import { iconSm, iconMd, iconLg } from '../sharedStyles';
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {

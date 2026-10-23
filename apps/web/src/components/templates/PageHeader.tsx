@@ -1,4 +1,4 @@
-import { iconSm, iconMd, iconLg } from '../sharedStyles';
+import { iconMd, iconLg } from '../sharedStyles';
 import React from 'react';
 import {
   Box,

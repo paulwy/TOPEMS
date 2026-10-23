@@ -99,7 +99,7 @@ describe('V141 ERP - leaveRequestApi', () => {
 
   it('should support page_size parameter', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await leaveRequestApi.list({ page: 1, page_size: 50 } as any);
+    await leaveRequestApi.list({ page: 1, page_size: 50 } as unknown);
     expect(mockClient.get).toHaveBeenCalledWith('/leave-requests?page=1&page_size=50');
   });
 });
@@ -203,7 +203,7 @@ describe('V141 ERP - hrProxyApi', () => {
 
   it('should support page_size parameter', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await hrProxyApi.listEmployees({ page: 1, page_size: 50 } as any);
+    await hrProxyApi.listEmployees({ page: 1, page_size: 50 } as unknown);
     expect(mockClient.get).toHaveBeenCalledWith('/hr/employees?page=1&page_size=50');
   });
 });

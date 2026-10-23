@@ -10,7 +10,7 @@ vi.mock('@topems/shared-components', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
-    ConfirmDialog: ({ onConfirm }: any) => (
+    ConfirmDialog: ({ onConfirm }: unknown) => (
       <button
         type='button'
         onClick={() => onConfirm?.()}
@@ -88,7 +88,7 @@ vi.mock('react-i18next', () => {
       type: '3rdParty',
       init: vi.fn(),
     },
-    Trans: ({ children }: any) => children,
+    Trans: ({ children }: unknown) => children,
   };
 });
 
@@ -166,13 +166,13 @@ const mockTrigger = vi.fn();
 
 vi.mock('@/api/automation', () => ({
   automationRulesApi: {
-    list: (...args: any[]) => mockList(...args),
-    create: (...args: any[]) => mockCreate(...args),
-    remove: (...args: any[]) => mockRemove(...args),
-    duplicate: (...args: any[]) => mockDuplicate(...args),
-    enable: (...args: any[]) => mockEnable(...args),
-    disable: (...args: any[]) => mockDisable(...args),
-    trigger: (...args: any[]) => mockTrigger(...args),
+    list: (...args: unknown[]) => mockList(...args),
+    create: (...args: unknown[]) => mockCreate(...args),
+    remove: (...args: unknown[]) => mockRemove(...args),
+    duplicate: (...args: unknown[]) => mockDuplicate(...args),
+    enable: (...args: unknown[]) => mockEnable(...args),
+    disable: (...args: unknown[]) => mockDisable(...args),
+    trigger: (...args: unknown[]) => mockTrigger(...args),
   },
   AutomationRule: {},
   AutomationRuleTriggerType: {},
@@ -215,7 +215,7 @@ describe('AutomationRulesPage', () => {
   });
 
   it('shows loading', async () => {
-    let resolvePromise: ((v: any) => void) | undefined;
+    let resolvePromise: ((v: unknown) => void) | undefined;
     mockList.mockReturnValue(
       new Promise((res) => {
         resolvePromise = res;

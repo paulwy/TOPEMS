@@ -20,9 +20,14 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
   ({ devicePoints, storageLocations, center = [116.397428, 39.90923], zoom = 10 }, ref) => {
     const mapContainer = useRef<HTMLDivElement>(null);
 
-    const mapRef = useRef<any>(null);
+    const mapRef = useRef<{
+      plugin: (plugins: string[], cb: () => void) => void;
+      remove: (marker: AMapMarker) => void;
+      add: (marker: AMapMarker) => void;
+      destroy: () => void;
+    } | null>(null);
 
-    const markersRef = useRef<Map<string, any>>(new Map());
+    const markersRef = useRef<Map<string, AMapMarker>>(new Map());
 
     useImperativeHandle(ref, () => ({
       getMap: () => mapRef.current,
@@ -107,7 +112,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
       mapRef.current.plugin(['AMap.Marker'], () => {
         updateMarkers(
           (window as unknown as Record<string, unknown>).AMap as AMapType,
-          mapRef.current
+          mapRef.current!
         );
       });
     }, [devicePoints, storageLocations, updateMarkers]);

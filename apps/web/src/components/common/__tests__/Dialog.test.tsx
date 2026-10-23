@@ -20,7 +20,7 @@ vi.mock('react-i18next', () => {
       i18n: { language: 'zh' },
     }),
     initReactI18next: { type: '3rdParty', init: () => {} },
-    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: unknown }) =>
       i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
   };
 });
@@ -46,7 +46,7 @@ vi.mock('@/i18n', () => {
 });
 
 vi.mock('@/store', () => ({
-  useNotificationStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: unknown) =>
     selector
       ? selector({
           addNotification: vi.fn(),
@@ -57,7 +57,7 @@ vi.mock('@/store', () => ({
           notifications: [],
         }
   ),
-  useAuthStore: vi.fn((selector?: any) =>
+  useAuthStore: vi.fn((selector?: unknown) =>
     selector
       ? selector({
           user: null,

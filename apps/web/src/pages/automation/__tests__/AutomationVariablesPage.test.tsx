@@ -71,7 +71,7 @@ vi.mock('react-i18next', () => {
       type: '3rdParty',
       init: vi.fn(),
     },
-    Trans: ({ children }: any) => children,
+    Trans: ({ children }: unknown) => children,
   };
 });
 
@@ -146,10 +146,10 @@ const mockReveal = vi.fn();
 
 vi.mock('@/api/automation', () => ({
   automationVariablesApi: {
-    list: (...args: any[]) => mockList(...args),
-    create: (...args: any[]) => mockCreate(...args),
-    remove: (...args: any[]) => mockRemove(...args),
-    reveal: (...args: any[]) => mockReveal(...args),
+    list: (...args: unknown[]) => mockList(...args),
+    create: (...args: unknown[]) => mockCreate(...args),
+    remove: (...args: unknown[]) => mockRemove(...args),
+    reveal: (...args: unknown[]) => mockReveal(...args),
   },
   AutomationVariable: {},
   AutomationVariableScope: {},
@@ -189,7 +189,7 @@ describe('AutomationVariablesPage', () => {
   });
 
   it('shows loading', async () => {
-    let resolvePromise: ((v: any) => void) | undefined;
+    let resolvePromise: ((v: unknown) => void) | undefined;
     mockList.mockReturnValue(
       new Promise((res) => {
         resolvePromise = res;

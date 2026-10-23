@@ -190,7 +190,7 @@ export interface StatusBadgeProps {
   disabled?: boolean;
 
   /** 自定义样式 */
-  sx?: any;
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
 
   /** 使用Chip组件渲染（默认true） */
   useChip?: boolean;
@@ -597,7 +597,7 @@ const SIZE_CONFIG: Record<StatusSize, 'small' | 'medium'> = {
   lg: 'medium', // MUI Chip max size is medium; icon sizing handled below
 };
 
-const SIZE_STYLES: Record<StatusSize, any> = {
+const SIZE_STYLES: Record<StatusSize, React.CSSProperties> = {
   sm: {
     height: 24,
     fontSize: designTokens.typography.fontSize.scale['0.75rem'],
@@ -617,7 +617,7 @@ const SIZE_STYLES: Record<StatusSize, any> = {
 
 // ============ 变体样式映射 ============
 
-const VARIANT_STYLES: Record<StatusVariant, any> = {
+const VARIANT_STYLES: Record<StatusVariant, unknown> = {
   filled: (color: StatusColor) => ({
     sx: {
       bgcolor: color === 'default' ? 'grey.400' : `${color}.main`,
@@ -733,7 +733,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   const chipSize = SIZE_CONFIG[size];
   const chipSx = {
     ...SIZE_STYLES[size],
-    ...(variant === 'soft' ? VARIANT_STYLES.soft(chipColor) : {}),
+    ...(variant === 'soft' ? (VARIANT_STYLES.soft as (color: StatusColor) => Record<string, unknown>)(chipColor) : {}),
     ...(clickable ? { cursor: 'pointer' } : {}),
     ...(disabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}),
     ...sx,

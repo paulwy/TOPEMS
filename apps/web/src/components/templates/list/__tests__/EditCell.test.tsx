@@ -13,7 +13,7 @@ describe('EditCell', () => {
   });
 
   it('renders text input by default when no inlineEdit type specified', () => {
-    const column: ColumnDef<any> = { id: 'name' };
+    const column: ColumnDef<unknown> = { id: 'name' };
     renderWithProviders(
       <EditCell
         column={column}
@@ -27,7 +27,7 @@ describe('EditCell', () => {
   });
 
   it('renders select when inlineEdit type is select', () => {
-    const column: ColumnDef<any> = {
+    const column: ColumnDef<unknown> = {
       id: 'status',
       inlineEdit: {
         type: 'select',
@@ -51,7 +51,7 @@ describe('EditCell', () => {
   });
 
   it('renders number input when inlineEdit type is number', () => {
-    const column: ColumnDef<any> = {
+    const column: ColumnDef<unknown> = {
       id: 'count',
       inlineEdit: { type: 'number' },
     };
@@ -68,7 +68,7 @@ describe('EditCell', () => {
   });
 
   it('renders checkbox when inlineEdit type is checkbox', () => {
-    const column: ColumnDef<any> = {
+    const column: ColumnDef<unknown> = {
       id: 'enabled',
       inlineEdit: { type: 'checkbox' },
     };
@@ -86,7 +86,7 @@ describe('EditCell', () => {
   });
 
   it('renders date input when inlineEdit type is date', () => {
-    const column: ColumnDef<any> = {
+    const column: ColumnDef<unknown> = {
       id: 'date',
       inlineEdit: { type: 'date' },
     };
@@ -104,7 +104,7 @@ describe('EditCell', () => {
 
   it('calls onChange when text input value changes', () => {
     const handleChange = vi.fn();
-    const column: ColumnDef<any> = { id: 'name' };
+    const column: ColumnDef<unknown> = { id: 'name' };
     renderWithProviders(
       <EditCell
         column={column}
@@ -121,7 +121,7 @@ describe('EditCell', () => {
 
   it('calls onSave when Enter key is pressed', () => {
     const handleSave = vi.fn();
-    const column: ColumnDef<any> = { id: 'name' };
+    const column: ColumnDef<unknown> = { id: 'name' };
     renderWithProviders(
       <EditCell
         column={column}
@@ -138,7 +138,7 @@ describe('EditCell', () => {
 
   it('calls onCancel when Escape key is pressed', () => {
     const handleCancel = vi.fn();
-    const column: ColumnDef<any> = { id: 'name' };
+    const column: ColumnDef<unknown> = { id: 'name' };
     renderWithProviders(
       <EditCell
         column={column}
@@ -155,7 +155,7 @@ describe('EditCell', () => {
 
   it('calls onChange with checked value for checkbox', () => {
     const handleChange = vi.fn();
-    const column: ColumnDef<any> = {
+    const column: ColumnDef<unknown> = {
       id: 'enabled',
       inlineEdit: { type: 'checkbox' },
     };

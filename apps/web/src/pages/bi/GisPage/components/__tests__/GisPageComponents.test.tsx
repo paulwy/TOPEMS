@@ -140,8 +140,8 @@ vi.mock('@/components/common/DataTable', async () => {
       searchPlaceholder,
       exportFileName,
     }: {
-      columns: any[];
-      data: any[];
+      columns: unknown[];
+      data: unknown[];
       searchKey?: string;
       searchPlaceholder?: string;
       exportFileName?: string;

@@ -4,17 +4,17 @@ import { useDashboardData } from '../UseDashboardData';
 
 vi.mock('@tanstack/react-query', () => ({
   QueryCache: class QueryCache {
-    constructor(_options?: any) {}
+    constructor(_options?: unknown) {}
     subscribe() {}
     clear() {}
   },
   MutationCache: class MutationCache {
-    constructor(_options?: any) {}
+    constructor(_options?: unknown) {}
     subscribe() {}
     clear() {}
   },
   QueryClient: class QueryClient {
-    constructor(_options?: any) {}
+    constructor(_options?: unknown) {}
     invalidateQueries() {}
     setQueryData() {}
     getQueryData() {}

@@ -44,7 +44,7 @@ vi.mock('react-router-dom', () => ({
   useParams: vi.fn(() => ({})),
   useLocation: vi.fn(() => ({ pathname: '/', search: '', hash: '', state: null })),
   useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
-  Link: ({ children }: any) => children,
+  Link: ({ children }: unknown) => children,
   useMatch: vi.fn(() => null),
 }));
 vi.mock('react-i18next', () => ({

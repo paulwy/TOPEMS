@@ -68,7 +68,7 @@ describe('SettingsTabRenderer', () => {
       <SettingsTabRenderer
         title='监控设置'
         subtitle='配置监控刷新和告警参数'
-        tabs={tabs as any}
+        tabs={tabs as unknown}
         handleSave={vi.fn()}
       />
     );

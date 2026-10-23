@@ -39,12 +39,12 @@ vi.mock('@/components/templates/ListPageTemplate', () => ({
             key={row.id}
             data-testid={`row-${row.id}`}
           >
-            {props.columns.map((column: any) => (
+            {props.columns.map((column: unknown) => (
               <div key={column.id}>{column.render(row)}</div>
             ))}
             {props.rowActions
-              .filter((action: any) => !action.show || action.show(row))
-              .map((action: any) => (
+              .filter((action: unknown) => !action.show || action.show(row))
+              .map((action: unknown) => (
                 <button
                   key={action.key}
                   type='button'

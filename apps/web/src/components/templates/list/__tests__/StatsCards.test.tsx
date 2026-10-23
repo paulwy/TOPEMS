@@ -15,7 +15,7 @@ describe('StatsCards', () => {
     const { container, rerender } = renderWithProviders(<StatsCards cards={[]} />);
     expect(container.firstChild).toBeNull();
 
-    rerender(<StatsCards cards={undefined as any} />);
+    rerender(<StatsCards cards={undefined as unknown} />);
     expect(container.firstChild).toBeNull();
   });
 

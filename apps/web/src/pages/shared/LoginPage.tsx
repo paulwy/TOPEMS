@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { apiLogger } from '@/utils/logger';
 import { authApi } from '@/api/iam';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';

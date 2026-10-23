@@ -69,7 +69,7 @@ describe('useCrud', () => {
     it('should handle fetch error', async () => {
       const errorMessage = 'Fetch failed';
       const err = new Error(errorMessage);
-      (err as any).response = { data: { message: errorMessage } };
+      (err as unknown).response = { data: { message: errorMessage } };
       vi.mocked(mockApi.get).mockRejectedValueOnce(err);
 
       const onError = vi.fn((e) => {

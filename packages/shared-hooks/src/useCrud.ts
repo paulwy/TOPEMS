@@ -6,7 +6,7 @@ export interface UseCrudOptions<T> {
   api: AxiosInstance;
   basePath: string;
   initialData?: T[];
-  onError?: (error: any) => void;
+  onError?: (error: unknown) => void;
   onSuccess?: (message: string) => void;
   cacheTime?: number;
   autoFetch?: boolean;
@@ -16,7 +16,7 @@ export interface UseCrudResult<T, TCreate = Omit<T, 'id'>, TUpdate = Partial<T>>
   data: T[];
   loading: boolean;
   error: string | null;
-  fetch: (params?: Record<string, any>) => Promise<T[]>;
+  fetch: (params?: Record<string, unknown>) => Promise<T[]>;
   get: (id: string | number) => Promise<T>;
   create: (item: TCreate) => Promise<T>;
   update: (id: string | number, item: TUpdate) => Promise<T>;
@@ -70,8 +70,9 @@ export function useCrud<
   }, []);
 
   const handleError = useCallback(
-    (err: any) => {
-      const message = err?.response?.data?.message || err?.message || err?.toString() || zh['crud.operationFailed'];
+    (err: unknown) => {
+      const e = err as { response?: { data?: { message?: string } }; message?: string } | null;
+      const message = e?.response?.data?.message || e?.message || (err instanceof Error ? err.message : String(err)) || zh['crud.operationFailed'];
       setError(message);
       onError?.(err);
       return Promise.reject(err);
@@ -84,7 +85,7 @@ export function useCrud<
   }, []);
 
   const fetch = useCallback(
-    async (params?: Record<string, any>) => {
+    async (params?: Record<string, unknown>) => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }

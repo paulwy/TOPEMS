@@ -220,7 +220,9 @@ describe('TableSection', () => {
   });
 
   it('renders dash for undefined cell values', () => {
-    const dataWithNull: TestRow[] = [{ id: '1', name: undefined as any, status: undefined as any }];
+    const dataWithNull: TestRow[] = [
+      { id: '1', name: undefined as unknown, status: undefined as unknown },
+    ];
     renderWithProviders(
       <table>
         <TableSection

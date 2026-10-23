@@ -151,7 +151,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
       value={displayValue}
       onChange={handleChange}
       onBlur={handleBlur}
-      slotProps={mergedSlotProps as any}
+      slotProps={mergedSlotProps}
       {...restProps}
     />
   );

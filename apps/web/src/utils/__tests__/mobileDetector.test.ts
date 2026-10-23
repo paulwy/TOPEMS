@@ -90,10 +90,10 @@ describe('utils/mobileDetector', () => {
 
     it('detects WeChat mini program', () => {
       mockUserAgent('Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 MicroMessenger/8.0');
-      (window as any).__wxjs_environment = 'miniprogram';
+      (window as unknown).__wxjs_environment = 'miniprogram';
       const info = getDeviceInfo();
       expect(info.isMiniProgram).toBe(true);
-      delete (window as any).__wxjs_environment;
+      delete (window as unknown).__wxjs_environment;
     });
 
     it('returns screen dimensions', () => {

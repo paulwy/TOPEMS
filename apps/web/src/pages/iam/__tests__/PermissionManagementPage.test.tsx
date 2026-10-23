@@ -22,7 +22,7 @@ vi.mock('react-i18next', () => {
       i18n: { language: 'zh' },
     }),
     initReactI18next: { type: '3rdParty', init: () => {} },
-    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: unknown }) =>
       i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
   };
 });
@@ -49,17 +49,17 @@ vi.mock('@/i18n', () => {
   };
 });
 
-let capturedProps: any = null;
+let capturedProps: unknown = null;
 
 vi.mock('@/components/templates/CrudPage', () => {
   return {
-    default: (props: any) => {
+    default: (props: unknown) => {
       capturedProps = props;
       return (
         <div data-testid='crud-page'>
           <span data-testid='crud-schema'>{props.schema?.name || 'unknown'}</span>
           <span data-testid='crud-breadcrumbs'>
-            {props.breadcrumbs?.map((b: any) => b.label).join(' / ')}
+            {props.breadcrumbs?.map((b: unknown) => b.label).join(' / ')}
           </span>
           <span data-testid='crud-has-header'>{props.headerContent ? 'yes' : 'no'}</span>
         </div>

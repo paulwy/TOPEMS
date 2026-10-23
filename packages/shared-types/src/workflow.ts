@@ -6,7 +6,7 @@ export interface WorkflowNode {
   y: number;
   width?: number;
   height?: number;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
 }
 
 export interface WorkflowEdge {
@@ -35,7 +35,7 @@ export interface WorkflowInstance {
   status: 'running' | 'completed' | 'cancelled';
   currentNodeId: string;
   initiatorId: string;
-  variables: Record<string, any>;
+  variables: Record<string, unknown>;
 }
 
 export interface WorkflowTask {

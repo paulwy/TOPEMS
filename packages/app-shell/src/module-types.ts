@@ -1,3 +1,5 @@
+import type { ComponentType } from 'react';
+
 /**
  * 从 apps/web/src/modules/registry/index.ts 抽取的模块配置类型定义。
  *
@@ -38,7 +40,7 @@ export interface ModuleRoute {
   /** Route name */
   name: string;
   /** Component to load (local modules) */
-  component: () => Promise<any>;
+  component: () => Promise<{ default: ComponentType<Record<string, unknown>> }>;
   /** Component name (remote modules) */
   componentName?: string;
   /** Component path (remote modules, e.g., './pages/UserManagement') */

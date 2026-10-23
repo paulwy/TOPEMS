@@ -128,7 +128,7 @@ describe('V140 ERP - dictApi', () => {
 
   it('should support page_size parameter alias', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await dictApi.listTypes({ page: 1, page_size: 50 } as any);
+    await dictApi.listTypes({ page: 1, page_size: 50 } as unknown);
     expect(mockClient.get).toHaveBeenCalledWith('/system/dict-types?page=1&page_size=50');
   });
 });
@@ -231,7 +231,7 @@ describe('V140 ERP - openingBalanceApi', () => {
 
   it('should support page_size parameter alias', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await openingBalanceApi.list({ page: 1, page_size: 50 } as any);
+    await openingBalanceApi.list({ page: 1, page_size: 50 } as unknown);
     expect(mockClient.get).toHaveBeenCalledWith(
       '/finance/accounts/opening-balances?page=1&page_size=50'
     );

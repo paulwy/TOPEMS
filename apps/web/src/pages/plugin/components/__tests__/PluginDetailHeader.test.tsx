@@ -7,7 +7,7 @@ import type { Plugin } from '@/api/plugin';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (x: string, opts?: any) => {
+    t: (x: string, opts?: unknown) => {
       if (opts && opts.count !== undefined) return `${x}:${opts.count}`;
       return x;
     },

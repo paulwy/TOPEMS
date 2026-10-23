@@ -42,11 +42,11 @@ vi.mock('react-i18next', () => ({
     type: '3rdParty',
     init: vi.fn(),
   },
-  Trans: ({ children }: any) => children,
+  Trans: ({ children }: unknown) => children,
 }));
 
 vi.mock('@/store', () => ({
-  useNotificationStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: unknown) =>
     selector
       ? selector({
           addNotification: vi.fn(),
@@ -57,7 +57,7 @@ vi.mock('@/store', () => ({
           notifications: [],
         }
   ),
-  useAuthStore: vi.fn((selector?: any) =>
+  useAuthStore: vi.fn((selector?: unknown) =>
     selector
       ? selector({
           user: null,

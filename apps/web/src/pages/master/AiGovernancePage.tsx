@@ -219,9 +219,9 @@ const AiGovernancePage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      let field_config: Record<string, unknown>;
+      let fieldConfig: Record<string, unknown>;
       try {
-        field_config = JSON.parse(ruleForm.field_config);
+        fieldConfig = JSON.parse(ruleForm.field_config);
       } catch {
         setError(t('field_config_invalid'));
         setLoading(false);
@@ -230,7 +230,7 @@ const AiGovernancePage: React.FC = () => {
       const res = await aiGovernanceApi.createMatchRule({
         name: ruleForm.name,
         rule_type: ruleForm.rule_type,
-        field_config,
+        field_config: fieldConfig,
         threshold: ruleForm.threshold || undefined,
       });
       if (!res.success) setError(res.message || t('rule_add_failed'));

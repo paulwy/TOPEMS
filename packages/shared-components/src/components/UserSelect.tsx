@@ -40,8 +40,8 @@ export const UserSelect: React.FC<UserSelectProps> = ({
       loading={loading}
       disabled={disabled}
       renderInput={(params) => {
-        // 使用 any 绕过 MUI 版本差异的类型检查
-        const anyParams = params as any;
+        // 使用 unknown 收窄绕过 MUI 版本差异的类型检查
+        const anyParams = params as unknown as typeof params & { slotProps?: { input?: Record<string, unknown> } };
         return (
           <TextField
             {...anyParams}

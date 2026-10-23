@@ -48,7 +48,7 @@ describe('clone utilities', () => {
 
       expect(cloned).toEqual(arr);
       expect(cloned[0]).not.toBe(arr[0]);
-      expect((cloned[2] as any).nested).not.toBe((arr[2] as any).nested);
+      expect((cloned[2] as unknown).nested).not.toBe((arr[2] as unknown).nested);
     });
 
     it('should clone Date objects', () => {
@@ -71,7 +71,7 @@ describe('clone utilities', () => {
     });
 
     it('should handle circular references in objects', () => {
-      const obj: any = { name: 'root' };
+      const obj: unknown = { name: 'root' };
       obj.self = obj;
 
       const cloned = deepClone(obj);
@@ -82,7 +82,7 @@ describe('clone utilities', () => {
     });
 
     it('should handle circular references in arrays', () => {
-      const arr: any[] = [1, 2];
+      const arr: unknown[] = [1, 2];
       arr.push(arr);
 
       const cloned = deepClone(arr);
@@ -107,11 +107,11 @@ describe('clone utilities', () => {
       class Foo {
         own = 'own';
       }
-      (Foo.prototype as any).protoProp = 'proto';
-      const obj: any = new Foo();
+      (Foo.prototype as unknown).protoProp = 'proto';
+      const obj: unknown = new Foo();
       obj.extra = 'extra';
 
-      const cloned: any = deepClone(obj);
+      const cloned: unknown = deepClone(obj);
 
       expect(cloned.own).toBe('own');
       expect(cloned.extra).toBe('extra');
@@ -142,8 +142,8 @@ describe('clone utilities', () => {
 
   describe('clearCloneCache', () => {
     it('should allow independent cloning across separate calls', () => {
-      const obj1: any = { name: 'obj1' };
-      const obj2: any = { name: 'obj2' };
+      const obj1: unknown = { name: 'obj1' };
+      const obj2: unknown = { name: 'obj2' };
 
       const cloned1 = deepClone(obj1);
       clearCloneCache();

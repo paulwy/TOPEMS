@@ -57,7 +57,7 @@ vi.mock('react-i18next', () => {
       type: '3rdParty',
       init: vi.fn(),
     },
-    Trans: ({ children }: any) => children,
+    Trans: ({ children }: unknown) => children,
   };
 });
 
@@ -115,7 +115,7 @@ const mockGetStats = vi.fn();
 
 vi.mock('@/api/automation', () => ({
   automationApi: {
-    getDashboardStats: (...args: any[]) => mockGetStats(...args),
+    getDashboardStats: (...args: unknown[]) => mockGetStats(...args),
   },
 }));
 
@@ -162,7 +162,7 @@ describe('AutomationDashboardPage', () => {
   });
 
   it('shows loading spinner', async () => {
-    let resolvePromise: ((v: any) => void) | undefined;
+    let resolvePromise: ((v: unknown) => void) | undefined;
     mockGetStats.mockReturnValue(
       new Promise((res) => {
         resolvePromise = res;

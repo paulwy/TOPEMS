@@ -28,7 +28,7 @@ async function wipeAllStores() {
 async function listAllCacheEntries(mod: typeof import('@/services/OfflineStorage')) {
   // There is no public "list all cache entries" API. We iterate via deleteCacheEntry patterns
   // by re-opening the DB directly.
-  return new Promise<any[]>((resolve, reject) => {
+  return new Promise<unknown[]>((resolve, reject) => {
     const openReq = indexedDB.open('TOPEMSOfflineDB', 1);
     openReq.onsuccess = () => {
       const db = openReq.result;
@@ -36,7 +36,7 @@ async function listAllCacheEntries(mod: typeof import('@/services/OfflineStorage
         const tx = db.transaction(['cacheEntries'], 'readonly');
         const store = tx.objectStore('cacheEntries');
         const req = store.getAll();
-        req.onsuccess = () => resolve(req.result as any[]);
+        req.onsuccess = () => resolve(req.result as unknown[]);
         req.onerror = () => reject(req.error);
       } catch (e) {
         // cacheEntries store doesn't exist yet -> empty
@@ -76,7 +76,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
       expect(all[0].id).toBe(id);
       expect(all[0].status).toBe('pending');
       expect(all[0].retryCount).toBe(0);
-      expect((all[0].data as any).name).toBe('Alice');
+      expect((all[0].data as unknown).name).toBe('Alice');
     });
 
     it('getOfflineRecords filters by status index', async () => {
@@ -230,7 +230,7 @@ describe('offlineStorage (via fake-indexeddb)', () => {
       expect(entry).not.toBeNull();
       expect(entry!.service).toBe(service);
       expect(entry!.endpoint).toBe(endpoint);
-      expect((entry!.data as any)[0].name).toBe('X');
+      expect((entry!.data as unknown)[0].name).toBe('X');
       expect(entry!.ttl).toBe(60_000);
     });
 

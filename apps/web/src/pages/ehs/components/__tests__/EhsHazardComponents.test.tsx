@@ -37,7 +37,7 @@ vi.mock('@/components/ehs', async () => {
 vi.mock('@/components/common/DataTable', async () => {
   const React = await import('react');
   return {
-    DataTable: ({ columns, data }: { columns: any[]; data: any[] }) =>
+    DataTable: ({ columns, data }: { columns: unknown[]; data: unknown[] }) =>
       React.createElement(
         'table',
         { 'data-testid': 'mock-data-table' },
@@ -147,7 +147,7 @@ describe('EhsHazard components', () => {
 
   describe('EhsHazardBasicInfoSection', () => {
     it('renders hazard basic fields and risk tiles', () => {
-      renderWithProviders(<EhsHazardBasicInfoSection hazard={hazard as any} />);
+      renderWithProviders(<EhsHazardBasicInfoSection hazard={hazard as unknown} />);
 
       expect(
         screen.getAllByText('ehs.ehshazarddetailpage.basic_information').length

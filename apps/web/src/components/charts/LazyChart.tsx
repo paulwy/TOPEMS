@@ -19,7 +19,7 @@ export interface BarChartProps extends BaseChartProps {
   barRadius?: number | [number, number, number, number];
   animate?: boolean;
   cellColors?: string[];
-  tooltipFormatter?: (...args: any[]) => any;
+  tooltipFormatter?: (...args: unknown[]) => React.ReactNode;
 }
 
 export interface LineChartProps extends BaseChartProps {

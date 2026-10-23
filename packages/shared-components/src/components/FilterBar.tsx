@@ -35,9 +35,9 @@ export interface FilterConfig {
   type?: 'select' | 'multiselect' | 'date' | 'dateRange' | 'text' | 'number' | 'search';
   placeholder?: string;
   options?: FilterOption[];
-  value?: any;
-  defaultValue?: any;
-  onChange?: (value: any, filter: FilterConfig) => void;
+  value?: unknown;
+  defaultValue?: unknown;
+  onChange?: (value: unknown, filter: FilterConfig) => void;
   width?: number | string;
   /** 是否显示搜索框（用于multiselect） */
   searchable?: boolean;
@@ -45,7 +45,7 @@ export interface FilterConfig {
 
 export interface FilterBarProps {
   filters: FilterConfig[];
-  onFilterChange?: (filters: Record<string, any>) => void;
+  onFilterChange?: (filters: Record<string, unknown>) => void;
   onReset?: () => void;
   onSearch?: () => void;
   collapsible?: boolean;
@@ -60,7 +60,7 @@ export interface FilterBarProps {
 
 const FilterControl: React.FC<{
   filter: FilterConfig;
-  onChange: (value: any, filter: FilterConfig) => void;
+  onChange: (value: unknown, filter: FilterConfig) => void;
   dense?: boolean;
   variant?: 'standard' | 'outlined' | 'filled';
   disabled?: boolean;
@@ -84,7 +84,7 @@ const FilterControl: React.FC<{
   };
 
   const formControlProps = {
-    variant: variant as any,
+    variant: variant as 'outlined' | 'standard' | 'filled',
     fullWidth: true,
     disabled,
   };
@@ -134,7 +134,7 @@ const FilterControl: React.FC<{
             label={filter.label}
             onChange={handleChange}
             renderValue={(selected) =>
-              (selected as any[])
+              (selected as unknown[])
                 .map((v) => filter.options?.find((o) => o.value === v)?.label)
                 .filter(Boolean)
                 .join(', ') || i18next.t('components.filter_bar.all', { defaultValue: 'All' })
@@ -164,15 +164,16 @@ const FilterControl: React.FC<{
         />
       );
 
-    case 'dateRange':
+    case 'dateRange': {
+      const dateValue = filter.value as { start?: string; end?: string } | undefined;
       return (
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <TextField
             {...textFieldProps}
             type='date'
             label={i18next.t('components.filter_bar.start_date', { defaultValue: 'Start date' })}
-            value={filter.value?.start ?? ''}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange({ ...filter.value, start: e.target.value })}
+            value={dateValue?.start ?? ''}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange({ ...(dateValue ?? {}), start: e.target.value })}
             sx={{ width: filter.width || 140 }}
           />
           <Typography color='text.secondary'>
@@ -182,12 +183,13 @@ const FilterControl: React.FC<{
             {...textFieldProps}
             type='date'
             label={i18next.t('components.filter_bar.end_date', { defaultValue: 'End date' })}
-            value={filter.value?.end ?? ''}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange({ ...filter.value, end: e.target.value })}
+            value={dateValue?.end ?? ''}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange({ ...(dateValue ?? {}), end: e.target.value })}
             sx={{ width: filter.width || 140 }}
           />
         </Box>
       );
+    }
 
     case 'number':
       return (
@@ -234,8 +236,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [expanded, setExpanded] = React.useState(defaultExpanded);
-  const [localFilters, setLocalFilters] = React.useState<Record<string, any>>(() => {
-    const initial: Record<string, any> = {};
+  const [localFilters, setLocalFilters] = React.useState<Record<string, unknown>>(() => {
+    const initial: Record<string, unknown> = {};
     filters.forEach((f) => {
       initial[f.id] = f.value ?? f.defaultValue;
     });
@@ -244,7 +246,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   // 同步外部 filters 变化
   React.useEffect(() => {
-    const newFilters: Record<string, any> = {};
+    const newFilters: Record<string, unknown> = {};
     filters.forEach((f) => {
       newFilters[f.id] = f.value ?? f.defaultValue;
     });
@@ -253,7 +255,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   // 筛选变化
   const handleFilterChange = useCallback(
-    (value: any, filter: FilterConfig) => {
+    (value: unknown, filter: FilterConfig) => {
       const newFilters = { ...localFilters, [filter.id]: value };
       setLocalFilters(newFilters);
       filter.onChange?.(value, filter);
@@ -264,7 +266,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   // 重置
   const handleReset = useCallback(() => {
-    const resetFilters: Record<string, any> = {};
+    const resetFilters: Record<string, unknown> = {};
     filters.forEach((f) => {
       resetFilters[f.id] = f.defaultValue;
     });

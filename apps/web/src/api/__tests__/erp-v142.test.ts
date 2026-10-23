@@ -423,7 +423,7 @@ describe('V142 ERP - mdmRefsApi', () => {
 
   it('should support page_size parameter', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await mdmRefsApi.list({ page: 1, page_size: 50 } as any);
+    await mdmRefsApi.list({ page: 1, page_size: 50 } as unknown);
     expect(mockClient.get).toHaveBeenCalledWith('/master-data-refs?page=1&page_size=50');
   });
 });

@@ -18,9 +18,9 @@ vi.mock('@/components/common/DataTable', async () => {
       data,
       onRowClick,
     }: {
-      columns: any[];
-      data: any[];
-      onRowClick?: (row: any) => void;
+      columns: unknown[];
+      data: unknown[];
+      onRowClick?: (row: unknown) => void;
     }) =>
       React.createElement(
         'table',

@@ -251,7 +251,7 @@ const TenantManagementPage: React.FC = () => {
     if (editingTenant) {
       updateMutation.mutate({ id: editingTenant.id, data: formData });
     } else {
-      createMutation.mutate(formData as any);
+      createMutation.mutate(formData as unknown as Parameters<typeof createMutation.mutate>[0]);
     }
   };
 
@@ -420,7 +420,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
     quota_users: initialData?.quota_users || 10,
   });
 
-  const handleChange = (field: keyof Tenant, value: any) => {
+  const handleChange = (field: keyof Tenant, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

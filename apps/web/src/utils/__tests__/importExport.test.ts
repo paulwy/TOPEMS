@@ -19,13 +19,13 @@ vi.mock('@/i18n', () => {
     'common.no': '否',
   };
   const instance = {
-    t: (key: string, options?: any) => {
+    t: (key: string, options?: unknown) => {
       // support dual-sig: t(key, fallbackString) and t(key, {count:..})
       if (typeof options === 'string') return options;
       return i18nMap[key] ?? key;
     },
-    use: (x: any) => instance,
-    init: (cfg: any) => ({}) as any,
+    use: (x: unknown) => instance,
+    init: (cfg: unknown) => ({}) as unknown,
     on: vi.fn(),
     off: vi.fn(),
     language: 'zh-CN',
@@ -51,12 +51,12 @@ vi.mock('i18next', () => {
     'common.no': '否',
   };
   const instance = {
-    t: (key: string, options?: any) => {
+    t: (key: string, options?: unknown) => {
       if (typeof options === 'string') return options;
       return i18nMap[key] ?? key;
     },
-    use: (x: any) => instance,
-    init: (cfg: any) => ({}) as any,
+    use: (x: unknown) => instance,
+    init: (cfg: unknown) => ({}) as unknown,
     on: vi.fn(),
     off: vi.fn(),
     language: 'zh-CN',
@@ -121,8 +121,8 @@ describe('utils/importExport - readFileAsBase64', () => {
     const file = new File(['hello'], 'test.csv', { type: 'text/csv' });
 
     class MockFileReader {
-      onload: ((ev: any) => void) | null = null;
-      onerror: ((ev: any) => void) | null = null;
+      onload: ((ev: unknown) => void) | null = null;
+      onerror: ((ev: unknown) => void) | null = null;
       result: string | null = null;
       readAsDataURL = vi.fn((f: File) => {
         setTimeout(() => {
@@ -143,8 +143,8 @@ describe('utils/importExport - readFileAsBase64', () => {
     const file = new File(['data'], 'test.csv');
 
     class MockFileReader {
-      onload: ((ev: any) => void) | null = null;
-      onerror: ((ev: any) => void) | null = null;
+      onload: ((ev: unknown) => void) | null = null;
+      onerror: ((ev: unknown) => void) | null = null;
       readAsDataURL = vi.fn((f: File) => {
         setTimeout(() => {
           this.onerror(new Error('read failed'));
@@ -166,9 +166,9 @@ describe('utils/importExport - exportToCSV', () => {
       href: '',
       download: '',
       click: vi.fn(),
-    } as any);
-    vi.spyOn(document.body, 'appendChild').mockImplementation(() => null as any);
-    vi.spyOn(document.body, 'removeChild').mockImplementation(() => null as any);
+    } as unknown);
+    vi.spyOn(document.body, 'appendChild').mockImplementation(() => null as unknown);
+    vi.spyOn(document.body, 'removeChild').mockImplementation(() => null as unknown);
     vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:fake') });
   });
 
@@ -235,14 +235,14 @@ describe('utils/importExport - downloadTemplate', () => {
       href: '',
       download: '',
       click: vi.fn(),
-    } as any);
-    vi.spyOn(document.body, 'appendChild').mockImplementation(() => null as any);
-    vi.spyOn(document.body, 'removeChild').mockImplementation(() => null as any);
+    } as unknown);
+    vi.spyOn(document.body, 'appendChild').mockImplementation(() => null as unknown);
+    vi.spyOn(document.body, 'removeChild').mockImplementation(() => null as unknown);
     vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:fake') });
   });
 
   it('creates a download link for the template', () => {
-    const columns: ExportColumn<any>[] = [
+    const columns: ExportColumn<unknown>[] = [
       { key: 'name', label: '姓名' },
       { key: 'email', label: '邮箱' },
     ];
@@ -250,7 +250,7 @@ describe('utils/importExport - downloadTemplate', () => {
   });
 
   it('uses default filename "template" when not provided', () => {
-    const columns: ExportColumn<any>[] = [{ key: 'name', label: 'Name' }];
+    const columns: ExportColumn<unknown>[] = [{ key: 'name', label: 'Name' }];
     expect(() => downloadTemplate(columns)).not.toThrow();
   });
 });

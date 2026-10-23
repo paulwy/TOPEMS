@@ -50,7 +50,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useNotificationStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: unknown) =>
     selector ? selector({ addNotification: vi.fn() }) : { addNotification: vi.fn() }
   ),
 }));

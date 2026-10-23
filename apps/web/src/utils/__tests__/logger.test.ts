@@ -69,8 +69,8 @@ describe('createLogger', () => {
 
       expect(console.debug).not.toHaveBeenCalled();
       expect(console.info).toHaveBeenCalled();
-      expect((console.info as any).mock.calls[0][0]).toContain('[INFO]');
-      expect((console.info as any).mock.calls[0][0]).toContain('[Test]');
+      expect((console.info as unknown).mock.calls[0][0]).toContain('[INFO]');
+      expect((console.info as unknown).mock.calls[0][0]).toContain('[Test]');
     });
 
     it('filters info+debug when level is warn', () => {
@@ -114,7 +114,7 @@ describe('createLogger', () => {
     it('includes timestamp when enabled', () => {
       const log = createLogger('Test', { level: 'info', enableTimestamp: true });
       log.info('msg');
-      const called = (console.info as any).mock.calls[0][0] as string;
+      const called = (console.info as unknown).mock.calls[0][0] as string;
       expect(called).toContain('[2024-01-15T10:00:00.000Z]');
       expect(called).toContain('[INFO]');
       expect(called).toContain('[Test]');
@@ -123,7 +123,7 @@ describe('createLogger', () => {
     it('skips timestamp when disabled', () => {
       const log = createLogger('Test', { level: 'info', enableTimestamp: false });
       log.info('msg');
-      const called = (console.info as any).mock.calls[0][0] as string;
+      const called = (console.info as unknown).mock.calls[0][0] as string;
       expect(called).not.toContain('[2024');
       expect(called).toContain('[INFO]');
       expect(called).toContain('[Test]');
@@ -136,7 +136,7 @@ describe('createLogger', () => {
         prefix: 'API',
       });
       log.info('msg');
-      const called = (console.info as any).mock.calls[0][0] as string;
+      const called = (console.info as unknown).mock.calls[0][0] as string;
       expect(called).toContain('[API]');
       expect(called).toContain('[Test]');
     });
@@ -229,7 +229,7 @@ describe('createLogger', () => {
       const child = parent.child({ prefix: 'C' });
 
       child.info('msg');
-      const called = (console.info as any).mock.calls[0][0] as string;
+      const called = (console.info as unknown).mock.calls[0][0] as string;
       expect(called).toContain('[C]');
       expect(called).toContain('[Parent]');
     });
@@ -244,7 +244,7 @@ describe('createLogger', () => {
       parent.info('parent-info');
       expect(console.info).toHaveBeenCalledTimes(1);
 
-      (console.info as any).mockClear();
+      (console.info as unknown).mockClear();
       child.info('child-info');
       expect(console.info).not.toHaveBeenCalled();
 

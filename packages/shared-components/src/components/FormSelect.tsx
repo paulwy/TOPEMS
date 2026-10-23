@@ -50,7 +50,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const handleChange = (event: any) => {
+  const handleChange = (event: { target: { value: string | number | string[] } }) => {
     const value = event.target.value;
     onChange?.(value);
   };

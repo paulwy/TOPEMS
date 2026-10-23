@@ -110,9 +110,15 @@ export interface CrudTab {
   disabled?: boolean;
 }
 
+// headerContent 回调的 rows 由各页面以具体实体类型声明，受参数逆变限制只能保持 any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CrudHeaderRow = any;
+
 export interface CrudPageProps<T = Record<string, unknown>> {
   schema: EntitySchema<T>;
 
+  // apiAdapter 的 list/create/update 形参因逆变无法用 Record<string, unknown> 统一，各页面传入具体实体类型的适配器
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiAdapter: CrudApiAdapter<any>;
   /** 自定义列表列（覆盖 Schema 生成的列） */
   customColumns?: ColumnDef<T>[];
@@ -124,7 +130,7 @@ export interface CrudPageProps<T = Record<string, unknown>> {
   idField?: string;
   /** 自定义头部内容（覆盖 Schema 中的 headerContent）。支持渲染函数接收数据、总数和当前搜索词 */
   headerContent?:
-    React.ReactNode | ((rows: any[], total: number, search: string) => React.ReactNode);
+    React.ReactNode | ((rows: CrudHeaderRow[], total: number, search: string) => React.ReactNode);
   /**
    * 树形模式数据适配器
    *

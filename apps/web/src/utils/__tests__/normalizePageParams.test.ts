@@ -98,14 +98,14 @@ describe('utils/normalizePageParams', () => {
     });
 
     it('returns non-object values as-is', () => {
-      expect(normalizeObjectKeysDeep(null as any)).toBeNull();
-      expect(normalizeObjectKeysDeep('string' as any)).toBe('string');
-      expect(normalizeObjectKeysDeep(42 as any)).toBe(42);
+      expect(normalizeObjectKeysDeep(null as unknown)).toBeNull();
+      expect(normalizeObjectKeysDeep('string' as unknown)).toBe('string');
+      expect(normalizeObjectKeysDeep(42 as unknown)).toBe(42);
     });
 
     it('returns arrays as-is', () => {
       const arr = [{ pageSize: 10 }];
-      const result = normalizeObjectKeysDeep(arr as any);
+      const result = normalizeObjectKeysDeep(arr as unknown);
       expect(result).toBe(arr);
     });
 

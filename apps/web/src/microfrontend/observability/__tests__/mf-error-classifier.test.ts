@@ -256,7 +256,7 @@ describe('shouldShowToast', () => {
   it('returns false for info severity', () => {
     const event: MFErrorEvent = {
       type: 'unknown',
-      severity: 'info' as any,
+      severity: 'info' as unknown,
       moduleName: 'topems_erp',
       errorMessage: 'info',
       recovered: false,

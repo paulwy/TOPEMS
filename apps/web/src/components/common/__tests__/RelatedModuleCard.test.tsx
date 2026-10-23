@@ -34,9 +34,9 @@ vi.mock('react-i18next', () => ({
     i18n: { language: 'zh-CN', changeLanguage: vi.fn(), exists: (k: string) => !!i18nMap[k] },
     ready: true,
   }),
-  withTranslation: () => (Component: any) => Component,
+  withTranslation: () => (Component: unknown) => Component,
   initReactI18next: { type: '3rdParty', init: vi.fn() },
-  Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+  Trans: ({ i18nKey, children }: { i18nKey?: string; children?: unknown }) =>
     i18nKey ? translate(i18nKey) : children,
 }));
 

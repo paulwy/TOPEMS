@@ -49,6 +49,9 @@ export interface PaginationParams {
   search?: string;
 }
 
+// 该 HTTP 客户端被大量 API 模块以不传泛型的方式调用（直接返回值断言为具体 ApiResponse<T>），
+// 方法的泛型默认值必须保持宽松以兼容这些调用点；此处有意保留 any 默认值。
+/* eslint-disable @typescript-eslint/no-explicit-any */
 type TypedAxiosInstance = Omit<AxiosInstance, 'get' | 'post' | 'put' | 'patch' | 'delete'> & {
   defaults: { baseURL?: string };
   get<T = any, R = ApiResponse<T>, D = any>(

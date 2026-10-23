@@ -57,8 +57,8 @@ describe('lib/security', () => {
   describe('escapeHtml', () => {
     it('returns empty string for null/undefined/empty', () => {
       expect(escapeHtml('')).toBe('');
-      expect(escapeHtml(null as any)).toBe('');
-      expect(escapeHtml(undefined as any)).toBe('');
+      expect(escapeHtml(null as unknown)).toBe('');
+      expect(escapeHtml(undefined as unknown)).toBe('');
     });
 
     it('escapes HTML special characters using DOM textContent', () => {
@@ -77,7 +77,7 @@ describe('lib/security', () => {
   describe('sanitizeHtml', () => {
     it('returns empty string for null/undefined/empty', () => {
       expect(sanitizeHtml('')).toBe('');
-      expect(sanitizeHtml(null as any)).toBe('');
+      expect(sanitizeHtml(null as unknown)).toBe('');
     });
 
     it('removes malicious script tags while preserving content', () => {
@@ -107,8 +107,8 @@ describe('lib/security', () => {
   describe('validateUrl', () => {
     it('returns false for empty/null/undefined', () => {
       expect(validateUrl('')).toBe(false);
-      expect(validateUrl(null as any)).toBe(false);
-      expect(validateUrl(undefined as any)).toBe(false);
+      expect(validateUrl(null as unknown)).toBe(false);
+      expect(validateUrl(undefined as unknown)).toBe(false);
     });
 
     it('accepts http and https URLs', () => {
@@ -131,7 +131,7 @@ describe('lib/security', () => {
   describe('validateEmail', () => {
     it('returns false for empty/null/undefined', () => {
       expect(validateEmail('')).toBe(false);
-      expect(validateEmail(null as any)).toBe(false);
+      expect(validateEmail(null as unknown)).toBe(false);
     });
 
     it('accepts valid email addresses', () => {
@@ -150,7 +150,7 @@ describe('lib/security', () => {
   describe('sanitizeInput', () => {
     it('returns empty string for empty/null', () => {
       expect(sanitizeInput('')).toBe('');
-      expect(sanitizeInput(null as any)).toBe('');
+      expect(sanitizeInput(null as unknown)).toBe('');
     });
 
     it('removes script blocks explicitly', () => {
@@ -262,9 +262,9 @@ describe('lib/csrf (axios interceptors)', () => {
         headers: { Authorization: 'Bearer abc', 'Content-Type': 'application/json' },
       };
       const result = csrfRequestInterceptor(config);
-      expect((result.headers as any)['Authorization']).toBe('Bearer abc');
-      expect((result.headers as any)['Content-Type']).toBe('application/json');
-      expect((result.headers as any)['X-CSRF-Token']).toBe('tkn');
+      expect((result.headers as unknown)['Authorization']).toBe('Bearer abc');
+      expect((result.headers as unknown)['Content-Type']).toBe('application/json');
+      expect((result.headers as unknown)['X-CSRF-Token']).toBe('tkn');
     });
 
     it('does not add header when no token stored', () => {
@@ -287,7 +287,7 @@ describe('lib/csrf (axios interceptors)', () => {
     it('ignores missing or non-string CSRF response header', () => {
       const before = document.cookie;
       csrfResponseInterceptor({ headers: {} } as AxiosResponse);
-      csrfResponseInterceptor({ headers: { 'x-csrf-token': 42 } } as any);
+      csrfResponseInterceptor({ headers: { 'x-csrf-token': 42 } } as unknown);
       expect(document.cookie).toBe(before); // should not add invalid cookies
     });
 

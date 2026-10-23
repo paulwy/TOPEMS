@@ -68,7 +68,7 @@ vi.mock('react-i18next', () => {
       type: '3rdParty',
       init: vi.fn(),
     },
-    Trans: ({ children }: any) => children,
+    Trans: ({ children }: unknown) => children,
   };
 });
 
@@ -140,10 +140,10 @@ const mockCancel = vi.fn();
 
 vi.mock('@/api/automation', () => ({
   automationRunsApi: {
-    list: (...args: any[]) => mockList(...args),
-    get: (...args: any[]) => mockGet(...args),
-    retry: (...args: any[]) => mockRetry(...args),
-    cancel: (...args: any[]) => mockCancel(...args),
+    list: (...args: unknown[]) => mockList(...args),
+    get: (...args: unknown[]) => mockGet(...args),
+    retry: (...args: unknown[]) => mockRetry(...args),
+    cancel: (...args: unknown[]) => mockCancel(...args),
   },
   AutomationRun: {},
   AutomationRunStatus: {},
@@ -194,7 +194,7 @@ describe('AutomationRunsPage', () => {
   });
 
   it('shows loading', async () => {
-    let resolvePromise: ((v: any) => void) | undefined;
+    let resolvePromise: ((v: unknown) => void) | undefined;
     mockList.mockReturnValue(
       new Promise((res) => {
         resolvePromise = res;

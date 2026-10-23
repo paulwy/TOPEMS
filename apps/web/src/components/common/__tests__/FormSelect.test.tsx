@@ -7,7 +7,7 @@ import { FormSelect } from '../FormSelect';
 import { renderWithProviders } from '@/__tests__/test-utils';
 
 vi.mock('@/store', () => ({
-  useNotificationStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: unknown) =>
     selector
       ? selector({
           addNotification: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock('@/store', () => ({
           notifications: [],
         }
   ),
-  useAuthStore: vi.fn((selector?: any) =>
+  useAuthStore: vi.fn((selector?: unknown) =>
     selector
       ? selector({
           user: null,

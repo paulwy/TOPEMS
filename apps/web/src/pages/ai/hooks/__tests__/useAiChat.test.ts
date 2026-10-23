@@ -13,7 +13,7 @@ vi.mock('@/i18n', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useNotificationStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: unknown) =>
     selector
       ? selector({ addNotification: storeMock.addNotification })
       : { addNotification: storeMock.addNotification }
@@ -128,7 +128,7 @@ describe('useAiChat', () => {
         key: 'Enter',
         shiftKey: false,
         preventDefault,
-      } as any);
+      } as unknown);
     });
     expect(preventDefault).toHaveBeenCalled();
     expect(result.current.messages.length).toBe(initialLen + 1);
@@ -143,7 +143,7 @@ describe('useAiChat', () => {
         key: 'Enter',
         shiftKey: true,
         preventDefault,
-      } as any);
+      } as unknown);
     });
     expect(preventDefault).not.toHaveBeenCalled();
     expect(result.current.messages.length).toBe(initialLen);
@@ -211,7 +211,7 @@ describe('useAiChat', () => {
     const { result } = renderHook(() => useAiChat());
     const mockFile = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     act(() => {
-      result.current.handleFileUpload({ target: { files: [mockFile] } } as any);
+      result.current.handleFileUpload({ target: { files: [mockFile] } } as unknown);
     });
     expect(result.current.docFile).toEqual(mockFile);
     expect(storeMock.addNotification).toHaveBeenCalled();
@@ -230,7 +230,7 @@ describe('useAiChat', () => {
     const { result } = renderHook(() => useAiChat());
     const mockFile = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     act(() => {
-      result.current.handleFileUpload({ target: { files: [mockFile] } } as any);
+      result.current.handleFileUpload({ target: { files: [mockFile] } } as unknown);
     });
     act(() => {
       result.current.handleStartSummary();

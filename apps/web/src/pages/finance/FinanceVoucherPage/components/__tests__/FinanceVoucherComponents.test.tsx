@@ -46,7 +46,7 @@ vi.mock('react-i18next', () => {
   return {
     useTranslation: () => ({ t, i18n: { language: 'zh' } }),
     initReactI18next: { type: '3rdParty', init: () => {} },
-    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: any }) =>
+    Trans: ({ i18nKey, children }: { i18nKey?: string; children?: unknown }) =>
       i18nKey ? (i18nMap[i18nKey] ?? i18nKey) : children,
   };
 });
@@ -268,7 +268,7 @@ describe('FinanceVoucher components', () => {
     it('renders stat card group and subjects', () => {
       renderWithProviders(
         <SubjectListPanel
-          subjects={subjects as any}
+          subjects={subjects as unknown}
           subjectStatCards={[{ title: '总科目', value: 2 }]}
         />
       );

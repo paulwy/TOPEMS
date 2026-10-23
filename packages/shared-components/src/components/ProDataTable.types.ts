@@ -474,11 +474,12 @@ export function migrateColumn<TData>(
   };
 
   // Map cell type to column type
-  if ((col as any).cellType === 'number') {
+  const cellType = 'cellType' in col ? (col as { cellType?: string }).cellType : undefined;
+  if (cellType === 'number') {
     result.type = 'number';
     result.align = 'right';
     result.headerAlign = 'right';
-  } else if ((col as any).cellType === 'boolean') {
+  } else if (cellType === 'boolean') {
     result.type = 'boolean';
     result.align = 'center';
     result.headerAlign = 'center';
@@ -486,7 +487,7 @@ export function migrateColumn<TData>(
 
   // Map cell renderer
   if (col.cell && typeof col.cell === 'function') {
-    const originalCell = col.cell as any;
+    const originalCell = col.cell as (props: { value: unknown; row: TData; index: number }) => React.ReactNode;
     result.renderCell = (params) =>
       originalCell({ value: params.value, row: params.row as TData, index });
   }
@@ -495,7 +496,7 @@ export function migrateColumn<TData>(
   if (col.header && typeof col.header !== 'string') {
     const originalHeader = col.header;
     result.renderHeader = () =>
-      originalHeader({ column: col as any } as any) as React.ReactNode;
+      (originalHeader as (props: { column: unknown }) => React.ReactNode)({ column: col });
   }
 
   return result;

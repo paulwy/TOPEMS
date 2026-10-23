@@ -294,7 +294,7 @@ describe('V143 ERP - mdmLifecycleApi', () => {
   // ===== page_size compatibility =====
   it('should support page_size parameter', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await mdmLifecycleApi.listEntities({ page: 1, page_size: 50 } as any);
+    await mdmLifecycleApi.listEntities({ page: 1, page_size: 50 } as unknown);
     expect(mockClient.get).toHaveBeenCalledWith('/mdm-v49/lifecycle/entities?page=1&page_size=50');
   });
 });

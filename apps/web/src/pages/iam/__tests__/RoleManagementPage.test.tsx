@@ -51,8 +51,8 @@ vi.mock('@/api/iam', () => ({
 describe('RoleManagementPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (authApi.listRoles as any).mockResolvedValue({ success: true, data: [] });
-    (authApi.listPermissions as any).mockResolvedValue({ success: true, data: [] });
+    (authApi.listRoles as unknown).mockResolvedValue({ success: true, data: [] });
+    (authApi.listPermissions as unknown).mockResolvedValue({ success: true, data: [] });
   });
 
   it('renders role management page with title and empty state', async () => {
@@ -67,7 +67,7 @@ describe('RoleManagementPage', () => {
   });
 
   it('renders role rows when data is available', async () => {
-    (authApi.listRoles as any).mockResolvedValue({
+    (authApi.listRoles as unknown).mockResolvedValue({
       success: true,
       data: [
         {
