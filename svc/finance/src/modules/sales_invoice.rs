@@ -1055,21 +1055,89 @@ pub async fn batch_confirm_collections(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let mut success = 0i64;
     let mut failed = 0i64;
+
+    // 整批单事务：与单条 confirm_collection 同一口径——确认回款 + 回写发票
+    // paid_amount/状态（原子增量 paid_amount = paid_amount + $amount，按余额翻 'paid'）。
+    // 同一张发票多笔回款在同一事务内逐笔累加，自身写入对自身可见；任一笔 DB 错误整体回滚。
+    let mut tx = match state.pool.begin().await {
+        Ok(t) => t,
+        Err(e) => return Json(crate::shared::err_resp(e)),
+    };
+
     for rid in payload.record_ids {
-        let result = sqlx::query(
+        // 与单条 confirm_collection 1011-1027 相同的读取口径：金额 + 匹配发票 + 状态
+        let rec = match sqlx::query(
+            "SELECT amount, (SELECT si.id FROM finance.sales_invoices si WHERE si.invoice_number = erc.invoice_no AND si.tenant_id = erc.tenant_id) AS invoice_id, status FROM finance.erp_collection_records erc
+             WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+        )
+        .bind(rid)
+        .bind(tenant_id)
+        .fetch_optional(&mut *tx)
+        .await
+        {
+            Ok(r) => r,
+            Err(e) => return Json(crate::shared::err_resp(e)),
+        };
+
+        let row = match rec {
+            Some(r) => r,
+            None => {
+                failed += 1;
+                continue;
+            }
+        };
+        let status: String = row.get("status");
+        if status == "confirmed" {
+            failed += 1;
+            continue;
+        }
+
+        let affected = match sqlx::query(
             "UPDATE finance.erp_collection_records
              SET status = 'confirmed', confirmed_at = NOW(), updated_at = NOW()
              WHERE id = $1 AND tenant_id = $2 AND status != 'confirmed' AND deleted_at IS NULL",
         )
         .bind(rid)
         .bind(tenant_id)
-        .execute(&state.pool)
-        .await;
-        match result {
-            Ok(r) if r.rows_affected() > 0 => success += 1,
-            _ => failed += 1,
+        .execute(&mut *tx)
+        .await
+        {
+            Ok(r) => r.rows_affected(),
+            Err(e) => return Json(crate::shared::err_resp(e)),
+        };
+        if affected == 0 {
+            // 并发下已被其他事务确认
+            failed += 1;
+            continue;
         }
+
+        // 回写发票：与单条 confirm_collection 相同语句
+        let invoice_id: Option<Uuid> = row.get("invoice_id");
+        let amount: Decimal = row.get("amount");
+        if let Some(inv_id) = invoice_id {
+            if let Err(e) = sqlx::query(
+                "UPDATE finance.sales_invoices
+                 SET paid_amount = paid_amount + $3,
+                     status = CASE WHEN paid_amount + $3 >= total_amount THEN 'paid' ELSE status END,
+                     updated_at = NOW()
+                 WHERE id = $1 AND tenant_id = $2",
+            )
+            .bind(inv_id)
+            .bind(tenant_id)
+            .bind(amount)
+            .execute(&mut *tx)
+            .await
+            {
+                return Json(crate::shared::err_resp(e));
+            }
+        }
+        success += 1;
     }
+
+    if let Err(e) = tx.commit().await {
+        return Json(crate::shared::err_resp(e));
+    }
+
     Json(ApiResponse::success(
         serde_json::json!({ "success": success, "failed": failed }),
         "Success",

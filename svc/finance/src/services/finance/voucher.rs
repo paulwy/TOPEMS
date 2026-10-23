@@ -318,8 +318,11 @@ impl FinanceService {
         let mut tx = self.db_pool.begin().await?;
 
         for line in &lines {
+            // 余额读取必须落在本事务内：calculate_account_balance 先对账户主行
+            // SELECT ... FOR UPDATE 加行锁，将同一账户的并发过账串行化，再在本事务内
+            // 汇总 ledger（可见本事务已插入的分录），杜绝事务外独立连接读余额导致的并发丢更新
             let balance = self
-                .calculate_account_balance(tenant_id, line.account_id)
+                .calculate_account_balance(&mut *tx, tenant_id, line.account_id)
                 .await?;
             let new_balance = if line.debit > Decimal::ZERO {
                 balance + line.debit - line.credit
@@ -392,11 +395,29 @@ impl FinanceService {
         Ok(updated_voucher)
     }
 
-    pub(super) async fn calculate_account_balance(
+    /// 在过账事务内计算账户余额。
+    ///
+    /// 先对 `core_finance_accounts` 账户主行 `SELECT ... FOR UPDATE` 加行锁：
+    /// 同一账户的并发过账事务在此串行排队，后者待前者提交后再读余额，保证累计链正确；
+    /// 随后在同一事务内汇总 ledger（本事务内已插入的分录对自身可见），
+    /// 替代原先走 `self.db_pool` 独立连接、事务外读余额的并发丢更新模式。
+    /// 账户主行不存在时跳过加锁，退化为普通汇总（不阻断既有流程）。
+    async fn calculate_account_balance(
         &self,
+        tx: &mut sqlx::PgConnection,
         tenant_id: Uuid,
         account_id: Uuid,
     ) -> Result<Decimal, TopemsError> {
+        // 行锁：仅锁存在的账户主行；多笔凭证行命中同一账户时由本事务重入持有
+        let _: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(
+            "finance",
+            "SELECT id FROM finance.core_finance_accounts WHERE tenant_id = $1 AND id = $2 FOR UPDATE"
+        ))
+        .bind(tenant_id)
+        .bind(account_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+
         let result: (Option<Decimal>,) = sqlx::query_as(only_own_schema_query!(
             "finance",
             "SELECT COALESCE(SUM(debit - credit), 0) as balance FROM finance.core_finance_ledger
@@ -404,7 +425,7 @@ impl FinanceService {
         ))
         .bind(tenant_id)
         .bind(account_id)
-        .fetch_one(&self.db_pool)
+        .fetch_one(tx)
         .await?;
 
         Ok(result.0.unwrap_or(Decimal::ZERO))
