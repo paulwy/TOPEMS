@@ -3399,3 +3399,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **BFF 8099 实机验证**：三实体 CRUD 全 200；双租户隔离断言 list(0001)=仅本租户 / 越权=0 / nil=全量 / 越权改删 get=404；DB 落库 tenant_id=0001；测试数据已清理
 - 至此 §4 最小业务闭环 5 环节（物料→供应商→采购→入库→检验）全 200
 - 注：master-data mdm_crud_integration 13 failed 为既有（quality_v51 dashboard 治理洞察断言与实现偏差，stash 对比确认非本批引入）
+
+## v1.98 空租户首次初始化引导文档（2026-10-23）
+- [x] **文档缺口补齐**：新增 `docs/getting-started/first-run-initialization.md`（活文档 §2 缺口行回写 ✅）——空租户/首次端到端初始化五步流程（建组织→建部门→建岗位→绑管理员→完成）对齐 `svc/hrm/src/modules/setup.rs` 全端点（progress/company/departments/positions/admin/complete）
+- [x] **IAM 建号联动（P1-1）**：文档覆盖直建（username+password）与回绑（user_id）两方式；未绑定告警说明
+- [x] **验收口径**：完成态验收（progress is_completed=true / InitGate 静默回退 / 新租户按 Claims.tenant_id 落库互不串扰）+ 关联实现索引（P2-1/P2-2/种子/FK 迁移）
+- 复核：contract-gate 2657/6325/0 缺口；活文档变更日志 v1.98 登记
+

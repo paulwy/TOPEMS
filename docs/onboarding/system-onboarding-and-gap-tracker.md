@@ -364,7 +364,7 @@
 - 其余业务模块：`artifacts/findings-other-modules.md`
 - 前端引导/路由对齐：`artifacts/findings-frontend-usability.md`
 
-已有上手文档（可供配套使用，非本次新写）：`docs/getting-started/{quickstart,environment-config,local-deployment}.md`、`docs/user-guide/{quick-start,UserManual,system-admin-manual,system-feature-checklist}.md`、`docs/admin/` 部署运维手册。**缺一份"空租户/首次端到端初始化（建组织→建人员→配权限）"引导文档，与前端引导缺失（P0-1/P2-1）对应。**
+已有上手文档（可供配套使用，非本次新写）：`docs/getting-started/{quickstart,environment-config,local-deployment}.md`、`docs/user-guide/{quick-start,UserManual,system-admin-manual,system-feature-checklist}.md`、`docs/admin/` 部署运维手册。~~缺一份"空租户/首次端到端初始化（建组织→建人员→配权限）"引导文档，与前端引导缺失（P0-1/P2-1）对应。~~ **✅ 已补齐（2026-10-23，v1.98）**：`docs/getting-started/first-run-initialization.md`（五步流程 + IAM 建号联动 + 全端点请求/响应示例 + 完成态验收，对齐 P2-1/P2-2 已落地实现）。
 
 ---
 
@@ -372,6 +372,7 @@
 
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
+| 2026-10-23 | v1.98 | 空租户首次初始化引导文档 ✅ | 补齐活文档文档缺口：新增 `docs/getting-started/first-run-initialization.md`——空租户/首次端到端初始化（建组织→建部门→建岗位→绑管理员→完成）五步流程 + IAM 建号联动（P1-1 直建/回绑两方式）+ 全端点请求/响应示例（progress/company/departments/positions/admin/complete，字段对齐 `svc/hrm/src/modules/setup.rs`）+ 完成态验收 + 关联实现索引（P2-1 InitChecklistPanel/P2-2 租户归属/种子与 FK 迁移）。契约静态门禁复核：contract-gate 2657/6325/0 缺口 |
 | 2026-10-23 | v1.97 | §4 物料环节 RLS + 15 handler 显式租户隔离 ✅ | 接 v1.96 建表：补 RLS 迁移 `20261023000002`（materials/uoms/samples 三表 tenant_isolation_* 宽松策略，与 master_data 域 81 表一致，topems + topems_prepare 双库应用）；master_data.rs 15 handler 显式租户隔离（读路径 list/get 加 `($N::uuid='00000000-0000-0000-0000-000000000000'::uuid OR tenant_id=$N::uuid)`，写路径 create 落 x-tenant-id 头租户、update/delete 加租户条件，GUC 兜底废弃——rls_middleware 独占连接与 handler 池连接不同致 GUC 不生效，全站同类写路径靠显式参数/Claims）。验证：BFF 8099 实跑三实体 CRUD 全 200；双租户隔离断言——list(0001)=仅本租户、list(越权 c51c3a73)=0、list(nil)=全量、越权 update/delete/get=404、DB 落库 tenant_id=0001 正确；测试数据已清理。至此 §4 闭环 5 环节（物料→供应商→采购→入库→检验）全 200 |
 | 2026-10-23 | v1.96 | 物料主数据（§4 物料环节）✅ | `database/migrations/20261023000003_master_data_materials_table.sql` 建 `master_data.materials`（对齐 Material 模型 + CreateMaterialRequest：uom_id UUID、tenant_id 默认 000 系统级）；物料 API 实测：POST/GET `/api/master-data/master-data/materials` 200（MAT-CLOSE-001 建单+列表+DB 落库）。§4.2 物料环节环境制约解除（此前 master_data.materials 表缺） |
 | 2026-10-23 | v1.95 | 前端菜单叶子映射全模块覆盖 ✅ | `MENU_PERMISSIONS` 扩至 114 条：第二批 crm/srm/ehs/pdm/tms 16 条 + 第三批 admin/asset/bi/doc/finance/gis/hrm/lims/pm/rd 34 条；`/pdm/bom`→`pdm:bom:read`、`/pdm/process`→`pdm:process:read` 改细。navItems 全部 path 已覆盖（comm 差集为空），tsc 通过；无精确码的叶子用近似码（`/admin/monitor`→`admin:debug:read`、`/hrm/organization`→`hrm:department:read`） |
