@@ -436,47 +436,12 @@ pub async fn list_hazard_factors(
 )]
 pub async fn create_hazard_factor(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    Json(req): Json<CreateHazardFactorRequest>,
+    Json(_req): Json<CreateHazardFactorRequest>,
 ) -> Json<ApiResponse<HazardFactor>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating hazard factor: {:?}", req);
-    Json(ApiResponse::success(
-        HazardFactor {
-            id: uuid::Uuid::new_v4().to_string(),
-            factor_no: format!(
-                "HF-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            name: req.name,
-            factor_type: req.factor_type,
-            category: req.category,
-            description: req.description,
-            hazard_level: req.hazard_level,
-            exposure_limit: req.exposure_limit,
-            unit: req.unit,
-            sources: req.sources,
-            affected_positions: req.affected_positions,
-            affected_count: req.affected_count,
-            status: "active".to_string(),
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "危害因素创建成功",
-    ))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -607,45 +572,13 @@ pub async fn get_hazard_factor(
 )]
 pub async fn update_hazard_factor(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-    Json(req): Json<UpdateHazardFactorRequest>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+    Json(_req): Json<UpdateHazardFactorRequest>,
 ) -> Json<ApiResponse<HazardFactor>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating hazard factor {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        HazardFactor {
-            id,
-            factor_no: "HF-2024001".to_string(),
-            name: req.name.unwrap_or_else(|| "噪声".to_string()),
-            factor_type: req.factor_type.unwrap_or_else(|| "physical".to_string()),
-            category: req.category,
-            description: req.description,
-            hazard_level: req.hazard_level,
-            exposure_limit: req.exposure_limit,
-            unit: req.unit,
-            sources: req.sources,
-            affected_positions: req.affected_positions,
-            affected_count: req.affected_count,
-            status: req.status.unwrap_or_else(|| "active".to_string()),
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "危害因素更新成功",
-    ))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 // gate: admin-only
@@ -664,10 +597,10 @@ pub async fn delete_hazard_factor(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting hazard factor: {}", id);
-    Json(ApiResponse::success((), "危害因素删除成功"))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -682,11 +615,8 @@ pub async fn list_detection_records(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DetectionRecord>>> {
-    tracing::debug!("Listing detection records");
-    Json(ApiResponse::success(
-        Vec::<DetectionRecord>::new(),
-        "获取检测记录列表成功",
-    ))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -699,50 +629,12 @@ pub async fn list_detection_records(
 )]
 pub async fn create_detection_record(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    Json(req): Json<CreateDetectionRecordRequest>,
+    Json(_req): Json<CreateDetectionRecordRequest>,
 ) -> Json<ApiResponse<DetectionRecord>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating detection record: {:?}", req);
-    Json(ApiResponse::success(
-        DetectionRecord {
-            id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!(
-                "DR-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            factor_id: req.factor_id,
-            factor_name: req.factor_name,
-            factor_type: req.factor_type,
-            detect_point: req.detect_point,
-            detect_date: req.detect_date,
-            detect_agency: req.detect_agency,
-            detect_method: req.detect_method,
-            concentration: req.concentration,
-            unit: req.unit,
-            standard_value: req.standard_value,
-            result: req.result,
-            detector: req.detector,
-            status: "completed".to_string(),
-            remarks: req.remarks,
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "检测记录创建成功",
-    ))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -758,47 +650,12 @@ pub async fn create_detection_record(
 )]
 pub async fn get_detection_record(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DetectionRecord>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting detection record: {}", id);
-    Json(ApiResponse::success(
-        DetectionRecord {
-            id,
-            record_no: "DR-2024001".to_string(),
-            factor_id: Some("factor-001".to_string()),
-            factor_name: "噪声".to_string(),
-            factor_type: "physical".to_string(),
-            detect_point: "冲压车间A区".to_string(),
-            detect_date: Some("2024-06-01".to_string()),
-            detect_agency: Some("市职业卫生检测中心".to_string()),
-            detect_method: Some("声级计法".to_string()),
-            concentration: Some("88".to_string()),
-            unit: Some("dB(A)".to_string()),
-            standard_value: Some("85".to_string()),
-            result: "over_limit".to_string(),
-            detector: Some("王检测".to_string()),
-            status: "completed".to_string(),
-            remarks: Some("略超过限值，需加强防护".to_string()),
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "获取检测记录详情成功",
-    ))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -816,10 +673,10 @@ pub async fn delete_detection_record(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting detection record: {}", id);
-    Json(ApiResponse::success((), "检测记录删除成功"))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 #[derive(Debug, Deserialize)]
@@ -1219,11 +1076,8 @@ pub async fn list_protection_measures(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ProtectionMeasure>>> {
-    tracing::debug!("Listing protection measures");
-    Json(ApiResponse::success(
-        Vec::<ProtectionMeasure>::new(),
-        "获取防护措施列表成功",
-    ))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -1236,46 +1090,12 @@ pub async fn list_protection_measures(
 )]
 pub async fn create_protection_measure(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    Json(req): Json<CreateProtectionMeasureRequest>,
+    Json(_req): Json<CreateProtectionMeasureRequest>,
 ) -> Json<ApiResponse<ProtectionMeasure>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating protection measure: {:?}", req);
-    Json(ApiResponse::success(
-        ProtectionMeasure {
-            id: uuid::Uuid::new_v4().to_string(),
-            measure_no: format!(
-                "PM-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            title: req.title,
-            measure_type: req.measure_type,
-            description: req.description,
-            related_factors: req.related_factors,
-            related_positions: req.related_positions,
-            implementation_date: req.implementation_date,
-            status: "active".to_string(),
-            responsible_person: req.responsible_person,
-            effectiveness: req.effectiveness,
-            inspection_date: None,
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "防护措施创建成功",
-    ))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -1291,43 +1111,12 @@ pub async fn create_protection_measure(
 )]
 pub async fn get_protection_measure(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<ProtectionMeasure>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting protection measure: {}", id);
-    Json(ApiResponse::success(
-        ProtectionMeasure {
-            id,
-            measure_no: "PM-2024001".to_string(),
-            title: "噪声防护耳塞发放".to_string(),
-            measure_type: "personal_protection".to_string(),
-            description: Some("为噪声岗位员工配备防噪耳塞".to_string()),
-            related_factors: Some(vec!["噪声".to_string()]),
-            related_positions: Some(vec!["冲压工".to_string(), "操作工".to_string()]),
-            implementation_date: Some("2024-01-01".to_string()),
-            status: "active".to_string(),
-            responsible_person: Some("张安全".to_string()),
-            effectiveness: Some("good".to_string()),
-            inspection_date: Some("2024-06-01".to_string()),
-            remarks: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "获取防护措施详情成功",
-    ))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -1344,54 +1133,13 @@ pub async fn get_protection_measure(
 )]
 pub async fn update_protection_measure(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-    Json(req): Json<serde_json::Value>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+    Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ProtectionMeasure>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating protection measure {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        ProtectionMeasure {
-            id,
-            measure_no: "PM-2024001".to_string(),
-            title: "噪声防护耳塞发放".to_string(),
-            measure_type: "personal_protection".to_string(),
-            description: Some("为噪声岗位员工配备防噪耳塞".to_string()),
-            related_factors: Some(vec!["噪声".to_string()]),
-            related_positions: Some(vec!["冲压工".to_string(), "操作工".to_string()]),
-            implementation_date: Some("2024-01-01".to_string()),
-            status: req
-                .get("status")
-                .and_then(|v| v.as_str())
-                .unwrap_or("active")
-                .to_string(),
-            responsible_person: Some("张安全".to_string()),
-            effectiveness: req
-                .get("effectiveness")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            inspection_date: None,
-            remarks: req
-                .get("remarks")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "防护措施更新成功",
-    ))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -1409,10 +1157,10 @@ pub async fn delete_protection_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
+    axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting protection measure: {}", id);
-    Json(ApiResponse::success((), "防护措施删除成功"))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -1424,46 +1172,11 @@ pub async fn delete_protection_measure(
 )]
 pub async fn get_disease_statistics(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<DiseaseStatistics>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting disease statistics");
-    Json(ApiResponse::success(
-        DiseaseStatistics {
-            total_factors: 12,
-            controlled_factors: 8,
-            total_detections: 56,
-            qualified_detections: 48,
-            total_cases: 5,
-            active_cases: 3,
-            total_trainings: 12,
-            total_participants: 1200,
-            by_factor_type: vec![
-                serde_json::json!({ "type": "physical", "name": "物理因素", "count": 5 }),
-                serde_json::json!({ "type": "chemical", "name": "化学因素", "count": 4 }),
-                serde_json::json!({ "type": "biological", "name": "生物因素", "count": 2 }),
-                serde_json::json!({ "type": "ergonomic", "name": "工效学因素", "count": 1 }),
-            ],
-            by_department: vec![
-                serde_json::json!({ "department": "生产部", "factors": 8, "cases": 4 }),
-                serde_json::json!({ "department": "技术部", "factors": 2, "cases": 0 }),
-                serde_json::json!({ "department": "质量部", "factors": 2, "cases": 1 }),
-            ],
-
-            tenant_id,
-        },
-        "获取职业病防治统计成功",
-    ))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 pub async fn update_detection_record(
@@ -1473,7 +1186,8 @@ pub async fn update_detection_record(
     axum::extract::Path(_id): axum::extract::Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "检测记录不存在"))
+    tracing::warn!("Occupational disease module not yet enabled");
+    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
 }
 
 /// 解析请求租户：超管 → nil UUID；否则取 claims.tenant_id。

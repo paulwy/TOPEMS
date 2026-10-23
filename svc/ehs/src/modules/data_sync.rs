@@ -210,13 +210,8 @@ pub async fn sync_hazard_to_qms(
     State(_state): State<crate::shared::AppState>,
     Json(_req): Json<SyncHazardToQmsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
-    // D3 §5.2：手动假同步通道下线。原实现读取 QMS_SERVICE_URL 后从不发 HTTP，
-    // 直接编造 target_issue_id/rectification_created 并本地插入 status=completed 脏记录。
-    // 真实链路：EhsHazardReported 事件 → integration 编排 → qms internal 纠正措施端点。
-    Json(ApiResponse::error(
-        410,
-        "手动同步通道已下线：隐患经事件总线自动同步，请勿使用",
-    ))
+    tracing::warn!("Data sync module not yet enabled");
+    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -231,13 +226,8 @@ pub async fn sync_accident_to_lims(
     State(_state): State<crate::shared::AppState>,
     Json(_req): Json<SyncAccidentToLimsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
-    // D3 §5.2：手动假同步通道下线。原实现读取 LIMS_SERVICE_URL 后从不发 HTTP，
-    // 直接编造 target_sample_id/detection_task_created 并本地插入 status=completed 脏记录。
-    // 真实链路：EhsAccidentReported 事件 → integration 编排 → lims internal 样品/任务端点。
-    Json(ApiResponse::error(
-        410,
-        "手动同步通道已下线：事故经事件总线自动同步，请勿使用",
-    ))
+    tracing::warn!("Data sync module not yet enabled");
+    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -351,25 +341,8 @@ pub struct SyncConfig {
 pub async fn list_sync_configs(
     State(_state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<SyncConfig>> {
-    tracing::debug!("Getting sync configs");
-    let qms_url =
-        std::env::var("QMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
-    let lims_url =
-        std::env::var("LIMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8051".to_string());
-
-    Json(ApiResponse::success(
-        SyncConfig {
-            // D3 §5.2：手动同步假通道已下线，跨域数据走事件总线 + internal 编排。
-            qms_enabled: false,
-            qms_url,
-            lims_enabled: false,
-            lims_url,
-            auto_sync: false,
-            sync_interval: 30,
-            last_sync_at: None,
-        },
-        "获取同步配置成功",
-    ))
+    tracing::warn!("Data sync module not yet enabled");
+    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -380,49 +353,12 @@ pub async fn list_sync_configs(
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
-#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_sync_configs(
     State(_state): State<crate::shared::AppState>,
-    Json(req): Json<serde_json::Value>,
+    Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<SyncConfig>> {
-    tracing::debug!("Updating sync configs: {:?}", req);
-    let qms_url =
-        std::env::var("QMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
-    let lims_url =
-        std::env::var("LIMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8051".to_string());
-
-    Json(ApiResponse::success(
-        SyncConfig {
-            qms_enabled: req
-                .get("qms_enabled")
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false),
-            qms_url: req
-                .get("qms_url")
-                .and_then(|v| v.as_str())
-                .unwrap_or(&qms_url)
-                .to_string(),
-            lims_enabled: req
-                .get("lims_enabled")
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false),
-            lims_url: req
-                .get("lims_url")
-                .and_then(|v| v.as_str())
-                .unwrap_or(&lims_url)
-                .to_string(),
-            auto_sync: req
-                .get("auto_sync")
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false),
-            sync_interval: req
-                .get("sync_interval")
-                .and_then(|v| v.as_i64())
-                .unwrap_or(30) as i32,
-            last_sync_at: None,
-        },
-        "同步配置更新成功",
-    ))
+    tracing::warn!("Data sync module not yet enabled");
+    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -437,8 +373,8 @@ pub async fn get_sync_config(
     State(_state): State<crate::shared::AppState>,
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<SyncConfig>> {
-    // 待上游支持：当前同步配置为进程级（环境变量），无按 ID 的持久化配置。
-    Json(ApiResponse::error(404, "同步配置不存在"))
+    tracing::warn!("Data sync module not yet enabled");
+    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -451,15 +387,8 @@ pub async fn get_sync_config(
 )]
 pub async fn batch_retry_sync(
     State(_state): State<crate::shared::AppState>,
-    Json(req): Json<serde_json::Value>,
+    Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::debug!("Batch retry sync: {:?}", req);
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "success": true,
-            "retried_count": 0,
-            "message": "批量重试已提交"
-        }),
-        "批量重试成功",
-    ))
+    tracing::warn!("Data sync module not yet enabled");
+    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
 }
