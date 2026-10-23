@@ -348,7 +348,7 @@ async fn save_audit_log(
     let now = chrono::Utc::now();
 
     sqlx::query(
-        r#"INSERT INTO core_audit_logs (
+        r#"INSERT INTO public.audit_logs (
             id, action, entity_type, entity_id, entity_ids,
             user_id, user_name, request_details, response_details,
             status, error_message, ip_address, user_agent, created_at

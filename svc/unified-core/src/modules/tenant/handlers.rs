@@ -2813,10 +2813,10 @@ pub async fn get_tenant_api_usage(
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    // 真实数据源：core_audit_logs（请求审计中间件写入）按租户成员反查聚合
+    // 真实数据源：public.audit_logs（请求审计中间件写入）按租户成员反查聚合
     let total: i64 = sqlx::query(
-        "SELECT COUNT(*)::bigint AS total FROM core_audit_logs a
-         JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = $1
+        "SELECT COUNT(*)::bigint AS total FROM public.audit_logs a
+         JOIN public.core_tenant_users u ON a.user_id = u.user_id AND u.tenant_id = $1
          WHERE a.created_at >= date_trunc('month', now())",
     )
     .bind(tenant_id)
@@ -2825,8 +2825,8 @@ pub async fn get_tenant_api_usage(
     .map(|r| r.get::<i64, _>("total"))
     .unwrap_or(0);
     let breakdown: Vec<serde_json::Value> = sqlx::query(
-        "SELECT action, COUNT(*)::bigint AS cnt FROM core_audit_logs a
-         JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = $1
+        "SELECT action, COUNT(*)::bigint AS cnt FROM public.audit_logs a
+         JOIN public.core_tenant_users u ON a.user_id = u.user_id AND u.tenant_id = $1
          WHERE a.created_at >= date_trunc('month', now())
          GROUP BY action ORDER BY cnt DESC",
     )
@@ -2849,10 +2849,10 @@ pub async fn get_tenant_activity(
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    // 真实数据源：core_audit_logs 近 7 天按日聚合
+    // 真实数据源：public.audit_logs 近 7 天按日聚合
     let days: Vec<serde_json::Value> = sqlx::query(
         "SELECT to_char(date_trunc('day', a.created_at), 'YYYY-MM-DD') AS day, COUNT(*)::bigint AS cnt
-         FROM core_audit_logs a JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = $1
+         FROM public.audit_logs a JOIN public.core_tenant_users u ON a.user_id = u.user_id AND u.tenant_id = $1
          WHERE a.created_at >= now() - interval '7 days'
          GROUP BY 1 ORDER BY 1",
     )
@@ -2875,10 +2875,10 @@ pub async fn get_tenant_top_endpoints(
     Extension(_claims): Extension<Claims>,
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
-    // 真实数据源：core_audit_logs 近 7 天按资源类型聚合 TOP 10（中间件无完整 path，entity_type 为资源段）
+    // 真实数据源：public.audit_logs 近 7 天按资源类型聚合 TOP 10（中间件无完整 path，entity_type 为资源段）
     let eps: Vec<serde_json::Value> = sqlx::query(
-        "SELECT entity_type, COUNT(*)::bigint AS cnt FROM core_audit_logs a
-         JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = $1
+        "SELECT entity_type, COUNT(*)::bigint AS cnt FROM public.audit_logs a
+         JOIN public.core_tenant_users u ON a.user_id = u.user_id AND u.tenant_id = $1
          WHERE a.created_at >= now() - interval '7 days'
          GROUP BY entity_type ORDER BY cnt DESC LIMIT 10",
     )
@@ -2932,8 +2932,8 @@ pub async fn get_tenant_real_time(
     .map(|r| r.get::<i64,_>("count"))
     .unwrap_or(0);
     let requests_last_minute: i64 = sqlx::query(
-        "SELECT COUNT(*)::bigint AS cnt FROM core_audit_logs a
-         JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = $1
+        "SELECT COUNT(*)::bigint AS cnt FROM public.audit_logs a
+         JOIN public.core_tenant_users u ON a.user_id = u.user_id AND u.tenant_id = $1
          WHERE a.created_at >= now() - interval '60 seconds'",
     )
     .bind(tenant_id)
@@ -2997,16 +2997,16 @@ pub async fn collect_tenant_usage(
     Extension(_claims): Extension<Claims>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     let result = sqlx::query(
-        r#"INSERT INTO core_tenant_usage (id, tenant_id, users_count, storage_used_mb, api_calls_count, period_start, period_end, base_cost)
+        r#"INSERT INTO public.core_tenant_usage (id, tenant_id, users_count, storage_used_mb, api_calls_count, period_start, period_end, base_cost)
         SELECT gen_random_uuid(), t.id,
-               (SELECT COUNT(*) FROM core_tenant_users u WHERE u.tenant_id = t.id AND u.deleted_at IS NULL),
-               (SELECT COALESCE(SUM(f.size)::bigint / 1048576, 0) FROM core_files f WHERE f.tenant_id = t.id AND f.deleted_at IS NULL),
-               (SELECT COUNT(*) FROM core_audit_logs a JOIN core_tenant_users u ON NULLIF(a.user_id, '')::uuid = u.user_id AND u.tenant_id = t.id
+               (SELECT COUNT(*) FROM public.core_tenant_users u WHERE u.tenant_id = t.id AND u.deleted_at IS NULL),
+               (SELECT COALESCE(SUM(f.size)::bigint / 1048576, 0) FROM public.core_files f WHERE f.tenant_id = t.id AND f.deleted_at IS NULL),
+               (SELECT COUNT(*) FROM public.audit_logs a JOIN public.core_tenant_users u ON a.user_id = u.user_id AND u.tenant_id = t.id
                 WHERE a.created_at >= date_trunc('month', now())),
                date_trunc('month', CURRENT_DATE)::date,
                (date_trunc('month', CURRENT_DATE) + interval '1 month' - interval '1 day')::date,
                0
-        FROM core_tenants t
+        FROM public.core_tenants t
         WHERE t.deleted_at IS NULL AND t.status = 'active'
         ON CONFLICT (tenant_id, period_start) DO UPDATE SET
           users_count = EXCLUDED.users_count,
@@ -3019,7 +3019,7 @@ pub async fn collect_tenant_usage(
         Ok(r) => {
             let rows = r.rows_affected();
             let total_users: i64 = sqlx::query(
-                "SELECT COALESCE(SUM(users_count), 0)::bigint FROM core_tenant_usage WHERE period_start = date_trunc('month', CURRENT_DATE)::date",
+                "SELECT COALESCE(SUM(users_count), 0)::bigint FROM public.core_tenant_usage WHERE period_start = date_trunc('month', CURRENT_DATE)::date",
             )
             .fetch_one(&state.pool)
             .await

@@ -16,15 +16,18 @@ SELECT gen_random_uuid(), '${TENANT_ID}', m.code, m.name, 'enterprise', true, NO
 FROM (VALUES ('iam','身份与权限'),('crm','客户管理'),('mes','生产执行'),('erp','企业资源'),('bi','商业智能')) AS m(code,name)
 ON CONFLICT DO NOTHING;"
 echo "core_tenant_modules 种子就绪（tenant ${TENANT_ID}）"
-# core_audit_logs 表自愈（请求审计中间件写库依赖；幂等）
+# core_audit_logs 表自愈（请求审计中间件写库依赖；幂等）——v1.86 统一审计表为 public.audit_logs
+# （历史分裂：unified-core middleware 写 public.audit_logs、shared-auth audit_logger 写 core_audit_logs，
+#  test 库缺 core_audit_logs 致 usage collect/审计查询失败；现统一单表，两写入路径与 tenant 查询同表）
 psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
-CREATE TABLE IF NOT EXISTS public.core_audit_logs (
-    id UUID PRIMARY KEY,
-    action VARCHAR(50) NOT NULL,
-    entity_type VARCHAR(100) NOT NULL,
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID,
+    action VARCHAR(255) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
     entity_id UUID,
     entity_ids JSONB,
-    user_id TEXT,
+    user_id UUID,
     user_name TEXT,
     request_details JSONB,
     response_details JSONB,
@@ -32,11 +35,13 @@ CREATE TABLE IF NOT EXISTS public.core_audit_logs (
     error_message TEXT,
     ip_address VARCHAR(45),
     user_agent TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_core_audit_logs_time ON public.core_audit_logs(created_at);
-CREATE INDEX IF NOT EXISTS idx_core_audit_logs_user ON public.core_audit_logs(user_id);"
-echo "core_audit_logs 表就绪（请求审计写库）"
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON public.audit_logs(entity_type);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON public.audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);"
+echo "audit_logs 表就绪（请求审计写库，统一表名）"
 # erp_master_data_audit_trail 补表（消 erp 审计查询 warn；幂等）
 psql -U topems -d topems -v ON_ERROR_STOP=1 -c "
 CREATE TABLE IF NOT EXISTS erp.erp_master_data_audit_trail (
