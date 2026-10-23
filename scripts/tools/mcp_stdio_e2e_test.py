@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """MCP stdio 端到端验证：模拟 Cursor/Claude Desktop 调用 TOPEMS MCP。
 
-流程：initialize → tools/list → 调用 3 个业务工具 → 验证响应。
+流程：initialize → tools/list → 调用 3 个业务工具（注入身份）→ 匿名保护断言 → 验证响应。
+
+P1-1：业务工具调用需注入 MCP_STDIO_SUBJECT（admin）方可通过；未注入时匿名保护返回 -32001。
 """
 import json
 import os
@@ -17,6 +19,27 @@ E2E_ENV = {
     "JWT_SECRET": "e2e-test-jwt-secret",
     "RUST_LOG": "warn",
 }
+# 业务身份注入（P1-1）：admin 拥有全部工具权限
+SUBJECT_ENV = {
+    "MCP_STDIO_SUBJECT": json.dumps({
+        "user_id": "e2e-admin",
+        "tenant_id": "t1",
+        "roles": ["admin"],
+    }),
+}
+
+def spawn_stdio(extra_env=None):
+    env = {**os.environ, **E2E_ENV, **(extra_env or {})}
+    proc = subprocess.Popen(
+        [BINARY],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        bufsize=1,
+        env=env,
+    )
+    return proc
 
 def send(proc, msg):
     line = json.dumps(msg) + "\n"
@@ -39,35 +62,29 @@ def recv(proc):
         return json.loads(line)
     raise TimeoutError("等待响应超时")
 
+def handshake(proc):
+    """initialize + initialized 通知。"""
+    send(proc, {"jsonrpc": "2.0", "id": 1, "method": "initialize",
+                 "params": {"protocolVersion": "2024-11-05",
+                            "capabilities": {},
+                            "clientInfo": {"name": "e2e-test", "version": "1.0"}}})
+    resp = recv(proc)
+    assert "result" in resp, f"initialize 失败: {resp}"
+    send(proc, {"jsonrpc": "2.0", "method": "notifications/initialized"})
+    return resp
+
 def main():
-    # 继承当前环境变量并覆盖 JWT_SECRET（mcp-stdio fail-closed 必需）
-    env = {**os.environ, **E2E_ENV}
-    proc = subprocess.Popen(
-        [BINARY],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        text=True,
-        bufsize=1,
-        env=env,
-    )
+    # 注入 admin 身份（P1-1）：业务工具按工具级权限放行
+    proc = spawn_stdio(SUBJECT_ENV)
     results = []
     try:
         # 1. initialize
-        send(proc, {"jsonrpc": "2.0", "id": 1, "method": "initialize",
-                     "params": {"protocolVersion": "2024-11-05",
-                                "capabilities": {},
-                                "clientInfo": {"name": "e2e-test", "version": "1.0"}}})
-        resp = recv(proc)
-        assert "result" in resp, f"initialize 失败: {resp}"
+        resp = handshake(proc)
         server_info = resp["result"].get("serverInfo", {})
         print(f"[1] initialize OK: server={server_info.get('name')} v{server_info.get('version')}")
         results.append(("initialize", True))
 
-        # 2. initialized notification
-        send(proc, {"jsonrpc": "2.0", "method": "notifications/initialized"})
-
-        # 3. tools/list
+        # 2. tools/list
         send(proc, {"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         resp = recv(proc)
         tools = resp["result"]["tools"]
@@ -85,7 +102,7 @@ def main():
         print(f"[3] 10 个业务工具全部注册: {', '.join(business_tools[:3])}...")
         results.append(("10 business tools registered", True))
 
-        # 4. 调用 3 个业务工具（mock 降级路径）
+        # 3. 调用 3 个业务工具（注入 admin 身份 → 放行，mock 降级路径）
         calls = [
             ("crm.list_customers", {"page": 1, "page_size": 3}),
             ("erp.get_inventory_summary", {}),
@@ -104,10 +121,9 @@ def main():
             print(f"[{i}] tools/call {tool} OK (source={source})")
             results.append((f"call {tool}", True, source))
 
-        # 5. resources/list
+        # 4. resources/list
         send(proc, {"jsonrpc": "2.0", "id": 20, "method": "resources/list"})
         resp = recv(proc)
-        # resources/list 可能不支持（取决于 server 实现），记录结果
         if "result" in resp:
             resources = resp["result"].get("resources", [])
             print(f"[8] resources/list OK: {len(resources)} resources")
@@ -122,6 +138,26 @@ def main():
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             proc.kill()
+
+    # 5. 匿名保护（P1-1）：未注入 MCP_STDIO_SUBJECT → 业务工具返回 -32001
+    anon_ok = False
+    anon = spawn_stdio(None)
+    try:
+        handshake(anon)
+        send(anon, {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+                     "params": {"name": "crm.list_customers", "arguments": {"page": 1, "page_size": 3}}})
+        resp = recv(anon)
+        code = resp.get("error", {}).get("code")
+        assert code == -32001, f"匿名调用业务工具应返回 -32001（fail-closed），实际: {resp}"
+        print("[7] 匿名保护 OK: 未注入 MCP_STDIO_SUBJECT 时业务工具返回 -32001")
+        anon_ok = True
+    finally:
+        anon.terminate()
+        try:
+            anon.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            anon.kill()
+    results.append(("anonymous protection", anon_ok))
 
     print("\n=== 端到端验证结果 ===")
     for r in results:

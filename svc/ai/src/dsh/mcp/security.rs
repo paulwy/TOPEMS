@@ -147,8 +147,13 @@ impl Default for McpSecurityMiddleware {
 impl McpSecurityMiddleware {
     /// 创建新的安全中间件
     pub fn new() -> Self {
+        // P1-3：速率上限可由 MCP_RATE_LIMIT_PER_MINUTE 环境变量覆盖（默认 60/min）
+        let rate_limit_per_minute = std::env::var("MCP_RATE_LIMIT_PER_MINUTE")
+            .ok()
+            .and_then(|v| v.parse::<u32>().ok())
+            .unwrap_or(60);
         Self {
-            rate_limit_per_minute: 60, // 默认每分钟 60 次请求
+            rate_limit_per_minute,
             rate_limits: Arc::new(RwLock::new(HashMap::new())),
             injection_detection_enabled: true,
             output_sanitization_enabled: true,

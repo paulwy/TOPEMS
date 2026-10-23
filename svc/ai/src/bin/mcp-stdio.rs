@@ -3,6 +3,11 @@
 //! 通过标准输入/输出（stdin/stdout）进行 JSON-RPC 通信，供本地 AI Agent
 //! （如 Cursor Local、Claude Desktop 等）直接调用 TOPEMS MCP 工具。
 //!
+//! # 身份注入
+//! - 可选环境变量 `MCP_STDIO_SUBJECT`：JSON `{ "user_id": "...", "tenant_id": "...", "roles": [...] }`，
+//!   注入后以该业务身份执行全部工具调用（工具级权限检查据此生效）。
+//! - 未注入 / 解析失败 → 匿名会话（fail-closed），业务工具返回 -32001 权限拒绝。
+//!
 //! # 通信协议
 //! - 每行一个 JSON-RPC 请求（NDJSON 格式）
 //! - 响应同样按行输出到 stdout
@@ -15,12 +20,22 @@ use serde_json::Value;
 
 use topems_shared_mcp::jsonrpc::JsonRpcRequest;
 
+use topems_ai::dsh::mcp::security::AuthenticatedUser;
 use topems_ai::dsh::mcp::{
     register_aps_tools, register_bi_tools, register_crm_tools, register_cs_tools,
     register_ehs_tools, register_erp_tools, register_finance_tools, register_hr_tools,
     register_iot_tools, register_lims_tools, register_mes_tools, register_oa_tools,
     register_pm_tools, register_qms_tools, register_scm_tools, register_wms_tools, McpServer,
 };
+
+/// `MCP_STDIO_SUBJECT` 环境变量格式：JSON 对象 `{ user_id, tenant_id, roles }`
+#[derive(Debug, serde::Deserialize)]
+struct StdioSubject {
+    user_id: String,
+    tenant_id: String,
+    #[serde(default)]
+    roles: Vec<String>,
+}
 
 /// MCP stdio 服务器主入口
 #[tokio::main]
@@ -80,6 +95,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let tool_count = server.tool_registry().len().await;
     tracing::info!("All tools registered: {} tools total", tool_count);
 
+    // 3.5 可选身份注入：MCP_STDIO_SUBJECT（JSON { user_id, tenant_id, roles }）
+    //     注入 → 以该业务身份执行全部工具调用（权限检查按工具声明生效）；
+    //     缺失/解析失败 → 匿名会话（fail-closed，业务工具返回 -32001）。
+    let stdio_user: Option<AuthenticatedUser> = match std::env::var("MCP_STDIO_SUBJECT") {
+        Ok(raw) if !raw.trim().is_empty() => match serde_json::from_str::<StdioSubject>(&raw) {
+            Ok(subject) => {
+                tracing::info!(
+                    user_id = %subject.user_id,
+                    tenant_id = %subject.tenant_id,
+                    roles = ?subject.roles,
+                    "MCP_STDIO_SUBJECT injected; business tools enabled for this identity"
+                );
+                Some(AuthenticatedUser::new(
+                    subject.user_id,
+                    subject.tenant_id,
+                    subject.roles,
+                ))
+            }
+            Err(e) => {
+                tracing::error!(
+                    "MCP_STDIO_SUBJECT parse failed; staying anonymous (fail-closed): {}",
+                    e
+                );
+                None
+            }
+        },
+        _ => None,
+    };
+
     // 3. 从 stdin 逐行读取 JSON-RPC 请求
     let stdin = std::io::stdin();
     let mut reader = std::io::BufReader::new(stdin.lock());
@@ -131,8 +175,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             is_notification
         );
 
-        // stdio 通道无认证注入，恒为匿名会话（None）：业务工具由 check_tool_permission 匿名保护拒绝。
-        let response = server.handle_request(request, None).await;
+        // stdio 通道身份：MCP_STDIO_SUBJECT 注入的身份（若有），否则匿名（None）——
+        // 匿名会话业务工具由 check_tool_permission 拒绝（-32001，fail-closed）。
+        let response = server.handle_request(request, stdio_user.clone()).await;
 
         // 5. 将响应序列化为 JSON 写入 stdout（通知不需要响应）
         if let Some(resp) = response {

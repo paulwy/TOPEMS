@@ -20,24 +20,26 @@ use std::time::Duration;
 
 use serde_json::{json, Value};
 
-/// 启动 mcp-stdio 子进程，返回 stdin 和响应接收通道
+/// 启动 mcp-stdio 子进程（可注入 MCP_STDIO_SUBJECT 身份），返回 stdin 和响应接收通道
 ///
 /// 内部创建一个持续运行的读取线程，将所有读取到的 JSON 响应发送到通道中。
 /// 这样可以避免读取超时后线程仍在运行、消耗后续响应的竞态条件问题。
-fn start_mcp_stdio() -> (
+fn spawn_mcp_stdio(subject: Option<&str>) -> (
     std::process::Child,
     std::process::ChildStdin,
     mpsc::Receiver<Value>,
 ) {
     // mcp-stdio fail-closed 要求 JWT_SECRET 环境变量；集成测试使用固定测试密钥。
-    let mut child = Command::new(env!("CARGO_BIN_EXE_mcp-stdio"))
-        .env("JWT_SECRET", "test-jwt-secret")
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_mcp-stdio"));
+    cmd.env("JWT_SECRET", "test-jwt-secret")
         .env("RUST_LOG", "warn")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-        .expect("Failed to start mcp-stdio");
+        .stderr(Stdio::null());
+    if let Some(subject) = subject {
+        cmd.env("MCP_STDIO_SUBJECT", subject);
+    }
+    let mut child = cmd.spawn().expect("Failed to start mcp-stdio");
 
     let stdin = child.stdin.take().expect("Failed to open stdin");
     let stdout = child.stdout.take().expect("Failed to open stdout");
@@ -80,6 +82,15 @@ fn start_mcp_stdio() -> (
     });
 
     (child, stdin, rx)
+}
+
+/// 启动 mcp-stdio 子进程（匿名，无身份注入），返回 stdin 和响应接收通道
+fn start_mcp_stdio() -> (
+    std::process::Child,
+    std::process::ChildStdin,
+    mpsc::Receiver<Value>,
+) {
+    spawn_mcp_stdio(None)
 }
 
 /// 向 stdin 发送一行 JSON-RPC 请求
@@ -525,6 +536,99 @@ fn test_external_agent_calls_business_tools() {
     }
 
     // 4. 正常关闭
+    drop(stdin);
+    let _ = child.wait();
+}
+
+/// P1-1：MCP_STDIO_SUBJECT 身份注入后，业务工具以注入身份执行（不再匿名拒绝）。
+///
+/// fail-closed 反例：注入 admin 身份 → tools/call 不再返回 -32001（匿名保护），
+/// 也不应返回 -32601（方法不存在）。Crm 域工具权限 crm:list_customers 对 admin 放行。
+#[test]
+fn test_stdio_subject_injection_enables_business_tools() {
+    let (mut child, mut stdin, rx) = spawn_mcp_stdio(Some(
+        r#"{"user_id":"mcp-admin","tenant_id":"t1","roles":["admin"]}"#,
+    ));
+
+    // 1. initialize
+    let init_request = json!({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+            "protocolVersion": "2025-03-26",
+            "capabilities": {},
+            "clientInfo": { "name": "inject-test", "version": "1.0" }
+        }
+    });
+    send_request(&mut stdin, &init_request);
+    let init_resp = read_response(&rx);
+    assert!(init_resp["result"].is_object(), "initialize 应成功");
+
+    // 2. initialized 通知
+    send_request(
+        &mut stdin,
+        &json!({"jsonrpc": "2.0", "method": "notifications/initialized"}),
+    );
+
+    // 3. 业务工具调用（注入 admin 后应放行，成功或降级 mock，不得 -32001/-32601）
+    let call_request = json!({
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": { "name": "crm.list_customers", "arguments": {"page": 1, "page_size": 3} }
+    });
+    send_request(&mut stdin, &call_request);
+    let resp = read_response(&rx);
+    assert_eq!(resp["id"], 2, "应返回对应 id");
+    let code = resp["error"]["code"].as_i64().unwrap_or(0);
+    assert!(
+        code != -32001 && code != -32601,
+        "注入 admin 身份后业务工具不应被匿名保护拒绝或报方法不存在: {:?}",
+        resp
+    );
+    eprintln!("注入身份调用 crm.list_customers 结果: {:?}", resp);
+
+    // 4. 正常关闭
+    drop(stdin);
+    let _ = child.wait();
+}
+
+/// P1-1：MCP_STDIO_SUBJECT 解析失败时保持匿名（fail-closed），业务工具仍被 -32001 拒绝。
+#[test]
+fn test_stdio_subject_invalid_json_stays_anonymous() {
+    let (mut child, mut stdin, rx) = spawn_mcp_stdio(Some("not-json"));
+
+    let init_request = json!({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+            "protocolVersion": "2025-03-26",
+            "capabilities": {},
+            "clientInfo": { "name": "inject-test", "version": "1.0" }
+        }
+    });
+    send_request(&mut stdin, &init_request);
+    let init_resp = read_response(&rx);
+    assert!(init_resp["result"].is_object(), "initialize 应成功");
+    send_request(
+        &mut stdin,
+        &json!({"jsonrpc": "2.0", "method": "notifications/initialized"}),
+    );
+
+    let call_request = json!({
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": { "name": "crm.list_customers", "arguments": {"page": 1, "page_size": 3} }
+    });
+    send_request(&mut stdin, &call_request);
+    let resp = read_response(&rx);
+    assert_eq!(resp["id"], 2);
+    let code = resp["error"]["code"].as_i64().unwrap_or(0);
+    assert_eq!(code, -32001, "注入解析失败应保持匿名，业务工具被拒绝: {:?}", resp);
+
     drop(stdin);
     let _ = child.wait();
 }

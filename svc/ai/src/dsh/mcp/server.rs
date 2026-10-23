@@ -222,7 +222,7 @@ impl McpServer {
             "tools/list" => Some(self.handle_tools_list(id).await),
             "tools/call" => Some(self.handle_tools_call(id, request.params, user).await),
             "resources/list" => Some(self.handle_resources_list(id).await),
-            "resources/read" => Some(self.handle_resources_read(id, request.params).await),
+            "resources/read" => Some(self.handle_resources_read(id, request.params, user).await),
             "ping" => Some(JsonRpcResponse::success(id, json!({}))),
             _ => Some(JsonRpcResponse::error(
                 id,
@@ -374,6 +374,20 @@ impl McpServer {
             return JsonRpcResponse::error(id, JsonRpcError::app_error(code, message, None));
         }
 
+        // P1-3：协议层速率限制（按用户；匿名以共享 key 兜底防滥用）。
+        // 放权限检查之后：未授权请求不消耗额度；HTTP 层另有按 IP 限流兜底。
+        let rate_key = user
+            .as_ref()
+            .map(|u| u.user_id.as_str())
+            .unwrap_or("anonymous");
+        if let Err(e) = self.security.check_rate_limit(rate_key).await {
+            let (code, message) = match e {
+                ToolExecutionError::Validation(_) => (-32000, e.to_string()),
+                _ => (-32000, e.to_string()),
+            };
+            return JsonRpcResponse::error(id, JsonRpcError::app_error(code, message, None));
+        }
+
         match self.tools.call_tool(&tool_name, arguments).await {
             Ok(result) => {
                 let result_value = match serde_json::to_value(result) {
@@ -409,7 +423,12 @@ impl McpServer {
     }
 
     /// 处理 resources/read 请求
-    async fn handle_resources_read(&self, id: Value, params: Option<Value>) -> JsonRpcResponse {
+    async fn handle_resources_read(
+        &self,
+        id: Value,
+        params: Option<Value>,
+        user: Option<AuthenticatedUser>,
+    ) -> JsonRpcResponse {
         let uri = match params
             .and_then(|p| p.get("uri").and_then(|v| v.as_str()).map(|s| s.to_string()))
         {
@@ -421,6 +440,44 @@ impl McpServer {
                 )
             }
         };
+
+        // P1-2：资源读取接入权限检查（与 tools/call 一致：匿名拒绝、按资源域映射只读权限）。
+        // 未注册域视为未知资源（-32002，不暴露内部信息）。
+        let domain_permission = match uri.split_once("://") {
+            Some((domain, _)) => match domain {
+                "crm" => Some("crm:read"),
+                "erp" => Some("erp:read"),
+                "finance" => Some("finance:read"),
+                _ => None,
+            },
+            None => None,
+        };
+        let Some(permission) = domain_permission else {
+            return JsonRpcResponse::error(
+                id,
+                JsonRpcError::app_error(-32002, format!("Resource not found: {}", uri), None),
+            );
+        };
+        let Some(user) = user else {
+            return JsonRpcResponse::error(
+                id,
+                JsonRpcError::app_error(
+                    -32001,
+                    format!(
+                        "Anonymous session; resource '{}' requires authentication",
+                        uri
+                    ),
+                    None,
+                ),
+            );
+        };
+        if let Err(e) = self.security.check_permission(&user, &uri, Some(permission)).await {
+            let (code, message) = match &e {
+                ToolExecutionError::PermissionDenied(msg) => (-32001, msg.clone()),
+                _ => (-32000, e.to_string()),
+            };
+            return JsonRpcResponse::error(id, JsonRpcError::app_error(code, message, None));
+        }
 
         match self.resources.read_by_template(&uri).await {
             Some((meta, content)) => {
@@ -1061,5 +1118,70 @@ mod tests {
             resp_b.is_success(),
             "finance 角色并发调用 finance.create_voucher 应放行（身份未串扰）"
         );
+    }
+
+    #[tokio::test]
+    async fn test_resources_read_permission_enforced() {
+        // P1-2：resources/read 接入权限检查——匿名拒绝（-32001）、
+        // 按资源域映射只读权限（crm 角色可读 crm 资源、不可读 finance 资源）。
+        let server = setup_finance_permission_server().await;
+        server.register_resources().await;
+        init_server(&server).await;
+
+        // 匿名读取 → -32001（业务数据访问需认证）
+        let anon = server
+            .handle_request(
+                JsonRpcRequest::new(
+                    "resources/read",
+                    json!(3),
+                    Some(json!({"uri": "crm://customers/cust-001"})),
+                ),
+                None,
+            )
+            .await
+            .unwrap();
+        assert!(!anon.is_success(), "匿名读取资源应被拒绝");
+        assert_eq!(anon.error.as_ref().unwrap().code, -32001);
+
+        // crm 角色读 crm 资源 → 通过（不返回 -32001；可能 -32002 资源不存在或 mock 成功）
+        let crm_read = server
+            .handle_request(
+                JsonRpcRequest::new(
+                    "resources/read",
+                    json!(4),
+                    Some(json!({"uri": "crm://customers/cust-001"})),
+                ),
+                Some(AuthenticatedUser::new(
+                    "crm_user",
+                    "tenant1",
+                    vec!["crm".to_string()],
+                )),
+            )
+            .await
+            .unwrap();
+        assert_ne!(
+            crm_read.error.as_ref().map(|e| e.code),
+            Some(-32001),
+            "crm 角色读取 crm 资源不应被权限拒绝"
+        );
+
+        // crm 角色读 finance 资源 → -32001（无 finance:read 权限）
+        let finance_read = server
+            .handle_request(
+                JsonRpcRequest::new(
+                    "resources/read",
+                    json!(5),
+                    Some(json!({"uri": "finance://vouchers/voucher-001"})),
+                ),
+                Some(AuthenticatedUser::new(
+                    "crm_user",
+                    "tenant1",
+                    vec!["crm".to_string()],
+                )),
+            )
+            .await
+            .unwrap();
+        assert!(!finance_read.is_success());
+        assert_eq!(finance_read.error.as_ref().unwrap().code, -32001);
     }
 }

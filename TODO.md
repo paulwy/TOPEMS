@@ -4,9 +4,9 @@
 > 源自 `MCP修复方案-2026-10-23.md`（P0×1 / P1×3 / P2×7）。原则：先修根因再提交，lefthook 全跑，不绕过门禁。
 
 - [x] **P0 · HTTP 并发用户上下文串扰** ✅ 完成：user 从全局单值改为随请求传递——`handle_request` 增 user 参数、`mcp_auth_middleware` 解析 JWT 写入 axum extensions、SSE 会话绑定连接用户（session_user）、stdio 恒传 None；删除 set_user/apply_auth/current_user；新增并发隔离测试 `test_concurrent_users_no_context_leak`；cargo check 0 error，dsh::mcp 165 passed / mcp_stdio_integration 8 passed
-- [ ] **P1-1 · stdio 业务工具全拒**：`MCP_STDIO_SUBJECT` 环境变量注入身份（fail-closed），同步对接文档与 e2e 脚本
-- [ ] **P1-2 · resources/read 权限**：接入 `check_tool_permission`（crm/erp/finance → crm:read/erp:read/finance:read）+ resolver 统一 TypedServiceClient
-- [ ] **P1-3 · MCP 端点限流**：`/mcp` 纳入 rate_limit_layer + `handle_tools_call` 调 `check_rate_limit`（含 MCP_RATE_LIMIT_PER_MINUTE 覆盖）
+- [x] **P1-1 · stdio 业务工具全拒** ✅ 完成：`MCP_STDIO_SUBJECT` 环境变量注入身份（fail-closed，缺失/解析失败保持匿名）；对接文档（Cursor/Claude Desktop/Claude Code 配置 + 环境变量表 + 安全说明）与 e2e 脚本同步（注入 admin 后业务工具成功 + 匿名保护 -32001 断言）；集成测试新增 `test_stdio_subject_injection_enables_business_tools` / `test_stdio_subject_invalid_json_stays_anonymous`（10/10 通过）
+- [x] **P1-2 · resources/read 权限** ✅ 完成（权限部分）：接入权限检查（匿名拒绝 -32001；crm/erp/finance → crm:read/erp:read/finance:read）；新增 `test_resources_read_permission_enforced`。⚠️ 认证通道统一（resolver 改 TypedServiceClient）并入 P2-7 全量处理
+- [x] **P1-3 · MCP 端点限流** ✅ 完成：`/mcp`、`/mcp/sse` 复用 rate_limiter 纳入限流（按 IP 5000/60s）+ `handle_tools_call` 调 `check_rate_limit`（按用户，默认 60/min，`MCP_RATE_LIMIT_PER_MINUTE` 可覆盖）
 - [ ] **P2-1 · stdio 双实现合一**：bin 改用 `run_stdio`（统一 MAX_LINE_BYTES=1MiB）
 - [ ] **P2-2 · Schema 参数校验**：`validate_tool_input` 按工具 input_schema 校验 required/type
 - [ ] **P2-3 · 注入检测误伤收窄**：删除 `--`/`INSERT INTO`/`UPDATE.*SET` 等误伤面大的字面量

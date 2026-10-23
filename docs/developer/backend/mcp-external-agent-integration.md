@@ -1,10 +1,12 @@
 # TOPEMS MCP 外部 Agent 对接指南
 
-> 版本：V2026.09 ｜ 验证状态：端到端通过（initialize → tools/list → tools/call → resources/list）
+> 版本：V2026.10 ｜ 验证状态：端到端通过（initialize → tools/list → tools/call → resources/list）+ stdio 身份注入（MCP_STDIO_SUBJECT）
 
 ## 概述
 
-TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务资源，支持 Cursor、Claude Desktop、Claude Code 等兼容 MCP 协议的 AI Agent 直接调用 TOPEMS 业务能力。
+TOPEMS MCP Server 通过 **stdio 传输**暴露 66 个工具（64 个业务工具 + 2 个系统工具）+ 3 个业务资源，支持 Cursor、Claude Desktop、Claude Code 等兼容 MCP 协议的 AI Agent 直接调用 TOPEMS 业务能力。
+
+**身份与权限（P1-1 匿名保护）**：stdio 通道默认匿名——未注入业务身份时，`system.*` 系统工具可用，**业务工具全部返回 -32001 权限拒绝**（防止未认证枚举业务数据，fail-closed）。需调用业务工具时，通过 `MCP_STDIO_SUBJECT` 环境变量注入业务身份（user_id/tenant_id/roles），工具级权限检查据此生效。
 
 
 
@@ -50,6 +52,7 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务
 | 变量                    | 默认值                     | 说明                                     |
 | --------------------- | ----------------------- | -------------------------------------- |
 | `JWT_SECRET`          | （必填，无默认）              | 服务间认证密钥；fail-closed，缺失则 mcp-stdio 拒绝启动 |
+| `MCP_STDIO_SUBJECT`   | （可选，缺省匿名）              | 业务身份注入：JSON `{"user_id":"...","tenant_id":"...","roles":[...]}`；缺失/解析失败 → 匿名（业务工具 -32001，fail-closed） |
 | `CRM_SERVICE_URL`     | `http://localhost:8029` | CRM 服务地址                               |
 | `ERP_SERVICE_URL`     | `http://localhost:8030` | ERP 服务地址                               |
 | `FINANCE_SERVICE_URL` | `http://localhost:8011` | Finance 服务地址                           |
@@ -83,6 +86,8 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务
 &#x20;     "env": {
 
 &#x20;       "JWT_SECRET": "<your-jwt-secret>",
+
+&#x20;       "MCP_STDIO_SUBJECT": "{\"user_id\":\"mcp-agent\",\"tenant_id\":\"<tenant-id>\",\"roles\":[\"crm\",\"erp\",\"finance\"]}",
 
 &#x20;       "RUST_LOG": "info"
 
@@ -122,6 +127,8 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务
 
 &#x20;       "JWT_SECRET": "<your-jwt-secret>",
 
+&#x20;       "MCP_STDIO_SUBJECT": "{\"user_id\":\"mcp-agent\",\"tenant_id\":\"<tenant-id>\",\"roles\":[\"crm\",\"erp\",\"finance\"]}",
+
 &#x20;       "RUST_LOG": "info"
 
 &#x20;     }
@@ -133,7 +140,7 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务
 }
 ```
 
-**验证**：重启 Claude Desktop → 聊天窗口输入 `/` 或查看工具列表 → 出现 `topems` 工具组（64 个工具）。
+**验证**：重启 Claude Desktop → 聊天窗口输入 `/` 或查看工具列表 → 出现 `topems` 工具组（66 个工具）。
 
 ## Claude Code 配置
 
@@ -154,7 +161,9 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务
 
 &#x20;     "env": {
 
-&#x20;       "JWT_SECRET": "<your-jwt-secret>"
+&#x20;       "JWT_SECRET": "<your-jwt-secret>",
+
+&#x20;       "MCP_STDIO_SUBJECT": "{\"user_id\":\"mcp-agent\",\"tenant_id\":\"<tenant-id>\",\"roles\":[\"crm\",\"erp\",\"finance\"]}"
 
 &#x20;     }
 
@@ -165,7 +174,7 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务
 }
 ```
 
-或通过 CLI：`JWT_SECRET=<your-jwt-secret> claude mcp add topems -- /Users/air/TOPEMS/target/debug/mcp-stdio`
+或通过 CLI：`JWT_SECRET=<your-jwt-secret> MCP_STDIO_SUBJECT='{"user_id":"mcp-agent","tenant_id":"<tenant-id>","roles":["crm","erp","finance"]}' claude mcp add topems -- /Users/air/TOPEMS/target/debug/mcp-stdio`
 
 ## 端到端验证脚本
 
@@ -179,7 +188,7 @@ cd /Users/air/TOPEMS
 python3 scripts/mcp\_stdio\_e2e\_test.py
 ```
 
-预期输出：
+预期输出（注：e2e 脚本默认匿名运行，业务工具按匿名保护返回 -32001；如需验证业务工具真实调用，为脚本注入 `MCP_STDIO_SUBJECT`）：
 
 
 
@@ -190,11 +199,13 @@ python3 scripts/mcp\_stdio\_e2e\_test.py
 
 \[3] 10 个业务工具全部注册
 
-\[4] tools/call crm.list\_customers OK (source=mock\_fallback)
+\[4] tools/call crm.list\_customers OK (source=mock\_fallback)   # 注入 MCP_STDIO_SUBJECT 后
 
-\[5] tools/call erp.get\_inventory\_summary OK (source=mock\_fallback)
+\[5] tools/call erp.get\_inventory\_summary OK (source=mock\_fallback)   # 注入后
 
-\[6] tools/call finance.list\_receivables OK (source=mock\_fallback)
+\[6] tools/call finance.list\_receivables OK (source=mock\_fallback)   # 注入后
+
+\[7] 匿名保护：未注入 MCP_STDIO_SUBJECT 时业务工具返回 -32001（fail-closed）
 
 \[8] resources/list OK: 3 resources
 
@@ -219,5 +230,7 @@ python3 scripts/mcp\_stdio\_e2e\_test.py
 * MCP stdio 仅监听本地 stdin/stdout，不暴露网络端口
 
 * 工具调用通过 TypedServiceClient 走 HTTP 调用内部服务，无直查 DB
+
+* **匿名保护（P1-1）**：stdio 未注入 `MCP_STDIO_SUBJECT` 时业务工具一律 -32001（fail-closed），仅 `system.*` 可用；注入身份后工具级权限检查（roles → required_permission）生效，admin/super_admin 拥有全部权限
 
 * 生产环境建议通过 `MCP_TOOL_PERMISSIONS` 环境变量限制敏感工具（如 create\_voucher /create\_purchase\_order）

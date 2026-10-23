@@ -893,7 +893,7 @@ pub fn create_routes(
         .with_by_ip(true);
     let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
     let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter;
+        let mw = rate_limiter.clone();
         move |req, next| {
             let mw = mw.clone();
             async move { rate_limit_middleware(mw, req, next).await }
@@ -966,7 +966,16 @@ pub fn create_routes(
     // V335: MCP (Model Context Protocol) Server 路由
     // 端点：POST /mcp, GET /mcp/sse
     // MCP 客户端（如 Cursor）通过这些端点进行 JSON-RPC 通信
-    let app = app.merge(create_mcp_routes(mcp_server, mcp_jwt_secret));
+    // P1-3：MCP 端点纳入统一限流（复用同一 rate_limiter，按 IP 5000/60s，防滥用/DoS；
+    //       协议层另有按用户 check_rate_limit 兜底）
+    let mcp_router = create_mcp_routes(mcp_server, mcp_jwt_secret).layer(axum::middleware::from_fn({
+        let mw = rate_limiter;
+        move |req, next| {
+            let mw = mw.clone();
+            async move { rate_limit_middleware(mw, req, next).await }
+        }
+    }));
+    let app = app.merge(mcp_router);
 
     // ai 自管全部中间件（不走 build_application），手动补 /metrics 鉴权层（最外层）。
     let app = app.layer(topems_shared_bootstrap::metrics_auth_layer());
