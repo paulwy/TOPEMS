@@ -124,7 +124,11 @@ pub async fn list_bank_accounts(
          WHERE ($1::text IS NULL OR status = $1) \
            AND ($2::text IS NULL OR bank_name ILIKE '%' || $2 || '%' \
              OR account_number ILIKE '%' || $2 || '%' \
-             OR account_name ILIKE '%' || $2 || '%')"
+             OR account_name ILIKE '%' || $2 || '%') \
+           AND (current_setting('app.tenant_id', true) IS NULL \
+             OR current_setting('app.tenant_id', true) = '' \
+             OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' \
+             OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)"
     ))
     .bind(&status)
     .bind(&keyword)
@@ -145,6 +149,10 @@ pub async fn list_bank_accounts(
            AND ($2::text IS NULL OR bank_name ILIKE '%' || $2 || '%' \
              OR account_number ILIKE '%' || $2 || '%' \
              OR account_name ILIKE '%' || $2 || '%') \
+           AND (current_setting('app.tenant_id', true) IS NULL \
+             OR current_setting('app.tenant_id', true) = '' \
+             OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' \
+             OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid) \
          ORDER BY created_at DESC LIMIT $3 OFFSET $4"))
         .bind(&status)
         .bind(&keyword)
@@ -195,7 +203,11 @@ pub async fn get_bank_account(
     };
     let row = match sqlx::query(only_own_schema_query!("erp",
         "SELECT id, bank_name, account_number, account_name, branch_name, currency, balance, is_default, status, created_at, updated_at \
-         FROM erp.bank_accounts WHERE id = $1"))
+         FROM erp.bank_accounts WHERE id = $1 \
+           AND (current_setting('app.tenant_id', true) IS NULL \
+             OR current_setting('app.tenant_id', true) = '' \
+             OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' \
+             OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)"))
         .bind(id)
         .fetch_optional(&mut **txn)
         .await
@@ -348,7 +360,11 @@ pub async fn delete_bank_account(
     };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "DELETE FROM erp.bank_accounts WHERE id = $1"
+        "DELETE FROM erp.bank_accounts WHERE id = $1 \
+           AND (current_setting('app.tenant_id', true) IS NULL \
+             OR current_setting('app.tenant_id', true) = '' \
+             OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' \
+             OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)"
     ))
     .bind(id)
     .execute(&mut **txn)

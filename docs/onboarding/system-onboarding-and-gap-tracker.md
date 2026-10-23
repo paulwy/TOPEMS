@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.88（v1.86-88 闭环：审计表统一/RLS 关键表补齐/api_dup 核销；见文末变更日志） |
+| 版本 | v1.89（业务缺口批1：PM 表结构+隔离补齐/ERP/BI 租户过滤；见文末变更日志） |
 | 最近更新 | 2026-10-23 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
@@ -101,7 +101,7 @@
 | MES | 工序 / 工艺路线+步骤 | `production_process.rs:24-29`；`process_route.rs:30-50` | `/mes/production-process`、`/mes/process-routes`（`config.ts:1042-1080`） | 已具备 |
 | MES | 班组 | `teams`+`team_members`，`team.rs:44-55`（INSERT 未显式绑 tenant_id `:414-418`） | `/mes/teams` → `TeamManagementPage.tsx:21` | 已具备（隔离弱） |
 | MES | MES 自有 BOM | `material_bom/mod.rs:13-27`（`/boms`） | `pages/mes/MaterialBOMPage.tsx:19` | 已具备（与 PDM BOM 双套） |
-| MES | 产能日历（APS 基础） | `capacities`，`capacity.rs:22-32`（`/capacities` CRUD 完整） | **无页面、无 api 文件** | **部分（后端有前端缺）** |
+| MES | 产能日历（APS 基础） | `capacities`，`capacity.rs:22-32`（`/capacities` CRUD 完整） | 管理页已挂载（P1-9） | **已具备（P1-9）** |
 | MES | **车间/产线/工作中心** | **无表无路由**（全库无 workshop/production_line/work_center 建表） | 无 | **缺失（双缺）** |
 | MES | 班次/工作日历 | 无（无 shift/calendar 表） | 无 | **缺失（双缺）** |
 | WMS | 仓库 / 库位 | `warehouse.rs:84-89`；`location.rs:55-67`（含批量）；organization_id 写死 | `/wms/warehouse-management`、`/wms/location-management`（`config.ts:95-122`） | 已具备（隔离弱） |
@@ -114,7 +114,7 @@
 | QMS | 检验单（执行单据） | `qa_quality_inspections`，`quality_inspection.rs:751-763`（`/checks`，挂 standard_id） | `/qms/inspection`（`config.ts:584-594`） | 已具备（单据） |
 | QMS | 不合格品（单据） | `qa_quality_issues`，`quality_issue.rs:871-882`；无缺陷代码主数据 | `/qms/nonconformance`（`config.ts:611-624`） | 已具备（单据） |
 | LIMS | 检验方法+版本 / 仪器 / 试剂 | `test_method.rs:16-22`；`instrument.rs:20-36`；`reagent.rs:15-19` | `/lims/test-method`、`/lims/instrument`、`/lims/reagent`（`modules/lims/config.ts:293-368`） | 已具备 |
-| LIMS | 方法分类 | `/method-categories` CRUD，`test_method.rs:23-30` + api `testMethod.ts:47-64` | **无管理页** | **部分（后端有前端缺）** |
+| LIMS | 方法分类 | `/method-categories` CRUD，`test_method.rs:23-30` + api `testMethod.ts:47-64` | 管理页已挂载（P1-9） | **已具备（P1-9）** |
 | LIMS | 检验项目（analyte） | **无独立表/路由**（仅任务内字段） | 无 | **缺失（双缺）** |
 
 #### 3.3 CRM / 财务 / ERP / EHS / PDM / PM / RD / BI
@@ -122,29 +122,29 @@
 | 模块 | 前置主数据 | 后端 CRUD 证据 | 前端页面证据 | 状态 |
 |---|---|---|---|---|
 | CRM | 客户 / 联系人 / 商机 | `customer.rs:51-66`；`contact.rs:36-47`；`opportunity.rs:159-178`（含 advance/rollback） | `/crm/customers`、`/crm/contacts`、`/crm/opportunities` | 已具备 |
-| CRM | 标签 | `tag.rs:32-42`（`/tags` CRUD） | 无管理页、config 无路由 | **部分（后端有前端无）** |
+| CRM | 标签 | `tag.rs:32-42`（`/tags` CRUD） | 管理页已挂载（P1-9） | **已具备（P1-9）** |
 | CRM | 产品/报价 | **未找到** product/quote 路由/表 | — | **缺失**（产品分散在 ERP/PDM） |
 | 财务 | 账簿科目 `core_finance_accounts` | `/accounts` CRUD，`mod.rs:4934-4948`；tree、期初余额 `:5340-5354` | `/admin/account` → `AccountManagementPage`（业务侧无科目菜单，挂 admin） | 已具备 |
 | 财务 | 另一套科目 `accounting_subjects` | `/accounting-subjects`，`accounting_subjects.rs:398-408` | `/erp/accounting-management` → `AccountingManagementPage.tsx:20,38` | 已具备（**两套科目表并存、归属割裂**） |
 | 财务 | 会计期间 | GET `/periods`、POST open/close，`mod.rs:5321-5323`；api 封装但**无页面消费** | 无期间管理页 | **部分（后端有前端无）**；新租户不被种子覆盖 |
 | 财务 | 辅助核算 `/aux-accounts` | POST/GET，`mod.rs:4998-5001` | api 仅 GET（`auxAccount.ts:28`），无创建页 | **部分** |
 | 财务 | 税率 | 仅 GET `/finance-v56/tax/rates`，税率硬编码 0.13/0.06（`tax_v56.rs:1057,2234`） | `FinanceTaxPage` 聚合只读，create/update throw | **部分（只读/硬编码）**，无税率主表 |
-| 财务 | 币种 | **未找到**币种表/路由，默认 CNY | — | **缺失（全栈）** |
+| 财务 | 币种 | **已具备（P1-10 `78042fe2a`）**：币种主表 `finance.core_finance_currencies` + CRUD + 前端币种/期间管理页 | — | **已具备** |
 | 财务 | 默认科目/期间种子 | `20261020000005_finance_seed_default_accounts_periods.sql:60-82`（5 科目+当月期间，**仅对已存在租户**，空库不种） | — | 已种子（部分，边界受限） |
-| ERP | 银行账户 | `/bank-accounts`，`bank_account.rs:24-32`；**表无 tenant_id/org_id，全局共享** | `/erp/bank-account` → `BankAccountPage` | **部分（隔离缺失）** |
+| ERP | 银行账户 | `/bank-accounts`，`bank_account.rs:24-32`；**v1.89 应用层租户过滤补齐**（列表/get/delete 按 current_setting） | `/erp/bank-account` → `BankAccountPage` | **已具备（隔离补齐 v1.89）** |
 | ERP | 资产分类 | `/asset-categories`，`asset_category.rs:25-32`；消费方在 api/asset，erp 内无分类入口 | erp 资产页不消费分类 | **部分（前端错位）** |
-| ERP | 系统字典 `/system/dict-types` | `dict.rs:151-183` CRUD | `DictManagementPage` 用本地 useState，零 API 调用 | **部分（后端有前端未接）** |
-| EHS | 危险源 | `ehs.qa_ehs_risks`，`risk.rs:19-25`（`/hazards`+assessments）；api 已封装，**无列表页**（仅详情被消费） | 无列表页 | **部分（后端有前端无）** |
+| ERP | 系统字典 `/system/dict-types` | `dict.rs:151-183` CRUD | 管理页已挂载（P1-9，迁移 `20261021000008/00009`） | **已具备（P1-9）** |
+| EHS | 危险源 | `ehs.qa_ehs_risks`，`risk.rs:19-25`（`/hazards`+assessments） | 列表页已挂载（P1-9 复用 EhsHazardPage） | **已具备（P1-9）** |
 | EHS | 环境因素 / 检查标准 / 危化品 / 应急预案 | `environment.rs:16-29`；`safety.rs:18-41`；`hazardous_material.rs:14-55`；`emergency_plan.rs:19-26` | `/ehs/environment`、`/ehs/check`、`/ehs/hazardous-material`、`/ehs/plan` | 已具备（环境页另调后端不存在的 `/environment/indicators`） |
 | PDM | 产品 / 物料 / BOM / 文档库 | `product.rs:14-18`；`material.rs:41-47`；`bom.rs:415-442`（`/bom-versions`+`/bom-items`）；`document.rs:19-36` | `/pdm/product`、`/pdm/material`、`/pdm/bom`、`/pdm/document` | 已具备（无独立"图纸/drawing"实体） |
-| PM | 项目 / WBS 阶段 | `/projects` `project.rs:138-149`（**列表无 tenant_id 过滤 `:188`**）；`/projects/{id}/phases` `project_phase.rs:34-41` | `/pm/projects` → `PmProjectListPage`；WBS 走 api | **部分（隔离薄弱）** |
-| PM | 项目类型/模板 | `/project-types` **空桩**（`project_type_config.rs:12-17` 返回空）；前端静态数组、未注册路由 | `PmTemplatePage` 静态、不调 | **缺失（后端桩+前端静态）** |
+| PM | 项目 / WBS 阶段 | `/projects` `project.rs:138-149`；**v1.89 表结构补全（迁移 `20261023000001`，26 列对齐 struct）+ 列表/get/dashboard 租户过滤 + RLS** | `/pm/projects` → `PmProjectListPage`；WBS 走 api | **已具备（隔离补齐 v1.89）** |
+| PM | 项目类型/模板 | `/project-types` 5 handler 全 CRUD（批7 `67efb57b5`，迁移 00011 补 name_en/唯一约束） | `PmTemplatePage` | **已具备（批7）** |
 | RD | 研发项目 / 实验 / 配方 | `project.rs:55-67`（tenant 过滤 `:123`）；`experiment.rs:65-86`；`formula.rs:67-76`（版本+approve） | `/rd/project`、`/rd/experiment`、`RsFormulaListPage` | 已具备 |
-| RD | 原料测试（隔离缺失） | `material.rs:98-109`；**表无 tenant_id**（INSERT `:307-313`） | `RsMaterialListPage` | **部分（隔离缺失）** |
+| RD | 原料测试 | `material.rs:98-109`；INSERT 已含 `COALESCE(NULLIF(current_setting('app.tenant_id'))::UUID, 全零)` 租户绑定 | `RsMaterialListPage` | **已具备（盘点过时）** |
 | RD | 样品 | **未找到**实体/路由/表 | — | **缺失** |
-| GIS | 地理围栏 | `embedded.rs:211,412-419`（`/fences`）；**表无 tenant_id**（DDL `20261007000009:1282`） | `/gis/fence` → `GisFencePage` | **部分（隔离缺失）** |
-| GIS | 设备 | `/devices` GET、`/register` POST，`embedded.rs:180,387,391` | 无设备注册页 | **部分（后端有前端无）** |
-| BI | 数据源 / 数据集 / 报表 | `analytics/routes.rs:154-180`（带 tenant）；`dataset.rs:90-95`（**无 tenant_id 过滤**）；`report.rs:17-27` | `BIDataSourcePage`、`DatasetPage`、`pages/report/*` | 数据源/报表已具备；**数据集部分（隔离缺失）** |
+| GIS | 地理围栏 | `embedded.rs:211,412-419`（`/fences`）；DDL `20261007000009:1282` 已含 `tenant_id` 列 + RLS（P1-8） | `/gis/fence` → `GisFencePage` | **已具备（盘点过时）** |
+| GIS | 设备 | `/devices` GET、`/register` POST，`embedded.rs:180,387,391` | 注册页已挂载（P1-9） | **已具备（P1-9）** |
+| BI | 数据源 / 数据集 / 报表 | `analytics/routes.rs:154-180`（带 tenant）；`dataset.rs:90-95`（**v1.89 列表/count 补租户过滤，is_public 放行**） | `BIDataSourcePage`、`DatasetPage`、`pages/report/*` | 数据源/报表已具备；**数据集已具备（v1.89）** |
 
 ### 阶段 4　试跑验证
 
@@ -372,6 +372,7 @@
 
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
+| 2026-10-23 | v1.89 | 业务缺口批1：隔离补齐（PM/ERP/BI）+ 盘点校准 ✅ | 业务缺口批次启动：§2 共 28 项缺口分级，批 1 = 技术债/隔离类。实证收敛——RD material/GIS geofences/财务币种/PM 项目类型已修复（盘点过时），真实缺口 3 项：① **PM projects**：全仓无正式建表（主库缺表、test 空壳，INSERT/SELECT 引用 name_en/tags 与旧结构错位致列表/创建 500）→ 迁移 `20261023000001` 幂等建表（26 列对齐 Project struct，start_date/end_date timestamptz、tags text[]、progress int、created_by/cost_center_id varchar）+ 列表/get/dashboard 租户过滤 + RLS（tenant_isolation_projects，seed 并入）；② **ERP bank_accounts**：列表/get/delete 补 current_setting 租户过滤（列/INSERT 已具备）；③ **BI analytics_datasets**：列表/count 补租户过滤（is_public 放行）。验证：BFF 实跑 PM 创建/列表/get/删除全 200、双租户列表隔离（仅本租户）、ERP/BI 列表 200。§2 校准 13 行（P1-8/9/10、批7 已闭环项回写状态） |
 | 2026-10-23 | v1.88 | code-quality api_dup 性能瓶颈核销 ✅ | CI 11 FAIL 复核续：code-quality api_dup 核销——远端 `52b26e88e`（perf 脚本加速：注释剥离逐字符状态机 → re.sub 批量替换，并修生命周期注解 '_/'static 误剥 bug）；本地 --ci 全量复跑实证内存峰值由原 25GB+ 降至 ~4.6GB（CPU 活跃），修复有效；全量完成耗时长归 CI job 执行（lefthook Gate P 注明由 CI 执行，本地 pre-push 不含全量）。**CI 11 FAIL 累计 11/11 核销**。提交 `18f9198d9` |
 | 2026-10-23 | v1.87 | verify-rls 关键表清零（RLS 补齐） ✅ | v1.85 终验②「RLS 缺 iam.core_roles 策略」闭环：① 清单校准——主库 iam schema 无 core_* 表（iam.core_roles/core_users/core_files 均不存在，v1.75 双表统一已删空壳）→ verify-rls KEY_TABLES 改为真实 public 版；② 真实缺口修复——public.core_roles/core_users 补 tenant_isolation 策略（管理员全可见 + 租户过滤 + NULL 放行）+ ehs.qa_ehs_hazards 补 tenant_id 列与策略（qms 版已有），幂等并入 ensure-tenant-users-seed.sh，主库/test 双库执行；③ 验证——verify-rls 111 策略表缺口 0 + 关键表抽样全部有策略。提交 `ddbb487bc` |
 | 2026-10-23 | v1.86 | push 门禁 USAGE_COLLECT_FAIL 修复（审计表统一） ✅ | pre-push domain-probe USAGE_COLLECT_FAIL 根因三层：① 审计表分裂——unified-core middleware 写 public.audit_logs，shared-auth audit_logger 与 tenant 查询用 core_audit_logs（test 库从未建表）；② SEARCH_PATH=flow,public（unified-core embedded 设置）致无前缀表解析到 flow 兼容层（flow.core_files 缺 tenant_id）；③ v1.50 遗留 TEXT 列 NULLIF(a.user_id,'')::uuid cast 在 uuid 列报错。修复：统一 public.audit_logs（audit_logger INSERT / tenant 查询 / seed 建表对齐）+ usage collect 表引用显式 public + JOIN 改 a.user_id 直连。实测 usage collect success + DOMAIN_PROBE_OK（0 5xx）。提交 `05845c9d1` |
