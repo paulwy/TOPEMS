@@ -3391,3 +3391,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **occupational_disease + data_sync 去虚构**（`cbcb332a31`）
 - [x] **剩余 3 个字典桩去硬编码**（`d54e807833`）：emergency_plan list_plan_categories、environmental_compliance list_regulation_categories/list_monitor_types 硬编码分类 → 声明式 501（无真表数据源）
 - 收尾：ehs 域「前端实调后端桩」清扫完成（training×3 批 + environmental×2 批 + drill/health/hazard/issues/inspection/assess-controls/disease-cases/hazardous-material + 字典桩 3）；残余 501（data_sync 数据源未启用 ×6、危险品分类/出入库、预案/法规分类）均为声明式未接入或零消费冻结，不撒谎不删除。
+
+## v1.90 物料环节另批闭环（2026-10-23）
+- [x] **主库补建 master_data.materials/uoms/samples 三表**：应用 `20261021000010`（幂等，topems + topems_prepare 双库）——存量库 psql 直推体系下迁移链从未应用，主库此前缺表致物料 CRUD 500
+- [x] **RLS 迁移 `20261023000002`**：三表 tenant_isolation_* 宽松策略（与 master_data 域 81 表一致，双库应用 + checksums 登记）
+- [x] **master_data.rs 15 handler 显式租户隔离**：读路径 list/get 加 `($N::uuid='00000000-…000000'::uuid OR tenant_id=$N::uuid)`；写路径 create 落 x-tenant-id 头租户、update/delete 加租户条件；GUC 兜底废弃（rls_middleware 独占连接与 handler 池连接不同致 GUC 不生效，全站同类写路径靠显式参数/Claims）
+- [x] **BFF 8099 实机验证**：三实体 CRUD 全 200；双租户隔离断言 list(0001)=仅本租户 / 越权=0 / nil=全量 / 越权改删 get=404；DB 落库 tenant_id=0001；测试数据已清理
+- 至此 §4 最小业务闭环 5 环节（物料→供应商→采购→入库→检验）全 200
+- 注：master-data mdm_crud_integration 13 failed 为既有（quality_v51 dashboard 治理洞察断言与实现偏差，stash 对比确认非本批引入）

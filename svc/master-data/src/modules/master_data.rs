@@ -14,6 +14,15 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 
+/// 请求级租户上下文（对齐 rls_middleware 同源：读 x-tenant-id 头；缺失/非法 → nil 全放行）
+fn req_tenant_id(headers: &HeaderMap) -> Uuid {
+    headers
+        .get("x-tenant-id")
+        .and_then(|h| h.to_str().ok())
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or_else(Uuid::nil)
+}
+
 fn material_columns(locale: &str) -> String {
     format!(
         "id::text, material_code, CASE WHEN '{}' = 'en' THEN COALESCE(name_en, material_name) ELSE material_name END AS material_name, material_type, specification, unit, uom_id::text, status, description, created_at::text, updated_at::text",
@@ -109,11 +118,13 @@ pub async fn list_materials(
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR material_type = $1)
              AND ($2::text IS NULL OR status = $2)
-             AND ($3::text IS NULL OR material_code ILIKE '%' || $3 || '%' OR material_name ILIKE '%' || $3 || '%')"#,
+             AND ($3::text IS NULL OR material_code ILIKE '%' || $3 || '%' OR material_name ILIKE '%' || $3 || '%')
+             AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)"#,
     )
     .bind(query.material_type.clone())
     .bind(query.status.clone())
     .bind(query.search.clone())
+    .bind(req_tenant_id(&headers))
     .fetch_one(&state.db)
     .await
     {
@@ -132,6 +143,7 @@ pub async fn list_materials(
              AND ($1::text IS NULL OR material_type = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR material_code ILIKE '%' || $3 || '%' OR material_name ILIKE '%' || $3 || '%')
+             AND ($6::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $6::uuid)
            ORDER BY created_at DESC
            LIMIT $4 OFFSET $5"#,
         material_columns(&locale)
@@ -143,6 +155,7 @@ pub async fn list_materials(
         .bind(query.search)
         .bind(page_size)
         .bind(offset)
+        .bind(req_tenant_id(&headers))
         .fetch_all(&state.db)
         .await
     {
@@ -170,11 +183,12 @@ pub async fn get_material(
 ) -> Json<ApiResponse<Material>> {
     let locale = Locale::from_headers(&headers).as_sql();
     let sql = format!(
-        r#"SELECT {} FROM master_data.materials WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT {} FROM master_data.materials WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
         material_columns(&locale)
     );
     let row: Option<Material> = match sqlx::query_as(&sql)
         .bind(id)
+        .bind(req_tenant_id(&headers))
         .fetch_optional(&state.db)
         .await
     {
@@ -196,13 +210,14 @@ pub async fn get_material(
 
 pub async fn create_material(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<CreateMaterialRequest>,
 ) -> Json<ApiResponse<Material>> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
     let row: Option<Material> = match sqlx::query_as(
         r#"INSERT INTO master_data.materials
             (material_code, material_name, name_en, material_type, specification, unit, uom_id, status, description, tenant_id, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'), '00000000-0000-0000-0000-000000000000')
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, '00000000-0000-0000-0000-000000000000')
            RETURNING id::text, material_code, material_name, material_type, specification, unit, uom_id::text, status, description, created_at::text, updated_at::text"#,
     )
     .bind(&req.material_code)
@@ -214,6 +229,7 @@ pub async fn create_material(
     .bind(req.uom_id)
     .bind(&status)
     .bind(&req.description)
+    .bind(req_tenant_id(&headers))
     .fetch_optional(&state.db)
     .await
     {
@@ -236,6 +252,7 @@ pub async fn create_material(
 
 pub async fn update_material(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialRequest>,
 ) -> Json<ApiResponse<Material>> {
@@ -251,6 +268,7 @@ pub async fn update_material(
              description = COALESCE($9, description),
              updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
+             AND ($10::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $10::uuid)
            RETURNING id::text, material_code, material_name, material_type, specification, unit, uom_id::text, status, description, created_at::text, updated_at::text"#,
     )
     .bind(id)
@@ -262,6 +280,7 @@ pub async fn update_material(
     .bind(req.uom_id)
     .bind(&req.status)
     .bind(&req.description)
+    .bind(req_tenant_id(&headers))
     .fetch_optional(&state.db)
     .await
     {
@@ -284,12 +303,14 @@ pub async fn update_material(
 
 pub async fn delete_material(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match sqlx::query(
-        "UPDATE master_data.materials SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+        "UPDATE master_data.materials SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
     .bind(id)
+    .bind(req_tenant_id(&headers))
     .execute(&state.db)
     .await
     {
@@ -379,11 +400,13 @@ pub async fn list_uoms(
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR uom_type = $1)
              AND ($2::text IS NULL OR status = $2)
-             AND ($3::text IS NULL OR uom_code ILIKE '%' || $3 || '%' OR uom_name ILIKE '%' || $3 || '%')"#,
+             AND ($3::text IS NULL OR uom_code ILIKE '%' || $3 || '%' OR uom_name ILIKE '%' || $3 || '%')
+             AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)"#,
     )
     .bind(query.uom_type.clone())
     .bind(query.status.clone())
     .bind(query.search.clone())
+    .bind(req_tenant_id(&headers))
     .fetch_one(&state.db)
     .await
     {
@@ -402,6 +425,7 @@ pub async fn list_uoms(
              AND ($1::text IS NULL OR uom_type = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR uom_code ILIKE '%' || $3 || '%' OR uom_name ILIKE '%' || $3 || '%')
+             AND ($6::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $6::uuid)
            ORDER BY created_at DESC
            LIMIT $4 OFFSET $5"#,
         uom_columns(&locale)
@@ -413,6 +437,7 @@ pub async fn list_uoms(
         .bind(query.search)
         .bind(page_size)
         .bind(offset)
+        .bind(req_tenant_id(&headers))
         .fetch_all(&state.db)
         .await
     {
@@ -440,11 +465,12 @@ pub async fn get_uom(
 ) -> Json<ApiResponse<Uom>> {
     let locale = Locale::from_headers(&headers).as_sql();
     let sql = format!(
-        r#"SELECT {} FROM master_data.uoms WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT {} FROM master_data.uoms WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
         uom_columns(&locale)
     );
     let row: Option<Uom> = match sqlx::query_as(&sql)
         .bind(id)
+        .bind(req_tenant_id(&headers))
         .fetch_optional(&state.db)
         .await
     {
@@ -466,13 +492,14 @@ pub async fn get_uom(
 
 pub async fn create_uom(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<CreateUomRequest>,
 ) -> Json<ApiResponse<Uom>> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
     let row: Option<Uom> = match sqlx::query_as(
         r#"INSERT INTO master_data.uoms
             (uom_code, uom_name, name_en, uom_type, category, status, description, tenant_id, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'), '00000000-0000-0000-0000-000000000000')
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, '00000000-0000-0000-0000-000000000000')
            RETURNING id::text, uom_code, uom_name, uom_type, category, status, description, created_at::text, updated_at::text"#,
     )
     .bind(&req.uom_code)
@@ -482,6 +509,7 @@ pub async fn create_uom(
     .bind(&req.category)
     .bind(&status)
     .bind(&req.description)
+    .bind(req_tenant_id(&headers))
     .fetch_optional(&state.db)
     .await
     {
@@ -504,6 +532,7 @@ pub async fn create_uom(
 
 pub async fn update_uom(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateUomRequest>,
 ) -> Json<ApiResponse<Uom>> {
@@ -517,6 +546,7 @@ pub async fn update_uom(
              description = COALESCE($7, description),
              updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
+             AND ($8::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $8::uuid)
            RETURNING id::text, uom_code, uom_name, uom_type, category, status, description, created_at::text, updated_at::text"#,
     )
     .bind(id)
@@ -526,6 +556,7 @@ pub async fn update_uom(
     .bind(&req.category)
     .bind(&req.status)
     .bind(&req.description)
+    .bind(req_tenant_id(&headers))
     .fetch_optional(&state.db)
     .await
     {
@@ -548,12 +579,14 @@ pub async fn update_uom(
 
 pub async fn delete_uom(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match sqlx::query(
-        "UPDATE master_data.uoms SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+        "UPDATE master_data.uoms SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
     .bind(id)
+    .bind(req_tenant_id(&headers))
     .execute(&state.db)
     .await
     {
@@ -643,11 +676,13 @@ pub async fn list_samples(
            WHERE deleted_at IS NULL
              AND ($1::text IS NULL OR sample_type = $1)
              AND ($2::text IS NULL OR status = $2)
-             AND ($3::text IS NULL OR sample_code ILIKE '%' || $3 || '%' OR sample_name ILIKE '%' || $3 || '%')"#,
+             AND ($3::text IS NULL OR sample_code ILIKE '%' || $3 || '%' OR sample_name ILIKE '%' || $3 || '%')
+             AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)"#,
     )
     .bind(query.sample_type.clone())
     .bind(query.status.clone())
     .bind(query.search.clone())
+    .bind(req_tenant_id(&headers))
     .fetch_one(&state.db)
     .await
     {
@@ -666,6 +701,7 @@ pub async fn list_samples(
              AND ($1::text IS NULL OR sample_type = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR sample_code ILIKE '%' || $3 || '%' OR sample_name ILIKE '%' || $3 || '%')
+             AND ($6::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $6::uuid)
            ORDER BY created_at DESC
            LIMIT $4 OFFSET $5"#,
         sample_columns(&locale)
@@ -677,6 +713,7 @@ pub async fn list_samples(
         .bind(query.search)
         .bind(page_size)
         .bind(offset)
+        .bind(req_tenant_id(&headers))
         .fetch_all(&state.db)
         .await
     {
@@ -704,11 +741,12 @@ pub async fn get_sample(
 ) -> Json<ApiResponse<Sample>> {
     let locale = Locale::from_headers(&headers).as_sql();
     let sql = format!(
-        r#"SELECT {} FROM master_data.samples WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT {} FROM master_data.samples WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
         sample_columns(&locale)
     );
     let row: Option<Sample> = match sqlx::query_as(&sql)
         .bind(id)
+        .bind(req_tenant_id(&headers))
         .fetch_optional(&state.db)
         .await
     {
@@ -730,13 +768,14 @@ pub async fn get_sample(
 
 pub async fn create_sample(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<CreateSampleRequest>,
 ) -> Json<ApiResponse<Sample>> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
     let row: Option<Sample> = match sqlx::query_as(
         r#"INSERT INTO master_data.samples
             (sample_code, sample_name, name_en, sample_type, source, status, description, tenant_id, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'), '00000000-0000-0000-0000-000000000000')
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, '00000000-0000-0000-0000-000000000000')
            RETURNING id::text, sample_code, sample_name, sample_type, source, status, description, created_at::text, updated_at::text"#,
     )
     .bind(&req.sample_code)
@@ -746,6 +785,7 @@ pub async fn create_sample(
     .bind(&req.source)
     .bind(&status)
     .bind(&req.description)
+    .bind(req_tenant_id(&headers))
     .fetch_optional(&state.db)
     .await
     {
@@ -768,6 +808,7 @@ pub async fn create_sample(
 
 pub async fn update_sample(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSampleRequest>,
 ) -> Json<ApiResponse<Sample>> {
@@ -781,6 +822,7 @@ pub async fn update_sample(
              description = COALESCE($7, description),
              updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
+             AND ($8::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $8::uuid)
            RETURNING id::text, sample_code, sample_name, sample_type, source, status, description, created_at::text, updated_at::text"#,
     )
     .bind(id)
@@ -790,6 +832,7 @@ pub async fn update_sample(
     .bind(&req.source)
     .bind(&req.status)
     .bind(&req.description)
+    .bind(req_tenant_id(&headers))
     .fetch_optional(&state.db)
     .await
     {
@@ -812,12 +855,14 @@ pub async fn update_sample(
 
 pub async fn delete_sample(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     match sqlx::query(
-        "UPDATE master_data.samples SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+        "UPDATE master_data.samples SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
     .bind(id)
+    .bind(req_tenant_id(&headers))
     .execute(&state.db)
     .await
     {
