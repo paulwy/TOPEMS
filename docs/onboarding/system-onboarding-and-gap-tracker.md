@@ -4,7 +4,7 @@
 
 | 项 | 值 |
 |---|---|
-| 版本 | v1.94（角色/权限种子幂等迁移：manager 细粒度授权落地；见文末变更日志） |
+| 版本 | v1.95（前端菜单叶子映射全模块覆盖：114 条全 navItems path；见文末变更日志） |
 | 最近更新 | 2026-10-23 |
 | 维护人 | 开发协作（随迭代更新） |
 | 关联待办 | [`TODO.md`](../../TODO.md)「系统启用与查漏补缺」块 |
@@ -372,6 +372,7 @@
 
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
+| 2026-10-23 | v1.95 | 前端菜单叶子映射全模块覆盖 ✅ | `MENU_PERMISSIONS` 扩至 114 条：第二批 crm/srm/ehs/pdm/tms 16 条 + 第三批 admin/asset/bi/doc/finance/gis/hrm/lims/pm/rd 34 条；`/pdm/bom`→`pdm:bom:read`、`/pdm/process`→`pdm:process:read` 改细。navItems 全部 path 已覆盖（comm 差集为空），tsc 通过；无精确码的叶子用近似码（`/admin/monitor`→`admin:debug:read`、`/hrm/organization`→`hrm:department:read`） |
 | 2026-10-23 | v1.94 | 角色/权限种子幂等迁移 ✅ | `database/migrations/20261023000002_iam_seed_manager_role_permissions.sql`：① 字典补缺 `<mod>:read/write` 8 码；② `erp_manager` 角色（nil 系统级，对齐 qms/scm/wms manager）+ 001 版 tenant 统一 nil；③ 4 manager 绑定 read/write 总码（补 `qms:write`）；④ 清理 v1.91 手工交叉绑定（scm_manager 的 wms:*、wms_manager 的 scm:* 共 4 条）。幂等验证：test 库重跑 0 变更；tenant2 复核：wms 建单 200（tenant 002）、token 权限 176（含 4 模块总码） |
 | 2026-10-23 | v1.93 | 超管建单公共行可见性（§4.4 口径）✅ | wms 入库列表过滤 `AND (tenant_id = $N OR tenant_id IS NULL)` 对齐 RLS 策略（`tenant_id = GUC OR tenant_id IS NULL`）：普通用户可见本租户行 + NULL 公共行（超管建单），租户 A（001）行仍隔离。实测：租户B 列表可见公共行（INB-ADMIN-PUB-001）+ 自身 002 行，001 行不可见。写操作（get/update/delete）保持租户过滤排除公共行（公共行仅读，修改删除仍限超管） |
 | 2026-10-23 | v1.92 | 前端菜单过滤（4.1 剩余）✅ | GlobalLayoutV3 菜单叶子级过滤：children 逐项按 `MENU_PERMISSIONS` 细粒度码过滤（`checkPermission`，超管短路），可见子项为 0 时整组隐藏；`MENU_PERMISSIONS` 补齐核心 5 模块（mes/erp/scm/wms/qms）25 条叶子映射，与各模块 config.ts 路由级 `requiredPermissions` 对齐（`/mes/wip`→`mes:wip:read`、`/qms/eightd`→`qms:eightd:read` 改细）。tsc 通过；浏览器实测普通角色菜单留待实机确认 |

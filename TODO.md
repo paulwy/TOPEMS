@@ -46,7 +46,8 @@
 - [x] **§4 联动待办② 前端菜单过滤（v1.92）** ✅ GlobalLayoutV3 叶子级过滤（children 细粒度码逐项，空组隐藏）；MENU_PERMISSIONS 补核心 5 模块 25 条叶子映射；tsc 通过（浏览器实测留待实机）。
 - [x] **§4 联动待办③ 超管建单公共行可见性（v1.93）** ✅ wms 入库列表过滤对齐 RLS 放行 NULL 公共行（普通用户可见公共行+本租户行，001 行仍隔离；写操作保持排除公共行）。
 - [x] **§4 联动待办④ 角色种子补全（DB 部分 v1.94）** ✅ 幂等迁移 `20261023000002`：erp_manager 角色（nil 系统级）+ read/write 总码配入 4 manager（补 qms:write）+ 清理 scm/wms 交叉绑定 4 条 + erp_manager tenant 001→nil；test 库重跑幂等，tenant2 链路复核通过。
-- [ ] **§4 联动待办（剩余）**：① 前端其余模块叶子映射补全（v1.92 仅覆盖核心 5 模块，crm/srm/ehs/pdm 等待补）；② 物料主数据（master-data 8090 部署 + test 库补 master_data schema）。
+- [x] **§4 联动待办⑤ 前端叶子映射全模块覆盖（v1.95）** ✅ MENU_PERMISSIONS 114 条覆盖 navItems 全部 path（第二批 crm/srm/ehs/pdm/tms + 第三批 admin/asset/bi/doc/finance/gis/hrm/lims/pm/rd），tsc 通过。
+- [ ] **§4 联动待办（剩余）**：① 物料主数据（master-data 8090 部署 + test 库补 master_data schema）。
 - [x] **业务缺口批1 · 隔离补齐（v1.89）** ✅ 闭环：实证收敛（RD/GIS/币种/项目类型已修复=盘点过时，仅 3 项真实缺口）——PM projects 全仓无正式建表（主库缺表/test 空壳 + name_en/tags/progress 类型错位致列表/创建 500）→ 迁移 `20261023000001` 幂等建表（26 列对齐 Project struct）+ 列表/get/dashboard 补 current_setting 租户过滤 + RLS（tenant_isolation_projects，seed 并入）；ERP bank_accounts 列表/get/delete 补租户过滤（列/INSERT 已具备）；BI analytics_datasets 列表/count 补租户过滤（is_public 放行）。验证：BFF 实跑 PM 创建/列表/get/删除全 200、双租户列表隔离（仅本租户可见）、ERP/BI 列表 200。
 
 > P2 增强/一致性/技术债（空态 CTA、向导租户归属、批量事务、岗位 FK、路由清理、菜单种子、新租户补播、技术债、公共主数据域）见活文档 §3 P2 表，按需认领。
