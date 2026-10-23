@@ -124,9 +124,10 @@ jobs:
       # ── [2026-10-24 Phase D] Rust 后端启动补齐（此前 e2e 零后端，API 全打 :8080 无服务）──
       # 最小可用口径：setup-rust → 顶层迁移链 sqlx migrate → cargo build topems-server
       # → 模块化单体起于 SERVER_PORT=8080（对齐既有 API_BASE_URL，免改测试侧）→ 健康轮询。
+      # 迁移口径确认（2026-10-24 第三批 P2）：全仓唯一迁移源 database/migrations（469 个版本），
+      # 无 svc 级 migrations 子目录，下方 "Apply top-level migrations" 即全量重放覆盖。
       # 未覆盖（留 TODO，随后续批次补）：
-      #   ①各 svc 自有 migrations 子目录的 up-replay（CI migration-test job 口径）；
-      #   ②首启超管依赖 unified-core 启动自举（未设 ADMIN_INITIAL_PASSWORD 时弱默认 admin/admin123，
+      #   ①首启超管依赖 unified-core 启动自举（未设 ADMIN_INITIAL_PASSWORD 时弱默认 admin/admin123，
       #     见 svc/unified-core/src/modules/iam/mod.rs:439；e2e 用例 E2E_USERNAME/E2E_PASSWORD 即此口径）。
       - name: Setup Rust toolchain
         uses: ./.github/actions/setup-rust
