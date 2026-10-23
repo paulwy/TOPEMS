@@ -293,6 +293,8 @@ export interface ListPageTemplateProps<T = Record<string, unknown>> extends BoxP
     icon?: React.ReactNode;
     onClick?: () => void;
     variant?: 'contained' | 'outlined' | 'text';
+    /** 稳定测试锚点（渲染为 data-testid），供 e2e 定位 */
+    testId?: string;
   }>;
   rowActions?: RowAction<T>[];
   /**

@@ -296,6 +296,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
     const result: RowAction<T>[] = [];
     if (actions.includes('detail')) {
       result.push({
+        key: 'view',
         label: t('common.view', i18n.t('components.crud_page.k0')),
         icon: <Eye size={16} />,
         onClick: (row: T) => setDetailTarget(row),
@@ -303,6 +304,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
     }
     if (actions.includes('edit')) {
       result.push({
+        key: 'edit',
         label: t('common.edit', i18n.t('components.crud_page.k1')),
         icon: <Pencil size={16} />,
         onClick: (row: T) => {
@@ -313,6 +315,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
     }
     if (actions.includes('delete')) {
       result.push({
+        key: 'delete',
         label: t('common.delete', i18n.t('components.crud_page.k2')),
         icon: <Trash2 size={16} />,
         color: 'error',
@@ -930,6 +933,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                             setCreateOpen(true);
                           },
                           variant: 'contained' as const,
+                          testId: 'crud-create-btn',
                         }
                       : null,
                     importConfig?.enabled
@@ -938,6 +942,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                           icon: <Upload size={16} />,
                           onClick: () => fileInputRef.current?.click(),
                           variant: 'outlined' as const,
+                          testId: 'crud-import-btn',
                         }
                       : null,
                     exportConfig?.enabled
@@ -946,6 +951,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                           icon: <Download size={16} />,
                           onClick: handleExport,
                           variant: 'outlined' as const,
+                          testId: 'crud-export-btn',
                         }
                       : null,
                   ].filter(Boolean) as Array<{
@@ -953,6 +959,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                     icon?: React.ReactNode;
                     onClick?: () => void;
                     variant?: 'contained' | 'outlined' | 'text';
+                    testId?: string;
                   }>
                 }
               />

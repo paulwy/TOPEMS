@@ -187,7 +187,6 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
         }
       }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const validateField = useCallback(
@@ -798,6 +797,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
               <Button
                 type='reset'
                 variant='outlined'
+                data-testid='form-reset-btn'
               >
                 {mode === 'view' ? i18n.t('shared.form_builder.k3') : resetLabel}
               </Button>
@@ -806,6 +806,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
               <Button
                 type='submit'
                 variant='contained'
+                data-testid='form-submit-btn'
               >
                 {submitLabel}
               </Button>

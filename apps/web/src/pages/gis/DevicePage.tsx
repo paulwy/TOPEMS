@@ -158,6 +158,7 @@ const DevicePage: React.FC = () => {
           <Button
             variant='contained'
             startIcon={<Plus size={18} />}
+            data-testid='device-create-btn'
             onClick={openCreate}
           >
             {t('gis.devices.create')}
@@ -196,6 +197,7 @@ const DevicePage: React.FC = () => {
                     <TableCell>
                       <IconButton
                         size='small'
+                        data-testid='device-edit-btn'
                         onClick={() => openEdit(row)}
                       >
                         <Pencil size={16} />
@@ -203,6 +205,7 @@ const DevicePage: React.FC = () => {
                       <IconButton
                         size='small'
                         color='error'
+                        data-testid='device-delete-btn'
                         onClick={() => removeMutation.mutate(row.id)}
                       >
                         <Trash2 size={16} />

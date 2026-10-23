@@ -1500,6 +1500,7 @@ export function ListPageTemplate<
       icon: <Plus size={18} />,
       variant: 'contained' as const,
       onClick: openCreateForm,
+      testId: 'crud-create-btn',
     };
     return actions ? [...actions, createAction] : [createAction];
   }, [crud, actions, openCreateForm, hasForm]);
@@ -2869,6 +2870,7 @@ export function ListPageTemplate<
                         >
                           <IconButton
                             size='small'
+                            data-testid={`row-action-${action.key ?? actionIndex}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               action.onClick?.(row);
@@ -3473,6 +3475,7 @@ export function ListPageTemplate<
                           key={index}
                           variant={action.variant || 'contained'}
                           size='small'
+                          data-testid={action.testId}
                           startIcon={!isMobile ? action.icon : undefined}
                           onClick={action.onClick}
                           sx={{ whiteSpace: 'nowrap' }}
