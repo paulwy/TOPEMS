@@ -7,12 +7,13 @@ use crate::services::track_stats::{TrackPoint, TrackStatisticsCalculator};
 use crate::shared::permission::{check_permission, GisPermission};
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
-use topems_shared_auth::auth::Claims;
+use topems_shared_auth::auth::{verify_jwt_token, AuthState, Claims};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
@@ -579,13 +580,38 @@ pub async fn list_devices_with_tracks(
     }
 }
 
-/// 通过 device_code 上报设备位置（设备端调用，无需用户认证）
+/// 通过 device_code 上报设备位置
+///
+/// P1-22 修复：上报端点不再匿名。要求用户 JWT 认证（`Authorization: Bearer <JWT>`），
+/// 并校验：设备存在、状态 `active`、且属于 claims 租户（超管除外）；
+/// 上报记录租户取设备归属租户（`device.tenant_id`）。
+///
+/// 待产品确认：设备级凭证（`X-Device-Token`，与 `gis.devices` 绑定）——
+/// 当前 `gis.devices` 表无 token 列，且本批未引入迁移；
+/// IoT ingest 设备直连场景需先迁移加列再启用设备凭证模式。
 pub async fn report_device_location(
     State(pool): State<PgPool>,
     State(ws_manager): State<SharedWebSocketManager>,
+    State(auth_state): State<AuthState>,
+    headers: HeaderMap,
     Path(device_code): Path<String>,
     Json(payload): Json<UpdateDeviceLocation>,
 ) -> Json<ApiResponse<DeviceLocationRecord>> {
+    // 1) 认证：必须提供合法的 Authorization Bearer JWT
+    let jwt = headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|h| h.strip_prefix("Bearer "))
+        .map(str::to_string);
+    let Some(jwt) = jwt else {
+        return Json(ApiResponse::error(401, "未认证：缺少 Authorization Bearer token"));
+    };
+    let claims = match verify_jwt_token(&jwt, &auth_state.jwt_secret) {
+        Ok(claims) => claims,
+        Err(_) => return Json(ApiResponse::error(401, "未认证：token 无效或已过期")),
+    };
+
+    // 2) 查设备（deleted_at 过滤）
     match sqlx::query_as::<_, Device>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1"),
     )
@@ -594,6 +620,24 @@ pub async fn report_device_location(
     .await
     {
         Ok(device) => {
+            // 2a) 状态启用校验
+            if device.status != "active" {
+                return Json(ApiResponse::error(403, "设备未启用，禁止上报"));
+            }
+            // 2b) 租户归属校验（超管豁免）
+            if !claims.is_superuser {
+                let claim_tenant = claims
+                    .tenant_id
+                    .as_deref()
+                    .and_then(|t| Uuid::parse_str(t).ok());
+                let owned = match claim_tenant {
+                    Some(t) => t == device.tenant_id,
+                    None => false,
+                };
+                if !owned {
+                    return Json(ApiResponse::error(403, "无权上报该租户的设备"));
+                }
+            }
             match sqlx::query_as::<_, DeviceLocationRecord>(
                 only_own_schema_query!("gis", r#"
                 INSERT INTO gis.device_location_records 

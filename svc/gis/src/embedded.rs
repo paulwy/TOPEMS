@@ -52,7 +52,10 @@ impl FromRef<AppState> for Arc<WebSocketManager> {
 /// - 独立部署 main.rs：与 system_routes 合并后统一 `.with_state(..)`
 /// - server 嵌入（feature `module-gis`）：nest 后 `.with_state(state)`
 ///
-/// - 公开路由：查询类 GET + WebSocket（无鉴权，与独立部署一致）
+/// - 公开路由：查询类 GET + WebSocket 握手（HTTP 层无鉴权）
+///   - WS：握手 public，鉴权与订阅租户过滤在 WS 消息层完成（P1-21）
+///   - POST /devices/{device_code}/report：路由 public，handler 内部强制
+///     JWT 认证 + 设备归属租户校验（P1-22）
 /// - 受保护路由：写操作，tenant 中间件 + auth 中间件 + `gis:admin` 权限 + 限流
 pub fn build_business_router(state: &AppState) -> Router<AppState> {
     // 认证查询路由（需登录，无需 gis:admin；按 claims 租户过滤）

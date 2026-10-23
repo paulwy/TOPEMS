@@ -14,7 +14,8 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::{mpsc, RwLock};
 use tokio::time::{timeout, Duration};
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{verify_jwt_token, AuthState, Claims};
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 type ConnectionId = Uuid;
@@ -182,12 +183,20 @@ impl WebSocketManager {
     }
 }
 
+/// 向指定连接发送 `error` 消息（内部注册表访问，与 Ping→Pong 同一通道）。
+async fn send_ws_error(ws_manager: &WebSocketManager, conn_id: ConnectionId, message: String) {
+    if let Some(sender) = ws_manager.connections.read().await.get(&conn_id) {
+        let _ = sender.send(WebSocketMessage::Error { message }).await;
+    }
+}
+
 use std::env;
 
 pub async fn websocket_handler(
     ws: WebSocketUpgrade,
     State(ws_manager): State<SharedWebSocketManager>,
     State(auth_state): State<AuthState>,
+    State(pool): State<sqlx::PgPool>,
     Query(params): Query<WsQueryParams>,
 ) -> impl IntoResponse {
     let config = ws_manager.get_config();
@@ -195,7 +204,7 @@ pub async fn websocket_handler(
     let token = params.token;
     ws.max_frame_size(config.max_frame_size)
         .max_message_size(config.max_message_size)
-        .on_upgrade(move |socket| handle_socket(socket, ws_manager, jwt_secret, token))
+        .on_upgrade(move |socket| handle_socket(socket, ws_manager, jwt_secret, token, pool))
 }
 
 async fn handle_socket(
@@ -203,6 +212,7 @@ async fn handle_socket(
     ws_manager: SharedWebSocketManager,
     jwt_secret: String,
     token: Option<String>,
+    pool: sqlx::PgPool,
 ) {
     let conn_id = Uuid::new_v4();
     let (tx, mut rx) = mpsc::channel(100);
@@ -211,13 +221,9 @@ async fn handle_socket(
         return;
     }
 
-    // 认证：URL token 校验（与 mes/communication WS 一致，软认证模式——
-    // 无效 token 仍可建立连接但不会收到业务订阅数据，仅基础消息可用）
-    let _authenticated = if let Some(tok) = token {
-        topems_shared_auth::auth::verify_jwt_token(&tok, &jwt_secret).is_ok()
-    } else {
-        false
-    };
+    // P1-21：WS 消息层强制鉴权（握手保持 public，与 mes/communication WS 的 ?token= 模式一致）。
+    // 未认证 / token 无效的连接仅允许 Ping/Pong/Close；Subscribe/Unsubscribe 一律拒绝。
+    let claims: Option<Claims> = token.and_then(|tok| verify_jwt_token(&tok, &jwt_secret).ok());
 
     let (sender, receiver) = socket.split();
     let idle_timeout = ws_manager.get_config().idle_timeout_secs;
@@ -245,14 +251,67 @@ async fn handle_socket(
                         if let Ok(message) = serde_json::from_str::<WebSocketMessage>(&text) {
                             match message {
                                 WebSocketMessage::Subscribe { device_codes } => {
-                                    ws_manager_clone
-                                        .subscribe(conn_id_clone, device_codes)
-                                        .await;
+                                    // P1-21：订阅前强制认证；已认证连接仅可订阅本租户设备
+                                    match &claims {
+                                        None => {
+                                            send_ws_error(
+                                                &ws_manager_clone,
+                                                conn_id_clone,
+                                                "未认证连接：拒绝订阅".to_string(),
+                                            )
+                                            .await;
+                                        }
+                                        Some(claims) => {
+                                            let tenant_filter: Option<Uuid> = if claims.is_superuser {
+                                                None
+                                            } else {
+                                                claims
+                                                    .tenant_id
+                                                    .as_deref()
+                                                    .and_then(|t| Uuid::parse_str(t).ok())
+                                            };
+                                            let allowed: Vec<String> = sqlx::query_scalar(
+                                                only_own_schema_query!(
+                                                    "gis",
+                                                    "SELECT device_code FROM gis.devices WHERE deleted_at IS NULL AND device_code = ANY($1) AND ($2::uuid IS NULL OR tenant_id = $2)"
+                                                ),
+                                            )
+                                            .bind(&device_codes)
+                                            .bind(tenant_filter)
+                                            .fetch_all(&pool)
+                                            .await
+                                            .unwrap_or_default();
+                                            let rejected: Vec<&str> = device_codes
+                                                .iter()
+                                                .filter(|c| !allowed.contains(c))
+                                                .map(|c| c.as_str())
+                                                .collect();
+                                            if !rejected.is_empty() {
+                                                send_ws_error(
+                                                    &ws_manager_clone,
+                                                    conn_id_clone,
+                                                    format!(
+                                                        "设备码无权订阅或不存在: {}",
+                                                        rejected.join(",")
+                                                    ),
+                                                )
+                                                .await;
+                                            }
+                                            if !allowed.is_empty() {
+                                                ws_manager_clone
+                                                    .subscribe(conn_id_clone, allowed)
+                                                    .await;
+                                            }
+                                        }
+                                    }
                                 }
                                 WebSocketMessage::Unsubscribe { device_codes } => {
-                                    ws_manager_clone
-                                        .unsubscribe(conn_id_clone, device_codes)
-                                        .await;
+                                    // 未认证连接无订阅可退，静默忽略
+                                    if claims.is_some() {
+                                        ws_manager_clone
+                                            .unsubscribe(conn_id_clone, device_codes)
+                                            .await;
+                                    }
                                 }
                                 WebSocketMessage::Ping => {
                                     if let Some(sender) = ws_manager_clone
@@ -299,6 +358,7 @@ where
     S: Clone + Send + Sync + 'static,
     SharedWebSocketManager: FromRef<S>,
     AuthState: FromRef<S>,
+    sqlx::PgPool: FromRef<S>,
 {
     Router::new()
         .route("/ws/gis/map", get(websocket_handler))
@@ -314,6 +374,7 @@ pub async fn websocket_device_handler(
     ws: WebSocketUpgrade,
     State(ws_manager): State<SharedWebSocketManager>,
     State(auth_state): State<AuthState>,
+    State(pool): State<sqlx::PgPool>,
     Path(device_code): Path<String>,
     Query(params): Query<WsQueryParams>,
 ) -> impl IntoResponse {
@@ -323,24 +384,61 @@ pub async fn websocket_device_handler(
     ws.max_frame_size(config.max_frame_size)
         .max_message_size(config.max_message_size)
         .on_upgrade(move |socket| {
-            handle_device_socket(socket, ws_manager, device_code, jwt_secret, token)
+            handle_device_socket(socket, ws_manager, device_code, jwt_secret, token, pool)
         })
 }
 
 async fn handle_device_socket(
-    socket: WebSocket,
+    mut socket: WebSocket,
     ws_manager: SharedWebSocketManager,
     device_code: String,
     jwt_secret: String,
     token: Option<String>,
+    pool: sqlx::PgPool,
 ) {
     let conn_id = Uuid::new_v4();
-    // 认证：URL token 校验（与 websocket_handler 一致的软认证模式）
-    let _authenticated = if let Some(tok) = token {
-        topems_shared_auth::auth::verify_jwt_token(&tok, &jwt_secret).is_ok()
-    } else {
-        false
+
+    // P1-21：设备 WS 连接强制认证 + 设备归属校验，任一不通过直接关闭连接
+    let reject_reason: Option<String> = match token.as_ref() {
+        None => Some("缺少 token".to_string()),
+        Some(tok) => match verify_jwt_token(tok, &jwt_secret) {
+            Err(_) => Some("无效 token".to_string()),
+            Ok(claims) => {
+                let tenant_filter: Option<Uuid> = if claims.is_superuser {
+                    None
+                } else {
+                    claims
+                        .tenant_id
+                        .as_deref()
+                        .and_then(|t| Uuid::parse_str(t).ok())
+                };
+                let status: Option<String> = sqlx::query_scalar(only_own_schema_query!(
+                    "gis",
+                    "SELECT status FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+                ))
+                .bind(&device_code)
+                .bind(tenant_filter)
+                .fetch_optional(&pool)
+                .await
+                .unwrap_or(None);
+                match status {
+                    Some(s) if s == "active" => None,
+                    Some(_) => Some("设备未启用".to_string()),
+                    None => Some("设备不存在或无权访问".to_string()),
+                }
+            }
+        },
     };
+    if let Some(reason) = reject_reason {
+        tracing::warn!(
+            "设备 WS 拒绝连接 {}: {}",
+            device_code,
+            reason
+        );
+        let _ = socket.send(Message::Close(None)).await;
+        return;
+    }
+
     let (tx, mut rx) = mpsc::channel(100);
 
     if ws_manager.register_connection(conn_id, tx).await.is_err() {
