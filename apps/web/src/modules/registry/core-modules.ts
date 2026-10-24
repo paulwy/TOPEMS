@@ -3,7 +3,6 @@ import { VITEDeploymentMode, isDev } from '@/config/env';
 import i18n from '@/i18n';
 
 const DEPLOYMENT_MODE = VITEDeploymentMode();
-const isMFMode = DEPLOYMENT_MODE !== 'static';
 
 /**
  * V64 CORS 修复：与 microfrontend/config.ts 的 getRemoteEntry 保持同策略
@@ -667,10 +666,3 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
     ],
   },
 ];
-
-export const getCoreModules = (): ModuleConfig[] => {
-  if (!isMFMode) {
-    return [];
-  }
-  return CORE_MODULES_CONFIG;
-};

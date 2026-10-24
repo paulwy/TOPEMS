@@ -163,49 +163,6 @@ export function createServiceApi(service: ServiceCode | string) {
   };
 }
 
-export const SERVICES = {
-  iam: createServiceApi('iam'),
-  workflow: createServiceApi('flow'),
-  erp: createServiceApi('erp'),
-  hrm: createServiceApi('hrm'),
-  crm: createServiceApi('crm'),
-  mes: createServiceApi('mes'),
-  wms: createServiceApi('wms'),
-  scm: createServiceApi('scm'),
-  srm: createServiceApi('srm'),
-  qms: createServiceApi('qms'),
-  ehs: createServiceApi('ehs'),
-  lims: createServiceApi('lims'),
-  pm: createServiceApi('pm'),
-  pdm: createServiceApi('pdm'),
-  bi: createServiceApi('bi'),
-  analytics: createServiceApi('analytics'),
-  portal: createServiceApi('portal'),
-  gis: createServiceApi('gis'),
-  mobile: createServiceApi('mobile'),
-  integration: createServiceApi('integration'),
-  rd: createServiceApi('rd'),
-  finance: createServiceApi('finance'),
-  monitor: createServiceApi('monitor'),
-  oa: createServiceApi('oa'),
-  file: createServiceApi('file'),
-  ai: createServiceApi('ai'),
-  doc: createServiceApi('doc'),
-  document: createServiceApi('document'),
-  // V64: unified-core 虚拟模块（Group1）
-  automation: createServiceApi('automation'),
-  plugin: createServiceApi('plugin'),
-  tenant: createServiceApi('tenant'),
-  master: createServiceApi('master-data'),
-  // V66: 扩展独立服务（Group2 — 从 unified-core 外迁）
-  'master-data': createServiceApi('master-data'),
-  communication: createServiceApi('communication'),
-  search: createServiceApi('search'),
-  ticket: createServiceApi('ticket'),
-  // [V2026.08 已移除] lowcode 空壳占位服务
-  asset: createServiceApi('asset'),
-} as const;
-
 /* =============================================================
  * API_PATHS：前端业务用到的"规范化路径常量集合"
  * 按 V9.0 契约：auth 走 Group1；hrm/pm/wms/erp/scm/qms 走 Group2；file/ai/file/mail/notification... 各自 Group 对应

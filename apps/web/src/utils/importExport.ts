@@ -1,59 +1,11 @@
 import dayjs from 'dayjs';
 import i18n from '@/i18n';
-import i18next from 'i18next';
 
 export interface ExportColumn<T> {
   key: keyof T;
   label: string;
   format?: (value: unknown) => string;
 }
-
-export const exportToExcel = async <T>(
-  data: T[],
-  columns: ExportColumn<T>[],
-  fileName: string = 'export'
-): Promise<void> => {
-  const ExcelJS = await import('exceljs');
-  const headers = columns.map((col) => col.label);
-
-  const rows = data.map((item) =>
-    columns.map((col) => {
-      const value = item[col.key];
-      if (col.format) {
-        return col.format(value);
-      }
-      if (value === null || value === undefined) {
-        return '';
-      }
-      if (typeof value === 'boolean') {
-        return value
-          ? i18next.t('common.yes', i18n.t('shared.import_export.k1'))
-          : i18next.t('common.no', i18n.t('shared.import_export.k0'));
-      }
-      if (value instanceof Date || (typeof value === 'string' && dayjs(value).isValid())) {
-        return dayjs(value).format('YYYY-MM-DD HH:mm:ss');
-      }
-      return String(value);
-    })
-  );
-
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Sheet1');
-  worksheet.addRow(headers);
-  rows.forEach((row) => worksheet.addRow(row));
-
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `${fileName}_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(link.href);
-};
 
 export const exportToCSV = <T>(
   data: T[],

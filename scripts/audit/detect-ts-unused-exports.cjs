@@ -113,8 +113,9 @@ function extractExports(filePath) {
   let i = 0;
 
   // 1. export const/class/function/enum/type/interface/abstract class Foo
+  //    [v7] 支持 async：export async function X 此前漏定义（declRe 无 async 分支）→ defFiles 空 → 误判孤儿转发
   const declRe =
-    /^\s*export\s+(declare\s+)?(?:abstract\s+)?(type|interface|enum|const|let|var|function|class|namespace)\s+(\w+)/;
+    /^\s*export\s+(declare\s+)?(?:abstract\s+)?(?:async\s+)?(type|interface|enum|const|let|var|function|class|namespace)\s+(\w+)/;
   const declRe2 = /^\s*export\s+\{\s*([^}]+?)\s*\}(?:\s+from\s+['"]([^'"]+)['"])?\s*;?\s*$/;
   // 2. export { A, B as C } 或 export { A } from './x'
   while (i < lines.length) {
@@ -184,6 +185,50 @@ function extractExports(filePath) {
   return exports;
 }
 
+/**
+ * [v6] 词法器：从源码提取标识符，剥离行/块注释与字符串字面量。
+ * 修复历史盲区：reverseIndex 曾把注释/字符串里的标识符计入引用 → 虚高 refCount → 假 L3。
+ * 模板字符串：引号内字符跳过，${...} 内的标识符是活引用（退出引号态后按普通代码扫描）。
+ */
+function extractIdentifiers(src) {
+  const out = new Set();
+  const n = src.length;
+  let i = 0;
+  while (i < n) {
+    const c = src[i];
+    if (c === '/' && src[i + 1] === '/') {
+      while (i < n && src[i] !== '\n') i++;
+      continue;
+    }
+    if (c === '/' && src[i + 1] === '*') {
+      i += 2;
+      while (i < n && !(src[i] === '*' && src[i + 1] === '/')) i++;
+      i += 2;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') {
+      const q = c;
+      i++;
+      while (i < n) {
+        if (src[i] === '\\') { i += 2; continue; }
+        if (src[i] === q) { i++; break; }
+        if (q === '`' && src[i] === '$' && src[i + 1] === '{') break;
+        i++;
+      }
+      continue;
+    }
+    if (/[A-Za-z_$]/.test(c)) {
+      let j = i;
+      while (j < n && /[A-Za-z0-9_$]/.test(src[j])) j++;
+      out.add(src.slice(i, j));
+      i = j;
+      continue;
+    }
+    i++;
+  }
+  return out;
+}
+
 function main() {
   // CLI args
   const args = process.argv.slice(2);
@@ -233,6 +278,29 @@ function main() {
   }
   console.log(`   命名导出数: ${totalExports} (去重名后 ${exportMap.size})`);
 
+  // [v8] 分离式定义识别：const X = ...; export { X }（本地转发且同文件存在裸定义行）→ 计为定义。
+  // 修复盲区：storage.ts 的 `class LocalStorage {...} export { LocalStorage }` 此前 defFiles 空 → 误判孤儿转发。
+  for (const [, es] of exportMap) {
+    for (const e of es) {
+      if (!e.isReExport || e.fromPath) continue;
+      let src;
+      try {
+        src = fs.readFileSync(path.join(ROOT, e.file), 'utf8');
+      } catch {
+        continue;
+      }
+      const re = new RegExp(
+        '^(?:declare\\s+)?(?:abstract\\s+)?(?:async\\s+)?(?:type|interface|enum|const|let|var|function|class|namespace)\\s+' +
+          e.origName + '\\b',
+        'm'
+      );
+      if (re.test(src)) {
+        e.isReExport = false;
+        e.kind = 'const'; // 保守标注种类（定义行种类不一，仅用于 defFiles 归属）
+      }
+    }
+  }
+
   // phase 2: 构建反向引用索引（每个标识符出现在哪些文件）
   console.log('\n📦 阶段 2/3  构建反向引用索引...');
   const reverseIndex = new Map(); // name -> Set<file>
@@ -243,9 +311,8 @@ function main() {
     } catch {
       continue;
     }
-    // 粗略拿 identifiers：简单 /\b[A-Za-z_$][\w$]*\b/g 即可
-    // 用 *（允许单字符标识符，如 lucide-react 图标 X）——{1,} 会漏计单字符名导致伪 L1
-    const ids = new Set(src.match(/\b[A-Za-z_$][\w$]*\b/g) || []);
+    // [v6] 剥离注释/字符串后的标识符（修复注释/字符串虚引盲区）
+    const ids = extractIdentifiers(src);
     const rel = path.relative(ROOT, f);
     for (const id of ids) {
       if (!reverseIndex.has(id)) reverseIndex.set(id, new Set());
@@ -275,6 +342,10 @@ function main() {
   const L1 = []; // SAFE: 仅自身文件有引用 → 0 处引用
   const L2 = []; // CAUTION: 仅 barrel/test/story
   const L3 = []; // HOLD: 实际使用
+  const L3Dead = []; // [v5] 死链候选：真实消费方均为孤儿文件
+
+  // [v5] 文件 → 命名导出 索引（惰性构建一次）
+  let fileToExports = null;
 
   for (const [name, exps] of exportMap) {
     // 候选定义文件集合
@@ -364,6 +435,59 @@ function main() {
       anyTypeExport,
     };
 
+    // [v5] L3 死链降级：真实消费方全部为孤儿文件（该文件自身的导出无任何外部真实消费）
+    // 单层 + barrel 一层：孤儿判定排除 barrel/test/story/mock/自身/本项 defFiles；
+    // 保守规则：纯 side-effect 文件（无命名导出）不判死；结论仅候选，删除前必须人工核验。
+    if (level === 'L3') {
+      const isSpecial = (f) =>
+        /\/index\.(ts|tsx)$/.test(f) ||
+        /__tests__|\.(test|spec)\.(ts|tsx)$/.test(f) ||
+        /\.stories\.(ts|tsx)$/.test(f) ||
+        (/__mocks__|mock\.ts/.test(f));
+      const realConsumers = [...realRefFiles].filter((rf) => !isSpecial(rf) && !defFiles.has(rf));
+      if (realConsumers.length > 0) {
+        if (!fileToExports) {
+          fileToExports = new Map();
+          for (const [nm, es] of exportMap) {
+            for (const e of es) {
+              if (e.isReExport) continue;
+              if (!fileToExports.has(e.file)) fileToExports.set(e.file, new Set());
+              fileToExports.get(e.file).add(nm);
+            }
+          }
+        }
+        const isOrphanFile = (f) => {
+          const names = fileToExports.get(f);
+          if (!names || names.size === 0) return false; // 纯 side-effect 文件，保守不判
+          for (const n of names) {
+            const direct = new Set(
+              [...(reverseIndex.get(n) || [])].filter((rf) => rf !== f && !defFiles.has(rf) && !isSpecial(rf))
+            );
+            if (direct.size > 0) return false;
+            // barrel 一层：经 index 转发的引用方再看一层
+            const barrelRefs = new Set(
+              [...(reverseIndex.get(n) || [])].filter((rf) => /\/index\.(ts|tsx)$/.test(rf) && rf !== f)
+            );
+            for (const b of barrelRefs) {
+              const bNames = fileToExports.get(b) || new Set();
+              for (const bn of bNames) {
+                const brefs = new Set(
+                  [...(reverseIndex.get(bn) || [])].filter((rf) => rf !== b && !defFiles.has(rf) && !isSpecial(rf))
+                );
+                if (brefs.size > 0) return false;
+              }
+            }
+          }
+          return true;
+        };
+        if (realConsumers.every(isOrphanFile)) {
+          record.level = 'L3_DEAD';
+          record.deadReason = '真实消费方均为孤儿文件（死链）';
+          record.consumerFiles = [...realConsumers];
+        }
+      }
+    }
+
     // [v3] 同文件消费识别：定义文件内「使用次数 > 定义/export块次数」→ 算消费（new X() 实例、类内部静态调用、函数内部引用）
     if (level === 'L1' || level === 'L2') {
       let sameFile = false;
@@ -392,6 +516,7 @@ function main() {
       L3.push(record);
     } else if (level === 'L1') L1.push(record);
     else if (level === 'L2') L2.push(record);
+    else if (level === 'L3_DEAD') L3Dead.push(record);
     else L3.push(record);
   }
 
@@ -409,6 +534,7 @@ function main() {
   console.log(`     其中值导出      : ${l2Values.length}`);
   console.log(`     其中类型导出    : ${l2Types.length}`);
   console.log(`   L3-HOLD    总数   : ${L3.length}`);
+  console.log(`   L3-DEAD    死链候选: ${L3Dead.length}  ← L3 深化候选（删除前必须人工核验）`);
   console.log();
 
   // 写 JSON
@@ -426,10 +552,11 @@ function main() {
         summary: {
           L1: { total: L1.length, values: l1Values.length, types: l1Types.length },
           L2: { total: L2.length, values: l2Values.length, types: l2Types.length },
-          L3: { total: L3.length },
+          L3: { total: L3.length, dead: L3Dead.length },
         },
         L1,
         L2,
+        L3Dead,
       },
       null,
       2
