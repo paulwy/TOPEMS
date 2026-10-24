@@ -1,15 +1,3 @@
-import type React from 'react';
-import { useCallback, useMemo, useState } from 'react';
-import type { useMutation } from '@tanstack/react-query';
-import { useQueryClient } from '@tanstack/react-query';
-import { Play, Square, Trash2, Download } from 'lucide-react';
-import type { CrudApiAdapter } from '@/components/templates/CrudPage';
-import type { RowAction } from '@/components/templates/list/types';
-import { QUERY_KEYS } from '@/lib/reactQuery';
-import { useNotificationStore } from '@/store';
-import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
-import { usePluginStore } from '@/store/pluginStore';
-import { extractErrorMessage } from '@/utils/errors';
 import i18n from '@/i18n';
 
 export interface MarketplacePlugin {
@@ -69,50 +57,4 @@ export const PLUGIN_CATEGORIES: Record<string, string> = {
 export interface UninstallTarget {
   code: string;
   tier: UninstallTier;
-}
-type EnableMutation = ReturnType<typeof useMutation<string, unknown, string>>;
-type DisableMutation = ReturnType<typeof useMutation<string, unknown, string>>;
-type UpgradeMutation = ReturnType<typeof useMutation<string, unknown, string>>;
-type UninstallMutation = ReturnType<
-  typeof useMutation<
-    { pluginCode: string; tier: UninstallTier },
-    unknown,
-    { pluginCode: string; tier: UninstallTier }
-  >
->;
-type InstallMutation = ReturnType<typeof useMutation<string, unknown, string>>;
-interface UsePluginManagementReturn {
-  // marketplace state
-  marketplaceOpen: boolean;
-  marketplaceTab: number;
-  marketplaceSearch: string;
-  installingPlugin: MarketplacePlugin | null;
-  installStep: number;
-  installLoading: boolean;
-  installError: string | null;
-  // uninstall state
-  uninstallTarget: UninstallTarget | null;
-  setUninstallTarget: React.Dispatch<React.SetStateAction<UninstallTarget | null>>;
-  // marketplace setters
-  setMarketplaceTab: React.Dispatch<React.SetStateAction<number>>;
-  setMarketplaceSearch: React.Dispatch<React.SetStateAction<string>>;
-  // marketplace data
-  filteredMarketplace: MarketplacePlugin[];
-  installedCodes: string[];
-  // mutations
-  enableMutation: EnableMutation;
-  disableMutation: DisableMutation;
-  upgradeMutation: UpgradeMutation;
-  uninstallMutation: UninstallMutation;
-  installMutation: InstallMutation;
-  // handlers
-  handleOpenMarketplace: () => void;
-  handleCloseMarketplace: () => void;
-  handleInstallPlugin: (plugin: MarketplacePlugin) => void;
-  handleInstallNext: () => Promise<void>;
-  handleInstallBack: () => void;
-  getUninstallMessage: (pluginCode: string, tier: UninstallTier) => string;
-  // adapters / config
-  apiAdapter: CrudApiAdapter;
-  customRowActions: RowAction[];
 }

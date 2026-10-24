@@ -1,21 +1,3 @@
-import { useState, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useTheme, useMediaQuery } from '@mui/material';
-import {
-  MessageSquare,
-  FileText,
-  Code,
-  Zap,
-  Clock,
-  Sparkles,
-  BookOpen,
-  Lightbulb,
-} from 'lucide-react';
-
-import { AI_PATHS } from '@/modules/ai/config';
-import { useNotificationStore } from '@/store';
-
 export interface StatCardData {
   id: string;
   title: string;

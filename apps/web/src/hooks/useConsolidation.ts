@@ -8,7 +8,6 @@ import type {
   GenerateConsolidationReportRequest,
   ConsolidationScopeQueryParams,
   ConsolidationReportQueryParams,
-  CompanyRelationType,
 } from '@/types/consolidation';
 import * as consolidationApi from '@/api/consolidation';
 

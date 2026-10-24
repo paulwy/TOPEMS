@@ -7,5 +7,4 @@ export * from './return';
 export * from './billing';
 export * from './customerScoring';
 export * from './customerSegmentation';
-export * from './dashboardSchema';
 export * from './recommendation';

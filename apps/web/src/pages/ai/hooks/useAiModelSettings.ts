@@ -1,11 +1,7 @@
-import { useState } from 'react';
-import { useNotificationStore } from '@/store';
 import i18n from '@/i18n';
 
 // Module-level t for use outside React components (shadowed by useTranslation inside components)
 const t = i18n.t;
-
-type SettingsTab = 'models' | 'config' | 'usage' | 'api';
 
 export interface AIModel {
   id: string;

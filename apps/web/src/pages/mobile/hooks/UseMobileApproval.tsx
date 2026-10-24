@@ -1,17 +1,4 @@
-/**
- * MobileApproval state management and API calls hook
- * @refactor-split Extracted from MobileApprovalPage.tsx
- */
-import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore, useNotificationStore } from '@/store';
-import { approvalTaskApi } from '@/api/workflow/approval';
-import type { ListParams } from '@/api/workflow/types';
-import { apiLogger } from '@/utils/logger';
-import { useNavigate } from 'react-router-dom';
-import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { Package, Users, DollarSign, FileText } from 'lucide-react';
-import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
 export interface ApprovalItem {
