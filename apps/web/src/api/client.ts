@@ -648,6 +648,21 @@ const createAxiosClient = ({
         // 关键：如果请求本身是登录/注册/刷新/找回密码等认证公开API，
         // 返回 401 是正常业务失败（如密码错误），不应清除 token 或触发登出事件
         if (!requestIsAuthPublicApi && currentPath !== '/login' && currentPath !== '/register') {
+          // #18 批 B：401 自动刷新重试（单次 + 单飞）——
+          // access_token 过期而 HttpOnly Cookie 仍有效时，先刷新再重放原请求；
+          // 刷新失败 / 已重试过 / 无 token 则走原有登出逻辑。
+          const cfg = error.config as
+            (InternalAxiosRequestConfig & { _authRetried?: boolean }) | undefined;
+          if (tokenBefore && cfg && !cfg._authRetried) {
+            const refreshed = await renewAuthTokenOnce();
+            if (refreshed) {
+              cfg._authRetried = true;
+              cfg.headers.set('Authorization', `Bearer ${localStorage.getItem('token') ?? ''}`);
+              apiLogger.info(`[Auth Retry] 401 → refresh ok, retrying ${fullUrl}`);
+              return client.request(cfg);
+            }
+            apiLogger.warn(`[Auth Retry] 401 → refresh failed, logging out (${fullUrl})`);
+          }
           handleAuthError();
         }
         return Promise.reject(error);
@@ -996,6 +1011,30 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient();
+
+// #18 批 B：401 自动刷新（单飞——并发 401 只触发一次 refresh；HttpOnly Cookie 模式，后端 cookie 优先）
+let authRenewalPromise: Promise<boolean> | null = null;
+
+const renewAuthTokenOnce = (): Promise<boolean> => {
+  if (!authRenewalPromise) {
+    authRenewalPromise = apiClient.iam
+      .post<{ access_token: string }>('/auth/refresh')
+      .then((r) => {
+        const accessToken = r?.data?.access_token;
+        if (r.success && accessToken) {
+          localStorage.setItem('token', accessToken);
+          apiClient.setAuthToken(accessToken);
+          return true;
+        }
+        return false;
+      })
+      .catch(() => false)
+      .finally(() => {
+        authRenewalPromise = null;
+      });
+  }
+  return authRenewalPromise;
+};
 export default apiClient;
 
 // ============== Request utilities (merged from ./request.ts) ==============

@@ -6,7 +6,7 @@
 > - 安全：HttpOnly 缓解 XSS 窃取；SameSite=Lax 阻断跨站 POST；csrfRequestInterceptor 保留（同站防护）
 > - 验证：unified-core cargo check 0 error；eslint 0；api/iam+hooks 99 用例过；pre-commit 全绿
 > - 提交：`c42055565e`
-> - **待办（批 B）**：三端验证（web 实测 / Tauri 桌面 WebView cookie / 移动端）、401 自动刷新重试增强、旧 localStorage refresh_token 存量清理策略
+> - **批 B1 已实施**：401 自动刷新重试（单飞 + 单次，）；**待办（批 B2）**：三端验证（web 实测 / Tauri 桌面 WebView cookie / 移动端）、旧 localStorage refresh_token 存量清理策略（login 已自动清迁移残留）
 
 ## #22 补测批 2：ai/ehs 域页面补测（2026-10-25）✅ 完成
 
