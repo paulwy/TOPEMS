@@ -396,10 +396,17 @@ is_migration_applied() {
 # ----------------------------------------------------------------------------
 record_migration() {
   local version="$1" description="$2"
-  psql "$DATABASE_URL" -c \
+  local out rc
+  out="$(psql "$DATABASE_URL" -c \
     "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time_ms) \
      VALUES ('$version', '$description', NOW(), true, decode('manual-via-migrate-sh', 'escape'), 0) \
-     ON CONFLICT (version) DO NOTHING" >/dev/null 2>&1
+     ON CONFLICT (version) DO NOTHING" 2>&1)"
+  rc=$?
+  if [[ $rc -ne 0 ]]; then
+    log_error "记账失败: $version ($description)：$out"
+    return 1
+  fi
+  return 0
 }
 
 # ----------------------------------------------------------------------------
@@ -505,7 +512,11 @@ run_migrations_with_psql() {
 
     log_detail "执行: $mname (version=$version)"
     if psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$file" >/dev/null 2>&1; then
-      record_migration "$version" "$mname"
+      if ! record_migration "$version" "$mname"; then
+        log_error "迁移执行成功但记账失败，中止（防账实不一致重放）: $mname"
+        dir_failed=$((dir_failed + 1))
+        return 1
+      fi
       dir_applied=$((dir_applied + 1))
     else
       log_error "迁移失败: $mname"
