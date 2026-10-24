@@ -4039,3 +4039,24 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   1. L2 values 248 剩余：测试/stories 引用 49 文件（chartPalette/TouchButton/TableSection 等——删代码需同步删测试用例）；index.tsx 页面入口消费（MailPageHooks 等——detector 把 index.tsx 当 barrel 误判，保留）。
   2. modules config 组（automation/pdm 等 30+ 文件 2 导出）：被 navigation/routes 聚合对象引用——聚合对象消费链待核（navConfigs 无外部消费则可整链删）。
   3. detector v4：别名链识别（export { X as Y } → 页面 import Y 算消费）；index.tsx 页面入口不按 barrel 弱引用处理。
+
+## 第十六轮（2026-10-24）：detector v4 + modules config 组判定 + ai 组件清理
+
+### ① detector v4（commit 0e04154d1）
+- 别名链识别：`export { X as Y }` 被页面 import Y → Y 引用合并到 X（修复 getSuites/SUITES、departmentSchema 误判）。
+- index.tsx 入口不再按 barrel 弱引用（页面/组件入口 index.tsx 算真实引用）。
+- 效果：L2 381 → 345（36 项经 index.tsx/别名消费升 L3）；L1 保持 0。
+
+### ② modules config 组 68 项判定 = 全活（保留）
+- routes/v2/index.ts moduleImports 动态 import 34 个 config（`import('@/modules/x/config')`）——detector identifier 扫描看不到字符串 → 误报 L2。
+- lib/navigation/index.ts essentialModules 数组聚合（`const x: ModuleNavConfig[] = [`）——v2 只查对象聚合 `{` 不查数组 `[` → 误报。
+- 结论：**动态 import + 数组聚合是 detector 第 4/5 个盲区（v5 候选）**，68 项全部保留。
+
+### ③ 删除（tsc/eslint 全绿）
+- AICodeGenerator.tsx 整文件（-460 行，含 AICodeGeneratorProps——真死）+ components/ai/index.ts 转发行（commit 0e04154d1）。
+- getModulesByCategory（config/plugins.config.ts -3 行，registry/index.ts 107 行是同名类方法噪声）。
+- AIGenerateModal.tsx 整文件（-95 行，L1 归零，commit 54d1f3e2e）。
+
+### ④ 状态与下批
+- L1 = 0；L2 343（值 213 / types 130）；L3 4764+。
+- 下批：L2 values 213 剩余——**测试引用组 148**：api 客户端（createBaseAxiosClient/meetingBookingApi/iamApi 等，被 api/index.ts 聚合对象转发——聚合对象消费链待核）；组件+stories/test 联动（chartPalette G2_PALETTE/DEMO_COLORS、AvatarGroup、TouchButton、TrendLine 等——删代码须同步删 stories/test）。
