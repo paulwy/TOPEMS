@@ -18,7 +18,8 @@ mod migration;
 mod rate_limit_config;
 // V68.1 A2.1: routes/monitor.rs 旧适配层依赖 modules::monitor（已拆到 svc/monitor），这里不再载入
 // V68.1 A2.2: routes/plugin.rs 适配层依赖 modules::plugin（已拆到 svc/plugin-registry 8096），这里不再载入
-mod contract_stubs;
+// 2026-10-24: contract_stubs 末 2 条 copilot 501 stub（DELETE sessions/{id} + GET modules/{id}/faq）
+// 已随 svc/ai 实现、前端改指 apiClient.ai 后清零删除，模块整体移除。
 mod mdm_dlq;
 mod settings;
 mod system;
@@ -189,9 +190,7 @@ pub fn create_routes(
         // P36-5: SMTP 配置 + API Key 保险库 CRUD（此前 settings_routes 已实现但未挂载，
         // 导致 GET/PUT /system/settings/smtp、GET/POST/DELETE /system/api-keys 404）。
         .merge(settings::settings_routes(state))
-        // web 契约兜底：copilot/forms/documents/governance/comments/favorites/search/
-        // dict/tenant 管理台/wms 审批等暂无上游实现的端点，统一返回 200 成功信封（待上游支持）。
-        .merge(contract_stubs::contract_stub_routes())
+        // 2026-10-24: web 契约兜底 contract_stubs 已清零删除（copilot 末 2 条随 svc/ai 实现改指）。
         // A4: MDM 主数据死信队列管理 API（list=system:read / replay=system:write）
         .merge(mdm_dlq::mdm_dlq_routes(state))
         .merge(doc::doc_routes(state))

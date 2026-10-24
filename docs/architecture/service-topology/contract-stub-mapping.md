@@ -60,7 +60,7 @@
 
 | 域 | 条数 | 主要状态 | 上游候选 / 现状 | 前端调用文件 |
 |---|---:|---|---|---|
-| copilot | 3（原8，已删5） | 🟢 已核销 | 5 条死兜底已删；sessions(GET/DELETE)、faq 仍走 core | `api/ai/businessCopilot.ts` |
+| copilot | 0（原8，已全删） | ✅ 已清零 | 2026-10-24 svc/ai 实现 DELETE `/dsh/copilot/sessions/{id}` + GET `/dsh/copilot/modules/{id}/faq`，前端改指 apiClient.ai，core 末 2 条 501 stub 删除、contract_stubs 模块整体移除 | `api/ai/businessCopilot.ts`（走 ai） |
 | forms | 1（原7，已删6） | 🟢 已核销 | 6 条死兜底已删；仅 GET `/forms/{id}` 走 core | `api/ai/businessIntelligence.ts` |
 | documents | 4（原9，已删5） | 🔴 部分 | CRUD/generate 死兜底已删；parse/summary/search 仍走 core | `api/ai/businessIntelligence.ts` |
 | governance | 2（原12，已删10） | 🟢 已核销 | 10 条死兜底已删；trends/refresh 仍走 core | `api/ai/governanceDashboard.ts` |
@@ -84,20 +84,20 @@
 
 ## 4. 分组明细
 
-### 4.1 copilot（8）🟢 上游已有，旧契约待切换
+### 4.1 copilot（8）✅ 已清零（2026-10-24）
 | 方法 | 路径 | 兜底 | 状态 |
 |---|---|---|---|
-| POST | `/copilot/sessions` | 成功回执 | 🟢 |
-| GET | `/copilot/sessions/{id}` | 列表空壳 | 🟢 |
-| DELETE | `/copilot/sessions/{id}` | 成功回执 | 🟢 |
-| POST | `/copilot/chat` | 成功回执 | 🟢 |
-| POST | `/copilot/intent` | 成功回执 | 🟢 |
-| GET | `/copilot/modules` | 列表空壳 | 🟢 |
-| GET | `/copilot/modules/{id}` | 列表空壳 | 🟢 |
-| GET | `/copilot/modules/{id}/faq` | 列表空壳 | 🟢 |
+| POST | `/copilot/sessions` | 成功回执 | ✅ 已删 |
+| GET | `/copilot/sessions/{id}` | 列表空壳 | ✅ 已删（S2） |
+| DELETE | `/copilot/sessions/{id}` | 501 stub | ✅ 已删（2026-10-24，svc/ai 已实现） |
+| POST | `/copilot/chat` | 成功回执 | ✅ 已删 |
+| POST | `/copilot/intent` | 成功回执 | ✅ 已删 |
+| GET | `/copilot/modules` | 列表空壳 | ✅ 已删 |
+| GET | `/copilot/modules/{id}` | 列表空壳 | ✅ 已删 |
+| GET | `/copilot/modules/{id}/faq` | 501 stub | ✅ 已删（2026-10-24，svc/ai 已实现） |
 
-- 现状：真实能力在 svc/ai DSH，前端 `businessCopilot.ts` 已走 `/dsh/copilot/*`；core 下 `/copilot/*` 为旧契约。
-- 建议：前端确认无残留 `/copilot/*` 调用后，移除本组兜底。
+- 现状：真实能力在 svc/ai DSH，前端 `businessCopilot.ts` 已全量走 `/dsh/copilot/*`（含 deleteSession / searchFAQ）；core 下 `/copilot/*` 兜底已清零，contract_stubs 模块整体移除。
+- 结论：前端零残留 `/copilot/*` core 调用，本组兜底全部移除（2026-10-24）。
 
 ### 4.2 forms（7）🟢 上游已有，待前缀对接
 | 方法 | 路径 | 兜底 | 状态 |
@@ -333,7 +333,7 @@
 | **search/recent** | 2 | ✅ 活调（FavoritesPage:77,130 getRecentSearches/clearRecentSearches） | svc/search 未实现 recent 存储 | **排期新建**（svc/search 或 core 简易 recent 表 + 租户隔离，0.5 人日） | S1 |
 | favorites/comments | 8 | ✅ 活调（FavoritesPage:63,105 / CommentsPage） | ④ 已建 engagement 真后端（core_favorites/core_comments） | **已闭环，无排期** | ✅ |
 | **tenant 系列**（analytics7/billing8/settings2/branding2/features4/domains3/email2/integrations4/webhooks5/security18） | 55 | ✅ 全量页面拍板 A（租户中心） | **✅ A 实施完成（2026-10-22，活文档 v1.42~v1.44）**：T2-a config 22（settings/branding/features/domains/email/integrations/webhooks）+ T2-b security 18（settings/password-policy/2fa/api-keys/audit-logs/sessions/ip-whitelist）+ T2-c analytics 16（analytics 7 + billing 9）——master.rs 55 方法 handler 补真、contract_stubs 全删；实跑全链 PASS、契约缺口 0 | 产品拍板：A（全量页面） | ✅ 已闭环 |
-| **core copilot/forms/documents** | 8 | ⚠️ 页面零方法调用（BusinessCopilotPage 仅类型 import，走 dsh/smart-forms），但 api 封装方法仍指 core（businessCopilot.ts:214,222,268 / businessIntelligence.ts:253,320） | dsh/smart-forms 已承接（sessions POST、chat、intent、modules、forms validate/generate、documents DOC_BASE_PATH） | **✅ S2 已闭环（2026-10-22，`526a7687c`）**：实证修正——6 条真死删（getSession/getFormDefinition/documents parse+summary×2+search，页面+hook 零调用）+ 2 条 hook 活调保留（deleteSession useBusinessCopilot.ts:282 / searchFAQ :258，svc/ai 未实现子路径） | ✅ S2 |
+| **core copilot/forms/documents** | 8 | ⚠️ 页面零方法调用（BusinessCopilotPage 仅类型 import，走 dsh/smart-forms），但 api 封装方法仍指 core（businessCopilot.ts:214,222,268 / businessIntelligence.ts:253,320） | dsh/smart-forms 已承接（sessions POST、chat、intent、modules、forms validate/generate、documents DOC_BASE_PATH） | **✅ S2 已闭环（2026-10-22，`526a7687c`）**：实证修正——6 条真死删（getSession/getFormDefinition/documents parse+summary×2+search，页面+hook 零调用）+ 2 条 hook 活调保留（deleteSession useBusinessCopilot.ts:282 / searchFAQ :258，svc/ai 未实现子路径）。**✅ 收尾（2026-10-24）**：svc/ai 实现 DELETE `/dsh/copilot/sessions/{id}` + GET `/dsh/copilot/modules/{id}/faq`，前端改指 apiClient.ai，core 末 2 条 501 stub 删除、contract_stubs 模块整体移除 | ✅ S2 + 收尾 |
 | **governance 剩余**（risk/compliance/cost/performance/audit/trends/recommendations + security-events） | 8 | ✅ 全量面板拍板 A（治理工作台） | **✅ A 实施完成（2026-10-22，活文档 v1.45）**：7 项面板走 ai `/dsh/governance/*`（已真实现）+ trends/refresh 由 core 补真（get_governance_trends/refresh_governance）；实跑全链 PASS、契约缺口 0 | 产品拍板：A（全量面板） | ✅ 已闭环 |
 | **documents 通用库定位** | 4 | ⚠️ 封装引用（businessIntelligence.ts:312-345 指 apiClient.ai /documents/*） | **✅ 已闭环（2026-10-22，实证）**：A 选项（并入 ai）实际已就绪——svc/ai documents CRUD 全套（POST /documents、GET /{id}、download、delete、list、process）+ 前端封装已指 apiClient.ai + core 兜底 S2 已清零（0 条残留）；实跑 list 200 / 不存在 404「文档不存在」；契约 gate 缺口 0。**剩余仅前端页面零消费**（文档库页面待产品排期） | ✅ 已闭环（并入 ai，S2 已达成） |
 | **system/api-keys** | 2 | ❌ 零页面调用 | **✅ 已闭环（2026-10-22，`349c187ae`）**：补 GET 详情 + PUT 更新 handler（对齐 list/create/delete 租户口径，mask + 404），真实 CRUD 全量就绪；前端封装 api/unified-core/system.ts 零页面消费，待租户中心页面启用 | ✅ 已闭环（P 组 2 条） |
