@@ -3682,3 +3682,24 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### 依赖审计（Dependabot 10 项核对）
 - [x] **官方 registry 审计 0 命中**（经 ghfast 代理 registry.npmjs.org；本机 npm registry=npmmirror 无 audit 端点，此前 {} 为假阴性）；overrides 已钉 45+ 历史脆弱传递依赖于修复版（node-forge 1.4.0/ip-address 10.7.4/@vitest/mocker 4.1.12/axios 1.20.0/dompurify 3.4.17/vite 8.1.5/storybook 10.5.4 等）；azure 0 引用、launch-editor 不在 lock → **Dependabot 10 项判定为历史/缓存状态（对应修复前 lock 或待重扫），建议 GH UI 确认后 Dismiss/等重扫，无本地可升级缺口**
 - 状态：mes 补丁/analytics/草稿已落盘待提交；mes 全链路验证阻塞待授权 2 条 ALTER；未 push
+
+## 审计修复实施登记 mes 技术债 + 决策项落地（2026-10-24 第三轮，未推送）
+### mes 技术债修复（核心，闭环）
+- [x] **租户谓词补丁恢复**：b5edb0219 cherry-pick 干净落地（28be01931，14 模块文件+豁免登记文档）
+- [x] **TIMESTAMPTZ 迁移后类型失配修复 185→0**（13 文件，在线 check 以 DB 实际类型为准，仅改代码）：BigDecimal↔f64/float8 ~30（equipment_oee 12 数值列/inspection/standard）、时间 NaiveDateTime↔DateTime<Utc> ~20（return_handlers/work_report）、可空性对齐 ~40、Option<Uuid> Display ~10、team.rs leader_id uuid→varchar 绑定 1、match tuple 臂 4、clippy 冗余字段 5
+- [x] **sqlx 缓存刷新**：`sqlx-prepare.sh -p topems-mes` EXIT 0（mes 167 查询，根 .sqlx 349 条）；离线 check/clippy 0 error；单测 459+doc 16 passed
+- [x] **capacity_e2e 断言修复**：body["capacities"]→body["items"]（对齐 handler 实际返回键，pre-existing 契约问题）；连库 2/2 passed
+- commits：28be01931（补丁）+ 5669a659c（类型修复）+ 7a15d55fd（缓存刷新）
+### 决策项落地（8/8）
+- [x] **crm 租户隔离**：迁移 20261024000010——customer_segments/recommendations 补 tenant_id（全零回填，无派生列）SET NOT NULL + RLS FORCE + 策略
+- [x] **gis IoT 设备凭证**：迁移 20261024000011（device_token varchar(64) 存 sha256 hex）+ device.rs 双通道认证（X-Device-Token 摘要比对 / JWT 保留，状态 active；迁移未落地前按约定代码先写）
+- [x] **external_erp SSRF DNS 重绑定加固**：blocked_ip 纯函数 + lookup_host 任一解析 IP 命中即拒 + 解析失败保守拒（代理跳过）；私网段仍待产品决策；TOCTOU 边界留后续
+- [x] **copilot 前端指路**：GET /dsh/copilot/modules/{module}/faq 真实现（curated 静态知识库 erp/finance/crm/wms+通用回落，无 DB）+ 前端 businessCopilot.ts deleteSession/searchFAQ 两处切指 svc/ai（8/10 函数已指向）；core 侧 501 stub 保留待后续批
+- [x] **portal:admin 角色绑定**：迁移 20261024000014（core_permissions/core_roles/core_role_permissions 三段幂等 seed，测试库无 admin 角色自举兜底）
+- [x] **srm supplier_users**：迁移 20261024000012 落地草稿（建表+部分唯一索引+RLS tenant/supplier_scope；role 非枚举/user_id 不 FK 留注释）
+- [x] **erp voucher 唯一索引**：迁移 20261024000013（uq_finance_voucher_tenant_period_no 部分唯一，erp.financial_vouchers 实测确认）
+- [x] **stats 中文映射**：62 条字典（19 角色+43 动作，未知回落原名），routes/main 双副本
+- [x] **analytics 集成测试改连 topems_test**：integration_tests.rs 硬编码 topems 库 → TEST_DATABASE_URL 环境变量优先/fallback topems_test；6/6 集成测试通过（含此前 2 个环境型失败）
+### 迁移链空库重放缺陷（评估，未改已提交迁移）
+- [ ] **20261007000006_rebuild_orphan_tables.sql**：机器生成迁移，304 处 ALTER 中 **99 处引用未在文件内 CREATE 的表**（iam/mes 等 schema 的 core_* 运行时自建表副本）——空库全量重放必失败（core_billing_invoices 为首个）。门禁不做空库重放（validate/check-migrations 为静态校验），严重性中低。修复方案：A 补 99 处 CREATE（需列定义）；B 存在性守卫 DO 块；C 空库重放跳过 06~09 运维快照迁移并标注；D 修生成器重生成。**待用户定夺后实施**
+- 状态：本轮 7 commits 落盘待推送（mes 3 + 决策项 4）；未 push
