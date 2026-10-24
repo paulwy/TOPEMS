@@ -408,13 +408,6 @@ export interface UpdateInspectionRecordRequest {
   defect_details?: string;
 }
 
-export interface InspectionDisposalRequest {
-  inspection_id: string;
-  disposal_type: string;
-  disposal_quantity: number;
-  remarks?: string;
-}
-
 /** @deprecated 由 InspectionResultRequest 取代（pass/reject 对齐后端 InspectionResultRequest） */
 export type { InspectionResultRequest as InspectionResultRequestAlias };
 

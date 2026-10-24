@@ -126,23 +126,6 @@ export interface ExperimentResult {
 }
 
 /** 用户分配记录 */
-export interface AssignmentRecord {
-  experiment_id: string;
-  user_id: string;
-  variant_id: string;
-  assigned_at: string;
-}
-
-/** 转化事件记录 */
-export interface ConversionEvent {
-  experiment_id: string;
-  user_id: string;
-  variant_id: string;
-  metric_name: string;
-  value: number;
-  timestamp: string;
-}
-
 // ==================== FNV-1a 哈希 ====================
 
 /**

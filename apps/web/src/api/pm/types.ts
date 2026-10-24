@@ -392,22 +392,6 @@ export interface DocumentFolder {
   updated_at: string;
 }
 
-export interface ProjectReport {
-  id: string;
-  project_id: string;
-  report_code?: string;
-  report_name: string;
-  report_type: string;
-  report_period?: string;
-  status?: string;
-  generated_at?: string;
-  data?: Record<string, unknown>;
-  summary?: string;
-  generated_by?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface ReportTemplate {
   id: string;
   template_code: string;
@@ -433,18 +417,6 @@ export interface Notification {
   due_date?: string;
   delivered_at?: string;
   read_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface NotificationSetting {
-  id: string;
-  project_id: string;
-  user_id: string;
-  notification_type: string;
-  enabled: boolean;
-  notify_before_days?: number;
-  preferred_channel?: string;
   created_at: string;
   updated_at: string;
 }

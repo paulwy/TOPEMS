@@ -86,12 +86,6 @@ export const exportToExcel = async <T>(
   URL.revokeObjectURL(link.href);
 };
 
-export interface ImportResult<T> {
-  success: boolean;
-  data: T[];
-  errors: { row: number; message: string }[];
-}
-
 export const exportToCSV = <T>(
   data: T[],
   columns: ExportColumn<T>[],

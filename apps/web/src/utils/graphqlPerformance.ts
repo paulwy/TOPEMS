@@ -107,37 +107,6 @@ export function performanceMeasure(
 /**
  * 查询性能记录
  */
-export interface QueryPerformanceRecord {
-  operationName: string;
-  queryHash: string;
-  duration: number;
-  success: boolean;
-  cached: boolean;
-  timestamp: number;
-  variables?: Record<string, unknown>;
-  error?: string;
-}
-
-/**
- * 查询性能统计
- */
-export interface QueryPerformanceStats {
-  operationName: string;
-  totalCount: number;
-  successCount: number;
-  errorCount: number;
-  cacheHitCount: number;
-  cacheMissCount: number;
-  avgDuration: number;
-  minDuration: number;
-  maxDuration: number;
-  p50Duration: number;
-  p95Duration: number;
-  p99Duration: number;
-  totalDuration: number;
-  lastAccessed: number;
-}
-
 /**
  * 计算百分位数
  */

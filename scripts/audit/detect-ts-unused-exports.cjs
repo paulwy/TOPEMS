@@ -339,6 +339,27 @@ function main() {
       anyValueExport,
       anyTypeExport,
     };
+
+    // [v3] 同文件消费识别：定义文件内「使用次数 > 定义/export块次数」→ 算消费（new X() 实例、类内部静态调用、函数内部引用）
+    if (level === 'L1' || level === 'L2') {
+      let sameFile = false;
+      for (const df of defFiles) {
+        let bSrc;
+        try { bSrc = fs.readFileSync(path.join(ROOT, df), 'utf8'); } catch { continue; }
+        const re = new RegExp('\\b' + name + '\\b', 'g');
+        let total = 0, m;
+        while ((m = re.exec(bSrc)) !== null) total++;
+        const defRe = new RegExp('^export\\s+(?:default\\s+)?(?:const|function|class|interface|type|enum)\\s+' + name + '\\b', 'gm');
+        let defs = 0;
+        while (defRe.exec(bSrc)) defs++;
+        const blkRe = new RegExp('export\\s*\\{[^}]*\\b' + name + '\\b[^}]*\\}', 'g');
+        let blks = 0;
+        while (blkRe.exec(bSrc)) blks++;
+        if (total - defs - blks > 0) { sameFile = true; break; }
+      }
+      if (sameFile) level = 'L3';
+    }
+
     // 约定文件保护：命中 CONVENTION_PRESERVE_SUFFIX 则归 L3-HOLD，绝不进 L1/L2 删除候选。
     const isConventionPreserved = [...defFiles].some((df) =>
       CONVENTION_PRESERVE_SUFFIX.some((s) => df.endsWith(s))

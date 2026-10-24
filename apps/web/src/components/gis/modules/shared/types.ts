@@ -31,13 +31,6 @@ export type ToolMode =
   'select' | 'measure-distance' | 'measure-area' | 'draw-point' | 'draw-line' | 'draw-polygon';
 
 // Offline Module Types
-export interface OfflineConfig {
-  tileBounds: [[number, number], [number, number]];
-  minZoom: number;
-  maxZoom: number;
-  tileSources: ('osm' | 'amap')[];
-}
-
 export interface SyncStatus {
   lastSyncTime: string;
   pendingUploads: number;
