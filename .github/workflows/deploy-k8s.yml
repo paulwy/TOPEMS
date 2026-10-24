@@ -72,34 +72,46 @@ jobs:
 
       - name: Deploy all services
         run: |
+          # [P3-5 2026-10-24] 服务清单对齐 config/services.yaml：补 communication/master-data/search/ticket/tms
           SERVICES=(
             unified-core erp finance doc ai hrm pm crm mes pdm
             scm wms srm qms lims ehs rd analytics monitor portal mobile gis integration
+            communication master-data search ticket tms
           )
-          
+
           echo "## K8s Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Service | Status | Image Tag |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|--------|-----------|" >> $GITHUB_STEP_SUMMARY
-          
+
+          # [P3-5] 移除 || true 吞失败：set image / rollout 失败记录后累计退出码，
+          # 单服务失败不中断其余部署，最终以非零退出暴露失败（通知 job failure() 仍可捕获）。
+          FAILED=0
           for svc in "${SERVICES[@]}"; do
             echo "Deploying $svc..."
-            kubectl set image deployment/$svc \
+            if ! kubectl set image deployment/$svc \
               $svc=ghcr.io/${{ github.repository_owner }}/topems-$svc:${{ steps.tag.outputs.image_tag }} \
-              -n ${{ env.K8S_NAMESPACE }} || true
-            
+              -n ${{ env.K8S_NAMESPACE }}; then
+              echo "| $svc | ⚠️ set image 失败 | ${{ steps.tag.outputs.image_tag }} |" >> $GITHUB_STEP_SUMMARY
+              FAILED=1
+              continue
+            fi
+
             kubectl rollout status deployment/$svc \
               -n ${{ env.K8S_NAMESPACE }} \
               --timeout=300s && \
-              echo "| $svc | ✅ Deployed | ${{ steps.tag.outputs.image_tag }} |" >> $GITHUB_STEP_SUMMARY || \
+              echo "| $svc | ✅ Deployed | ${{ steps.tag.outputs.image_tag }} |" >> $GITHUB_STEP_SUMMARY || {
               echo "| $svc | ❌ Failed | ${{ steps.tag.outputs.image_tag }} |" >> $GITHUB_STEP_SUMMARY
+              FAILED=1
+            }
           done
+          exit $FAILED
 
       - name: Deploy frontend
         run: |
           kubectl set image deployment/web \
             web=ghcr.io/${{ github.repository_owner }}/topems-web:${{ steps.tag.outputs.image_tag }} \
-            -n ${{ env.K8S_NAMESPACE }} || true
+            -n ${{ env.K8S_NAMESPACE }} && \
           kubectl rollout status deployment/web \
             -n ${{ env.K8S_NAMESPACE }} \
             --timeout=180s

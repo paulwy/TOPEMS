@@ -37,6 +37,9 @@ pub struct AppState {
     pub dsh_rag_engine: Option<RagEngine>,
     /// DSH 多 Agent 协调器（可选）
     pub dsh_multi_agent_coordinator: Option<MultiAgentCoordinator>,
+    /// [P3-4] MCP 工具注册就绪屏障：routes.rs 后台注册完成前置 true；
+    /// 详细健康检查据此报告 Degraded（注册窗口），避免启动初期 tools/list 瞬时空被探活判活。
+    pub mcp_tools_ready: std::sync::Arc<std::sync::atomic::AtomicBool>,
 }
 
 impl FromRef<AppState> for AuthState {

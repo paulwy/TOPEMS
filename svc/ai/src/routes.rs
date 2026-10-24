@@ -99,12 +99,17 @@ pub fn create_routes(
     let multi_agent_coordinator =
         crate::dsh::multi_agent::MultiAgentCoordinator::new(multi_agent_config);
 
+    // [P3-4] MCP 工具注册就绪屏障：初始 false，下方 spawn 注册完成后置 true；
+    // health_check_detailed 据此报告 Degraded，避免启动探活在注册窗口内误判就绪。
+    let mcp_tools_ready = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+
     // 更新 app_state，添加 DSH Agent 编排器和增强能力
     let app_state = AppState {
         dsh_agent_orchestrator: Some(dsh_agent_orchestrator),
         dsh_knowledge_graph: Some(knowledge_graph),
         dsh_rag_engine: Some(rag_engine),
         dsh_multi_agent_coordinator: Some(multi_agent_coordinator),
+        mcp_tools_ready: mcp_tools_ready.clone(),
         ..app_state
     };
 
@@ -145,6 +150,8 @@ pub fn create_routes(
             server_clone.resource_registry().len().await,
             external_count
         );
+        // [P3-4] 注册全部完成，置就绪标志
+        mcp_tools_ready.store(true, std::sync::atomic::Ordering::Release);
     });
 
     let public_routes = Router::new()

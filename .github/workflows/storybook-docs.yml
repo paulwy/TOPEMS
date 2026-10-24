@@ -33,7 +33,9 @@ jobs:
     env:
       NODE_VERSION: '22'
     steps:
-      - uses: actions/checkout@v4
+      # [P3-10 2026-10-24] checkout@v4→v5 与仓内其余 workflow 统一；
+      # NODE_VERSION 保留 22（与 ci.yml 主门禁一致；e2e/ai-tests 的 NODE20 属历史差异，另行对齐）
+      - uses: actions/checkout@v5
 
       - uses: pnpm/action-setup@v4
 

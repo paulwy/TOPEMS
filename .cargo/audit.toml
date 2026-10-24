@@ -9,8 +9,14 @@
 #      签名验证（SigningKey/BlindedSigningKey/Pkcs1v15Sign/Pss），解密路径零调用，
 #      而 Marvin Attack 仅影响 PKCS#1 v1.5 解密（RSAES-PKCS1-v1_5）计时侧信道，
 #      实际利用面为空；
-#   3. 已引入私有补丁（[patch.crates-io] rsa = path vendor/rsa，版本 0.9.11）：
+#   3. 已引入私有补丁（[patch.crates-io] rsa = path vendor/rsa，manifest 版本 0.9.10）：
 #      移植上游 PR #702 implicit rejection 缓解——解密 padding 无效时返回 KDF 派生
 #      伪随机消息而非错误，消除错误区分计时侧信道，为未来误用解密路径提供防御。
+#      [P3-9 2026-10-24] 版本注释口径校准：vendor/rsa/Cargo.toml 实际声明 0.9.10
+#      （上游 0.9.10 + PR #702 补丁），此前误写 0.9.11。
+#
+# RUSTSEC-2026-0253（lru 0.16.4，informational unsound）
+# 忽略理由：经 async-graphql 传递锁定本版；触发需 catch_unwind + panic 落在 Drop 路径，
+# 本仓无此用法（2026-10-07 快照比对确认仅 1 条 informational）；随 async-graphql 升级滚动消除。
 [advisories]
-ignore = ["RUSTSEC-2023-0071"]
+ignore = ["RUSTSEC-2023-0071", "RUSTSEC-2026-0253"]

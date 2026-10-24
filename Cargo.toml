@@ -450,8 +450,8 @@ mockall = "0.11"
 
 
 [patch.crates-io]
-# TOPEMS 私有补丁：rsa 0.9.11（上游 0.9.10 含 RUSTSEC-2023-0071 Marvin Attack，
-# 无修复版本；vendor/rsa 移植上游 PR #702 implicit rejection 缓解）
+# TOPEMS 私有补丁：vendor/rsa manifest 版本 0.9.10（上游 0.9.10 含 RUSTSEC-2023-0071
+# Marvin Attack，无修复版本；vendor/rsa 移植上游 PR #702 implicit rejection 缓解）
 rsa = { path = "vendor/rsa" }
 
 [profile.release]

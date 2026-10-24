@@ -75,7 +75,8 @@ env:
   CARGO_TERM_COLOR: always
   NODE_VERSION: '20'
   PNPM_VERSION: '9'
-  RUST_TOOLCHAIN: 'stable'
+  # [P3-1 2026-10-24] 与 rust-toolchain.toml / ci.yml 全仓门禁对齐：nightly-2026-07-01
+  RUST_TOOLCHAIN: 'nightly-2026-07-01'
   # Defaults for the in-CI backend
   DATABASE_URL: postgres://topems_ai:topems_ai_secret@localhost:5432/topems_ai
   REDIS_URL: redis://localhost:6379/0
@@ -124,22 +125,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      # [P3-1] 复用仓内 setup-rust 复合动作（默认 nightly-2026-07-01 + sccache + Swatinem/rust-cache）
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: rustfmt, clippy
-
-      - name: Cache Rust cargo registry
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          cache-prefix: "ai-unit-nightly-2026-07-01"
 
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -328,21 +318,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      # [P3-1] 同 Job1：对齐 nightly-2026-07-01 门禁
+      - uses: ./.github/actions/setup-rust
         with:
-          toolchain: ${{ env.RUST_TOOLCHAIN }}
-
-      - name: Cache Rust cargo registry
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-release-
+          cache-prefix: "ai-perf-nightly-2026-07-01"
 
       - name: Install k6
         run: |

@@ -317,6 +317,7 @@ async fn main() -> anyhow::Result<()> {
         dsh_knowledge_graph: None,
         dsh_rag_engine: None,
         dsh_multi_agent_coordinator: None,
+        mcp_tools_ready: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
     };
 
     // 创建路由（routes::create_routes 处理所有中间件：auth、tenant、rate_limit、cors、prometheus、telemetry）

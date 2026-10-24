@@ -26,10 +26,27 @@ pub async fn health() -> Json<ApiResponse<String>> {
 pub async fn health_check_detailed(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<ServiceHealth>> {
+    // [P3-4] MCP 工具注册就绪屏障：spawn 注册窗口内报告 Degraded，
+    // 避免启动初期探活误判就绪（tools/list 瞬时空）。
+    let mcp_dep = if state.mcp_tools_ready.load(std::sync::atomic::Ordering::Acquire) {
+        DependencyHealth {
+            name: "mcp-tools".to_string(),
+            status: HealthStatus::Healthy,
+            message: "MCP 工具注册完成".to_string(),
+        }
+    } else {
+        DependencyHealth {
+            name: "mcp-tools".to_string(),
+            status: HealthStatus::Degraded,
+            message: "MCP 工具注册中（启动窗口，就绪标志未置位）".to_string(),
+        }
+    };
+
     let dependencies = vec![
         check_iam_health().await,
         check_database_health(&state.document_service.pool().await).await,
         check_ai_service_health().await,
+        mcp_dep,
     ];
 
     let statuses: Vec<HealthStatus> = dependencies.iter().map(|d| d.status.clone()).collect();

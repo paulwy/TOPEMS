@@ -25,10 +25,14 @@ yanked = "deny"
 # RUSTSEC-2026-0192（ttf-parser 0.25.1, unmaintained）：字体解析库，链路 lopdf → pdf-extract
 #   → topems-ai（PDF 抽取），无已知可利用漏洞，仅作者停止维护；官方无修复版。
 #   跟踪 pdf-extract 切换 skrifa 后解除。
+# RUSTSEC-2026-0253（lru 0.16.4, informational unsound）：经 async-graphql 传递锁定，
+#   触发需 catch_unwind + panic 落在 Drop 路径（本仓无此用法）；2026-10-07 快照比对确认仅此 1 条
+#   informational，随 async-graphql 升级滚动消除（P3-8 2026-10-24 登记接受）。
 ignore = [
   "RUSTSEC-2023-0071",
   "RUSTSEC-2024-0370",
   "RUSTSEC-2026-0192",
+  "RUSTSEC-2026-0253",
 ]
 
 # ────────────────────────────────────────────────────────────────────────────

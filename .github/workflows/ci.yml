@@ -745,7 +745,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run ESLint
-        run: pnpm --filter topems-portal lint
+        # [P3-7 2026-10-24] 全工作区 lint（apps/mobile + packages 一并纳入），
+        # 此前仅 `--filter topems-portal`，mobile/packages 未进 CI 门禁。
+        # 根 lint = `eslint apps/ packages/ --max-warnings 100`（P1-25 清理后基线 3 warnings）。
+        run: pnpm lint
 
       - name: Run a11y lint (V65)
         run: pnpm --filter topems-portal lint:a11y
@@ -2081,6 +2084,8 @@ jobs:
           echo "| Gate T · 统一错误出口 (错误泄露 / 业务层 anyhow · V517) | ${{ needs.error-handling-gate.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| SQLx Cache Freshness (D-track · advisory · non-blocking) | ${{ steps.sqlx-cache.outputs.status || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Schema Defense Gate (26 svc · strict · V274 含 sqlx 语义 advisory) | ${{ needs.schema-defense-gate.result }} |" >> $GITHUB_STEP_SUMMARY
+          # [P3-6 2026-10-24] 补汇总行：needs 声明了 schema-defense-drift 但表中无行（此前漏汇总）
+          echo "| Schema Defense Drift (TABLE_DEFS 漂移检测) | ${{ needs.schema-defense-drift.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "### PR Review Checklist" >> $GITHUB_STEP_SUMMARY
@@ -2099,7 +2104,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Treat "skipped" as acceptable (path-filtered jobs); only fail on failure/cancelled.
-          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.cargo-deny.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.slow-db-startup-test.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.lighthouse.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.desktop-build.result }} ${{ needs.changelog-gate.result }}"
+          # [P3-6] RESULTS 补齐两个 needs 已声明但未纳入门控判定的 job（此前其失败不会让汇总变红）
+          RESULTS="${{ needs.rust-lint.result }} ${{ needs.rust-test.result }} ${{ needs.rust-audit.result }} ${{ needs.cargo-deny.result }} ${{ needs.schema-defense-gate.result }} ${{ needs.schema-defense-drift.result }} ${{ needs.error-handling-gate.result }} ${{ needs.slow-db-startup-test.result }} ${{ needs.frontend-lint.result }} ${{ needs.frontend-typecheck.result }} ${{ needs.frontend-test.result }} ${{ needs.frontend-coverage.result }} ${{ needs.frontend-build.result }} ${{ needs.lighthouse.result }} ${{ needs.design-system-check.result }} ${{ needs.frontend-audit.result }} ${{ needs.i18n-quality-gate.result }} ${{ needs.permission-matrix-gate.result }} ${{ needs.menu-health-gate.result }} ${{ needs.axum-layer-gate.result }} ${{ needs.security-scan.result }} ${{ needs.code-quality.result }} ${{ needs.migration-test.result }} ${{ needs.desktop-build.result }} ${{ needs.changelog-gate.result }}"
 
           FAILED=false
           for result in $RESULTS; do
