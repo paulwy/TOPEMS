@@ -1,3 +1,13 @@
+## #18 HttpOnly Cookie 迁移（refresh_token 出 localStorage）（2026-10-25）✅ 批 A 实施
+
+> **双轨兼容**：Cookie 优先 + body 降级（迁移期旧客户端 / 测试 / 其它端不受影响）
+> - 后端 `iam/auth.rs`：login Set-Cookie（HttpOnly+Secure+SameSite=Lax+Path=/）；refresh Cookie 优先 + 轮换 Cookie；logout Cookie 优先 + 清 Cookie；helper `extract_refresh_token`/`build_refresh_token_cookie`（`TOPEMS_COOKIE_SECURE=false` 可关 Secure）
+> - 前端：`apiClient` withCredentials=true；`auth.ts` login 不写 localStorage refresh_token / logout 无 body / refreshToken(token?) 可选参；`useAuth` refresh 优先 cookie 模式、localStorage 旧 token 降级 body
+> - 安全：HttpOnly 缓解 XSS 窃取；SameSite=Lax 阻断跨站 POST；csrfRequestInterceptor 保留（同站防护）
+> - 验证：unified-core cargo check 0 error；eslint 0；api/iam+hooks 99 用例过；pre-commit 全绿
+> - 提交：`c42055565e`
+> - **待办（批 B）**：三端验证（web 实测 / Tauri 桌面 WebView cookie / 移动端）、401 自动刷新重试增强、旧 localStorage refresh_token 存量清理策略
+
 ## #22 补测批 2：ai/ehs 域页面补测（2026-10-25）✅ 完成
 
 > **#22 续 · 模板 stub 改造受益**（改造后 CrudPage/ListPageTemplate 包装页可测）：
