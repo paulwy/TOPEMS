@@ -5,7 +5,7 @@
 > - **改造**：移除二次覆盖 + 979 mock 升级为**行渲染 + customRowActions 交互**（adapter.list→行单元格；customRowActions 按 show 过滤渲染按钮、onClick 透传行）——CrudPage 包装页面可测真实行交互（scm 15 页及其它模块受益）
 > - **回归**：全量 component project 316 passed/11 failed（改造前基线 315/12——**零新增失败**，存量 11 文件失败均与本改造无关：R 系列 Rust 门禁检测 + navigation/route-nav/wms-tms-erp 集成测试）
 > - **MrpPlanPage.test.tsx（3 用例）**：行渲染+status 行动作按钮（show 过滤）、计算流（点计算→ConfirmDialog→确认→calculate('M1')→结果 Dialog 汇总卡）、查看建议跳转（location 替换断言 href）
-> - 提交：`6fdfad59a7`
+> - 提交：`2d2421a78c`（rebase 后）
 
 ## #22 补测批：scm schemas 结构守卫（2026-10-25）✅ 完成
 
