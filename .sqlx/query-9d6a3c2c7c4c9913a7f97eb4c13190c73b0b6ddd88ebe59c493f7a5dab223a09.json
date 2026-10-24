@@ -16,62 +16,62 @@
       {
         "ordinal": 2,
         "name": "record_date",
-        "type_info": "Timestamptz"
+        "type_info": "Date"
       },
       {
         "ordinal": 3,
         "name": "planned_production_time",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 4,
         "name": "actual_run_time",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 5,
         "name": "downtime",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 6,
         "name": "ideal_cycle_time",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 7,
         "name": "actual_output",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 8,
         "name": "good_output",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 9,
         "name": "defective_output",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 10,
         "name": "availability",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 11,
         "name": "performance",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 12,
         "name": "quality_rate",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 13,
         "name": "oee",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 14,
@@ -132,8 +132,8 @@
       true,
       true,
       true,
-      false,
-      false,
+      true,
+      true,
       false,
       false
     ]

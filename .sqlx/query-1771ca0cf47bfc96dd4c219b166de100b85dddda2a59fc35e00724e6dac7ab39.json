@@ -31,12 +31,12 @@
       {
         "ordinal": 5,
         "name": "quantity",
-        "type_info": "Int8"
+        "type_info": "Int4"
       },
       {
         "ordinal": 6,
         "name": "completed_quantity",
-        "type_info": "Int8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 7,
@@ -54,7 +54,7 @@
       false,
       null,
       false,
-      false,
+      true,
       false,
       true,
       false

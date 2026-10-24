@@ -51,7 +51,7 @@
       {
         "ordinal": 9,
         "name": "report_date",
-        "type_info": "Timestamptz"
+        "type_info": "Date"
       },
       {
         "ordinal": 10,
@@ -86,7 +86,7 @@
       {
         "ordinal": 16,
         "name": "approved_by",
-        "type_info": "Varchar"
+        "type_info": "Uuid"
       },
       {
         "ordinal": 17,
@@ -119,7 +119,7 @@
         "Uuid",
         "Varchar",
         "Varchar",
-        "Timestamptz",
+        "Date",
         "Varchar",
         "Numeric",
         "Numeric",
@@ -129,6 +129,14 @@
       ]
     },
     "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
       false,
       true,
       true,
@@ -140,16 +148,8 @@
       true,
       true,
       true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true
+      false,
+      false
     ]
   },
   "hash": "d0ebd458c38a2b91c06746f0df044753d15da515d81e2e6bd3d9ba8120269ed0"

@@ -21,12 +21,12 @@
       {
         "ordinal": 3,
         "name": "standard",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 4,
         "name": "actual_value",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 5,
@@ -43,8 +43,8 @@
       "Left": [
         "Uuid",
         "Varchar",
-        "Text",
-        "Text",
+        "Varchar",
+        "Varchar",
         "Varchar",
         "Text",
         "Uuid"
@@ -52,7 +52,7 @@
     },
     "nullable": [
       false,
-      true,
+      false,
       false,
       true,
       true,

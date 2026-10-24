@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "effective_date",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 9,
@@ -73,18 +73,18 @@
         "Varchar",
         "Varchar",
         "Int4",
-        "Text",
+        "Varchar",
         "Text",
         "Uuid"
       ]
     },
     "nullable": [
       false,
-      true,
+      false,
       false,
       true,
       true,
-      true,
+      false,
       true,
       true,
       true,
