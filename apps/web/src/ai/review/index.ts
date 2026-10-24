@@ -1,10 +1,4 @@
-export type {
-  ReviewIssue,
-  ReviewResult,
-  ReviewRule,
-  IssueType,
-  IssueSeverity,
-} from './code-reviewer';
+export type { ReviewIssue, ReviewResult, IssueType, IssueSeverity } from './code-reviewer';
 
 export type {
   SecurityFinding,
@@ -16,10 +10,8 @@ export type {
 
 export type {
   PerfFinding,
-  AuditResult,
   AuditMetrics,
   LighthouseScores,
-  BundleInfo,
   PerfCategory,
 } from './performance-auditor';
 

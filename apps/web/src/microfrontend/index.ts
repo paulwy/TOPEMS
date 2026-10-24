@@ -113,7 +113,6 @@ export { default as RegistryPanel } from './registry/RegistryPanel';
 export {
   type ModuleVersion,
   type VersionStatus,
-  type VersioningStrategy,
   type VersionComparison,
 } from './version-platform/version-platform';
 export {
@@ -201,7 +200,6 @@ export * as marketplace from './marketplace';
 // ==================== V44.0 依赖治理 ====================
 export {
   dependencyGovernor,
-  type ModuleDependency,
   type DependencyGraphNode,
   type DependencyGraphEdge,
   type DependencyGraph,
@@ -247,8 +245,6 @@ export {
   type FrameworkAdapter,
   type UnifiedProps,
   type UnifiedEvents,
-  type UnifiedLifecycle,
-  type LifecycleHook,
   type MountedComponent,
 } from './runtime/cross-framework';
 

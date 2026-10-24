@@ -1,28 +1,5 @@
 import { navigationRegistryV2 } from './NavigationRegistryV2';
-import {
-  coreModuleNavConfigs,
-  adminNavConfig,
-  iamNavConfig,
-  workflowNavConfig,
-  notificationNavConfig,
-  docNavConfig,
-  monitorNavConfig,
-  oaNavConfig,
-  aiNavConfig,
-  automationNavConfig,
-  erpNavConfig,
-  hrmNavConfig,
-  integrationNavConfig,
-  mesNavConfig,
-  mobileNavConfig,
-  pmNavConfig,
-  qmsNavConfig,
-  reportNavConfig,
-  scmNavConfig,
-  ticketNavConfig,
-  wmsNavConfig,
-  pluginNavConfig,
-} from './modules';
+import { coreModuleNavConfigs } from './modules';
 import type { ModuleNavConfig } from './types';
 
 /**
@@ -43,33 +20,12 @@ import type { ModuleNavConfig } from './types';
  */
 const essentialModules: ModuleNavConfig[] = [
   // 企业平台域
-  iamNavConfig,
-  adminNavConfig,
-  erpNavConfig,
-  reportNavConfig,
-  pluginNavConfig,
   // 协同与工具域
-  workflowNavConfig,
-  notificationNavConfig,
-  docNavConfig,
-  oaNavConfig,
-  ticketNavConfig,
-  mobileNavConfig,
   // 平台能力域
-  aiNavConfig,
-  automationNavConfig,
-  integrationNavConfig,
-  monitorNavConfig,
   // 运营/项目域
-  pmNavConfig,
   // 制造域
-  mesNavConfig,
-  qmsNavConfig,
   // 供应链域
-  scmNavConfig,
-  wmsNavConfig,
   // 财务HR域
-  hrmNavConfig,
 ];
 
 essentialModules.forEach((config) => {

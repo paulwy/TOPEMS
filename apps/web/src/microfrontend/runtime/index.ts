@@ -40,8 +40,6 @@ export {
   type FrameworkAdapter,
   type UnifiedProps,
   type UnifiedEvents,
-  type UnifiedLifecycle,
-  type LifecycleHook,
   type MountedComponent,
 } from './cross-framework';
 

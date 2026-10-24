@@ -11,7 +11,6 @@ export type {
   WsConnectionStatus,
   UseWebSocketOptions,
   WebSocketMessage,
-  SubscriptionConfig,
 } from '../../useWebSocket';
 
 // Dashboard WebSocket - 注意不要重复导出 WsConnectionStatus

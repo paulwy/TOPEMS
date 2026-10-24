@@ -1,7 +1,6 @@
 export {
   DependencyGovernor,
   dependencyGovernor,
-  type ModuleDependency,
   type DependencyGraphNode,
   type DependencyGraphEdge,
   type DependencyGraph,

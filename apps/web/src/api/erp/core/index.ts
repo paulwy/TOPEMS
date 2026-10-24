@@ -5,7 +5,6 @@ export type {
   CreatePurchaseOrderItemRequest,
   UpdatePurchaseOrderRequest,
   SalesOrder,
-  SalesOrderItem,
   CreateSalesOrderRequest,
   CreateSalesOrderItemRequest,
   UpdateSalesOrderRequest,

@@ -317,14 +317,7 @@ export default monitorApi;
 
 export { alertBatchApi, templateApi, pluginApi, dashboardApi };
 
-export type {
-  AlertDetail,
-  AlertStatistics,
-  AlertHistoryEvent,
-  AlertTimelinePoint,
-  AlertSeverity,
-  AlertStatus,
-} from './alert';
+export type { AlertStatistics, AlertTimelinePoint, AlertSeverity, AlertStatus } from './alert';
 
 export type {
   RoutingConfig,
@@ -355,11 +348,4 @@ export type {
   SloBudgetStatus,
 } from './slo';
 
-export type {
-  BusinessMetric,
-  MetricSummary,
-  MetricTrendPoint,
-  KpiDashboard,
-  MetricType,
-  MetricAggregation,
-} from './businessMetric';
+export type { BusinessMetric, MetricType, MetricAggregation } from './businessMetric';

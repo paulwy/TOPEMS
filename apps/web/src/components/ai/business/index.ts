@@ -2,7 +2,7 @@ export { BusinessModuleSelector } from './BusinessModuleSelector';
 export type { BusinessModuleType } from './BusinessModuleSelector';
 
 export { SmartFormRenderer } from './SmartFormRenderer';
-export type { FormDefinition, FormFieldDefinition, FormValidationError } from './SmartFormRenderer';
+export type { FormDefinition, FormFieldDefinition } from './SmartFormRenderer';
 
 export { GovernanceDashboard } from './GovernanceDashboard';
 export type { GovernanceDashboardData } from './GovernanceDashboard';

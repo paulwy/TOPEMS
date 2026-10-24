@@ -1,16 +1,8 @@
 // STATUS: WIRED | Integrated in App.tsx DevTools panel
 
-export type {
-  Recommendation,
-  RecommendationType,
-  UserBehavior,
-  RecommendationStats,
-} from './smart-recommender';
+export type { Recommendation, RecommendationType } from './smart-recommender';
 
 export type {
-  InteractionProfile,
-  AdaptiveResponse,
-  AdaptationRecord,
   DeviceType,
   ProficiencyLevel,
   LayoutDensity,
@@ -20,8 +12,6 @@ export type {
 export type {
   EmotionState,
   DesignResponse,
-  EmotionProfile,
-  EmotionEvent,
   Valence,
   Arousal,
   EmotionType,

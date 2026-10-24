@@ -2,6 +2,6 @@
 export { AIHelperButton } from './AIHelperButton';
 export type { AIHelperButtonProps } from './AIHelperButton';
 
-export type { AIDataCompleterProps } from './AIDataCompleter';
+export type {} from './AIDataCompleter';
 
-export type { AIFormValidatorProps } from './AIFormValidator';
+export type {} from './AIFormValidator';

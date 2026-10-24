@@ -6,10 +6,8 @@ export {
   type HazardStatus,
   type IncidentStatus,
   type ControlStatus,
-  type SeverityLevel,
   type RiskLevel,
   type MeasureType,
-  type IncidentType,
 } from './EHSBadges';
 
 export {
@@ -17,7 +15,5 @@ export {
   getSeverityLabel,
   type SeverityValue,
   type LikelihoodValue,
-  type ExposureValue,
-  type EffectivenessLevel,
   type RiskCalculationResult,
 } from './riskUtils';

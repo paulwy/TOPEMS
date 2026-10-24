@@ -879,7 +879,6 @@ export type {
   StocktakeRecordInput,
   InventoryStatus,
   StocktakeStatus,
-  InventoryMovementType,
   InventoryMovementStatus,
 } from './inventory';
 

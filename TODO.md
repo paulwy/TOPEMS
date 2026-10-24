@@ -1,3 +1,12 @@
+## unused L2 barrel-only 清理批（2026-10-25）✅ 完成
+
+> **#21 续批 · L2 barrel-only 孤儿清理（-132 条）**：
+> - 仅删 barrel 索引文件的 named re-export 项（197 条候选经 detect 复核，barrel 删项 192 处、30 文件），**def 端 export 保留**（保守——避免 detect 盲区误删页面/动态 import 引用）
+> - detect 已知盲区登记：只统计静态 import，漏 routes/v2 动态 import（`import('@/modules/xx/config')`）与部分页面直接引用——本批 def 零改动规避该风险
+> - 收敛过程：tsc 0 错一次通过（仅 1 处 dashboard barrel 语法修复）；eslint 0（34 存量 warnings）；detect 复跑 **L2 219→87**
+> - 副作用登记：barrel 删项后 **131 条 def export 变 0 引用**（L1 新增，值 3/类型 128）——下批安全去 export（detect L1 口径=0 引用真孤儿）
+> - 新增工具：`scripts/audit/l2-barrel-clean.py`（复刻 V258 l1-conservative-remove-v2 的 barrel 删项逻辑）
+
 ## unused L1 残余清零（2026-10-25）✅ 完成
 
 > **#21 续批 · L1-SAFE 归零**：detect-ts-unused-exports 复核全仓 L1 仅余 4 条真孤儿（前批已删 2814+ 条），本批删除并验证：

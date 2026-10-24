@@ -7,7 +7,7 @@
 // ServiceStatus - 服务状态监控
 
 // Code - 编码规则与生成
-export { useBatchNextCodes, useValidateCode, usePreviewCode, codeApi } from '../../useCode';
+export { codeApi } from '../../useCode';
 export type {
   ModuleType,
   EntityType,

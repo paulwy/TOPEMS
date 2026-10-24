@@ -24,8 +24,4 @@ export * from './retry';
 export * from './time';
 
 export { normalizePaginationParams } from './pagination';
-export type {
-  PageSizeField,
-  PaginationParamsInput,
-  PaginationParamsNormalized,
-} from './pagination';
+export type { PaginationParamsInput, PaginationParamsNormalized } from './pagination';

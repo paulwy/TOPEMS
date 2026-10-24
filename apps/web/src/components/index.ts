@@ -328,13 +328,7 @@ export { default as ExportButton } from './export/ExportButton';
 
 // 权限验证组件
 
-export type {
-  WithPermissionOptions,
-  RequirePermissionProps,
-  PermissionGuardProps,
-  ModulePermissionGuardProps,
-  ConditionalRenderProps,
-} from './PermissionComponents';
+export type {} from './PermissionComponents';
 
 // ===== 访问日志组件 =====
 

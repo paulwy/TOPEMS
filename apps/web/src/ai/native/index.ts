@@ -1,22 +1,12 @@
 export type {
-  AICapability,
   AICapabilityType,
   CapabilityStatus,
   PlatformConfig,
-  AIPlatformStatus,
   MiddlewareContext,
   MiddlewareResult,
-  MiddlewareHandler,
 } from './ai-first-architecture';
 
-export type {
-  RouteRecommendation,
-  RouteIntent,
-  RoutePerformance,
-  BehaviorEntry,
-  RouterStats,
-  RoutingStrategy,
-} from './intelligent-router';
+export type { RoutePerformance, RoutingStrategy } from './intelligent-router';
 
 export type {
   UserProfile,
@@ -24,9 +14,6 @@ export type {
   BehaviorPattern,
   UserContext,
   DeviceType,
-  AdaptedLayout,
-  ContentRecommendation,
-  AdaptationStats,
   LayoutDensity,
   ThemeMode,
   ContentPriority,
