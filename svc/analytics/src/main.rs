@@ -911,6 +911,19 @@ async fn reports_center_stats(
                AND (tenant_id = current_setting('app.tenant_id', true)::uuid OR current_setting('app.tenant_id', true) = '')) AS recent_activities
     "#).fetch_one(&state.pool).await.unwrap_or((0, 0, 0, 0, 0));
 
+    // 组织计数（BE-02 方案 A）：hrm 组织数据对 analytics（schema=bi，boundary allow=[]）不可裸引，
+    // 由 bi.org_stats 物化视图提供快照（companies/departments/employees 排除软删 + refreshed_at）。
+    // 查询失败（视图缺失/未刷新）回落 0 + orgStatsStatus=not-connected，绝不伪造数字。
+    // 与 routes.rs（库副本）保持同步。
+    let (total_companies, total_departments, total_employees, org_refreshed) =
+        sqlx::query_as::<_, (i64, i64, i64, Option<chrono::DateTime<chrono::Utc>>)>(
+            "SELECT companies, departments, employees, refreshed_at FROM bi.org_stats",
+        )
+        .fetch_one(&state.pool)
+        .await
+        .map(|(c, d, e, r)| (c, d, e, r.map(|t| t.to_rfc3339())))
+        .unwrap_or((0, 0, 0, None));
+
     // 近 6 个月真实用户增长（数据来源表：core_users）：
     //   新增用户 = core_users.created_at 分月计数；
     //   活跃用户 = core_users.last_login_at 分月计数。
@@ -1029,12 +1042,14 @@ async fn reports_center_stats(
             "activeUsers": active_users,
             "totalRoles": total_roles,
             "totalPermissions": total_permissions,
-            // Org headcounts: not connected to a live source yet. Surface an explicit
-            // null + "not-connected" status instead of fabricated .max(5/23/210) numbers.
-            "totalCompanies": serde_json::Value::Null,
-            "totalDepartments": serde_json::Value::Null,
-            "totalEmployees": serde_json::Value::Null,
-            "orgStatsStatus": "not-connected",
+            // Org headcounts: live snapshot from bi.org_stats materialized view
+            // (BE-02 plan A). Not connected → explicit null + "not-connected" status,
+            // never fabricated numbers.
+            "totalCompanies": total_companies,
+            "totalDepartments": total_departments,
+            "totalEmployees": total_employees,
+            "orgStatsStatus": if org_refreshed.is_some() { "connected" } else { "not-connected" },
+            "orgStatsUpdatedAt": org_refreshed,
             "recentActivities": recent_activities,
         },
         "userGrowth": user_growth,
