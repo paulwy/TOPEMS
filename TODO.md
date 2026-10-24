@@ -3766,7 +3766,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] 收敛实现：单条幂等 DO 块动态扫描 `information_schema` 中 tenant_id ∈ (varchar,text) 的 BASE TABLE（实测命中=任务列明 17 表精确一致）；每表：摘除既有 RLS 策略→DROP DEFAULT→`ALTER TYPE uuid USING 合法 uuid 直转/非法回填全零`→SET DEFAULT 全零→原已开 RLS 按 089 模板重建策略（integration.erp_* 无 RLS 不接管）；重复执行幂等（列已 uuid → 守卫不命中）
 - [x] 门禁：validate Errors=0 / Checksum errors=0；check-migrations ✅ PASS（无序号重复）
 - [x] **空库全链重放（topems_prepare）**：**085 success、089 success（原 `character varying = uuid` 阻塞消除）、090 success、091 success**；终态实证 17 表 tenant_id 全 uuid + RLS 全开 + 各 1 条策略
-- [ ] **新失败点（缺列家族，未修，需决策）**：`20261016000092` —— `column r.tenant_id does not exist at line 3721`；`public.core_refresh_tokens` / `public.core_sessions` 两表存在但**无 tenant_id 列**（仅有 user_id），092 却 UPDATE 回填 r.tenant_id。账本 405 success / 0 failed，链停 091 后。修复方向二选一（待定）：(a) 两表补 tenant_id 列迁移前置到 092（若契约应有租户维度）；(b) 092 相关语句加列存在性守卫（若两表设计上无需租户隔离）。需确认这两表在 TABLE_DEFS/契约中的 tenant_id 归属
+- [x] **新失败点（缺列家族）已解决**（2026-10-24 核实）：契约口径定案 = (b)——会话/刷新令牌为全局认证基础设施，**契约天然无租户维度**（092 头注释定稿）；守卫已由 `f87324ce20` 落地（092/093/004/009 存在性守卫，**空库全链 479/479 重放贯通**）。本机实测闭环：两表均有 tenant_id 列 + RLS FORCE 策略（tenant_isolation_core_sessions/refresh_tokens）+ 092 已应用（账本含 20261016000092）+ 回填完成（905 行 NULL=0）。原「两表无 tenant_id 列」断言为守卫落地前的空库/stub 场景，已过期
 ### ② FAQ 编辑端点 PUT + status toggle（落地）
 - [x] `PUT /dsh/copilot/admin/faqs/{id}`：UpdateFaqRequest 全 Option + **COALESCE 部分更新**（传 NULL 保持原值，全缺省 400）；status 仅 active/disabled（400 校验）；权限与 delete 同型（ai:admin/超管豁免/租户管理员限本租户、全局行仅超管）；返回完整 AdminFaqItem；搜索路径 disabled 过滤保持（round-trip 验证）
 - [x] 验证：ai check/clippy 0、test lib 970 + integration 85 + doc 2 全过；测试库 PUT round-trip（部分更新/disabled 过滤/toggle）通过
