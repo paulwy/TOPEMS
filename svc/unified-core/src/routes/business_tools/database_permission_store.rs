@@ -12,6 +12,7 @@ use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use serde::Serialize;
+use sqlx::types::Uuid;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
 
@@ -212,7 +213,7 @@ impl DatabasePermissionStore {
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
-            permission.tenant_id,
+            Uuid::parse_str(&permission.tenant_id).unwrap_or_default(),
             permission.user_id,
             permission.role.as_str(),
             permission.active,
@@ -276,7 +277,7 @@ impl DatabasePermissionStore {
             FROM tenant_permissions
             WHERE tenant_id = $1 AND user_id = $2 AND deleted_at IS NULL
             "#,
-            tenant_id,
+            Uuid::parse_str(tenant_id).unwrap_or_default(),
             user_id,
         )
         .fetch_optional(self.pool.as_ref())
@@ -310,7 +311,7 @@ impl DatabasePermissionStore {
             .collect();
 
         Ok(Some(TenantPermission {
-            tenant_id: record.tenant_id,
+            tenant_id: record.tenant_id.to_string(),
             user_id: record.user_id,
             role: TenantRole::from_str(&record.role).unwrap_or(TenantRole::Member),
             tool_permissions,
@@ -330,7 +331,7 @@ impl DatabasePermissionStore {
             SET deleted_at = NOW(), active = FALSE
             WHERE tenant_id = $1 AND user_id = $2 AND deleted_at IS NULL
             "#,
-            tenant_id,
+            Uuid::parse_str(tenant_id).unwrap_or_default(),
             user_id,
         )
         .execute(self.pool.as_ref())
@@ -358,7 +359,7 @@ impl DatabasePermissionStore {
             WHERE tenant_id = $1 AND deleted_at IS NULL
             ORDER BY created_at DESC
             "#,
-            tenant_id,
+            Uuid::parse_str(tenant_id).unwrap_or_default(),
         )
         .fetch_all(self.pool.as_ref())
         .await?;
@@ -366,7 +367,7 @@ impl DatabasePermissionStore {
         let mut permissions = Vec::new();
         for record in records {
             if let Some(perm) = self
-                .fetch_tenant_permission(&record.tenant_id, &record.user_id)
+                .fetch_tenant_permission(&record.tenant_id.to_string(), &record.user_id)
                 .await?
             {
                 permissions.push(perm);
@@ -396,7 +397,7 @@ impl DatabasePermissionStore {
         let mut permissions = Vec::new();
         for record in records {
             if let Some(perm) = self
-                .fetch_tenant_permission(&record.tenant_id, &record.user_id)
+                .fetch_tenant_permission(&record.tenant_id.to_string(), &record.user_id)
                 .await?
             {
                 permissions.push(perm);
@@ -471,7 +472,7 @@ impl PermissionStore for DatabasePermissionStore {
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
-            permission.tenant_id,
+            Uuid::parse_str(&permission.tenant_id).unwrap_or_default(),
             permission.user_id,
             permission.role.as_str(),
             permission.active,
@@ -569,7 +570,7 @@ impl PermissionStore for DatabasePermissionStore {
             "#,
             permission.role.as_str(),
             permission.active,
-            permission.tenant_id,
+            Uuid::parse_str(&permission.tenant_id).unwrap_or_default(),
             permission.user_id,
         )
         .fetch_optional(&mut *tx)
