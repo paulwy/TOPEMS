@@ -41,6 +41,7 @@ vi.mock('@/components/templates', () => ({
 }));
 
 vi.mock('@topems/shared-components', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 测试 mock 组件 props
   ConfirmDialog: ({ isOpen, onClose, onConfirm, title, message }: any) =>
     isOpen ? (
       <div role='dialog'>

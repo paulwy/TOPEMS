@@ -23,10 +23,3 @@ export const flexRowCenter: React.CSSProperties = {
   alignItems: 'center',
   gap: 8,
 };
-
-/** Flex 行居中 + gap 12（6 处重复） */
-export const flexRowCenterGap12: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 12,
-};

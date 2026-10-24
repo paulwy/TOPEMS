@@ -18,7 +18,3 @@ export const DEMO_COLORS = {
   neutralGrey: '#9E9E9E',
   materialBlue: '#1976D2',
 } as const;
-
-/** 按下标循环取 G2 系列色。 */
-export const getG2Color = (index: number): string =>
-  G2_PALETTE[((index % G2_PALETTE.length) + G2_PALETTE.length) % G2_PALETTE.length];

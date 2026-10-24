@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# 幂等补建 ERP/Finance/WMS 域缺表缺列（09_erp_finance_wms_schema.sql）
+# 幂等补建 ERP/Finance/WMS 域缺表缺列（调用统一迁移链，权威来源，
+# 消除 init/ 双源漂移；原 09_erp_finance_wms_schema.sql 兜底由迁移链取代）
 # guard：erp.asset_categories 与 finance.reconcile_orders 均存在即视为已就绪
 # 用法：bash scripts/dev/ensure-erp-finance-wms-schema.sh
 # ==============================================================================
 set -euo pipefail
 
 PGURL="${DATABASE_URL:-postgres://topems:topems_secret@localhost:5432/topems}"
-SQL_FILE="$(cd "$(dirname "$0")/../.." && pwd)/database/init/09_erp_finance_wms_schema.sql"
+SCRIPT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+MIGRATE_SCRIPT="$SCRIPT_DIR/scripts/migrate.sh"
 
 already() {
   local n
@@ -20,9 +22,10 @@ already() {
 }
 
 if already; then
-  echo "已就绪：erp.asset_categories + finance.reconcile_orders 存在（09 已应用），幂等退出 0"
+  echo "已就绪：erp.asset_categories + finance.reconcile_orders 存在（迁移链已应用），幂等退出 0"
   exit 0
 fi
 
-psql "$PGURL" -v ON_ERROR_STOP=1 -f "$SQL_FILE"
-echo "✅ 09_erp_finance_wms_schema.sql 已应用（erp.asset_categories / finance.reconcile_orders 建表 + 6 列补齐）"
+echo "ERP/Finance/WMS 域表缺失，调用迁移链补建（migrate.sh run）"
+bash "$MIGRATE_SCRIPT" run >/dev/null
+echo "✅ 迁移链已应用（erp.asset_categories / finance.reconcile_orders 建表 + 列补齐）"

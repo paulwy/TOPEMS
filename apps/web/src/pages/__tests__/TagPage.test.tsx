@@ -25,7 +25,9 @@ vi.mock('@/api/crm/tags', () => ({
 // 此处提供每渲染新鲜闭包的 react-query mock（CapacityPage 先例）。
 const mockInvalidateQueries = vi.hoisted(() => vi.fn());
 vi.mock('@tanstack/react-query', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 测试 mock react-query
   const useQuery = ({ queryKey, queryFn, enabled = true }: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 测试 mock 状态
     const [data, setData] = React.useState<any>(undefined);
     const [isLoading, setIsLoading] = React.useState(true);
     React.useEffect(() => {
