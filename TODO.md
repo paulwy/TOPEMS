@@ -3904,3 +3904,29 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 未跟踪遗留不变：`TOPEMS全项目测试与审计报告-2026-10-23.md`（60622B）、
   `notification-路由对齐清单-2026-10-18.md`、`审查报告-代码与工程质量审计-2026-10-18.md`、
   `状态存档-测试补强与契约回归-2026-10-18.md`、`rustc-ice-*.txt`（0B）。
+
+## 第十轮登记（2026-10-24）：unused 第三批（a1d1e88dd，已推送）+ P3-9/P3-10 确认已落地
+
+### ① 本轮内容
+- **unused 第三批**：124 可删导出修正判定（聚合消费行匹配 + 同文件 count>1 排除）→ 真可删 84 / 保留 131。
+  实删：62 文件部分删 + DebugOverlay.tsx / api/wms/mock.ts / api/wms/mockData.ts 整文件删（后两者全仓零引用）。
+  误删恢复（同文件引用/类实例/聚合盲区）：pdm 2、DashboardSections 8、UserMenu、ai-ops/gov 类 new X()、
+  cross-framework 类、design-system 主题、SecurityScanner/UIRecommender/ABTestEngine、hooks/bff 5（签名被删函数头，
+  整目录回退 HEAD）、AICodeGenerator/ImportExportModal/ModuleCard/ChartAnnotations/AISelectionBubble（配平删块误伤）。
+  **L1 308 → 261**（净减 47；恢复文件候选留后续批）。
+- **eslint 全链清理**（删除后残留）：import 四形态（默认/单行花括号/多行块/混合 inline-type）批量移除 +
+  局部 const/interface/function 配平删块 + 参数 _ 前缀；经 5 轮迭代 237→0 warnings。
+- **P3-10（空库守卫明文密码）**：`scripts/ensure-empty-db-prereqs.sh` 脱敏（MASKED_URL）——确认已随历史提交 c9bcf524e 落地。
+- **P3-9（rls_remaining_tables.sql 陈旧）**：已加 DEPRECATED 头标注——确认已随 c9bcf524e 落地。
+
+### ② 验证
+- tsc 0 error（node --stack-size=8192 --max-old-space-size=8192）；eslint --max-warnings 0 全绿。
+- pre-commit 门禁全绿（frontend-lint 曾因 hooks/bff 签名坏拦截→恢复后过；frontend-typecheck 44s ✔）。
+- push：rebase 于 5e4597925（协作方 record_migration 修复）之上无冲突；pre-push cargo-check 全绿。
+
+### ③ 状态
+- 1 commit a1d1e88dd（rebase 后），已推送；本地领先 0。
+- 下批候选：unused 剩余 L1 261（含本轮恢复的 hooks/bff 5、AICodeGenerator 等候选——配平器需修函数头/块删除边界；
+  恢复文件候选与保留 131 的精确处理留后续）、typeOnly 87 按口径不动。
+- 经验：删除器对「函数签名行」（`export function X(`）与「配平块边界」需 seen_brace 扩展；git checkout -- <dir> 在
+  staged 目录恢复不可靠，用 `git checkout HEAD -- <file>` 显式单文件。
