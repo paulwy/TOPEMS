@@ -4215,3 +4215,14 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 下批：L2 208 值候选继续：api 组 8 项复核（含 completeTodoGql 幽灵项去向核）+ other 131 中纯转发无消费链项；config 盲区 68 永久保留。- 顺手清理（全量 vitest 24→7 收敛）：22 个测已删导出的死测试整删/清段——ports.test（getBackendPort 段）/validation/isrManager/TouchButton/TrendLine/EditCell/abTesting/pdm-material-product/WorkflowSettingsComponents/mf-error-classifier（模块已删或幽灵函数）/batchOperation.regression/codegen/effects/errorHandler/mobileDetector/storage/streamingSsr/themeUtils/tracing（utils 测已删导出）/useDictionaryManagement/useRateLimitConfig/useMobileApproval/useMobileQuality（20 批删 hooks 测试漏清）/AvatarGroup 段（Avatar.tsx 未导出）；修复缺 import 坏测试：batchOperation/sseClient/moduleThemes 补 import、path-constants 补 DASHBOARD_PATHS+删 MOBILE_TAB_PATHS 幽灵段、payloadCleaner/smartPrefetch 清幽灵 it 段。
 - L1 残留 GlowStrength（theme/effects.ts type，0 消费）AST 删除；重扫 L1=0、L2=207。
 - 残留 7 文件 13 失败（预存在实现问题，非删除引入）：route-nav-alignment 路由对齐断言/wms-tms-erp mock undefined/ScmWmsSrmComponents FilterHint caption/AiModelSettings+Dashboard+ErpOperational+FinancialReport i18n 渲染——标注不动（组件行为 bug，另立任务）。
+## 第二十二轮（2026-10-25）：L2 type 批1·非 ai 组 25 真死 type 删除（L2 207→184）
+- L2 207 全量分类：other 130（ai/ 120+ type 全 barrel 转发——ai/ 13 子目录外部 0 消费，设计层整体评估另列）+ api 8 + config 盲区 68 + barrel 1。
+- 非 ai other 组 + api 组 29 项消费核：25 真死——PermissionComponents 5（WithPermissionOptions/RequirePermissionProps/PermissionGuardProps/ModulePermissionGuardProps/ConditionalRenderProps，组件值活 type 死）+ AIDataCompleterProps/AIFormValidatorProps/FormValidationError + ModuleSectionKey/ModuleCardData + SeverityLevel/IncidentType/ExposureValue/EffectivenessLevel + PageSizeField + SubscriptionConfig + UnifiedLifecycle/VersioningStrategy + SalesOrderItem + InventoryMovementType + AlertDetail/AlertHistoryEvent + MetricSummary/MetricTrendPoint/KpiDashboard（metrics.ts 用内部类型非 import）。
+- barrel 转发清理 20 行（11 文件：components/index/ai/index/ai/business/dashboard/ehs、api/erp/core/monitor/mobile、microfrontend/index+runtime、websocket）+ constants/index 的 export * 自动 + components/ai/business 改行。
+- **rebase 带入远端 commit 冲突修复**：e371fb8d0（marketplace 收敛共享 client 拍板 A）依赖 21 批已删的 createBaseAxiosClient → 从 08fc4bfcc^ 恢复该函数到 client.ts（活，marketplace 消费）。
+- 连锁 unused：删 3 处 type import（PermissionComponents ReactNode/AIDataCompleter CompleteRequest 等/AIFormValidator ValidateRequest 等）；eslint --fix + 复验全绿。
+- 验证：tsc 0 error、eslint 全绿、相关测试 41/42（仅预存在 ScmWmsSrmComponents FilterHint caption）、重扫 **L1=0、L2=207→184**（-23）、L3=4733→4732。
+- 残留 7 文件 13 失败（预存在，勿动）：route-nav-alignment/wms-tms-erp/ScmWmsSrmComponents/AiModelSettings/Dashboard/ErpOperational/FinancialReport。
+- ai/ 120+ L2 type 标注：ai/ 13 子目录外部 0 消费（设计层），整目录删除工程大（涉及 L3 函数互链），建议独立评估。
+### 状态与下批
+- 下批：L2 184 继续——ai/ 设计层整目录评估（或独立任务）；非 ai 剩余 other 组（useBIStore/useUIStore/errorLogger/useInstalledPlugins 已确认活=保留；PeriodOption/DefectForm 测试引用=保留）；completeTodoGql 幽灵项去向核（barrel export * 未展开疑）。
