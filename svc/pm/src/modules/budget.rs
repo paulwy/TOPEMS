@@ -18,6 +18,59 @@ use crate::models::budget::{
 };
 use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
+use rust_decimal::Decimal;
+
+/// 超支硬拦截（业务拍板 A，2026-10-25）：
+/// 登记/更新预算项前校验「预算项合计 ≤ 预算总额」，超支即 422 拒绝并回显口径。
+/// 预算不存在（含跨租户不可见）→ 404。incoming 为 None（部分更新未涉及金额）时放行。
+async fn assert_budget_not_exceeded(
+    pool: &PgPool,
+    budget_id: Uuid,
+    exclude_item_id: Option<Uuid>,
+    incoming: Option<Decimal>,
+) -> Result<(), (u16, String)> {
+    let Some(incoming) = incoming else {
+        return Ok(());
+    };
+    let total: Option<Decimal> = sqlx::query_scalar(only_own_schema_query!(
+        "pm",
+        "SELECT total_amount FROM pm.budgets WHERE id = $1"
+    ))
+    .bind(budget_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("超支校验读取预算失败: {}", e);
+        (500, "超支校验失败".to_string())
+    })?;
+    let Some(total) = total else {
+        return Err((404, "预算不存在".to_string()));
+    };
+    let used: Decimal = sqlx::query_scalar(
+        only_own_schema_query!(
+            "pm",
+            "SELECT COALESCE(SUM(budget_amount), 0) FROM pm.budget_items WHERE budget_id = $1 AND ($2::uuid IS NULL OR id <> $2)"
+        ),
+    )
+    .bind(budget_id)
+    .bind(exclude_item_id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("超支校验读取预算项失败: {}", e);
+        (500, "超支校验失败".to_string())
+    })?;
+    if used + incoming > total {
+        Err((
+            422,
+            format!(
+                "超支拦截：预算总额 {total}，现有预算项合计 {used}，本次 {incoming} 将超出预算"
+            ),
+        ))
+    } else {
+        Ok(())
+    }
+}
 
 // ==================== Pure functions ====================
 
@@ -521,6 +574,12 @@ async fn create_budget_item(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBudgetItemRequest>,
 ) -> Json<ApiResponse<BudgetItem>> {
+    // 超支硬拦截（拍板 A）：登记支出项前校验预算项合计 ≤ 预算总额
+    if let Err((code, msg)) =
+        assert_budget_not_exceeded(&pool, id, None, Some(req.budget_amount)).await
+    {
+        return Json(ApiResponse::error(code, msg.as_str()));
+    }
     let item_id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -572,6 +631,12 @@ async fn update_budget_item(
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateBudgetItemRequest>,
 ) -> Json<ApiResponse<BudgetItem>> {
+    // 超支硬拦截（拍板 A）：更新金额时校验（排除自身）预算项合计 ≤ 预算总额
+    if let Err((code, msg)) =
+        assert_budget_not_exceeded(&pool, id, Some(item_id), req.budget_amount).await
+    {
+        return Json(ApiResponse::error(code, msg.as_str()));
+    }
     let item = sqlx::query_as::<_, BudgetItem>(only_own_schema_query!(
         "pm",
         "UPDATE pm.budget_items SET
