@@ -1,0 +1,72 @@
+-- ============================================================================
+-- DRAFT（草稿，未落地）：erp.financial_vouchers 凭证号租户内唯一约束
+-- 文件：docs/database/draft-2026-10-24-erp-voucher-no-unique.sql
+-- 状态：键序/口径待财务确认，确认前不得移入 database/migrations/
+--       （移入后需按 scripts/migration/validate.sh 流程登记 checksums）。
+--
+-- 背景与候选键依据：
+--   database/migrations/20261023000020_erp_biz_unique_constraints.sql §注释 已登记：
+--   「erp.financial_vouchers.voucher_number 按会计期间(period)重号，
+--     唯一键应为 (tenant_id, period, voucher_number)，口径待财务确认，列入候选报告不补。」
+--   本草稿即该候选键的落地形态。
+--
+-- 表名勘误（任务书 vs 实测）：
+--   任务书原写 finance.vouchers；只读核对 topems_test 实际表为
+--   erp.financial_vouchers（finance.vouchers 不存在）。本索引按实际表写。
+--   实测列（2026-10-24，topems_test）：
+--     id            uuid PK default gen_random_uuid()
+--     tenant_id     uuid 可空
+--     period        varchar NOT NULL        -- 会计期间，如 '2026-10'
+--     voucher_number varchar NOT NULL
+--     deleted_at    timestamptz 可空        -- 软删
+--     organization_id uuid NOT NULL
+--     status        varchar NOT NULL default 'draft'
+--   当前全表 0 行，无存量重复；除 PK 外无任何二级索引。
+--
+-- 幂等：CREATE UNIQUE INDEX IF NOT EXISTS，可重复执行。
+--
+-- 待确认点（落地前必须逐条关闭）：
+--   [ ] Q1 键序：(tenant_id, period, voucher_number) 是否即为财务口径？
+--       是否需要带 organization_id（表上有 organization_id NOT NULL，
+--       若凭证按组织独立编号则应进键）？
+--   [ ] Q2 部分索引 vs 全量：本草稿采用 WHERE deleted_at IS NULL——
+--       软删凭证不占用唯一号，允许删后重开同号。财务是否认可？
+--       若要求「历史号码永不复用」，去掉 WHERE 子句做全量唯一。
+--   [ ] Q3 tenant_id 可空：本表 tenant_id 允许 NULL（同 20261023000020 三表）。
+--       Postgres 唯一索引视 NULL 互不相同 → 多 NULL 租户 + 同 period+号 可共存。
+--       是否符合预期？（与既有可空设计兼容，无需改表）
+--   [ ] Q4 status='draft' 的草稿凭证是否参与唯一？
+--       若草稿可自由编号、仅过账后才算号，谓词应追加 AND status <> 'draft'。
+--   [ ] Q5 存量重复数据：topems_test 现 0 行无重复；落地前必须在生产/预发
+--       重跑下方只读核对 SQL，若有重复须先清洗（合并/改号）再建索引，
+--       否则 CREATE UNIQUE INDEX 会在生产硬失败。
+-- ============================================================================
+
+-- 唯一索引：租户 + 会计期间 + 凭证号，软删行豁免
+-- （索引名沿用任务书候选名 uq_finance_voucher_tenant_period_no；
+--   表已勘误为 erp.financial_vouchers。）
+CREATE UNIQUE INDEX IF NOT EXISTS uq_finance_voucher_tenant_period_no
+    ON erp.financial_vouchers (tenant_id, period, voucher_number)
+    WHERE deleted_at IS NULL;
+
+-- ---------------------------------------------------------------------------
+-- 落地前只读核对（不写库；在目标环境执行）：
+--
+-- ① 确认表/列真实存在（防勘误遗漏）：
+--   SELECT column_name FROM information_schema.columns
+--    WHERE table_schema='erp' AND table_name='financial_vouchers'
+--      AND column_name IN ('tenant_id','period','voucher_number','deleted_at');
+--
+-- ② 存量重复检查（Q5）——有结果即必须先清洗，切勿直接建索引：
+--   SELECT tenant_id, period, voucher_number, count(*) AS cnt,
+--          array_agg(id) AS voucher_ids
+--     FROM erp.financial_vouchers
+--    WHERE deleted_at IS NULL
+--    GROUP BY tenant_id, period, voucher_number
+--   HAVING count(*) > 1
+--    ORDER BY cnt DESC;
+--
+-- ③ 草稿状态占比参考（Q4）：
+--   SELECT status, count(*) FROM erp.financial_vouchers WHERE deleted_at IS NULL
+--    GROUP BY status;
+-- ---------------------------------------------------------------------------

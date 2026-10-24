@@ -1,0 +1,128 @@
+-- ============================================================================
+-- DRAFT（草稿，未落地）：srm.supplier_users 供应商账号映射表
+-- 文件：docs/database/draft-2026-10-24-srm-supplier-user-mapping.sql
+-- 状态：待产品 / 财务 / 安全确认，确认前不得移入 database/migrations/
+--       （移入后需按 scripts/migration/validate.sh 流程登记 checksums）。
+--
+-- 背景：
+--   上轮 srm supplier_portal 拆分后，供应商账号级自助（claims 归属、
+--   供应商登录后只读自己的数据）需要 supplier → user 的映射表。
+--   现网 srm.suppliers 仅有 contact_person / phone / email 文本联系信息，
+--   无任何 user_id 列（已只读核对 topems_test：srm.suppliers 共 24 列，
+--   无 contact_user_id / account_user_id）。
+--
+-- 目标：建立 srm.supplier_users，把「哪个 iam 用户 / 门户账号」绑定到
+--   「哪家供应商」，作为供应商自助门户鉴权与数据归属的桥表。
+--
+-- 幂等风格：对齐 database/migrations/20261024000001_p2_four_tables_tenant_rls.sql
+--   （to_regclass 守卫 + IF NOT EXISTS + DO $$ 块，主/测库可重复执行）。
+-- RLS 谓词：tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true),
+--   '')::uuid, '00000000-0000-0000-0000-000000000000'::uuid)
+--   （超管/未设置 GUC/全零租户 → 需显式 SET app.tenant_id='00000000-...' 才能访问，
+--     与本仓 P2 RLS 谓词约定一致）。
+--
+-- 待确认点（落地前必须逐条关闭）：
+--   [ ] Q1 role 列取值：varchar 自由文本 vs CHECK 枚举？
+--       建议候选：owner（主联系人）/ contact（普通联系人）/ readonly（只读门户账号）。
+--       是否需要绑定 iam 角色 ID 而非字符串？
+--   [ ] Q2 是否冗余：srm.suppliers 已有 contact_person/phone/email 文本字段，
+--       本映射表是否要回写 supplier 表加 primary_contact_user_id 列？
+--       （本草稿倾向：不加，桥表只管账号绑定，联系人信息仍留在 suppliers 表。）
+--   [ ] Q3 user_id 外键：供应商门户账号是否都落在 iam.users？
+--       若是 → 补 REFERENCES iam.users(id)；若门户账号是独立外部表 → 不建 FK，
+--       由应用层保证引用完整性。当前草稿暂不建 FK（下方注释行）。
+--   [ ] Q4 认证流程：供应商登录后 GUC 是设置 app.tenant_id + app.supplier_id
+--       两个，还是仅 app.tenant_id、supplier 范围由应用层过滤？
+--       下方 supplier 范围策略（policy 2）按「设置 app.supplier_id」草案写，
+--       若实际方案不同需改谓词。
+--   [ ] Q5 一个 user_id 是否允许同时绑定多家供应商？当前唯一约束
+--       (tenant_id, supplier_id, user_id) 允许一人多供应商；
+--       若产品要求一人一户，需再加 UNIQUE (tenant_id, user_id)。
+-- ============================================================================
+
+-- 1. 建表
+DO $$
+BEGIN
+    IF to_regclass('srm.supplier_users') IS NULL THEN
+        CREATE TABLE srm.supplier_users (
+            id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            supplier_id uuid NOT NULL REFERENCES srm.suppliers(id) ON DELETE CASCADE,
+            -- Q3 待确认：若门户账号一律在 iam.users，取消下行注释改为：
+            -- user_id    uuid NOT NULL REFERENCES iam.users(id),
+            user_id     uuid NOT NULL,
+            tenant_id   uuid NOT NULL,
+            role        varchar(32) NOT NULL DEFAULT 'contact',   -- Q1：取值待枚举化
+            status      varchar(16) NOT NULL DEFAULT 'active',    -- active / disabled
+            created_at  timestamptz NOT NULL DEFAULT now(),
+            updated_at  timestamptz NOT NULL DEFAULT now(),
+            deleted_at  timestamptz
+        );
+
+        COMMENT ON TABLE srm.supplier_users IS
+          '供应商账号映射桥表（草稿）：user ↔ supplier 多对多绑定，支撑供应商门户自助；待产品/财务/安全确认。';
+    END IF;
+END $$;
+
+-- 2. 租户内「一个 user 在一家供应商下只绑一次」唯一约束（部分索引：软删不挡重绑）
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_indexes
+        WHERE schemaname = 'srm' AND tablename = 'supplier_users'
+          AND indexname = 'supplier_users_tenant_supplier_user_key'
+    ) THEN
+        CREATE UNIQUE INDEX supplier_users_tenant_supplier_user_key
+            ON srm.supplier_users (tenant_id, supplier_id, user_id)
+            WHERE deleted_at IS NULL;
+    END IF;
+END $$;
+
+-- 3. RLS：ENABLE + FORCE + 租户谓词策略
+DO $$
+BEGIN
+    IF to_regclass('srm.supplier_users') IS NOT NULL THEN
+        ALTER TABLE srm.supplier_users ENABLE ROW LEVEL SECURITY;
+        ALTER TABLE srm.supplier_users FORCE  ROW LEVEL SECURITY;
+
+        -- policy 1：租户隔离（与 P2 批次同型谓词，全零租户放行给超管）
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies
+            WHERE schemaname = 'srm' AND tablename = 'supplier_users'
+              AND policyname = 'tenant_isolation_supplier_users'
+        ) THEN
+            CREATE POLICY tenant_isolation_supplier_users ON srm.supplier_users FOR ALL
+            USING (
+                tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
+                                     '00000000-0000-0000-0000-000000000000'::uuid)
+            )
+            WITH CHECK (
+                tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid,
+                                     '00000000-0000-0000-0000-000000000000'::uuid)
+            );
+        END IF;
+
+        -- policy 2：供应商范围（门户自助只读自己那家供应商的绑定记录）
+        -- Q4 待确认：依赖应用在供应商登录后 SET app.supplier_id；
+        -- 若认证方案改为单 GUC（仅 tenant_id），本策略删除、由应用层过滤。
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies
+            WHERE schemaname = 'srm' AND tablename = 'supplier_users'
+              AND policyname = 'supplier_scope_supplier_users'
+        ) THEN
+            CREATE POLICY supplier_scope_supplier_users ON srm.supplier_users FOR SELECT
+            USING (
+                supplier_id = COALESCE(NULLIF(current_setting('app.supplier_id', true), '')::uuid,
+                                       '00000000-0000-0000-0000-000000000000'::uuid)
+                OR current_setting('app.supplier_id', true) IS NULL
+            );
+        END IF;
+    END IF;
+END $$;
+
+-- 落地前只读核对（不写库）：
+--   -- 确认 srm.suppliers 当前无 user_id 类列（本草稿前提）：
+--   SELECT column_name FROM information_schema.columns
+--    WHERE table_schema='srm' AND table_name='suppliers'
+--      AND column_name ILIKE '%user%';
+--   -- 确认没有同名已存在表/策略（防重复绑定）：
+--   SELECT to_regclass('srm.supplier_users');
