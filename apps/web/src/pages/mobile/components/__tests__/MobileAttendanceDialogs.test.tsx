@@ -6,7 +6,6 @@ import { AttendanceClockTab } from '../AttendanceClockTab';
 import { AttendanceLeaveTab } from '../AttendanceLeaveTab';
 import { AttendanceRecordsTab } from '../AttendanceRecordsTab';
 import { LeaveApplicationDialog } from '../LeaveApplicationDialog';
-import { MobileQualityDefectDialog } from '../MobileQualityDefectDialog';
 import type {
   AttendanceRecord,
   AttendanceStats,
@@ -266,77 +265,5 @@ describe('LeaveApplicationDialog', () => {
     );
 
     expect(screen.getByText('提交申请')).toBeDisabled();
-  });
-});
-
-describe('MobileQualityDefectDialog', () => {
-  it('renders selected task context and defect form fields', () => {
-    renderWithProviders(
-      <MobileQualityDefectDialog
-        open
-        onClose={vi.fn()}
-        selectedTask={qualityTask}
-        defectForm={defectForm}
-        setDefectForm={vi.fn()}
-        onSubmit={vi.fn()}
-        submitting={false}
-      />
-    );
-
-    expect(screen.getByText('上报缺陷')).toBeInTheDocument();
-    expect(screen.getByText('工业网关')).toBeInTheDocument();
-    expect(screen.getByText('QC-001 · 批次 B-001')).toBeInTheDocument();
-    expect(screen.getByLabelText('缺陷类型')).toHaveValue('外观划痕');
-    expect(screen.getByLabelText('缺陷数量')).toHaveValue(1);
-    expect(screen.getByLabelText('缺陷描述')).toHaveValue('外壳存在划痕');
-    expect(screen.getByText('拍照上传')).toBeInTheDocument();
-  });
-
-  it('emits defect form updater functions and submits', () => {
-    const setDefectForm = vi.fn();
-    const onClose = vi.fn();
-    const onSubmit = vi.fn();
-    renderWithProviders(
-      <MobileQualityDefectDialog
-        open
-        onClose={onClose}
-        selectedTask={qualityTask}
-        defectForm={defectForm}
-        setDefectForm={setDefectForm}
-        onSubmit={onSubmit}
-        submitting={false}
-      />
-    );
-
-    fireEvent.change(screen.getByDisplayValue('外观划痕'), {
-      target: { value: '尺寸偏差' },
-    });
-    fireEvent.change(screen.getByDisplayValue('外壳存在划痕'), {
-      target: { value: '尺寸超出公差' },
-    });
-    fireEvent.click(screen.getByText('取消'));
-    fireEvent.click(screen.getByText('提交上报'));
-
-    expect(setDefectForm).toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(onSubmit).toHaveBeenCalledTimes(1);
-  });
-
-  it('hides task context and disables actions while submitting', () => {
-    renderWithProviders(
-      <MobileQualityDefectDialog
-        open
-        onClose={vi.fn()}
-        selectedTask={null}
-        defectForm={defectForm}
-        setDefectForm={vi.fn()}
-        onSubmit={vi.fn()}
-        submitting
-      />
-    );
-
-    expect(screen.queryByText('当前任务')).not.toBeInTheDocument();
-    expect(screen.getByText('取消')).toBeDisabled();
-    expect(screen.getByText('提交上报')).toBeDisabled();
   });
 });

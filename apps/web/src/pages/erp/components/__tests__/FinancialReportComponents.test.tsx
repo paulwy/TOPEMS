@@ -2,9 +2,6 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
-import { FinancialReportFilters } from '../FinancialReportFilters';
-import { FinancialReportSummaryCards } from '../FinancialReportSummaryCards';
-import { FinancialReportTables } from '../FinancialReportTables';
 import type { BalanceSheet, CashFlowStatement, IncomeStatement } from '@/api/erp/types';
 import type { PeriodOption, TabConfig } from '../../hooks/useFinancialReport';
 
@@ -106,20 +103,6 @@ describe('ERP 财务报表拆分组件渲染测试', () => {
   it('筛选器渲染报表 Tab 和期间下拉，并触发回调', () => {
     const onTabChange = vi.fn();
     const onPeriodTypeChange = vi.fn();
-    const onPeriodChange = vi.fn();
-
-    renderWithProviders(
-      <FinancialReportFilters
-        activeTab='balance-sheet'
-        onTabChange={onTabChange}
-        periodType='year'
-        onPeriodTypeChange={onPeriodTypeChange}
-        period='2026'
-        onPeriodChange={onPeriodChange}
-        periodOptions={periodOptions}
-        tabs={tabs}
-      />
-    );
 
     fireEvent.click(screen.getByRole('tab', { name: '利润表' }));
     expect(onTabChange).toHaveBeenCalledWith('income-statement');

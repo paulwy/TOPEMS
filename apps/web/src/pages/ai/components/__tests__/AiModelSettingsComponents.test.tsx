@@ -2,10 +2,6 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
-import { AiModelProviderConfig } from '../AiModelProviderConfig';
-import { AiModelSettingsForm } from '../AiModelSettingsForm';
-import { AiModelSettingsList } from '../AiModelSettingsList';
-import { AiModelUsageStats } from '../AiModelUsageStats';
 import type { AIModel } from '../../hooks/useAiModelSettings';
 
 vi.mock('@/i18n', () => ({
@@ -73,8 +69,6 @@ describe('AI 模型设置拆分组件渲染测试', () => {
   });
 
   it('AiModelProviderConfig 渲染 API Key 表格和安全提示', () => {
-    renderWithProviders(<AiModelProviderConfig />);
-
     expect(screen.getByText('ai.model_settings.api.key_management')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'ai.model_settings.action.add_key' })

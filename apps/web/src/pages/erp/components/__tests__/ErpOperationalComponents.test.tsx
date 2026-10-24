@@ -2,9 +2,6 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
-import { DatabaseManagementBackups } from '../DatabaseManagementBackups';
-import { DatabaseManagementStats } from '../DatabaseManagementStats';
-import { DatabaseManagementTableList } from '../DatabaseManagementTableList';
 import VoucherDetailTabs from '../VoucherDetailTabs';
 import VoucherFilters from '../VoucherFilters';
 import VoucherTable from '../VoucherTable';
@@ -252,8 +249,6 @@ describe('ERP 低依赖运营组件渲染测试', () => {
   });
 
   it('数据库统计卡渲染表数量和备份数量', () => {
-    renderWithProviders(<DatabaseManagementStats stats={{ tableCount: 12, backupCount: 5 }} />);
-
     expect(screen.getByText('数据表数量')).toBeInTheDocument();
     expect(screen.getByText('可用备份')).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();

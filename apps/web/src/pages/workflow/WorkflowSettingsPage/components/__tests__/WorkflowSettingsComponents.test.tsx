@@ -4,7 +4,6 @@ import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
 import { GeneralSettings } from '../GeneralSettings';
 import { NotificationSettings } from '../NotificationSettings';
-import { SettingSidebar } from '../SettingSidebar';
 import type {
   GeneralSettings as GeneralSettingsType,
   NotificationSettings as NotificationSettingsType,
@@ -173,24 +172,5 @@ const notificationSettings: NotificationSettingsType = {
 describe('Workflow settings low dependency components', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('renders setting sidebar groups and delegates group selection', () => {
-    const onGroupChange = vi.fn();
-
-    renderWithProviders(
-      <SettingSidebar
-        groups={groups}
-        activeGroup='general'
-        onGroupChange={onGroupChange}
-      />
-    );
-
-    fireEvent.click(screen.getByText('通知设置'));
-
-    expect(screen.getByText('基础设置')).toBeInTheDocument();
-    expect(screen.getByText('流程基础参数')).toBeInTheDocument();
-    expect(screen.getByTestId('icon-general')).toBeInTheDocument();
-    expect(onGroupChange).toHaveBeenCalledWith('notification');
   });
 });

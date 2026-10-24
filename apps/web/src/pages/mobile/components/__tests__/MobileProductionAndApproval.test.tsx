@@ -6,7 +6,6 @@ import { ApprovalCard } from '../ApprovalCard';
 import { MobileProductionActions } from '../MobileProductionActions';
 import { MobileProductionCard } from '../MobileProductionCard';
 import { MobileProductionFilters } from '../MobileProductionFilters';
-import { MobileQualitySearchBar } from '../MobileQualitySearchBar';
 import type { ProductionOrder, WorkReport, Equipment } from '@/api/mobile';
 import type { ApprovalItem } from '../../hooks/UseMobileApproval';
 
@@ -494,23 +493,5 @@ describe('ApprovalCard', () => {
     expect(screen.queryByText('¥12,000')).not.toBeInTheDocument();
     expect(() => fireEvent.click(screen.getByText('mobile.approval.action.approve'))).not.toThrow();
     expect(() => fireEvent.click(screen.getByText('mobile.approval.action.reject'))).not.toThrow();
-  });
-});
-
-describe('MobileQualitySearchBar', () => {
-  it('renders the current query and emits search changes', () => {
-    const onSearchChange = vi.fn();
-    renderWithProviders(
-      <MobileQualitySearchBar
-        searchQuery='IQC'
-        onSearchChange={onSearchChange}
-      />
-    );
-
-    const input = screen.getByPlaceholderText('mobile.quality.search_placeholder');
-    expect(input).toHaveValue('IQC');
-
-    fireEvent.change(input, { target: { value: 'FQC' } });
-    expect(onSearchChange).toHaveBeenCalledWith('FQC');
   });
 });

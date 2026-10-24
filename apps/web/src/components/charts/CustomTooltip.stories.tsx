@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import CustomTooltip from './CustomTooltip';
-import { DEMO_COLORS } from './chartPalette';
 
 const meta = {
   title: 'Charts/CustomTooltip',
@@ -28,8 +27,18 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const samplePayload = [
-  { name: '本月销售额', value: 128400, color: DEMO_COLORS.materialBlue, dataKey: 'sales' },
-  { name: '目标值', value: 120000, color: DEMO_COLORS.neutralGrey, dataKey: 'target' },
+  {
+    name: '本月销售额',
+    value: 128400,
+    color: ['#4e79a7', '#f28e2c', '#e15759', '#76b7b2', '#59a14f'].materialBlue,
+    dataKey: 'sales',
+  },
+  {
+    name: '目标值',
+    value: 120000,
+    color: ['#4e79a7', '#f28e2c', '#e15759', '#76b7b2', '#59a14f'].neutralGrey,
+    dataKey: 'target',
+  },
 ];
 
 export const Default: Story = {

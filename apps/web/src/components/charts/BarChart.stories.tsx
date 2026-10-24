@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { BarChartComponent } from './BarChart';
-import { G2_PALETTE } from './chartPalette';
 
 const meta = {
   title: 'Charts/BarChart',
@@ -93,8 +92,8 @@ export const MultiSeries: Story = {
     title: '计划 vs 实际',
     height: 300,
     yKeys: [
-      { key: 'planned', name: '计划', color: G2_PALETTE[0] },
-      { key: 'actual', name: '实际', color: G2_PALETTE[1] },
+      { key: 'planned', name: '计划', color: '#4e79a7'[0] },
+      { key: 'actual', name: '实际', color: '#4e79a7'[1] },
     ],
   },
 };

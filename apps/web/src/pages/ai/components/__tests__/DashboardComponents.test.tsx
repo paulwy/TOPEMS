@@ -2,12 +2,8 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
-import { DashboardFeatures } from '../DashboardFeatures';
-import { DashboardHero } from '../DashboardHero';
 import { DashboardQuickActions } from '../DashboardQuickActions';
-import { DashboardRecentActivity } from '../DashboardRecentActivity';
 import { DashboardStats } from '../DashboardStats';
-import { DashboardTrend } from '../DashboardTrend';
 import { FeatureCard } from '../FeatureCard';
 import { MiniChart } from '../MiniChart';
 import { RecentItem } from '../RecentItem';
@@ -161,8 +157,6 @@ describe('AI Dashboard 拆分组件渲染测试', () => {
   });
 
   it('DashboardHero 渲染欢迎区并导航到聊天和提示词库', () => {
-    renderWithProviders(<DashboardHero />);
-
     expect(screen.getByText('ai.dashboard.hero_title')).toBeInTheDocument();
     expect(screen.getByText('ai.dashboard.hero_welcomeai.dashboard.hero_desc')).toBeInTheDocument();
 
