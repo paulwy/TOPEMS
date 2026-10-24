@@ -261,7 +261,7 @@ function main() {
 
   for (const [name, exps] of exportMap) {
     // 候选定义文件集合
-    const defFiles = new Set(exps.map((e) => e.file));
+    const defFiles = new Set(exps.filter((e) => !e.isReExport).map((e) => e.file));
     const reffingFiles = reverseIndex.get(name) || new Set();
 
     // 真实引用文件数 = 出现的所有文件 - 定义文件
@@ -300,6 +300,33 @@ function main() {
         }
       }
       level = allL2 ? 'L2' : 'L3';
+    }
+
+
+    // [v2] 两级聚合消费链升级：L2 候选若被「有外部消费的聚合对象」引用成员 → 升 L3（活）
+    // （修复历史误判：barrel re-export 文件曾计入 defFiles 被扣除，导致聚合对象成员误报 L1）
+    if (level === 'L2') {
+      let promoted = false;
+      for (const rf of realRefFiles) {
+        if (!/\/index\.(ts|tsx)$/.test(rf)) continue;
+        let bSrc;
+        try { bSrc = fs.readFileSync(path.join(ROOT, rf), 'utf8'); } catch { continue; }
+        const aggRe = /\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*\{/g;
+        let am;
+        while ((am = aggRe.exec(bSrc)) !== null) {
+          const aggName = am[1];
+          const after = bSrc.slice(am.index);
+          const mEnd = after.search(/\n\s*\};/);
+          const body = mEnd > -1 ? after.slice(0, mEnd) : after;
+          if (new RegExp('\\b' + name + '\\b').test(body)) {
+            const aggRefs = reverseIndex.get(aggName) || new Set();
+            const extRef = [...aggRefs].some((rf2) => !/\/index\.(ts|tsx)$/.test(rf2) && rf2 !== rf);
+            if (extRef) { promoted = true; break; }
+          }
+        }
+        if (promoted) break;
+      }
+      if (promoted) level = 'L3';
     }
 
     const record = {
