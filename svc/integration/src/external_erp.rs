@@ -24,15 +24,23 @@ fn tenant_uuid(claims: &Claims) -> Uuid {
         .unwrap_or(Uuid::nil())
 }
 
-// ===== SSRF 防护（P2 低风险配套 + DNS 重绑定加固） =====
+// ===== SSRF 防护（默认封锁私网段 + env 白名单显式放行 + DNS 重绑定加固） =====
 //
-// 范围：「回环/链路本地/未指定段封锁 + 错误回传脱敏 + 域名目标 DNS 解析校验」。
-// 地址白名单策略（允许哪些内网网段访问 ERP）属产品决策项，暂不自动开启，
-// 标注待产品确认（TODO(product): 内网地址白名单策略）。
+// 范围：「回环/链路本地/未指定/私网段封锁 + 错误回传脱敏 + 域名目标 DNS 解析校验」。
+// 封锁集合（blocked_ip）：
+//   - 回环 127.0.0.0/8、::1；
+//   - 链路本地 169.254.0.0/16、fe80::/10（含云元数据 169.254.169.254）；
+//   - 未指定 0.0.0.0、::；
+//   - IPv4 私网段 10.0.0.0/8、172.16.0.0/12、192.168.0.0/16（std is_private，RFC1918）；
+//   - IPv6 唯一本地地址 fc00::/7（ULA，私网对应段）。
+// 白名单放行：环境变量 EXTERNAL_ERP_ALLOWED_HOSTS（逗号分隔），单项支持
+// 精确域名、精确 IP、CIDR 前缀（IPv4/IPv6）。命中即跳过封锁，优先级最高
+// （先于代理跳过逻辑）；env 未设置/为空 → 全部按默认封锁。每次判定前实时读取
+// env，运行时变更无需重启（与 has_egress_proxy 读取时机一致）。
 //
 // 若进程配置了出口代理（HTTP_PROXY / HTTPS_PROXY / ALL_PROXY 环境变量），
 // 请求实际发往代理而非直连目标，本地封锁无意义 → 跳过封锁并依赖代理出口策略，
-// 同时打 warn 日志便于审计。
+// 同时打 warn 日志便于审计（白名单命中时直接放行，不打该 warn）。
 
 /// 进程是否已配置出口代理（大小写不敏感）
 fn has_egress_proxy() -> bool {
@@ -47,25 +55,171 @@ fn has_egress_proxy() -> bool {
 
 /// 纯函数：单个 IP 是否命中 SSRF 封锁段。
 /// 封锁集合：回环 127.0.0.0/8、::1；链路本地 169.254.0.0/16、fe80::/10；
-/// 未指定地址 0.0.0.0、::。IP 直连判定与域名解析结果（DNS 重绑定防护）共用本函数。
-/// 注意：私网段（10/8、172.16/12、192.168/16）不在本函数封锁范围内
-/// （白名单策略待产品确认，本轮不改）。
+/// 未指定地址 0.0.0.0、::；IPv4 私网段 10.0.0.0/8、172.16.0.0/12、192.168.0.0/16
+/// （std `Ipv4Addr::is_private`，RFC1918）；IPv6 唯一本地地址 fc00::/7（ULA）。
+/// IP 直连判定与域名解析结果（DNS 重绑定防护）共用本函数。
+/// 例外：EXTERNAL_ERP_ALLOWED_HOSTS 白名单命中的目标不经过本函数封锁
+/// （见 host_whitelisted / ip_whitelisted，判定优先级高于本函数）。
 fn blocked_ip(ip: std::net::IpAddr) -> bool {
     match ip {
-        std::net::IpAddr::V4(v4) => v4.is_loopback() || v4.is_link_local() || v4.is_unspecified(),
+        std::net::IpAddr::V4(v4) => {
+            // is_loopback: 127.0.0.0/8；is_link_local: 169.254.0.0/16；
+            // is_unspecified: 0.0.0.0；is_private: RFC1918 私网段
+            v4.is_loopback() || v4.is_link_local() || v4.is_unspecified() || v4.is_private()
+        }
         std::net::IpAddr::V6(v6) => {
-            // ::1 回环；:: 未指定；fe80::/10 链路本地（std 未提供 is_link_local，手动判定）
-            v6.is_loopback() || v6.is_unspecified() || (v6.segments()[0] & 0xffc0 == 0xfe80)
+            // ::1 回环；:: 未指定；fe80::/10 链路本地（std 未提供 is_link_local，手动判定）；
+            // fc00::/7 唯一本地地址 ULA（私网对应段）
+            v6.is_loopback()
+                || v6.is_unspecified()
+                || (v6.segments()[0] & 0xffc0 == 0xfe80)
+                || v6_unique_local(v6)
         }
     }
 }
 
+/// IPv6 唯一本地地址（ULA，fc00::/7）：首字节高 7 位恒为 1111110，
+/// 即首字节 ∈ 0xFC..=0xFD（fc00:: 与 fd00::/8 两段合并为 /7）。
+fn v6_unique_local(v6: std::net::Ipv6Addr) -> bool {
+    v6.octets()[0] & 0xfe == 0xfc
+}
+
+// ===== EXTERNAL_ERP_ALLOWED_HOSTS 白名单（显式放行内网/私网目标） =====
+
+/// 白名单条目：EXTERNAL_ERP_ALLOWED_HOSTS 逗号分隔列表中的单项（小写化后存储）。
+#[derive(Debug, Clone, PartialEq)]
+enum AllowEntry {
+    /// 精确域名：与 URL host 整串相等（小写比较，不含端口），如 `erp.corp.local`。
+    Domain(String),
+    /// 精确 IP，如 `10.0.0.5`。
+    Ip(std::net::IpAddr),
+    /// IPv4 CIDR 前缀，如 `10.0.0.0/8`、`172.16.0.0/12`（网络号已按 mask 归一）。
+    CidrV4 { net: u32, mask: u32 },
+    /// IPv6 CIDR 前缀，如 `fd00::/8`、`fc00::/7`（网络号已按 mask 归一）。
+    CidrV6 { net: u128, mask: u128 },
+}
+
+/// 纯函数：解析 EXTERNAL_ERP_ALLOWED_HOSTS 原始串为白名单条目列表。
+/// 逗号分隔；空项与无法识别的单项跳过（不使整个白名单失效）。单项格式：
+/// 精确域名 / 精确 IP / `IP/前缀` CIDR（IPv4 前缀 0..=32，IPv6 前缀 0..=128）。
+/// 未新增第三方依赖：CIDR 归一与包含判定均用 std（u32/u128 位运算）。
+fn parse_allowed_hosts(raw: &str) -> Vec<AllowEntry> {
+    raw.split(',')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .filter_map(|s| parse_allowed_entry(&s.to_lowercase()))
+        .collect()
+}
+
+/// 解析单个白名单条目；非法单项返回 None（跳过）。
+fn parse_allowed_entry(lower: &str) -> Option<AllowEntry> {
+    if let Some((net_str, prefix_str)) = lower.split_once('/') {
+        // CIDR 形式。IPv6 文本含 ':' 不含 '/'，split_once('/') 不会误切。
+        let prefix: u32 = prefix_str.parse().ok()?;
+        return match net_str.parse::<std::net::IpAddr>().ok()? {
+            std::net::IpAddr::V4(v4) => {
+                if prefix > 32 {
+                    return None;
+                }
+                let mask = if prefix == 0 { 0u32 } else { u32::MAX << (32 - prefix) };
+                Some(AllowEntry::CidrV4 {
+                    net: u32::from(v4) & mask,
+                    mask,
+                })
+            }
+            std::net::IpAddr::V6(v6) => {
+                if prefix > 128 {
+                    return None;
+                }
+                let mask = if prefix == 0 { 0u128 } else { u128::MAX << (128 - prefix) };
+                Some(AllowEntry::CidrV6 {
+                    net: u128::from(v6) & mask,
+                    mask,
+                })
+            }
+        };
+    }
+    // 精确 IP
+    if let Ok(ip) = lower.parse::<std::net::IpAddr>() {
+        return Some(AllowEntry::Ip(ip));
+    }
+    // 精确域名：拒绝含端口（':'）或空白的项（URL host 比对不含端口）。
+    // 此处不做严格域名语法校验——作为整串精确匹配，误配只会导致该条目永不命中。
+    if lower.chars().any(|c| c == ':' || c.is_whitespace()) {
+        return None;
+    }
+    Some(AllowEntry::Domain(lower.to_string()))
+}
+
+/// 白名单实时读取：每次 SSRF 判定前调用（与 has_egress_proxy 读取时机一致），
+/// 运行时变更 env 即可生效、无需重启；env::var 开销可忽略（判定点仅在外部 ERP
+/// 调用/探测前，非热路径）。env 未设置或为空 → 返回空列表（全部按默认封锁）。
+fn allowed_host_entries() -> Vec<AllowEntry> {
+    match std::env::var("EXTERNAL_ERP_ALLOWED_HOSTS") {
+        Ok(raw) => parse_allowed_hosts(&raw),
+        Err(_) => Vec::new(),
+    }
+}
+
+/// 纯函数：URL host 字符串是否命中白名单（精确域名 / 精确 IP / CIDR）。
+/// 入参为 URL 解析出的 host（可能带方括号 IPv6），内部归一化（去括号、小写）后比对。
+fn host_whitelisted(host: &str, entries: &[AllowEntry]) -> bool {
+    let h = host
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .to_lowercase();
+    if h.is_empty() {
+        return false;
+    }
+    entries.iter().any(|e| match e {
+        AllowEntry::Domain(d) => h == *d,
+        AllowEntry::Ip(allowed) => h
+            .parse::<std::net::IpAddr>()
+            .map(|parsed| &parsed == allowed)
+            .unwrap_or(false),
+        AllowEntry::CidrV4 { net, mask } => match h.parse::<std::net::IpAddr>() {
+            Ok(std::net::IpAddr::V4(v4)) => (u32::from(v4) & *mask) == *net,
+            _ => false,
+        },
+        AllowEntry::CidrV6 { net, mask } => match h.parse::<std::net::IpAddr>() {
+            Ok(std::net::IpAddr::V6(v6)) => (u128::from(v6) & *mask) == *net,
+            _ => false,
+        },
+    })
+}
+
+/// 纯函数：解析后的 IP 是否命中白名单（精确 IP / CIDR；域名条目不参与 IP 匹配）。
+fn ip_whitelisted(ip: std::net::IpAddr, entries: &[AllowEntry]) -> bool {
+    entries.iter().any(|e| match e {
+        AllowEntry::Domain(_) => false,
+        AllowEntry::Ip(allowed) => allowed == &ip,
+        AllowEntry::CidrV4 { net, mask } => match ip {
+            std::net::IpAddr::V4(v4) => (u32::from(v4) & *mask) == *net,
+            _ => false,
+        },
+        AllowEntry::CidrV6 { net, mask } => match ip {
+            std::net::IpAddr::V6(v6) => (u128::from(v6) & *mask) == *net,
+            _ => false,
+        },
+    })
+}
+
 /// 判断目标 URL 是否命中 SSRF 封锁规则（回环 127.0.0.0/8、::1；
-/// 链路本地 169.254.0.0/16；未指定地址 0.0.0.0；主机名 localhost；
-/// host 为 IP 直连时按 blocked_ip 判定）。
+/// 链路本地 169.254.0.0/16；未指定地址 0.0.0.0；私网段 10/8、172.16/12、192.168/16；
+/// 主机名 localhost；host 为 IP 直连时按 blocked_ip 判定）。
+/// 白名单：EXTERNAL_ERP_ALLOWED_HOSTS 命中（精确域名/精确 IP/CIDR）时直接放行，
+/// 优先级最高（先于代理跳过判定）。
 /// 域名形式 host 不在本同步函数内解析——DNS 校验由 ssrf_target_blocked_async
 /// 在异步调用点补齐（DNS 重绑定防护）。走代理时返回 false（跳过封锁，依赖代理策略）。
 fn ssrf_target_blocked(url: &str) -> bool {
+    let host = match url::Url::parse(url) {
+        Ok(u) => u.host().map(|h| h.to_string()).unwrap_or_default(),
+        Err(_) => return true, // 无法解析的 URL 一律拒绝
+    };
+    // 白名单最高优先：命中即放行（先于代理跳过判定）
+    if host_whitelisted(&host, &allowed_host_entries()) {
+        return false;
+    }
     if has_egress_proxy() {
         tracing::warn!(
             "external_erp SSRF: 检测到出口代理环境变量，跳过本地目标封锁，依赖代理出口策略 (url={})",
@@ -73,10 +227,6 @@ fn ssrf_target_blocked(url: &str) -> bool {
         );
         return false;
     }
-    let host = match url::Url::parse(url) {
-        Ok(u) => u.host().map(|h| h.to_string()).unwrap_or_default(),
-        Err(_) => return true, // 无法解析的 URL 一律拒绝
-    };
     ssrf_host_blocked(&host)
 }
 
@@ -97,7 +247,9 @@ fn ssrf_host_blocked(host: &str) -> bool {
 }
 
 /// DNS 重绑定加固（异步）：对域名形式的目标 host 做 DNS 解析，
-/// 解析出的全部 IP 中任一命中 blocked_ip（回环/链路本地/未指定）即拒绝。
+/// 解析出的全部 IP 中任一命中 blocked_ip（回环/链路本地/未指定/私网段）即拒绝。
+/// 白名单：EXTERNAL_ERP_ALLOWED_HOSTS 命中即放行——host 字符串命中（精确域名/
+/// 精确 IP/CIDR）直接放行，不做后续解析；解析后任一 IP 命中精确 IP/CIDR 条目亦放行。
 /// 解析策略：
 /// - IP 直连 host：返回 false（已由 ssrf_host_blocked / blocked_ip 判定）；
 /// - 域名 host：`tokio::net::lookup_host` 解析，任一解析 IP 被封锁 → blocked；
@@ -106,9 +258,6 @@ fn ssrf_host_blocked(host: &str) -> bool {
 ///   拒绝不损失真实可用性，仅堵死「解析器投毒/分裂 DNS」绕过路径）。
 /// 走代理时与 ssrf_target_blocked 一致：跳过本地校验（warn 已在同步侧打）。
 async fn ssrf_target_blocked_async(url: &str) -> bool {
-    if has_egress_proxy() {
-        return false;
-    }
     let host = match url::Url::parse(url) {
         Ok(u) => u.host().map(|h| h.to_string()).unwrap_or_default(),
         Err(_) => return true, // 无法解析 URL：同步侧已拒绝，此处保持一致
@@ -117,12 +266,30 @@ async fn ssrf_target_blocked_async(url: &str) -> bool {
         .trim_start_matches('[')
         .trim_end_matches(']')
         .to_lowercase();
+    let entries = allowed_host_entries();
+    // 白名单最高优先：host 字符串命中（精确域名/精确 IP/CIDR）即放行，
+    // 先于代理跳过与 DNS 解析判定；operator 显式信任的目标不再做解析校验。
+    if host_whitelisted(&host, &entries) {
+        return false;
+    }
+    if has_egress_proxy() {
+        return false;
+    }
     if host.is_empty() || host.parse::<std::net::IpAddr>().is_ok() {
         return false; // IP 直连 / localhost 已在同步侧判定
     }
     let resolved = tokio::net::lookup_host((host.as_str(), 0)).await;
     match resolved {
-        Ok(addrs) => addrs.into_iter().any(|sa| blocked_ip(sa.ip())),
+        Ok(addrs) => {
+            let addrs: Vec<_> = addrs.collect();
+            // 白名单（精确 IP/CIDR）：任一解析 IP 命中 → 放行（operator 显式 opt-in）。
+            // 注意：此放行以 operator 配置为准；默认（白名单为空）仍保持
+            // 「任一解析 IP 命中封锁段即拒绝」的 DNS 重绑定防护。
+            if addrs.iter().any(|sa| ip_whitelisted(sa.ip(), &entries)) {
+                return false;
+            }
+            addrs.iter().any(|sa| blocked_ip(sa.ip()))
+        }
         Err(e) => {
             tracing::warn!(
                 "external_erp SSRF: 目标域名 DNS 解析失败，保守拒绝 (host={}, err={})",
@@ -302,17 +469,20 @@ pub(crate) struct ProbeResult {
 /// 真实 HTTP 连通性探测：对目标 URL 发起 GET 请求，带整体超时。
 /// 成功判定：HTTP 2xx/3xx；连接拒绝 / DNS 失败 / 超时均返回失败（success=false），
 /// 不再出现"仅校验 URL 前缀即报成功"的假探测。
-/// SSRF 防护（P2 低风险配套）：封锁回环/链路本地目标；错误原文脱敏后回传，
-/// 不暴露内网地址/端口细节。地址白名单策略待产品确认（见模块头注释）。
+/// SSRF 防护：封锁回环/链路本地/未指定/私网段目标；EXTERNAL_ERP_ALLOWED_HOSTS
+/// 白名单命中者放行；错误原文脱敏后回传，不暴露内网地址/端口细节（见模块头注释）。
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub(crate) async fn probe_http_url(api_url: &str, timeout_ms: u64) -> ProbeResult {
-    // SSRF 目标封锁：回环/链路本地段 + 域名 DNS 解析校验（防 DNS 重绑定）
+    // SSRF 目标封锁：回环/链路本地/私网段 + 域名 DNS 解析校验（防 DNS 重绑定）
     if ssrf_target_blocked(api_url) || ssrf_target_blocked_async(api_url).await {
         return ProbeResult {
             success: false,
             response_time_ms: 0,
             http_status: None,
-            error_message: Some("目标地址被安全策略拒绝（回环/链路本地段禁止访问）".to_string()),
+            error_message: Some(
+                "目标地址被安全策略拒绝（回环/链路本地/私网段禁止访问；内网目标请配置 EXTERNAL_ERP_ALLOWED_HOSTS 显式放行）"
+                    .to_string(),
+            ),
         };
     }
 
@@ -731,8 +901,9 @@ async fn get_connection_by_id(
 }
 
 /// 调用 ERP API（支持认证头）
-/// SSRF 防护：请求前封锁回环/链路本地目标；错误信息脱敏，不向调用方回传
-/// 含内网地址/端口/完整 URL 的 reqwest 原文（原文仅落服务端日志）。
+/// SSRF 防护：请求前封锁回环/链路本地/未指定/私网段目标（EXTERNAL_ERP_ALLOWED_HOSTS
+/// 白名单命中者放行）；错误信息脱敏，不向调用方回传含内网地址/端口/完整 URL 的
+/// reqwest 原文（原文仅落服务端日志）。
 async fn call_erp_api(
     connection: &ErpConnection,
     method: &str,
@@ -744,7 +915,7 @@ async fn call_erp_api(
     if ssrf_target_blocked(&url) || ssrf_target_blocked_async(&url).await {
         tracing::warn!("external_erp SSRF blocked: {}", url);
         return Err(TopemsError::BusinessLogic(
-            "目标地址被安全策略拒绝（回环/链路本地段禁止访问）".to_string(),
+            "目标地址被安全策略拒绝（回环/链路本地/私网段禁止访问）".to_string(),
         ));
     }
 
@@ -1735,6 +1906,14 @@ pub fn create_routes() -> Router<AppState> {
 mod ssrf_tests {
     use super::*;
 
+    /// env 全局状态互斥锁：EXTERNAL_ERP_ALLOWED_HOSTS 是进程级环境变量，
+    /// 「默认封锁」语义的断言测试与 env 注入测试共用本锁串行执行，
+    /// 避免并行测试互相污染。
+    static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    fn env_lock_guard() -> std::sync::MutexGuard<'static, ()> {
+        ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
     #[test]
     fn blocks_loopback_ipv4() {
         assert!(ssrf_host_blocked("127.0.0.1"));
@@ -1761,11 +1940,13 @@ mod ssrf_tests {
 
     #[test]
     fn allows_public_targets() {
+        let _guard = env_lock_guard(); // 断言「白名单为空」语义，需与 env 注入测试互斥
         assert!(!ssrf_target_blocked(
             "https://erp.customer.example.com/api/v1"
         ));
         assert!(!ssrf_target_blocked("http://8.8.8.8:8080/"));
-        assert!(!ssrf_target_blocked("http://10.0.0.5:8080/")); // 私网不在本批封锁范围（待产品白名单决策）
+        // 私网段已并入默认封锁（EXTERNAL_ERP_ALLOWED_HOSTS 可显式放行）
+        assert!(ssrf_target_blocked("http://10.0.0.5:8080/"));
     }
 
     #[test]
@@ -1788,14 +1969,98 @@ mod ssrf_tests {
         // 未指定地址
         assert!(blocked_ip(parse("0.0.0.0")));
         assert!(blocked_ip(parse("::")));
-        // 公网与私网（私网白名单策略待产品确认，本轮不封锁）
+        // IPv4 私网段（RFC1918）本轮并入默认封锁
+        assert!(blocked_ip(parse("10.0.0.5")));
+        assert!(blocked_ip(parse("172.16.3.4")));
+        assert!(blocked_ip(parse("192.168.1.1")));
+        // IPv6 唯一本地地址 fc00::/7 封锁
+        assert!(blocked_ip(parse("fc00::1")));
+        assert!(blocked_ip(parse("fd12:3456:7890::abcd")));
+        // 公网不封锁
         assert!(!blocked_ip(parse("8.8.8.8")));
         assert!(!blocked_ip(parse("1.1.1.1")));
-        assert!(!blocked_ip(parse("10.0.0.5")));
-        assert!(!blocked_ip(parse("172.16.3.4")));
-        assert!(!blocked_ip(parse("192.168.1.1")));
         // 其他公网 IPv6（非链路本地前缀）不封锁
         assert!(!blocked_ip(parse("2606:4700:4700::1111")));
+    }
+
+    #[test]
+    fn blocks_private_network_segments() {
+        let _guard = env_lock_guard(); // 断言「白名单为空」语义，需与 env 注入测试互斥
+        // IPv4 私网段（RFC1918）并入默认封锁：同步侧 IP 直连路径
+        assert!(ssrf_host_blocked("10.0.0.1"));
+        assert!(ssrf_target_blocked("http://10.0.0.1:8080/api"));
+        assert!(ssrf_host_blocked("172.16.0.1"));
+        assert!(ssrf_host_blocked("172.31.255.254"));
+        assert!(ssrf_target_blocked("http://172.20.4.9/"));
+        assert!(ssrf_host_blocked("192.168.1.1"));
+        assert!(ssrf_target_blocked("http://192.168.0.10:9000/"));
+        // 私网段边界外不封锁
+        assert!(!ssrf_host_blocked("11.0.0.1"));
+        assert!(!ssrf_host_blocked("172.15.0.1"));
+        assert!(!ssrf_host_blocked("172.32.0.1"));
+        assert!(!ssrf_host_blocked("192.169.0.1"));
+    }
+
+    #[test]
+    fn parse_allowed_hosts_domains_ips_cidrs() {
+        let entries = parse_allowed_hosts(
+            "erp.corp.local, 10.0.0.5, 10.0.0.0/8, 172.16.0.0/12, fd00::/8, ,",
+        );
+        // 精确域名（整串、大小写不敏感）
+        assert!(host_whitelisted("erp.corp.local", &entries));
+        assert!(host_whitelisted("ERP.CORP.LOCAL", &entries));
+        assert!(!host_whitelisted("corp.local", &entries)); // 非整串子串不命中
+        assert!(!host_whitelisted("evil.com", &entries));
+        // 精确 IP / CIDR：10.0.0.5 同时被精确条目与 10.0.0.0/8 CIDR 命中；
+        // 10.0.0.6 虽不是精确条目，但落在 CIDR 内
+        assert!(host_whitelisted("10.0.0.5", &entries));
+        assert!(host_whitelisted("10.0.0.6", &entries));
+        // 纯精确 IP 条目不扩展到同段其他地址
+        let exact_only = parse_allowed_hosts("10.0.0.5");
+        assert!(host_whitelisted("10.0.0.5", &exact_only));
+        assert!(!host_whitelisted("10.0.0.6", &exact_only));
+        // IPv4 CIDR 命中与边界
+        assert!(host_whitelisted("10.9.9.9", &entries));
+        assert!(host_whitelisted("172.16.0.1", &entries));
+        assert!(host_whitelisted("172.31.255.254", &entries));
+        assert!(!host_whitelisted("172.15.0.1", &entries));
+        assert!(!host_whitelisted("172.32.0.1", &entries));
+        assert!(!host_whitelisted("8.8.8.8", &entries));
+        // IPv6 CIDR
+        assert!(host_whitelisted("fd00::1", &entries));
+        assert!(!host_whitelisted("fc00::1", &entries)); // fd00::/8 不含 fc00::
+        // 解析后 IP 匹配（异步侧 DNS 校验路径）
+        use std::net::IpAddr;
+        let parse = |s: &str| s.parse::<IpAddr>().unwrap();
+        assert!(ip_whitelisted(parse("10.20.30.40"), &entries));
+        assert!(ip_whitelisted(parse("fd12::1"), &entries));
+        assert!(!ip_whitelisted(parse("8.8.8.8"), &entries));
+        assert!(!ip_whitelisted(parse("169.254.169.254"), &entries));
+        // 非法单项跳过（端口项/空白项/超长前缀）
+        let bad = parse_allowed_hosts("erp.local:8080, not a domain, 10.0.0.0/33, 2001:db8::/129");
+        assert!(bad.is_empty());
+    }
+
+    /// env 注入集成测试：set_var/remove_var 为进程全局状态，用模块级互斥锁
+    /// 与「默认封锁」断言测试串行化；结束后恢复原值。
+    #[test]
+    fn whitelist_env_allows_private_target() {
+        let _guard = env_lock_guard();
+
+        let original = std::env::var("EXTERNAL_ERP_ALLOWED_HOSTS").ok();
+        std::env::set_var("EXTERNAL_ERP_ALLOWED_HOSTS", "erp.corp.local, 10.0.0.0/8");
+
+        // 私网段目标原本封锁，白名单 CIDR 命中后放行
+        assert!(!ssrf_target_blocked("http://10.0.5.6:8080/"));
+        // 精确域名命中放行
+        assert!(!ssrf_target_blocked("http://erp.corp.local/api"));
+        // 白名单外的私网段仍封锁
+        assert!(ssrf_target_blocked("http://192.168.1.1/"));
+
+        match original {
+            Some(v) => std::env::set_var("EXTERNAL_ERP_ALLOWED_HOSTS", v),
+            None => std::env::remove_var("EXTERNAL_ERP_ALLOWED_HOSTS"),
+        }
     }
 
     #[test]
