@@ -4060,3 +4060,15 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### ④ 状态与下批
 - L1 = 0；L2 343（值 213 / types 130）；L3 4764+。
 - 下批：L2 values 213 剩余——**测试引用组 148**：api 客户端（createBaseAxiosClient/meetingBookingApi/iamApi 等，被 api/index.ts 聚合对象转发——聚合对象消费链待核）；组件+stories/test 联动（chartPalette G2_PALETTE/DEMO_COLORS、AvatarGroup、TouchButton、TrendLine 等——删代码须同步删 stories/test）。
+
+## 第十七轮（2026-10-24）：L2 测试引用首批（api 客户端真死 + 同步删测试）
+
+### ① 删除（tsc/eslint 全绿）
+- pdmMaterialApi（pdmMaterial.ts -21 行）+ MaterialListResponse + unused imports；pdmProductApi（pdmProduct.ts 同结构）；wmsApprovalApi（wms/index.ts -34 行）+ unused imports（commit db0ad6b81，-313 行）。
+- 同步删测试用例：pdm-material-product.test.ts 两个 describe（pdmMaterialApi/pdmProductApi）、wms-tms-erp-integration.test.ts wmsApprovalApi it 块。
+- L1 连环清理：ApprovalStartRequest（mes/types.ts）、ApprovalApproveRequest/ApprovalRejectRequest（wms/types.ts）、ApprovalStartRequest（wms/types.ts）共 4 个真死 type（commit d5c5dae55 + 46b242fe2，-19 行）。
+- 教训：整删 pdmMaterial/pdmProduct 文件失败（MaterialQuery/ProductQuery 被 modules/pdm/config.ts 消费）——恢复后只删 API 段；行号偏移导致 MaterialListResponse 删残，按名字重新定位修复。
+
+### ② 状态与下批
+- L1 = 0；L2 340（值 209 / types 131）；L3 4764+。
+- 下批：L2 测试引用剩余 145——组件+stories/test 联动（chartPalette G2_PALETTE/DEMO_COLORS、AvatarGroup、TouchButton、TrendLine、ExportMenu、TableSection 等——删代码须同步删 stories/test）；B 组 index+test 28（createBaseAxiosClient/meetingBookingApi/iamApi 等——api/index.ts 聚合对象消费链待核）。
