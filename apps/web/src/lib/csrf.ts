@@ -1,5 +1,5 @@
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { getCsrfToken, initCsrfToken, verifyCsrfToken } from './security';
+import { getCsrfToken, initCsrfToken } from './security';
 
 const CSRF_HEADER = 'X-CSRF-Token';
 const CSRF_COOKIE_NAME = 'csrf_token';

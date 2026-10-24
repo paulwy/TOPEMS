@@ -137,18 +137,3 @@ function sendSpanToCollector(span: Span): void {
     }),
   }).catch(() => {});
 }
-
-interface AxiosInterceptorConfig {
-  headers?: Record<string, string>;
-}
-
-interface AxiosResponse {
-  config?: AxiosInterceptorConfig;
-}
-
-interface AxiosInterceptorManager<T> {
-  use(
-    onFulfilled?: (value: T) => T | Promise<T>,
-    onRejected?: (error: unknown) => Promise<never>
-  ): number;
-}

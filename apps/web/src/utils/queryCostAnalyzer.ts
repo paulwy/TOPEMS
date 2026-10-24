@@ -9,7 +9,7 @@
  */
 
 import { parseQueryName } from './graphqlPerformance.ts';
-import { designTokens } from '@topems/tokens';
+import {} from '@topems/tokens';
 import i18n from '@/i18n';
 
 export type CostLevel = 'low' | 'medium' | 'high' | 'critical';
