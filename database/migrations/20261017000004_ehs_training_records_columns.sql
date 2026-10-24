@@ -29,8 +29,24 @@ ALTER TABLE ehs.training_records
 -- 前端契约 plan_id 可空（string | null），既有 program_id NOT NULL 约束与之冲突：放开。
 -- 既有 employee_id/employee_name/enrollment_date NOT NULL 约束亦非前端契约字段（前端 TrainingRecord
 -- 20 字段不含这三者），且 create 请求可不携带：一并放开，保持"后端宽容、零回归"。
-ALTER TABLE ehs.training_records
-    ALTER COLUMN program_id DROP NOT NULL,
-    ALTER COLUMN employee_id DROP NOT NULL,
-    ALTER COLUMN employee_name DROP NOT NULL,
-    ALTER COLUMN enrollment_date DROP NOT NULL;
+-- 空库守卫（对齐 092/093）：空库链中 ehs.training_records 仅为 id+deleted_at 骨架
+-- （本迁移按非空库 16 列实写），列存在才放开 NOT NULL；无列表整段跳过。
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='ehs' AND table_name='training_records' AND column_name='program_id') THEN
+        ALTER TABLE ehs.training_records ALTER COLUMN program_id DROP NOT NULL;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='ehs' AND table_name='training_records' AND column_name='employee_id') THEN
+        ALTER TABLE ehs.training_records ALTER COLUMN employee_id DROP NOT NULL;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='ehs' AND table_name='training_records' AND column_name='employee_name') THEN
+        ALTER TABLE ehs.training_records ALTER COLUMN employee_name DROP NOT NULL;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='ehs' AND table_name='training_records' AND column_name='enrollment_date') THEN
+        ALTER TABLE ehs.training_records ALTER COLUMN enrollment_date DROP NOT NULL;
+    END IF;
+END $$;

@@ -64,7 +64,12 @@ CREATE TABLE IF NOT EXISTS ehs.hazard_control_measures (
 DO $$
 BEGIN
     IF to_regclass('ehs.qa_ehs_hazards') IS NOT NULL
-       AND (SELECT relkind FROM pg_class WHERE oid = to_regclass('ehs.qa_ehs_hazards')) = 'r' THEN
+       AND (SELECT relkind FROM pg_class WHERE oid = to_regclass('ehs.qa_ehs_hazards')) = 'r'
+       -- 空库守卫（对齐 092/093/004）：空库链中 public.qa_ehs_hazards 骨架无 tenant_id 列，
+       -- 目标列不齐时跳过存量搬迁（空表本无数据可搬），列齐后行为不变。
+       AND EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_schema='public' AND table_name='qa_ehs_hazards'
+                     AND column_name='tenant_id') THEN
         EXECUTE $ins$
             INSERT INTO public.qa_ehs_hazards
                 (id, hazard_no, title, description, category, level, source, location,

@@ -18,9 +18,9 @@ WHERE NOT EXISTS (SELECT 1 FROM iam.users u WHERE u.id = s.user_id);
 DELETE FROM public.core_refresh_tokens r
 WHERE NOT EXISTS (SELECT 1 FROM iam.users u WHERE u.id = r.user_id);
 
--- 2. 删除旧 FK
-ALTER TABLE public.core_sessions DROP CONSTRAINT sessions_user_id_fkey;
-ALTER TABLE public.core_refresh_tokens DROP CONSTRAINT refresh_tokens_user_id_fkey;
+-- 2. 删除旧 FK（IF EXISTS 守卫：空库链中两表 FK 约束数为 0，与 092 同族守卫）
+ALTER TABLE public.core_sessions DROP CONSTRAINT IF EXISTS sessions_user_id_fkey;
+ALTER TABLE public.core_refresh_tokens DROP CONSTRAINT IF EXISTS refresh_tokens_user_id_fkey;
 
 -- 3. 加新 FK 指向 iam.users（同名约束，级联语义保持）
 ALTER TABLE public.core_sessions
