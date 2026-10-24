@@ -1,3 +1,7 @@
+## SSRF TOCTOU 钉 IP 闭环（2026-10-25）✅ 完成
+
+> 遗留「TOCTOU 钉 IP」闭环：`ssrf_target_blocked_async` 校验用一次 DNS 解析、reqwest 连接时二次解析，攻击者可在校验后切换 DNS 应答。`build_pinned_client`（external_erp.rs）在 SSRF 校验后立即解析（2s 短超时防卡顿）并把首个解析 IP 经 `ClientBuilder::resolve` 钉入——连接/SNI/证书仍按原域名，消除二次解析窗口；IP 直连无需钉、解析失败回退默认（前置校验已保守拒绝）。接线 `probe_http_url` + `call_erp_api` 两处 client 构建。+3 测试（IP 直连构建 / 钉 IP 命中本地双栈 server 200 / 不可解析域名回退不 panic），ssrf_tests 13 全绿、integration lib 194 passed、clippy/fmt 过。提交 `828c4890fb`。
+
 ## ai FAQ admin 补测闭环（2026-10-25）✅ 完成
 
 > 第七轮遗留「PUT 编辑端点与 status toggle 下批」核实：PUT 端点已由 `ad187d2915` 实现接线（routes.rs:644 + openapi.rs:148，COALESCE 部分更新 + status 枚举校验 active/disabled），仅缺测试覆盖 → 补 integration_tests FAQ admin CRUD 数据面 round-trip（`ea2f6e9067`）：部分更新保持未传列原值、status 切换、租户边界（全局行仅超管）、软删守卫；真库 0.04s 通过，ai lib 988 + integration 16 全绿，clippy/fmt/pre-commit 26 项全绿。ai:admin 权限中心显式登记（迁移 20261024000016 已含）属运维登记。
@@ -3791,7 +3795,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] blocked_ip 并入 RFC1918 私网（10/8、172.16/12、192.168/16，std is_private）+ IPv6 ULA fc00::/7；回环/链路本地/未指定保持
 - [x] **EXTERNAL_ERP_ALLOWED_HOSTS**：逗号分隔 域名/IP/CIDR，std 位运算自实现（无新依赖），每次判定前实时读取；白名单最高优先（先白名单→再代理→再封锁/DNS）；同步+异步侧均过
 - [x] 测试：lib 191 passed（+3：私网封锁/解析格式/环境放行），SSRF 模块 10 全绿；env 竞态用模块级 Mutex 串行化
-- [ ] 遗留：CIDR 白名单命中一个即整体放行的 tradeoff（已注释）；TOCTOU 钉 IP 仍后续
+- [x] 遗留 · SSRF 收口 ✅：CIDR 白名单命中一个即整体放行的 tradeoff（已注释保留）；**TOCTOU 钉 IP 已闭环（`828c4890fb`）**——build_pinned_client 域名目标 SSRF 校验后立即解析（2s 超时）并 `reqwest resolve` 钉入，连接不再二次 DNS 解析（消除校验/使用两次解析窗口）；probe_http_url + call_erp_api 两处接线；+3 测试，integration lib 194 passed
 ### ③ core copilot 501 stub 删除（收尾）
 - [x] 引用确认：前端全走 apiClient.ai（businessCopilot.ts:215/:262），后端仅 stub 文件自身命中 → 零活引用
 - [x] 整模块移除：contract_stubs.rs 删除（86 行）+ routes/mod.rs mod/merge 清理 + 契约台账 contract-stub-mapping.md copilot 行清零
@@ -4136,4 +4140,5 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 重扫：L1=0、L2=258（317→258）、L3=4743。
 ### 状态与下批
 - 下批：剩余 L2 值 ~39：hooks 7（useDataTable/useBatchSelection/useDeviceType/useThrottledCallback/useConsolidation 2）+ schemas 7 + pages hooks 13 + plugin-loader 3（ModuleLoadingOverlay/PluginRouteWrapper/PluginLoaderProvider）——页面 hook 高危（逐名复核消费链，防别名/动态引用误删）；api 3 保留（聚合对象）。
+
 
