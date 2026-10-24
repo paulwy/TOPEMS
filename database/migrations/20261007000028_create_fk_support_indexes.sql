@@ -56,20 +56,40 @@ CREATE INDEX IF NOT EXISTS "idx_core_flow_variable_history_variable_id" ON "flow
 CREATE INDEX IF NOT EXISTS "idx_map_layers_map_id" ON "gis"."map_layers" ("map_id");  -- FK: 见 gis.map_layers
 
 -- ---- schema: iam (7 条) ----
-CREATE INDEX IF NOT EXISTS "idx_core_billing_invoices_subscription_id" ON "iam"."core_billing_invoices" ("subscription_id");  -- FK: 见 iam.core_billing_invoices
-CREATE INDEX IF NOT EXISTS "idx_core_role_permissions_permission_id" ON "iam"."core_role_permissions" ("permission_id");  -- FK: 见 iam.core_role_permissions
-CREATE INDEX IF NOT EXISTS "idx_core_subscriptions_plan_id" ON "iam"."core_subscriptions" ("plan_id");  -- FK: 见 iam.core_subscriptions
-CREATE INDEX IF NOT EXISTS "idx_core_tenant_plugins_plugin_id" ON "iam"."core_tenant_plugins" ("plugin_id");  -- FK: 见 iam.core_tenant_plugins
-CREATE INDEX IF NOT EXISTS "idx_core_user_roles_role_id" ON "iam"."core_user_roles" ("role_id");  -- FK: 见 iam.core_user_roles
+DO $$ BEGIN IF to_regclass('"iam"."core_billing_invoices"') IS NOT NULL THEN
+  CREATE INDEX IF NOT EXISTS "idx_core_billing_invoices_subscription_id" ON "iam"."core_billing_invoices" ("subscription_id");
+END IF; END $$;
+DO $$ BEGIN IF to_regclass('"iam"."core_role_permissions"') IS NOT NULL THEN
+  CREATE INDEX IF NOT EXISTS "idx_core_role_permissions_permission_id" ON "iam"."core_role_permissions" ("permission_id");
+END IF; END $$;
+DO $$ BEGIN IF to_regclass('"iam"."core_subscriptions"') IS NOT NULL THEN
+  CREATE INDEX IF NOT EXISTS "idx_core_subscriptions_plan_id" ON "iam"."core_subscriptions" ("plan_id");
+END IF; END $$;
+DO $$ BEGIN IF to_regclass('"iam"."core_tenant_plugins"') IS NOT NULL THEN
+  CREATE INDEX IF NOT EXISTS "idx_core_tenant_plugins_plugin_id" ON "iam"."core_tenant_plugins" ("plugin_id");
+END IF; END $$;
+DO $$ BEGIN IF to_regclass('"iam"."core_user_roles"') IS NOT NULL THEN
+  CREATE INDEX IF NOT EXISTS "idx_core_user_roles_role_id" ON "iam"."core_user_roles" ("role_id");
+END IF; END $$;
 CREATE INDEX IF NOT EXISTS "idx_position_roles_role_id" ON "iam"."position_roles" ("role_id");  -- FK: 见 iam.position_roles
 CREATE INDEX IF NOT EXISTS "idx_user_positions_position_id" ON "iam"."user_positions" ("position_id");  -- FK: 见 iam.user_positions
 
 -- ---- schema: mes (8 条) ----
-CREATE INDEX IF NOT EXISTS "idx_core_billing_invoices_subscription_id" ON "mes"."core_billing_invoices" ("subscription_id");  -- FK: 见 mes.core_billing_invoices
-CREATE INDEX IF NOT EXISTS "idx_core_role_permissions_permission_id" ON "mes"."core_role_permissions" ("permission_id");  -- FK: 见 mes.core_role_permissions
-CREATE INDEX IF NOT EXISTS "idx_core_subscriptions_plan_id" ON "mes"."core_subscriptions" ("plan_id");  -- FK: 见 mes.core_subscriptions
-CREATE INDEX IF NOT EXISTS "idx_core_tenant_plugins_plugin_id" ON "mes"."core_tenant_plugins" ("plugin_id");  -- FK: 见 mes.core_tenant_plugins
-CREATE INDEX IF NOT EXISTS "idx_core_user_roles_role_id" ON "mes"."core_user_roles" ("role_id");  -- FK: 见 mes.core_user_roles
+DO $$ BEGIN IF to_regclass('"mes"."core_billing_invoices"') IS NOT NULL THEN
+  CREATE INDEX IF NOT EXISTS "idx_core_billing_invoices_subscription_id" ON "mes"."core_billing_invoices" ("subscription_id");
+END IF; END $$;
+DO $$ BEGIN IF to_regclass('"mes"."core_role_permissions"') IS NOT NULL THEN
+  CREATE INDEX IF NOT EXISTS "idx_core_role_permissions_permission_id" ON "mes"."core_role_permissions" ("permission_id");
+END IF; END $$;
+DO $$ BEGIN IF to_regclass('"mes"."core_subscriptions"') IS NOT NULL THEN
+  CREATE INDEX IF NOT EXISTS "idx_core_subscriptions_plan_id" ON "mes"."core_subscriptions" ("plan_id");
+END IF; END $$;
+DO $$ BEGIN IF to_regclass('"mes"."core_tenant_plugins"') IS NOT NULL THEN
+  CREATE INDEX IF NOT EXISTS "idx_core_tenant_plugins_plugin_id" ON "mes"."core_tenant_plugins" ("plugin_id");
+END IF; END $$;
+DO $$ BEGIN IF to_regclass('"mes"."core_user_roles"') IS NOT NULL THEN
+  CREATE INDEX IF NOT EXISTS "idx_core_user_roles_role_id" ON "mes"."core_user_roles" ("role_id");
+END IF; END $$;
 CREATE INDEX IF NOT EXISTS "idx_production_records_equipment_id" ON "mes"."production_records" ("equipment_id");  -- FK: 见 mes.production_records
 CREATE INDEX IF NOT EXISTS "idx_work_stations_equipment_id" ON "mes"."work_stations" ("equipment_id");  -- FK: 见 mes.work_stations
 CREATE INDEX IF NOT EXISTS "idx_work_stations_process_id" ON "mes"."work_stations" ("process_id");  -- FK: 见 mes.work_stations

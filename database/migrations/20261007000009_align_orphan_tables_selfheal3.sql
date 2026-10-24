@@ -3973,19 +3973,19 @@ END $$;
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_documents_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."_archive_core_doc_documents"')) THEN
-        ALTER TABLE "public"."_archive_core_doc_documents" RENAME CONSTRAINT "core_doc_documents_pkey" TO "core_doc_documents_pkey1";
+        ALTER TABLE IF EXISTS "public"."_archive_core_doc_documents" RENAME CONSTRAINT "core_doc_documents_pkey" TO "core_doc_documents_pkey1";
     END IF;
 END $$;
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_folders_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."_archive_core_doc_folders"')) THEN
-        ALTER TABLE "public"."_archive_core_doc_folders" RENAME CONSTRAINT "core_doc_folders_pkey" TO "core_doc_folders_pkey1";
+        ALTER TABLE IF EXISTS "public"."_archive_core_doc_folders" RENAME CONSTRAINT "core_doc_folders_pkey" TO "core_doc_folders_pkey1";
     END IF;
 END $$;
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_templates_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."_archive_core_doc_templates"')) THEN
-        ALTER TABLE "public"."_archive_core_doc_templates" RENAME CONSTRAINT "core_doc_templates_pkey" TO "core_doc_templates_pkey1";
+        ALTER TABLE IF EXISTS "public"."_archive_core_doc_templates" RENAME CONSTRAINT "core_doc_templates_pkey" TO "core_doc_templates_pkey1";
     END IF;
 END $$;
 DO $$
@@ -5470,7 +5470,7 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_records_task_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_records"')) THEN
-        ALTER TABLE "public"."qa_lab_records" ADD CONSTRAINT "qa_lab_records_task_id_fkey" FOREIGN KEY (task_id) REFERENCES public.qa_lab_tasks(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "public"."qa_lab_records" ADD CONSTRAINT "qa_lab_records_task_id_fkey" FOREIGN KEY (task_id) REFERENCES public.qa_lab_tasks(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$

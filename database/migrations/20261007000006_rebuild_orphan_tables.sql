@@ -4482,445 +4482,445 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_invoices"')) THEN
-        ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_invoice_number_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_invoice_number_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_invoices"')) THEN
-        ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_invoice_number_key" UNIQUE (tenant_id, invoice_number);
+        ALTER TABLE IF EXISTS "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_invoice_number_key" UNIQUE (tenant_id, invoice_number);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_plans"')) THEN
-        ALTER TABLE "iam"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "iam"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_plans"')) THEN
-        ALTER TABLE "iam"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_members"')) THEN
-        ALTER TABLE "iam"."core_chat_members" ADD CONSTRAINT "core_chat_members_pkey" PRIMARY KEY (room_id, user_id);
+        ALTER TABLE IF EXISTS "iam"."core_chat_members" ADD CONSTRAINT "core_chat_members_pkey" PRIMARY KEY (room_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_messages"')) THEN
-        ALTER TABLE "iam"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_rooms_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_rooms_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_rooms"')) THEN
-        ALTER TABLE "iam"."core_chat_rooms" ADD CONSTRAINT "core_chat_rooms_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_chat_rooms" ADD CONSTRAINT "core_chat_rooms_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dashboard_refresh_log_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dashboard_refresh_log_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dashboard_refresh_log"')) THEN
-        ALTER TABLE "iam"."core_dashboard_refresh_log" ADD CONSTRAINT "core_dashboard_refresh_log_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_dashboard_refresh_log" ADD CONSTRAINT "core_dashboard_refresh_log_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_items"')) THEN
-        ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_code_key" UNIQUE (dict_type_id, code);
+        ALTER TABLE IF EXISTS "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_code_key" UNIQUE (dict_type_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_items"')) THEN
-        ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_types"')) THEN
-        ALTER TABLE "iam"."core_dict_types" ADD CONSTRAINT "core_dict_types_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "iam"."core_dict_types" ADD CONSTRAINT "core_dict_types_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_types"')) THEN
-        ALTER TABLE "iam"."core_dict_types" ADD CONSTRAINT "core_dict_types_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_dict_types" ADD CONSTRAINT "core_dict_types_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_queue_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_queue_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_email_queue"')) THEN
-        ALTER TABLE "iam"."core_email_queue" ADD CONSTRAINT "core_email_queue_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_email_queue" ADD CONSTRAINT "core_email_queue_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_templates_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_templates_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_email_templates"')) THEN
-        ALTER TABLE "iam"."core_email_templates" ADD CONSTRAINT "core_email_templates_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_email_templates" ADD CONSTRAINT "core_email_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_emails"')) THEN
-        ALTER TABLE "iam"."core_emails" ADD CONSTRAINT "core_emails_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_emails" ADD CONSTRAINT "core_emails_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_faqs_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_faqs_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_faqs"')) THEN
-        ALTER TABLE "iam"."core_faqs" ADD CONSTRAINT "core_faqs_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_faqs" ADD CONSTRAINT "core_faqs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_file_folders_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_file_folders_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_file_folders"')) THEN
-        ALTER TABLE "iam"."core_file_folders" ADD CONSTRAINT "core_file_folders_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_file_folders" ADD CONSTRAINT "core_file_folders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_files_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_files_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_files"')) THEN
-        ALTER TABLE "iam"."core_files" ADD CONSTRAINT "core_files_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_files" ADD CONSTRAINT "core_files_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_lessons"')) THEN
-        ALTER TABLE "iam"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_user_id_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_user_id_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_progress"')) THEN
-        ALTER TABLE "iam"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_user_id_key" UNIQUE (guide_id, user_id);
+        ALTER TABLE IF EXISTS "iam"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_user_id_key" UNIQUE (guide_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_progress"')) THEN
-        ALTER TABLE "iam"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guides_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guides_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guides"')) THEN
-        ALTER TABLE "iam"."core_guides" ADD CONSTRAINT "core_guides_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_guides" ADD CONSTRAINT "core_guides_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_inter_module_sync"')) THEN
-        ALTER TABLE "iam"."core_inter_module_sync" ADD CONSTRAINT "core_inter_module_sync_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_inter_module_sync" ADD CONSTRAINT "core_inter_module_sync_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_login_logs_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_login_logs_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_login_logs"')) THEN
-        ALTER TABLE "iam"."core_login_logs" ADD CONSTRAINT "core_login_logs_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_login_logs" ADD CONSTRAINT "core_login_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menu_groups"')) THEN
-        ALTER TABLE "iam"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_tenant_id_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_tenant_id_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menu_groups"')) THEN
-        ALTER TABLE "iam"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_tenant_id_code_key" UNIQUE (tenant_id, code);
+        ALTER TABLE IF EXISTS "iam"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_tenant_id_code_key" UNIQUE (tenant_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menus"')) THEN
-        ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_menus" ADD CONSTRAINT "core_menus_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_tenant_id_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_tenant_id_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menus"')) THEN
-        ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_tenant_id_code_key" UNIQUE (tenant_id, code);
+        ALTER TABLE IF EXISTS "iam"."core_menus" ADD CONSTRAINT "core_menus_tenant_id_code_key" UNIQUE (tenant_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_migration_history"')) THEN
-        ALTER TABLE "iam"."core_migration_history" ADD CONSTRAINT "core_migration_history_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_migration_history" ADD CONSTRAINT "core_migration_history_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_plugin_name_version_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_plugin_name_version_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_migration_history"')) THEN
-        ALTER TABLE "iam"."core_migration_history" ADD CONSTRAINT "core_migration_history_plugin_name_version_key" UNIQUE (plugin_name, version);
+        ALTER TABLE IF EXISTS "iam"."core_migration_history" ADD CONSTRAINT "core_migration_history_plugin_name_version_key" UNIQUE (plugin_name, version);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mobile_offline_records_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mobile_offline_records_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_mobile_offline_records"')) THEN
-        ALTER TABLE "iam"."core_mobile_offline_records" ADD CONSTRAINT "core_mobile_offline_records_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_mobile_offline_records" ADD CONSTRAINT "core_mobile_offline_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_notification_templates"')) THEN
-        ALTER TABLE "iam"."core_notification_templates" ADD CONSTRAINT "core_notification_templates_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_notification_templates" ADD CONSTRAINT "core_notification_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_notifications"')) THEN
-        ALTER TABLE "iam"."core_notifications" ADD CONSTRAINT "core_notifications_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_notifications" ADD CONSTRAINT "core_notifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_permissions"')) THEN
-        ALTER TABLE "iam"."core_permissions" ADD CONSTRAINT "core_permissions_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "iam"."core_permissions" ADD CONSTRAINT "core_permissions_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_permissions"')) THEN
-        ALTER TABLE "iam"."core_permissions" ADD CONSTRAINT "core_permissions_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_permissions" ADD CONSTRAINT "core_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_categories"')) THEN
-        ALTER TABLE "iam"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "iam"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_categories"')) THEN
-        ALTER TABLE "iam"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_instances"')) THEN
-        ALTER TABLE "iam"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_instances"')) THEN
-        ALTER TABLE "iam"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_key" UNIQUE (plugin_id);
+        ALTER TABLE IF EXISTS "iam"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_key" UNIQUE (plugin_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_permissions"')) THEN
-        ALTER TABLE "iam"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_plugin_code_permission_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_plugin_code_permission_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_permissions"')) THEN
-        ALTER TABLE "iam"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_plugin_code_permission_code_key" UNIQUE (plugin_code, permission_code);
+        ALTER TABLE IF EXISTS "iam"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_plugin_code_permission_code_key" UNIQUE (plugin_code, permission_code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_pricing"')) THEN
-        ALTER TABLE "iam"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_plugin_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_plugin_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_pricing"')) THEN
-        ALTER TABLE "iam"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_plugin_code_key" UNIQUE (plugin_code);
+        ALTER TABLE IF EXISTS "iam"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_plugin_code_key" UNIQUE (plugin_code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_reviews"')) THEN
-        ALTER TABLE "iam"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_versions"')) THEN
-        ALTER TABLE "iam"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_versions"')) THEN
-        ALTER TABLE "iam"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_version_key" UNIQUE (plugin_id, version);
+        ALTER TABLE IF EXISTS "iam"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_version_key" UNIQUE (plugin_id, version);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugins"')) THEN
-        ALTER TABLE "iam"."core_plugins" ADD CONSTRAINT "core_plugins_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "iam"."core_plugins" ADD CONSTRAINT "core_plugins_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugins"')) THEN
-        ALTER TABLE "iam"."core_plugins" ADD CONSTRAINT "core_plugins_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_plugins" ADD CONSTRAINT "core_plugins_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_role_permissions"')) THEN
-        ALTER TABLE "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_pkey" PRIMARY KEY (role_id, permission_id);
+        ALTER TABLE IF EXISTS "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_pkey" PRIMARY KEY (role_id, permission_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_name_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_name_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_roles"')) THEN
-        ALTER TABLE "iam"."core_roles" ADD CONSTRAINT "core_roles_name_key" UNIQUE (name);
+        ALTER TABLE IF EXISTS "iam"."core_roles" ADD CONSTRAINT "core_roles_name_key" UNIQUE (name);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_roles"')) THEN
-        ALTER TABLE "iam"."core_roles" ADD CONSTRAINT "core_roles_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_roles" ADD CONSTRAINT "core_roles_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_subscriptions"')) THEN
-        ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_subscriptions"')) THEN
-        ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_key" UNIQUE (tenant_id);
+        ALTER TABLE IF EXISTS "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_key" UNIQUE (tenant_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_modules"')) THEN
-        ALTER TABLE "iam"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_module_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_module_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_modules"')) THEN
-        ALTER TABLE "iam"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_module_code_key" UNIQUE (tenant_id, module_code);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_module_code_key" UNIQUE (tenant_id, module_code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_plugins"')) THEN
-        ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_plugin_id_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_plugin_id_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_plugins"')) THEN
-        ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_plugin_id_key" UNIQUE (tenant_id, plugin_id);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_plugin_id_key" UNIQUE (tenant_id, plugin_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_settings"')) THEN
-        ALTER TABLE "iam"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_setting_key_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_setting_key_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_settings"')) THEN
-        ALTER TABLE "iam"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_setting_key_key" UNIQUE (tenant_id, setting_key);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_setting_key_key" UNIQUE (tenant_id, setting_key);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_usage"')) THEN
-        ALTER TABLE "iam"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_period_start_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_period_start_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_usage"')) THEN
-        ALTER TABLE "iam"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_period_start_key" UNIQUE (tenant_id, period_start);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_period_start_key" UNIQUE (tenant_id, period_start);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_users"')) THEN
-        ALTER TABLE "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_email_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_email_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_users"')) THEN
-        ALTER TABLE "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_email_key" UNIQUE (tenant_id, email);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_email_key" UNIQUE (tenant_id, email);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_user_id_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_user_id_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_users"')) THEN
-        ALTER TABLE "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_user_id_key" UNIQUE (tenant_id, user_id);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_user_id_key" UNIQUE (tenant_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenants"')) THEN
-        ALTER TABLE "iam"."core_tenants" ADD CONSTRAINT "core_tenants_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "iam"."core_tenants" ADD CONSTRAINT "core_tenants_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenants"')) THEN
-        ALTER TABLE "iam"."core_tenants" ADD CONSTRAINT "core_tenants_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_tenants" ADD CONSTRAINT "core_tenants_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_usage_records"')) THEN
-        ALTER TABLE "iam"."core_usage_records" ADD CONSTRAINT "core_usage_records_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_usage_records" ADD CONSTRAINT "core_usage_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_user_roles"')) THEN
-        ALTER TABLE "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_pkey" PRIMARY KEY (user_id, role_id);
+        ALTER TABLE IF EXISTS "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_pkey" PRIMARY KEY (user_id, role_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_email_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_email_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_users"')) THEN
-        ALTER TABLE "iam"."core_users" ADD CONSTRAINT "core_users_email_key" UNIQUE (email);
+        ALTER TABLE IF EXISTS "iam"."core_users" ADD CONSTRAINT "core_users_email_key" UNIQUE (email);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_users"')) THEN
-        ALTER TABLE "iam"."core_users" ADD CONSTRAINT "core_users_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_users" ADD CONSTRAINT "core_users_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_username_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_username_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_users"')) THEN
-        ALTER TABLE "iam"."core_users" ADD CONSTRAINT "core_users_username_key" UNIQUE (username);
+        ALTER TABLE IF EXISTS "iam"."core_users" ADD CONSTRAINT "core_users_username_key" UNIQUE (username);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflow_instances"')) THEN
-        ALTER TABLE "iam"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflow_tasks"')) THEN
-        ALTER TABLE "iam"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflows_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflows_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflows"')) THEN
-        ALTER TABLE "iam"."core_workflows" ADD CONSTRAINT "core_workflows_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "iam"."core_workflows" ADD CONSTRAINT "core_workflows_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
@@ -5082,445 +5082,445 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
-        ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_invoice_number_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_invoice_number_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
-        ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_invoice_number_key" UNIQUE (tenant_id, invoice_number);
+        ALTER TABLE IF EXISTS "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_invoice_number_key" UNIQUE (tenant_id, invoice_number);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_plans"')) THEN
-        ALTER TABLE "mes"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "mes"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_plans"')) THEN
-        ALTER TABLE "mes"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_members"')) THEN
-        ALTER TABLE "mes"."core_chat_members" ADD CONSTRAINT "core_chat_members_pkey" PRIMARY KEY (room_id, user_id);
+        ALTER TABLE IF EXISTS "mes"."core_chat_members" ADD CONSTRAINT "core_chat_members_pkey" PRIMARY KEY (room_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_messages"')) THEN
-        ALTER TABLE "mes"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_rooms_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_rooms_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_rooms"')) THEN
-        ALTER TABLE "mes"."core_chat_rooms" ADD CONSTRAINT "core_chat_rooms_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_chat_rooms" ADD CONSTRAINT "core_chat_rooms_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dashboard_refresh_log_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dashboard_refresh_log_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dashboard_refresh_log"')) THEN
-        ALTER TABLE "mes"."core_dashboard_refresh_log" ADD CONSTRAINT "core_dashboard_refresh_log_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_dashboard_refresh_log" ADD CONSTRAINT "core_dashboard_refresh_log_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_items"')) THEN
-        ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_code_key" UNIQUE (dict_type_id, code);
+        ALTER TABLE IF EXISTS "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_code_key" UNIQUE (dict_type_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_items"')) THEN
-        ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_types"')) THEN
-        ALTER TABLE "mes"."core_dict_types" ADD CONSTRAINT "core_dict_types_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "mes"."core_dict_types" ADD CONSTRAINT "core_dict_types_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_types"')) THEN
-        ALTER TABLE "mes"."core_dict_types" ADD CONSTRAINT "core_dict_types_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_dict_types" ADD CONSTRAINT "core_dict_types_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_queue_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_queue_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_email_queue"')) THEN
-        ALTER TABLE "mes"."core_email_queue" ADD CONSTRAINT "core_email_queue_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_email_queue" ADD CONSTRAINT "core_email_queue_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_templates_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_templates_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_email_templates"')) THEN
-        ALTER TABLE "mes"."core_email_templates" ADD CONSTRAINT "core_email_templates_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_email_templates" ADD CONSTRAINT "core_email_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_emails"')) THEN
-        ALTER TABLE "mes"."core_emails" ADD CONSTRAINT "core_emails_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_emails" ADD CONSTRAINT "core_emails_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_faqs_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_faqs_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_faqs"')) THEN
-        ALTER TABLE "mes"."core_faqs" ADD CONSTRAINT "core_faqs_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_faqs" ADD CONSTRAINT "core_faqs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_file_folders_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_file_folders_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_file_folders"')) THEN
-        ALTER TABLE "mes"."core_file_folders" ADD CONSTRAINT "core_file_folders_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_file_folders" ADD CONSTRAINT "core_file_folders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_files_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_files_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_files"')) THEN
-        ALTER TABLE "mes"."core_files" ADD CONSTRAINT "core_files_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_files" ADD CONSTRAINT "core_files_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_lessons"')) THEN
-        ALTER TABLE "mes"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_user_id_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_user_id_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_progress"')) THEN
-        ALTER TABLE "mes"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_user_id_key" UNIQUE (guide_id, user_id);
+        ALTER TABLE IF EXISTS "mes"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_user_id_key" UNIQUE (guide_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_progress"')) THEN
-        ALTER TABLE "mes"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guides_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guides_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guides"')) THEN
-        ALTER TABLE "mes"."core_guides" ADD CONSTRAINT "core_guides_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_guides" ADD CONSTRAINT "core_guides_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_inter_module_sync"')) THEN
-        ALTER TABLE "mes"."core_inter_module_sync" ADD CONSTRAINT "core_inter_module_sync_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_inter_module_sync" ADD CONSTRAINT "core_inter_module_sync_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_login_logs_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_login_logs_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_login_logs"')) THEN
-        ALTER TABLE "mes"."core_login_logs" ADD CONSTRAINT "core_login_logs_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_login_logs" ADD CONSTRAINT "core_login_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menu_groups"')) THEN
-        ALTER TABLE "mes"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_tenant_id_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_tenant_id_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menu_groups"')) THEN
-        ALTER TABLE "mes"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_tenant_id_code_key" UNIQUE (tenant_id, code);
+        ALTER TABLE IF EXISTS "mes"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_tenant_id_code_key" UNIQUE (tenant_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menus"')) THEN
-        ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_menus" ADD CONSTRAINT "core_menus_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_tenant_id_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_tenant_id_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menus"')) THEN
-        ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_tenant_id_code_key" UNIQUE (tenant_id, code);
+        ALTER TABLE IF EXISTS "mes"."core_menus" ADD CONSTRAINT "core_menus_tenant_id_code_key" UNIQUE (tenant_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_migration_history"')) THEN
-        ALTER TABLE "mes"."core_migration_history" ADD CONSTRAINT "core_migration_history_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_migration_history" ADD CONSTRAINT "core_migration_history_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_plugin_name_version_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_plugin_name_version_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_migration_history"')) THEN
-        ALTER TABLE "mes"."core_migration_history" ADD CONSTRAINT "core_migration_history_plugin_name_version_key" UNIQUE (plugin_name, version);
+        ALTER TABLE IF EXISTS "mes"."core_migration_history" ADD CONSTRAINT "core_migration_history_plugin_name_version_key" UNIQUE (plugin_name, version);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mobile_offline_records_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mobile_offline_records_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_mobile_offline_records"')) THEN
-        ALTER TABLE "mes"."core_mobile_offline_records" ADD CONSTRAINT "core_mobile_offline_records_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_mobile_offline_records" ADD CONSTRAINT "core_mobile_offline_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_notification_templates"')) THEN
-        ALTER TABLE "mes"."core_notification_templates" ADD CONSTRAINT "core_notification_templates_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_notification_templates" ADD CONSTRAINT "core_notification_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_notifications"')) THEN
-        ALTER TABLE "mes"."core_notifications" ADD CONSTRAINT "core_notifications_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_notifications" ADD CONSTRAINT "core_notifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_permissions"')) THEN
-        ALTER TABLE "mes"."core_permissions" ADD CONSTRAINT "core_permissions_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "mes"."core_permissions" ADD CONSTRAINT "core_permissions_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_permissions"')) THEN
-        ALTER TABLE "mes"."core_permissions" ADD CONSTRAINT "core_permissions_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_permissions" ADD CONSTRAINT "core_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_categories"')) THEN
-        ALTER TABLE "mes"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "mes"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_categories"')) THEN
-        ALTER TABLE "mes"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_instances"')) THEN
-        ALTER TABLE "mes"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_instances"')) THEN
-        ALTER TABLE "mes"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_key" UNIQUE (plugin_id);
+        ALTER TABLE IF EXISTS "mes"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_key" UNIQUE (plugin_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_permissions"')) THEN
-        ALTER TABLE "mes"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_plugin_code_permission_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_plugin_code_permission_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_permissions"')) THEN
-        ALTER TABLE "mes"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_plugin_code_permission_code_key" UNIQUE (plugin_code, permission_code);
+        ALTER TABLE IF EXISTS "mes"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_plugin_code_permission_code_key" UNIQUE (plugin_code, permission_code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_pricing"')) THEN
-        ALTER TABLE "mes"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_plugin_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_plugin_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_pricing"')) THEN
-        ALTER TABLE "mes"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_plugin_code_key" UNIQUE (plugin_code);
+        ALTER TABLE IF EXISTS "mes"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_plugin_code_key" UNIQUE (plugin_code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_reviews"')) THEN
-        ALTER TABLE "mes"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_versions"')) THEN
-        ALTER TABLE "mes"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_versions"')) THEN
-        ALTER TABLE "mes"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_version_key" UNIQUE (plugin_id, version);
+        ALTER TABLE IF EXISTS "mes"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_version_key" UNIQUE (plugin_id, version);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugins"')) THEN
-        ALTER TABLE "mes"."core_plugins" ADD CONSTRAINT "core_plugins_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "mes"."core_plugins" ADD CONSTRAINT "core_plugins_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugins"')) THEN
-        ALTER TABLE "mes"."core_plugins" ADD CONSTRAINT "core_plugins_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_plugins" ADD CONSTRAINT "core_plugins_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_role_permissions"')) THEN
-        ALTER TABLE "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_pkey" PRIMARY KEY (role_id, permission_id);
+        ALTER TABLE IF EXISTS "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_pkey" PRIMARY KEY (role_id, permission_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_name_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_name_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_roles"')) THEN
-        ALTER TABLE "mes"."core_roles" ADD CONSTRAINT "core_roles_name_key" UNIQUE (name);
+        ALTER TABLE IF EXISTS "mes"."core_roles" ADD CONSTRAINT "core_roles_name_key" UNIQUE (name);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_roles"')) THEN
-        ALTER TABLE "mes"."core_roles" ADD CONSTRAINT "core_roles_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_roles" ADD CONSTRAINT "core_roles_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_subscriptions"')) THEN
-        ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_subscriptions"')) THEN
-        ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_key" UNIQUE (tenant_id);
+        ALTER TABLE IF EXISTS "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_key" UNIQUE (tenant_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_modules"')) THEN
-        ALTER TABLE "mes"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_module_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_module_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_modules"')) THEN
-        ALTER TABLE "mes"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_module_code_key" UNIQUE (tenant_id, module_code);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_module_code_key" UNIQUE (tenant_id, module_code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
-        ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_plugin_id_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_plugin_id_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
-        ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_plugin_id_key" UNIQUE (tenant_id, plugin_id);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_plugin_id_key" UNIQUE (tenant_id, plugin_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_settings"')) THEN
-        ALTER TABLE "mes"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_setting_key_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_setting_key_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_settings"')) THEN
-        ALTER TABLE "mes"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_setting_key_key" UNIQUE (tenant_id, setting_key);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_setting_key_key" UNIQUE (tenant_id, setting_key);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_usage"')) THEN
-        ALTER TABLE "mes"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_period_start_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_period_start_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_usage"')) THEN
-        ALTER TABLE "mes"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_period_start_key" UNIQUE (tenant_id, period_start);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_period_start_key" UNIQUE (tenant_id, period_start);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_users"')) THEN
-        ALTER TABLE "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_email_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_email_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_users"')) THEN
-        ALTER TABLE "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_email_key" UNIQUE (tenant_id, email);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_email_key" UNIQUE (tenant_id, email);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_user_id_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_user_id_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_users"')) THEN
-        ALTER TABLE "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_user_id_key" UNIQUE (tenant_id, user_id);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_user_id_key" UNIQUE (tenant_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenants"')) THEN
-        ALTER TABLE "mes"."core_tenants" ADD CONSTRAINT "core_tenants_code_key" UNIQUE (code);
+        ALTER TABLE IF EXISTS "mes"."core_tenants" ADD CONSTRAINT "core_tenants_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenants"')) THEN
-        ALTER TABLE "mes"."core_tenants" ADD CONSTRAINT "core_tenants_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_tenants" ADD CONSTRAINT "core_tenants_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_usage_records"')) THEN
-        ALTER TABLE "mes"."core_usage_records" ADD CONSTRAINT "core_usage_records_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_usage_records" ADD CONSTRAINT "core_usage_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_user_roles"')) THEN
-        ALTER TABLE "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_pkey" PRIMARY KEY (user_id, role_id);
+        ALTER TABLE IF EXISTS "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_pkey" PRIMARY KEY (user_id, role_id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_email_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_email_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_users"')) THEN
-        ALTER TABLE "mes"."core_users" ADD CONSTRAINT "core_users_email_key" UNIQUE (email);
+        ALTER TABLE IF EXISTS "mes"."core_users" ADD CONSTRAINT "core_users_email_key" UNIQUE (email);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_users"')) THEN
-        ALTER TABLE "mes"."core_users" ADD CONSTRAINT "core_users_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_users" ADD CONSTRAINT "core_users_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_username_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_username_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_users"')) THEN
-        ALTER TABLE "mes"."core_users" ADD CONSTRAINT "core_users_username_key" UNIQUE (username);
+        ALTER TABLE IF EXISTS "mes"."core_users" ADD CONSTRAINT "core_users_username_key" UNIQUE (username);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflow_instances"')) THEN
-        ALTER TABLE "mes"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflow_tasks"')) THEN
-        ALTER TABLE "mes"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflows_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflows_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflows"')) THEN
-        ALTER TABLE "mes"."core_workflows" ADD CONSTRAINT "core_workflows_pkey" PRIMARY KEY (id);
+        ALTER TABLE IF EXISTS "mes"."core_workflows" ADD CONSTRAINT "core_workflows_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
@@ -6735,169 +6735,169 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_subscription_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_invoices"')) THEN
-        ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_subscription_id_fkey" FOREIGN KEY (subscription_id) REFERENCES public.core_subscriptions(id);
+        ALTER TABLE IF EXISTS "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_subscription_id_fkey" FOREIGN KEY (subscription_id) REFERENCES public.core_subscriptions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_invoices"')) THEN
-        ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_room_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_members"')) THEN
-        ALTER TABLE "iam"."core_chat_members" ADD CONSTRAINT "core_chat_members_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
+        ALTER TABLE IF EXISTS "iam"."core_chat_members" ADD CONSTRAINT "core_chat_members_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_room_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_messages"')) THEN
-        ALTER TABLE "iam"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
+        ALTER TABLE IF EXISTS "iam"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_items"')) THEN
-        ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_fkey" FOREIGN KEY (dict_type_id) REFERENCES public.core_dict_types(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_fkey" FOREIGN KEY (dict_type_id) REFERENCES public.core_dict_types(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_parent_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_items"')) THEN
-        ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_dict_items(id) ON DELETE SET NULL;
+        ALTER TABLE IF EXISTS "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_dict_items(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_guide_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_lessons"')) THEN
-        ALTER TABLE "iam"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_progress"')) THEN
-        ALTER TABLE "iam"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_group_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menus"')) THEN
-        ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.core_menu_groups(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."core_menus" ADD CONSTRAINT "core_menus_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.core_menu_groups(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_parent_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menus"')) THEN
-        ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_menus(id) ON DELETE SET NULL;
+        ALTER TABLE IF EXISTS "iam"."core_menus" ADD CONSTRAINT "core_menus_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_menus(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_instances"')) THEN
-        ALTER TABLE "iam"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_reviews"')) THEN
-        ALTER TABLE "iam"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_versions"')) THEN
-        ALTER TABLE "iam"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_permission_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_role_permissions"')) THEN
-        ALTER TABLE "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_permission_id_fkey" FOREIGN KEY (permission_id) REFERENCES public.core_permissions(id);
+        ALTER TABLE IF EXISTS "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_permission_id_fkey" FOREIGN KEY (permission_id) REFERENCES public.core_permissions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_role_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_role_permissions"')) THEN
-        ALTER TABLE "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
+        ALTER TABLE IF EXISTS "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_plan_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_subscriptions"')) THEN
-        ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.core_billing_plans(id);
+        ALTER TABLE IF EXISTS "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.core_billing_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_subscriptions"')) THEN
-        ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_modules"')) THEN
-        ALTER TABLE "iam"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_plugins"')) THEN
-        ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_plugins"')) THEN
-        ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_settings"')) THEN
-        ALTER TABLE "iam"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_usage"')) THEN
-        ALTER TABLE "iam"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "iam"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_users"')) THEN
-        ALTER TABLE "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_usage_records"')) THEN
-        ALTER TABLE "iam"."core_usage_records" ADD CONSTRAINT "core_usage_records_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "iam"."core_usage_records" ADD CONSTRAINT "core_usage_records_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_role_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_user_roles"')) THEN
-        ALTER TABLE "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
+        ALTER TABLE IF EXISTS "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_user_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_user_roles"')) THEN
-        ALTER TABLE "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id);
+        ALTER TABLE IF EXISTS "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_workflow_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflow_instances"')) THEN
-        ALTER TABLE "iam"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES public.core_workflows(id);
+        ALTER TABLE IF EXISTS "iam"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES public.core_workflows(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_instance_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflow_tasks"')) THEN
-        ALTER TABLE "iam"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_instance_id_fkey" FOREIGN KEY (instance_id) REFERENCES public.core_workflow_instances(id);
+        ALTER TABLE IF EXISTS "iam"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_instance_id_fkey" FOREIGN KEY (instance_id) REFERENCES public.core_workflow_instances(id);
     END IF;
 END $$;
 DO $$
@@ -6909,181 +6909,181 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_user_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."refresh_tokens"')) THEN
-        ALTER TABLE "iam"."refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sessions_user_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."sessions"')) THEN
-        ALTER TABLE "iam"."sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "iam"."sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_subscription_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
-        ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_subscription_id_fkey" FOREIGN KEY (subscription_id) REFERENCES public.core_subscriptions(id);
+        ALTER TABLE IF EXISTS "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_subscription_id_fkey" FOREIGN KEY (subscription_id) REFERENCES public.core_subscriptions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
-        ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_room_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_members"')) THEN
-        ALTER TABLE "mes"."core_chat_members" ADD CONSTRAINT "core_chat_members_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
+        ALTER TABLE IF EXISTS "mes"."core_chat_members" ADD CONSTRAINT "core_chat_members_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_room_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_messages"')) THEN
-        ALTER TABLE "mes"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
+        ALTER TABLE IF EXISTS "mes"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_room_id_fkey" FOREIGN KEY (room_id) REFERENCES public.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_items"')) THEN
-        ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_fkey" FOREIGN KEY (dict_type_id) REFERENCES public.core_dict_types(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_fkey" FOREIGN KEY (dict_type_id) REFERENCES public.core_dict_types(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_parent_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_items"')) THEN
-        ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_dict_items(id) ON DELETE SET NULL;
+        ALTER TABLE IF EXISTS "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_dict_items(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_guide_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_lessons"')) THEN
-        ALTER TABLE "mes"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "mes"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_progress"')) THEN
-        ALTER TABLE "mes"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "mes"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES public.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_group_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menus"')) THEN
-        ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.core_menu_groups(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "mes"."core_menus" ADD CONSTRAINT "core_menus_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public.core_menu_groups(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_parent_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menus"')) THEN
-        ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_menus(id) ON DELETE SET NULL;
+        ALTER TABLE IF EXISTS "mes"."core_menus" ADD CONSTRAINT "core_menus_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.core_menus(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_instances"')) THEN
-        ALTER TABLE "mes"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "mes"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_reviews"')) THEN
-        ALTER TABLE "mes"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "mes"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_versions"')) THEN
-        ALTER TABLE "mes"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "mes"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_permission_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_role_permissions"')) THEN
-        ALTER TABLE "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_permission_id_fkey" FOREIGN KEY (permission_id) REFERENCES public.core_permissions(id);
+        ALTER TABLE IF EXISTS "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_permission_id_fkey" FOREIGN KEY (permission_id) REFERENCES public.core_permissions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_role_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_role_permissions"')) THEN
-        ALTER TABLE "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
+        ALTER TABLE IF EXISTS "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_plan_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_subscriptions"')) THEN
-        ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.core_billing_plans(id);
+        ALTER TABLE IF EXISTS "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.core_billing_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_subscriptions"')) THEN
-        ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_modules"')) THEN
-        ALTER TABLE "mes"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
-        ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES core.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
-        ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_settings"')) THEN
-        ALTER TABLE "mes"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_usage"')) THEN
-        ALTER TABLE "mes"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "mes"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_users"')) THEN
-        ALTER TABLE "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_usage_records"')) THEN
-        ALTER TABLE "mes"."core_usage_records" ADD CONSTRAINT "core_usage_records_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
+        ALTER TABLE IF EXISTS "mes"."core_usage_records" ADD CONSTRAINT "core_usage_records_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_role_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_user_roles"')) THEN
-        ALTER TABLE "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
+        ALTER TABLE IF EXISTS "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_user_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_user_roles"')) THEN
-        ALTER TABLE "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id);
+        ALTER TABLE IF EXISTS "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.core_users(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_workflow_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflow_instances"')) THEN
-        ALTER TABLE "mes"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES public.core_workflows(id);
+        ALTER TABLE IF EXISTS "mes"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES public.core_workflows(id);
     END IF;
 END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_instance_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflow_tasks"')) THEN
-        ALTER TABLE "mes"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_instance_id_fkey" FOREIGN KEY (instance_id) REFERENCES public.core_workflow_instances(id);
+        ALTER TABLE IF EXISTS "mes"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_instance_id_fkey" FOREIGN KEY (instance_id) REFERENCES public.core_workflow_instances(id);
     END IF;
 END $$;
 DO $$
@@ -7425,7 +7425,7 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_settings_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."user_settings"')) THEN
-        ALTER TABLE "public"."user_settings" ADD CONSTRAINT "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
+        ALTER TABLE IF EXISTS "public"."user_settings" ADD CONSTRAINT "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 
@@ -7523,259 +7523,259 @@ BEGIN
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_billing_invoices' AND polrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
+    IF to_regclass('"mes"."core_billing_invoices"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_billing_invoices' AND polrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
         CREATE POLICY "tenant_isolation_core_billing_invoices" ON "mes"."core_billing_invoices" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_billing_plans' AND polrelid = to_regclass('"mes"."core_billing_plans"')) THEN
+    IF to_regclass('"mes"."core_billing_plans"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_billing_plans' AND polrelid = to_regclass('"mes"."core_billing_plans"')) THEN
         CREATE POLICY "tenant_isolation_core_billing_plans" ON "mes"."core_billing_plans" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_members' AND polrelid = to_regclass('"mes"."core_chat_members"')) THEN
+    IF to_regclass('"mes"."core_chat_members"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_members' AND polrelid = to_regclass('"mes"."core_chat_members"')) THEN
         CREATE POLICY "tenant_isolation_core_chat_members" ON "mes"."core_chat_members" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_messages' AND polrelid = to_regclass('"mes"."core_chat_messages"')) THEN
+    IF to_regclass('"mes"."core_chat_messages"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_messages' AND polrelid = to_regclass('"mes"."core_chat_messages"')) THEN
         CREATE POLICY "tenant_isolation_core_chat_messages" ON "mes"."core_chat_messages" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_rooms' AND polrelid = to_regclass('"mes"."core_chat_rooms"')) THEN
+    IF to_regclass('"mes"."core_chat_rooms"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_rooms' AND polrelid = to_regclass('"mes"."core_chat_rooms"')) THEN
         CREATE POLICY "tenant_isolation_core_chat_rooms" ON "mes"."core_chat_rooms" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dashboard_refresh_log' AND polrelid = to_regclass('"mes"."core_dashboard_refresh_log"')) THEN
+    IF to_regclass('"mes"."core_dashboard_refresh_log"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dashboard_refresh_log' AND polrelid = to_regclass('"mes"."core_dashboard_refresh_log"')) THEN
         CREATE POLICY "tenant_isolation_core_dashboard_refresh_log" ON "mes"."core_dashboard_refresh_log" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dict_items' AND polrelid = to_regclass('"mes"."core_dict_items"')) THEN
+    IF to_regclass('"mes"."core_dict_items"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dict_items' AND polrelid = to_regclass('"mes"."core_dict_items"')) THEN
         CREATE POLICY "tenant_isolation_core_dict_items" ON "mes"."core_dict_items" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dict_types' AND polrelid = to_regclass('"mes"."core_dict_types"')) THEN
+    IF to_regclass('"mes"."core_dict_types"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dict_types' AND polrelid = to_regclass('"mes"."core_dict_types"')) THEN
         CREATE POLICY "tenant_isolation_core_dict_types" ON "mes"."core_dict_types" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_email_queue' AND polrelid = to_regclass('"mes"."core_email_queue"')) THEN
+    IF to_regclass('"mes"."core_email_queue"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_email_queue' AND polrelid = to_regclass('"mes"."core_email_queue"')) THEN
         CREATE POLICY "tenant_isolation_core_email_queue" ON "mes"."core_email_queue" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_email_templates' AND polrelid = to_regclass('"mes"."core_email_templates"')) THEN
+    IF to_regclass('"mes"."core_email_templates"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_email_templates' AND polrelid = to_regclass('"mes"."core_email_templates"')) THEN
         CREATE POLICY "tenant_isolation_core_email_templates" ON "mes"."core_email_templates" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_emails' AND polrelid = to_regclass('"mes"."core_emails"')) THEN
+    IF to_regclass('"mes"."core_emails"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_emails' AND polrelid = to_regclass('"mes"."core_emails"')) THEN
         CREATE POLICY "tenant_isolation_core_emails" ON "mes"."core_emails" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_faqs' AND polrelid = to_regclass('"mes"."core_faqs"')) THEN
+    IF to_regclass('"mes"."core_faqs"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_faqs' AND polrelid = to_regclass('"mes"."core_faqs"')) THEN
         CREATE POLICY "tenant_isolation_core_faqs" ON "mes"."core_faqs" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_file_folders' AND polrelid = to_regclass('"mes"."core_file_folders"')) THEN
+    IF to_regclass('"mes"."core_file_folders"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_file_folders' AND polrelid = to_regclass('"mes"."core_file_folders"')) THEN
         CREATE POLICY "tenant_isolation_core_file_folders" ON "mes"."core_file_folders" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_files' AND polrelid = to_regclass('"mes"."core_files"')) THEN
+    IF to_regclass('"mes"."core_files"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_files' AND polrelid = to_regclass('"mes"."core_files"')) THEN
         CREATE POLICY "tenant_isolation_core_files" ON "mes"."core_files" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guide_lessons' AND polrelid = to_regclass('"mes"."core_guide_lessons"')) THEN
+    IF to_regclass('"mes"."core_guide_lessons"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guide_lessons' AND polrelid = to_regclass('"mes"."core_guide_lessons"')) THEN
         CREATE POLICY "tenant_isolation_core_guide_lessons" ON "mes"."core_guide_lessons" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guide_progress' AND polrelid = to_regclass('"mes"."core_guide_progress"')) THEN
+    IF to_regclass('"mes"."core_guide_progress"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guide_progress' AND polrelid = to_regclass('"mes"."core_guide_progress"')) THEN
         CREATE POLICY "tenant_isolation_core_guide_progress" ON "mes"."core_guide_progress" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guides' AND polrelid = to_regclass('"mes"."core_guides"')) THEN
+    IF to_regclass('"mes"."core_guides"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guides' AND polrelid = to_regclass('"mes"."core_guides"')) THEN
         CREATE POLICY "tenant_isolation_core_guides" ON "mes"."core_guides" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_inter_module_sync' AND polrelid = to_regclass('"mes"."core_inter_module_sync"')) THEN
+    IF to_regclass('"mes"."core_inter_module_sync"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_inter_module_sync' AND polrelid = to_regclass('"mes"."core_inter_module_sync"')) THEN
         CREATE POLICY "tenant_isolation_core_inter_module_sync" ON "mes"."core_inter_module_sync" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_login_logs' AND polrelid = to_regclass('"mes"."core_login_logs"')) THEN
+    IF to_regclass('"mes"."core_login_logs"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_login_logs' AND polrelid = to_regclass('"mes"."core_login_logs"')) THEN
         CREATE POLICY "tenant_isolation_core_login_logs" ON "mes"."core_login_logs" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_menu_groups' AND polrelid = to_regclass('"mes"."core_menu_groups"')) THEN
+    IF to_regclass('"mes"."core_menu_groups"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_menu_groups' AND polrelid = to_regclass('"mes"."core_menu_groups"')) THEN
         CREATE POLICY "tenant_isolation_core_menu_groups" ON "mes"."core_menu_groups" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_menus' AND polrelid = to_regclass('"mes"."core_menus"')) THEN
+    IF to_regclass('"mes"."core_menus"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_menus' AND polrelid = to_regclass('"mes"."core_menus"')) THEN
         CREATE POLICY "tenant_isolation_core_menus" ON "mes"."core_menus" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_migration_history' AND polrelid = to_regclass('"mes"."core_migration_history"')) THEN
+    IF to_regclass('"mes"."core_migration_history"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_migration_history' AND polrelid = to_regclass('"mes"."core_migration_history"')) THEN
         CREATE POLICY "tenant_isolation_core_migration_history" ON "mes"."core_migration_history" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_mobile_offline_records' AND polrelid = to_regclass('"mes"."core_mobile_offline_records"')) THEN
+    IF to_regclass('"mes"."core_mobile_offline_records"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_mobile_offline_records' AND polrelid = to_regclass('"mes"."core_mobile_offline_records"')) THEN
         CREATE POLICY "tenant_isolation_core_mobile_offline_records" ON "mes"."core_mobile_offline_records" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_notification_templates' AND polrelid = to_regclass('"mes"."core_notification_templates"')) THEN
+    IF to_regclass('"mes"."core_notification_templates"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_notification_templates' AND polrelid = to_regclass('"mes"."core_notification_templates"')) THEN
         CREATE POLICY "tenant_isolation_core_notification_templates" ON "mes"."core_notification_templates" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_notifications' AND polrelid = to_regclass('"mes"."core_notifications"')) THEN
+    IF to_regclass('"mes"."core_notifications"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_notifications' AND polrelid = to_regclass('"mes"."core_notifications"')) THEN
         CREATE POLICY "tenant_isolation_core_notifications" ON "mes"."core_notifications" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_categories' AND polrelid = to_regclass('"mes"."core_plugin_categories"')) THEN
+    IF to_regclass('"mes"."core_plugin_categories"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_categories' AND polrelid = to_regclass('"mes"."core_plugin_categories"')) THEN
         CREATE POLICY "tenant_isolation_core_plugin_categories" ON "mes"."core_plugin_categories" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_instances' AND polrelid = to_regclass('"mes"."core_plugin_instances"')) THEN
+    IF to_regclass('"mes"."core_plugin_instances"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_instances' AND polrelid = to_regclass('"mes"."core_plugin_instances"')) THEN
         CREATE POLICY "tenant_isolation_core_plugin_instances" ON "mes"."core_plugin_instances" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_permissions' AND polrelid = to_regclass('"mes"."core_plugin_permissions"')) THEN
+    IF to_regclass('"mes"."core_plugin_permissions"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_permissions' AND polrelid = to_regclass('"mes"."core_plugin_permissions"')) THEN
         CREATE POLICY "tenant_isolation_core_plugin_permissions" ON "mes"."core_plugin_permissions" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_pricing' AND polrelid = to_regclass('"mes"."core_plugin_pricing"')) THEN
+    IF to_regclass('"mes"."core_plugin_pricing"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_pricing' AND polrelid = to_regclass('"mes"."core_plugin_pricing"')) THEN
         CREATE POLICY "tenant_isolation_core_plugin_pricing" ON "mes"."core_plugin_pricing" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_reviews' AND polrelid = to_regclass('"mes"."core_plugin_reviews"')) THEN
+    IF to_regclass('"mes"."core_plugin_reviews"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_reviews' AND polrelid = to_regclass('"mes"."core_plugin_reviews"')) THEN
         CREATE POLICY "tenant_isolation_core_plugin_reviews" ON "mes"."core_plugin_reviews" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugins' AND polrelid = to_regclass('"mes"."core_plugins"')) THEN
+    IF to_regclass('"mes"."core_plugins"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugins' AND polrelid = to_regclass('"mes"."core_plugins"')) THEN
         CREATE POLICY "tenant_isolation_core_plugins" ON "mes"."core_plugins" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_roles' AND polrelid = to_regclass('"mes"."core_roles"')) THEN
+    IF to_regclass('"mes"."core_roles"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_roles' AND polrelid = to_regclass('"mes"."core_roles"')) THEN
         CREATE POLICY "tenant_isolation_core_roles" ON "mes"."core_roles" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_subscriptions' AND polrelid = to_regclass('"mes"."core_subscriptions"')) THEN
+    IF to_regclass('"mes"."core_subscriptions"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_subscriptions' AND polrelid = to_regclass('"mes"."core_subscriptions"')) THEN
         CREATE POLICY "tenant_isolation_core_subscriptions" ON "mes"."core_subscriptions" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_modules' AND polrelid = to_regclass('"mes"."core_tenant_modules"')) THEN
+    IF to_regclass('"mes"."core_tenant_modules"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_modules' AND polrelid = to_regclass('"mes"."core_tenant_modules"')) THEN
         CREATE POLICY "tenant_isolation_core_tenant_modules" ON "mes"."core_tenant_modules" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_plugins' AND polrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
+    IF to_regclass('"mes"."core_tenant_plugins"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_plugins' AND polrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
         CREATE POLICY "tenant_isolation_core_tenant_plugins" ON "mes"."core_tenant_plugins" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_settings' AND polrelid = to_regclass('"mes"."core_tenant_settings"')) THEN
+    IF to_regclass('"mes"."core_tenant_settings"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_settings' AND polrelid = to_regclass('"mes"."core_tenant_settings"')) THEN
         CREATE POLICY "tenant_isolation_core_tenant_settings" ON "mes"."core_tenant_settings" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_usage' AND polrelid = to_regclass('"mes"."core_tenant_usage"')) THEN
+    IF to_regclass('"mes"."core_tenant_usage"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_usage' AND polrelid = to_regclass('"mes"."core_tenant_usage"')) THEN
         CREATE POLICY "tenant_isolation_core_tenant_usage" ON "mes"."core_tenant_usage" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_users' AND polrelid = to_regclass('"mes"."core_tenant_users"')) THEN
+    IF to_regclass('"mes"."core_tenant_users"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_users' AND polrelid = to_regclass('"mes"."core_tenant_users"')) THEN
         CREATE POLICY "tenant_isolation_core_tenant_users" ON "mes"."core_tenant_users" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_usage_records' AND polrelid = to_regclass('"mes"."core_usage_records"')) THEN
+    IF to_regclass('"mes"."core_usage_records"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_usage_records' AND polrelid = to_regclass('"mes"."core_usage_records"')) THEN
         CREATE POLICY "tenant_isolation_core_usage_records" ON "mes"."core_usage_records" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_users' AND polrelid = to_regclass('"mes"."core_users"')) THEN
+    IF to_regclass('"mes"."core_users"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_users' AND polrelid = to_regclass('"mes"."core_users"')) THEN
         CREATE POLICY "tenant_isolation_core_users" ON "mes"."core_users" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflow_instances' AND polrelid = to_regclass('"mes"."core_workflow_instances"')) THEN
+    IF to_regclass('"mes"."core_workflow_instances"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflow_instances' AND polrelid = to_regclass('"mes"."core_workflow_instances"')) THEN
         CREATE POLICY "tenant_isolation_core_workflow_instances" ON "mes"."core_workflow_instances" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflow_tasks' AND polrelid = to_regclass('"mes"."core_workflow_tasks"')) THEN
+    IF to_regclass('"mes"."core_workflow_tasks"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflow_tasks' AND polrelid = to_regclass('"mes"."core_workflow_tasks"')) THEN
         CREATE POLICY "tenant_isolation_core_workflow_tasks" ON "mes"."core_workflow_tasks" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflows' AND polrelid = to_regclass('"mes"."core_workflows"')) THEN
+    IF to_regclass('"mes"."core_workflows"') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflows' AND polrelid = to_regclass('"mes"."core_workflows"')) THEN
         CREATE POLICY "tenant_isolation_core_workflows" ON "mes"."core_workflows" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
@@ -7839,49 +7839,49 @@ ALTER TABLE "analytics"."analytics_drilldown_paths" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "analytics"."analytics_row_level_permissions" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "analytics"."analytics_self_service_reports" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "analytics"."analytics_widgets" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_billing_invoices" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_billing_plans" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_chat_members" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_chat_messages" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_chat_rooms" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_dashboard_refresh_log" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_dict_items" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_dict_types" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_email_queue" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_email_templates" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_emails" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_faqs" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_file_folders" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_files" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_guide_lessons" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_guide_progress" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_guides" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_inter_module_sync" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_login_logs" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_menu_groups" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_menus" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_migration_history" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_mobile_offline_records" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_notification_templates" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_notifications" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_plugin_categories" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_plugin_instances" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_plugin_permissions" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_plugin_pricing" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_plugin_reviews" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_plugins" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_roles" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_subscriptions" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_tenant_modules" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_tenant_plugins" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_tenant_settings" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_tenant_usage" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_tenant_users" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_usage_records" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_users" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_workflow_instances" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_workflow_tasks" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "mes"."core_workflows" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_billing_invoices" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_billing_plans" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_chat_members" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_chat_messages" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_chat_rooms" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_dashboard_refresh_log" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_dict_items" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_dict_types" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_email_queue" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_email_templates" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_emails" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_faqs" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_file_folders" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_files" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_guide_lessons" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_guide_progress" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_guides" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_inter_module_sync" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_login_logs" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_menu_groups" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_menus" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_migration_history" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_mobile_offline_records" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_notification_templates" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_notifications" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_plugin_categories" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_plugin_instances" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_plugin_permissions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_plugin_pricing" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_plugin_reviews" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_plugins" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_roles" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_subscriptions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_tenant_modules" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_tenant_plugins" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_tenant_settings" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_tenant_usage" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_tenant_users" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_usage_records" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_users" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_workflow_instances" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_workflow_tasks" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "mes"."core_workflows" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "mes"."dashboard_stats" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "mes"."financial_records" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "mes"."inspection_records" ENABLE ROW LEVEL SECURITY;
