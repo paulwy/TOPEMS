@@ -25,7 +25,8 @@
 | erp | VoucherPage / BankAccountPage / MaterialManagementPage | 15 | `1cdc888f1c` |
 | finance | FinanceExpensePage / FinanceInvoicePage / FinanceCurrencyPage | 16 | `dc3064febd` |
 
-- 说明：本批新增形态含 ListPageTemplate（记录型 mock + crud 包装层断言）、itemsField 定制解包（inboundOrders→orders 等）、统计卡片 headerContent mount 查询（mockResolvedValueOnce 须在 render 后注入）、表单/自绘页 payload 归一化（trim/大写/字符串数值）与 UI 行为断言（受 harness useMutation 闭包冻结限制，create/update 精确 payload 不可经 UI 观测时改断言弹窗/回填/触发）。**登记页面缺陷 1 处（未修，待决策）**：mes MaterialIssuePage 的 `materialIssueApi` 仅暴露 list+create，无 update/delete 端点，适配器 update/delete 会落到未定义函数——已从本批候选剔除，建议后续按「修根因」批次补 API 端点后补测。
+- 说明：本批新增形态含 ListPageTemplate（记录型 mock + crud 包装层断言）、itemsField 定制解包（inboundOrders→orders 等）、统计卡片 headerContent mount 查询（mockResolvedValueOnce 须在 render 后注入）、表单/自绘页 payload 归一化（trim/大写/字符串数值）与 UI 行为断言（受 harness useMutation 闭包冻结限制，create/update 精确 payload 不可经 UI 观测时改断言弹窗/回填/触发）。
+- **MaterialIssuePage 缺陷（已修）**：批次 2 登记——mes MaterialIssuePage 的 `materialIssueApi` 仅暴露 list+create，update/delete 落到未定义函数（后端 5 端点早已挂载，纯前端 API 层缺失）。修根因批次：`apps/web/src/api/mes/types.ts` 补 `UpdateMaterialIssueRequest`；`apps/web/src/api/mes/material.ts` 的 `materialIssueApi` 补齐 `get(id)`/`update(id,data)`/`delete(id)`（GET/PUT/DELETE `/material-issues/{id}`）；新增 `apps/web/src/pages/__tests__/MaterialIssuePage.test.tsx` 真断言补测 5 用例（渲染/参数归一化/itemsField 解包/三操作委托与 payload/四档错误翻译/headerContent 状态分桶统计）。vitest 5/5、tsc、eslint 全绿，pre-commit 26 项与 pre-push 7 项门禁通过。提交 `33d95fc0e3`，已推送 main（HEAD `33d95fc0e3`）。
 
 ## MCP 接口修复（2026-10-23）📌 待办
 
