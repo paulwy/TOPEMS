@@ -31,7 +31,7 @@ interface InventoryPageProps {
   warehouseId?: string;
   sku?: string;
 }
-export interface SupplierManagementPageProps {}
+interface SupplierManagementPageProps {}
 interface SupplierDetailPageProps {
   id?: string;
 }

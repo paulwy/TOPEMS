@@ -6,7 +6,7 @@ import i18n from '@/i18n';
 // ---- 路径常量：唯一真相源 ----
 // 组件中应引用 SCM_PATHS.xxx，而非硬编码字符串
 /** DashboardPage 路由 Props · 模板=dashboard */
-export interface DashboardPageProps {
+interface DashboardPageProps {
   /** 仪表盘视图类型 */
   variant?: 'overview' | 'executive';
   /** 看板全局筛选条件 */

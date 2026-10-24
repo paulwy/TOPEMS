@@ -9,7 +9,7 @@ const TICKET_PATHS = {
   center: '/ticket/center',
 } as const;
 
-export interface DashboardPageProps {}
+interface DashboardPageProps {}
 
 interface TicketCenterPageProps {
   page?: number;

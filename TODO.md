@@ -1,3 +1,9 @@
+## unused L2 续批：export-star barrel 条目 def 去 export（2026-10-25）✅ 完成
+
+> **#21 续批**：L2 剩 78 条中 65 条为 export-star barrel 引用（`export * from './x'`，脚本 named 删项不适用）——对 65 条 def 端去 export（8 文件，star 引用自动失效）；13 条（test 引用 7 + barrel+test 6）保留；routes 动态 import 的 automationModuleConfig/pdmModuleConfig 收敛时恢复 export（TS2339 不在收敛正则，手动恢复）
+> - 验证：tsc 0 错、eslint 0、detect 复跑 L1=0 保持
+> - 注：detect 对 export-star 引用口径无法归零（star 行不计名字），L2 报告数 78 为口径残值；def 端 export 面已实际收窄
+
 ## unused L1 归零批（2026-10-25）✅ 完成
 
 > **#21 续批 · L1 131 条 def 去 export（barrel 删项后遗留孤儿面清零）**：

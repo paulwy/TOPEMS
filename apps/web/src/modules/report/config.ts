@@ -11,7 +11,7 @@ interface ReportViewerPageRouteProps {
   parameters?: Record<string, unknown>;
 }
 interface ReportDesignPageProps {}
-export interface ReportBuilderPageProps {}
+interface ReportBuilderPageProps {}
 interface ReportSchedulePageProps {}
 interface ReportSubscriptionPageProps {}
 interface TemplateManagementPageProps {}

@@ -11,7 +11,7 @@ const OA_PATHS = {
   meetings: '/oa/meetings',
   vehicles: '/oa/vehicles',
 } as const;
-export interface DashboardPageProps {}
+interface DashboardPageProps {}
 
 interface DocumentManagementPageProps {
   page?: number;

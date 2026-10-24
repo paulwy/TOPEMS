@@ -150,7 +150,7 @@ interface FinanceAssetPageProps {
 }
 
 /** BudgetManagementPage 路由 Props · 模板=list */
-export interface BudgetManagementPageProps {
+interface BudgetManagementPageProps {
   /** 分页页码，默认 1 */
   page?: number;
   /** 分页大小，默认 20 */

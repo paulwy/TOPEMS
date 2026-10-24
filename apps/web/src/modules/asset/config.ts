@@ -4,7 +4,7 @@ import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 /** DashboardPage 路由 Props · 模板=dashboard */
-export interface DashboardPageProps {
+interface DashboardPageProps {
   /** 仪表盘视图类型 */
   variant?: 'overview' | 'executive';
   /** 看板全局筛选条件 */

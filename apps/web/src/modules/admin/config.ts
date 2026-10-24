@@ -19,7 +19,7 @@ interface AdminUserListProps {
   filters?: Record<string, unknown>;
 }
 interface BankAccountManagementPageProps {}
-export interface DictionaryManagementPageProps {}
+interface DictionaryManagementPageProps {}
 interface AuditLogPageProps {
   entityType?: string;
   entityId?: string;
@@ -343,7 +343,7 @@ const adminRoutes: RouteConfigV2[] = [
     path: ADMIN_PATHS.menu,
     element: lazyWithRetry(() => import('@/pages/system/MenuManagementPage'), 'MenuManagementPage'),
     module: 'admin',
-    title: '菜单管理',
+    title: i18n.t('admin.nav.admin-menu'),
     titleKey: 'admin.nav.admin-menu',
     code: 'admin-menu',
     requiredPermissions: ['system:read', 'admin:dashboard:read'],
@@ -588,14 +588,14 @@ export const adminNavConfig: ModuleNavConfig = {
     },
     {
       code: 'admin-menu',
-      label: '菜单管理',
+      label: i18n.t('admin.nav.admin-menu'),
       labelKey: 'admin.nav.admin-menu',
       icon: 'Menu',
       path: ADMIN_PATHS.menu,
       permission: 'system:read',
       order: 25,
       group: 'setting',
-      description: '维护菜单分组与菜单项',
+      description: i18n.t('admin.nav.admin-menu_desc'),
     },
     {
       code: 'admin-monitor',
