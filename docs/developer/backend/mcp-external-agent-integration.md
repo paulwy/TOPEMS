@@ -53,6 +53,7 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 66 个工具（64 个业务工�
 | --------------------- | ----------------------- | -------------------------------------- |
 | `JWT_SECRET`          | （必填，无默认）              | 服务间认证密钥；fail-closed，缺失则 mcp-stdio 拒绝启动 |
 | `MCP_STDIO_SUBJECT`   | （可选，缺省匿名）              | 业务身份注入：JSON `{"user_id":"...","tenant_id":"...","roles":[...]}`；缺失/解析失败 → 匿名（业务工具 -32001，fail-closed） |
+| `MCP_EXTERNAL_SERVERS`| （可选，缺省不启用）              | 外部 MCP server 白名单：JSON 数组 `[{"name":"toy","command":"python3","args":["..."],"env":[...]}]`；解析失败/不可达 → 跳过不阻断启动（fail-open），工具以 `ext.<name>.<tool>` 挂载 |
 | `CRM_SERVICE_URL`     | `http://localhost:8029` | CRM 服务地址                               |
 | `ERP_SERVICE_URL`     | `http://localhost:8030` | ERP 服务地址                               |
 | `FINANCE_SERVICE_URL` | `http://localhost:8011` | Finance 服务地址                           |
