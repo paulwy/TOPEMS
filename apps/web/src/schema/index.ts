@@ -45,7 +45,7 @@ export type {
   CrudApiAdapter,
 } from './adapterFactory';
 
-export { createCrudApiAdapter, normalizeListResponse } from './adapterFactory';
+export { normalizeListResponse } from './adapterFactory';
 
 // ── Schema Extensions ──
 export type {

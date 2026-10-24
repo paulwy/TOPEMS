@@ -14,7 +14,7 @@ export { useCrudMutations } from '../useCrudMutations';
 export type { UseCrudMutationsOptions } from '../useCrudMutations';
 
 // CrudQueries
-export { useCrudQueries, useModuleQueries, useCrudOperations } from '../useCrudQueries';
+export { useCrudQueries, useCrudOperations } from '../useCrudQueries';
 export type {
   UseCrudQueriesResult,
   UseCrudOperationsOptions,

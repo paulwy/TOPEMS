@@ -11,7 +11,7 @@
  * 不修改现有 useCrud.ts 和 useErp.ts，完全向后兼容。
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import type { AxiosInstance } from 'axios';
 import { useNotificationStore } from '@/store';
 import i18n from '@/i18n';
@@ -35,25 +35,6 @@ interface CrudQueriesOptions<T> {
   onError?: (error: unknown) => void;
   /** 列表数据转换（从 Response 中提取 items） */
   transformList?: (response: unknown) => { items: T[]; total: number };
-}
-
-interface ModuleQueriesOptions<T> {
-  /** 模块 API 对象（必须实现 list/get/create/update/delete） */
-  api: {
-    list: (
-      params?: Record<string, unknown>
-    ) => Promise<{ success: boolean; data?: { items: T[]; total: number } }>;
-    get: (id: string) => Promise<{ success: boolean; data?: T }>;
-    create: (data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
-    update: (id: string, data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
-    delete: (id: string) => Promise<{ success: boolean }>;
-  };
-  /** React Query queryKey 前缀 */
-  queryKey: string;
-  /** 是否自动获取列表（默认 true） */
-  autoFetch?: boolean;
-  /** 每页条数（默认 10） */
-  defaultPageSize?: number;
 }
 
 export interface UseCrudQueriesResult<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
@@ -374,247 +355,6 @@ export function useCrudQueries<
  * });
  * ```
  */
-export function useModuleQueries<T extends { id?: string }>(
-  options: ModuleQueriesOptions<T>
-): UseCrudQueriesResult<T> {
-  const { api, queryKey, autoFetch = true, defaultPageSize = 10 } = options;
-
-  const queryClient = useQueryClient();
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
-  // ---- 分页状态 ----
-  const [page, setPageState] = useState(1);
-  const [pageSize, setPageSizeState] = useState(defaultPageSize);
-  const [extraParams, setExtraParams] = useState<Record<string, unknown>>({});
-
-  const setPage = useCallback((newPage: number) => {
-    setPageState(Math.max(1, newPage));
-  }, []);
-
-  const setPageSize = useCallback((newSize: number) => {
-    setPageSizeState(newSize);
-    setPageState(1);
-  }, []);
-
-  // ---- 列表查询 ----
-  const listQueryKey = useMemo(
-    () => [queryKey, 'list', page, pageSize, extraParams],
-    [queryKey, page, pageSize, extraParams]
-  );
-
-  const listQuery = useQuery({
-    queryKey: listQueryKey,
-    queryFn: async () => {
-      const response = await api.list({ page, pageSize, ...extraParams });
-      if (!response.success || !response.data) {
-        throw new Error(i18n.t('shared.use_crud_queries.k7'));
-      }
-      return response.data;
-    },
-    enabled: autoFetch,
-    staleTime: 5 * 60 * 1000,
-    retry: 2,
-  });
-
-  const data = listQuery.data?.items ?? [];
-  const total = listQuery.data?.total ?? 0;
-
-  const pagination = useMemo(
-    () => ({ page, pageSize, total, setPage, setPageSize }),
-    [page, pageSize, total, setPage, setPageSize]
-  );
-
-  // ---- fetch ----
-  const fetch = useCallback(
-    (params?: Record<string, unknown>) => {
-      if (params) {
-        setExtraParams(params);
-      }
-      queryClient.invalidateQueries({
-        queryKey: [queryKey, 'list'],
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-    [queryClient, queryKey]
-  );
-
-  // ---- get（单条） ----
-  const getItem = useCallback(
-    async (id: string): Promise<T | null> => {
-      try {
-        const cached = queryClient.getQueryData<T>([queryKey, 'detail', id]);
-        if (cached) return cached;
-
-        const response = await api.get(id);
-        if (response.success && response.data) {
-          queryClient.setQueryData([queryKey, 'detail', id], response.data);
-          return response.data;
-        }
-        return null;
-      } catch (err: unknown) {
-        const errAny = err as { response?: { data?: { message?: string } }; message?: string };
-        const message =
-          errAny?.response?.data?.message ||
-          errAny?.message ||
-          i18n.t('shared.use_crud_queries.k8');
-        addNotification({ title: i18n.t('shared.use_crud_queries.k9'), message, type: 'error' });
-        return null;
-      }
-    },
-    [api, queryKey, queryClient, addNotification]
-  );
-
-  // ---- refresh ----
-  const refresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
-  }, [queryClient, queryKey]);
-
-  // ---- 错误通知辅助 ----
-  const notifyError = useCallback(
-    (err: unknown, defaultMessage: string) => {
-      const errAny = err as { response?: { data?: { message?: string } }; message?: string };
-      const message = errAny?.response?.data?.message || errAny?.message || defaultMessage;
-      addNotification({ title: i18n.t('shared.use_crud_queries.k10'), message, type: 'error' });
-      return Promise.reject(err);
-    },
-    [addNotification]
-  );
-
-  const notifySuccess = useCallback(
-    (message: string) => {
-      addNotification({ title: i18n.t('shared.use_crud_queries.k11'), message, type: 'success' });
-    },
-    [addNotification]
-  );
-
-  // ---- create ----
-  const createMutation = useMutation({
-    mutationFn: async (item: Partial<T>) => {
-      const response = await api.create(item);
-      if (!response.success) {
-        throw new Error(i18n.t('shared.use_crud_queries.k12'));
-      }
-      return response.data ?? null;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [queryKey, 'list'],
-        exact: false,
-        refetchType: 'active',
-      });
-      notifySuccess(i18n.t('shared.use_crud_queries.k13'));
-    },
-    onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k14')),
-  });
-
-  // ---- update ----
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, item }: { id: string; item: Partial<T> }) => {
-      const response = await api.update(id, item);
-      if (!response.success) {
-        throw new Error(i18n.t('shared.use_crud_queries.k15'));
-      }
-      return response.data ?? null;
-    },
-    onSuccess: (_data: T | null, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: [queryKey, 'list'],
-        exact: false,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: [queryKey, 'detail', variables.id],
-
-        exact: false,
-        refetchType: 'active',
-      });
-      notifySuccess(i18n.t('shared.use_crud_queries.k16'));
-    },
-    onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k17')),
-  });
-
-  // ---- delete ----
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await api.delete(id);
-      if (!response.success) {
-        throw new Error(i18n.t('shared.use_crud_queries.k18'));
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
-      notifySuccess(i18n.t('shared.use_crud_queries.k19'));
-    },
-    onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k20')),
-  });
-
-  // ---- bulkDelete ----
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => api.delete(id)));
-    },
-    onSuccess: (_data: void, variables: string[]) => {
-      queryClient.invalidateQueries({ queryKey: [queryKey], exact: false, refetchType: 'active' });
-      notifySuccess(
-        `${i18n.t('shared.use_crud_queries.k2')}${variables.length}${i18n.t('shared.use_crud_queries.k3')}`
-      );
-    },
-    onError: (err) => notifyError(err, i18n.t('shared.use_crud_queries.k21')),
-  });
-
-  // ---- 便捷方法 ----
-  const create = useCallback(
-    (item: Partial<T>) => createMutation.mutateAsync(item) as Promise<T | null>,
-    [createMutation]
-  );
-
-  const update = useCallback(
-    (id: string, item: Partial<T>) => updateMutation.mutateAsync({ id, item }) as Promise<T | null>,
-    [updateMutation]
-  );
-
-  const deleteItem = useCallback((id: string) => deleteMutation.mutateAsync(id), [deleteMutation]);
-
-  const bulkDelete = useCallback(
-    (ids: string[]) => bulkDeleteMutation.mutateAsync(ids),
-    [bulkDeleteMutation]
-  );
-
-  // ---- 合并 loading ----
-  const loading =
-    listQuery.isLoading ||
-    createMutation.isPending ||
-    updateMutation.isPending ||
-    deleteMutation.isPending ||
-    bulkDeleteMutation.isPending;
-
-  const error: string | null = (listQuery.error as Error)?.message ?? null;
-
-  return {
-    data,
-    loading,
-    error,
-    pagination,
-    fetch,
-    get: getItem,
-    refresh,
-    create,
-    update,
-    delete: deleteItem,
-    bulkDelete,
-    createMutation,
-    updateMutation,
-    deleteMutation,
-    bulkDeleteMutation,
-    mutations: {
-      createMutation,
-      updateMutation,
-      deleteMutation,
-      bulkDeleteMutation,
-    },
-  };
-}
 
 // ============ useCrudOperations ============
 
@@ -931,7 +671,7 @@ export function useCrudOperations<
 
 // ============ 导出 ============
 
-export default { useCrudQueries, useModuleQueries, useCrudOperations };
+export default { useCrudQueries, useCrudOperations };
 
 // ============ 使用示例（参考） ============
 

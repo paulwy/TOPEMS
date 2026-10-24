@@ -12,5 +12,3 @@ export { usePermission } from '../../usePermission';
 
 export { useRole } from '../../useRole';
 export type { Role } from '../../useRole';
-
-export { useOrganization } from '../../useOrganization';

@@ -21,4 +21,3 @@ export { ComponentPalette } from './ComponentPalette';
 export { DesignCanvas } from './DesignCanvas';
 export { PropertyPanel } from './PropertyPanel';
 export { ComponentTree } from './ComponentTree';
-export { DesignerPage } from './DesignerPage';

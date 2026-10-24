@@ -123,40 +123,14 @@ export function normalizeListResponse<T>(
  * 归一化分页参数名
  * 将 pageSize 映射为后端期望的参数名（page_size 或自定义）
  */
-function normalizePaginationParams(
-  params: Record<string, unknown>,
-  config: CrudApiAdapterConfig
-): Record<string, unknown> {
-  const { pageSizeParam = 'page_size', pageParam = 'page', normalizePageSize = true } = config;
-
-  const result: Record<string, unknown> = { ...params };
-
-  if (normalizePageSize && params.pageSize !== undefined) {
-    result[pageSizeParam] = params.pageSize;
-    delete result.pageSize;
-  }
-
-  if (params.page !== undefined && pageParam !== 'page') {
-    result[pageParam] = params.page;
-    delete result.page;
-  }
-
-  return result;
-}
 
 /**
  * 从 ApiResponse 中提取单条数据
  */
-function extractData<T>(response: ApiResponse<T>): T | undefined {
-  return response?.data as T | undefined;
-}
 
 /**
  * 检查响应是否成功
  */
-function isSuccess(response: ApiResponse<unknown>): boolean {
-  return response?.success === true;
-}
 
 // ============ 工厂函数 ============
 
@@ -173,67 +147,4 @@ function isSuccess(response: ApiResponse<unknown>): boolean {
  * });
  *
  * const { items, total } = await materialAdapter.list({ page: 1, pageSize: 20 });
- * ```
- */
-export function createCrudApiAdapter<T, TCreate = Partial<T>, TUpdate = Partial<T>>(
-  api: CrudApi<T, TCreate, TUpdate>,
-  config: CrudApiAdapterConfig = {}
-): CrudApiAdapter<T, TCreate, TUpdate> {
-  const adapter: CrudApiAdapter<T, TCreate, TUpdate> = {
-    async list(params?: Record<string, unknown>): Promise<NormalizedListResponse<T>> {
-      const normalizedParams = params ? normalizePaginationParams(params, config) : {};
-      const response = await api.list(normalizedParams);
-
-      if (!isSuccess(response)) {
-        throw new Error(response?.message || 'Failed to list records');
-      }
-
-      return normalizeListResponse<T>(response, config);
-    },
-
-    async get(id: string): Promise<CrudResult<T>> {
-      const response = await api.get(id);
-
-      return {
-        success: isSuccess(response),
-        data: extractData<T>(response),
-        message: response?.message,
-        code: response?.code,
-      };
-    },
-
-    async create(data: TCreate): Promise<CrudResult<T>> {
-      const response = await api.create(data);
-
-      return {
-        success: isSuccess(response),
-        data: extractData<T>(response),
-        message: response?.message,
-        code: response?.code,
-      };
-    },
-
-    async update(id: string, data: TUpdate): Promise<CrudResult<T>> {
-      const response = await api.update(id, data);
-
-      return {
-        success: isSuccess(response),
-        data: extractData<T>(response),
-        message: response?.message,
-        code: response?.code,
-      };
-    },
-
-    async delete(id: string): Promise<CrudResult<void>> {
-      const response = await api.delete(id);
-
-      return {
-        success: isSuccess(response),
-        message: response?.message,
-        code: response?.code,
-      };
-    },
-  };
-
-  return adapter;
-}
+ * ``` */

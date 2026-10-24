@@ -15,8 +15,6 @@ export type { ConfirmDialogConfig } from '../useConfirmDialog';
 export { useDataTable, useExportData } from '../useDataTable';
 
 // WindowManager
-export { useWindowManager } from '../useWindowManager';
-export type { WindowState } from '../useWindowManager';
 
 // BackNavigation
 export { useBackNavigation } from '../useBackNavigation';

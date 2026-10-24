@@ -30,5 +30,3 @@ export type {
 } from '../../useNotificationWebSocket';
 
 // WebSocket → Snackbar 通知频道（原 useUnifiedWebSocket 内的便捷 hooks）
-export { useWebSocketNotifications } from '../../useWebSocketNotifications';
-export type { WsNotificationConfig } from '../../useWebSocketNotifications';

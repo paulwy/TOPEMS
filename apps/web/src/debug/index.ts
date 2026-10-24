@@ -4,5 +4,3 @@
  * 使用：
  *   import { useDebugTrace, getDebugTrace, setDebugTrace } from '@/debug';
  */
-export { default as useDebugTrace } from './useDebugTrace';
-export { getDebugTrace } from './useDebugTrace';

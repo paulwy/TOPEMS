@@ -65,8 +65,8 @@ export { helpApi } from './help';
 // [V2026.08 已合并] feedbackApi 已归档 apps/web/_archive/feedback-api（feedback 服务合并至 ticket，兼容端点在 /api/feedback）
 
 // V33.0/V34.0 Portal BFF 聚合 API
-export { bffApi, bffGraphQL, getDashboard, completeTodoGql, subscribeServiceHealth } from './bff';
-export type { ServiceStats, UnifiedTodo, MasterDataRef } from './bff';
+export { bffGraphQL, getDashboard, completeTodoGql } from './bff';
+export type { ServiceStats, UnifiedTodo } from './bff';
 
 // Plugin system
 export * as pluginApi from './plugin';
