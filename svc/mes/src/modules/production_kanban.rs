@@ -14,7 +14,7 @@ use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
-use topems_shared_db::decimal::big_decimal_to_f64;
+use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_opt};
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -207,7 +207,7 @@ pub async fn get_dashboard(
     .await;
 
     let oee_avg = match oee_stats {
-        Ok(r) => r.avg_oee.unwrap_or(0.0) * 100.0,
+        Ok(r) => big_decimal_to_f64_opt(r.avg_oee).unwrap_or(0.0) * 100.0,
         Err(e) => {
             tracing::error!("Failed to fetch equipment OEE: {}", e);
             0.0

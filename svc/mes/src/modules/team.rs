@@ -378,11 +378,11 @@ pub async fn get_team(
                 work_station_name: Some(r.work_station_name),
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
-                member_count: r.member_count,
-                status: r.status,
+                member_count: r.member_count.unwrap_or_default(),
+                status: r.status.unwrap_or_default(),
                 description: r.description,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -425,7 +425,7 @@ pub async fn create_team(
         req.team_name,
         req.team_type,
         work_station_id,
-        leader_id.map(|u| u.to_string()),
+        leader_id,
         req.leader_name,
         req.description,
         Utc::now(),
@@ -484,11 +484,11 @@ pub async fn create_team(
         work_station_name: None,
         leader_id: result.leader_id.map(|u| u.to_string()),
         leader_name: result.leader_name,
-        member_count: result.member_count,
-        status: result.status,
+        member_count: result.member_count.unwrap_or_default(),
+        status: result.status.unwrap_or_default(),
         description: result.description,
-        created_at: result.created_at,
-        updated_at: result.updated_at,
+        created_at: result.created_at.unwrap_or_else(Utc::now),
+        updated_at: result.updated_at.unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(team, "班组创建成功"))
