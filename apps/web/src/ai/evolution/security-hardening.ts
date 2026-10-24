@@ -20,23 +20,3 @@ export interface SecurityCheckV58 {
 export type ThreatSeverity = 'Critical' | 'High' | 'Medium' | 'Low';
 export type ThreatLikelihood = 'VeryLikely' | 'Likely' | 'Unlikely' | 'Rare';
 export type ThreatImpact = 'VeryHigh' | 'High' | 'Medium' | 'Low';
-
-interface ThreatModel {
-  id: string;
-  threat_type: string;
-  severity: ThreatSeverity;
-  likelihood: ThreatLikelihood;
-  impact: ThreatImpact;
-  mitigation: string;
-  status: 'Identified' | 'Mitigated' | 'Resolved';
-}
-
-interface SecurityReport {
-  totalChecks: number;
-  passed: number;
-  failed: number;
-  warnings: number;
-  score: number;
-  checks: SecurityCheckV58[];
-  generatedAt: number;
-}

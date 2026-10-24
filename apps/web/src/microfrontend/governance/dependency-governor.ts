@@ -1,14 +1,6 @@
 import { moduleMarket, type MarketplaceModule } from '../marketplace/module-market';
 import i18n from '@/i18n';
 
-interface ModuleDependency {
-  module_id: string;
-  version: string;
-  required_version: string;
-  is_optional: boolean;
-  is_dev: boolean;
-}
-
 export interface DependencyGraphNode {
   id: string;
   name: string;

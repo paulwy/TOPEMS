@@ -91,21 +91,6 @@ export interface SalesOrder {
   created_by?: string;
 }
 
-interface SalesOrderItem {
-  id: string;
-  sales_order_id: string;
-  material_id: string;
-  material_code: string;
-  material_name: string;
-  specification?: string;
-  unit?: string;
-  quantity: number;
-  unit_price: number;
-  amount: number;
-  shipped_quantity?: number;
-  remark?: string;
-}
-
 export interface CreateSalesOrderRequest {
   order_number: string;
   customer_id: string;

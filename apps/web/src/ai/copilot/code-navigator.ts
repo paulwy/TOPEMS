@@ -19,17 +19,6 @@ export interface ImportInfo {
   source: string;
 }
 
-interface FileStructure {
-  path: string;
-  imports: ImportInfo[];
-  exports: string[];
-  symbols: SymbolInfo[];
-  dependencies: string[];
-  dependents: string[];
-  lineCount: number;
-  language: 'typescript' | 'tsx' | 'javascript' | 'jsx';
-}
-
 export interface SearchResult {
   file: string;
   line: number;
@@ -37,12 +26,4 @@ export interface SearchResult {
   match: string;
   context: string;
   score: number;
-}
-
-interface IndexStats {
-  totalFiles: number;
-  totalSymbols: number;
-  totalImports: number;
-  languages: Record<string, number>;
-  indexedAt: number;
 }

@@ -18,16 +18,6 @@ export interface ModuleCardQuota {
   label?: string;
 }
 
-interface ModuleCardData {
-  key: string;
-  name: string;
-  icon: IconComponent;
-  description?: string;
-  status?: ModuleCardStatus;
-  quota?: ModuleCardQuota;
-  path: string;
-}
-
 export interface ModuleItem {
   title: string;
   icon: IconComponent;

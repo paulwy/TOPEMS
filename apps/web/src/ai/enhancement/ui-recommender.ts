@@ -26,29 +26,6 @@ export type IntentCategory =
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
-interface IntentContext {
-  description: string;
-  category?: IntentCategory;
-  keywords?: string[];
-  containerType?: 'page' | 'section' | 'card' | 'dialog' | 'sidebar';
-  responsive?: boolean;
-  a11yRequirements?: string[];
-  themeMode?: ThemeMode;
-  dataShape?: 'list' | 'grid' | 'form' | 'detail' | 'empty';
-  priority?: 'performance' | 'accessibility' | 'consistency' | 'simplicity';
-}
-
-interface ComponentRecommendation {
-  component: string;
-  reason: string;
-  alternatives: Array<{
-    name: string;
-    pros: string;
-    cons: string;
-  }>;
-  a11y_notes: string[];
-}
-
 export interface ComponentMeta {
   name: string;
   category: IntentCategory;

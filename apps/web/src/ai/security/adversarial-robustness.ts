@@ -13,30 +13,3 @@ export interface AttackVector {
   description?: string;
   examples?: string[];
 }
-
-interface RobustnessTest {
-  id: string;
-  modelId: string;
-  attackVector: AttackVector;
-  success_rate: number;
-  defense_rate: number;
-  status: TestStatus;
-  details?: {
-    test_cases: number;
-    passed_cases: number;
-    failed_cases: number;
-    mitigations_applied: string[];
-    timestamp: number;
-    duration_ms: number;
-  };
-}
-
-interface Defense {
-  id: string;
-  name: string;
-  type: AttackType;
-  description: string;
-  enabled: boolean;
-  effectiveness: number;
-  configuration: Record<string, unknown>;
-}

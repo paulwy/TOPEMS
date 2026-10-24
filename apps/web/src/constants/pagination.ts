@@ -16,21 +16,6 @@ export const DEFAULT_PAGE = 1 as const;
 /** Default page size (consistent with shared PAGINATION.DEFAULT_PAGE_SIZE) */
 export const DEFAULT_PAGE_SIZE = 20 as const;
 
-/**
- * 分页参数命名归一化（pageSize ↔ page_size ↔ page_size 三种历史命名兼容）。
- *
- * 前端三种写法：
- *   - pageSize  (camelCase, 绝大多数业务 API 层)
- *   - page_size (snake_case, help.ts / admin/*.ts / 后端 Rust struct)
- *   - page_size  (全小写, notification/email 等历史遗留发送 URLSearchParams)
- * 后端所有服务统一使用 page_size。
- *
- * ⚠️ 最终方向：新增代码统一使用 pageSize（TS API 类型），在 axios Request
- * interceptor 层调用 normalizePaginationParams 自动转成 page_size 发给后端。
- */
-
-type PageSizeField = 'pageSize' | 'page_size';
-
 export interface PaginationParamsInput {
   page?: number;
   pageSize?: number;

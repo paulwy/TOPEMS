@@ -1,19 +1,6 @@
 export type RiskCategory = 'Security' | 'Compliance' | 'Performance' | 'Financial';
 export type RiskLevel = 'critical' | 'high' | 'medium' | 'low';
 
-interface RiskIndicator {
-  id: string;
-  name: string;
-  category: RiskCategory;
-  threshold: number;
-  current_value: number;
-  severity: RiskLevel;
-  unit: string;
-  description: string;
-  direction: 'above' | 'below';
-  metadata?: Record<string, unknown>;
-}
-
 export interface RiskAlert {
   id: string;
   indicator_id: string;
@@ -33,18 +20,3 @@ export interface RiskAlert {
   assignee?: string;
   tags: string[];
 }
-
-interface RiskScore {
-  overall: number;
-  by_category: Record<RiskCategory, number>;
-  bySeverity: Record<RiskLevel, number>;
-  trend: 'improving' | 'stable' | 'deteriorating';
-  components: Array<{
-    indicator_id: string;
-    score: number;
-    weight: number;
-    contribution: number;
-  }>;
-}
-
-type AlertSubscriber = (alert: RiskAlert) => void;

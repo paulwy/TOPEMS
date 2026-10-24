@@ -1,25 +1,5 @@
 export type RoutingStrategy = 'intent-based' | 'performance-based' | 'hybrid' | 'a/b-test';
 
-interface RouteRecommendation {
-  path: string;
-  confidence: number;
-  reason: string;
-  alternatives: Array<{
-    path: string;
-    confidence: number;
-    tradeoff: string;
-  }>;
-  predicted_latency_ms: number;
-  ab_test_variant?: string;
-}
-
-interface RouteIntent {
-  action: string;
-  target: string;
-  context: string[];
-  urgency: 'low' | 'normal' | 'high' | 'critical';
-}
-
 export interface RoutePerformance {
   path: string;
   avg_latency_ms: number;
@@ -27,26 +7,4 @@ export interface RoutePerformance {
   error_rate: number;
   cache_hit_rate: number;
   last_updated: number;
-}
-
-interface BehaviorEntry {
-  path: string;
-  timestamp: number;
-  duration_ms: number;
-  user_action: string;
-  conversion: boolean;
-}
-
-interface RouterStats {
-  total_recommendations: number;
-  accepted_recommendations: number;
-  acceptance_rate: number;
-  avg_confidence: number;
-  by_strategy: Record<RoutingStrategy, number>;
-  top_routes: Array<{ path: string; count: number; avg_confidence: number }>;
-  performance: RoutePerformance[];
-  ab_tests: Array<{
-    test_id: string;
-    variants: Array<{ variant: string; traffic: number; conversions: number }>;
-  }>;
 }

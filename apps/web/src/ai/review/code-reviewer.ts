@@ -18,13 +18,3 @@ export interface ReviewResult {
   passed: boolean;
   reviewed_at: number;
 }
-
-interface ReviewRule {
-  id: string;
-  name: string;
-  type: IssueType;
-  severity: IssueSeverity;
-  pattern: RegExp;
-  message: string;
-  suggestion: string;
-}

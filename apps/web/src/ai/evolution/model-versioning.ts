@@ -19,10 +19,3 @@ export interface Model {
   versions: ModelVersion[];
   owner: string;
 }
-
-interface VersionCompareResult {
-  added: string[];
-  removed: string[];
-  changed: string[];
-  metricDeltas: Record<string, number>;
-}

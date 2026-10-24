@@ -39,25 +39,3 @@ export interface ToolRegistry {
   get: (name: string) => Tool | undefined;
   list: () => Tool[];
 }
-
-interface TaskPlan {
-  taskId: string;
-  steps: Array<{ description: string; tool?: string }>;
-}
-
-interface AgentEvent {
-  type:
-    | 'task_started'
-    | 'step_started'
-    | 'step_completed'
-    | 'step_failed'
-    | 'task_completed'
-    | 'task_failed'
-    | 'task_cancelled'
-    | 'progress_update';
-  taskId: string;
-  stepId?: string;
-  message: string;
-  timestamp: number;
-  progress?: number;
-}

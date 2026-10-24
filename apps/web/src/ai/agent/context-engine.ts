@@ -10,47 +10,9 @@ export interface ConversationMessage {
   timestamp: number;
 }
 
-interface ConversationContext {
-  messages: ConversationMessage[];
-  entities: Entity[];
-  topics: string[];
-  sentiment: Sentiment;
-  intent: Intent;
-  summary?: string;
-}
-
 export interface Entity {
   name: string;
   type: 'person' | 'organization' | 'location' | 'date' | 'number' | 'product' | 'action';
   value: string;
   confidence: number;
-}
-
-interface MemoryEntry {
-  id: string;
-  type: MemoryEntryType;
-  content: string;
-  timestamp: number;
-  importance: number;
-  metadata?: Record<string, unknown>;
-}
-
-interface ContextWindow {
-  maxMessages: number;
-  maxTokens: number;
-  summaryThreshold: number;
-}
-
-interface ContextEvent {
-  type:
-    | 'input_processed'
-    | 'context_updated'
-    | 'memory_stored'
-    | 'memory_retrieved'
-    | 'context_summarized'
-    | 'entity_extracted'
-    | 'intent_detected';
-  message: string;
-  timestamp: number;
-  details?: Record<string, unknown>;
 }

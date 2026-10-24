@@ -80,33 +80,6 @@ export interface FrameworkAdapter {
   setErrorHandler(handler: (error: Error) => void): void;
 }
 
-/** 统一生命周期 */
-interface UnifiedLifecycle {
-  /** 框架类型 */
-  framework: FrameworkType;
-  /** 挂载 */
-  mount: (container: HTMLElement, props: UnifiedProps) => void;
-  /** 卸载 */
-  unmount: (container: HTMLElement) => void;
-  /** 更新 */
-  update: (container: HTMLElement, props: UnifiedProps) => void;
-  /** 状态监听 */
-  watch: (callback: (state: Record<string, unknown>) => void) => () => void;
-  /** 错误回调 */
-  error: (error: Error) => void;
-}
-
-/** 生命周期钩子 */
-interface LifecycleHook {
-  beforeMount?: (container: HTMLElement, props: UnifiedProps) => void;
-  mounted?: (container: HTMLElement) => void;
-  beforeUpdate?: (container: HTMLElement, props: UnifiedProps) => void;
-  updated?: (container: HTMLElement) => void;
-  beforeUnmount?: (container: HTMLElement) => void;
-  unmounted?: (container: HTMLElement) => void;
-  errorCaptured?: (error: Error, container: HTMLElement) => void;
-}
-
 /** 已挂载的组件实例 */
 export interface MountedComponent {
   /** 实例 ID */

@@ -2,9 +2,6 @@
  * 统一编码生成服务 - 集中管理全系统ID编码
  */
 
-import { useMutation } from '@tanstack/react-query';
-import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
-
 // ============================================
 // 一、编码规则类型定义
 // ============================================
@@ -188,68 +185,6 @@ const codeApi = {
     return response.data.code;
   },
 };
-
-// ============================================
-// 三、Hooks
-// ============================================
-
-/**
- * 批量获取编码
- */
-function useBatchNextCodes() {
-  return useMutation({
-    mutationFn: (
-      requests: {
-        entity_type: EntityType;
-        quantity: number;
-        module?: ModuleType;
-      }[]
-    ) => codeApi.batchGetNextCodes(requests),
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-  });
-}
-
-/**
- * 验证编码
- */
-function useValidateCode() {
-  return useMutation({
-    mutationFn: (params: { entity_type: EntityType; code: string }) => codeApi.validateCode(params),
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-  });
-}
-
-/**
- * 预览编码格式
- */
-function usePreviewCode() {
-  return useMutation({
-    mutationFn: ({ ruleId, variables }: { ruleId: string; variables?: Record<string, string> }) =>
-      codeApi.previewCode(ruleId, variables),
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.CODE_RESERVATIONS_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-  });
-}
 
 // ============================================
 // 五、导出

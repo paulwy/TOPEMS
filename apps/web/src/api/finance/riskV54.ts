@@ -7,15 +7,6 @@ export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type RiskCategory =
   'credit' | 'market' | 'liquidity' | 'operational' | 'compliance' | 'fraud';
 export type Regulation = 'sox' | 'gdpr' | 'pci_dss' | 'hipaa' | 'internal';
-interface RiskIndicator {
-  id: string;
-  category: string;
-  level: string;
-  current_value: number;
-  threshold: number;
-  unit: string;
-  updated_at: string;
-}
 
 export interface RiskAlert {
   id: string;
@@ -68,14 +59,6 @@ interface Transaction {
   device_id: string;
   timestamp: string;
   metadata?: unknown;
-}
-
-interface ReviewRule {
-  id: string;
-  regulation: string;
-  category: string;
-  severity: string;
-  action: string;
 }
 
 export interface ReviewResult {

@@ -13,25 +13,3 @@ export interface SecurityAudit {
   timestamp: number;
   metadata?: Record<string, unknown>;
 }
-
-interface AuditResult {
-  auditId: string;
-  passed: boolean;
-  score: number;
-  findings: SecurityAudit[];
-  recommendations: string[];
-  timestamp: number;
-  modelId: string;
-  duration_ms: number;
-}
-
-interface AuditRule {
-  id: string;
-  name: string;
-  type: AuditType;
-  description: string;
-  pattern: string;
-  severity: AuditSeverity;
-  enabled: boolean;
-  remediation: string;
-}

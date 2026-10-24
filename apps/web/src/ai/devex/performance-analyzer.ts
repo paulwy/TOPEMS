@@ -1,24 +1,4 @@
-interface PerfSnapshot {
-  timestamp: number;
-  fps: number;
-  memory: number;
-  cpu: number;
-  renderTime: number;
-  scriptTime: number;
-  paintTime: number;
-}
-
 export type PerfIssueType = 'MemoryLeak' | 'LayoutThrash' | 'LongTask' | 'ExcessiveRenders';
-
-interface PerfIssue {
-  id: string;
-  type: PerfIssueType;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  location: string;
-  description: string;
-  suggestion: string;
-  timestamp: number;
-}
 
 export interface PerformanceBudget {
   maxFpsDrop: number;

@@ -25,20 +25,3 @@ export interface Breakpoint {
   hitCount: number;
   enabled: boolean;
 }
-
-interface DebugSuggestion {
-  id: string;
-  type: 'performance' | 'logic' | 'security' | 'style' | 'bug';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  message: string;
-  suggestion: string;
-  location?: { file: string; line: number };
-}
-
-interface StateAnalysis {
-  componentName: string;
-  stateSize: number;
-  changeFrequency: number;
-  immutable: boolean;
-  issues: string[];
-}

@@ -25,19 +25,3 @@ export interface Policy {
   version: number;
   tags: string[];
 }
-
-interface PolicyDecision {
-  id: string;
-  policy_id: string;
-  policy_name: string;
-  rule_id: string;
-  rule_name: string;
-  action: 'allow' | 'deny' | 'warn' | 'require_approval';
-  allowed: boolean;
-  reason: string;
-  evidence: string;
-  context: Record<string, unknown>;
-  decided_at: number;
-  user_id?: string;
-  simulation?: boolean;
-}

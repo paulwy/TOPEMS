@@ -53,21 +53,3 @@ export interface DesignResponse {
     volume: number;
   };
 }
-
-interface EmotionProfile {
-  userId: string;
-  emotionHistory: EmotionState[];
-  dominantEmotion: EmotionType;
-  avgValence: number;
-  avgArousal: number;
-  lastDetected: number;
-}
-
-interface EmotionEvent {
-  id: string;
-  timestamp: number;
-  trigger: string;
-  emotion: EmotionState;
-  response: DesignResponse;
-  userFeedback?: 'accepted' | 'rejected' | 'ignored';
-}

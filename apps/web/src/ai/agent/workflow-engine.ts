@@ -39,21 +39,3 @@ export interface WorkflowTemplate {
   triggers: WorkflowTrigger[];
   variables?: Record<string, unknown>;
 }
-
-interface WorkflowEvent {
-  type:
-    | 'workflow_started'
-    | 'step_started'
-    | 'step_completed'
-    | 'step_failed'
-    | 'workflow_completed'
-    | 'workflow_failed'
-    | 'workflow_paused'
-    | 'workflow_resumed'
-    | 'workflow_cancelled';
-  workflowId: string;
-  stepId?: string;
-  message: string;
-  timestamp: number;
-  progress?: number;
-}

@@ -51,32 +51,3 @@ export interface CompletionItem {
     new_text: string;
   };
 }
-
-interface SnippetDefinition {
-  id: string;
-  label: string;
-  description: string;
-  language: string;
-  kind: CompletionKind;
-  template: string;
-  placeholders: Array<{ name: string; default_value?: string }>;
-  sort_order: number;
-  category: 'react' | 'typescript' | 'css' | 'json' | 'testing';
-}
-
-interface ComponentPropInfo {
-  name: string;
-  type: string;
-  required: boolean;
-  description?: string;
-  default_value?: unknown;
-  deprecated?: boolean;
-}
-
-interface APIEndpointInfo {
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-  path: string;
-  description: string;
-  request_type?: string;
-  response_type?: string;
-}

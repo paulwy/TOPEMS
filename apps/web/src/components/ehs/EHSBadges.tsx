@@ -169,24 +169,6 @@ export const EHSStatusBadge: React.FC<EHSStatusBadgeProps> = ({ status, type = '
   );
 };
 
-// ============ Severity Badge ============
-
-type SeverityLevel =
-  | 'high'
-  | 'medium'
-  | 'low'
-  | 'fatal'
-  | 'serious'
-  | 'minor'
-  | 'near_miss'
-  | '高'
-  | '中'
-  | '低'
-  | '致命'
-  | '严重'
-  | '轻微'
-  | '未遂';
-
 // ============ Risk Level Badge ============
 
 export type RiskLevel = 'high' | 'medium' | 'low' | '高' | '中' | '低';
@@ -249,17 +231,3 @@ export const EHSMeasureTypeBadge: React.FC<EHSMeasureTypeBadgeProps> = ({ type }
     />
   );
 };
-
-// ============ Incident Type Badge ============
-
-type IncidentType =
-  | 'near_miss'
-  | 'accident'
-  | 'injury'
-  | 'environmental'
-  | 'equipment'
-  | '未遂事件'
-  | '事故'
-  | '人员伤害'
-  | '环境事件'
-  | '设备故障';

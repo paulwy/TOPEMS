@@ -77,11 +77,6 @@ export interface UseWebSocketOptions {
   autoAuthToken?: boolean;
 }
 
-interface SubscriptionConfig {
-  channel: string;
-  handler: (message: WebSocketMessage) => void;
-}
-
 const WS_URL =
   (import.meta.env.VITE_WS_URL as string | undefined) ||
   `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/core`;

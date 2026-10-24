@@ -12,19 +12,6 @@ export type AICapabilityType =
 
 export type CapabilityStatus = 'active' | 'inactive' | 'degraded' | 'error';
 
-interface AICapability {
-  id: string;
-  name: string;
-  type: AICapabilityType;
-  config: Record<string, unknown>;
-  status: CapabilityStatus;
-  description?: string;
-  version?: string;
-  enabled: boolean;
-  createdAt: number;
-  updatedAt: number;
-}
-
 export interface PlatformConfig {
   ai_enabled: boolean;
   auto_optimize: boolean;
@@ -49,28 +36,6 @@ export interface MiddlewareResult {
   data?: unknown;
   error?: string;
   latency: number;
-}
-
-type MiddlewareHandler = (
-  context: MiddlewareContext,
-  next: () => Promise<MiddlewareResult>
-) => Promise<MiddlewareResult>;
-
-interface AIPlatformStatus {
-  initialized: boolean;
-  config: PlatformConfig;
-  capabilities: {
-    total: number;
-    active: number;
-    inactive: number;
-    degraded: number;
-  };
-  middleware: {
-    total: number;
-    healthy: number;
-  };
-  uptime: number;
-  lastCheck: number;
 }
 
 [

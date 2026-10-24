@@ -19,9 +19,3 @@ export interface KnowledgeDocument {
   tags: string[];
   addedAt: number;
 }
-
-interface QAResult {
-  entry: QAEntry;
-  relatedDocuments: KnowledgeDocument[];
-  suggestions: string[];
-}

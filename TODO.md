@@ -4241,3 +4241,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - ai/ 120+ L2 type 标注：ai/ 13 子目录外部 0 消费（设计层），整目录删除工程大（涉及 L3 函数互链），建议独立评估。
 ### 状态与下批
 - 下批：L2 184 继续——ai/ 设计层整目录评估（或独立任务）；非 ai 剩余 other 组（useBIStore/useUIStore/errorLogger/useInstalledPlugins 已确认活=保留；PeriodOption/DefectForm 测试引用=保留）；completeTodoGql 幽灵项去向核（barrel export * 未展开疑）。
+## 第二十三轮（2026-10-25）：L1 合并遗留 135 导出未用清（远端 31a45e85c 删 barrel 后暴露）
+- 远端「L2 barrel-only 孤儿清理 -132 条」只删 barrel 转发未删定义 → L1 0→137（eslint 137 unused 同步）。
+- eslint json 驱动 135 项真死导出删除（3 轮收敛）：ai/* type 39 + useCode 函数 2 + microfrontend 等；del_any xargs 逐项删 + tsc 0 无连锁。
+- 连锁 import 清 9 处（PermissionComponents ReactNode/AIDataCompleter 2/AIFormValidator 3/useCode 3）+ prettier 空行 3 处；eslint 全绿。
+- 重扫：**L1=137→34、L2=90、L3=4686**；tsc 0、eslint 0。
+- L1 剩 34 = 34 个 *NavConfig（modules/*/config.ts）——已核：动态 import（routes/v2）只取 ModuleConfig（`.then(m => ({ xModuleConfig }))`），NavConfig 0 消费（定义+barrel 转发外无引用）——旧「永久保留」结论基于动态盲区假设，证据已反证；coreModuleNavConfigs 空数组骨架。下批定夺删除。
+### 状态与下批
+- 下批：L1 34 NavConfig 删除（0 消费证据确凿）或确认保留；L2 90 继续（ai/ 剩余 + 新降级）；completeTodoGql 幽灵项去向核。

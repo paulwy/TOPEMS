@@ -1,26 +1,6 @@
 export type Regulation = 'GDPR' | 'SOX' | 'HIPAA' | 'PCI';
 export type Severity = 'critical' | 'high' | 'medium' | 'low';
 
-interface ComplianceRule {
-  id: string;
-  name: string;
-  regulation: Regulation;
-  check_type:
-    | 'data_access'
-    | 'data_encryption'
-    | 'audit_logging'
-    | 'user_consent'
-    | 'data_retention'
-    | 'network_security'
-    | 'authentication'
-    | 'authorization';
-  severity: Severity;
-  action: string;
-  description: string;
-  enabled: boolean;
-  metadata?: Record<string, unknown>;
-}
-
 export interface ComplianceCheck {
   id: string;
   rule_id: string;

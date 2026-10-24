@@ -29,11 +29,3 @@ export interface ExperimentResult {
   conversionRate: number;
   confidence: number;
 }
-
-interface SignificanceResult {
-  isSignificant: boolean;
-  confidenceLevel: number;
-  pValue: number;
-  winner: string | null;
-  relativeLift: number;
-}

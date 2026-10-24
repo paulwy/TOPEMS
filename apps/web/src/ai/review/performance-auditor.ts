@@ -22,18 +22,3 @@ export interface LighthouseScores {
   best_practices: number;
   seo: number;
 }
-
-interface BundleInfo {
-  name: string;
-  size: number;
-  gzipped_size: number;
-  chunk: string;
-}
-
-interface AuditResult {
-  findings: PerfFinding[];
-  lighthouse_scores: LighthouseScores;
-  metrics: AuditMetrics;
-  optimized: boolean;
-  audited_at: number;
-}

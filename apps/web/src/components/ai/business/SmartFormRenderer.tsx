@@ -54,11 +54,6 @@ export interface FormDefinition {
   fields: FormFieldDefinition[];
 }
 
-interface FormValidationError {
-  field_id: string;
-  message: string;
-}
-
 interface SmartFormRendererProps {
   form: FormDefinition;
   initialValues?: Record<string, unknown>;

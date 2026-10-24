@@ -4,7 +4,6 @@ import i18n from '@/i18n';
 
 export type SeverityValue = 'high' | 'medium' | 'low';
 export type LikelihoodValue = 'high' | 'medium' | 'low';
-type ExposureValue = 'high' | 'medium' | 'low';
 
 export interface RiskCalculationResult {
   score: number;
@@ -79,8 +78,3 @@ export function getSeverityLabel(severity: string): string {
   };
   return labelMap[severity] || severity;
 }
-
-/**
- * Control measure effectiveness rating
- */
-type EffectivenessLevel = 'high' | 'medium' | 'low';
