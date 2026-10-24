@@ -4100,3 +4100,15 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### ② 状态与下批
 - L1 = 0；L2 340（值 209 / types 131）；L3 4764+。
 - 下批：L2 测试引用剩余 145——组件+stories/test 联动（chartPalette G2_PALETTE/DEMO_COLORS、AvatarGroup、TouchButton、TrendLine、ExportMenu、TableSection 等——删代码须同步删 stories/test）；B 组 index+test 28（createBaseAxiosClient/meetingBookingApi/iamApi 等——api/index.ts 聚合对象消费链待核）。
+
+## 第十八轮（2026-10-24）：L2 测试引用批2·组件类
+- 删 25 个真死组件/文件：pages/admin components（DatabaseStructureIndexes/Table/Tree）、pages/ai（AiModelProviderConfig/AiModelSettingsForm/AiModelSettingsList/AiModelUsageStats/DashboardFeatures/Hero/RecentActivity/Trend）、pages/erp（DatabaseManagementBackups/Stats/TableList/FinancialReportFilters/SummaryCards/Tables）、pages/mobile（MobileQualityDefectDialog/MobileQualitySearchBar）、monitor SettingsTabRenderer、workflow SettingSidebar、templates/list ViewModeToggle/TableSection/ExportMenu、charts chartPalette.ts。
+- 段删：Avatar.tsx AvatarGroup（-48 行）+ Tooltip/AvatarGroupProps unused；InventoryReportFilters.tsx InventoryReportFilterHint + Typography。
+- 3 stories 修复：chartPalette import 移除、G2_PALETTE→'#4e79a7'、DEMO_COLORS 内联 5 色。
+- 测试联动：删 4 纯死测试（SettingsTabRenderer/ViewModeToggle/TableSection/ExportMenu）；9 混合测试清理 import/describe/JSX（AdminDatabaseMonitoring/AiModelSettings/Dashboard/ErpOperational/FinancialReport/MobileAttendanceDialogs/MobileProductionAndApproval/ScmWmsSrm/InventoryReportComponents/WorkflowSettings）。
+- 修复：WorkflowSettingsComponents 悬空 describe 补 });（两次偏移后按名重定位）；FinancialReportComponents 悬空 JSX props 块；Avatar/InventoryReportFilters unused imports。
+- 验证：本地 tsc 0 error、eslint src --max-warnings 0 全绿；commit d94eca338（rebase 后，原 693988eb5）。
+- 卡点处理：pre-commit frontend-lint 拦 3 次（WorkflowSettings describe 未闭合 + 全仓 parsing error）；pre-push stale-base 拦（远端 8 新提交）→ git pull --rebase 后推送成功。
+### 状态与下批
+- L1 = 0；L2 317（值 ~209 / types ~108）；L3 4764+。
+- 下批：L2 测试引用剩余（B 组 index+test 28：createBaseAxiosClient/meetingBookingApi/iamApi/TouchButton/DashboardQuickActions/TrendLine/sanitizeInput/useCreateCompanyRelation 等——api/index.ts 聚合对象消费链待核）。
