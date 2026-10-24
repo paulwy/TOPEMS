@@ -1216,7 +1216,17 @@ pub async fn update_admin_faq(
 
     // COALESCE 部分更新：传 NULL 的列保持原值；超管不加租户过滤
     let row: Result<
-        Option<(Uuid, Uuid, String, String, String, serde_json::Value, String, String, String)>,
+        Option<(
+            Uuid,
+            Uuid,
+            String,
+            String,
+            String,
+            serde_json::Value,
+            String,
+            String,
+            String,
+        )>,
         sqlx::Error,
     > = if claims.is_superuser {
         sqlx::query_as(
