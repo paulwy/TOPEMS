@@ -44,20 +44,44 @@ use super::governance::{
 use super::server::McpServer;
 use super::tools::ToolExecutionError;
 
+/// 传输类型
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum TransportKind {
+    /// stdio 子进程（Phase 1；缺省）
+    Stdio,
+    /// HTTP Streamable（Phase 3 B 档）
+    Http,
+}
+
+fn default_transport() -> TransportKind {
+    TransportKind::Stdio
+}
+
 /// 外部 server 配置
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct ExternalServerConfig {
     /// server 名（工具命名空间前缀）
     name: String,
-    /// 启动命令
-    command: String,
-    /// 命令参数
+    /// 传输类型（缺省 stdio）
+    #[serde(default = "default_transport")]
+    transport: TransportKind,
+    /// 启动命令（stdio 必需；http 忽略）
+    #[serde(default)]
+    command: Option<String>,
+    /// 命令参数（stdio）
     #[serde(default)]
     args: Vec<String>,
-    /// 注入子进程的环境变量（可选）
+    /// 注入子进程的环境变量（stdio；可选）
     #[serde(default)]
     env: Vec<EnvEntry>,
+    /// HTTP 端点完整地址（http 必需，如 http://127.0.0.1:8082/mcp）
+    #[serde(default)]
+    url: Option<String>,
+    /// HTTP Bearer token（http 可选）
+    #[serde(default)]
+    token: Option<String>,
 }
 
 /// 环境变量键值对
@@ -102,7 +126,24 @@ pub async fn register_external_tools(server: &McpServer, raw_config: &str) -> us
             .iter()
             .map(|e| (e.key.clone(), e.value.clone()))
             .collect();
-        match McpClient::connect_stdio(&cfg.command, &cfg.args, &envs).await {
+        // 按传输类型连接：stdio spawn 子进程；http 走 Streamable HTTP（token 可选）
+        let connected = match cfg.transport {
+            TransportKind::Stdio => match cfg.command.as_deref().filter(|c| !c.is_empty()) {
+                Some(cmd) => McpClient::connect_stdio(cmd, &cfg.args, &envs).await,
+                None => {
+                    warn!(server = %cfg.name, "stdio 传输缺少 command，跳过（fail-open）");
+                    continue;
+                }
+            },
+            TransportKind::Http => match cfg.url.as_deref().filter(|u| !u.is_empty()) {
+                Some(url) => McpClient::connect_http(url, cfg.token.as_deref()).await,
+                None => {
+                    warn!(server = %cfg.name, "http 传输缺少 url，跳过（fail-open）");
+                    continue;
+                }
+            },
+        };
+        match connected {
             Ok(client) => {
                 let client_handle: Arc<Mutex<Option<McpClient>>> =
                     Arc::new(Mutex::new(Some(client)));
@@ -240,8 +281,39 @@ mod tests {
         );
         assert_eq!(servers.len(), 1);
         assert_eq!(servers[0].name, "toy");
-        assert_eq!(servers[0].command, "python3");
+        assert_eq!(servers[0].transport, TransportKind::Stdio); // 缺省 stdio（向后兼容）
+        assert_eq!(servers[0].command.as_deref(), Some("python3"));
         assert_eq!(servers[0].args, vec!["a.py"]);
         assert_eq!(servers[0].env.len(), 1);
+        assert!(servers[0].url.is_none());
+        assert!(servers[0].token.is_none());
+    }
+
+    #[test]
+    fn parse_http_config() {
+        let servers = parse_external_servers(
+            r#"[{"name":"search","transport":"http","url":"http://127.0.0.1:8082/mcp","token":"s3cret"}]"#,
+        );
+        assert_eq!(servers.len(), 1);
+        assert_eq!(servers[0].transport, TransportKind::Http);
+        assert_eq!(servers[0].url.as_deref(), Some("http://127.0.0.1:8082/mcp"));
+        assert_eq!(servers[0].token.as_deref(), Some("s3cret"));
+        assert!(servers[0].command.is_none());
+    }
+
+    #[test]
+    fn parse_mixed_transports() {
+        let servers = parse_external_servers(
+            r#"[{"name":"a","command":"x"},{"name":"b","transport":"http","url":"http://h/mcp"}]"#,
+        );
+        assert_eq!(servers.len(), 2);
+        assert_eq!(servers[0].transport, TransportKind::Stdio);
+        assert_eq!(servers[1].transport, TransportKind::Http);
+    }
+
+    #[test]
+    fn parse_unknown_transport_fails_open() {
+        // transport 值非法 → 整条配置解析失败 → fail-open 空列表（不阻断启动）
+        assert!(parse_external_servers(r#"[{"name":"x","transport":"carrier"}]"#).is_empty());
     }
 }

@@ -192,3 +192,124 @@ async fn phase2_sanitizes_sensitive_fields_in_external_output() {
         "token+secret 共 2 字段脱敏"
     );
 }
+
+#[tokio::test]
+async fn register_external_http_transport_mounts_and_forwards() {
+    // Phase 3 B 档第 3 步：transport=http 配置 → 注册 ext.search.<tool> → 透明调用
+    // 用 axum 起一个模拟 search /mcp 端点（认证 + initialize + tools/list + tools/call）
+    use axum::extract::State as AxState;
+    use axum::http::{HeaderMap, StatusCode};
+    use axum::routing::post;
+    use axum::{Json, Router};
+
+    async fn mock_mcp(
+        AxState(token): AxState<&'static str>,
+        headers: HeaderMap,
+        Json(req): Json<Value>,
+    ) -> (StatusCode, Json<Value>) {
+        let ok = headers
+            .get("authorization")
+            .and_then(|v| v.to_str().ok())
+            .map(|v| v == format!("Bearer {token}"))
+            .unwrap_or(false);
+        if !ok {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(json!({
+                    "jsonrpc": "2.0", "id": req.get("id").cloned().unwrap_or(Value::Null),
+                    "error": { "code": -32001, "message": "Unauthorized" }
+                })),
+            );
+        }
+        let rq: topems_shared_mcp::jsonrpc::JsonRpcRequest =
+            serde_json::from_value(req).expect("合法请求");
+        let id = rq.id.clone().unwrap_or(Value::Null);
+        let resp = match rq.method.as_str() {
+            "initialize" => json!({
+                "jsonrpc": "2.0", "id": id,
+                "result": {
+                    "protocolVersion": "2025-03-26",
+                    "capabilities": { "tools": { "listChanged": false } },
+                    "serverInfo": { "name": "mock-search", "version": "1.0" }
+                }
+            }),
+            "tools/list" => json!({
+                "jsonrpc": "2.0", "id": id,
+                "result": { "tools": [
+                    { "name": "search.global", "description": "全局检索", "inputSchema": { "type": "object" } },
+                    { "name": "search.suggest", "description": "搜索建议", "inputSchema": { "type": "object" } }
+                ] }
+            }),
+            "tools/call" => json!({
+                "jsonrpc": "2.0", "id": id,
+                "result": {
+                    "content": [ { "type": "text", "text": json!({ "items": [], "total": 0 }).to_string() } ],
+                    "isError": false
+                }
+            }),
+            _ => json!({
+                "jsonrpc": "2.0", "id": id,
+                "error": { "code": -32601, "message": "Method not found" }
+            }),
+        };
+        (StatusCode::OK, Json(resp))
+    }
+
+    let app = Router::new()
+        .route("/mcp", post(mock_mcp))
+        .with_state("s3cret-http");
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind");
+    let addr = listener.local_addr().expect("addr");
+    tokio::spawn(async move {
+        axum::serve(listener, app.into_make_service())
+            .await
+            .expect("serve");
+    });
+    let url = format!("http://{addr}/mcp");
+
+    let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
+    let cfg =
+        json!([{ "name": "search", "transport": "http", "url": url, "token": "s3cret-http" }])
+            .to_string();
+    let registered = register_external_tools(&server, &cfg).await;
+    assert_eq!(registered, 2, "search server 应注册 2 个工具");
+
+    let registry = server.tool_registry();
+    assert!(registry.has_tool("ext.search.search.global").await);
+    assert!(registry.has_tool("ext.search.search.suggest").await);
+    assert_eq!(registry.len().await, 2);
+
+    // source=external 标记（Phase 2 语义对 http 传输同样生效）
+    let tool = registry
+        .get_tool("ext.search.search.global")
+        .await
+        .expect("工具应存在");
+    assert!(tool.description.starts_with("[external-mcp]"));
+
+    // 透明调用（出站脱敏在 Phase 4 落地前，输入参数原样透传——本工具无敏感字段）
+    let result = registry
+        .call_tool(
+            "ext.search.search.global",
+            json!({ "query": "订单", "limit": 5 }),
+        )
+        .await
+        .expect("http 外部工具应可透明调用");
+    if let McpContent::Text { text } = &result.content[0] {
+        let parsed: Value = serde_json::from_str(text).expect("应为 JSON");
+        assert_eq!(parsed["total"], 0);
+    } else {
+        panic!("应为文本内容");
+    }
+
+    // 错误 token 配置 → server 跳过注册（fail-open），不 panic
+    let server2 = McpServer::new("test2", "1.0.0", "jwt");
+    let bad_cfg = json!([{ "name": "search", "transport": "http", "url": url, "token": "wrong" }])
+        .to_string();
+    assert_eq!(
+        register_external_tools(&server2, &bad_cfg).await,
+        0,
+        "错 token 应跳过"
+    );
+}
