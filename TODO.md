@@ -3816,3 +3816,34 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 前端：DOMPurify iframe sandbox（产品）/refresh_token HttpOnly 迁移（架构）/marketplace 收敛共享 client/三端版本统一 5.15.0+mobile 脚本（跨 apps）/unused 356 按 L1 分批/下批补测候选（scm 余 15 页/ehs Training/ai 域）
 ### 状态
 - 本轮 7 commits 落盘（架构/基建/制造供应链/财务平台/数据库/前端/本登记）；**未 push**；统一推送前用户 fetch+rebase
+
+---
+## 第八轮登记（2026-10-24）：P3 无歧义三项落地（68a661ae5，已推送）
+
+### ① 落地项
+- **数据库 P3-8 ensure-* 迁移链重构**：4 脚本（core/mdm/ehs/erp-finance-wms）补建由
+  `psql -f database/init/*.sql` 改为调用迁移链 `migrate.sh run`（权威来源），guard 幂等 +
+  断言保留；消除 init/ 双源漂移；bash -n + pre-commit shellcheck 通过。
+- **数据库 CRM 列表谓词**：customer_recommendation（list/count/get）+ customer_segmentation
+  （list/count/get/段名查询）共 7 处补显式 GUC 租户谓词（对齐 P1-12 pm 先例，GUC 内嵌
+  current_setting('app.tenant_id') 不改 handler 签名）；两表 tenant_id+RLS FORCE 已由
+  P2 迁移 20261024000010 落地（2f7258635）。cargo check/clippy -p topems-crm 0。
+- **前端 unused 第一批（L1 零引用）**：删 13 个零引用文件（im×6/ContextHelpButton/
+  FloatingAIHelper/ai-templates/iam role+user/workflow approval/monitor notificationChannel）
+  + 同步 3 处 barrel re-export（iam/workflow/monitor index）+ icons 31 个零引用图标 +
+  getG2Color/flexRowCenterGap12 块；**甄别保留**：authStore 4 hook（文件内真实使用）、
+  use-sync-external-store shim（vite alias 落点）。tsc 0 / eslint 0 告警（含 3 处存量
+  测试 any 补局部 disable）/ vitest 11 passed。
+### ② 验证
+- cargo check/clippy -p topems-crm 0；前端 tsc 0 error、eslint --max-warnings 0 通过；
+  vitest 改动测试 11 passed；pre-commit 全绿（boundary-gate crm 255 引用、migration-validate、
+  shellcheck、frontend-typecheck/lint）；pre-push cargo-check-workspace（SQLX_OFFLINE +
+  RUSTFLAGS=-D warnings）通过。
+### ③ 状态
+- 1 commit 68a661ae5（27 files +45/-4425），rebase 到 MCP Phase 3 B 档 7 commits 之上（c91b8ec9e），
+  已推送；本地领先 0。
+- 未跟踪遗留：`TOPEMS全项目测试与审计报告-2026-10-23.md`（60622B 审计产物待定）、
+  `rustc-ice-2026-10-23T15_40_55-60650.txt`（0B 空文件，建议删除）。
+- 下批候选：unused 剩余 L1（JSON 报告 scripts/audit/ts-unused-exports-report.json，L1 剩余
+  ~305 条按 refCount 分级继续）；CRM 其余聚合谓词（sales_funnel/analytics/rfm/profile 已定位
+  非列表类，RLS 兜底，可选下批）；create_uom/sample 同模式延伸；测试库台账收敛。
