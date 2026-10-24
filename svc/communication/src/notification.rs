@@ -262,7 +262,39 @@ pub async fn broadcast_notification(
     let mut failed_count = 0;
     let mut first_error: Option<String> = None;
 
+    // 同租户默认（拍板 A，2026-10-25）：非超管发送方仅可通知本租户收件人，
+    // 跨租户/不存在 user_id 跳过并计数；超管=全租户白名单不受限
+    let sender_tenant: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
+
     for user_id in &req.user_ids {
+        if let Some(st) = sender_tenant {
+            let recipient_ok: Option<(Option<Uuid>,)> = sqlx::query_as(
+                "SELECT tenant_id FROM iam.users WHERE id = $1 AND deleted_at IS NULL",
+            )
+            .bind(user_id)
+            .fetch_optional(&pool)
+            .await
+            .unwrap_or(None);
+            let tenant_matches = match recipient_ok {
+                None => false, // 收件人不存在/已删除
+                Some((Some(rt),)) => rt == st,
+                Some((None,)) => false, // 收件人无租户归属，非同租户
+            };
+            if !tenant_matches {
+                failed_count += 1;
+                if first_error.is_none() {
+                    first_error = Some(format!("跨租户收件人已跳过（同租户默认）: {user_id}"));
+                }
+                continue;
+            }
+        }
         let tenant_bind = if claims.is_superuser {
             Uuid::nil()
         } else {
