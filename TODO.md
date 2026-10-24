@@ -1,3 +1,11 @@
+## #22 补测批 2：ai/ehs 域页面补测（2026-10-25）✅ 完成
+
+> **#22 续 · 模板 stub 改造受益**（改造后 CrudPage/ListPageTemplate 包装页可测）：
+> - `AiPromptLibraryPage.test.tsx`（3 用例）：列表渲染（cell-name 行）、行 action「使用」→ Use Dialog、行 action「删除」→ 乐观更新（setQueryData updater 过滤）；store mock 支持 zustand selector 式（`useNotificationStore((s)=>s.addNotification)`）
+> - `TrainingPage.test.tsx`（1 用例）：CrudPage 渲染（培训计划页签）+ adapter.list → `trainingApi.listTrainingPlans` 调用 + 行数据渲染
+> - 验证：4 文件 23 用例全过（含 scm 批回归）、eslint 0
+> - 提交：`148616d898`
+
 ## 模板 stub 架构改造 + MrpPlanPage 计算流补测（2026-10-25）✅ 完成
 
 > **#22 补测续 · 架构改造**：解除 CrudPage 页面测试不可行的架构约束
