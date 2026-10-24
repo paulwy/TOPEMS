@@ -1175,10 +1175,6 @@ export type {
 // 审批 DTO（与 7 FSM 的 requires_approval gate 对应）
 // ============================================================================
 // 对齐 svc/wms ApprovalRequest：{ operator, comment? }（操作人 + 审批备注/驳回原因）
-export interface ApprovalStartRequest {
-  operator: string;
-  comment?: string;
-}
 
 // ============================================================================
 // 6 BI 聚合数据类型
