@@ -1,3 +1,12 @@
+## 补测续：scm 域三页真断言 2（2026-10-25）✅ 完成
+
+> **模板 stub 架构改造受益（续批）**：补 scm 域剩余 CrudPage 包装代表页
+> - `ScmIncomingInspectionPage.test`（**自定义适配器特殊形态**：手写 list 解包 `{inspections,total}` 非共享 items 信封；**无 createCrudPageAdapter 归一化层——params 原样透传（pageSize 非 page_size）如实断言**；create/update 委托；**delete 恒定抛"不支持删除"（后端无 DELETE 路由，页面自有 key k3）**；list 失败抛页面 key k0）
+> - `ScmEvaluationPage.test`（evaluationSchema + 'SCM'/k0；参数归一化 + 解包；三操作委托；四档错误翻译）
+> - `PurchaseContractPage.test`（purchaseContractSchema + 'SCM'/k0；参数归一化 + 解包；三操作委托；四档错误翻译）
+> - 验证：12/12 passed；eslint 0（prettier --fix 7 处）；tsc 0
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：scm 域 CrudPage 三页真断言（2026-10-25）✅ 完成
 
 > **模板 stub 架构改造受益（续 MrpPlanPage）**：照 `CrmCrudPages.test.tsx` 冻结范本补 scm 域走 CrudPage 包装的代表页（`ScmCrudPages.test.tsx` 已覆盖 PurchaseOrder/Supplier，本批扩展）
