@@ -232,6 +232,7 @@
   - 系统/IAM 管理域（5）：`system:write`、`admin:iam:write`、`admin:iam:delete`、`admin:iam:tenant:write`、`iam:tenant:read`；
   - 细粒度补缺（3）：`ai:dashboard:write`、`finance:settlement:read`、`finance:settlement:write`。
 - **孤儿（种子有、中间件从不检查）**：20260724/20260908 里大量 `finance:voucher:*`、`mes:*`、`hrm:employee:*` 等细粒度码没有任何 `require_permission` 挂载，属"字典先于网关"，保留不删（角色绑定仍可能用于前端/未来细粒度网关）。
+- **后续登记（2026-10-24）**：`ai:admin` 伞码字典行早已存在（20260908 同步种子，原描述泛化），但此前无角色绑定（仅超管短路可用）。迁移 `20261024000016_copilot_faq_admin_permission.sql` 补齐：字典兜底（ON CONFLICT DO NOTHING 不覆盖原描述）+ admin 角色兜底 + `admin → ai:admin` 绑定，支撑 svc/ai `/dsh/copilot/admin/faqs` 全组端点（core.ai_faqs 由 `20261024000015` 建表）。注意该迁移显式写 `public.*` 副本（登录 JWT 授权展开读 public，见④），与 000014 落 iam 副本的未限定写法不同。
 
 **③ 命名口径约定（本批立规，不在本批改名）**
 

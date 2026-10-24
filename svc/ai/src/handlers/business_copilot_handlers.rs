@@ -171,6 +171,17 @@ pub struct CreateFaqRequest {
     pub category: Option<String>,
 }
 
+/// 更新 FAQ 请求（部分更新：仅传需变更的字段；status ∈ active/disabled）
+#[derive(Debug, Deserialize)]
+pub struct UpdateFaqRequest {
+    pub module: Option<String>,
+    pub question: Option<String>,
+    pub answer: Option<String>,
+    pub keywords: Option<Vec<String>>,
+    pub category: Option<String>,
+    pub status: Option<String>,
+}
+
 /// 写操作成功响应
 #[derive(Debug, Serialize)]
 pub struct SessionWriteOkResponse {
@@ -1119,6 +1130,176 @@ pub async fn delete_admin_faq(
             }),
         )
             .into_response()
+    }
+}
+
+/// 更新 FAQ（admin，部分更新）
+///
+/// PUT /dsh/copilot/admin/faqs/{id}：仅更新请求中传入的字段（COALESCE 语义），
+/// status 传 "active"/"disabled" 即切换（搜索路径已过滤 disabled）。
+/// 权限与 delete 一致：普通管理员仅可改本租户自有行；全局行（全零）仅超管可改。
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ai:admin"])),
+    path = "/dsh/copilot/admin/faqs/{id}",
+    params(
+        ("id" = String, Path, description = "faq id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = ApiResponse<AdminFaqItem>),
+        (status = 400, description = "Bad request"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Not found")
+    ),
+    tag = "ai"
+)]
+pub async fn update_admin_faq(
+    State(state): State<CopilotAppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(req): Json<UpdateFaqRequest>,
+) -> impl IntoResponse {
+    if !has_ai_permission(&claims, &AiPermission::Manage) {
+        return faq_admin_forbidden().into_response();
+    }
+    // 全部字段缺省 → 400（避免空更新）
+    if req.module.is_none()
+        && req.question.is_none()
+        && req.answer.is_none()
+        && req.keywords.is_none()
+        && req.category.is_none()
+        && req.status.is_none()
+    {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(ApiError {
+                error: "validation_failed".to_string(),
+                message: "至少提供一个待更新字段".to_string(),
+            }),
+        )
+            .into_response();
+    }
+    if let Some(status) = req.status.as_deref() {
+        if status != "active" && status != "disabled" {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiError {
+                    error: "validation_failed".to_string(),
+                    message: "status 仅支持 active/disabled".to_string(),
+                }),
+            )
+                .into_response();
+        }
+    }
+    let faq_id = match Uuid::parse_str(&id) {
+        Ok(v) => v,
+        Err(_) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(ApiError {
+                    error: "not_found".to_string(),
+                    message: format!("FAQ {} 不存在", id),
+                }),
+            )
+                .into_response()
+        }
+    };
+    let tenant_uuid = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+    let keywords_json = req
+        .keywords
+        .as_ref()
+        .map(|k| serde_json::to_value(k).unwrap_or(serde_json::json!([])));
+
+    // COALESCE 部分更新：传 NULL 的列保持原值；超管不加租户过滤
+    let row: Result<
+        Option<(Uuid, Uuid, String, String, String, serde_json::Value, String, String, String)>,
+        sqlx::Error,
+    > = if claims.is_superuser {
+        sqlx::query_as(
+            "UPDATE core.ai_faqs SET
+                 module = COALESCE($2, module),
+                 question = COALESCE($3, question),
+                 answer = COALESCE($4, answer),
+                 keywords = COALESCE($5::jsonb, keywords),
+                 category = COALESCE($6, category),
+                 status = COALESCE($7, status),
+                 updated_at = now()
+             WHERE id = $1 AND deleted_at IS NULL
+             RETURNING id, tenant_id, module, question, answer, keywords, category, status, created_at::text",
+        )
+        .bind(faq_id)
+        .bind(req.module.as_deref())
+        .bind(req.question.as_deref())
+        .bind(req.answer.as_deref())
+        .bind(keywords_json)
+        .bind(req.category.as_deref())
+        .bind(req.status.as_deref())
+        .fetch_optional(&state.pool)
+        .await
+    } else {
+        sqlx::query_as(
+            "UPDATE core.ai_faqs SET
+                 module = COALESCE($2, module),
+                 question = COALESCE($3, question),
+                 answer = COALESCE($4, answer),
+                 keywords = COALESCE($5::jsonb, keywords),
+                 category = COALESCE($6, category),
+                 status = COALESCE($7, status),
+                 updated_at = now()
+             WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $8
+             RETURNING id, tenant_id, module, question, answer, keywords, category, status, created_at::text",
+        )
+        .bind(faq_id)
+        .bind(req.module.as_deref())
+        .bind(req.question.as_deref())
+        .bind(req.answer.as_deref())
+        .bind(keywords_json)
+        .bind(req.category.as_deref())
+        .bind(req.status.as_deref())
+        .bind(tenant_uuid)
+        .fetch_optional(&state.pool)
+        .await
+    };
+
+    match row {
+        Ok(Some(item)) => Json(ApiResponse::success(
+            AdminFaqItem {
+                id: item.0.to_string(),
+                tenant_id: item.1.to_string(),
+                module: item.2,
+                question: item.3,
+                answer: item.4,
+                keywords: jsonb_keywords_to_vec(item.5),
+                category: item.6,
+                status: item.7,
+                created_at: item.8,
+            },
+            "ok",
+        ))
+        .into_response(),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: "not_found".to_string(),
+                message: format!("FAQ {} 不存在或无权修改", id),
+            }),
+        )
+            .into_response(),
+        Err(e) => {
+            tracing::error!("update_admin_faq DB failed: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    error: "db_error".to_string(),
+                    message: "FAQ 更新失败".to_string(),
+                }),
+            )
+                .into_response()
+        }
     }
 }
 

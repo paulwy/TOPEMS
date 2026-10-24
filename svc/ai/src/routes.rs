@@ -633,7 +633,8 @@ pub fn create_routes(
         )
         .route(
             "/dsh/copilot/admin/faqs/{id}",
-            delete(crate::handlers::business_copilot_handlers::delete_admin_faq),
+            delete(crate::handlers::business_copilot_handlers::delete_admin_faq)
+                .put(crate::handlers::business_copilot_handlers::update_admin_faq),
         )
         // BE-P0：补 auth + tenant 中间件（此前裸奔，对齐 dsh_agent_router :469-476 范式）。
         .layer(axum::middleware::from_fn_with_state(
