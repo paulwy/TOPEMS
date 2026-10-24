@@ -1082,11 +1082,6 @@ export type { QualityInspectionResult, TraceabilityStatus, EquipmentStatus } fro
 export type { AnomalyStatus, AnomalySeverity } from '@/types/mes';
 
 // ==================== 审批 DTO ====================
-export interface ApprovalStartRequest {
-  reason: string;
-  change_scope?: string;
-  expected_approval_version?: number;
-}
 
 export interface ApprovalResponse {
   approval_id: string;

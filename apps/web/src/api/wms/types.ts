@@ -1180,15 +1180,5 @@ export interface ApprovalStartRequest {
   comment?: string;
 }
 
-export interface ApprovalApproveRequest {
-  operator: string;
-  comment?: string;
-}
-
-export interface ApprovalRejectRequest {
-  operator: string;
-  comment?: string;
-}
-
 // ============================================================================
 // 6 BI 聚合数据类型
