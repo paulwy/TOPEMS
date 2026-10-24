@@ -735,18 +735,10 @@ pub async fn update_oee_record(
     let planned_time = req
         .planned_production_time
         .unwrap_or(existing.planned_production_time);
-    let run_time = req
-        .actual_run_time
-        .unwrap_or(existing.actual_run_time);
-    let cycle_time = req
-        .ideal_cycle_time
-        .unwrap_or(existing.ideal_cycle_time);
-    let output = req
-        .actual_output
-        .unwrap_or(existing.actual_output);
-    let good = req
-        .good_output
-        .unwrap_or(existing.good_output);
+    let run_time = req.actual_run_time.unwrap_or(existing.actual_run_time);
+    let cycle_time = req.ideal_cycle_time.unwrap_or(existing.ideal_cycle_time);
+    let output = req.actual_output.unwrap_or(existing.actual_output);
+    let good = req.good_output.unwrap_or(existing.good_output);
 
     let (availability, performance, quality_rate, oee) =
         calculate_oee(planned_time, run_time, cycle_time, output, good);

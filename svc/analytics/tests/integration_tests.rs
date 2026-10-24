@@ -12,8 +12,9 @@ mod tests {
     // 测试库优先取环境变量，默认连 topems_test（本地测试库，schema 完整）；
     // 历史默认 topems 库为陈旧 bootstrap（bi schema 缺表缺默认值），不再使用。
     fn test_database_url() -> String {
-        std::env::var("TEST_DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems_test".to_string())
+        std::env::var("TEST_DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems_test".to_string()
+        })
     }
 
     async fn setup_test_pool() -> Result<PgPool, sqlx::Error> {

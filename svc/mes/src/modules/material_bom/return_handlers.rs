@@ -128,8 +128,14 @@ pub async fn create_material_return(
         operator_id: return_record.operator_id.map(|u| u.to_string()),
         return_time: return_record.return_time.map(|d| d.and_utc().to_rfc3339()),
         notes: return_record.notes,
-        created_at: return_record.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: return_record.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        created_at: return_record
+            .created_at
+            .map(|d| d.and_utc())
+            .unwrap_or_else(Utc::now),
+        updated_at: return_record
+            .updated_at
+            .map(|d| d.and_utc())
+            .unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(response, "物料退库单创建成功"))

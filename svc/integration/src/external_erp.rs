@@ -52,9 +52,7 @@ fn has_egress_proxy() -> bool {
 /// （白名单策略待产品确认，本轮不改）。
 fn blocked_ip(ip: std::net::IpAddr) -> bool {
     match ip {
-        std::net::IpAddr::V4(v4) => {
-            v4.is_loopback() || v4.is_link_local() || v4.is_unspecified()
-        }
+        std::net::IpAddr::V4(v4) => v4.is_loopback() || v4.is_link_local() || v4.is_unspecified(),
         std::net::IpAddr::V6(v6) => {
             // ::1 回环；:: 未指定；fe80::/10 链路本地（std 未提供 is_link_local，手动判定）
             v6.is_loopback() || v6.is_unspecified() || (v6.segments()[0] & 0xffc0 == 0xfe80)
