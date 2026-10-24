@@ -10,7 +10,6 @@
  */
 
 import { apiClient } from '../client';
-import type { ApiResponse } from '../client';
 import { performanceMark, performanceMeasure, parseQueryName } from '@/utils/graphqlPerformance';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
@@ -87,17 +86,6 @@ export interface UnifiedTodo {
   createdAt?: string;
   created_at?: string;
 }
-
-export const bffApi = {
-  /** 获取跨服务业务统计数据（REST） */
-  getBusinessStats: () =>
-    portal.get<ApiResponse<BusinessStatsAggregation>>('/dashboard/business-stats'),
-
-  /** 获取统一待办列表（REST） */
-  getUnifiedTodos: () => portal.get<ApiResponse<UnifiedTodo[]>>('/dashboard/unified-todos'),
-};
-
-// ==================== GraphQL 查询 API ====================
 
 /** GraphQL 端点统一响应结构（BFF /api/portal/graphql 返回） */
 interface GraphQLError {
@@ -327,132 +315,6 @@ export async function completeTodoGql(id: string) {
     { id }
   );
 }
-
-// ==================== GraphQL Subscription ====================
-
-/**
- * 订阅服务健康状态变化（WebSocket）
- *
- * @example
- * const unsubscribe = subscribeServiceHealth((health) => {
- *   logger.debug(`${health.service}: ${health.healthy ? 'healthy' : 'down'}`);
- * });
- * // 清理时调用 unsubscribe()
- */
-export function subscribeServiceHealth(
-  callback: (health: { service: string; healthy: boolean; url: string }) => void
-): () => void {
-  // V64 静默降级：开发环境下 portal 服务（8063）通常未启动，
-  // 跳过 WebSocket 连接避免浏览器控制台刷屏。
-  if (import.meta.env.DEV && !import.meta.env.VITE_BFF_WS_ENABLED) {
-    return () => {}; // no-op
-  }
-
-  const wsUrl = `ws://${window.location.host}/api/portal/graphql/ws`;
-  let ws: WebSocket | null = null;
-  let closed = false;
-
-  const connect = () => {
-    if (closed) return;
-    ws = new WebSocket(wsUrl, ['graphql-transport-ws']);
-
-    ws.onopen = () => {
-      ws?.send(JSON.stringify({ type: 'connection_init', payload: {} }));
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.type === 'connection_ack') {
-          ws?.send(
-            JSON.stringify({
-              id: 'service-health-sub',
-              type: 'subscribe',
-              payload: {
-                query: `
-                  subscription ServiceHealthChanged {
-                    serviceHealthChanged {
-                      service
-                      healthy
-                      url
-                    }
-                  }
-                `,
-              },
-            })
-          );
-        } else if (msg.type === 'next' && msg.payload?.data?.serviceHealthChanged) {
-          callback(msg.payload.data.serviceHealthChanged);
-        }
-      } catch {
-        // ignore parse errors
-      }
-    };
-
-    ws.onclose = () => {
-      if (!closed) {
-        perfLogger.warn(i18n.t('api.index.k0'));
-      }
-    };
-
-    ws.onerror = (event) => {
-      perfLogger.warn('Service health WebSocket error', {
-        readyState: ws?.readyState,
-        event,
-      });
-    };
-  };
-
-  connect();
-
-  return () => {
-    closed = true;
-    ws?.close();
-  };
-}
-
-// ==================== 主数据引用 API ====================
-
-export interface MasterDataRef {
-  master_data_id: string;
-  tenant_id: string;
-  domain: string;
-  code: string;
-  name?: string;
-  status: string;
-  source_service: string;
-  local_entity_type?: string;
-  local_entity_id?: string;
-  last_synced_at: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export const masterDataApi = {
-  /** 列出本地主数据引用 */
-  list: (domain?: string, page?: number, pageSize?: number) =>
-    apiClient.erp.get<
-      ApiResponse<{
-        items: MasterDataRef[];
-        total: number;
-        page: number;
-        page_size: number;
-        total_pages: number;
-      }>
-    >('/master-data-refs', { params: { domain, page, page_size: pageSize } }),
-
-  /** 通过 master_data_id 查找 */
-  getById: (masterDataId: string) =>
-    apiClient.erp.get<ApiResponse<MasterDataRef>>(`/master-data-refs/${masterDataId}`),
-
-  /** 通过 domain + code 查找 */
-  getByCode: (domain: string, code: string) =>
-    apiClient.erp.get<ApiResponse<MasterDataRef>>(`/master-data-refs/by-code/${domain}/${code}`),
-};
-
-// ==================== 通用联邦实体 CRUD（GraphQL） ====================
-
-/** 实体列表查询参数 */
 export interface ListEntitiesParams {
   page: number;
   pageSize: number;
@@ -595,12 +457,4 @@ export async function getFederatedDashboard() {
       federatedServices { service url available entities }
     }
   `);
-}
-
-/** 注册 BFF GraphQL 性能监控回调，返回取消注册函数 */
-export function onBffPerformance(cb: PerformanceCallback): () => void {
-  performanceCallbacks.add(cb);
-  return () => {
-    performanceCallbacks.delete(cb);
-  };
 }

@@ -12,9 +12,5 @@ export {
 } from './ModuleCard';
 
 export { RecentActivities, type ActivityItem } from './RecentActivities';
-export {
-  ModuleSection,
-  type DashboardSectionProps,
-  type ModuleSectionKey,
-} from './DashboardSections';
+export { ModuleSection, type ModuleSectionKey } from './DashboardSections';
 export { HybridDashboard } from './HybridDashboard';
