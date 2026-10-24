@@ -3603,7 +3603,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **qms submit_result 勾稽**：合格+不合格>总量 → 400（=总量允许）
 - [x] **lims FSM 边校验**：SAMPLE_STAGE_EDGES 常量 + 非法转移 409 + 2 单测（151 passed）
 - [x] **ehs data_sync/integration nil 豁免登记**：qa_ehs_sync_records 无 tenant_id 系统级同步日志（豁免注释）；integration internal 端点对齐 qms P1-4 契约（Uuid::nil() 全局集成行+注释）
-- [ ] **mes UPDATE 租户谓词（缺口）**：work_order 7 处+material_plan 2 处补 GUC 谓词后因 sqlx 离线缓存失配回退——需 DB 环境 cargo sqlx prepare 后重放；另有 ~70 处同类待后续批
+- [~] **mes UPDATE 租户谓词（代码已补齐，缓存刷新被既有 DB 缺列阻塞）**：91 处 UPDATE 实测——有 tenant_id 列的表已补 **47 处** GUC 谓词（14 文件，material_plans 因 text 型 tenant_id 去 ::uuid 强转）；**25 处无 tenant_id 表登记豁免**（work_orders×7/wips×3/material_requirements×3 等：order_id 可空不宜加 EXISTS，根治需 DDL 补列）。详见 `docs/database/mes-租户谓词补齐与豁免登记-2026-10-24.md`。**待办阻塞**：`sqlx-prepare.sh -p topems-mes` 因在线 stub 库缺 `public.process_flow_steps.flow_id`、`public.quality_standard_values.standard_id` 两列硬失败（非本次引入），需 DBA 授权 ALTER 补列后重跑 prepare → 离线 check/clippy/test 闭环。
 ### 供应链域
 - [x] **wms 收货校验**：received_quantity 非负/不超应收/明细归属（400），应用层拦截防 GUC 静默
 - [x] **scm 审批前置门**：purchase_order+supplier_delivery_appointment 补 AND status='pending' AND deleted_at IS NULL + RowNotFound→409（另三处已有）
@@ -3637,3 +3637,19 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **overrides 过期**：ip-address 10.7.1→10.7.4、@vitest/mocker 4.1.11→4.1.12（根 pnpm.overrides，lockfile 实证）；pnpm audit 两项 0 命中
 - [x] **plugin.yaml 残留核对**：validator 0 告警；permissions:{} 属合一兼容反序列化设计内写法
 - 状态：P2 分域收口完成待合批提交；未 push（推送由用户确认后统一执行）
+
+## 审计修复实施登记 P2 剩余项（2026-10-24 第二轮，未推送）
+### mes 租户谓词补齐（核心项）
+- [x] **47 处 UPDATE 租户谓词补齐**（14 文件）：production_orders×6/teams×5/work_reports×4/work_stations×4/production_plans×3/equipment×3/production_schedules×3/process_flows×2/equipment_oee×2/material_plans×2/process_routes+steps×4/quality 四表×8/equipment_maintenance_records×1；统一谓词 `AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id',true),'')::uuid, 全零)`（material_plans 为 text 列去 ::uuid）；17 处原有谓词未动
+- [x] **25 处豁免登记**：work_orders×7/wips×3/material_*×7/process_flow_steps×2/team_members/workshops/production_lines/shifts/work_calendars/quality_standard_values——表无 tenant_id 且 RLS=f；order_id FK 全部可空，EXISTS 子查询方案有 0 行回归风险，根治需 DDL 补列（对照 ehs 先例登记 `docs/database/mes-租户谓词补齐与豁免登记-2026-10-24.md`）
+- [ ] **验证阻塞（待授权）**：`sqlx-prepare -p topems-mes` 失败因 topems_test stub 库缺列 `public.process_flow_steps.flow_id`、`public.quality_standard_values.standard_id`（既有失配，基础迁移仅建 id 桩表）；且提交的根 .sqlx 缓存本就落后 TIMESTAMPTZ 迁移（干净代码离线 check 亦 111 处类型失配）。补丁 SQL 已用 psql PREPARE 抽验通过（t1/t2/t4 OK、material_plans 文本谓词 OK）。**需用户授权 2 条 ALTER 补列（或重放迁移链）后重跑 prepare+验证闭环**
+### analytics 环境核对 + stats 真实化
+- [x] **环境根因修正**：integration_tests.rs:12 硬编码连 **topems** 库（非 .env topems_test）——topems.bi 仅 9 表（test 期望≥10）、analytics_dashboards.tenant_id 无 DEFAULT；migrations 期望 ≥16 表+默认值；_sqlx_migrations 台账空（selfheal bootstrap 未重放）→ **DB 环境落后非测试缺陷**，登记 `docs/database/analytics-环境DB与测试期望核对-2026-10-24.md`（DDL 修补/迁移重放/改连 topems_test 均待确认）
+- [x] **reports_center_stats 静态占位下线**：role_distribution（原 3/12/8）→ core_roles↔core_user_roles↔core_users 真实聚合 TOP10；activity_types（原 180/65/22/14）→ public.audit_logs.action 近 30 天 TOP10；unwrap_or_default 回落空数组不造假；routes.rs+main.rs 双副本；check/clippy 0
+### 迁移草稿（不落地）
+- [x] **srm 供应商映射表草稿**：`docs/database/draft-2026-10-24-srm-supplier-user-mapping.sql`（supplier_users 建表+部分唯一索引+RLS tenant/supplier_scope 策略；srm.suppliers 已 FORCE RLS；5 个待确认点）
+- [x] **erp 凭证唯一约束草稿**：`docs/database/draft-2026-10-24-erp-voucher-no-unique.sql`（**表名勘误：erp.financial_vouchers** 非 finance.vouchers；当前 0 行无重复；部分唯一索引 (tenant_id,period,voucher_number) WHERE deleted_at IS NULL；5 个待确认点）
+- [x] 登记：`docs/database/P2-迁移草稿登记-2026-10-24.md`；check-migrations PASS、validate.sh Errors=0，草稿未污染门禁
+### 依赖审计（Dependabot 10 项核对）
+- [x] **官方 registry 审计 0 命中**（经 ghfast 代理 registry.npmjs.org；本机 npm registry=npmmirror 无 audit 端点，此前 {} 为假阴性）；overrides 已钉 45+ 历史脆弱传递依赖于修复版（node-forge 1.4.0/ip-address 10.7.4/@vitest/mocker 4.1.12/axios 1.20.0/dompurify 3.4.17/vite 8.1.5/storybook 10.5.4 等）；azure 0 引用、launch-editor 不在 lock → **Dependabot 10 项判定为历史/缓存状态（对应修复前 lock 或待重扫），建议 GH UI 确认后 Dismiss/等重扫，无本地可升级缺口**
+- 状态：mes 补丁/analytics/草稿已落盘待提交；mes 全链路验证阻塞待授权 2 条 ALTER；未 push
