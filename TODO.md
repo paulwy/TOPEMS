@@ -3848,3 +3848,53 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 下批候选：unused 剩余 L1（JSON 报告 scripts/audit/ts-unused-exports-report.json，L1 剩余
   ~305 条按 refCount 分级继续）；CRM 其余聚合谓词（sales_funnel/analytics/rfm/profile 已定位
   非列表类，RLS 兜底，可选下批）；create_uom/sample 同模式延伸；测试库台账收敛。
+
+## 第九轮登记（2026-10-24）：P3 第二波落地（aeefc4fde，已推送）
+
+### ① 本轮落地三项（第二波同模式延伸）
+- **ensure-iam-schema.sh 重构**（P3-8 同模式延伸，最后一个 schema 类 init 引用）：
+  由 `psql -f init/06_iam_schema.sql` 改 `migrate.sh run`（guard iam.users + 断言 iam 表数/users），
+  脱离 init 双源。init/ 引用面清到仅剩 ensure-bi-org-stats.sh（数据类，不在审计范围）。
+  bash -n + shellcheck 0 告警。**注**：「create_uom/sample 同模式延伸」经核查为误读——
+  master_data uoms/samples/materials 三表 list/get/delete 均已带显式租户谓词
+  （`$n::uuid = '0000…' OR tenant_id = $n::uuid`，绑 req_tenant_id），无需补；
+  P3-8 同模式延伸的实际对象即 ensure-iam-schema.sh。
+- **CRM 聚合查询租户谓词 15 处**（GUC 模式，同 P1-12 pm 先例）：
+  analytics.rs 7 处（:207/:213/:220/:233/:240/:247/:254 单行聚合）、
+  sales_funnel.rs 6 处（:153/:220/:242 + :307/:313 双同文本 + :380 周期分组）、
+  customer_profile.rs 3 处（customer_scores/opportunities/interactions by customer_id）。
+  经复核 rfm.rs:381、analytics.rs:110-150/:297/:455 已有谓词（含多行 join/子查询）。
+  cargo check + clippy -p topems-crm 0 告警。
+- **unused 第二批：15 个 L1 零引用整文件**（净减 L1 319→308）：
+  components/bi/ChartExport+DrillDownPanel、components/dashboard/×5（DashboardHeader/
+  HeroSection/MobileMenu/ModuleStatsCard/ServiceStatusMonitor）、components/hrm/×2
+  （DepartmentSelector/EmployeeForm，含 DepartmentBreadcrumb 死导出一并清）、
+  components/templates/dashboard/×2（CardGroup/ChartCardComponent）、hooks/useExternalErp+
+  useHrmFinance、schemas/admin/tenant、schemas/ehs/hazard。
+  同步 barrel re-export：dashboard/hrm/templates/dashboard index、components/index.ts×2
+  （ChartExport/DrillDownPanel）、hooks/features/finance/index.ts×2（useErpConnections/
+  useEmployeeFinanceInfo 死 re-export）、schemas/admin+ehs index。
+  tsc 0 error / eslint --max-warnings 0。
+  **甄别保留（聚合消费误判为 unused）**：automation/dashboard、hrm/settings、lims/barcode、
+  scm/settings、workflow/form+history——均被各自 barrel index 聚合转发消费（如
+  BarcodePage.tsx 用 barcodeApiAdapter、workflow/index.ts:98-128 方法转发），脚本
+  refCount 口径不统计聚合消费，不删。
+
+### ② 验证
+- crm：cargo check + clippy 0 告警；schema-defense-drift crm 255 引用 PASS（pre-commit）。
+- 前端：tsc 0 error、eslint --max-warnings 0；pre-commit frontend-typecheck/lint 全绿。
+- ensure-iam：bash -n + shellcheck 0 告警；shellcheck-workspace 78 脚本 0 告警。
+- pre-push：cargo-test-workspace 126.86s ✔ + cargo-fmt-check ✔ + shellcheck ✔；
+  门禁曾两次被 check-stale-base 拦截（协作方并发推送 MCP Phase 3 B 档后续 docs commits
+  a01dc1495/ddf2d2350），rebase 两次后通过。
+- **磁盘治理**：target/debug/incremental 74G 清理（纯可再生缓存）——此前 push 门禁
+  cargo-check 快速失败系磁盘满（Avail 7.5G→76G）。
+
+### ③ 状态
+- 1 commit aeefc4fde（rebase 于 ddf2d2350 之上），已推送；本地领先 0。
+- 下批候选：unused 剩余 L1 308（多 defFile 值导出 227 中 124 无聚合消费可删——
+  整文件 15 已删，剩余 59 个定义文件部分删 + 其他；typeOnly 87 按口径不动）、
+  测试库台账收敛。
+- 未跟踪遗留不变：`TOPEMS全项目测试与审计报告-2026-10-23.md`（60622B）、
+  `notification-路由对齐清单-2026-10-18.md`、`审查报告-代码与工程质量审计-2026-10-18.md`、
+  `状态存档-测试补强与契约回归-2026-10-18.md`、`rustc-ice-*.txt`（0B）。
