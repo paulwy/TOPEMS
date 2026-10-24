@@ -3968,3 +3968,24 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - L1：261 → **282**（values 129 降 / types 153 升——消费方删除后新暴露的 typeOnly，按口径不动）。
 - 下批候选：L1 values 129 精确判定（排除实例保留类）；typeOnly 153 标注不动；utils/ai 其他文件（aiReview 等）与新暴露项。
 - 经验：tsconfig exclude 含 components/bff/**（L1 假阴性区），删除前必须文件级 grep 全导出；「新暴露」来自消费方删除后的连锁零消费，重扫 L1 数量不降反升属正常。
+
+## 第十三轮登记（unused 第六批 · values 110 精确判定）2026-10-24
+
+### ① 整删 19 文件（commit 97485dc1c）
+- **api/external-erp/ 整目录 7**（index/mapping/sync/syncLogs/preview/export/types——externalErpApi 聚合对象删除后整岛死亡，api/index.ts 同步摘除转发）。
+- **组件/hook 12**：components/AccessLogger、components/ai/copilot/{AICopilotQuickActions,AICopilotSearchBox}、components/designer/DesignerPage、components/layout/FlexGrid、debug/useDebugTrace、hooks/{useAIHelper,useOrganization,useServiceStatus,useWebSocketNotifications,useWindowManager}（纯转发 barrel 已同步删行）。
+
+### ② 部分删配平（14 文件）
+- **api 类**：api/bff/index.ts 部分段（bffApi 聚合后 computeQueryHash/executeGraphQL 被 bffGraphQL 消费 → 已整体恢复，留待后续批）、api/notification/{channel,delivery}.ts、api/pdm/documentApproval.ts、api/pm/{budget,contract,document}.ts、api/tenant/config.ts（**注：上述 5 组经查均被同级 barrel 聚合对象真实消费（页面经 barrel 用 xxxApi.xxx），误删后已 git checkout 恢复，本批不动**）。
+- **hooks/工具**：hooks/useCrudQueries.ts（删 useModuleQueries 函数体 377-617，987→746→修 export default）、hooks/useUiState.ts（删 useToast，-63）、schema/adapterFactory.ts（删 createCrudApiAdapter，237→176）、utils/graphqlPerformance.ts（删 calculateStats）、utils/importExport.ts（删 importFromExcel）、utils/bff/abTesting.ts（删 ABTestEngine/abTestEngine/zTestPValue/normalCdf 等死局部，-551）、components/dashboard/ModuleCard.tsx（删 ModuleCardV2 全组 5 私有定义+组件，385→181）。
+- **barrel 悬空清理**：components/ai/copilot、components/designer、debug、hooks/features/{ai,auth,system,websocket}、hooks/ui、api/tms（加回 optimizationApi import）、api/index（external-erp 摘除）、schema/index、hooks/domain。
+
+### ③ 判定口径修正（重要经验）
+- **detector 缺陷**：L1 把「barrel index.ts 转发/聚合」排除在消费之外 → 被同级 barrel 聚合对象（如 ehsApi = { accident: accidentApi }）引用的导出被误判死。第六批首批误删 30+ 文件（ehs/finance/notification/pm/tenant 等）→ tsc 连锁报错 → **全部 git checkout 恢复**。
+- **正确口径**：聚合对象成员引用 = 真实消费（页面经 barrel 用 xxxApi.xxx）；纯 `export { X } from './Y'` 转发且页面无 direct import = 可删。
+- **配平器教训**：跨行函数签名（useModuleQueries/adapterFactory）需「先找函数体 { 再配平」，注释行含 { } 会干扰（ModuleCard STATUS_CONFIG 泛型内 { } 提前配平）→ 用精确行号/区间删兜底。
+
+### ④ 状态
+- L1：282 → **263**（values 129→110 净减 19，types 153 持平）；tsc 0 error、eslint 0。
+- commit 97485dc1c 已推送 origin/main（79732a9cd..97485dc1c）。
+- 下批候选：L1 values 110 按「聚合消费恢复后重新判定」口径再清；utils/bff 保留文件复核；detector 升级（聚合对象成员算消费）后重扫。
