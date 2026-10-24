@@ -6,7 +6,7 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ModuleLoader, ModuleLoadingFallback, ModuleErrorFallback } from '../ModuleLoader';
+import { ModuleLoader, ModuleLoadingFallback } from '../ModuleLoader';
 import { useModuleLoadingStore } from '@/store/moduleLoadingStore';
 
 vi.mock('@/i18n', () => ({
@@ -38,13 +38,6 @@ describe('fallback components', () => {
       />
     );
     expect(screen.getByTestId('mocked-progress')).toHaveTextContent('progress:fb-mod');
-  });
-
-  it('ModuleErrorFallback renders title and optional error message', () => {
-    const { rerender } = render(<ModuleErrorFallback />);
-    expect(screen.getByText('lib.module_loader.k1')).toBeInTheDocument();
-    rerender(<ModuleErrorFallback error={new Error('boom-module')} />);
-    expect(screen.getByText('boom-module')).toBeInTheDocument();
   });
 });
 

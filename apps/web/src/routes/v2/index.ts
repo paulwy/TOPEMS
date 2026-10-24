@@ -201,10 +201,6 @@ export function findRouteByPathSync(path: string): RouteConfigV2 | undefined {
   return undefined;
 }
 
-export function getLoadedModules(): string[] {
-  return Array.from(loadedModules.keys());
-}
-
 export async function getActiveModuleCodes(): Promise<string[]> {
   try {
     await pluginManager.initialize();

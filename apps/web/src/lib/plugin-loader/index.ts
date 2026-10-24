@@ -1,4 +1,4 @@
-export { ModuleLoader, ModuleLoadingFallback, ModuleErrorFallback } from './ModuleLoader';
+export { ModuleLoader, ModuleLoadingFallback } from './ModuleLoader';
 export { PluginLoader, pluginLoader } from './PluginLoader';
 export type { PluginManifest } from './PluginLoader';
 export {

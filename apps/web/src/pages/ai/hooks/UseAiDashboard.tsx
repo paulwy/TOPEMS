@@ -26,13 +26,3 @@ export interface RecentItemData {
   type: 'chat' | 'code' | 'document' | 'summary';
   onClick: () => void;
 }
-
-export interface FeatureCardData {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-  stats?: { label: string; value: string }[];
-  action?: { label: string; onClick: () => void };
-}

@@ -7,13 +7,7 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import {
-  PluginLoader,
-  pluginLoader,
-  ModuleLoadingFallback,
-  ModuleErrorFallback,
-  ModuleLoader,
-} from '../PluginLoader';
+import { PluginLoader, pluginLoader, ModuleLoadingFallback, ModuleLoader } from '../PluginLoader';
 import type { PluginManifest } from '../PluginLoader';
 
 vi.mock('@/i18n', () => ({
@@ -163,15 +157,6 @@ describe('Presentational fallback components', () => {
   it('ModuleLoadingFallback renders loading text', () => {
     render(<ModuleLoadingFallback />);
     expect(screen.getByText('lib.plugin_loader.k0')).toBeInTheDocument();
-  });
-
-  it('ModuleErrorFallback renders title without error, and message when error is given', () => {
-    const { rerender } = render(<ModuleErrorFallback />);
-    expect(screen.getByText('lib.plugin_loader.k1')).toBeInTheDocument();
-    expect(screen.queryByText(/something broke/)).not.toBeInTheDocument();
-
-    rerender(<ModuleErrorFallback error={new Error('something broke')} />);
-    expect(screen.getByText('something broke')).toBeInTheDocument();
   });
 });
 

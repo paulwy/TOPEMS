@@ -5,6 +5,5 @@ export {
 } from '@topems/shared-components';
 export { ModuleCard, type ModuleItem } from './ModuleCard';
 
-export { RecentActivities, type ActivityItem } from './RecentActivities';
 export { ModuleSection } from './DashboardSections';
 export { HybridDashboard } from './HybridDashboard';

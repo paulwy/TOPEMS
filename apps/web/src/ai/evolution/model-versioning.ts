@@ -10,12 +10,3 @@ export interface ModelVersion {
   metrics: Record<string, number>;
   createdAt: number;
 }
-
-export interface Model {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  versions: ModelVersion[];
-  owner: string;
-}

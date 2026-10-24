@@ -10,18 +10,3 @@ export interface PolicyRule {
   priority: number;
   metadata?: Record<string, unknown>;
 }
-
-export interface Policy {
-  id: string;
-  name: string;
-  scope: 'global' | 'module' | 'entity' | 'user';
-  scope_target: string;
-  rules: PolicyRule[];
-  enforcement_mode: EnforcementMode;
-  status: PolicyStatus;
-  description: string;
-  created_at: number;
-  updated_at: number;
-  version: number;
-  tags: string[];
-}

@@ -79,39 +79,6 @@ export const ModuleLoadingFallback: React.FC<{
 };
 
 /**
- * Error Fallback Component
- */
-export const ModuleErrorFallback: React.FC<{ error?: Error }> = ({ error }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
-      minHeight: 200,
-      gap: 2,
-      p: 3,
-    }}
-  >
-    <Typography
-      variant='h6'
-      color='error'
-    >
-      {i18n.t('lib.module_loader.k1')}
-    </Typography>
-    {error && (
-      <Typography
-        variant='body2'
-        color='text.secondary'
-      >
-        {error.message}
-      </Typography>
-    )}
-  </Box>
-);
-
-/**
  * Lazy Module Loader Component
  */
 export const ModuleLoader: React.FC<ModuleLoaderProps> = ({

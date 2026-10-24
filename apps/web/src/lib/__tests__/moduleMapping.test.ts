@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { moduleMapping, getAllModuleCodes } from '../navigation/moduleMapping';
+import { moduleMapping } from '../navigation/moduleMapping';
 
 describe('moduleMapping', () => {
   it('should export a non-empty record', () => {
@@ -64,22 +64,5 @@ describe('moduleMapping', () => {
   it('should not have dead aliases "document" or "docs"', () => {
     expect(moduleMapping.document).toBeUndefined();
     expect(moduleMapping.docs).toBeUndefined();
-  });
-});
-
-describe('getAllModuleCodes', () => {
-  it('should return an array of all module codes', () => {
-    const codes = getAllModuleCodes();
-    expect(Array.isArray(codes)).toBe(true);
-    expect(codes.length).toBe(Object.keys(moduleMapping).length);
-  });
-
-  it('should include known module codes', () => {
-    const codes = getAllModuleCodes();
-    expect(codes).toContain('iam');
-    expect(codes).toContain('admin');
-    expect(codes).toContain('crm');
-    expect(codes).toContain('wms');
-    expect(codes).toContain('qms');
   });
 });

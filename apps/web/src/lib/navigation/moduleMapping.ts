@@ -289,7 +289,3 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
     apiBasePath: '/api/master-data',
   },
 };
-
-export const getAllModuleCodes = (): string[] => {
-  return Object.keys(moduleMapping);
-};
