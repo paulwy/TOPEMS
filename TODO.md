@@ -3949,3 +3949,22 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### ③ 状态
 - L1：删除 17 个导出后重扫仍 261（删除 14+3 与「删除后新暴露」候选相抵：registerRouteShell/unregisterRouteShell/useBffPerformance/useQueryCost/useSmartPrefetch/BffErrorBoundary/BffErrorType/ErrorRecoveryStrategy/onErrorReport/reportError/uiRecommender/ResponsiveStrategy/UILibrary 等新进 L1——多为 barrel 转发零消费，下一批精确判定）。
 - 下批候选：新暴露 32（恢复文件相关）+ ModuleCardV2（真死候选）+ cross-framework AngularAdapter/SvelteAdapter + design-system PRESET_TOKENS 等 6 残余。
+
+## 第十二轮登记（unused 第五批 · 死亡岛整肃）2026-10-24
+
+### ① 内容（commit f0a47197d，已推送）
+- **整删 17 零消费文件**（精确消费判定升级：不只查 L1 导出，还查「文件级」消费链）：
+  - **components/bff/ 整目录 6**：index.ts（死 barrel）、BffDataTable.tsx、BffDetailPage.tsx、BffFormPage.tsx、ABTestPanel.tsx、BffErrorBoundary.tsx（全目录唯一 import 方是自身 index.ts，页面零消费）
+  - **hooks/bff/ 整目录 9**：index.ts、useBffCrud.ts、useBffPage.ts、useAutoSharding.ts、useBffDashboard.ts、useBffPerformance.ts、usePartialPreRender.tsx、useQueryCost.ts、useSmartPrefetch.ts（唯一消费方是已删的 components/bff 死岛）
+  - **utils/ai/uiRecommender.ts + index.ts**（UIRecommender/uiRecommender/ResponsiveStrategy/UILibrary 全零，index.ts 27 行纯该段）
+- **修复上批遗留悬空**：ABTestPanel.tsx 引用已删 useABTest.ts（上批整删时未查文件全部导出）——本批随 ABTestPanel 一起删；bff/index.ts 引用已删 UseBffListPage* type（上批部分删遗漏 barrel）——随目录删。
+- 验证：tsc 0 error、eslint 0（components/bff/** 在 tsconfig exclude 内，悬空引用 tsc 不报——以 eslint+文件级 grep 兜底）。
+
+### ② 判定口径升级（文件级）
+- **死亡岛判定**：文件唯一消费方是「自身目录 barrel + barrel 零消费」→ 整目录删（L1 只捕叶子不捕树，需文件级 grep 消费链）。
+- 保留：export const x = new X() 类实例（crossFrameworkBridge/dependencyGovernor/securityScanner/abTestEngine/moduleMarket 等）+ 测试消费（utils/bff 5 文件 + abTesting）。
+
+### ③ 状态
+- L1：261 → **282**（values 129 降 / types 153 升——消费方删除后新暴露的 typeOnly，按口径不动）。
+- 下批候选：L1 values 129 精确判定（排除实例保留类）；typeOnly 153 标注不动；utils/ai 其他文件（aiReview 等）与新暴露项。
+- 经验：tsconfig exclude 含 components/bff/**（L1 假阴性区），删除前必须文件级 grep 全导出；「新暴露」来自消费方删除后的连锁零消费，重扫 L1 数量不降反升属正常。
