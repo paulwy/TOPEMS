@@ -1,6 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
-import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
@@ -104,59 +103,4 @@ export const pluginModuleConfig: RouteModuleConfig = {
   // 仅管理操作（上传/发布）仍需 admin 权限
   permission: undefined,
   routes: [dashboardRoute, pluginMarketplaceRoute, pluginUploadRoute, pluginDetailRoute],
-};
-
-// ---- 导航配置（供导航注册表使用） ----
-export const pluginNavConfig: ModuleNavConfig = {
-  code: 'plugin',
-  name: i18n.t('plugin.nav.module_name'),
-  nameKey: 'plugin.nav.module_name',
-  icon: 'Puzzle',
-  path: PLUGIN_PATHS.root,
-  // P4-D: 扩展市场导航入口对所有已登录用户可见
-  permission: undefined,
-  source: 'core',
-  suite: 'enterprise',
-  status: 'online',
-  order: 21,
-  description: i18n.t('plugin.nav.module_name_desc'),
-  navItems: [
-    {
-      code: 'plugin-dashboard',
-      label: i18n.t('plugin.nav.plugin-dashboard'),
-      labelKey: 'plugin.nav.plugin-dashboard',
-      icon: 'LayoutDashboard',
-      path: PLUGIN_PATHS.dashboard,
-      permission: 'plugin:dashboard:read',
-      order: 0,
-      group: 'overview',
-      showInTabs: true,
-      description: i18n.t('plugin.nav.plugin-dashboard_desc'),
-    },
-    {
-      code: 'plugin-marketplace',
-      label: i18n.t('plugin.nav.plugin-marketplace'),
-      labelKey: 'plugin.nav.plugin-marketplace',
-      icon: 'ShoppingCart',
-      path: PLUGIN_PATHS.marketplace,
-      permission: 'plugin:marketplace:read',
-      order: 1,
-      group: 'setting',
-      showInTabs: true,
-      description: i18n.t('plugin.nav.plugin-marketplace_desc'),
-    },
-    {
-      code: 'plugin-upload',
-      label: i18n.t('plugin.nav.plugin-upload'),
-      labelKey: 'plugin.nav.plugin-upload',
-      icon: 'Upload',
-      path: PLUGIN_PATHS.upload,
-      // 上传/开发操作保留 admin 权限
-      permission: 'admin:plugin:write',
-      order: 2,
-      group: 'setting',
-      showInTabs: true,
-      description: i18n.t('plugin.nav.plugin-upload_desc'),
-    },
-  ],
 };

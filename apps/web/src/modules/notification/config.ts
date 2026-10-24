@@ -1,6 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
-import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 export const NOTIFICATION_PATHS = {
@@ -201,101 +200,5 @@ export const notificationModuleConfig: RouteModuleConfig = {
     notificationTemplatesRoute,
     notificationStatsRoute,
     notificationSettingsRoute,
-  ],
-};
-
-// ---- 第三部分：导航配置 ----
-export const notificationNavConfig: ModuleNavConfig = {
-  code: 'notification',
-  name: i18n.t('notification.nav.module_name'),
-  nameKey: 'notification.nav.module_name',
-  icon: 'Bell',
-  path: NOTIFICATION_PATHS.root,
-  permission: 'notification:dashboard:read',
-  source: 'core',
-  suite: 'collaboration',
-  status: 'online',
-  order: 3,
-  description: i18n.t('notification.nav.module_name_desc'),
-  navItems: [
-    {
-      code: 'notification-dashboard',
-      label: i18n.t('notification.nav.notification-dashboard'),
-      labelKey: 'notification.nav.notification-dashboard',
-      icon: 'LayoutDashboard',
-      path: NOTIFICATION_PATHS.dashboard,
-      permission: 'notification:dashboard:read',
-      order: 0,
-      group: 'overview',
-      showInTabs: true,
-      description: i18n.t('notification.nav.notification-dashboard_desc'),
-    },
-    {
-      code: 'notification-list',
-      label: i18n.t('notification.nav.notification-list'),
-      labelKey: 'notification.nav.notification-list',
-      icon: 'ScrollText',
-      path: NOTIFICATION_PATHS.list,
-      permission: 'notification:dashboard:read',
-      order: 1,
-      group: 'setting',
-      showInTabs: true,
-      description: i18n.t('notification.nav.notification-list_desc'),
-    },
-    {
-      code: 'notification-archive',
-      label: i18n.t('notification.nav.notification-archive'),
-      labelKey: 'notification.nav.notification-archive',
-      icon: 'Archive',
-      path: NOTIFICATION_PATHS.archive,
-      permission: 'notification:dashboard:read',
-      order: 2,
-      group: 'setting',
-      description: i18n.t('notification.nav.notification-archive_desc'),
-    },
-    {
-      code: 'notification-center',
-      label: i18n.t('notification.nav.notification-center'),
-      labelKey: 'notification.nav.notification-center',
-      icon: 'Bell',
-      path: NOTIFICATION_PATHS.center,
-      permission: 'notification:dashboard:read',
-      order: 3,
-      group: 'setting',
-      description: i18n.t('notification.nav.notification-center_desc'),
-    },
-    {
-      code: 'notification-templates',
-      label: i18n.t('notification.nav.notification-templates'),
-      labelKey: 'notification.nav.notification-templates',
-      icon: 'FileText',
-      path: NOTIFICATION_PATHS.templates,
-      permission: 'notification:dashboard:read',
-      order: 4,
-      group: 'setting',
-      description: i18n.t('notification.nav.notification-templates_desc'),
-    },
-    {
-      code: 'notification-statistics',
-      label: i18n.t('notification.nav.notification-statistics'),
-      labelKey: 'notification.nav.notification-statistics',
-      icon: 'BarChart3',
-      path: NOTIFICATION_PATHS.statistics,
-      permission: 'notification:dashboard:read',
-      order: 1,
-      group: 'analytics',
-      description: i18n.t('notification.nav.notification-statistics_desc'),
-    },
-    {
-      code: 'notification-settings',
-      label: i18n.t('notification.nav.notification-settings'),
-      labelKey: 'notification.nav.notification-settings',
-      icon: 'Settings',
-      path: NOTIFICATION_PATHS.settings,
-      permission: 'notification:dashboard:read',
-      order: 5,
-      group: 'setting',
-      description: i18n.t('notification.nav.notification-settings_desc'),
-    },
   ],
 };

@@ -1,6 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
-import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
@@ -144,80 +143,5 @@ export const automationModuleConfig: RouteModuleConfig = {
     automationRunsRoute,
     automationDesignerRoute,
     automationVariablesRoute,
-  ],
-};
-
-// ---- 导航配置（供导航注册表使用） ----
-export const automationNavConfig: ModuleNavConfig = {
-  code: 'automation',
-  name: i18n.t('automation.nav.module_name'),
-  nameKey: 'automation.nav.module_name',
-  icon: 'Zap',
-  path: AUTOMATION_PATHS.root,
-  permission: 'automation:dashboard:read',
-  source: 'core',
-  suite: 'platform',
-  status: 'online',
-  order: 70,
-  description: i18n.t('automation.nav.module_name_desc'),
-  navItems: [
-    {
-      code: 'automation-dashboard',
-      label: i18n.t('automation.nav.automation-dashboard'),
-      labelKey: 'automation.nav.automation-dashboard',
-      icon: 'LayoutDashboard',
-      path: AUTOMATION_PATHS.dashboard,
-      permission: 'automation:dashboard:read',
-      order: 0,
-      group: 'overview',
-      showInTabs: true,
-      description: i18n.t('automation.nav.automation-dashboard_desc'),
-    },
-    {
-      code: 'automation-rules',
-      label: i18n.t('automation.nav.automation-rules'),
-      labelKey: 'automation.nav.automation-rules',
-      icon: 'Zap',
-      path: AUTOMATION_PATHS.rules,
-      permission: 'automation:rule:read',
-      order: 1,
-      group: 'process',
-      showInTabs: true,
-      description: i18n.t('automation.nav.automation-rules_desc'),
-    },
-    {
-      code: 'automation-runs',
-      label: i18n.t('automation.nav.automation-runs'),
-      labelKey: 'automation.nav.automation-runs',
-      icon: 'History',
-      path: AUTOMATION_PATHS.runs,
-      permission: 'automation:run:read',
-      order: 2,
-      group: 'analytics',
-      showInTabs: true,
-      description: i18n.t('automation.nav.automation-runs_desc'),
-    },
-    {
-      code: 'automation-designer',
-      label: i18n.t('automation.nav.automation-designer'),
-      labelKey: 'automation.nav.automation-designer',
-      icon: 'Workflow',
-      path: AUTOMATION_PATHS.designer,
-      permission: 'automation:rule:write',
-      order: 3,
-      group: 'process',
-      description: i18n.t('automation.nav.automation-designer_desc'),
-    },
-    {
-      code: 'automation-variables',
-      label: i18n.t('automation.nav.automation-variables'),
-      labelKey: 'automation.nav.automation-variables',
-      icon: 'KeyRound',
-      path: AUTOMATION_PATHS.variables,
-      permission: 'automation:variable:read',
-      order: 4,
-      group: 'setting',
-      description: i18n.t('automation.nav.automation-variables_desc'),
-    },
   ],
 };

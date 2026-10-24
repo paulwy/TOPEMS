@@ -4258,3 +4258,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - L1 剩 34 = 34 个 *NavConfig（modules/*/config.ts）——已核：动态 import（routes/v2）只取 ModuleConfig（`.then(m => ({ xModuleConfig }))`），NavConfig 0 消费（定义+barrel 转发外无引用）——旧「永久保留」结论基于动态盲区假设，证据已反证；coreModuleNavConfigs 空数组骨架。下批定夺删除。
 ### 状态与下批
 - 下批：L1 34 NavConfig 删除（0 消费证据确凿）或确认保留；L2 90 继续（ai/ 剩余 + 新降级）；completeTodoGql 幽灵项去向核。
+## 第二十四轮（2026-10-25）：L1 归零——34 个 *NavConfig 删除（0 消费证据确凿）
+- 上轮核反证：routes/v2 动态 import 只取 ModuleConfig，NavConfig 全仓 0 消费（定义行外无任何引用，含 barrel/测试）。
+- del_any 删 34 个 `export const *NavConfig: ModuleNavConfig = {...}` 对象块（wms 先行单删验证 AST 整块删除 → 批量 33）。
+- 连锁：34 个 config.ts 的 `import type { ModuleNavConfig }` 残留（eslint 34 项）→ python 整行删 34（全唯一成员）；tsc 0、eslint 全绿。
+- 测试安全：navigation.test/route-nav-alignment.test 仅引用 coreModuleNavConfigs（空数组骨架，未被删）。
+- 重扫：**L1=0（归零！）、L2=90（values 40/types 50）、L3=4682**。
+- 说明：coreModuleNavConfigs 空数组 + ModuleNavConfig 类型仍活（空数组类型标注 + 测试引用）；34 NavConfig 删除后无导航消费影响（导航走 ModuleConfig 动态 import）。
+### 状态与下批
+- L1 全清（里程碑）。下批：L2 90 推进——values 40 精确消费判定（含 coreModuleNavConfigs 空壳评估）+ types 50；detector v4 盲区（别名链/index.tsx）评估。

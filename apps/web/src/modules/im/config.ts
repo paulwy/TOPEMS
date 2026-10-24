@@ -1,6 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
-import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
@@ -60,45 +59,4 @@ export const imModuleConfig: RouteModuleConfig = {
   description: i18n.t('im.nav.module_name_desc'),
   permission: 'im:mail:read',
   routes: [dashboardRoute, mailRoute],
-};
-
-// ---- 导航配置（供导航注册表使用） ----
-export const imNavConfig: ModuleNavConfig = {
-  code: 'im',
-  name: i18n.t('im.nav.module_name'),
-  nameKey: 'im.nav.module_name',
-  icon: 'MessageSquare',
-  path: IM_PATHS.root,
-  permission: 'im:mail:read',
-  source: 'plugin',
-  suite: 'collaboration',
-  status: 'online',
-  order: 22,
-  description: i18n.t('im.nav.module_name_desc'),
-  navItems: [
-    {
-      code: 'im-dashboard',
-      label: i18n.t('im.nav.im-dashboard'),
-      labelKey: 'im.nav.im-dashboard',
-      icon: 'LayoutDashboard',
-      path: IM_PATHS.dashboard,
-      permission: 'im:dashboard:read',
-      order: 0,
-      group: 'overview',
-      showInTabs: true,
-      description: i18n.t('im.nav.im-dashboard_desc'),
-    },
-    {
-      code: 'im-mail',
-      label: i18n.t('im.nav.im-mail'),
-      labelKey: 'im.nav.im-mail',
-      icon: 'Mail',
-      path: IM_PATHS.mail,
-      permission: 'im:mail:read',
-      order: 1,
-      group: 'business',
-      showInTabs: true,
-      description: i18n.t('im.nav.im-mail_desc'),
-    },
-  ],
 };

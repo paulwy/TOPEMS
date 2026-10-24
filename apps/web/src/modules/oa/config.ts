@@ -1,6 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
-import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 const OA_PATHS = {
@@ -122,66 +121,5 @@ export const oaModuleConfig: RouteModuleConfig = {
     announcementRoute,
     meetingManagementRoute,
     vehicleManagementRoute,
-  ],
-};
-
-export const oaNavConfig: ModuleNavConfig = {
-  code: 'oa',
-  name: i18n.t('oa.nav.module_name'),
-  nameKey: 'oa.nav.module_name',
-  icon: 'FileText',
-  path: OA_PATHS.root,
-  source: 'core',
-  suite: 'collaboration',
-  order: 92,
-  navItems: [
-    {
-      code: 'oa-dashboard',
-      label: i18n.t('oa.nav.oa-dashboard'),
-      labelKey: 'oa.nav.oa-dashboard',
-      icon: 'LayoutDashboard',
-      path: OA_PATHS.dashboard,
-      permission: 'oa:dashboard:read',
-      order: 0,
-      group: 'overview',
-      showInTabs: true,
-      description: i18n.t('oa.nav.oa-dashboard_desc'),
-    },
-    {
-      code: 'oa-documents',
-      label: i18n.t('oa.nav.oa-documents'),
-      labelKey: 'oa.nav.oa-documents',
-      path: OA_PATHS.documents,
-      permission: 'oa:document:read',
-      group: 'business',
-      showInSidebar: true,
-    },
-    {
-      code: 'oa-announcements',
-      label: i18n.t('oa.nav.oa-announcements'),
-      labelKey: 'oa.nav.oa-announcements',
-      path: OA_PATHS.announcements,
-      permission: 'oa:announcement:read',
-      group: 'master',
-      showInSidebar: true,
-    },
-    {
-      code: 'oa-meetings',
-      label: i18n.t('oa.nav.oa-meetings'),
-      labelKey: 'oa.nav.oa-meetings',
-      path: OA_PATHS.meetings,
-      permission: 'oa:meeting:read',
-      group: 'process',
-      showInSidebar: true,
-    },
-    {
-      code: 'oa-vehicles',
-      label: i18n.t('oa.nav.oa-vehicles'),
-      labelKey: 'oa.nav.oa-vehicles',
-      path: OA_PATHS.vehicles,
-      permission: 'oa:vehicle:read',
-      group: 'business',
-      showInSidebar: true,
-    },
   ],
 };
