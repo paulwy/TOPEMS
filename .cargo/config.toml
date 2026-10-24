@@ -39,6 +39,10 @@ retry = 3
 # - 覆盖方式：需要连库（如 `cargo sqlx prepare` 更新离线缓存）时，显式 `SQLX_OFFLINE=false cargo ...`
 #   必须显式 force=false，否则 shell 的显式环境变量会被本项覆盖（实测简写行为）。
 SQLX_OFFLINE = { value = "true", force = false }
+# [2026-10-24] Homebrew rust 1.95.0 的 std 为 macOS 26 构建，而 rustc 默认部署目标
+# 为 11.0 → test 二进制链接报 "ld: symbol(s) not found for architecture arm64"。
+# 对齐本机运行时（macOS 26）；Linux 构建不受影响，CI 为 Linux 无此语义。
+MACOSX_DEPLOYMENT_TARGET = "26.0"
 
 [test]
 # cargo-nextest：2–5× 测试执行速度，测试报告友好
