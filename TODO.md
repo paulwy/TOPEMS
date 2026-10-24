@@ -1,4 +1,32 @@
 
+## B1 核销 · B2 缺列解除 · mes 类型回归修复（2026-10-24）✅ 完成
+
+> B1（`20261007000006_rebuild_orphan_tables.sql` 迁移：593 条 to_regclass + 全链 IF EXISTS 守卫已就位，空库全链 479/479 贯通背书）、B2（stub 缺列解除：topems_prepare 重建为 dev schema 克隆 + `app.tenant_id` GUC 声明，sqlx prepare 39/39）登记核销；mes 类型回归修复并入本次。
+
+### mes 类型回归修复（215 处，跨 13 文件）
+根因：P3 批次 `371bd9dfa3` 后代码 struct/绑定与 DB 真实列型错位（numeric/date 契约：date 列→NaiveDate、numeric→BigDecimal）。15:19 快照 206 处与 dev 实况一致；unified-core 另有 9 处 `expected Uuid found String`。修复按域并行，全部在绑定/赋值点转换、struct 字段类型零改动（API 序列化契约保持）。
+
+| 域 | 文件（处数） | 合计 | 提交哈希 |
+|---|---|---|---|
+| OEE | equipment_oee.rs（150） | 150 | `6e6f3527dd` |
+| QMS | standard.rs 16 / inspection.rs 9 / patrol.rs 3 / quality_traceability.rs 1 | 29 | `d2ba92fbf8` |
+| 流程工单 | process_flow.rs 15 / work_report.rs 13 / team.rs 9 / production_kanban.rs 3 / production_process.rs 1 | 41 | `c573d1288e` |
+| 订单物料 | return_handlers.rs 9 / production_order.rs 9 / process_route.rs 4 | 22 | `435c3f9cac` |
+| unified-core | database_permission_store.rs（tenant_id Uuid 契约） | 9 | `cf80800fe3` |
+
+- **定式**：f64→BigDecimal（`BigDecimal::from_str(&x.to_string()).unwrap_or_default()`，先例 aps_scheduling.rs:915）；DateTime→NaiveDate/NaiveDateTime（`.date_naive()`/`.naive_utc()`）；行值 Option 配对按行值实型去/补 `.unwrap_or_default()`；删/加 `.and_utc()`；行值 BigDecimal→f64 复用既有助手（big_decimal_to_f64(_non_opt)）；Uuid 契约用 `Uuid::parse_str(...).unwrap_or_default()`。
+- **验证**：`SQLX_OFFLINE=true cargo check -p topems-mes --lib` / `-p topems-unified-core --lib` exit 0；`cargo check --workspace --all-targets`（CI 口径）exit 0（3m14s）；fmt 全过；prepare 39/39；pre-commit 26 项逐提交通过。
+
+### B2 缺列解除（stub 重建 + prepare 39/39）
+- **现状偏差**：原 topems_prepare 为 60 迁移旧桩（无 equipment_oee 等，账本止于 20260831190800）；迁移链无法纯空库重放（20260831190850 需 pgvector 扩展、20260907000001 起存在增量断点）。
+- **处置**：DROP+CREATE topems_prepare → 装 6 扩展（uuid-ossp/vector/pgcrypto/btree_gin/pg_trgm/postgis）→ `pg_dump --schema-only`（dev 权威 schema，--no-owner）还原 → 全 schema 授权 topems_app → `ALTER DATABASE topems_prepare SET app.tenant_id`（对齐 dev 的 GUC 声明，否则 `current_setting('app.tenant_id')` 报 unrecognized）。
+- **结果**：`cargo sqlx prepare` 39/39（37 直过 + mes/analytics 因 GUC 声明时机补跑过），根 .sqlx 349 条按 dev 真实契约全量重生成（numeric/date），子目录缓存已清。
+- **缓存**：提交 `21fcc45915`（chore(sqlx)，65 files，sqlx-cache-freshness 门禁过）。
+
+### B1 核销
+- `20261007000006_rebuild_orphan_tables.sql` 迁移（593 条 to_regclass + 1119 条 IF EXISTS/IF NOT EXISTS 守卫）已提交于守卫批次 `2a4591d509`；空库全链重放 000001..20261016000088 全部 success（479/479 贯通背书），本次随 B2 stub 重建路径再次实证。登记核销。
+- 注：旧 TODO 条目行号（3734/3740/3710）已被并行会话重写，现行 TODO.md 无对应条目，本批直接新增小节登记。
+
 ## V517 泄露面清退（2026-10-24）✅ 完成
 
 > 对应「下一步工作规划」之「统一错误出口（V517）」子项。门禁 `check-error-handling.cjs` 报告模式较基线 +848 `ApiResponse::error` / +39 泄露面（远端并行会话新引入代码）——全量复扫后修复 39 处命中（raw-error-to-string 28 + leak-internal-error 11），统一出口 `Json(ApiResponse::from(TopemsError::internal("业务上下文", e)))`（classify() 保证细节只进日志，测试 `test_classify_does_not_leak_internal_details` 兜底）。
