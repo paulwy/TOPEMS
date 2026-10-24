@@ -5,9 +5,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 //   1. service 级（apiClient.wms / apiClient.tms / apiClient.erp）— 供 outboundOrderApi /
 //      inboundOrderApi / transferApi / shipmentApi / salesOrderApi / purchaseOrderApi /
 //      erp inventoryApi / materialApi / wms inventoryApi 等使用
-//   2. service 级 apiClient.wms — 审批路径（/approval/{start,approve,reject}）直接走
-//      apiClient.wms.post（后端 svc/wms 审批端点未实现，前端未封装 wmsApprovalApi，
-//      测试直接断言路径契约，避免 api-boundary-gate 拦截悬空路径）
+//   2. service 级 apiClient.wms — 审批端点封装 wmsApprovalApi（svc/wms 四实体
+//      /approval/{start,approve,reject} 12 路由后端已实现；index.ts 全字面量模板
+//      供 api-boundary-gate 静态配对）
 // ============================================================================
 vi.mock('@/api/client', () => {
   const createMockModule = () => ({
@@ -168,6 +168,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
 
     it('should require approval for inbound received→completed (APV-1)', async () => {
       const { inboundOrderApi } = await import('@/api/wms/inbound');
+      const { wmsApprovalApi } = await import('@/api/wms');
       const { apiClient } = await import('@/api/client');
 
       // inbound receive (confirmed→received)
@@ -184,9 +185,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
       const receiveResult = await inboundOrderApi.receive('inb-001', [
         { item_id: 'item-1', received_quantity: 50 },
       ]);
-      // 后端 svc/wms 审批端点（/inbound-orders/{id}/approval/*）尚未实现，
-      // 前端暂不封装 wmsApprovalApi（api-boundary-gate 拦截悬空路径），此处直接断言路径契约。
-      const approveResult = await apiClient.wms.post('/inbound-orders/inb-001/approval/approve', {
+      const approveResult = await wmsApprovalApi.inbound.approve('inb-001', {
         operator: 'user-002',
       });
 
@@ -273,6 +272,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
 
     it('should sync transfer confirmed→shipped with TMS dispatch (APV-4)', async () => {
       const { transferApi } = await import('@/api/wms/transfer');
+      const { wmsApprovalApi } = await import('@/api/wms');
       const { tmsApi } = await import('@/api/tms');
       const { apiClient } = await import('@/api/client');
 
@@ -293,8 +293,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
       });
 
       const confirmResult = await transferApi.confirm('trf-001');
-      // 同上：调拨审批端点后端未实现，直接断言路径契约。
-      const approveResult = await apiClient.wms.post('/transfers/trf-001/approval/approve', {
+      const approveResult = await wmsApprovalApi.transferOrder.approve('trf-001', {
         operator: 'user-003',
       });
       const dispatchResult = await tmsApi.dispatchShipment('ship-002');
@@ -514,6 +513,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
   describe('场景 6: Error Rollback', () => {
     it('should keep WMS outbound as picking when TMS shipment.create fails', async () => {
       const { outboundOrderApi } = await import('@/api/wms/outbound');
+      const { wmsApprovalApi } = await import('@/api/wms');
       const { tmsApi } = await import('@/api/tms');
       const { apiClient } = await import('@/api/client');
 
@@ -549,6 +549,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
 
     it('should reject invalid WMS FSM transition (created→completed)', async () => {
       const { apiClient } = await import('@/api/client');
+      const { wmsApprovalApi } = await import('@/api/wms');
 
       // 后端 FSM 检测到 created→completed 非法转换，返回 success:false
       apiClient.wms.post.mockResolvedValue({
@@ -556,7 +557,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
         message: 'InvalidTransition: created → completed is not allowed',
       });
 
-      const result = await apiClient.wms.post('/outbound-orders/out-004/approval/approve', {
+      const result = await wmsApprovalApi.outbound.approve('out-004', {
         operator: 'user-001',
       });
 
@@ -570,6 +571,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
 
     it('should reject approval on non-approval state (inbound created state)', async () => {
       const { apiClient } = await import('@/api/client');
+      const { wmsApprovalApi } = await import('@/api/wms');
 
       // inbound 处于 created 状态（非审批态），调用 approve 应被拒绝
       apiClient.wms.post.mockResolvedValue({
@@ -577,7 +579,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
         message: 'not in approval state: current state is created',
       });
 
-      const result = await apiClient.wms.post('/inbound-orders/inb-003/approval/approve', {
+      const result = await wmsApprovalApi.inbound.approve('inb-003', {
         operator: 'user-002',
       });
 

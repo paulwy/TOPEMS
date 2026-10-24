@@ -1,3 +1,12 @@
+import apiClient from '../client';
+import type { ApiResponse } from '../client';
+import type {
+  ApprovalActionRequest,
+  InboundOrder,
+  OutboundOrder,
+  StockTake,
+  TransferOrder,
+} from './types';
 import { inventoryApi, inventoryAlertsApi, inventoryStatsApi } from './inventory';
 import { wmsDashboardApi } from './dashboard';
 import { warehouseApi } from './warehouse';
@@ -160,5 +169,52 @@ export const wmsApi = {
 //   /stock-takes/${id}/approval/{start,approve,reject}
 //   /transfers/${id}/approval/{start,approve,reject}（调拨真实命名为 transfers）
 // ============================================================================
+
+const approvalEntity = <T>(
+  start: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<T>>,
+  approve: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<T>>,
+  reject: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<T>>
+) => ({ start, approve, reject });
+
+export const wmsApprovalApi = {
+  inbound: approvalEntity(
+    async (id, req) => apiClient.wms.post(`/inbound-orders/${id}/approval/start`, req ?? {}),
+    async (id, req) => apiClient.wms.post(`/inbound-orders/${id}/approval/approve`, req ?? {}),
+    async (id, req) => apiClient.wms.post(`/inbound-orders/${id}/approval/reject`, req ?? {})
+  ) as {
+    start: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<InboundOrder>>;
+    approve: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<InboundOrder>>;
+    reject: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<InboundOrder>>;
+  },
+  outbound: approvalEntity(
+    async (id, req) => apiClient.wms.post(`/outbound-orders/${id}/approval/start`, req ?? {}),
+    async (id, req) => apiClient.wms.post(`/outbound-orders/${id}/approval/approve`, req ?? {}),
+    async (id, req) => apiClient.wms.post(`/outbound-orders/${id}/approval/reject`, req ?? {})
+  ) as {
+    start: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<OutboundOrder>>;
+    approve: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<OutboundOrder>>;
+    reject: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<OutboundOrder>>;
+  },
+  stockTake: approvalEntity(
+    async (id, req) => apiClient.wms.post(`/stock-takes/${id}/approval/start`, req ?? {}),
+    async (id, req) => apiClient.wms.post(`/stock-takes/${id}/approval/approve`, req ?? {}),
+    async (id, req) => apiClient.wms.post(`/stock-takes/${id}/approval/reject`, req ?? {})
+  ) as {
+    start: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<StockTake>>;
+    approve: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<StockTake>>;
+    reject: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<StockTake>>;
+  },
+  transferOrder: approvalEntity(
+    async (id, req) => apiClient.wms.post(`/transfers/${id}/approval/start`, req ?? {}),
+    async (id, req) => apiClient.wms.post(`/transfers/${id}/approval/approve`, req ?? {}),
+    async (id, req) => apiClient.wms.post(`/transfers/${id}/approval/reject`, req ?? {})
+  ) as {
+    start: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<TransferOrder>>;
+    approve: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<TransferOrder>>;
+    reject: (id: string, req?: ApprovalActionRequest) => Promise<ApiResponse<TransferOrder>>;
+  },
+};
+
+export { approvalEntity };
 
 export default wmsApi;

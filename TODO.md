@@ -1,3 +1,13 @@
+## wms 审批端点前端封装恢复（wmsApprovalApi，2026-10-25）✅ 完成
+
+> **续「前端 component 预存在失败清理」wms-tms-erp 专项登记项——后端 svc/wms 审批端点实际已实现，本次恢复前端封装并升级测试断言**：
+> - **事实修正**：svc/wms `inbound_order.rs`/`outbound_order.rs`/`stock_take.rs`/`transfer_order.rs` 各有 `/approval/{start,approve,reject}` 3 路由（12 端点全部存在，openapi 已注册）——此前 TODO 登记的"待后端实现后再挂接 wmsApprovalApi"表述不实，实为**前端封装从未落地**
+> - **api-boundary-gate 拦因定位**：`makeApprovalEntity` 工厂用 `${base(id)}` 模板变量拼接——gate 正则剔除全部 `${...}` 占位后路径只剩 `/start`，无法与前 3 段配对（误报 3 violations）；改为**全字面量模板展开 12 方法**（`/inbound-orders/${id}/approval/start` 等，与既有 transferApi 风格一致）后 gate PASS（matched 2778，+12 正是审批端点）
+> - **types.ts**：补 `ApprovalActionRequest { operator: string; comment?: string }`（对齐 svc/wms ApprovalRequest）
+> - **测试升级**：wms-tms-erp 审批 4 用例由裸 `apiClient.wms.post` 路径契约断言恢复为 `wmsApprovalApi.inbound|outbound|transferOrder.approve(id, { operator })` 强断言（动态 import 按场景补 3 处）；文件头注释同步修正
+> - 验证：wms-tms-erp 17/17；**component 全量 325 files / 3288 passed / 0 failed**；tsc 0；eslint 0；api-boundary-gate PASS
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 前端 component 预存在失败清理：组件拆分死引用（2026-10-25）✅ 完成
 
 > **预存在 12 failed/6 files → 5 failed/1 file（wms-tms-erp 7 专项）**：
