@@ -253,6 +253,23 @@ function main() {
     }
   }
 
+  // [v4] 别名链索引：export { X as Y } → 页面 import Y 算消费（Y 的引用方合并到 X）
+  const aliasMap = new Map(); // Y -> X（Y 是 X 的别名）
+  for (const f of indexFiles) {
+    let src2;
+    try { src2 = fs.readFileSync(f, 'utf8'); } catch { continue; }
+    const reEx = /export\s*\{([^}]+)\}\s*(?:from\s*'[^']+')?/g;
+    let em;
+    while ((em = reEx.exec(src2)) !== null) {
+      for (const part of em[1].split(',')) {
+        const pm = part.trim().match(/^([A-Za-z_$][\w$]*)\s+as\s+([A-Za-z_$][\w$]*)$/);
+        if (pm) {
+          if (!aliasMap.has(pm[2])) aliasMap.set(pm[2], pm[1]);
+        }
+      }
+    }
+  }
+
   // phase 3：分级输出
   console.log('\n📦 阶段 3/3  分级中...');
   const L1 = []; // SAFE: 仅自身文件有引用 → 0 处引用
@@ -266,6 +283,13 @@ function main() {
 
     // 真实引用文件数 = 出现的所有文件 - 定义文件
     const realRefFiles = new Set([...reffingFiles].filter((f) => !defFiles.has(f)));
+    // [v4] 别名消费合并：name 若有别名 Y 被引用 → 合并引用方（页面 import Y 算消费）
+    for (const [alias, orig] of aliasMap) {
+      if (orig === name) {
+        const aliasRefs = reverseIndex.get(alias) || new Set();
+        for (const rf of aliasRefs) realRefFiles.add(rf);
+      }
+    }
 
     // 类型导出的 L1 判定更严格：类型可以出现在 type-only import，TS 可能在 tsc 时用
     // 先只对 值导出（const/function/class/enum/非 type-only reexport）做严格 L1
@@ -288,7 +312,7 @@ function main() {
       // L2: 全部引用文件都符合 barrel/test/story/mock
       let allL2 = true;
       for (const rf of realRefFiles) {
-        const isBarrel = /\/index\.(ts|tsx)$/.test(rf);
+        const isBarrel = /\/index\.ts$/.test(rf); // [v4] index.tsx 是页面/组件入口 → 真实引用，不算 barrel
         const isTest = /__tests__|\.(test|spec)\.(ts|tsx)$/.test(rf);
         const isStory = /\.stories\.(ts|tsx)$/.test(rf);
         const isMock = noSkipUnderscore

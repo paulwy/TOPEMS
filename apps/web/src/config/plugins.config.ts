@@ -154,7 +154,3 @@ export const REMOTE_MODULES: RemoteModuleConfig[] = [
     dependencies: ['topems_core'],
   },
 ];
-
-export const getModulesByCategory = (category: string): RemoteModuleConfig[] => {
-  return REMOTE_MODULES.filter((m) => m.category === category);
-};
