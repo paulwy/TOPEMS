@@ -10,6 +10,7 @@ import type {
   UpdateMaterialIssueRequest,
   MaterialReturn,
   CreateMaterialReturnRequest,
+  UpdateMaterialReturnRequest,
 } from './types';
 
 export const materialBomApi = {
@@ -105,5 +106,20 @@ export const materialReturnApi = {
 
   async create(data: CreateMaterialReturnRequest): Promise<ApiResponse<MaterialReturn>> {
     return apiClient.mes.post('/material-returns', data);
+  },
+
+  async get(id: string): Promise<ApiResponse<MaterialReturn>> {
+    return apiClient.mes.get(`/material-returns/${id}`);
+  },
+
+  async update(
+    id: string,
+    data: UpdateMaterialReturnRequest
+  ): Promise<ApiResponse<MaterialReturn>> {
+    return apiClient.mes.put(`/material-returns/${id}`, data);
+  },
+
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.mes.delete(`/material-returns/${id}`);
   },
 };

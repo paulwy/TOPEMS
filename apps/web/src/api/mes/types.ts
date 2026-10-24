@@ -595,6 +595,19 @@ export interface CreateMaterialReturnRequest {
   }>;
 }
 
+export interface UpdateMaterialReturnRequest {
+  status?: string;
+  operator?: string;
+  reason?: string;
+  items?: Array<{
+    material_code: string;
+    material_name: string;
+    quantity: number;
+    unit?: string;
+    batch_no?: string;
+  }>;
+}
+
 interface TraceNode {
   id: string;
   type: string;
