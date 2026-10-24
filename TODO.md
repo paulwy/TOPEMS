@@ -4015,3 +4015,27 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - L1：164（values 11 全为同文件实例消费误报 + types 153 待 type 批清理）；tsc 0 error、eslint 0。
 - commit 59577d2dc（detector v2）+ c410205ac（第七批）已推送（13e3b6047..c410205ac）。
 - 下批候选：L1 types 153 精确判定（同文件消费模式：MasterDataRef/ListEntitiesParams 等）；detector v3 同文件消费识别（new X() 实例 + 函数内部调用）；L2 values 415 中「纯转发无消费链」项清理。
+
+## 第十五轮（2026-10-24）：detector v3 + L1 types 全清 + L2 values 纯转发首轮
+
+### ① detector v3 同文件消费识别（commit 82599291c，已推送）
+- 定义文件内「使用次数 > 定义/export块次数」→ 算消费（new X() 实例、类内部静态调用、函数内部引用）。
+- 效果：L1 164 → 26 → 0；L2 1283 → 383（同文件消费 900 项升 L3）。**L1 全清零**。
+
+### ② L1 types 153 精确判定 → 26 真死删除（commit 82599291c，-497 行）
+- 26 个真死 type（v3 排除同文件消费后无引用）：types/wms.ts 11 个 DTO、api/pm/scm/wms 各若干、gis OfflineConfig、abTesting/graphqlPerformance/importExport 各 2-1 个。
+- 验证：tsc 0 error + eslint 0。L1 types 153 → 0。
+
+### ③ L2 values 250 纯转发无消费链判定（commit f4e5a0f14，-99 行）
+- 逐引用方分析（export-from 转发 vs import 消费 vs 测试/stories）：
+  - **删除**：masterNavConfig 段（master/config.ts -85 行 + navigation/modules/index.ts 3 处引用）、codeCompletion 孤儿实例转发 2 处（devex/index.ts + microfrontend/index.ts）。
+  - **保留（detector 盲区——经别名被页面消费）**：getSuites/SUITES（PluginMarketplacePage）、departmentSchema/employeeSchema（HrmDepartmentPage/HrmEmployeePage）、CodeCompletion 类（devex 转发链）——首次误删后 git checkout 恢复，确认别名引用不计入 reverseIndex。
+- 重扫：L2 383 → 381（值 248）。tsc 0 + eslint 0。
+
+### ④ 状态与下批
+- L1 = 0；L2 381（值 248 / types 133）；L3 3706+。
+- commit 82599291c + f4e5a0f14 已推送（8c8665b56..f4e5a0f14）。
+- 下批候选：
+  1. L2 values 248 剩余：测试/stories 引用 49 文件（chartPalette/TouchButton/TableSection 等——删代码需同步删测试用例）；index.tsx 页面入口消费（MailPageHooks 等——detector 把 index.tsx 当 barrel 误判，保留）。
+  2. modules config 组（automation/pdm 等 30+ 文件 2 导出）：被 navigation/routes 聚合对象引用——聚合对象消费链待核（navConfigs 无外部消费则可整链删）。
+  3. detector v4：别名链识别（export { X as Y } → 页面 import Y 算消费）；index.tsx 页面入口不按 barrel 弱引用处理。
