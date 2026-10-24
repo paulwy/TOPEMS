@@ -590,6 +590,12 @@
 - **留待下批（需追溯 API/state 类型，不强行断言）**：AnnouncementPage `(a:any)` 列表映射、`mutationFn:(data:any)`；Tenant `formData as any` 创建提交、`handleChange(value:any)`。
 - **门禁**：`tsc --noEmit` exit 0；两文件定点 eslint 0 error（剩 4 处 warning 即上述留待项）。
 
+### no-explicit-any 清零核销（2026-10-24）✅
+
+- **全量 eslint 实测：no-explicit-any 违规 = 0**（`apps/web` `npx eslint src`，基线 421 → 清零）
+- 剩余 8 处 grep 命中均为 **disable 注释 / 规则字符串**（crudPageAdapter.ts / CrudPage.tsx disable 行、api/client.ts 整文件 disable（T=any 默认值主动保留登记）、测试 mock disable、smartCodeReviewer.ts 规则 id 字面量）——非真实违规
+- 结论：A3 前端 any 剩余批次**无需再清**，历史「留待下批」项（Tenant formData/handleChange 等）已随类型推断/断言各批落地或属设计保留
+
 ### no-explicit-any 第四批 · Announcement API 映射与请求类型化（2026-10-20）✅
 
 - **本批净降 2 处**：`AnnouncementPage.tsx` 列表映射 `(a:any)` 删注解（由 `announcementApi.list` 返回类型推断）；`mutationFn:(data:any)` → `data: CreateAnnouncementRequest`。
@@ -3530,7 +3536,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 
 ## v1.107 smoke-prod 层2 H 指引对齐 + BFF WS 接线观察项（2026-10-23）
 - [x] **v1.102 观察项核销**：smoke-prod.sh 层2 H 指引过时（原文"unified-core WS 端点（mes_real_module 投影提供）"——U1-b1/U1-b2 已移除 unified-core mes 投影）→ 已修正为：`/ws/mes/dashboard` 由**独立 svc/mes** 提供（main.rs:259 dashboard_websocket）；BFF :8099 未接线如实标注（main.rs:532 注释登记"应由 mes_real_module 内嵌 topems_mes::dashboard_ws"）；BFF 核心 WS 保留 /ws/core/notifications、/ws/core/im
-- [ ] **观察项（接线暂缓）**：BFF :8099 恢复 /ws/mes/dashboard —— 尝试接线受阻：Module 契约要求 `Router<()>`（routes 字段 Router），而 `dashboard_websocket` 用 `State<AuthState>` extractor 需 `AuthState: FromRef<S>`；Router<()> 上 route 报 Handler 约束（S fallback ()），子路由带 state（Router<AppState>）nest 后整体类型变 Router<AppState> 与 Module 契约冲突（E0308）。属 server 侧接线类型改造（改 Module 契约/统一 state），暂缓并如实登记——生产拓扑由独立 svc/mes:8030 提供该 WS，无功能缺口
+- [x] **观察项（接线暂缓）已核销**（v1.110，2026-10-23）：解法为 dashboard_websocket 以独立 `Router<AppState>`（AppState: FromRef<AuthState> 已具备）构造 + `.route("/ws/mes/dashboard")` 后 `with_state` 固化 → `Router<()>`，再 merge 进顶层 Router<()>——规避 Module 契约限制，无需改 trait；认证语义对齐独立部署（URL token 自验）。生产拓扑仍由独立 svc/mes:8030 提供
 - 活文档变更日志 v1.107 登记
 
 ## v1.101 mdm_crud_integration 13 failed 核销（2026-10-23）
@@ -3774,7 +3780,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] 勘察：ai:admin 字典行本存在（public.core_permissions），但无角色绑定（仅超管短路）；运行时权威源为 **public 副本**（unified-core iam/auth.rs:702-705 JOIN public.core_*）
 - [x] **迁移 `20261024000016_copilot_faq_admin_permission.sql`**：三步同型 000014——字典兜底 ON CONFLICT DO NOTHING + admin 角色兜底（nil 租户）+ `admin → ai:admin` 绑定；**全部显式 public.\***（修正 000014 落 iam 副本的口径差异，header 注释说明）
 - [x] 文档：system-onboarding-and-gap-tracker.md 追加登记说明；测试库应用验证（绑定 INSERT 1 + 查询确认）
-- [ ] 遗留：000014 portal:admin 落 iam 副本的绑定有效性存疑（运行时读 public.*）——若 portal 管理端点仅超管可用，需按 public.* 口径补绑（建议下批）；租户业务管理员自管 FAQ 需 IAM 面单独授权（运维）；ai:admin dict 描述未回填（非破坏，未做）
+- [x] 遗留（portal:admin 绑定）已核销（2026-10-24）：`20261024000017_portal_admin_permission_public.sql`（`ab1621e190`）按 **public.* 权威口径补绑**（修正 000014 落 iam 副本差异）；租户业务管理员自管 FAQ 需 IAM 面单独授权仍属运维项；ai:admin dict 描述未回填仍非破坏未做
 ### 状态
 - 本轮 3 commits 落盘（085 收敛 + 000016/FAQ 编辑 + 本登记）；**未 push**；统一推送前用户 fetch+rebase
 
