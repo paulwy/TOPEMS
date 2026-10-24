@@ -558,10 +558,8 @@ describe('WMS InventoryReport 组件新组合变体', () => {
     expect(screen.queryByText('Tab未激活0')).not.toBeInTheDocument();
     expect(screen.queryByText('Tab未激活2')).not.toBeInTheDocument();
 
-    // InventoryReportFilterHint 是一个 caption 组件
-    const { unmount } = renderWithProviders();
-    expect(screen.getByText('按ABC规则自动分类提示')).toBeInTheDocument();
-    unmount();
+    // InventoryReportFilterHint 组件已随 L2 清理移除（源码不存在），
+    // 该 caption 断言为死引用残留，已删除；TabPanel 行为断言保留。
   });
 });
 

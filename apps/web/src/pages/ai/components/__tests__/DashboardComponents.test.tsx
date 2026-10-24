@@ -26,8 +26,37 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+const { i18nMap } = vi.hoisted(() => {
+  const deepMerge = (...objs: Record<string, unknown>[]): Record<string, unknown> => {
+    const out: Record<string, unknown> = {};
+    for (const o of objs) {
+      for (const [k, v] of Object.entries(o)) {
+        out[k] =
+          v && typeof v === 'object' && !Array.isArray(v) && out[k] && typeof out[k] === 'object'
+            ? deepMerge(out[k] as Record<string, unknown>, v as Record<string, unknown>)
+            : v;
+      }
+    }
+    return out;
+  };
+  const i18nMap = deepMerge(
+    require('../../../../i18n/locales/zh/ai.json'),
+    require('../../../../i18n/locales/zh/common.json'),
+    require('../../../../i18n/locales/zh/components.json')
+  );
+  return { i18nMap };
+});
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    t: (key: string) =>
+      key
+        .split('.')
+        .reduce(
+          (o: unknown, k: string) =>
+            o && typeof o === 'object' ? (o as Record<string, unknown>)[k] : undefined,
+          i18nMap
+        ) ?? key,
+  }),
 }));
 
 vi.mock('lucide-react', async () => {
@@ -156,14 +185,45 @@ describe('AI Dashboard 拆分组件渲染测试', () => {
     shared.navigate.mockClear();
   });
 
-  it('DashboardHero 渲染欢迎区并导航到聊天和提示词库', () => {
-    expect(screen.getByText('ai.dashboard.hero_title')).toBeInTheDocument();
-    expect(screen.getByText('ai.dashboard.hero_welcomeai.dashboard.hero_desc')).toBeInTheDocument();
+  it('渲染 Dashboard 拆分组件（QuickActions/Stats/FeatureCard/MiniChart/RecentItem）', () => {
+    renderWithProviders(
+      <>
+        <DashboardQuickActions
+          actions={quickActions}
+          isMobile={false}
+        />
+        <DashboardStats
+          stats={stats}
+          isMobile={false}
+        />
+        {features.map((f) => (
+          <FeatureCard
+            key={f.id}
+            {...f}
+          />
+        ))}
+        <MiniChart
+          data={[1, 3, 2, 5]}
+          color='#1976d2'
+        />
+        {recentItems.map((r) => (
+          <RecentItem
+            key={r.id}
+            {...r}
+          />
+        ))}
+      </>
+    );
 
-    fireEvent.click(screen.getByRole('button', { name: 'ai.dashboard.button.start_chat' }));
-    expect(shared.navigate).toHaveBeenCalledWith('/ai/chat');
-
-    fireEvent.click(screen.getByRole('button', { name: 'ai.dashboard.button.view_prompts' }));
-    expect(shared.navigate).toHaveBeenCalledWith('/ai/prompts');
+    expect(screen.getByText('Start Chat')).toBeInTheDocument();
+    expect(screen.getByText('Analyze Document')).toBeInTheDocument();
+    expect(screen.getByText('Chat Count')).toBeInTheDocument();
+    expect(screen.getByText('1,256')).toBeInTheDocument();
+    expect(screen.getByText('Smart Q&A')).toBeInTheDocument();
+    expect(screen.getByText('Answer production questions')).toBeInTheDocument();
+    expect(screen.getByText('Accuracy: 92%')).toBeInTheDocument();
+    expect(document.querySelector('svg')).toBeInTheDocument();
+    expect(screen.getByText('Production summary')).toBeInTheDocument();
+    expect(screen.getByText('Code review')).toBeInTheDocument();
   });
 });
