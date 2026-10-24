@@ -8,11 +8,11 @@
 
 | 域 | 文件（处数） | 合计 | 提交哈希 |
 |---|---|---|---|
-| OEE | equipment_oee.rs（150） | 150 | `6e6f3527dd` |
-| QMS | standard.rs 16 / inspection.rs 9 / patrol.rs 3 / quality_traceability.rs 1 | 29 | `d2ba92fbf8` |
-| 流程工单 | process_flow.rs 15 / work_report.rs 13 / team.rs 9 / production_kanban.rs 3 / production_process.rs 1 | 41 | `c573d1288e` |
-| 订单物料 | return_handlers.rs 9 / production_order.rs 9 / process_route.rs 4 | 22 | `435c3f9cac` |
-| unified-core | database_permission_store.rs（tenant_id Uuid 契约） | 9 | `cf80800fe3` |
+| OEE | equipment_oee.rs（150） | 150 | `73d37490db` |
+| QMS | standard.rs 16 / inspection.rs 9 / patrol.rs 3 / quality_traceability.rs 1 | 29 | `2729268aba` |
+| 流程工单 | process_flow.rs 15 / work_report.rs 13 / team.rs 9 / production_kanban.rs 3 / production_process.rs 1 | 41 | `3de1f7b6eb` |
+| 订单物料 | return_handlers.rs 9 / production_order.rs 9 / process_route.rs 4 | 22 | `299bfc6389` |
+| unified-core | database_permission_store.rs（tenant_id Uuid 契约） | 9 | `ddcdd8ece3` |
 
 - **定式**：f64→BigDecimal（`BigDecimal::from_str(&x.to_string()).unwrap_or_default()`，先例 aps_scheduling.rs:915）；DateTime→NaiveDate/NaiveDateTime（`.date_naive()`/`.naive_utc()`）；行值 Option 配对按行值实型去/补 `.unwrap_or_default()`；删/加 `.and_utc()`；行值 BigDecimal→f64 复用既有助手（big_decimal_to_f64(_non_opt)）；Uuid 契约用 `Uuid::parse_str(...).unwrap_or_default()`。
 - **验证**：`SQLX_OFFLINE=true cargo check -p topems-mes --lib` / `-p topems-unified-core --lib` exit 0；`cargo check --workspace --all-targets`（CI 口径）exit 0（3m14s）；fmt 全过；prepare 39/39；pre-commit 26 项逐提交通过。
@@ -21,7 +21,7 @@
 - **现状偏差**：原 topems_prepare 为 60 迁移旧桩（无 equipment_oee 等，账本止于 20260831190800）；迁移链无法纯空库重放（20260831190850 需 pgvector 扩展、20260907000001 起存在增量断点）。
 - **处置**：DROP+CREATE topems_prepare → 装 6 扩展（uuid-ossp/vector/pgcrypto/btree_gin/pg_trgm/postgis）→ `pg_dump --schema-only`（dev 权威 schema，--no-owner）还原 → 全 schema 授权 topems_app → `ALTER DATABASE topems_prepare SET app.tenant_id`（对齐 dev 的 GUC 声明，否则 `current_setting('app.tenant_id')` 报 unrecognized）。
 - **结果**：`cargo sqlx prepare` 39/39（37 直过 + mes/analytics 因 GUC 声明时机补跑过），根 .sqlx 349 条按 dev 真实契约全量重生成（numeric/date），子目录缓存已清。
-- **缓存**：提交 `21fcc45915`（chore(sqlx)，65 files，sqlx-cache-freshness 门禁过）。
+- **缓存**：提交 `fe1a663da8`（chore(sqlx)，65 files，sqlx-cache-freshness 门禁过）。
 
 ### B1 核销
 - `20261007000006_rebuild_orphan_tables.sql` 迁移（593 条 to_regclass + 1119 条 IF EXISTS/IF NOT EXISTS 守卫）已提交于守卫批次 `2a4591d509`；空库全链重放 000001..20261016000088 全部 success（479/479 贯通背书），本次随 B2 stub 重建路径再次实证。登记核销。
