@@ -10,8 +10,6 @@ export {
   type ScanHistoryEntry,
 } from './security-scanner';
 
-export { CSPStrategy, type CSPPolicy, type CSPViolation, type CSPDirective } from './csp-manager';
-
 export {
   type ModuleSignature,
   type TrustedPublisher,

@@ -107,20 +107,6 @@ export type {
 // 降级 UI 组件：加载/错误/离线/缓存兜底 + 统一容器
 // 注意：与 hooks/bff/useBffSuspense 中的同名组件不同，这里是面向降级策略的生产级 UI
 // （含重试计数、缓存预览、离线提示等），通过 '@/components/bff' 引用。
-export {
-  BffLoadingFallback,
-  BffErrorFallback,
-  BffOfflineFallback,
-  BffCacheFallback,
-} from './BffFallback';
-export type {
-  BffFallbackBaseProps,
-  BffLoadingFallbackProps,
-  BffErrorFallbackProps as BffFallbackErrorFallbackProps,
-  BffOfflineFallbackProps,
-  BffCacheFallbackProps,
-  BffFallbackContainerProps,
-} from './BffFallback';
 
 // A/B 测试管理面板：实验列表 + 创建表单 + 结果可视化
 export { ABTestPanel } from './ABTestPanel';
