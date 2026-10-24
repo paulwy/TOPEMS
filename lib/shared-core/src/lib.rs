@@ -8,7 +8,6 @@
 // === 已迁移到本 crate 的模块（实际实现）===
 
 pub mod api;
-pub mod api_security;
 pub mod api_version;
 pub mod cache;
 pub mod common_types;

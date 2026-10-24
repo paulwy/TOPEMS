@@ -111,30 +111,3 @@ pub trait AuditContextExt {
         status: &str,
     ) -> crate::audit::CreateAuditLogRequest;
 }
-
-impl AuditContextExt for topems_shared_core::api_security::AuditContext {
-    fn to_audit_request(
-        &self,
-        action: &str,
-        entity_type: &str,
-        status: &str,
-    ) -> crate::audit::CreateAuditLogRequest {
-        let mut req = crate::audit::CreateAuditLogRequest::new(
-            action.to_string(),
-            entity_type.to_string(),
-            status.to_string(),
-        )
-        .with_user(self.actor.clone(), String::new())
-        .with_request_info(Some(self.ip_address.clone()), Some(self.user_agent.clone()));
-
-        if let Some(ref tid) = self.trace_id {
-            req = req.with_request_details(serde_json::json!({
-                "trace_id": tid,
-                "method": self.method,
-                "path": self.path,
-            }));
-        }
-
-        req
-    }
-}

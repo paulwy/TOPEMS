@@ -1,23 +1,14 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
-//! V27.0: 领域模型与 API 安全模块集成测试
+//! V27.0: audit_soft_delete 领域模型集成测试（api_security 死面已删 2026-10-25）
 //!
 //! 独立测试文件，绕过 lib 内部预存在的测试编译问题
-//! （database/read_write.rs 缺少字段），聚焦新模块的覆盖。
+//! （database/read_write.rs 缺少字段）。
 
 use chrono::{TimeZone, Utc};
-use topems_shared_core::api_security::{
-    constant_time_eq, generate_request_signature, verify_request_signature, RequestSignatureConfig,
-    SignatureVerification,
-};
 use topems_shared_db::audit_soft_delete::{
     AuditAction, AuditSeverity, DomainEntity, IncrementalSyncQuery, IncrementallySynced,
     SoftDeletable, SoftDeleteFilter, SoftDeleteMerger,
 };
-
-use axum::body::Body;
-use axum::http::{HeaderMap, HeaderValue, Request};
-use std::time::SystemTime;
-use topems_shared_core::api_security::extract_audit_context;
 
 #[derive(Debug, Clone)]
 struct TestEntity {
@@ -148,110 +139,4 @@ fn test_audit_severity_ordering() {
     assert!(AuditSeverity::Critical > AuditSeverity::High);
     assert!(AuditSeverity::High > AuditSeverity::Medium);
     assert!(AuditSeverity::Medium > AuditSeverity::Low);
-}
-
-#[test]
-fn test_api_security_constant_time_eq() {
-    assert!(constant_time_eq(b"abc123", b"abc123"));
-    assert!(!constant_time_eq(b"abc123", b"abc124"));
-    assert!(!constant_time_eq(b"abc", b"abcd"));
-    assert!(!constant_time_eq(b"", b"a"));
-}
-
-#[test]
-fn test_api_security_generate_signature() {
-    let secret = "test-secret";
-    let signature = generate_request_signature(
-        "POST",
-        "/api/v1/orders",
-        b"{\"id\":1}",
-        1700000000,
-        "nonce-1",
-        secret,
-    );
-    assert_eq!(signature.len(), 64); // SHA-256 hex length
-}
-
-#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-#[test]
-fn test_api_security_verify_valid_signature() {
-    let secret = "test-secret";
-    let method = "GET";
-    let path = "/api/v1/users/1";
-    let body = b"";
-    let timestamp = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as i64;
-    let nonce = "nonce-unique-xyz";
-
-    let signature = generate_request_signature(method, path, body, timestamp, nonce, secret);
-
-    let config = RequestSignatureConfig::new(secret);
-    let mut headers = HeaderMap::new();
-    headers.insert("x-timestamp", HeaderValue::from(timestamp));
-    headers.insert("x-nonce", HeaderValue::from_str(nonce).unwrap());
-    headers.insert("x-signature", HeaderValue::from_str(&signature).unwrap());
-
-    let result = verify_request_signature(method, path, body, &headers, &config);
-    assert_eq!(result, SignatureVerification::Valid);
-}
-
-#[test]
-fn test_api_security_verify_expired_timestamp() {
-    let secret = "test-secret";
-    let method = "POST";
-    let path = "/api/v1/orders";
-    let body = b"{}";
-    let timestamp = 1000000000i64; // 2001 年
-    let nonce = "nonce-old";
-    let signature = generate_request_signature(method, path, body, timestamp, nonce, secret);
-
-    let config = RequestSignatureConfig::new(secret);
-    let mut headers = HeaderMap::new();
-    headers.insert("x-timestamp", HeaderValue::from(timestamp));
-    headers.insert("x-nonce", HeaderValue::from_str(nonce).unwrap());
-    headers.insert("x-signature", HeaderValue::from_str(&signature).unwrap());
-
-    let result = verify_request_signature(method, path, body, &headers, &config);
-    assert!(matches!(
-        result,
-        SignatureVerification::TimestampExpired { .. }
-    ));
-}
-
-#[test]
-fn test_api_security_verify_missing_headers() {
-    let config = RequestSignatureConfig::new("secret");
-    let headers = HeaderMap::new();
-
-    let result = verify_request_signature("GET", "/x", b"", &headers, &config);
-    assert!(matches!(result, SignatureVerification::MissingHeader(_)));
-}
-
-#[test]
-fn test_api_security_extract_audit_context() {
-    let req = Request::builder()
-        .method("POST")
-        .uri("/api/v1/orders")
-        .header("x-user-id", "user-42")
-        .header("x-forwarded-for", "192.168.1.100, 10.0.0.1")
-        .header("user-agent", "test-agent/1.0")
-        .header(
-            "traceparent",
-            "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
-        )
-        .body(Body::empty())
-        .unwrap();
-
-    let ctx = extract_audit_context(&req);
-    assert_eq!(ctx.actor, "user-42");
-    assert_eq!(ctx.ip_address, "192.168.1.100");
-    assert_eq!(ctx.user_agent, "test-agent/1.0");
-    assert_eq!(
-        ctx.trace_id,
-        Some("0af7651916cd43dd8448eb211c80319c".to_string())
-    );
-    assert_eq!(ctx.method, "POST");
-    assert_eq!(ctx.path, "/api/v1/orders");
 }
