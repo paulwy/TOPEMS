@@ -55,6 +55,11 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = Router::new()
         .route("/", get(handlers::search_handler))
         .route("/suggestions", get(handlers::suggestions_handler))
+        // P3：standalone 与 embedded（search_real_module）对齐挂载 /recent
+        .route(
+            "/recent",
+            get(handlers::list_recent).delete(handlers::clear_recent),
+        )
         .layer(axum::middleware::from_fn(require_permission(
             "search:admin",
         )))

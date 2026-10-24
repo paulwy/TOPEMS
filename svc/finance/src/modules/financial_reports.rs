@@ -1312,12 +1312,19 @@ pub async fn generate_balance_sheet(
     }
 }
 
+/// 金额取值兼容：Decimal 经 serde 默认可能序列化为 JSON number，
+/// 也可能以字符串落库/持久化报表 jsonb；两者都要能解析，
+/// 否则 total 恒为 0、占比静默输出 0.0（P3 修复）。
+fn amount_as_f64(v: &serde_json::Value) -> Option<f64> {
+    v.as_f64().or_else(|| v.as_str().and_then(|s| s.trim().parse::<f64>().ok()))
+}
+
 fn enrich_balance_percentage(mut data: serde_json::Value) -> serde_json::Value {
     for key in ["assets", "liabilities", "equity"] {
         if let Some(arr) = data.get_mut(key).and_then(|v| v.as_array_mut()) {
             let total: f64 = arr
                 .iter()
-                .filter_map(|r| r.get("amount").and_then(|a| a.as_f64()))
+                .filter_map(|r| r.get("amount").and_then(amount_as_f64))
                 .sum();
             for row in arr.iter_mut() {
                 if let Some(obj) = row.as_object_mut() {
@@ -1327,7 +1334,7 @@ fn enrich_balance_percentage(mut data: serde_json::Value) -> serde_json::Value {
                     if let Some(name) = obj.remove("account_name") {
                         obj.insert("name".into(), name);
                     }
-                    let amt = obj.get("amount").and_then(|a| a.as_f64()).unwrap_or(0.0);
+                    let amt = obj.get("amount").and_then(amount_as_f64).unwrap_or(0.0);
                     let pct = if total > 0.0 {
                         (amt / total * 100.0 * 100.0).round() / 100.0
                     } else {

@@ -26,7 +26,6 @@ pub mod customer;
 pub mod customer_calc;
 pub mod dashboard;
 pub mod db_structure;
-pub mod demo_data;
 pub mod dict;
 pub mod dictionaries;
 pub mod documents;

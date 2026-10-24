@@ -259,6 +259,8 @@ pub async fn broadcast_notification(
     let title = truncate_notification_title(&req.title, 255);
     let channels = select_channels(&notification_type, &["all"]);
     let mut sent_count = 0;
+    let mut failed_count = 0;
+    let mut first_error: Option<String> = None;
 
     for user_id in &req.user_ids {
         let tenant_bind = if claims.is_superuser {
@@ -288,17 +290,27 @@ pub async fn broadcast_notification(
         .execute(&pool)
         .await;
 
-        if result.is_ok() {
-            sent_count += 1;
+        match result {
+            Ok(_) => sent_count += 1,
+            Err(e) => {
+                // P3 修复：INSERT 失败不再静默吞掉，聚合失败计数并回传首个错误，
+                // 便于调用方发现部分写入失败。
+                failed_count += 1;
+                if first_error.is_none() {
+                    first_error = Some(e.to_string());
+                }
+            }
         }
     }
 
     Json(serde_json::json!({
-        "success": true,
+        "success": failed_count == 0,
         "message": format!("Broadcast completed, sent {} notifications", sent_count),
         "data": {
             "total_users": req.user_ids.len(),
             "sent_count": sent_count,
+            "failed_count": failed_count,
+            "first_error": first_error,
             "channels": channels
         }
     }))

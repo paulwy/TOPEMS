@@ -1,7 +1,6 @@
 use axum::{
     extract::{Extension, Query, State},
-    routing::get,
-    Json, Router,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
@@ -484,14 +483,6 @@ pub async fn suggestions_handler(
     };
 
     Json(api_success(SuggestionsResponse { suggestions }))
-}
-
-#[allow(dead_code)]
-pub fn search_routes() -> Router<PgPool> {
-    Router::new()
-        .route("/", get(search_handler))
-        .route("/suggestions", get(suggestions_handler))
-        .route("/recent", get(list_recent).delete(clear_recent))
 }
 
 // ==================== /search/recent（最近搜索，用户级） ====================

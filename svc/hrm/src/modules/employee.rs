@@ -860,7 +860,12 @@ pub async fn export_employees(
     };
 
     match employees {
-        Ok(emps) => {
+        Ok(mut emps) => {
+            // P3 修复：导出为批量下载场景，身份证/手机/邮箱/地址/紧急联系电话
+            // 一律脱敏后再序列化返回（明细查看是否脱敏由各角色在详情接口决定）。
+            for e in emps.iter_mut() {
+                e.mask_sensitive_fields();
+            }
             let data = serde_json::json!({
                 "format": format,
                 "count": emps.len(),

@@ -262,12 +262,16 @@ impl FinanceService {
         let id: Uuid = sqlx::Row::get(&row, "id");
         let status: String = sqlx::Row::get(&row, "status");
 
-        let _ = receivable_id;
-        let _ = write_off_amount;
-
+        // 核销当前对收款记录本身落账（status='written_off'）。
+        // receivable_id / write_off_amount 为前端契约入参：finance 侧暂无应收
+        // 台账表（erp_receivables）与核销金额列可承接，此处不再静默丢弃，
+        // 而是回显已接收值，便于前端与调用方确认参数已到服务层；
+        // 待应收台账立项后在此补充应收单核销回写。
         Ok(json!({
             "id": id.to_string(),
             "status": status,
+            "receivable_id": receivable_id.to_string(),
+            "write_off_amount": write_off_amount,
             "message": "核销成功"
         }))
     }

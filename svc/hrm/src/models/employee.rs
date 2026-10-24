@@ -171,6 +171,9 @@ impl Employee {
         if let Some(addr) = &self.address {
             self.address = Some(DataMasking::address(addr));
         }
+        if let Some(emergency_phone) = &self.emergency_phone {
+            self.emergency_phone = Some(DataMasking::phone(emergency_phone));
+        }
     }
 }
 

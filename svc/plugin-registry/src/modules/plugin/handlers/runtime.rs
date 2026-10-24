@@ -9,6 +9,19 @@ use topems_shared_auth::Claims;
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
 
+/// 常量时间比较（P3 修复）：避免 `==` 短路返回带来的令牌逐字节侧信道。
+/// 长度差异一并折入 diff，长度不同也输出 false。
+fn constant_time_eq(a: &str, b: &str) -> bool {
+    let a = a.as_bytes();
+    let b = b.as_bytes();
+    // 长度不一致即预置差异位，仍遍历较短长度完成字节比较，避免短路侧信道。
+    let mut diff: u8 = if a.len() == b.len() { 0 } else { 1 };
+    for (x, y) in a.iter().zip(b.iter()) {
+        diff |= x ^ y;
+    }
+    diff == 0
+}
+
 /// 验证插件注册令牌（T4 门控修复，CORE-05）
 ///
 /// 门控策略（优先级从高到低）：
@@ -51,7 +64,7 @@ fn verify_registration_token(headers: &HeaderMap) -> bool {
                 .get("X-Plugin-Token")
                 .and_then(|v| v.to_str().ok())
                 .unwrap_or("");
-            if provided_token == token {
+            if constant_time_eq(provided_token, &token) {
                 true
             } else {
                 tracing::warn!("[Plugin] Registration rejected: invalid or missing plugin token");
