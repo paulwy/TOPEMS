@@ -3704,3 +3704,29 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### 迁移链空库重放缺陷（评估，未改已提交迁移）
 - [ ] **20261007000006_rebuild_orphan_tables.sql**：机器生成迁移，304 处 ALTER 中 **99 处引用未在文件内 CREATE 的表**（iam/mes 等 schema 的 core_* 运行时自建表副本）——空库全量重放必失败（core_billing_invoices 为首个）。门禁不做空库重放（validate/check-migrations 为静态校验），严重性中低。修复方案：A 补 99 处 CREATE（需列定义）；B 存在性守卫 DO 块；C 空库重放跳过 06~09 运维快照迁移并标注；D 修生成器重生成。**待用户定夺后实施**
 - 状态：本轮 7 commits 落盘待推送（mes 3 + 决策项 4）；未 push
+
+## 审计修复实施登记 第四轮：迁移链守卫 + SSRF 白名单 + core stub 收尾 + 租户 FAQ 库（2026-10-24，未推送）
+### ① 迁移链空库重放缺陷（B 方案，核心）
+- [x] **selfheal 系列存在性守卫**（机器生成迁移 304→ALTER 引用运行时自建表）：06（250 行 ALTER IF EXISTS 覆盖 99 缺失表 + 43 处 CREATE POLICY 加 to_regclass 守卫）、07（81 行）、09（4 行）、014（482 行 ALTER IF EXISTS / 295 目标表）、028（10 条索引包 DO 块 to_regclass 守卫）；已 CREATE 的正常语句零误改
+- [x] **空库全链重放验证**（topems_prepare 每轮 DROP+CREATE）：修复前失败于 06 → 修复后 **000001..20261016000088 全部 success=t**（越过 06/07/08/09/014/028 等全部 selfheal/orphan/stub 系列）
+- [x] 门禁：validate Errors=0 / Schema drift=0；check-migrations 无序号重复（仅历史区间警告）
+- [ ] **终止点（非同族真缺陷，未修）**：`20261016000089_enable_rls_gap_tables.sql`——`operator does not exist: character varying = uuid`；17 张链内表 tenant_id 为 varchar/text（定义分散于 06/20261014000060/20260917000001/20261007140000），策略模板硬编码 ::uuid。归属 **UUID/字段统一工作线**：收敛 17 表 tenant_id 为 uuid 后本链应一次通过 089 及后续。17 表：integration.erp_connections/erp_mappings/external_erp_sync_logs、master_data.mdm_billing_records/mdm_sla_incidents/mdm_sla_measurements/mdm_subscriptions/mdm_usage_records、mes.material_plans/permission_audit_logs/tenant_permissions、mobile.oa_announcements/oa_calendar_events/oa_meetings/oa_tasks、public.permission_audit_logs/tenant_permissions
+### ② SSRF 私网白名单最终口径（落地）
+- [x] blocked_ip 并入 RFC1918 私网（10/8、172.16/12、192.168/16，std is_private）+ IPv6 ULA fc00::/7；回环/链路本地/未指定保持
+- [x] **EXTERNAL_ERP_ALLOWED_HOSTS**：逗号分隔 域名/IP/CIDR，std 位运算自实现（无新依赖），每次判定前实时读取；白名单最高优先（先白名单→再代理→再封锁/DNS）；同步+异步侧均过
+- [x] 测试：lib 191 passed（+3：私网封锁/解析格式/环境放行），SSRF 模块 10 全绿；env 竞态用模块级 Mutex 串行化
+- [ ] 遗留：CIDR 白名单命中一个即整体放行的 tradeoff（已注释）；TOCTOU 钉 IP 仍后续
+### ③ core copilot 501 stub 删除（收尾）
+- [x] 引用确认：前端全走 apiClient.ai（businessCopilot.ts:215/:262），后端仅 stub 文件自身命中 → 零活引用
+- [x] 整模块移除：contract_stubs.rs 删除（86 行）+ routes/mod.rs mod/merge 清理 + 契约台账 contract-stub-mapping.md copilot 行清零
+- [x] 验证：unified-core check/clippy 0、lib 538 passed；前端 typecheck/lint 0；audit_e2e 3 例环境性失败（空 DATABASE_URL，与本次无关）
+- [ ] 遗留：core 侧两路径现 404（预期）；audit_e2e 需真库环境
+### ④ 租户级 FAQ 库（评估=轻量，已全落地）
+- [x] **评估结论：轻量**（1 表 core.ai_faqs + search 改造 + admin list/create/delete 3 端点 + 前端零改）→ 本轮全落地
+- [x] 迁移 20261024000015_copilot_faq_table.sql：id/tenant_id(默认全零)/module/question/answer/keywords(jsonb)/category/status/时间戳/deleted_at；RLS ENABLE+FORCE+tenant 谓词（全零=全局默认，所有租户可见）；seed curated 15 条（erp/finance/crm/wms/general 各 3）幂等
+- [x] 后端：search_faq 改 DB（module+租户∪全局+q ILIKE；DB 空/错回落 curated）；admin GET list/POST create/DELETE {id}（ai:admin 权限，超管豁免，租户管理员限本租户）；openapi 登记
+- [x] 前端零改（FAQItem 字段与响应包裹不变）；测试库 round-trip 验证（seed 15、租户可见性、insert/软删）
+- [x] 验证：ai check/clippy 0、test lib 970 + integration 85 + doc 2 全过
+- [ ] 遗留：PUT 编辑端点与 status toggle 下批；ai:admin 权限中心显式登记属运维；seed 全局行=升级前行为等价
+### 状态
+- 本轮 5 commits 落盘（迁移守卫/SSRF/stub/FAQ/本登记）；**未 push**；统一推送前用户 fetch+rebase
