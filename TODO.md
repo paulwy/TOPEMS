@@ -1,3 +1,12 @@
+## 前端 component 预存在失败清理：组件拆分死引用（2026-10-25）✅ 完成
+
+> **预存在 12 failed/6 files → 5 failed/1 file（wms-tms-erp 7 专项）**：
+> - **DashboardComponents.test.tsx 重写**：原 it 断言不存在的 DashboardHero（组件从未拆分）；data 已构造未用（半成品）——重写为渲染真实 5 组件（DashboardQuickActions/DashboardStats/FeatureCard/MiniChart/RecentItem）9 断言全过；i18n mock 修复（t 由 key 字面量 → vi.hoisted 深合并 zh JSON 嵌套查找；lodash-es 不可用改自定义 deepMerge）
+> - **删除 3 个死引用测试文件**：AiModelSettings/ErpOperational/FinancialReportComponents——目标组件（AiModelProviderConfig/DashboardHero/统计卡/财务筛选器拆分组件）源码不存在，为 L2 组件清理（d94eca338e 删 25 组件）遗留死测试
+> - **ScmWmsSrmComponents**：InventoryReportFilterHint 源码不存在（L2 已移除），删除空渲染死断言；TabPanel 行为断言保留（11/11 过）
+> - 验证：component 全量 3280 passed/8 failed（剩 wms-tms-erp 7 + 计 1），tsc 0，eslint 0，pre-commit 全绿
+> - 提交：`a4269700a3`（测试批）、`e3386ee137`（TODO 登记）
+> - **wms-tms-erp-integration 7 失败登记（专项挂起）**：契约不匹配——createShipment body 缺 transfer_order_id（对象形状与测试期望不符）、received→completed 状态队列错位（mockResolvedValueOnce 与实际 API 调用序不符）、Error Rollback 场景 packing/completed 状态不符——需对照 api/tms、api/wms/transfer 实现逐用例对齐 mock 队列（非死引用，勿删测试）
 ## L2 106 全活复核 + NavConfig 回归收口（2026-10-25）✅ 完成
 
 > **#27 轮下批执行**（detect v6-v8 升级后 L2 106 逐条复核）：
