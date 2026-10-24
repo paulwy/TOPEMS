@@ -11,6 +11,7 @@
 // [2026-10-24] 门控对齐：模块文件内为 #![cfg(feature = "module-ai")]，main.rs 组装亦按 module-ai 门控
 #[cfg(feature = "module-ai")]
 pub mod ai_real_module;
+#[cfg(feature = "module-advanced")]
 pub mod analytics_real_module;
 #[cfg(feature = "module-communication")]
 pub mod communication_real_module;

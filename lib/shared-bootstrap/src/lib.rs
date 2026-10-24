@@ -385,6 +385,13 @@ impl ServiceBootstrap {
     async fn create_database_pool(&self) -> Result<sqlx::PgPool> {
         let database_url =
             env::var("DATABASE_URL").unwrap_or_else(|_| self.config.database.url.clone());
+        // [P3-5 2026-10-24] fail-fast 对齐：DATABASE_URL 缺失且配置兜底为空时显式报错，
+        // 不再静默回退到内置开发 DSN（凭据兜底已从 DatabaseConfig::default 移除）。
+        if database_url.is_empty() {
+            anyhow::bail!(
+                "DATABASE_URL 环境变量未设置，且 database.url 配置为空；请显式配置数据库连接串"
+            );
+        }
 
         let svc_tag = derive_service_tag(self.config.service_name);
         let per_service_key = format_db_max_connections_key(&svc_tag);
@@ -2157,8 +2164,10 @@ mod tests {
 
     #[test]
     fn test_database_config_default_via_bootstrap_config() {
+        // [P3-5] default 不再内置开发 DSN：DATABASE_URL 缺失时 url 为空串
+        std::env::remove_var("DATABASE_URL");
         let cfg = BootstrapConfig::default();
-        assert!(!cfg.database.url.is_empty());
+        assert!(cfg.database.url.is_empty());
         assert!(cfg.database.max_connections > 0);
     }
 

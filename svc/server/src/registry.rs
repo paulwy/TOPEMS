@@ -3,11 +3,10 @@
 //! 支持：
 //! - 模块注册与按组查询
 //! - 路由聚合（将所有模块路由合并到统一入口）
-//! - 健康检查聚合
 //! - **进程内调用**（类型安全枚举 provider，非 HTTP）
 //!   私有化部署模式下，模块间通过 trait 直接调用，消除网络开销。
 
-use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
+use crate::module::{Module, ModuleContext, ModuleGroup};
 use crate::providers::{AccountBalanceProvider, InProcProvider};
 use axum::extract::Request;
 use axum::http::StatusCode;
@@ -173,15 +172,6 @@ impl ModuleRegistry {
             )
             .fallback(not_found_handler)
             .layer(CatchPanicLayer::custom(handle_panic))
-    }
-
-    /// 聚合所有模块健康检查
-    pub async fn health_check_all(&self) -> Vec<ModuleHealth> {
-        let mut results = Vec::new();
-        for module in self.modules.values() {
-            results.push(module.health_check().await);
-        }
-        results
     }
 
     /// 模块总数

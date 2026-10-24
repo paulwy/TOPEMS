@@ -4,7 +4,7 @@ version.workspace = true
 edition = "2021"
 authors.workspace = true
 license.workspace = true
-description = "TOPEMS Unified Core Platform - IAM + Doc + Flow + File + Communication + Tenant + Billing + AI"
+description = "TOPEMS Unified Core Platform - IAM + Doc + Flow + File + Communication + Tenant + AI"
 
 [dependencies]
 topems-shared = { workspace = true }

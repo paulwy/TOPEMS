@@ -37,9 +37,9 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
-            url: env::var("DATABASE_URL").unwrap_or_else(|_| {
-                "postgres://topems:topems_secret@localhost:5432/topems".to_string()
-            }),
+            // [P3-5 2026-10-24] 不再内置开发 DSN 凭据兜底：DATABASE_URL 缺失时回退空串，
+            // 由 bootstrap 连接池构建路径统一 fail-fast（与 quick_bootstrap_with_db 主路径一致）。
+            url: env::var("DATABASE_URL").unwrap_or_default(),
             // 性能优化：开发环境默认 10 连接，生产环境通过 DB_MAX_CONNECTIONS 环境变量调整（20-50）
             max_connections: 10,
             // 性能优化：预热 2 个连接，减少首次请求延迟
@@ -639,8 +639,10 @@ mod tests {
 
     #[test]
     fn test_database_config_default() {
+        // [P3-5] default 不再内置开发 DSN：DATABASE_URL 缺失时 url 为空串（bootstrap 侧 fail-fast）
+        std::env::remove_var("DATABASE_URL");
         let config = DatabaseConfig::default();
-        assert!(!config.url.is_empty());
+        assert!(config.url.is_empty());
         // 与 DatabaseConfig::default() 保持一致（bf3e292b8 性能优化后默认 10/2/10）
         assert_eq!(config.max_connections, 10);
         assert_eq!(config.min_connections, Some(2));
@@ -707,6 +709,8 @@ mod tests {
             "CACHE_MAX_SIZE",
             "CACHE_DEFAULT_TTL",
             "CACHE_EVICTION_POLICY",
+            // [P3-5] default 不再内置开发 DSN，测试环境需先剥离 DATABASE_URL
+            "DATABASE_URL",
         ] {
             std::env::remove_var(k);
         }
@@ -716,7 +720,7 @@ mod tests {
     #[test]
     fn database_config_default_values() {
         let c = DatabaseConfig::default();
-        assert!(!c.url.is_empty());
+        assert!(c.url.is_empty());
         assert_eq!(c.max_connections, 10);
         assert_eq!(c.min_connections, Some(2));
         assert_eq!(c.connect_timeout, Some(10));
@@ -825,7 +829,11 @@ mod tests {
 
     #[test]
     fn database_config_validate_valid_ok() {
-        let c = DatabaseConfig::default();
+        // [P3-5] default 不再内置开发 DSN：valid 用例需显式给 url
+        let c = DatabaseConfig {
+            url: "postgres://u:p@localhost:5432/db".to_string(),
+            ..Default::default()
+        };
         assert!(c.validate().is_ok());
     }
 
@@ -1262,7 +1270,11 @@ mod tests {
     fn app_config_validate_valid_ok() {
         let c = AppConfig {
             service: ServiceConfig::default(),
-            database: DatabaseConfig::default(),
+            database: DatabaseConfig {
+                // [P3-5] default url 已空串，valid 用例显式给定
+                url: "postgres://u:p@localhost:5432/db".to_string(),
+                ..DatabaseConfig::default()
+            },
             redis: Some(RedisConfig {
                 url: "redis://localhost:6379".to_string(),
                 max_connections: 1,

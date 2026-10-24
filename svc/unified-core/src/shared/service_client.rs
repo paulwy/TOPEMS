@@ -1773,31 +1773,6 @@ impl ServiceRegistry {
         }
     }
 
-    /// Check the health of all registered services.
-    ///
-    /// Returns a map of service name to health status.
-    pub async fn health_check_all(&self) -> HashMap<String, ServiceHealth> {
-        let services = self.list();
-        let mut results = HashMap::new();
-
-        for service in services {
-            let health = self
-                .health_check(&service)
-                .await
-                .unwrap_or_else(|e| ServiceHealth {
-                    service: service.clone(),
-                    healthy: false,
-                    status_code: 0,
-                    response_time_ms: 0,
-                    last_checked: chrono::Utc::now().to_rfc3339(),
-                    error: Some(e.to_string()),
-                });
-            results.insert(service, health);
-        }
-
-        results
-    }
-
     /// Get the configuration of a single service.
     pub fn get_service_config(&self, service: &str) -> Result<ServiceConfig, ServiceClientError> {
         let client = self.get_client(service)?;

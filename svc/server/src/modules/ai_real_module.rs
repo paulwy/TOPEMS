@@ -263,6 +263,8 @@ impl AiRealModule {
             dsh_knowledge_graph: None,
             dsh_rag_engine: None,
             dsh_multi_agent_coordinator: None,
+            // [P3-4] create_routes 内部会以自身就绪标志覆盖此字段
+            mcp_tools_ready: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
         };
 
         // 创建路由（create_routes 处理 auth/tenant/rate_limit/cors/prometheus/telemetry）

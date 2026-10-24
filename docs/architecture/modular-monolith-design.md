@@ -38,7 +38,7 @@
 |--------|-------------|------|---------|
 | **core** | `module-core` | 平台核心：IAM/文档/流程/文件/通信/监控/搜索/集成/门户 | unified-core, monitor, plugin-registry, search, communication, integration, portal, mobile, ticket |
 | **erp** | `module-erp` | 企业资源：采购/销售/供应链/项目/研发/产品数据 | erp, scm, srm, pm, pdm |
-| **finance** | `module-finance` | 财务：总账/凭证/应收应付/计费 | finance, billing |
+| **finance** | `module-finance` | 财务：总账/凭证/应收应付/计费 | finance（billing 已归档 `svc/_archive/`，2026-08） |
 | **crm** | `module-crm` | 客户关系：客户/商机/营销 | crm |
 | **wms** | `module-wms` | 仓储制造：仓储/运输/制造执行/质量/环境安全/实验室 | wms, tms, mes, qms, ehs, lims, gis, rd |
 | **advanced** | `module-advanced` | 高级数据：主数据/数据分析 | master-data, analytics |
@@ -89,10 +89,15 @@ pub trait Module: Send + Sync + 'static {
 
 ```toml
 [features]
+# [2026-10-24 校准] default 全量以 svc/server/Cargo.toml 为唯一权威源（示例略写），
+# 当前 default 已含 module-tms / module-gis / module-portal / module-ai /
+# module-communication / module-search / module-monitor / module-plugin-registry /
+# module-integration / module-mobile / module-ticket / module-rd / module-srm /
+# module-advanced / module-ai（27 个真实模块组门控）。
 default = ["module-core", "module-erp", "module-finance", "module-qms", "module-crm",
            "module-hrm", "module-scm", "module-wms", "module-pm", "module-mes",
-           "module-ehs", "module-lims", "module-advanced", "module-ai"]
-# 行业特定服务：默认不启用，按客户需求裁剪（P3）
+           "module-ehs", "module-lims", "module-advanced", "module-ai", "..."]
+# 行业特定服务：tms / gis real_module 已嵌入，已转默认启用（见 svc/server/Cargo.toml）
 module-tms = ["dep:topems-tms"]
 module-gis = ["dep:topems-gis"]
 
@@ -108,8 +113,9 @@ module-pm = ["dep:topems-pm"]
 module-mes = ["dep:topems-mes"]
 module-ehs = ["dep:topems-ehs"]
 module-lims = ["dep:topems-lims"]
-module-advanced = []
-module-ai = []
+# [2026-10-24 校准] advanced/ai 均已挂真实 real_module（不再是 [] 幽灵 feature）
+module-advanced = ["dep:topems-master-data", "dep:topems-analytics"]
+module-ai = ["dep:topems-ai"]
 ```
 
 ### 4.1 按客户需求裁剪（P3）
@@ -152,7 +158,7 @@ module-ai = []
 6. **路由前缀**：真实模块路由相对路径需按 `config.api_prefix` nest（与 `build_application` 一致）；演示模块用独立前缀避免冲突
 7. **权限中间件**：erp 在路由上叠加 `require_permission("erp:admin")`（与独立部署一致）
 
-### 5.2 边界治理基线（2026-08-31）
+### 5.2 边界治理基线（2026-10-24 校准）
 
 > P0-2「模块化单体演进与边界治理」落地记录。目标：server 模块接入与服务清单保持单一真相源一致，消除"幽灵 feature"。
 
@@ -160,17 +166,13 @@ module-ai = []
 
 | 状态 | 模块 | 说明 |
 |------|------|------|
-| ✅ 已接入（default） | platform / finance-demo / dashboard + 真实服务 crm / erp / finance / qms / hrm / scm / wms / pm / mes / ehs / lims / ticket / rd / srm / master-data | 16 个真实业务服务经 real_module 接入统一入口，feature 门控，default 启用（2026-08-31 补 ticket/rd/srm/master-data） |
-| ✅ 已接入（可选） | tms / subscription | `module-tms` / `module-subscription`，默认不启用，按客户裁剪 |
-| 🔄 待接入 | — | master-data 已接入（module-advanced 挂载）；analytics/ai 评估保持独立（见下表）；module-ai 幽灵 feature 保留待评估 |
-| 🚫 明确不嵌入 | gis | WebSocket/事件订阅/插件体系，保持独立微服务部署（`module-gis` 仅编译依赖） |
+| ✅ 已接入（default） | platform / finance-demo / dashboard + 真实服务 crm / erp / finance / qms / hrm / scm / wms / pm / mes / ehs / lims / ticket / rd / srm / master-data / analytics / ai / gis / tms / portal / communication / search / monitor / plugin-registry / integration / mobile | 全部真实业务服务经 real_module 接入统一入口，feature 门控，default 启用（2026-10-24 校准：analytics/ai/gis/tms 均已嵌入，原"待接入/不嵌入"行作废） |
+| ✅ 已接入（可选） | subscription | `module-subscription`，默认不启用，按客户裁剪 |
 | ✅ 已接入（09-08） | portal | embedded::build_router 统一组装链（GraphQL/WebSocket/事件订阅者/430 业务路由全下沉 lib），server 新增 `module-portal` 默认启用 + PortalRealModule（Core 组）；独立部署 main.rs 瘦身 3289→150 行共用同一实现，双轨漂移消除（提交 `22aa79e61`） |
-| 🚫 明确不嵌入 | analytics | protected_routes 逐行组装于 main.rs（非 lib create_routes 汇总）+ ReportScheduler 定时调度任务；BI 服务独立部署（2026-08-31 评估） |
-| 🚫 明确不嵌入 | ai | MCP/Agent/DSH 复杂服务 + ai_service 独立 schema，保持独立部署（与 gis 同类，2026-08-31 评估） |
 
-**幽灵 feature 清理**（2026-08-31）：
-- `module-advanced` / `module-ai` 此前在 `default` features 中启用，但 server 无任何对应 `*_real_module` 注册（仅 `ModuleGroup::Advanced/Ai` 的 feature_flag 字符串映射），属"配置与代码脱节"的边界不一致。
-- 治理动作：从 `default` 移除两个幽灵 feature；**保留 feature 定义与 ModuleGroup 映射**，作为 advanced/ai 真实接入的挂载点。
+**幽灵 feature 清理**（2026-08-31，2026-10-24 复核闭环）：
+- `module-advanced` / `module-ai` 曾在 `default` features 中启用但 server 无对应 `*_real_module` 注册（仅 ModuleGroup 字符串映射），属"配置与代码脱节"。
+- 治理动作：补挂真实 real_module——`module-advanced = ["dep:topems-master-data", "dep:topems-analytics"]`、`module-ai = ["dep:topems-ai"]`，gis/tms 亦已 real_module 嵌入并转默认启用；幽灵 feature 已清零，权威源为 `svc/server/Cargo.toml`。
 - 验证：default / 最小集（`--no-default-features --features module-core,module-erp,module-finance`）/ 全量（`--all-features`）三组合编译全部通过。
 
 **边界规则**（决定"何时接入 server vs 保持独立微服务"）：

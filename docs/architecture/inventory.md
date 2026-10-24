@@ -3,6 +3,9 @@
 > **Auto-generated**: 2026-08-08
 > **Generator**: `scripts/generate-inventory.mjs`
 > **Backend services**: 30 | **Frontend modules**: 33
+>
+> ⚠️ **2026-10-24 口径警示**：本清单为 2026-08-08 快照，此后 billing / lowcode 已归档（`svc/_archive/`）、feedback 已并入 ticket、aps 已并入 mes；
+> 服务清单与端口权威源为 `config/services.yaml` + 各 `svc/*/src/main.rs`（`scripts/check-workspace-registry.py` 三向校验守护），下表历史快照仅作参考。
 
 ---
 

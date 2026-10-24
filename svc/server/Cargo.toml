@@ -84,7 +84,7 @@ default = [
     "module-ticket",
     "module-rd",
     "module-srm",
-    # [2026-08-31] module-advanced 已挂真实 master-data，加回 default；analytics 同组后续接入
+    # [2026-08-31] module-advanced 已挂真实 master-data + analytics（加回 default）
     "module-advanced",
     # [2026-09-08] portal 嵌入模块化单体（embedded::build_router 统一组装链）
     "module-portal",
@@ -99,9 +99,7 @@ default = [
     "module-gis",
     "module-integration",
     "module-mobile",
-    # [2026-09-17] tms real_module 接入模块化单体（P3 门控转为默认启用）
-    # [2026-09-17] gis real_module 接入模块化单体（原 P3 门控转默认启用，业务地图/设备点位）
-    "module-gis",
+    # [2026-09-17] tms / gis real_module 已接入模块化单体（P3 门控转默认启用）
     "module-tms",
 ]
 module-core = ["dep:topems-unified-core"]
@@ -142,7 +140,7 @@ module-mes = ["dep:topems-mes"]
 module-ehs = ["dep:topems-ehs"]
 # 真实业务服务接入：lims 模块（Phase B3 扩展）
 module-lims = ["dep:topems-lims"]
-# 真实业务服务接入：tms 模块（P3 feature flag，默认不启用，按客户需求裁剪）
+# 真实业务服务接入：tms 模块（2026-09-17 real_module 已嵌入，已转默认启用）
 module-tms = ["dep:topems-tms"]
 # 真实业务服务接入：ticket 模块（核心业务域，默认启用）
 module-ticket = ["dep:topems-ticket"]
@@ -150,7 +148,7 @@ module-ticket = ["dep:topems-ticket"]
 module-rd = ["dep:topems-rd"]
 # 真实业务服务接入：srm 模块（供应商关系，默认启用）
 module-srm = ["dep:topems-srm"]
-# 真实业务服务接入：gis 模块（P3 feature flag，默认不启用，按客户需求裁剪）
+# 真实业务服务接入：gis 模块（2026-09-17 real_module 已嵌入，已转默认启用）
 module-gis = ["dep:topems-gis"]
 # 真实业务服务接入：portal 模块（[2026-09-08] 已实现嵌入——lib 侧 embedded::build_router
 # 统一组装链，独立部署 main.rs 与 server 嵌入共用同一实现，默认启用）
