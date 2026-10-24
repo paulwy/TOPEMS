@@ -4298,7 +4298,6 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 验证：tsc 0、eslint 全绿；重扫 **L2=90→43（values 40 全活 + types 3 测试引用：VoucherItem/PeriodOption/DefectForm）**、L1=0、L3=4667。
 - vitest 24 批全量：13 文件 53 失败（较预存在 7/13 增多——需下批核失败清单判定是否本批引入；25 批删除项 grep 均无测试引用）。
 ### 状态与下批
-- 下批：types 3（VoucherItem/PeriodOption/DefectForm——测试引用，删除需同步测试）评估；vitest 失败清单核（13 文件 53 失败的构成：预存在 7/13 vs 新增）；L3 4686 级不再动。
 ## 第二十六轮（2026-10-25）：vitest 53 失败定性 + 22/24 批 NavConfig 聚合误删回归修复
 - **vitest 53 失败定性**（13 文件）：
   - **29 PluginManager.test**：`vi.mock('@/utils/logger')` 缺 `default` 导出（errors.ts 默认导入 `createLogger`）——远端并行机 f5fc7774b（S1 空串清洗）引入的 mock 缺口，**非 unused 批次所致** → 补 `default: () => loggerStub`，29/29 绿。
@@ -4323,3 +4322,4 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### 状态与下批
 - L1 归零达成；L2 106（34 NavConfig + 40 活 values + 7 无定义转发 = 81 永久保留登记项；剩余 ~25 新暴露真死候选，下批核）；L3 4876 不再动。
 - 下批：L2 106 中新暴露项精确消费判定（v6-v8 升级后暴露的 values/type）；对 34 NavConfig 等登记项抽查确认未被误伤。
+- **L2 types 3 终态核销（本会话）**：VoucherItem/PeriodOption/DefectForm 逐名核——全部被非测试代码消费（VoucherCreatePage/FinanceVoucherPage/useFinancialReport/useMobileQuality/MobileQualityPage）——detect 盲区（hooks/页面引用未进样本统计），零删除全部保留；masterNavConfig 一并纳入聚合（e0 基线含 master，本会话恢复 master/config.ts 定义 + modules/index.ts 引用）
