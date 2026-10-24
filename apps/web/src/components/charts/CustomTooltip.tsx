@@ -127,8 +127,5 @@ export const formatCurrency = (value: number): string => {
 };
 
 // Number with unit formatter
-export const formatWithUnit = (value: number, unit: string): string => {
-  return `${value.toLocaleString()}${unit}`;
-};
 
 export default CustomTooltip;

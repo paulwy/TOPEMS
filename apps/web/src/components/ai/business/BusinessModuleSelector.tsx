@@ -189,10 +189,4 @@ export const BusinessModuleSelector: React.FC<BusinessModuleSelectorProps> = ({
   );
 };
 
-export const getBusinessModuleInfo = (
-  moduleId: BusinessModuleType
-): BusinessModuleItem | undefined => {
-  return BUSINESS_MODULES.find((m) => m.id === moduleId);
-};
-
 export default BusinessModuleSelector;

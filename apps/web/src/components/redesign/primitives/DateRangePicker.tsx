@@ -32,53 +32,6 @@ export interface DateRangePickerProps {
 }
 
 /** 常用预设 */
-export const createDefaultPresets = (
-  t: (key: string) => string
-): { label: string; value: () => DateRange }[] => [
-  {
-    label: t('components.date_range_picker.preset_today'),
-    value: () => {
-      const today = new Date().toISOString().split('T')[0];
-      return { start: today, end: today };
-    },
-  },
-  {
-    label: t('components.date_range_picker.preset_last_7_days'),
-    value: () => {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - 7);
-      return {
-        start: start.toISOString().split('T')[0],
-        end: end.toISOString().split('T')[0],
-      };
-    },
-  },
-  {
-    label: t('components.date_range_picker.preset_last_30_days'),
-    value: () => {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - 30);
-      return {
-        start: start.toISOString().split('T')[0],
-        end: end.toISOString().split('T')[0],
-      };
-    },
-  },
-  {
-    label: t('components.date_range_picker.preset_this_month'),
-    value: () => {
-      const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      return {
-        start: start.toISOString().split('T')[0],
-        end: end.toISOString().split('T')[0],
-      };
-    },
-  },
-];
 
 export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   value,

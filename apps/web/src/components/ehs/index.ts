@@ -2,10 +2,7 @@
 
 export {
   EHSStatusBadge,
-  EHSSeverityBadge,
-  EHSRiskLevelBadge,
   EHSMeasureTypeBadge,
-  EHSIncidentTypeBadge,
   type HazardStatus,
   type IncidentStatus,
   type ControlStatus,

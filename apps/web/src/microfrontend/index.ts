@@ -139,8 +139,6 @@ export { default as ObservabilityDashboard } from './observability/dashboard/Obs
 // 异常检测
 export {
   anomalyDetector,
-  AnomalyDetector,
-  StatisticalAnalyzer,
   type MetricBaseline,
   type AnomalyResult,
   type AnomalyEvent,
@@ -150,7 +148,6 @@ export {
 // 智能告警
 export {
   smartAlertManager,
-  SmartAlertManager,
   type Alert,
   type AlertRule,
   type AlertCondition,
@@ -165,8 +162,6 @@ export {
 // 趋势预测
 export {
   metricPredictor,
-  MetricPredictor,
-  SimplePredictor,
   type PredictionResult,
   type PredictionWithConfidence,
   type PredictedAnomaly,
@@ -176,7 +171,6 @@ export {
 // 自动扩缩容
 export {
   autoScaler,
-  AutoScaler,
   type ScalingPolicy,
   type ScalingMetric,
   type ScalingDecision,
@@ -210,7 +204,6 @@ export * as marketplace from './marketplace';
 
 // ==================== V44.0 依赖治理 ====================
 export {
-  DependencyGovernor,
   dependencyGovernor,
   type ModuleDependency,
   type DependencyGraphNode,

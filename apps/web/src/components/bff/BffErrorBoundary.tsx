@@ -299,28 +299,8 @@ export function onErrorReport(handler: ErrorReportHandler): () => void {
 }
 
 /** 获取历史错误报告 */
-export function getErrorReports(): ErrorReportRecord[] {
-  return loadReports();
-}
 
 /** 清空错误报告 */
-export function clearErrorReports(): void {
-  persistReports([]);
-  // 通知监听器（空记录也可用于 UI 清空）
-  listeners.forEach((fn) => {
-    try {
-      fn({
-        id: makeId(),
-        type: BffErrorType.UNKNOWN,
-        message: '__clear__',
-        timestamp: new Date().toISOString(),
-        retryCount: 0,
-      });
-    } catch {
-      // ignore
-    }
-  });
-}
 
 // ==================== 错误回退 UI ====================
 
@@ -376,64 +356,6 @@ const ERROR_META: Record<
 };
 
 /** 默认错误回退组件 */
-export function DefaultBffErrorFallback({
-  classified,
-  reset,
-  showDetails = true,
-}: BffErrorBoundaryFallbackProps) {
-  const meta = ERROR_META[classified.type] ?? ERROR_META[BffErrorType.UNKNOWN];
-  return (
-    <Paper
-      sx={{ p: 3, m: 2, maxWidth: 640, mx: 'auto' }}
-      role='alert'
-    >
-      <Alert
-        severity={meta.color}
-        icon={meta.icon}
-      >
-        <AlertTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {meta.label}
-          <Chip
-            label={classified.type}
-            size='small'
-            variant='outlined'
-            color={meta.color}
-          />
-        </AlertTitle>
-        <Typography
-          variant='body2'
-          sx={{ mb: 1.5 }}
-        >
-          {classified.message}
-        </Typography>
-        {showDetails && classified.status !== undefined && (
-          <Typography
-            variant='caption'
-            color='text.secondary'
-          >
-            HTTP {classified.status} · {classified.timestamp}
-          </Typography>
-        )}
-        <Stack
-          direction='row'
-          spacing={1}
-          sx={{ mt: 1.5 }}
-        >
-          {classified.retryable && (
-            <Button
-              size='small'
-              startIcon={<RefreshCw size={14} />}
-              variant='contained'
-              onClick={reset}
-            >
-              {i18n.t('components.bff_error_boundary.retry')}
-            </Button>
-          )}
-        </Stack>
-      </Alert>
-    </Paper>
-  );
-}
 
 // ==================== 错误边界 ====================
 

@@ -3,7 +3,6 @@ import type { ApiResponse } from '../client';
 import { apiLogger } from '@/utils/logger';
 
 import { templateApi } from './template';
-import { configApi } from './config';
 import { batchApi } from './batch';
 import { pushConfigApi } from './pushConfig';
 import { preferenceApi } from './preference';
@@ -528,7 +527,7 @@ export const notificationApi = {
   getMyScheduled: digestApi.getMyScheduled,
 };
 
-export { templateApi, configApi, batchApi, deliveryApi, channelApi, groupApi, digestApi };
+export { templateApi, batchApi, deliveryApi, channelApi, groupApi, digestApi };
 
 export type {
   SendNotificationRequest,

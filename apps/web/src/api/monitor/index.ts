@@ -8,9 +8,7 @@ import { metricTypedApi } from './metricTyped';
 import { templateApi } from './template';
 import { thresholdApi } from './threshold';
 import { pluginApi } from './plugin';
-import { alertApi } from './alert';
 import { dashboardApi } from './dashboard';
-import { businessMetricApi } from './businessMetric';
 
 export interface SystemMetrics {
   cpu_usage: number;
@@ -317,7 +315,7 @@ export const monitorApi = {
 
 export default monitorApi;
 
-export { alertBatchApi, templateApi, pluginApi, alertApi, dashboardApi, businessMetricApi };
+export { alertBatchApi, templateApi, pluginApi, dashboardApi };
 
 export type {
   AlertDetail,

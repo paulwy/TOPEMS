@@ -5,12 +5,7 @@
  */
 
 // 通用 WebSocket - WsConnectionStatus 的原始定义在此
-export {
-  useWebSocket,
-  webSocketService,
-  useWebSocketSubscription,
-  useWebSocketConnection,
-} from '../../useWebSocket';
+export { useWebSocket, webSocketService } from '../../useWebSocket';
 export type {
   WsMessage,
   WsConnectionStatus,
@@ -35,9 +30,5 @@ export type {
 } from '../../useNotificationWebSocket';
 
 // WebSocket → Snackbar 通知频道（原 useUnifiedWebSocket 内的便捷 hooks）
-export {
-  useWebSocketNotifications,
-  useWebSocketNotificationChannel,
-  useWebSocketAlertChannel,
-} from '../../useWebSocketNotifications';
+export { useWebSocketNotifications } from '../../useWebSocketNotifications';
 export type { WsNotificationConfig } from '../../useWebSocketNotifications';

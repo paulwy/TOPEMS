@@ -41,16 +41,7 @@ export type {
 } from './MasterDetailPageTemplate';
 
 // 模板分类与推荐
-export {
-  TEMPLATE_CLASSIFICATIONS,
-  CORE_TEMPLATES,
-  EXTENSION_TEMPLATES,
-  CORE_8_TEMPLATES,
-  getTemplateByType,
-  getTemplatesByCategory,
-  getHighFrequencyTemplates,
-  recommendTemplate,
-} from './classification';
+
 export type { PageTemplateType } from './classification';
 
 // 模板辅助工具

@@ -1,4 +1,4 @@
-export { BusinessModuleSelector, getBusinessModuleInfo } from './BusinessModuleSelector';
+export { BusinessModuleSelector } from './BusinessModuleSelector';
 export type { BusinessModuleType } from './BusinessModuleSelector';
 
 export { SmartFormRenderer } from './SmartFormRenderer';

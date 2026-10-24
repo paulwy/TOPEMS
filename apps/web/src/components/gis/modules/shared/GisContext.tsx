@@ -1,6 +1,6 @@
 // modules/shared/GisContext.tsx
 import type React from 'react';
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 import type { MapModuleConfig } from '../MapModule/types';
 import type { TrackRecord } from '../TrackModule/types';
 import type { EvidenceRecord } from '../EvidenceModule/types';
@@ -185,12 +185,5 @@ const GisContext = createContext<GisContextValue | null>(null);
 // Provider
 
 // Hook
-export function useGisContext() {
-  const context = useContext(GisContext);
-  if (!context) {
-    throw new Error('useGisContext must be used within a GisProvider');
-  }
-  return context;
-}
 
 export { GisContext };

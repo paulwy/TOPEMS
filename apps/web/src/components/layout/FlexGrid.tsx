@@ -122,24 +122,4 @@ export const FlexGrid: React.FC<FlexGridProps> = ({
   return <>{children}</>;
 };
 
-interface FlexItemProps {
-  xs?: number | boolean;
-  sm?: number | boolean;
-  md?: number | boolean;
-  lg?: number | boolean;
-  xl?: number | boolean;
-  children?: React.ReactNode;
-  sx?: object;
-  className?: string;
-}
-
-export const FlexItem: React.FC<FlexItemProps> = ({ children, ...props }) => (
-  <FlexGrid
-    item
-    {...props}
-  >
-    {children}
-  </FlexGrid>
-);
-
 export default FlexGrid;

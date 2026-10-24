@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { webSocketService, type WebSocketMessage } from './useWebSocket';
 import { useNotificationStore } from '@/store/notificationStore';
-import i18n from '@/i18n';
 
 export interface WsNotificationConfig {
   /** 订阅的频道 */
@@ -77,26 +76,6 @@ export function useWebSocketNotifications(config: WsNotificationConfig): void {
  * useWebSocketNotificationChannel('notifications');
  * ```
  */
-export function useWebSocketNotificationChannel(
-  channel: string = 'notifications',
-  enabled: boolean = true
-): void {
-  useWebSocketNotifications({
-    channel,
-    enabled,
-    getTitle: (msg) => msg.payload?.title as string | undefined,
-    getMessage: (msg) =>
-      (msg.payload?.message as string) || i18n.t('shared.use_web_socket_notifications.k0'),
-    getType: (msg) => {
-      const payloadType = msg.payload?.type as string | undefined;
-      if (payloadType === 'success' || payloadType === 'error' || payloadType === 'warning') {
-        return payloadType;
-      }
-      return 'info';
-    },
-    duration: 6000,
-  });
-}
 
 /**
  * 便捷 Hook: 监听 WebSocket 告警频道
@@ -106,20 +85,3 @@ export function useWebSocketNotificationChannel(
  * useWebSocketAlertChannel();
  * ```
  */
-export function useWebSocketAlertChannel(enabled: boolean = true): void {
-  useWebSocketNotifications({
-    channel: 'alerts',
-    enabled,
-    getTitle: (msg) =>
-      (msg.payload?.title as string) || i18n.t('shared.use_web_socket_notifications.k1'),
-    getMessage: (msg) =>
-      (msg.payload?.message as string) || i18n.t('shared.use_web_socket_notifications.k2'),
-    getType: (msg) => {
-      const severity = msg.payload?.severity as string | undefined;
-      if (severity === 'critical' || severity === 'high') return 'error';
-      if (severity === 'medium') return 'warning';
-      return 'info';
-    },
-    duration: 8000,
-  });
-}

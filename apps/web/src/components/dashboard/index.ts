@@ -1,30 +1,19 @@
-export { DashboardQuickActions, defaultQuickActions } from './DashboardQuickActions';
+export { DashboardQuickActions } from './DashboardQuickActions';
 export {
   ModuleStatusBadge as StatusBadge,
   type ModuleStatusValue,
 } from '@topems/shared-components';
 export {
   ModuleCard,
-  ModuleCardV2,
   type ModuleItem,
   type ModuleCardData,
   type ModuleCardStatus,
   type ModuleCardQuota,
-  CARD_STYLE,
-  ICON_WRAPPER_STYLE,
 } from './ModuleCard';
-export { ServiceStatusCard } from './ServiceStatusCard';
+
 export { RecentActivities, type ActivityItem } from './RecentActivities';
 export {
-  DashboardSection,
-  TodayOverviewSection,
-  QuickAccessSection,
-  TodoListSection,
-  ModuleNavigationSection,
-  ServiceMonitorSection,
-  RecentActivitySection,
   ModuleSection,
-  MODULE_SECTIONS,
   type DashboardSectionProps,
   type ModuleSectionKey,
 } from './DashboardSections';

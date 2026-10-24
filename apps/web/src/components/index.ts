@@ -317,23 +317,8 @@ export { ChartCard } from './bi/ChartCard';
 export { MetricCard } from './bi/MetricCard';
 export { StatsChart } from './bi/StatsChart';
 export type { StatsChartProps } from './bi/StatsChart';
-export { ChartAnnotations } from './bi/ChartAnnotations';
-export { ChartLinkerProvider } from './bi/ChartLinker';
-export { useChartLinker } from './bi/ChartLinker';
-export { FullscreenChart } from './bi/FullscreenChart';
-// BISkeleton 默认导出是一个对象，包含多个 skeleton 组件
 
-export {
-  MetricCardSkeleton,
-  ChartCardSkeleton,
-  ModuleCardSkeleton,
-  VisualizationCardSkeleton,
-  ActivityItemSkeleton,
-  TableSkeleton,
-  DashboardSkeleton,
-  AnalyticsSkeleton,
-  VisualizationSkeleton,
-} from './bi/BISkeleton';
+// BISkeleton 默认导出是一个对象，包含多个 skeleton 组件
 
 // 导出组件
 export { default as ExportModal } from './export/ExportModal';
@@ -342,13 +327,7 @@ export { default as ExportButton } from './export/ExportButton';
 // 认证组件（登录表单由 pages/shared/LoginPage 自实现，LoginFormV2 已废弃删除）
 
 // 权限验证组件
-export {
-  withPermission,
-  RequirePermission,
-  PermissionGuard,
-  ModulePermissionGuard,
-  ConditionalRender,
-} from './PermissionComponents';
+
 export type {
   WithPermissionOptions,
   RequirePermissionProps,
@@ -358,7 +337,6 @@ export type {
 } from './PermissionComponents';
 
 // ===== 访问日志组件 =====
-export { AccessLogger, useAccessLogger, PageAccessLogger, ActionLogger } from './AccessLogger';
 
 // ===== V51.0 Design System [已弃用] =====
 // V51 设计系统已被 MUI 主题 + shared-components 体系替代。

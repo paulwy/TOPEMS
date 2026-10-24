@@ -1,9 +1,6 @@
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
-import { FileText, Brain, GitBranch, Clock, Bell, User, ShoppingCart } from 'lucide-react';
-import { PLUGIN_PATHS } from '@/modules/plugin/config';
 import { designTokens } from '@topems/tokens';
-import i18n from '@/i18n';
 
 type IconComponent = React.ComponentType<{
   className?: string;
@@ -109,69 +106,3 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
     </Box>
   );
 };
-
-export const defaultQuickActions: QuickAction[] = [
-  {
-    label: i18n.t('shared.dashboard_quick_actions.k0'),
-    icon: FileText,
-    path: '/documents',
-    color: 'primary.dark',
-    bgColor: 'primary.light',
-    hoverColor: 'primary.dark',
-    service: 'doc',
-  },
-  {
-    label: i18n.t('components.dashboard_quick_actions.ai_0'),
-    icon: Brain,
-    path: '/ai',
-    color: 'secondary.dark',
-    bgColor: 'secondary.light',
-    hoverColor: 'secondary.dark',
-    service: 'ai',
-  },
-  {
-    label: i18n.t('shared.dashboard_quick_actions.k1'),
-    icon: GitBranch,
-    path: '/flow/definitions',
-    color: 'success.dark',
-    bgColor: 'success.light',
-    hoverColor: 'success.dark',
-    service: 'flow',
-  },
-  {
-    label: i18n.t('shared.dashboard_quick_actions.k2'),
-    icon: Clock,
-    path: '/flow/approvals',
-    color: 'warning.600',
-    bgColor: 'white7ed',
-    hoverColor: 'warning.600',
-    service: 'flow',
-  },
-  {
-    label: i18n.t('shared.dashboard_quick_actions.k3'),
-    icon: Bell,
-    path: '/notifications',
-    color: 'yellow.600',
-    bgColor: 'warning.lighter',
-    hoverColor: 'yellow.600',
-    service: 'notification',
-  },
-  {
-    label: i18n.t('shared.dashboard_quick_actions.k4'),
-    icon: User,
-    path: '/profile',
-    color: 'primary.main',
-    bgColor: 'primary.50',
-    hoverColor: 'primary.main',
-    service: null,
-  },
-  {
-    label: i18n.t('shared.dashboard_quick_actions.k5'),
-    icon: ShoppingCart,
-    path: PLUGIN_PATHS.marketplace,
-    color: 'secondary.600',
-    bgColor: 'secondary.50',
-    hoverColor: 'secondary.600',
-    service: null,
-  },
-];

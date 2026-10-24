@@ -98,17 +98,8 @@ export const getChartColor = (index: number): string =>
   BIChartColors.series[index % BIChartColors.series.length];
 
 /** Get contrasting text color for a given hex background */
-export const getContrastingColor = (hexColor: string): string => {
-  const r = parseInt(hexColor.slice(1, 3), 16);
-  const g = parseInt(hexColor.slice(3, 5), 16);
-  const b = parseInt(hexColor.slice(5, 7), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? 'colors.grey.800' : 'var(--color-primary-foreground)';
-};
 
 /** Create gradient ID for SVG defs */
-export const createGradientId = (prefix: string, index: number): string =>
-  `${prefix}-gradient-${index}`;
 
 // ── Hook: dark-mode-aware chart theme resolved at runtime ──────────────────
 

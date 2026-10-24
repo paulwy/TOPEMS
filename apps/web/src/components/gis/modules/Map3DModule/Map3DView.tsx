@@ -36,13 +36,6 @@ export interface CameraAnimation {
   easing?: (t: number) => number;
 }
 // 默认3D视图状态
-export const DEFAULT_3D_VIEW: ViewState3D = {
-  center: [31.2304, 121.4737], // 上海
-  zoom: 15,
-  pitch: 45,
-  bearing: 0,
-  altitude: 500,
-};
 // 3D地图组件属性
 export interface Map3DViewProps {
   viewState: ViewState3D;
@@ -260,90 +253,5 @@ const BuildingMarker: React.FC<BuildingMarkerProps> = ({ building, enable3D, map
   return null;
 };
 // 高度可视化组件
-interface HeightVisualizationProps {
-  data: Array<{
-    position: [number, number];
-    value: number;
-  }>;
-  colorScale?: string[];
-  maxHeight?: number;
-}
-export const HeightVisualization: React.FC<HeightVisualizationProps> = ({
-  data,
-  colorScale = [
-    'var(--color-fallback-ant-blue)',
-    'var(--cyber-color-cyan)',
-    'var(--color-fallback-ant-green)',
-    'var(--color-fallback-ant-green)',
-    'var(--color-fallback-accent-pink)',
-  ],
-  maxHeight = 100,
-}) => {
-  // 渲染高度热力图
-  return (
-    <div className='height-visualization'>
-      {data.map((point, index) => (
-        <div
-          key={index}
-          className='height-point'
-          style={{
-            left: `${point.position[1]}%`,
-            top: `${point.position[0]}%`,
-            height: `${(point.value / maxHeight) * 100}%`,
-            background: colorScale[Math.floor((point.value / maxHeight) * (colorScale.length - 1))],
-          }}
-        />
-      ))}
-    </div>
-  );
-};
 // 3D视角控制器hook
-export function use3DViewController(initialView?: ViewState3D) {
-  const [viewState, setViewState] = useState<ViewState3D>(initialView || DEFAULT_3D_VIEW);
-  const [isAnimating, _setIsAnimating] = useState(false);
-  // 飞向指定位置
-  const flyTo = useCallback((position: [number, number], zoom?: number, pitch?: number) => {
-    setViewState((prev) => ({
-      ...prev,
-      center: position,
-      zoom: zoom ?? prev.zoom,
-      pitch: pitch ?? prev.pitch,
-    }));
-  }, []);
-  // 改变视角
-  const rotateTo = useCallback((bearing: number) => {
-    setViewState((prev) => ({
-      ...prev,
-      bearing,
-    }));
-  }, []);
-  // 改变倾斜
-  const tiltTo = useCallback((pitch: number) => {
-    setViewState((prev) => ({
-      ...prev,
-      pitch: Math.max(0, Math.min(60, pitch)),
-    }));
-  }, []);
-  // 拉近/拉远
-  const zoomBy = useCallback((delta: number) => {
-    setViewState((prev) => ({
-      ...prev,
-      zoom: Math.max(1, Math.min(20, prev.zoom + delta)),
-    }));
-  }, []);
-  // 重置视角
-  const reset = useCallback(() => {
-    setViewState(DEFAULT_3D_VIEW);
-  }, []);
-  return {
-    viewState,
-    setViewState,
-    isAnimating,
-    flyTo,
-    rotateTo,
-    tiltTo,
-    zoomBy,
-    reset,
-  };
-}
 export default Map3DView;

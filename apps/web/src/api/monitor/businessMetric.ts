@@ -13,9 +13,6 @@
  *   DELETE /business-metrics/{id}
  */
 
-import apiClient from '../client';
-import type { ApiResponse } from '../client';
-
 export type MetricType =
   | 'revenue'
   | 'orders'
@@ -114,68 +111,3 @@ export interface KpiDashboard {
     users: number;
   }>;
 }
-
-interface CreateBusinessMetricRequest {
-  name: string;
-  code: string;
-  description?: string;
-  metric_type: MetricType;
-  aggregation: MetricAggregation;
-  source_table?: string;
-  source_column?: string;
-  formula?: string;
-  unit?: string;
-  tags?: string[];
-}
-
-export const businessMetricApi = {
-  listMetrics: async (params?: {
-    metric_type?: MetricType;
-    is_active?: boolean;
-    page?: number;
-    page_size?: number;
-  }): Promise<ApiResponse<{ items: BusinessMetric[]; total: number }>> => {
-    return apiClient.monitor.get('/business-metrics', { params });
-  },
-
-  getMetric: async (id: string): Promise<ApiResponse<BusinessMetric>> => {
-    return apiClient.monitor.get(`/business-metrics/${id}`);
-  },
-
-  createMetric: async (data: CreateBusinessMetricRequest): Promise<ApiResponse<BusinessMetric>> => {
-    return apiClient.monitor.post('/business-metrics', data);
-  },
-
-  updateMetric: async (
-    id: string,
-    data: Partial<CreateBusinessMetricRequest>
-  ): Promise<ApiResponse<BusinessMetric>> => {
-    return apiClient.monitor.put(`/business-metrics/${id}`, data);
-  },
-
-  deleteMetric: async (id: string): Promise<ApiResponse<{ deleted: boolean }>> => {
-    return apiClient.monitor.delete(`/business-metrics/${id}`);
-  },
-
-  getSummary: async (): Promise<ApiResponse<MetricSummary>> => {
-    return apiClient.monitor.get('/business-metrics/summary');
-  },
-
-  getTrend: async (params?: {
-    metric_id?: string;
-    from?: string;
-    to?: string;
-    granularity?: 'day' | 'week' | 'month';
-  }): Promise<ApiResponse<MetricTrendPoint[]>> => {
-    return apiClient.monitor.get('/business-metrics/trend', { params });
-  },
-
-  getKpiDashboard: async (params?: {
-    period?: 'day' | 'week' | 'month' | 'quarter' | 'year';
-    date?: string;
-  }): Promise<ApiResponse<KpiDashboard>> => {
-    return apiClient.monitor.get('/business-metrics/kpi', { params });
-  },
-};
-
-export default businessMetricApi;

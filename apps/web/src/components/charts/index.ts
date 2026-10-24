@@ -13,12 +13,5 @@ export type {
   RadarChartProps,
   LazyChartProps,
 } from './LazyChart';
-export {
-  BIChartColors,
-  ChartType,
-  getChartColor,
-  getContrastingColor,
-  createGradientId,
-  useChartTheme,
-} from './chartTheme';
-export { CustomTooltip, formatPercent, formatCurrency, formatWithUnit } from './CustomTooltip';
+export { BIChartColors, ChartType, getChartColor, useChartTheme } from './chartTheme';
+export { CustomTooltip, formatPercent, formatCurrency } from './CustomTooltip';

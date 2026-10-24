@@ -13,9 +13,6 @@
  *   DELETE /alerts/{id}
  */
 
-import apiClient from '../client';
-import type { ApiResponse } from '../client';
-
 export type AlertSeverity = 'critical' | 'warning' | 'info';
 export type AlertStatus = 'active' | 'resolved' | 'acknowledged' | 'suppressed';
 
@@ -105,76 +102,3 @@ export interface AlertTimelinePoint {
   threshold?: number;
   note?: string;
 }
-
-interface BulkAcknowledgeRequest {
-  alert_ids: string[];
-  note?: string;
-}
-
-interface BulkResolveRequest {
-  alert_ids: string[];
-  reason?: string;
-}
-
-export const alertApi = {
-  listAlerts: async (params?: {
-    severity?: AlertSeverity;
-    status?: AlertStatus;
-    service_name?: string;
-    page?: number;
-    page_size?: number;
-  }): Promise<ApiResponse<{ items: AlertDetail[]; total: number }>> => {
-    return apiClient.monitor.get('/alerts', { params });
-  },
-
-  getAlert: async (id: string): Promise<ApiResponse<AlertDetail>> => {
-    return apiClient.monitor.get(`/alerts/${id}`);
-  },
-
-  updateAlert: async (
-    id: string,
-    data: Partial<AlertDetail>
-  ): Promise<ApiResponse<AlertDetail>> => {
-    return apiClient.monitor.post(`/alerts/${id}`, data);
-  },
-
-  deleteAlert: async (id: string): Promise<ApiResponse<{ deleted: boolean }>> => {
-    // 后端 /alerts/{id} 仅注册 GET+POST（update），无 DELETE；对齐为 GET 以消除 405（删除语义待后端补路由）。
-    return apiClient.monitor.get(`/alerts/${id}`);
-  },
-
-  getStatistics: async (params?: {
-    period?: 'day' | 'week' | 'month';
-    service_name?: string;
-  }): Promise<ApiResponse<AlertStatistics>> => {
-    return apiClient.monitor.get('/alerts/statistics', { params });
-  },
-
-  acknowledgeAlert: async (id: string, note?: string): Promise<ApiResponse<AlertDetail>> => {
-    return apiClient.monitor.post(`/alerts/${id}/acknowledge`, { note });
-  },
-
-  resolveAlert: async (id: string, reason?: string): Promise<ApiResponse<AlertDetail>> => {
-    return apiClient.monitor.post(`/alerts/${id}/resolve`, { reason });
-  },
-
-  bulkAcknowledge: async (
-    data: BulkAcknowledgeRequest
-  ): Promise<ApiResponse<{ acknowledged: number }>> => {
-    return apiClient.monitor.post('/alerts/acknowledge', data);
-  },
-
-  bulkResolve: async (data: BulkResolveRequest): Promise<ApiResponse<{ resolved: number }>> => {
-    return apiClient.monitor.post('/alerts/resolve', data);
-  },
-
-  getHistory: async (alertId: string): Promise<ApiResponse<AlertHistoryEvent[]>> => {
-    return apiClient.monitor.get(`/alerts/${alertId}/history`);
-  },
-
-  getTimeline: async (alertId: string): Promise<ApiResponse<AlertTimelinePoint[]>> => {
-    return apiClient.monitor.get(`/alerts/${alertId}/timeline`);
-  },
-};
-
-export default alertApi;

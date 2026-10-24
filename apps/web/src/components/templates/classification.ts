@@ -270,7 +270,6 @@ export const TEMPLATE_CLASSIFICATIONS: TemplateClassification[] = [
  * - dashboard: 仪表盘（含统计分析扩展）
  * - kanban  : 看板页（任务/状态流转）
  */
-export const CORE_TEMPLATES: PageTemplateType[] = ['list', 'form', 'detail', 'dashboard', 'kanban'];
 
 /**
  * 扩展模板（10 个，按需引入）
@@ -278,18 +277,6 @@ export const CORE_TEMPLATES: PageTemplateType[] = ['list', 'form', 'detail', 'da
  * 这些模板通过核心模板 + 配置组合可实现，或使用场景较低频。
  * 推荐使用动态导入（lazy import）以减少 bundle 体积。
  */
-export const EXTENSION_TEMPLATES: PageTemplateType[] = [
-  'tree',
-  'stats',
-  'settings',
-  'wizard',
-  'timeline',
-  'card-list',
-  'master-detail',
-  'markdown-editor',
-  'report-designer',
-  'gis-map',
-];
 
 /**
  * 兼容别名：原 V22 的"核心 8 模板"
@@ -297,30 +284,6 @@ export const EXTENSION_TEMPLATES: PageTemplateType[] = [
  * 等价于新的 CORE_TEMPLATES（5 个）+ tree + stats + settings。
  * 保留以维持向后兼容，新代码建议使用 CORE_TEMPLATES 或 EXTENSION_TEMPLATES。
  */
-export const CORE_8_TEMPLATES: PageTemplateType[] = [
-  'dashboard',
-  'list',
-  'detail',
-  'form',
-  'tree',
-  'stats',
-  'settings',
-  'kanban',
-];
-
-export function getTemplateByType(type: PageTemplateType): TemplateClassification | undefined {
-  return TEMPLATE_CLASSIFICATIONS.find((t) => t.type === type);
-}
-
-export function getTemplatesByCategory(
-  category: TemplateClassification['category']
-): TemplateClassification[] {
-  return TEMPLATE_CLASSIFICATIONS.filter((t) => t.category === category);
-}
-
-export function getHighFrequencyTemplates(): TemplateClassification[] {
-  return TEMPLATE_CLASSIFICATIONS.filter((t) => t.frequency === 'high');
-}
 
 /**
  * 根据数据类型推荐合适的页面模板。
@@ -330,17 +293,3 @@ export function getHighFrequencyTemplates(): TemplateClassification[] {
  * - chart → dashboard （DashboardTemplate 含 ChartCard，可承载统计分析）
  * - settings 仍使用扩展模板 SettingsPageTemplate（无核心模板可替代）
  */
-export function recommendTemplate(
-  dataType: 'list' | 'detail' | 'form' | 'dashboard' | 'tree' | 'chart' | 'settings'
-): PageTemplateType {
-  const mapping: Record<string, PageTemplateType> = {
-    list: 'list',
-    detail: 'detail',
-    form: 'form',
-    dashboard: 'dashboard',
-    tree: 'list',
-    chart: 'dashboard',
-    settings: 'settings',
-  };
-  return mapping[dataType] || 'list';
-}

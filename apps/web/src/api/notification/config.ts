@@ -11,9 +11,6 @@
  *   POST   /notification/notifications/{id}/unarchive
  */
 
-import apiClient from '../client';
-import type { ApiResponse } from '../client';
-
 export interface ArchiveConfig {
   enabled: boolean;
   retention_days: number;
@@ -33,44 +30,3 @@ export interface ArchivedNotification {
   created_at: string;
   archived_at: string;
 }
-
-interface AutoArchiveResponse {
-  archived_count: number;
-}
-
-interface ArchivedListResponse {
-  notifications: ArchivedNotification[];
-  total: number;
-  page: number;
-  page_size: number;
-}
-
-export const configApi = {
-  getArchiveConfig: async (): Promise<ApiResponse<ArchiveConfig>> => {
-    return apiClient.notification.get('/notifications/archive/config');
-  },
-
-  updateArchiveConfig: async (data: ArchiveConfig): Promise<ApiResponse<ArchiveConfig>> => {
-    return apiClient.notification.put('/notifications/archive/config', data);
-  },
-
-  runAutoArchive: async (): Promise<ApiResponse<AutoArchiveResponse>> => {
-    return apiClient.notification.post('/notifications/archive/run');
-  },
-
-  listArchived: async (page = 1, pageSize = 20): Promise<ApiResponse<ArchivedListResponse>> => {
-    return apiClient.notification.get('/notifications/archived', {
-      params: { page, page_size: pageSize },
-    });
-  },
-
-  archiveNotification: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.notification.post(`/notifications/${id}/archive`);
-  },
-
-  unarchiveNotification: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.notification.post(`/notifications/${id}/unarchive`);
-  },
-};
-
-export default configApi;

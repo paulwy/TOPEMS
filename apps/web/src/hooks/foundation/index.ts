@@ -28,7 +28,7 @@ export type { Breakpoint } from '../useResponsive';
 export { useIsMobile } from '../useIsMobile';
 
 // TouchFeedback
-export { useTouchFeedback, useSwipeGesture } from '../useTouchFeedback';
+export { useTouchFeedback } from '../useTouchFeedback';
 export type { TouchFeedbackOptions, TouchRipple } from '../useTouchFeedback';
 
 // VirtualScroll

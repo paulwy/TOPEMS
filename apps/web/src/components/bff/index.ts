@@ -91,11 +91,8 @@ export type {
 // 错误边界（类组件）：错误分类 + 恢复策略 + 错误上报
 export {
   BffErrorBoundary,
-  DefaultBffErrorFallback,
   classifyError,
   reportError,
-  getErrorReports,
-  clearErrorReports,
   onErrorReport,
   BffErrorType,
   ErrorRecoveryStrategy,
@@ -115,7 +112,6 @@ export {
   BffErrorFallback,
   BffOfflineFallback,
   BffCacheFallback,
-  BffFallbackContainer,
 } from './BffFallback';
 export type {
   BffFallbackBaseProps,
@@ -148,7 +144,7 @@ export type {
   FallbackStats,
 } from '@/utils/bff/fallbackStrategy';
 
-export { ABTestEngine, ExperimentStatus, fnv1aHash, abTestEngine } from '@/utils/bff/abTesting';
+export { ExperimentStatus, fnv1aHash, abTestEngine } from '@/utils/bff/abTesting';
 export type {
   TargetingOperator,
   TargetingRule,
