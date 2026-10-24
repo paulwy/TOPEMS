@@ -3792,3 +3792,27 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [ ] 遗留：000014 iam 副本绑定建议 header 注记「已被 000017 public.* 口径取代」（整合时补）；测试库账本后续走 sqlx 工具登记（DDL 幂等重跑安全）；portal 端到端登录签发未验（超范围）
 ### 状态
 - 本轮 3 commits 落盘（守卫贯通 + portal 补绑 + 本登记）；**未 push**；统一推送前用户 fetch+rebase
+
+## 审计修复实施登记 第七轮：P3 常态化 74 项 + 前端补测批次 4（2026-10-24，未推送）
+### ① P3 处理总统计（74 项按域认领）
+- **已修/已核实 43 项**：架构核心 6 + 基建 8 + 制造供应链 8 + 财务平台 7 + 数据库 8 + 前端 3（+补测 3 文件）
+- **已覆盖 13 项**（前序批次已闭环）：制造 3（ehs 501 决策维持/tms 已优雅化/pm_budget Decimal）+ 财务平台 6 + 数据库 1 + 前端核对 3 类
+- **登记需决策 18 项**（详见各域报告，均写入对应域遗留清单）
+### ② 域明细（已修亮点）
+- **架构核心**：module-gis 重复声明去重/health_check_all 死代码×2 删除/DSN 兜底改 fail-fast/env.example 补登 110 键/设计文档三处刷新（billing 幽灵等）
+- **基建**：ai-tests nightly 对齐仓内 setup-rust/MCP 注册就绪屏障（AppState ready 标志+health 依赖）/deploy-k8s 去 `|| true`+补清单/quality-gate 补两行门控/frontend-lint 全工作区/lru RUSTSEC 登记/audit.toml 版本漂移校准
+- **制造+供应链**：mes bootstrap order_no 索引列名/2 死模块删除（oee_logic 保留——测试在用）/tms 8 写端点 security/tms+ehs 路径/rows_affected 4 处/:admin 四服务统一前缀口径/**rls-txn expect 662 处批量优雅化**（21 特殊返回型适配）/rd clamp(0,100)/srm ≥0 校验×2
+- **财务+平台**：erp demo_data 死模块删除/finance.rs 927→189 死结构清理/collection 核销回显/amount_as_f64 双兼容/plugin-registry 常量时间比较/broadcast 失败聚合回传/hrm 导出脱敏+emergency_phone/search /recent 挂载+死函数删除
+- **数据库**：RLS FORCE 补齐（master_data 3 表+pm.projects）/README 479 口径/rls_remaining DEPRECATED/守卫脚本脱敏/created_by 绑定当前用户/空库重放 479/479 确认不破坏
+- **前端 P3**：menuPermissions 悬挂 key 删除/downloadBlob timeout=120s/tsconfig 纳入 generated-ai；**补测批次 4：3 文件 4 页 15 用例**（ScmCrudPages 6/EhsIncidentReportPage 4/TicketCenterPage 5，复用 CrmCrudPages 范本真断言）
+### ③ 验证汇总
+- 制造供应链 10 包 check/clippy 0 + lib 3280 passed；财务平台 6 包 2885 passed；架构 server/core/ai 全绿；数据库门禁 validate 双跑 0 + check-migrations 无重复 + 空库重放 479/479；前端 lint/typecheck 0 + **6767 用例全绿（审计期唯一 failed 已消除）**
+- 磁盘：编译期间 6.1Gi → 清 target/debug/incremental（78G）恢复 83Gi，无 No space
+### ④ 遗留/需产品决策（18 项，关键）
+- 架构：双配置层收敛（enhanced 单一入口建议）/api_security 死面去留/双客户端栈分工/vite 升级归前端
+- 制造：金额 f64 展示取舍/scm 服务端重算口径/pm 超支拦截策略/权限细粒度化演进
+- 财务平台：stub 200 vs 501 契约策略/analytics 全局 admin 门限放宽/broadcast 跨租户收件人口径/核销落账立项
+- 数据库：ensure-* 改迁移链重构窗口/create_uom/sample 同模式延伸/CRM 列表谓词过滤/测试库台账收敛
+- 前端：DOMPurify iframe sandbox（产品）/refresh_token HttpOnly 迁移（架构）/marketplace 收敛共享 client/三端版本统一 5.15.0+mobile 脚本（跨 apps）/unused 356 按 L1 分批/下批补测候选（scm 余 15 页/ehs Training/ai 域）
+### 状态
+- 本轮 7 commits 落盘（架构/基建/制造供应链/财务平台/数据库/前端/本登记）；**未 push**；统一推送前用户 fetch+rebase
