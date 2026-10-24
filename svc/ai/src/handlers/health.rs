@@ -28,7 +28,10 @@ pub async fn health_check_detailed(
 ) -> Json<ApiResponse<ServiceHealth>> {
     // [P3-4] MCP 工具注册就绪屏障：spawn 注册窗口内报告 Degraded，
     // 避免启动初期探活误判就绪（tools/list 瞬时空）。
-    let mcp_dep = if state.mcp_tools_ready.load(std::sync::atomic::Ordering::Acquire) {
+    let mcp_dep = if state
+        .mcp_tools_ready
+        .load(std::sync::atomic::Ordering::Acquire)
+    {
         DependencyHealth {
             name: "mcp-tools".to_string(),
             status: HealthStatus::Healthy,

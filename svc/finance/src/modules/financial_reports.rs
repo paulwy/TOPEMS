@@ -1316,7 +1316,8 @@ pub async fn generate_balance_sheet(
 /// 也可能以字符串落库/持久化报表 jsonb；两者都要能解析，
 /// 否则 total 恒为 0、占比静默输出 0.0（P3 修复）。
 fn amount_as_f64(v: &serde_json::Value) -> Option<f64> {
-    v.as_f64().or_else(|| v.as_str().and_then(|s| s.trim().parse::<f64>().ok()))
+    v.as_f64()
+        .or_else(|| v.as_str().and_then(|s| s.trim().parse::<f64>().ok()))
 }
 
 fn enrich_balance_percentage(mut data: serde_json::Value) -> serde_json::Value {

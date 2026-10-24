@@ -116,10 +116,15 @@ async fn list_analyses(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<PaginatedResponse<AiAnalysis>>::error(500, "rls transaction unavailable")),
-        ),
+        None => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<PaginatedResponse<AiAnalysis>>::error(
+                    500,
+                    "rls transaction unavailable",
+                )),
+            )
+        }
     };
 
     let page = params.page.unwrap_or(1);
@@ -179,10 +184,15 @@ async fn create_analysis(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<AiAnalysis>::error(500, "rls transaction unavailable")),
-        ),
+        None => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<AiAnalysis>::error(
+                    500,
+                    "rls transaction unavailable",
+                )),
+            )
+        }
     };
 
     let ai_service_url = resolve_ai_service_url();
@@ -263,10 +273,15 @@ async fn get_analysis(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<AiAnalysis>::error(500, "rls transaction unavailable")),
-        ),
+        None => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<AiAnalysis>::error(
+                    500,
+                    "rls transaction unavailable",
+                )),
+            )
+        }
     };
 
     let result: Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
@@ -345,10 +360,15 @@ async fn get_entity_analyses(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<Vec<AiAnalysis>>::error(500, "rls transaction unavailable")),
-        ),
+        None => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<Vec<AiAnalysis>>::error(
+                    500,
+                    "rls transaction unavailable",
+                )),
+            )
+        }
     };
 
     let result: Result<Vec<AiAnalysis>, sqlx::Error> = sqlx::query_as(

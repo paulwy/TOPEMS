@@ -1381,11 +1381,18 @@ pub async fn calculate_combined(
     .await
     {
         Ok(r) if r.rows_affected() == 0 => {
-            tracing::warn!("uncertainty project {} not found when persisting recalculated values", id);
+            tracing::warn!(
+                "uncertainty project {} not found when persisting recalculated values",
+                id
+            );
         }
         Ok(_) => {}
         Err(e) => {
-            tracing::error!("failed to persist recalculated uncertainty for project {}: {}", id, e);
+            tracing::error!(
+                "failed to persist recalculated uncertainty for project {}: {}",
+                id,
+                e
+            );
         }
     }
 

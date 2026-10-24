@@ -999,7 +999,16 @@ pub async fn export_projects(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return ([(header::CONTENT_TYPE, "application/json")], Json(ApiResponse::<&str>::error(500, "rls transaction unavailable"))).into_response(),
+        None => {
+            return (
+                [(header::CONTENT_TYPE, "application/json")],
+                Json(ApiResponse::<&str>::error(
+                    500,
+                    "rls transaction unavailable",
+                )),
+            )
+                .into_response()
+        }
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None

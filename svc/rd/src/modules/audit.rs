@@ -287,11 +287,16 @@ async fn export_audit_logs(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<serde_json::Value>::error(500, "rls transaction unavailable")),
-        )
-        .into_response(),
+        None => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<serde_json::Value>::error(
+                    500,
+                    "rls transaction unavailable",
+                )),
+            )
+                .into_response()
+        }
     };
     let result = sqlx::query_as::<_, AuditLog>(
         r#"

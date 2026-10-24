@@ -242,9 +242,9 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         "CREATE INDEX IF NOT EXISTS idx_production_orders_order_no ON production_orders(order_no)",
     )
     .execute(pool)
-            .await
-            .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
-            .ok();
+    .await
+    .map_err(|e| tracing::warn!("[mes init 宽容跳过] {}", e))
+    .ok();
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_production_orders_status ON production_orders(status)",
     )
