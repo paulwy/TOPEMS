@@ -3730,3 +3730,21 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [ ] 遗留：PUT 编辑端点与 status toggle 下批；ai:admin 权限中心显式登记属运维；seed 全局行=升级前行为等价
 ### 状态
 - 本轮 5 commits 落盘（迁移守卫/SSRF/stub/FAQ/本登记）；**未 push**；统一推送前用户 fetch+rebase
+
+## 审计修复实施登记 第五轮：17 表 tenant_id 收敛 + FAQ 编辑 + ai:admin 权限登记（2026-10-24，未推送）
+### ① 17 表 tenant_id varchar/text → uuid 收敛（核心，089 阻塞消除）
+- [x] **新增迁移 `20261016000085_convert_gap_tables_tenant_id_uuid.sql`**（勘察 20261016 段 000001-000085 未占用，前置序号优于内嵌 089——不动已提交迁移，check-migrations 无 ❌）
+- [x] 收敛实现：单条幂等 DO 块动态扫描 `information_schema` 中 tenant_id ∈ (varchar,text) 的 BASE TABLE（实测命中=任务列明 17 表精确一致）；每表：摘除既有 RLS 策略→DROP DEFAULT→`ALTER TYPE uuid USING 合法 uuid 直转/非法回填全零`→SET DEFAULT 全零→原已开 RLS 按 089 模板重建策略（integration.erp_* 无 RLS 不接管）；重复执行幂等（列已 uuid → 守卫不命中）
+- [x] 门禁：validate Errors=0 / Checksum errors=0；check-migrations ✅ PASS（无序号重复）
+- [x] **空库全链重放（topems_prepare）**：**085 success、089 success（原 `character varying = uuid` 阻塞消除）、090 success、091 success**；终态实证 17 表 tenant_id 全 uuid + RLS 全开 + 各 1 条策略
+- [ ] **新失败点（缺列家族，未修，需决策）**：`20261016000092` —— `column r.tenant_id does not exist at line 3721`；`public.core_refresh_tokens` / `public.core_sessions` 两表存在但**无 tenant_id 列**（仅有 user_id），092 却 UPDATE 回填 r.tenant_id。账本 405 success / 0 failed，链停 091 后。修复方向二选一（待定）：(a) 两表补 tenant_id 列迁移前置到 092（若契约应有租户维度）；(b) 092 相关语句加列存在性守卫（若两表设计上无需租户隔离）。需确认这两表在 TABLE_DEFS/契约中的 tenant_id 归属
+### ② FAQ 编辑端点 PUT + status toggle（落地）
+- [x] `PUT /dsh/copilot/admin/faqs/{id}`：UpdateFaqRequest 全 Option + **COALESCE 部分更新**（传 NULL 保持原值，全缺省 400）；status 仅 active/disabled（400 校验）；权限与 delete 同型（ai:admin/超管豁免/租户管理员限本租户、全局行仅超管）；返回完整 AdminFaqItem；搜索路径 disabled 过滤保持（round-trip 验证）
+- [x] 验证：ai check/clippy 0、test lib 970 + integration 85 + doc 2 全过；测试库 PUT round-trip（部分更新/disabled 过滤/toggle）通过
+### ③ ai:admin 权限中心显式登记（落地）
+- [x] 勘察：ai:admin 字典行本存在（public.core_permissions），但无角色绑定（仅超管短路）；运行时权威源为 **public 副本**（unified-core iam/auth.rs:702-705 JOIN public.core_*）
+- [x] **迁移 `20261024000016_copilot_faq_admin_permission.sql`**：三步同型 000014——字典兜底 ON CONFLICT DO NOTHING + admin 角色兜底（nil 租户）+ `admin → ai:admin` 绑定；**全部显式 public.\***（修正 000014 落 iam 副本的口径差异，header 注释说明）
+- [x] 文档：system-onboarding-and-gap-tracker.md 追加登记说明；测试库应用验证（绑定 INSERT 1 + 查询确认）
+- [ ] 遗留：000014 portal:admin 落 iam 副本的绑定有效性存疑（运行时读 public.*）——若 portal 管理端点仅超管可用，需按 public.* 口径补绑（建议下批）；租户业务管理员自管 FAQ 需 IAM 面单独授权（运维）；ai:admin dict 描述未回填（非破坏，未做）
+### 状态
+- 本轮 3 commits 落盘（085 收敛 + 000016/FAQ 编辑 + 本登记）；**未 push**；统一推送前用户 fetch+rebase
