@@ -13,7 +13,9 @@
 - **范围说明**：disaster_v56.rs 同文件同模式 `TopemsError::BusinessLogic(format!("X: {e}"))` 11 处（函数返回 Result 形态、非门禁命中）一并统一为 `internal("X", e)`——同为「原始错误拼接进客户端消息」，属 V517 清退范畴；测试无 message 文案断言，语义安全。
 - **验证**：全量复扫泄露面 39→0、`ApiResponse::error` 3869→3828；四域 `cargo test --lib` 1908 用例 0 失败（门禁口径，`mdm_crud_integration` 连真库需 DATABASE_URL 不在门禁内）；clippy `--all-targets -D warnings` 0 warning；fmt 通过；pre-commit 26 项 + pre-push 7 项全绿。
 - **提交**：`baeb934e43`（rebase 前 `6fa9a2ee6f`）。期间本地磁盘满（No space left on device）经用户手动删除 `target/` 释放后重编译验证。
-- **遗留登记**：CI 侧 `--changed-only` 拦截新增已按门禁约定生效；其余 svc（ai/pm/pdm/srm/qms/lims/wms/erp/gis/portal 等）无命中。monitor settings.rs 等非清单 `e.to_string()` 形态（脚本统计口径外）留待后续批次核对。
+- **批次 2（泛型 to_string 81 处）**：门禁脚本仅匹配非泛型 `ApiResponse::error(`，全量复扫发现 `ApiResponse::<T>::error(... &e.to_string())` 同形态 81 处（svc/ai 75 + finance sales_invoice 2 + monitor settings 4），统一 `ApiResponse::<T>::from(TopemsError::internal(ctx, e))`；提交 `38f55ba2a7`。srm supplier_evaluation 9 处 `400, &msg.to_string()` 为业务消息（msg 不在 ERR_VAR 口径）未改。
+- **批次 3（泛型 format 拼接 30 处 + 门禁口径闭环）**：脚本 CALL_RX 兼容泛型形态（`ApiResponse::(?:(?:<[^>]*>)?::)?error(`），新口径暴露 30 处 leak（srm 7 / rd 13 / hrm 1 / ai 9），统一 `from(internal(ctx, e))`；提交 `37eb697c30`。此后 **CI `--changed-only` 可拦截全部形态新增**（含泛型），V517 全口径闭环：泄露面 0（=基线）、ApiResponse::error 总量较基线仍 +1317（存量非泄露形态 `error(500, "静态文案")` 等，ADR 明确不在泄露面）。
+- **验证累计**：批次 2+3 涉及 8 svc，`cargo test --lib` 总计 4183 用例 0 失败（ai 976 / finance 140 / monitor 1086 / srm 559 / rd 155 / hrm 291 + master-data/ehs 批次 1 已验），clippy `--all-targets -D warnings` 0、fmt 全过、pre-commit 26 项 + pre-push 7 项逐批次全绿。
 
 ## 前端页面真断言补测（2026-10-24）📌 完成
 
