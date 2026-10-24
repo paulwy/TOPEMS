@@ -4310,3 +4310,16 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **方法论教训**：barrel 清理「0 消费」判定必须核**聚合对象本身的真消费**（coreModuleNavConfigs → navigation/index.ts 注册 + pluginManager.ts:497 builtInCodes）；detector 对聚合消费有盲区（判 L2），34 NavConfig 登记永久保留。
 ### 状态与下批
 - 下批：L2 77（values 74 = 40 活 + 34 NavConfig 永久保留 / types 3 测试引用）——实质无可删项；可选：L3 中刷新 34 NavConfig 登记说明；或转向「继续推进 erp/qms」等其他主线。
+## 第二十七轮（2026-10-25）：L3 深化——detector v6-v8 盲区升级 + L1 7 项归零
+- **detector 系统性盲区升级 3 版**（`scripts/audit/detect-ts-unused-exports.cjs`，本批提交）：
+  - v6 词法器 `extractIdentifiers`：剥离行/块注释与引号字符串/模板字符串（`${}` 内保持活引用）——裸正则把注释/字符串标识符计入引用 → 虚高 refCount → 假 L3。重扫 L1 0→19、L2 77→142、L3 4667→4583。
+  - v7 declRe 补 `(?:async\s+)?`：`export async function X` 此前不被识别为定义 → defFiles 空 → 误判"孤儿转发"（wavePick 11 项、api/bi 转发 44 项）。L1 19→9、L2 142→108、L3 4583→4871。
+  - v8 exportMap 后处理：分离式定义（`const X=...; export {X}`）+ 同文件裸定义 → 计为定义（storage.ts LocalStorage 案例）。L1 9→7、L2 108→105、L3 4871→4876。L2 无定义文件项收敛 7 个全真合法转发（TrackPanel/Command/FormInput/Tablet/AttendanceStatusBadge/LeaveStatusBadge/listParamMapping，**跨包/转发导出勿删**）。新增 L3Dead 桶 + summary 输出。
+- **L1 7 项逐一 spot-check 确认真死**（全仓实体消费 0，残余命中=注释/字符串/同名本地实体）→ 删除：
+  - 整文件 2：`_archive-microfrontend/RemoteLoader.tsx`（prefetchOnIdle，唯一命中是 code-completion.ts 模板字符串示例）、`lib/tier.ts`（filterModulesByTier 为唯一 export，链删 isModuleAvailable/MODULE_MAP/tierIncludes/TIER_LEVEL/TIER_FEATURE_MATRIX/ModuleFeature——**整文件死**）。
+  - 块删 5：PermissionGate+PermissionGateProps（保留活 ModuleGate/ModuleGateProps，删除误吞 ModuleGateProps 已补回）、getCoreModules（core-modules，保留 CORE_MODULES_CONFIG）、SERVICES（apiPath，恢复误删注释块首行）、exportToExcel（importExport，链删 i18next import）、getDeviceInfo（mobileDetector，保留 DeviceInfo）。
+- 验证：tsc 0、eslint 0（pre-commit 26 项全绿）、相关测试 5/5、全量 vitest 13 failed=预存在基线（7 文件）未增；重扫 **L1=7→0、L2=105→106、L3=4876**。
+- commit `e999943de` → push 远端（adeedeecf..e999943de）。
+### 状态与下批
+- L1 归零达成；L2 106（34 NavConfig + 40 活 values + 7 无定义转发 = 81 永久保留登记项；剩余 ~25 新暴露真死候选，下批核）；L3 4876 不再动。
+- 下批：L2 106 中新暴露项精确消费判定（v6-v8 升级后暴露的 values/type）；对 34 NavConfig 等登记项抽查确认未被误伤。
