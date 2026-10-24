@@ -82,7 +82,7 @@
 - [x] **Phase 1-3 · mock 外部 server + 集成测试** ✅ 完成：`scripts/tools/mcp_mock_external_server.py`（python3 stdio NDJSON，greet/echo 2 工具）+ `svc/ai/tests/mcp_external_client_integration.rs`（握手/探测/调用、注册挂载透明调用、不可达跳过、空配置 noop，4/4 通过）
 - [x] **Phase 1-4 · 双入口接入** ✅ 完成：`routes.rs` spawn 块 + `bin/mcp-stdio.rs` 均挂 `register_external_tools`（日志含 external_count）；DSH AgentOrchestrator 直调 ToolRegistry 零改动受益
 - [x] **Phase 2 · 治理化** ✅ 完成（2026-10-24）：`svc/ai/src/dsh/mcp/governance.rs` 新增——① `source=external` 标记（注册描述前缀 `[external-mcp]` + 审计事件 source 字段）；② 结果就地消毒（外部注册闭包内，双入口 orchestrator/server 均生效）：大小上限 64 KiB（JSON 结构截断顶层注入 `__truncated` 保持合法、非 JSON UTF-8 安全截断 `[truncated]`）+ 敏感字段递归脱敏（复用 security::SENSITIVE_FIELDS 单一清单）+ JSON 深度限制 8 层；③ 审计日志 + 原子指标（calls_total/calls_failed/redacted_fields_total/truncated_total，`metrics_snapshot()` 读取）。mock server 增 `echo_secret` 工具；单测 6 个 + 集成测试 5/5（脱敏断言：token/secret → `***REDACTED***`、明文不透传、非敏感字段保留、指标递增）；clippy -D warnings / fmt / mcp 模块 162 测试全绿
-- [ ] **Phase 3 · 第三方开放（后续）**：**决策分析已出**（`MCP修复方案-2026-10-23.md` §6.x，2026-10-24）——默认走 **B 档半开放**（HTTP/SSE client 传输 + server token 认证 + 白名单管理入口），前置补「输入面出站脱敏」（敏感字段从调用参数剥离后出网，复用 SENSITIVE_FIELDS）与审计指标扩展（outbound_args/outbound_redacted）；C 档全开放挂起，触发条件：出现真实第三方 server 消费需求 + 完成工具级权限声明设计。**待产品拍板**：确认 B 档启动、首个接入的 server 候选。
+- [ ] **Phase 3 · 第三方开放（后续）**：**决策已定**——B 档启动（2026-10-24），**首个接入候选：topems-search 全局搜索服务**（svc/search，HTTP/SSE 传输 + token 认证 + 白名单管理入口 + 输入面出站脱敏 + 审计指标扩展；理由/实现路径见 `MCP修复方案-2026-10-23.md` §6.x）。待启动实施。
 
 ---
 
