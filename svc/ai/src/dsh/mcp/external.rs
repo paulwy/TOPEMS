@@ -39,7 +39,8 @@ use tracing::{info, warn};
 
 use super::client::McpClient;
 use super::governance::{
-    audit_external_call, sanitize_external_output, AuditEvent, SanitizeLimits,
+    audit_external_call, record_outbound_call, sanitize_external_input, sanitize_external_output,
+    AuditEvent, SanitizeLimits,
 };
 use super::server::McpServer;
 use super::tools::ToolExecutionError;
@@ -189,8 +190,27 @@ pub async fn register_external_tools(server: &McpServer, raw_config: &str) -> us
                                                     "外部 MCP client 已失效".to_string(),
                                                 )
                                             })?;
+                                            // Phase 4：出站输入脱敏——调用参数剥离 SENSITIVE_FIELDS
+                                            // 命中的键后整体发送（业务数据不出网），并记录审计指标
+                                            let (clean_args, outbound) = sanitize_external_input(
+                                                &args,
+                                                SanitizeLimits::default().max_json_depth,
+                                            );
+                                            record_outbound_call(
+                                                outbound.keys_total,
+                                                outbound.redacted,
+                                            );
+                                            if outbound.redacted > 0 {
+                                                warn!(
+                                                    server = %server_name,
+                                                    tool = %tool_name,
+                                                    redacted = outbound.redacted,
+                                                    keys = outbound.keys_total,
+                                                    "外部 MCP 出站参数剥离敏感字段（不发送）"
+                                                );
+                                            }
                                             let call = client
-                                                .call_tool(&tool_name, args)
+                                                .call_tool(&tool_name, clean_args)
                                                 .await
                                                 .map_err(|e| {
                                                     ToolExecutionError::Execution(format!(

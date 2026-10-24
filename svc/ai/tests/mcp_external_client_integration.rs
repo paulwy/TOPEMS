@@ -313,3 +313,120 @@ async fn register_external_http_transport_mounts_and_forwards() {
         "错 token 应跳过"
     );
 }
+
+#[tokio::test]
+async fn phase4_outbound_sanitizes_input_args() {
+    // Phase 4：出站输入脱敏——调用参数中敏感键剥离后发送（外部收到的 args 不含敏感字段）
+    // mock server 的 tools/call 将收到的 arguments 原样回显，用于验证出站净载荷
+    use axum::extract::State as AxState;
+    use axum::http::StatusCode;
+    use axum::routing::post;
+    use axum::{Json, Router};
+
+    async fn echo_mcp(
+        AxState(token): AxState<&'static str>,
+        headers: axum::http::HeaderMap,
+        Json(req): Json<Value>,
+    ) -> (StatusCode, Json<Value>) {
+        let ok = headers
+            .get("authorization")
+            .and_then(|v| v.to_str().ok())
+            .map(|v| v == format!("Bearer {token}"))
+            .unwrap_or(false);
+        if !ok {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(
+                    json!({ "jsonrpc": "2.0", "id": Value::Null, "error": { "code": -32001, "message": "Unauthorized" } }),
+                ),
+            );
+        }
+        let rq: topems_shared_mcp::jsonrpc::JsonRpcRequest =
+            serde_json::from_value(req).expect("合法请求");
+        let id = rq.id.clone().unwrap_or(Value::Null);
+        let resp = match rq.method.as_str() {
+            "initialize" => json!({
+                "jsonrpc": "2.0", "id": id,
+                "result": { "protocolVersion": "2025-03-26", "capabilities": {}, "serverInfo": { "name": "echo", "version": "1.0" } }
+            }),
+            "tools/list" => json!({
+                "jsonrpc": "2.0", "id": id,
+                "result": { "tools": [ { "name": "raw", "description": "回显参数", "inputSchema": { "type": "object" } } ] }
+            }),
+            "tools/call" => {
+                let arguments = rq
+                    .params
+                    .as_ref()
+                    .and_then(|p| p.get("arguments"))
+                    .cloned()
+                    .unwrap_or(Value::Null);
+                json!({
+                    "jsonrpc": "2.0", "id": id,
+                    "result": { "content": [ { "type": "text", "text": arguments.to_string() } ], "isError": false }
+                })
+            }
+            _ => {
+                json!({ "jsonrpc": "2.0", "id": id, "error": { "code": -32601, "message": "Method not found" } })
+            }
+        };
+        (StatusCode::OK, Json(resp))
+    }
+
+    let app = Router::new()
+        .route("/mcp", post(echo_mcp))
+        .with_state("echo-token");
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind");
+    let addr = listener.local_addr().expect("addr");
+    tokio::spawn(async move {
+        axum::serve(listener, app.into_make_service())
+            .await
+            .expect("serve");
+    });
+    let url = format!("http://{addr}/mcp");
+
+    let before = topems_ai::dsh::mcp::governance::metrics_snapshot();
+    let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
+    let cfg = json!([{ "name": "echo", "transport": "http", "url": url, "token": "echo-token" }])
+        .to_string();
+    assert_eq!(register_external_tools(&server, &cfg).await, 1);
+
+    // 调用参数带敏感键（token/嵌套 secret）+ 非敏感键
+    let result = server
+        .tool_registry()
+        .call_tool(
+            "ext.echo.raw",
+            json!({ "query": "订单", "limit": 3, "token": "sk-leak", "filter": { "status": "open", "secret": "s3cr3t" } }),
+        )
+        .await
+        .expect("调用应成功");
+    if let McpContent::Text { text } = &result.content[0] {
+        let echoed: Value = serde_json::from_str(text).expect("回显应为 JSON");
+        let obj = echoed.as_object().expect("应为对象");
+        assert!(!obj.contains_key("token"), "顶层 token 不应出网");
+        assert_eq!(obj["query"], "订单", "非敏感参数应保留");
+        let filter = obj["filter"].as_object().expect("filter 应为对象");
+        assert!(!filter.contains_key("secret"), "嵌套 secret 不应出网");
+        assert_eq!(filter["status"], "open");
+        // 全文不得含明文敏感值
+        assert!(
+            !text.contains("sk-leak") && !text.contains("s3cr3t"),
+            "明文凭据不应出网"
+        );
+    } else {
+        panic!("应为文本内容");
+    }
+
+    let after = topems_ai::dsh::mcp::governance::metrics_snapshot();
+    // keys_total=5（query/limit/token/filter 顶层 4 + filter 内 status/secret 2 = 6）
+    assert!(
+        after.outbound_args_total > before.outbound_args_total,
+        "出站参数字段计数应递增"
+    );
+    assert_eq!(
+        after.outbound_redacted_total,
+        before.outbound_redacted_total + 2,
+        "token+secret 共 2 个敏感键剥离"
+    );
+}

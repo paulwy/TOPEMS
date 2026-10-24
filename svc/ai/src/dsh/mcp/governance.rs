@@ -21,7 +21,7 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use serde_json::Value;
+use serde_json::{json, Value};
 use topems_shared_mcp::protocol::{McpContent, McpToolResult};
 
 use super::security::SENSITIVE_FIELDS;
@@ -79,10 +79,14 @@ pub struct ExternalToolMetricsSnapshot {
     pub calls_total: u64,
     /// 累计失败次数
     pub calls_failed: u64,
-    /// 累计脱敏字段数
+    /// 累计脱敏字段数（返回路径）
     pub redacted_fields_total: u64,
     /// 累计截断次数
     pub truncated_total: u64,
+    /// 累计出站调用携带的参数字段总数（脱敏前，含嵌套）
+    pub outbound_args_total: u64,
+    /// 累计出站剥离的敏感字段数（Phase 4 输入面脱敏）
+    pub outbound_redacted_total: u64,
 }
 
 /// 模块级原子计数器（外部工具调用面）
@@ -93,6 +97,8 @@ struct ExternalToolMetrics {
     calls_failed: AtomicU64,
     redacted_fields_total: AtomicU64,
     truncated_total: AtomicU64,
+    outbound_args_total: AtomicU64,
+    outbound_redacted_total: AtomicU64,
 }
 
 impl ExternalToolMetrics {
@@ -102,6 +108,8 @@ impl ExternalToolMetrics {
             calls_failed: AtomicU64::new(0),
             redacted_fields_total: AtomicU64::new(0),
             truncated_total: AtomicU64::new(0),
+            outbound_args_total: AtomicU64::new(0),
+            outbound_redacted_total: AtomicU64::new(0),
         }
     }
 
@@ -118,6 +126,13 @@ impl ExternalToolMetrics {
             self.truncated_total.fetch_add(1, Ordering::Relaxed);
         }
     }
+
+    fn record_outbound(&self, args_total: u64, redacted: u64) {
+        self.outbound_args_total
+            .fetch_add(args_total, Ordering::Relaxed);
+        self.outbound_redacted_total
+            .fetch_add(redacted, Ordering::Relaxed);
+    }
 }
 
 /// 返回当前外部工具调用指标快照（测试断言 / 将来 metrics 导出）
@@ -127,7 +142,99 @@ pub fn metrics_snapshot() -> ExternalToolMetricsSnapshot {
         calls_failed: METRICS.calls_failed.load(Ordering::Relaxed),
         redacted_fields_total: METRICS.redacted_fields_total.load(Ordering::Relaxed),
         truncated_total: METRICS.truncated_total.load(Ordering::Relaxed),
+        outbound_args_total: METRICS.outbound_args_total.load(Ordering::Relaxed),
+        outbound_redacted_total: METRICS.outbound_redacted_total.load(Ordering::Relaxed),
     }
+}
+
+/// 出站输入消毒报告（Phase 4）
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct OutboundRedactReport {
+    /// 脱敏前参数字段总数（含嵌套对象键）
+    pub keys_total: u64,
+    /// 被剥离的敏感字段数（整个键移除，不出网）
+    pub redacted: u64,
+}
+
+/// 出站输入消毒：递归**剥离**命中 [`super::security::SENSITIVE_FIELDS`] 的键（整个键
+/// 移除，绝不发送到外部 server），同时统计脱敏前字段总数供审计指标。
+///
+/// 与返回路径 [`sanitize_external_output`] 的占位脱敏不同：输入参数出网=业务数据外发
+/// 第三方，敏感字段必须整体删除而非替换占位（占位仍向外部泄露字段存在性/形状）。
+///
+/// 返回（消毒后参数，报告）。
+pub fn sanitize_external_input(value: &Value, max_depth: usize) -> (Value, OutboundRedactReport) {
+    let (clean, redacted) = strip_sensitive(value, max_depth, 0);
+    (
+        clean,
+        OutboundRedactReport {
+            keys_total: count_keys(value, max_depth, 0),
+            redacted,
+        },
+    )
+}
+
+/// 递归剥离敏感键（命中 → 不插入输出），返回（值，剥离计数）
+fn strip_sensitive(value: &Value, max_depth: usize, depth: usize) -> (Value, u64) {
+    if depth > max_depth {
+        return (Value::String("***depth-limited***".to_string()), 0);
+    }
+    match value {
+        Value::Object(map) => {
+            let mut out = serde_json::Map::with_capacity(map.len());
+            let mut redacted = 0u64;
+            for (k, v) in map {
+                if SENSITIVE_FIELDS.contains(&k.as_str()) {
+                    redacted += 1;
+                    continue; // 整个键移除，不出网
+                }
+                let (sv, sr) = strip_sensitive(v, max_depth, depth + 1);
+                redacted += sr;
+                out.insert(k.clone(), sv);
+            }
+            (Value::Object(out), redacted)
+        }
+        Value::Array(arr) => {
+            let mut out = Vec::with_capacity(arr.len());
+            let mut redacted = 0u64;
+            for v in arr {
+                let (sv, sr) = strip_sensitive(v, max_depth, depth + 1);
+                redacted += sr;
+                out.push(sv);
+            }
+            (Value::Array(out), redacted)
+        }
+        other => (other.clone(), 0),
+    }
+}
+
+/// 递归统计 JSON 对象键总数（脱敏前，含嵌套；数组不计键）
+fn count_keys(value: &Value, max_depth: usize, depth: usize) -> u64 {
+    if depth > max_depth {
+        return 0;
+    }
+    match value {
+        Value::Object(map) => {
+            let mut n = 0u64;
+            for v in map.values() {
+                n += count_keys(v, max_depth, depth + 1);
+            }
+            n + u64::try_from(map.len()).unwrap_or(u64::MAX)
+        }
+        Value::Array(arr) => arr
+            .iter()
+            .map(|v| count_keys(v, max_depth, depth + 1))
+            .sum(),
+        _ => 0,
+    }
+}
+
+/// 记录一次出站调用（输入面脱敏后调用）的审计指标。
+///
+/// 语义：`args_total` 为脱敏前参数字段总数，`redacted` 为被剥离的敏感字段数，
+/// 恒有 `redacted ≤ args_total`，可审计剥离比例。
+pub fn record_outbound_call(args_total: u64, redacted: u64) {
+    METRICS.record_outbound(args_total, redacted);
 }
 
 /// 对外部工具结果就地消毒（大小上限 + 敏感字段脱敏 + JSON 深度限制）。
@@ -453,5 +560,77 @@ mod tests {
             before.redacted_fields_total + 1
         );
         let _ = out;
+    }
+
+    #[test]
+    fn input_sanitize_strips_sensitive_keys_entirely() {
+        // 顶层 + 嵌套 + 数组内敏感键整体剥离；非敏感键保留
+        let raw = json!({
+            "query": "订单",
+            "limit": 5,
+            "token": "sk-top-level",
+            "filter": {
+                "status": "open",
+                "password": "p@ss",
+                "nested": { "api_key": "k", "keep": "v" }
+            },
+            "tags": [ { "name": "a", "secret": "s" }, "plain" ]
+        });
+        let (clean, report) = sanitize_external_input(&raw, DEFAULT_MAX_JSON_DEPTH);
+        assert_eq!(
+            report.redacted, 4,
+            "token/password/api_key/secret 共 4 个敏感键剥离"
+        );
+        assert_eq!(report.keys_total, 12, "脱敏前对象键总数（5+3+2+2，含嵌套）");
+        let obj = clean.as_object().expect("应为对象");
+        assert!(!obj.contains_key("token"), "顶层 token 应移除");
+        assert!(obj.contains_key("query"));
+        let filter = obj["filter"].as_object().expect("filter 应为对象");
+        assert!(!filter.contains_key("password"), "嵌套 password 应移除");
+        assert!(filter.contains_key("status"));
+        assert!(filter["nested"]
+            .as_object()
+            .expect("nested")
+            .contains_key("keep"));
+        assert!(!filter["nested"]
+            .as_object()
+            .expect("nested")
+            .contains_key("api_key"));
+        let tags = obj["tags"].as_array().expect("tags 应为数组");
+        assert!(
+            !tags[0].as_object().expect("tag").contains_key("secret"),
+            "数组内 secret 应移除"
+        );
+        assert_eq!(tags[1], Value::String("plain".to_string()));
+    }
+
+    #[test]
+    fn input_sanitize_no_sensitive_fields_unchanged() {
+        let raw = json!({ "query": "x", "limit": 3 });
+        let (clean, report) = sanitize_external_input(&raw, DEFAULT_MAX_JSON_DEPTH);
+        assert_eq!(report.redacted, 0);
+        assert_eq!(report.keys_total, 2);
+        assert_eq!(clean, raw);
+    }
+
+    #[test]
+    fn input_sanitize_empty_and_scalars() {
+        let (c1, r1) = sanitize_external_input(&Value::Null, DEFAULT_MAX_JSON_DEPTH);
+        assert_eq!(r1.keys_total, 0);
+        assert_eq!(c1, Value::Null);
+        let (_, r2) = sanitize_external_input(&json!([]), DEFAULT_MAX_JSON_DEPTH);
+        assert_eq!(r2.keys_total, 0);
+    }
+
+    #[test]
+    fn outbound_metrics_record_args_and_redacted() {
+        let before = metrics_snapshot();
+        record_outbound_call(12, 4);
+        let after = metrics_snapshot();
+        assert_eq!(after.outbound_args_total, before.outbound_args_total + 12);
+        assert_eq!(
+            after.outbound_redacted_total,
+            before.outbound_redacted_total + 4
+        );
     }
 }
