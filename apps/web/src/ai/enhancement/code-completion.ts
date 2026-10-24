@@ -52,7 +52,7 @@ export interface CompletionItem {
   };
 }
 
-export interface SnippetDefinition {
+interface SnippetDefinition {
   id: string;
   label: string;
   description: string;
@@ -64,7 +64,7 @@ export interface SnippetDefinition {
   category: 'react' | 'typescript' | 'css' | 'json' | 'testing';
 }
 
-export interface ComponentPropInfo {
+interface ComponentPropInfo {
   name: string;
   type: string;
   required: boolean;
@@ -73,7 +73,7 @@ export interface ComponentPropInfo {
   deprecated?: boolean;
 }
 
-export interface APIEndpointInfo {
+interface APIEndpointInfo {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   path: string;
   description: string;

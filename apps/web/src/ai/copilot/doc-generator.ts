@@ -1,4 +1,4 @@
-export interface DocTemplate {
+interface DocTemplate {
   id: string;
   name: string;
   description: string;
@@ -6,7 +6,7 @@ export interface DocTemplate {
   placeholders: string[];
 }
 
-export interface GenerateDocOptions {
+interface GenerateDocOptions {
   description?: string;
   params?: Array<{ name: string; type: string; description?: string }>;
   returns?: string;
@@ -16,7 +16,7 @@ export interface GenerateDocOptions {
   examples?: string[];
 }
 
-export interface ChangelogEntry {
+interface ChangelogEntry {
   version: string;
   date: string;
   type: 'added' | 'changed' | 'fixed' | 'removed' | 'deprecated' | 'security';
@@ -24,7 +24,7 @@ export interface ChangelogEntry {
   author?: string;
 }
 
-export interface ReadmeSection {
+interface ReadmeSection {
   title: string;
   content: string;
 }

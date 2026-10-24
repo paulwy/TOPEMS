@@ -81,7 +81,7 @@ export interface FrameworkAdapter {
 }
 
 /** 统一生命周期 */
-export interface UnifiedLifecycle {
+interface UnifiedLifecycle {
   /** 框架类型 */
   framework: FrameworkType;
   /** 挂载 */
@@ -97,7 +97,7 @@ export interface UnifiedLifecycle {
 }
 
 /** 生命周期钩子 */
-export interface LifecycleHook {
+interface LifecycleHook {
   beforeMount?: (container: HTMLElement, props: UnifiedProps) => void;
   mounted?: (container: HTMLElement) => void;
   beforeUpdate?: (container: HTMLElement, props: UnifiedProps) => void;

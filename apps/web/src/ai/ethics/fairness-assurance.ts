@@ -1,8 +1,8 @@
 export type FairnessType = 'Demographic' | 'Equalized' | 'Calibrated';
 
-export type AuditStatus = 'passed' | 'failed' | 'warning';
+type AuditStatus = 'passed' | 'failed' | 'warning';
 
-export interface FairnessConfig {
+interface FairnessConfig {
   id: string;
   modelId: string;
   fairnessType: FairnessType;
@@ -12,7 +12,7 @@ export interface FairnessConfig {
   updatedAt: number;
 }
 
-export interface FairnessResult {
+interface FairnessResult {
   id: string;
   modelId: string;
   fairnessScore: number;
@@ -25,14 +25,14 @@ export interface FairnessResult {
   duration_ms: number;
 }
 
-export interface FairnessTrend {
+interface FairnessTrend {
   timestamp: number;
   score: number;
   parityDifference: number;
   calibrationScore: number;
 }
 
-export interface FairnessBenchmark {
+interface FairnessBenchmark {
   modelId: string;
   industryAverage: number;
   topQuartile: number;

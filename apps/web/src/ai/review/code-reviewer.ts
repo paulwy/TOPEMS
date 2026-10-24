@@ -19,7 +19,7 @@ export interface ReviewResult {
   reviewed_at: number;
 }
 
-export interface ReviewRule {
+interface ReviewRule {
   id: string;
   name: string;
   type: IssueType;

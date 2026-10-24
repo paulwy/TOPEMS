@@ -8,7 +8,7 @@ export interface TestStep {
   expected: string;
 }
 
-export interface TestScenario {
+interface TestScenario {
   id: string;
   name: string;
   type: TestType;
@@ -21,7 +21,7 @@ export interface TestScenario {
   module?: string;
 }
 
-export interface TestResult {
+interface TestResult {
   scenario_id: string;
   passed: boolean;
   duration_ms: number;
@@ -35,7 +35,7 @@ export interface TestResult {
   }>;
 }
 
-export interface CoverageReport {
+interface CoverageReport {
   total_statements: number;
   covered_statements: number;
   total_branches: number;
@@ -53,7 +53,7 @@ export interface CoverageReport {
   }>;
 }
 
-export interface FailureAnalysis {
+interface FailureAnalysis {
   scenario_id: string;
   failure_type: 'assertion' | 'timeout' | 'error' | 'skip';
   root_cause: string;
@@ -64,7 +64,7 @@ export interface FailureAnalysis {
   occurrence_count: number;
 }
 
-export type SmartTestEvent =
+type SmartTestEvent =
   | { type: 'tests_generated'; count: number; module: string }
   | { type: 'tests_started'; count: number }
   | { type: 'test_started'; scenario_id: string }

@@ -91,7 +91,7 @@ export interface SalesOrder {
   created_by?: string;
 }
 
-export interface SalesOrderItem {
+interface SalesOrderItem {
   id: string;
   sales_order_id: string;
   material_id: string;

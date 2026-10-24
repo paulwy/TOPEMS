@@ -4,7 +4,7 @@ import i18n from '@/i18n';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ModuleCard, type ModuleItem } from './ModuleCard';
 
-export type ModuleSectionKey = 'core' | 'operation' | 'production' | 'intelligent';
+type ModuleSectionKey = 'core' | 'operation' | 'production' | 'intelligent';
 
 interface ModuleSectionProps {
   title: string;

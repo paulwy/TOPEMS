@@ -54,7 +54,7 @@ export interface FormDefinition {
   fields: FormFieldDefinition[];
 }
 
-export interface FormValidationError {
+interface FormValidationError {
   field_id: string;
   message: string;
 }

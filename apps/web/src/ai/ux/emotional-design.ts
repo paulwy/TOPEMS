@@ -54,7 +54,7 @@ export interface DesignResponse {
   };
 }
 
-export interface EmotionProfile {
+interface EmotionProfile {
   userId: string;
   emotionHistory: EmotionState[];
   dominantEmotion: EmotionType;
@@ -63,7 +63,7 @@ export interface EmotionProfile {
   lastDetected: number;
 }
 
-export interface EmotionEvent {
+interface EmotionEvent {
   id: string;
   timestamp: number;
   trigger: string;

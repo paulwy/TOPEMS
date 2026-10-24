@@ -1,6 +1,6 @@
 export type RefactoringType = 'ExtractFunction' | 'ExtractVariable' | 'Rename' | 'Inline' | 'Move';
 
-export interface RefactoringPlan {
+interface RefactoringPlan {
   id: string;
   file: string;
   type: RefactoringType;
@@ -14,7 +14,7 @@ export interface RefactoringPlan {
 
 export type CodeIssueType = 'LongMethod' | 'Complexity' | 'Duplication' | 'GodClass';
 
-export interface CodeIssue {
+interface CodeIssue {
   id: string;
   file: string;
   line: number;
@@ -30,7 +30,7 @@ export interface CodeIssue {
   };
 }
 
-export interface RefactoringHistory {
+interface RefactoringHistory {
   planId: string;
   type: RefactoringType;
   file: string;
@@ -38,7 +38,7 @@ export interface RefactoringHistory {
   summary: string;
 }
 
-export interface ImpactEstimate {
+interface ImpactEstimate {
   filesChanged: number;
   linesAdded: number;
   linesRemoved: number;

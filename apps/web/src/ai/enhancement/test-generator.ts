@@ -13,7 +13,7 @@
 
 export type TestFramework = 'jest' | 'vitest';
 export type TestType = 'component' | 'hook' | 'api' | 'integration';
-export type AssertionStrategy = 'rtl' | 'jest' | 'vitest';
+type AssertionStrategy = 'rtl' | 'jest' | 'vitest';
 
 export interface TestCase {
   name: string;
@@ -39,7 +39,7 @@ export interface TestMethod {
   assertions: string[];
 }
 
-export interface TestSuite {
+interface TestSuite {
   name: string;
   tests: TestMethod[];
   setup?: string[];
@@ -47,7 +47,7 @@ export interface TestSuite {
   coverage_target?: string;
 }
 
-export interface AnalysisResult {
+interface AnalysisResult {
   componentName: string;
   props: Array<{ name: string; type: string; required: boolean }>;
   stateHooks: string[];

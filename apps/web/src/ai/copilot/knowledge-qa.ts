@@ -20,7 +20,7 @@ export interface KnowledgeDocument {
   addedAt: number;
 }
 
-export interface QAResult {
+interface QAResult {
   entry: QAEntry;
   relatedDocuments: KnowledgeDocument[];
   suggestions: string[];

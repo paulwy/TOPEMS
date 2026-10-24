@@ -26,7 +26,7 @@ export interface Breakpoint {
   enabled: boolean;
 }
 
-export interface DebugSuggestion {
+interface DebugSuggestion {
   id: string;
   type: 'performance' | 'logic' | 'security' | 'style' | 'bug';
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -35,7 +35,7 @@ export interface DebugSuggestion {
   location?: { file: string; line: number };
 }
 
-export interface StateAnalysis {
+interface StateAnalysis {
   componentName: string;
   stateSize: number;
   changeFrequency: number;

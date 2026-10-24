@@ -20,7 +20,7 @@ export interface Model {
   owner: string;
 }
 
-export interface VersionCompareResult {
+interface VersionCompareResult {
   added: string[];
   removed: string[];
   changed: string[];

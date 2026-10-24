@@ -1,6 +1,6 @@
 export type RoutingStrategy = 'intent-based' | 'performance-based' | 'hybrid' | 'a/b-test';
 
-export interface RouteRecommendation {
+interface RouteRecommendation {
   path: string;
   confidence: number;
   reason: string;
@@ -13,7 +13,7 @@ export interface RouteRecommendation {
   ab_test_variant?: string;
 }
 
-export interface RouteIntent {
+interface RouteIntent {
   action: string;
   target: string;
   context: string[];
@@ -29,7 +29,7 @@ export interface RoutePerformance {
   last_updated: number;
 }
 
-export interface BehaviorEntry {
+interface BehaviorEntry {
   path: string;
   timestamp: number;
   duration_ms: number;
@@ -37,7 +37,7 @@ export interface BehaviorEntry {
   conversion: boolean;
 }
 
-export interface RouterStats {
+interface RouterStats {
   total_recommendations: number;
   accepted_recommendations: number;
   acceptance_rate: number;

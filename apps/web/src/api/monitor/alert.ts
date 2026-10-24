@@ -16,7 +16,7 @@
 export type AlertSeverity = 'critical' | 'warning' | 'info';
 export type AlertStatus = 'active' | 'resolved' | 'acknowledged' | 'suppressed';
 
-export interface AlertDetail {
+interface AlertDetail {
   id: string;
   tenant_id?: string;
   alert_type: string;
@@ -74,7 +74,7 @@ export interface AlertStatistics {
   }>;
 }
 
-export interface AlertHistoryEvent {
+interface AlertHistoryEvent {
   id: string;
   alert_id: string;
   event_type:

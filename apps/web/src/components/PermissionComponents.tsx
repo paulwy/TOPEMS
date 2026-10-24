@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export interface WithPermissionOptions {
+interface WithPermissionOptions {
   requiredPermission?: string;
   requiredPermissions?: string[];
   requireAll?: boolean;
@@ -9,7 +9,7 @@ export interface WithPermissionOptions {
   loadingFallback?: ReactNode;
 }
 
-export interface RequirePermissionProps {
+interface RequirePermissionProps {
   children: ReactNode;
   permission?: string;
   permissions?: string[];
@@ -20,7 +20,7 @@ export interface RequirePermissionProps {
   onDenied?: () => void;
 }
 
-export interface PermissionGuardProps {
+interface PermissionGuardProps {
   children: ReactNode;
   permissions?: string[];
   requireAll?: boolean;
@@ -28,14 +28,14 @@ export interface PermissionGuardProps {
   fallbackComponent?: ReactNode;
 }
 
-export interface ModulePermissionGuardProps {
+interface ModulePermissionGuardProps {
   children: ReactNode;
   module: string;
   action?: 'read' | 'write' | 'delete' | 'approve' | 'admin';
   fallbackComponent?: ReactNode;
 }
 
-export interface ConditionalRenderProps {
+interface ConditionalRenderProps {
   permission?: string;
   permissions?: string[];
   requireAll?: boolean;

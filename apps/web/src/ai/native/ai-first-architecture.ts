@@ -12,7 +12,7 @@ export type AICapabilityType =
 
 export type CapabilityStatus = 'active' | 'inactive' | 'degraded' | 'error';
 
-export interface AICapability {
+interface AICapability {
   id: string;
   name: string;
   type: AICapabilityType;
@@ -51,12 +51,12 @@ export interface MiddlewareResult {
   latency: number;
 }
 
-export type MiddlewareHandler = (
+type MiddlewareHandler = (
   context: MiddlewareContext,
   next: () => Promise<MiddlewareResult>
 ) => Promise<MiddlewareResult>;
 
-export interface AIPlatformStatus {
+interface AIPlatformStatus {
   initialized: boolean;
   config: PlatformConfig;
   capabilities: {

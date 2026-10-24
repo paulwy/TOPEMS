@@ -1,6 +1,6 @@
 export type RegressionSeverity = 'info' | 'warning' | 'critical';
 
-export interface PerfMetric {
+interface PerfMetric {
   name: string;
   value: number;
   unit: string;
@@ -8,7 +8,7 @@ export interface PerfMetric {
   tags?: Record<string, string>;
 }
 
-export interface PerfBaseline {
+interface PerfBaseline {
   id: string;
   metrics: Record<string, number>;
   createdAt: string;
@@ -18,7 +18,7 @@ export interface PerfBaseline {
   environment?: string;
 }
 
-export interface PerfRegression {
+interface PerfRegression {
   id: string;
   metric: string;
   baseline: number;
@@ -31,7 +31,7 @@ export interface PerfRegression {
   history?: Array<{ timestamp: string; value: number }>;
 }
 
-export interface PerfAlert {
+interface PerfAlert {
   id: string;
   regressionId: string;
   message: string;
@@ -41,14 +41,14 @@ export interface PerfAlert {
   resolvedAt?: string;
 }
 
-export interface PerfTrendPoint {
+interface PerfTrendPoint {
   timestamp: string;
   metric: string;
   value: number;
   baseline: number;
 }
 
-export interface ContinuousPerfEvent {
+interface ContinuousPerfEvent {
   type: 'baseline_set' | 'regression_detected' | 'alert_triggered' | 'measurement_recorded';
   [key: string]: unknown;
 }

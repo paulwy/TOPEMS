@@ -26,7 +26,7 @@ export interface Policy {
   tags: string[];
 }
 
-export interface PolicyDecision {
+interface PolicyDecision {
   id: string;
   policy_id: string;
   policy_name: string;

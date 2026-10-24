@@ -30,7 +30,7 @@ export interface ExperimentResult {
   confidence: number;
 }
 
-export interface SignificanceResult {
+interface SignificanceResult {
   isSignificant: boolean;
   confidenceLevel: number;
   pValue: number;

@@ -40,12 +40,12 @@ export interface ToolRegistry {
   list: () => Tool[];
 }
 
-export interface TaskPlan {
+interface TaskPlan {
   taskId: string;
   steps: Array<{ description: string; tool?: string }>;
 }
 
-export interface AgentEvent {
+interface AgentEvent {
   type:
     | 'task_started'
     | 'step_started'

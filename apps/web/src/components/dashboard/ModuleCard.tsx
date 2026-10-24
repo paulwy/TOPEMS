@@ -18,7 +18,7 @@ export interface ModuleCardQuota {
   label?: string;
 }
 
-export interface ModuleCardData {
+interface ModuleCardData {
   key: string;
   name: string;
   icon: IconComponent;

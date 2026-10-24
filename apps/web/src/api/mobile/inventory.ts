@@ -24,7 +24,7 @@ import type { ApiResponse, PaginatedResponse } from '../client';
 
 export type InventoryStatus = 'normal' | 'low_stock' | 'out_of_stock' | 'frozen';
 export type StocktakeStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
-export type InventoryMovementType = 'inbound' | 'outbound' | 'transfer' | 'adjust';
+type InventoryMovementType = 'inbound' | 'outbound' | 'transfer' | 'adjust';
 export type InventoryMovementStatus =
   'pending' | 'in_progress' | 'confirmed' | 'completed' | 'cancelled';
 

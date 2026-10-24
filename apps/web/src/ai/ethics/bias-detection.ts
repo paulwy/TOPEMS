@@ -2,7 +2,7 @@ export type BiasType = 'Gender' | 'Race' | 'Age' | 'Socioeconomic';
 
 export type BiasSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 
-export interface BiasReport {
+interface BiasReport {
   id: string;
   modelId: string;
   biasType: BiasType;
@@ -13,7 +13,7 @@ export interface BiasReport {
   metadata?: Record<string, unknown>;
 }
 
-export interface BiasMetric {
+interface BiasMetric {
   metric: string;
   group: string;
   value: number;
@@ -22,7 +22,7 @@ export interface BiasMetric {
   severity: BiasSeverity;
 }
 
-export interface BiasRule {
+interface BiasRule {
   id: string;
   name: string;
   biasType: BiasType;

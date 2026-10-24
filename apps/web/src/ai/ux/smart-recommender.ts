@@ -8,7 +8,7 @@ export interface Recommendation {
   context: Record<string, unknown>;
 }
 
-export interface UserBehavior {
+interface UserBehavior {
   userId: string;
   action: string;
   target: string;
@@ -16,7 +16,7 @@ export interface UserBehavior {
   sessionId: string;
 }
 
-export interface RecommendationStats {
+interface RecommendationStats {
   total_recommendations: number;
   accepted_count: number;
   rejected_count: number;

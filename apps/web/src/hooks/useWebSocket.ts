@@ -77,7 +77,7 @@ export interface UseWebSocketOptions {
   autoAuthToken?: boolean;
 }
 
-export interface SubscriptionConfig {
+interface SubscriptionConfig {
   channel: string;
   handler: (message: WebSocketMessage) => void;
 }

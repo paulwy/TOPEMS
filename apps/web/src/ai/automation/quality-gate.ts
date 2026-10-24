@@ -3,7 +3,7 @@ export type GateAction = 'block' | 'warn' | 'info';
 export type GateStatus = 'passed' | 'failed' | 'warned' | 'skipped';
 export type MetricComparison = 'gt' | 'lt' | 'gte' | 'lte' | 'eq';
 
-export interface GateCriteria {
+interface GateCriteria {
   id: string;
   type: GateType;
   name: string;
@@ -15,7 +15,7 @@ export interface GateCriteria {
   metric_key: string;
 }
 
-export interface GateResult {
+interface GateResult {
   criteria_id: string;
   criteria_name: string;
   type: GateType;
@@ -29,7 +29,7 @@ export interface GateResult {
   duration_ms: number;
 }
 
-export interface GateOverride {
+interface GateOverride {
   criteria_id: string;
   reason: string;
   approved_by: string;
@@ -44,7 +44,7 @@ export interface TrendPoint {
   passed: boolean;
 }
 
-export type GateEvent =
+type GateEvent =
   | {
       type: 'gate_evaluated';
       criteria_id: string;

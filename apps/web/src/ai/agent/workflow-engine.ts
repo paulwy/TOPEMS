@@ -40,7 +40,7 @@ export interface WorkflowTemplate {
   variables?: Record<string, unknown>;
 }
 
-export interface WorkflowEvent {
+interface WorkflowEvent {
   type:
     | 'workflow_started'
     | 'step_started'

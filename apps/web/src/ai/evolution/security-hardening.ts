@@ -21,7 +21,7 @@ export type ThreatSeverity = 'Critical' | 'High' | 'Medium' | 'Low';
 export type ThreatLikelihood = 'VeryLikely' | 'Likely' | 'Unlikely' | 'Rare';
 export type ThreatImpact = 'VeryHigh' | 'High' | 'Medium' | 'Low';
 
-export interface ThreatModel {
+interface ThreatModel {
   id: string;
   threat_type: string;
   severity: ThreatSeverity;
@@ -31,7 +31,7 @@ export interface ThreatModel {
   status: 'Identified' | 'Mitigated' | 'Resolved';
 }
 
-export interface SecurityReport {
+interface SecurityReport {
   totalChecks: number;
   passed: number;
   failed: number;

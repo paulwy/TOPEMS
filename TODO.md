@@ -1,3 +1,11 @@
+## unused L1 归零批（2026-10-25）✅ 完成
+
+> **#21 续批 · L1 131 条 def 去 export（barrel 删项后遗留孤儿面清零）**：
+> - def 端去 export 135 处（值 3/类型 128，57 文件）；收敛过程 tsc 驱动，唯一恢复项 `createBaseAxiosClient`
+> - **远端误删修复**：远端 `08fc4bfccc`（unused 21批）误删 client.ts `createBaseAxiosClient`（detect 盲区漏 marketplace.ts 引用）——本批恢复定义（client.ts downloadBlob 前，V64 工厂语义保留）
+> - 验证：tsc 0 错、eslint 0（135 存量 warnings）、detect 复跑 **L1=0**（值 0/类型 0）、L2 87→78
+> - unused 全景更新：L1 0 / L2 78（值 75/类型 5，test/多引用面逐条谨慎）/ L3 活引用
+
 ## unused L2 barrel-only 清理批（2026-10-25）✅ 完成
 
 > **#21 续批 · L2 barrel-only 孤儿清理（-132 条）**：

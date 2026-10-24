@@ -1,4 +1,4 @@
-export interface PerfSnapshot {
+interface PerfSnapshot {
   timestamp: number;
   fps: number;
   memory: number;
@@ -10,7 +10,7 @@ export interface PerfSnapshot {
 
 export type PerfIssueType = 'MemoryLeak' | 'LayoutThrash' | 'LongTask' | 'ExcessiveRenders';
 
-export interface PerfIssue {
+interface PerfIssue {
   id: string;
   type: PerfIssueType;
   severity: 'low' | 'medium' | 'high' | 'critical';

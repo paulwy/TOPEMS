@@ -196,7 +196,7 @@ const codeApi = {
 /**
  * 批量获取编码
  */
-export function useBatchNextCodes() {
+function useBatchNextCodes() {
   return useMutation({
     mutationFn: (
       requests: {
@@ -219,7 +219,7 @@ export function useBatchNextCodes() {
 /**
  * 验证编码
  */
-export function useValidateCode() {
+function useValidateCode() {
   return useMutation({
     mutationFn: (params: { entity_type: EntityType; code: string }) => codeApi.validateCode(params),
 
@@ -236,7 +236,7 @@ export function useValidateCode() {
 /**
  * 预览编码格式
  */
-export function usePreviewCode() {
+function usePreviewCode() {
   return useMutation({
     mutationFn: ({ ruleId, variables }: { ruleId: string; variables?: Record<string, string> }) =>
       codeApi.previewCode(ruleId, variables),

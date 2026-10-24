@@ -32,7 +32,7 @@ export interface TestResultDetail {
   }>;
 }
 
-export interface TestRun {
+interface TestRun {
   id: string;
   testCaseIds: string[];
   startTime: string;
@@ -45,7 +45,7 @@ export interface TestRun {
   environment?: string;
 }
 
-export interface TestSuggestion {
+interface TestSuggestion {
   id: string;
   testCaseId: string;
   type: 'coverage' | 'edge-case' | 'performance' | 'security';
@@ -54,7 +54,7 @@ export interface TestSuggestion {
   confidence: number;
 }
 
-export interface TestTrendPoint {
+interface TestTrendPoint {
   timestamp: string;
   total: number;
   passed: number;
@@ -63,7 +63,7 @@ export interface TestTrendPoint {
   duration_ms: number;
 }
 
-export interface SmartTestEvent {
+interface SmartTestEvent {
   type:
     | 'tests_generated'
     | 'tests_started'

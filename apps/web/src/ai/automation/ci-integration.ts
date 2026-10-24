@@ -14,7 +14,7 @@ export interface CIStage {
   }>;
 }
 
-export interface CIConfig {
+interface CIConfig {
   pipeline: string;
   provider: CIProvider;
   triggers: TriggerType[];
@@ -29,7 +29,7 @@ export interface CIConfig {
   variables?: Record<string, string>;
 }
 
-export interface CIResult {
+interface CIResult {
   run_id: string;
   pipeline: string;
   status: CIStatus;
@@ -47,14 +47,14 @@ export interface CIResult {
   logs: string[];
 }
 
-export interface RunArtifact {
+interface RunArtifact {
   name: string;
   url: string;
   size: number;
   type: 'coverage' | 'bundle' | 'test-report' | 'build';
 }
 
-export type CIEvent =
+type CIEvent =
   | { type: 'pipeline_triggered'; run_id: string; pipeline: string; trigger: TriggerType }
   | { type: 'stage_started'; run_id: string; stage: string }
   | { type: 'stage_completed'; run_id: string; stage: string; duration_ms: number }

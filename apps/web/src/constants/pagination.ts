@@ -29,7 +29,7 @@ export const DEFAULT_PAGE_SIZE = 20 as const;
  * interceptor 层调用 normalizePaginationParams 自动转成 page_size 发给后端。
  */
 
-export type PageSizeField = 'pageSize' | 'page_size';
+type PageSizeField = 'pageSize' | 'page_size';
 
 export interface PaginationParamsInput {
   page?: number;

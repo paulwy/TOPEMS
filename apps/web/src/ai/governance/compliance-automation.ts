@@ -1,7 +1,7 @@
 export type Regulation = 'GDPR' | 'SOX' | 'HIPAA' | 'PCI';
 export type Severity = 'critical' | 'high' | 'medium' | 'low';
 
-export interface ComplianceRule {
+interface ComplianceRule {
   id: string;
   name: string;
   regulation: Regulation;

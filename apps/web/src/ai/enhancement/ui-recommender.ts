@@ -26,7 +26,7 @@ export type IntentCategory =
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
-export interface IntentContext {
+interface IntentContext {
   description: string;
   category?: IntentCategory;
   keywords?: string[];
@@ -38,7 +38,7 @@ export interface IntentContext {
   priority?: 'performance' | 'accessibility' | 'consistency' | 'simplicity';
 }
 
-export interface ComponentRecommendation {
+interface ComponentRecommendation {
   component: string;
   reason: string;
   alternatives: Array<{

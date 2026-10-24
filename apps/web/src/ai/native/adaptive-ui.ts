@@ -53,7 +53,7 @@ export interface UserProfile {
   updatedAt: number;
 }
 
-export interface AdaptedLayout {
+interface AdaptedLayout {
   layout: 'grid' | 'list' | 'mixed';
   density: LayoutDensity;
   theme: ThemeMode;
@@ -68,7 +68,7 @@ export interface AdaptedLayout {
   layout_confidence: number;
 }
 
-export interface ContentRecommendation {
+interface ContentRecommendation {
   id: string;
   title: string;
   type: 'module' | 'report' | 'dashboard' | 'action';
@@ -78,7 +78,7 @@ export interface ContentRecommendation {
   estimated_engagement: number;
 }
 
-export interface AdaptationStats {
+interface AdaptationStats {
   total_adaptations: number;
   layout_changes: number;
   content_recommendations: number;

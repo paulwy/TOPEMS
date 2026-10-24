@@ -45,7 +45,7 @@ export interface BusinessMetric {
   updated_at: string;
 }
 
-export interface MetricSummary {
+interface MetricSummary {
   total_metrics: number;
   active_metrics: number;
   by_type: Array<{
@@ -70,7 +70,7 @@ export interface MetricSummary {
   }>;
 }
 
-export interface MetricTrendPoint {
+interface MetricTrendPoint {
   period: string;
   value: number;
   target?: number;
@@ -78,7 +78,7 @@ export interface MetricTrendPoint {
   mom_change?: number;
 }
 
-export interface KpiDashboard {
+interface KpiDashboard {
   period: string;
   total_revenue?: number;
   total_orders?: number;

@@ -3,7 +3,7 @@ export type ProficiencyLevel = 'beginner' | 'intermediate' | 'expert';
 export type LayoutDensity = 'compact' | 'normal' | 'relaxed';
 export type MotionPreference = 'no_preference' | 'reduce' | 'increase';
 
-export interface InteractionProfile {
+interface InteractionProfile {
   userId: string;
   preferences: {
     density: LayoutDensity;
@@ -36,7 +36,7 @@ export interface InteractionProfile {
   updatedAt: number;
 }
 
-export interface AdaptiveResponse {
+interface AdaptiveResponse {
   component: {
     variant: string;
     size: 'small' | 'medium' | 'large';
@@ -67,7 +67,7 @@ export interface AdaptiveResponse {
   reason: string;
 }
 
-export interface AdaptationRecord {
+interface AdaptationRecord {
   id: string;
   timestamp: number;
   trigger: string;

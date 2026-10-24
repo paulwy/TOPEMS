@@ -14,7 +14,7 @@ export interface SecurityAudit {
   metadata?: Record<string, unknown>;
 }
 
-export interface AuditResult {
+interface AuditResult {
   auditId: string;
   passed: boolean;
   score: number;
@@ -25,7 +25,7 @@ export interface AuditResult {
   duration_ms: number;
 }
 
-export interface AuditRule {
+interface AuditRule {
   id: string;
   name: string;
   type: AuditType;

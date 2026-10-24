@@ -1,6 +1,6 @@
 export type ExplainabilityMethod = 'SHAP' | 'LIME' | 'Attention';
 
-export interface Explanation {
+interface Explanation {
   id: string;
   predictionId: string;
   modelId: string;
@@ -12,7 +12,7 @@ export interface Explanation {
   confidence: number;
 }
 
-export interface ExplainabilityReport {
+interface ExplainabilityReport {
   modelId: string;
   globalImportance: Array<{ feature: string; importance: number }>;
   featureRanking: Array<{ feature: string; rank: number; shapValue: number }>;

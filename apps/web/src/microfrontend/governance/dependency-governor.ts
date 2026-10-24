@@ -1,7 +1,7 @@
 import { moduleMarket, type MarketplaceModule } from '../marketplace/module-market';
 import i18n from '@/i18n';
 
-export interface ModuleDependency {
+interface ModuleDependency {
   module_id: string;
   version: string;
   required_version: string;

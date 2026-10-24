@@ -2,7 +2,7 @@ import i18n from '@/i18n';
 
 export type VersionStatus = 'active' | 'canary' | 'deprecated' | 'rollback';
 
-export type VersioningStrategy = 'semver' | 'date' | 'hash';
+type VersioningStrategy = 'semver' | 'date' | 'hash';
 
 export interface ModuleVersion {
   version: string;

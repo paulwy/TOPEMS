@@ -23,14 +23,14 @@ export interface LighthouseScores {
   seo: number;
 }
 
-export interface BundleInfo {
+interface BundleInfo {
   name: string;
   size: number;
   gzipped_size: number;
   chunk: string;
 }
 
-export interface AuditResult {
+interface AuditResult {
   findings: PerfFinding[];
   lighthouse_scores: LighthouseScores;
   metrics: AuditMetrics;

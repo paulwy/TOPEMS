@@ -7,7 +7,7 @@ export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type RiskCategory =
   'credit' | 'market' | 'liquidity' | 'operational' | 'compliance' | 'fraud';
 export type Regulation = 'sox' | 'gdpr' | 'pci_dss' | 'hipaa' | 'internal';
-export interface RiskIndicator {
+interface RiskIndicator {
   id: string;
   category: string;
   level: string;
@@ -70,7 +70,7 @@ interface Transaction {
   metadata?: unknown;
 }
 
-export interface ReviewRule {
+interface ReviewRule {
   id: string;
   regulation: string;
   category: string;

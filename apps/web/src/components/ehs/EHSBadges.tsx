@@ -171,7 +171,7 @@ export const EHSStatusBadge: React.FC<EHSStatusBadgeProps> = ({ status, type = '
 
 // ============ Severity Badge ============
 
-export type SeverityLevel =
+type SeverityLevel =
   | 'high'
   | 'medium'
   | 'low'
@@ -252,7 +252,7 @@ export const EHSMeasureTypeBadge: React.FC<EHSMeasureTypeBadgeProps> = ({ type }
 
 // ============ Incident Type Badge ============
 
-export type IncidentType =
+type IncidentType =
   | 'near_miss'
   | 'accident'
   | 'injury'

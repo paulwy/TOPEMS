@@ -19,7 +19,7 @@ export interface ImportInfo {
   source: string;
 }
 
-export interface FileStructure {
+interface FileStructure {
   path: string;
   imports: ImportInfo[];
   exports: string[];
@@ -39,7 +39,7 @@ export interface SearchResult {
   score: number;
 }
 
-export interface IndexStats {
+interface IndexStats {
   totalFiles: number;
   totalSymbols: number;
   totalImports: number;

@@ -10,7 +10,7 @@ export interface ConversationMessage {
   timestamp: number;
 }
 
-export interface ConversationContext {
+interface ConversationContext {
   messages: ConversationMessage[];
   entities: Entity[];
   topics: string[];
@@ -26,7 +26,7 @@ export interface Entity {
   confidence: number;
 }
 
-export interface MemoryEntry {
+interface MemoryEntry {
   id: string;
   type: MemoryEntryType;
   content: string;
@@ -35,13 +35,13 @@ export interface MemoryEntry {
   metadata?: Record<string, unknown>;
 }
 
-export interface ContextWindow {
+interface ContextWindow {
   maxMessages: number;
   maxTokens: number;
   summaryThreshold: number;
 }
 
-export interface ContextEvent {
+interface ContextEvent {
   type:
     | 'input_processed'
     | 'context_updated'

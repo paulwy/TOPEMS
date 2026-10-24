@@ -3,7 +3,7 @@ export type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 export type UserSegment =
   'all' | 'desktop' | 'mobile' | 'tablet' | 'new_user' | 'returning_user' | 'power_user';
 
-export interface UXMetric {
+interface UXMetric {
   id: string;
   type: UXMetricType;
   value: number;
@@ -14,7 +14,7 @@ export interface UXMetric {
   metadata?: Record<string, unknown>;
 }
 
-export interface UXAlert {
+interface UXAlert {
   id: string;
   metric: UXMetricType;
   threshold: number;
@@ -34,7 +34,7 @@ export interface FunnelStep {
   previousValue?: number;
 }
 
-export interface FunnelAnalysis {
+interface FunnelAnalysis {
   id: string;
   name: string;
   steps: FunnelStep[];
@@ -43,7 +43,7 @@ export interface FunnelAnalysis {
   totalUsers: number;
 }
 
-export interface UXMonitorEvent {
+interface UXMonitorEvent {
   type: 'metric_recorded' | 'alert_created' | 'alert_resolved' | 'funnel_analyzed';
   [key: string]: unknown;
 }

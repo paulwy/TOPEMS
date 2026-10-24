@@ -1,6 +1,6 @@
 export type NoiseStrategy = 'gaussian' | 'laplace' | 'exponential' | 'none';
 
-export interface PrivacyConfig {
+interface PrivacyConfig {
   id: string;
   modelId: string;
   differential_privacy_enabled: boolean;
@@ -14,7 +14,7 @@ export interface PrivacyConfig {
   updated_at: number;
 }
 
-export interface PrivacyReport {
+interface PrivacyReport {
   configId: string;
   privacy_score: number;
   reidentification_risk: number;
@@ -29,7 +29,7 @@ export interface PrivacyReport {
   generated_at: number;
 }
 
-export interface PrivacyTestResult {
+interface PrivacyTestResult {
   id: string;
   configId: string;
   modelId: string;

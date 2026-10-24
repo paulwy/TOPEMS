@@ -14,7 +14,7 @@ export interface AttackVector {
   examples?: string[];
 }
 
-export interface RobustnessTest {
+interface RobustnessTest {
   id: string;
   modelId: string;
   attackVector: AttackVector;
@@ -31,7 +31,7 @@ export interface RobustnessTest {
   };
 }
 
-export interface Defense {
+interface Defense {
   id: string;
   name: string;
   type: AttackType;
