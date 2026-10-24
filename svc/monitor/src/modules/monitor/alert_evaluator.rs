@@ -10,6 +10,7 @@ use crate::modules::monitor::metrics;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -338,7 +339,10 @@ pub async fn list_thresholds(
                 rows.iter().filter_map(row_to_threshold).collect();
             axum::Json(ApiResponse::success(thresholds, "获取阈值列表成功"))
         }
-        Err(e) => axum::Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => axum::Json(ApiResponse::from(TopemsError::internal(
+            "查询阈值列表失败",
+            e,
+        ))),
     }
 }
 
@@ -383,7 +387,7 @@ pub async fn create_threshold(
             Some(threshold) => axum::Json(ApiResponse::success(threshold, "阈值创建成功")),
             None => axum::Json(ApiResponse::error(500, "阈值行反序列化失败")),
         },
-        Err(e) => axum::Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => axum::Json(ApiResponse::from(TopemsError::internal("创建阈值失败", e))),
     }
 }
 
@@ -423,7 +427,10 @@ pub async fn get_threshold(
             None => axum::Json(ApiResponse::error(500, "阈值行反序列化失败")),
         },
         Ok(None) => axum::Json(ApiResponse::error(404, "阈值不存在")),
-        Err(e) => axum::Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => axum::Json(ApiResponse::from(TopemsError::internal(
+            "获取阈值详情失败",
+            e,
+        ))),
     }
 }
 
@@ -477,7 +484,7 @@ pub async fn update_threshold(
             None => axum::Json(ApiResponse::error(500, "阈值行反序列化失败")),
         },
         Ok(None) => axum::Json(ApiResponse::error(404, "阈值不存在")),
-        Err(e) => axum::Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => axum::Json(ApiResponse::from(TopemsError::internal("更新阈值失败", e))),
     }
 }
 
@@ -517,7 +524,7 @@ pub async fn delete_threshold(
             "阈值删除成功",
         )),
         Ok(_) => axum::Json(ApiResponse::error(404, "阈值不存在")),
-        Err(e) => axum::Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => axum::Json(ApiResponse::from(TopemsError::internal("删除阈值失败", e))),
     }
 }
 
@@ -550,7 +557,7 @@ pub async fn evaluate_thresholds(
     .await
     {
         Ok(rows) => rows.iter().filter_map(row_to_threshold).collect(),
-        Err(e) => return axum::Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => return axum::Json(ApiResponse::from(TopemsError::internal("查询阈值失败", e))),
     };
 
     // 2. 采集真实指标快照（CPU/内存/错误率/连接池均为真实采集，无硬编码值）

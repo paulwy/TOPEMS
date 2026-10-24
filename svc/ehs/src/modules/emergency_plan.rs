@@ -9,6 +9,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use uuid::Uuid;
@@ -244,10 +245,10 @@ pub async fn list_plans(
         }
         Err(e) => {
             tracing::error!("list_plans error: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("查询应急预案列表失败: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal(
+                "查询应急预案列表失败",
+                e,
+            )))
         }
     }
 }
@@ -306,7 +307,10 @@ pub async fn create_plan(
         Ok(r) => Json(ApiResponse::success(plan_from_row(&r), "创建应急预案成功")),
         Err(e) => {
             tracing::error!("create_plan error: {}", e);
-            Json(ApiResponse::error(500, &format!("创建应急预案失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "创建应急预案失败",
+                e,
+            )))
         }
     }
 }
@@ -338,7 +342,10 @@ pub async fn get_plan(
         }
         Err(e) => {
             tracing::error!("get_plan error: {}", e);
-            return Json(ApiResponse::error(500, &format!("查询应急预案失败: {}", e)));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询应急预案失败",
+                e,
+            )));
         }
     };
     let plan = plan_from_row(&plan_row);
@@ -482,7 +489,10 @@ pub async fn update_plan(
         Ok(None) => Json(ApiResponse::error(404, "应急预案不存在")),
         Err(e) => {
             tracing::error!("update_plan error: {}", e);
-            Json(ApiResponse::error(500, &format!("更新应急预案失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "更新应急预案失败",
+                e,
+            )))
         }
     }
 }
@@ -512,7 +522,10 @@ pub async fn delete_plan(
         Ok(_) => Json(ApiResponse::error(404, "应急预案不存在")),
         Err(e) => {
             tracing::error!("delete_plan error: {}", e);
-            Json(ApiResponse::error(500, &format!("删除应急预案失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "删除应急预案失败",
+                e,
+            )))
         }
     }
 }
@@ -544,10 +557,10 @@ pub async fn list_plan_versions(
         }
         Err(e) => {
             tracing::error!("list_plan_versions error: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("获取预案版本列表失败: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal(
+                "获取预案版本列表失败",
+                e,
+            )))
         }
     }
 }
@@ -591,7 +604,10 @@ pub async fn create_new_version(
         )),
         Err(e) => {
             tracing::error!("create_new_version error: {}", e);
-            Json(ApiResponse::error(500, &format!("创建预案版本失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "创建预案版本失败",
+                e,
+            )))
         }
     }
 }

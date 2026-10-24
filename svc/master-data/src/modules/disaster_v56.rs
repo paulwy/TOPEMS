@@ -252,7 +252,12 @@ macro_rules! db_exec {
     ($e:expr) => {
         match $e {
             Ok(v) => v,
-            Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::internal(
+                    "数据库操作失败",
+                    e,
+                )))
+            }
         }
     };
 }
@@ -714,9 +719,9 @@ pub async fn create_recovery_point(
     .bind(rp.size_bytes)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("写入恢复点失败: {e}")))
+    .map_err(|e| TopemsError::internal("写入恢复点失败", e))
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(e));
     }
 
     Json(ApiResponse::success(rp, "恢复点已创建"))
@@ -809,7 +814,7 @@ pub async fn restore_from_point(
     .bind(&req.recovery_point_id)
     .fetch_optional(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("查询恢复点失败: {e}"))))
+    .map_err(|e| TopemsError::internal("查询恢复点失败", e)))
     .map(|r| recovery_point_from_row(&r));
 
     let Some(point) = point else {
@@ -972,9 +977,9 @@ pub async fn create_recovery_plan(
     .bind(recovery_plan_status_to_str(&plan.status))
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("写入恢复计划失败: {e}")))
+    .map_err(|e| TopemsError::internal("写入恢复计划失败", e))
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(e));
     }
 
     Json(ApiResponse::success(plan, "恢复计划已创建"))
@@ -1001,7 +1006,7 @@ pub async fn execute_plan(
     .bind(&req.plan_id)
     .fetch_optional(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("查询恢复计划失败: {e}"))))
+    .map_err(|e| TopemsError::internal("查询恢复计划失败", e)))
     .map(|r| recovery_plan_from_row(&r));
 
     let Some(mut plan) = plan else {
@@ -1027,9 +1032,9 @@ pub async fn execute_plan(
     .bind(serde_json::to_value(&plan.steps).unwrap_or_default())
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("更新恢复计划失败: {e}")))
+    .map_err(|e| TopemsError::internal("更新恢复计划失败", e))
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(e));
     }
 
     Json(ApiResponse::success(
@@ -1075,7 +1080,7 @@ pub async fn get_plan_progress(
     .bind(&id)
     .fetch_optional(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("查询恢复计划失败: {e}"))))
+    .map_err(|e| TopemsError::internal("查询恢复计划失败", e)))
     .map(|r| recovery_plan_from_row(&r));
 
     let Some(plan) = plan else {
@@ -1135,7 +1140,7 @@ pub async fn test_recovery(
         ))
         .fetch_optional(&state.db)
         .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询恢复点失败: {e}"))))
+        .map_err(|e| TopemsError::internal("查询恢复点失败", e)))
         .map(|r| recovery_point_from_row(&r))
     } else {
         db_exec!(sqlx::query(&format!(
@@ -1144,7 +1149,7 @@ pub async fn test_recovery(
         .bind(&point_id)
         .fetch_optional(&state.db)
         .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询恢复点失败: {e}"))))
+        .map_err(|e| TopemsError::internal("查询恢复点失败", e)))
         .map(|r| recovery_point_from_row(&r))
     };
 
@@ -1238,7 +1243,7 @@ pub async fn create_continuity_plan(
     .bind(continuity_status_to_str(&plan.status))
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("写入连续性计划失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::internal("写入连续性计划失败", e)) { return Json(ApiResponse::from(e)); }
 
     Json(ApiResponse::success(plan, "连续性计划已创建"))
 }
@@ -1287,7 +1292,7 @@ pub async fn get_plan(
     .bind(&id)
     .fetch_optional(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("查询连续性计划失败: {e}"))))
+    .map_err(|e| TopemsError::internal("查询连续性计划失败", e)))
     .map(|r| continuity_plan_from_row(&r));
     match plan {
         Some(p) => Json(ApiResponse::success(p, "连续性计划详情")),
@@ -1319,7 +1324,7 @@ pub async fn update_plan(
     .bind(&id)
     .fetch_optional(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("查询连续性计划失败: {e}"))))
+    .map_err(|e| TopemsError::internal("查询连续性计划失败", e)))
     .map(|r| continuity_plan_from_row(&r));
 
     let Some(mut plan) = plan else {
@@ -1360,9 +1365,9 @@ pub async fn update_plan(
     .bind(continuity_status_to_str(&plan.status))
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("更新连续性计划失败: {e}")))
+    .map_err(|e| TopemsError::internal("更新连续性计划失败", e))
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(e));
     }
 
     Json(ApiResponse::success(plan, "连续性计划已更新"))
@@ -1392,7 +1397,7 @@ pub async fn test_plan(
     .bind(&id)
     .fetch_optional(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("查询连续性计划失败: {e}"))))
+    .map_err(|e| TopemsError::internal("查询连续性计划失败", e)))
     .map(|r| continuity_plan_from_row(&r));
 
     let Some(_plan) = plan else {
@@ -1408,7 +1413,7 @@ pub async fn test_plan(
     .bind("tested")
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("更新连续性计划失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::internal("更新连续性计划失败", e)) { return Json(ApiResponse::from(e)); }
 
     let bc_test = BCTest {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1432,9 +1437,9 @@ pub async fn test_plan(
     .bind(serde_json::to_value(&bc_test.issues_found).unwrap_or_default())
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("写入演练记录失败: {e}")))
+    .map_err(|e| TopemsError::internal("写入演练记录失败", e))
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(e));
     }
 
     Json(ApiResponse::success(bc_test, "连续性计划测试完成"))
@@ -1686,9 +1691,9 @@ pub async fn configure_replication(
     .bind(replication_status_to_str(&config.status))
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("写入复制配置失败: {e}")))
+    .map_err(|e| TopemsError::internal("写入复制配置失败", e))
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(e));
     }
 
     Json(ApiResponse::success(config, "复制配置已创建"))
@@ -1714,7 +1719,7 @@ pub async fn start_replication(
     .bind(&req.replication_id)
     .fetch_optional(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("查询复制配置失败: {e}"))))
+    .map_err(|e| TopemsError::internal("查询复制配置失败", e)))
     .map(|r| replication_config_from_row(&r));
 
     let Some(config) = config else {
@@ -1727,9 +1732,9 @@ pub async fn start_replication(
     .bind(&config.id)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("启动复制失败: {e}")))
+    .map_err(|e| TopemsError::internal("启动复制失败", e))
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(e));
     }
 
     Json(ApiResponse::success(
@@ -1764,7 +1769,7 @@ pub async fn stop_replication(
     .bind(&req.replication_id)
     .fetch_optional(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("查询复制配置失败: {e}"))))
+    .map_err(|e| TopemsError::internal("查询复制配置失败", e)))
     .map(|r| replication_config_from_row(&r));
 
     let Some(config) = config else {
@@ -1777,9 +1782,9 @@ pub async fn stop_replication(
     .bind(&config.id)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("停止复制失败: {e}")))
+    .map_err(|e| TopemsError::internal("停止复制失败", e))
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(e));
     }
 
     Json(ApiResponse::success(
@@ -1897,9 +1902,9 @@ pub async fn initiate_failover(
     .bind(failover_status_to_str(&failover.status))
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("写入故障转移记录失败: {e}")))
+    .map_err(|e| TopemsError::internal("写入故障转移记录失败", e))
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(e));
     }
 
     Json(ApiResponse::success(failover, "故障转移已发起"))
@@ -1930,7 +1935,7 @@ pub async fn complete_failover(
     .bind(&req.failover_id)
     .fetch_optional(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("查询故障转移记录失败: {e}"))))
+    .map_err(|e| TopemsError::internal("查询故障转移记录失败", e)))
     .map(|r| failover_record_from_row(&r));
 
     let Some(record) = record else {
@@ -1945,7 +1950,7 @@ pub async fn complete_failover(
     .bind(&completed_at)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("更新故障转移记录失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::internal("更新故障转移记录失败", e)) { return Json(ApiResponse::from(e)); }
 
     if let Err(e) = sqlx::query(
         r#"UPDATE master_data.mdm_region_configs SET status = 'offline', primary_flag = false WHERE region_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
@@ -1953,14 +1958,14 @@ pub async fn complete_failover(
     .bind(&record.from_region)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("更新源地域失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::internal("更新源地域失败", e)) { return Json(ApiResponse::from(e)); }
     if let Err(e) = sqlx::query(
         r#"UPDATE master_data.mdm_region_configs SET status = 'online', primary_flag = true WHERE region_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&record.to_region)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("更新目标地域失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::internal("更新目标地域失败", e)) { return Json(ApiResponse::from(e)); }
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -2018,7 +2023,7 @@ pub async fn switch_regions(
     .bind(&req.primary_region)
     .fetch_optional(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("查询地域失败: {e}"))))
+    .map_err(|e| TopemsError::internal("查询地域失败", e)))
     .map(|r| region_config_from_row(&r));
 
     let Some(_target) = target else {
@@ -2031,9 +2036,9 @@ pub async fn switch_regions(
     .bind(&req.primary_region)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("重置地域主备失败: {e}")))
+    .map_err(|e| TopemsError::internal("重置地域主备失败", e))
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(e));
     }
     if let Err(e) = sqlx::query(
         r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = 'online' WHERE region_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
@@ -2041,7 +2046,7 @@ pub async fn switch_regions(
     .bind(&req.primary_region)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("切换主地域失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::internal("切换主地域失败", e)) { return Json(ApiResponse::from(e)); }
 
     let regions: Vec<RegionConfig> = sqlx::query(&format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"

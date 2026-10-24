@@ -4220,7 +4220,7 @@ pub async fn get_opening_balances(
         }
         Err(e) => {
             tracing::error!("Failed to get opening balances: {}", e);
-            Json(ApiResponse::error(500, &format!("查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
         }
     }
 }
@@ -4301,7 +4301,7 @@ pub async fn create_opening_balances(
         )),
         Err(e) => {
             tracing::error!("Failed to create opening balance: {}", e);
-            Json(ApiResponse::error(500, &format!("创建失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("创建失败", e)))
         }
     }
 }
@@ -4390,7 +4390,7 @@ pub async fn set_opening_balance(
         )),
         Err(e) => {
             tracing::error!("Failed to set opening balance: {}", e);
-            Json(ApiResponse::error(500, &format!("设置失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("设置失败", e)))
         }
     }
 }
@@ -4447,7 +4447,7 @@ pub async fn carry_forward_opening_balance(
         )),
         Err(e) => {
             tracing::error!("Failed to carry forward opening balance: {}", e);
-            Json(ApiResponse::error(500, &format!("结转失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("结转失败", e)))
         }
     }
 }

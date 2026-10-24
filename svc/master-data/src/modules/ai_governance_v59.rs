@@ -32,7 +32,12 @@ macro_rules! db_exec {
     ($e:expr) => {
         match $e {
             Ok(v) => v,
-            Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::internal(
+                    "数据库操作失败",
+                    e,
+                )))
+            }
         }
     };
 }

@@ -20,7 +20,12 @@ macro_rules! db_exec {
     ($e:expr) => {
         match $e {
             Ok(v) => v,
-            Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::internal(
+                    "数据库操作失败",
+                    e,
+                )))
+            }
         }
     };
 }
@@ -1410,7 +1415,7 @@ pub async fn search_semantic_handler(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(TopemsError::internal("写入搜索历史失败", e)));
     }
 
     Json(ApiResponse::success(results, "语义搜索结果"))
@@ -1447,7 +1452,7 @@ pub async fn search_hybrid_handler(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &e.to_string()));
+        return Json(ApiResponse::from(TopemsError::internal("写入搜索历史失败", e)));
     }
 
     Json(ApiResponse::success(results, "混合搜索结果"))
