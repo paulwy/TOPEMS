@@ -309,6 +309,47 @@ async fn ssrf_target_blocked_async(url: &str) -> bool {
     }
 }
 
+/// 钉 IP 构建 HTTP client：域名目标在 SSRF 校验通过后立即解析，并把解析出的
+/// 第一个 IP 钉入 reqwest 解析表（`ClientBuilder::resolve`）——reqwest 建立连接时
+/// 不再做第二次 DNS 解析（连接/SNI/证书仍按原域名），消除「校验用解析 A、连接用
+/// 解析 B」的 TOCTOU / DNS 重绑定窗口。
+///
+/// - IP 直连 host（含 localhost）：无二次解析，直接构建，无需钉。
+/// - 域名解析失败：保持默认行为返回 client（前置 SSRF 校验已保守拒绝解析失败
+///   目标；此处失败仅导致连接报错，无安全损失）。
+async fn build_pinned_client(
+    url: &str,
+    timeout: std::time::Duration,
+) -> Result<reqwest::Client, reqwest::Error> {
+    let mut builder = reqwest::Client::builder().timeout(timeout);
+    if let Ok(u) = url::Url::parse(url) {
+        if let Some(host) = u.host_str() {
+            let host = host
+                .trim_start_matches('[')
+                .trim_end_matches(']')
+                .to_lowercase();
+            if !host.is_empty() && host.parse::<std::net::IpAddr>().is_err() {
+                let port = u.port_or_known_default().unwrap_or(80);
+                // 解析加短超时：钉 IP 属纵深加固，不得因解析器卡顿拖死请求线程
+                let resolved: Result<Vec<std::net::SocketAddr>, std::io::Error> =
+                    match tokio::time::timeout(
+                        std::time::Duration::from_secs(2),
+                        tokio::net::lookup_host((host.as_str(), port)),
+                    )
+                    .await
+                    {
+                        Ok(r) => r.map(|it| it.collect()),
+                        Err(_) => Ok(Vec::new()),
+                    };
+                if let Some(addr) = resolved.ok().and_then(|v| v.into_iter().next()) {
+                    builder = builder.resolve(&host, addr);
+                }
+            }
+        }
+    }
+    builder.build()
+}
+
 /// reqwest 错误原文可能携带内网地址/端口/完整 URL 细节，
 /// 回传客户端前脱敏；原始错误仅落服务端日志。
 fn sanitize_reqwest_error(e: &reqwest::Error) -> String {
@@ -495,20 +536,19 @@ pub(crate) async fn probe_http_url(api_url: &str, timeout_ms: u64) -> ProbeResul
     }
 
     let start = std::time::Instant::now();
-    let client = match reqwest::Client::builder()
-        .timeout(std::time::Duration::from_millis(timeout_ms))
-        .build()
-    {
-        Ok(c) => c,
-        Err(e) => {
-            return ProbeResult {
-                success: false,
-                response_time_ms: start.elapsed().as_millis() as u64,
-                http_status: None,
-                error_message: Some(sanitize_reqwest_error(&e)),
-            };
-        }
-    };
+    // 钉 IP：校验后的解析结果直接钉入 reqwest，连接不再二次 DNS 解析（防 TOCTOU）
+    let client =
+        match build_pinned_client(api_url, std::time::Duration::from_millis(timeout_ms)).await {
+            Ok(c) => c,
+            Err(e) => {
+                return ProbeResult {
+                    success: false,
+                    response_time_ms: start.elapsed().as_millis() as u64,
+                    http_status: None,
+                    error_message: Some(sanitize_reqwest_error(&e)),
+                };
+            }
+        };
 
     match client.get(api_url).send().await {
         Ok(resp) => {
@@ -927,9 +967,9 @@ async fn call_erp_api(
         ));
     }
 
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(30))
-        .build()
+    // 钉 IP：校验后的解析结果直接钉入 reqwest，连接不再二次 DNS 解析（防 TOCTOU）
+    let client = build_pinned_client(&url, std::time::Duration::from_secs(30))
+        .await
         .map_err(|e| {
             tracing::warn!("external_erp client build raw error: {}", e);
             TopemsError::NetworkRequest("HTTP client build failed".to_string())
@@ -2077,5 +2117,60 @@ mod ssrf_tests {
         assert!(ssrf_host_blocked("[fe80::dead:beef]"));
         assert!(!ssrf_host_blocked("example.internal.erp"));
         assert!(!ssrf_host_blocked("8.8.8.8"));
+    }
+
+    /// 钉 IP：IP 直连 host 无需钉（无二次解析），client 正常构建。
+    #[tokio::test]
+    async fn pinned_client_ip_direct_builds() {
+        let client = build_pinned_client(
+            "http://10.1.2.3:8080/api",
+            std::time::Duration::from_secs(5),
+        )
+        .await;
+        assert!(client.is_ok(), "IP 直连目标应正常构建 client");
+    }
+
+    /// 钉 IP：域名 host 在构建时被 resolve 钉到目标 IP——请求命中本地 server
+    /// 而非依赖系统 DNS 的地址选择（macOS 下 localhost 系统解析可能优先 ::1，
+    /// resolve 钉 127.0.0.1 后必走 IPv4 本地连接）。
+    #[tokio::test]
+    async fn pinned_client_connects_to_pinned_local_server() {
+        // 双栈监听：lookup 对 localhost 可能返回 ::1 优先，resolve 钉任意回环均可达
+        let listener = tokio::net::TcpListener::bind("[::]:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            loop {
+                let Ok((mut sock, _)) = listener.accept().await else {
+                    break;
+                };
+                let (mut r, mut w) = sock.split();
+                let mut reader = tokio::io::BufReader::new(&mut r);
+                let mut line = String::new();
+                let _ = tokio::io::AsyncBufReadExt::read_line(&mut reader, &mut line).await;
+                let resp = "HTTP/1.1 200 OK\r\ncontent-length: 0\r\nconnection: close\r\n\r\n";
+                let _ = tokio::io::AsyncWriteExt::write_all(&mut w, resp.as_bytes()).await;
+            }
+        });
+
+        let url = format!("http://localhost:{}/health", addr.port());
+        let client = build_pinned_client(&url, std::time::Duration::from_secs(5))
+            .await
+            .unwrap();
+        let resp = client.get(&url).send().await;
+        server.abort();
+        let resp = resp.expect("钉 IP 生效：应连接本地 server");
+        assert_eq!(resp.status(), 200, "resolve 钉住后应命中本地 server");
+    }
+
+    /// 钉 IP：域名不可解析时保持默认行为返回 client（连接时才报错），不 panic。
+    #[tokio::test]
+    async fn pinned_client_unresolvable_domain_builds() {
+        // .invalid 为保留 TLD，解析必然失败（或超时），此处仅验证构建不 panic
+        let client = build_pinned_client(
+            "http://definitely-not-real-9f3c2a.invalid/",
+            std::time::Duration::from_secs(1),
+        )
+        .await;
+        assert!(client.is_ok(), "解析失败应回退默认 client 而非报错");
     }
 }
