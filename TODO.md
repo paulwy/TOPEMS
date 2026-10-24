@@ -4,7 +4,7 @@
 > - `AiPromptLibraryPage.test.tsx`（3 用例）：列表渲染（cell-name 行）、行 action「使用」→ Use Dialog、行 action「删除」→ 乐观更新（setQueryData updater 过滤）；store mock 支持 zustand selector 式（`useNotificationStore((s)=>s.addNotification)`）
 > - `TrainingPage.test.tsx`（1 用例）：CrudPage 渲染（培训计划页签）+ adapter.list → `trainingApi.listTrainingPlans` 调用 + 行数据渲染
 > - 验证：4 文件 23 用例全过（含 scm 批回归）、eslint 0
-> - 提交：`148616d898`
+> - 提交：`f0b2d6d621`（rebase 后）
 
 ## 模板 stub 架构改造 + MrpPlanPage 计算流补测（2026-10-25）✅ 完成
 
