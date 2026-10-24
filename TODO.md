@@ -4299,3 +4299,14 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - vitest 24 批全量：13 文件 53 失败（较预存在 7/13 增多——需下批核失败清单判定是否本批引入；25 批删除项 grep 均无测试引用）。
 ### 状态与下批
 - 下批：types 3（VoucherItem/PeriodOption/DefectForm——测试引用，删除需同步测试）评估；vitest 失败清单核（13 文件 53 失败的构成：预存在 7/13 vs 新增）；L3 4686 级不再动。
+## 第二十六轮（2026-10-25）：vitest 53 失败定性 + 22/24 批 NavConfig 聚合误删回归修复
+- **vitest 53 失败定性**（13 文件）：
+  - **29 PluginManager.test**：`vi.mock('@/utils/logger')` 缺 `default` 导出（errors.ts 默认导入 `createLogger`）——远端并行机 f5fc7774b（S1 空串清洗）引入的 mock 缺口，**非 unused 批次所致** → 补 `default: () => loggerStub`，29/29 绿。
+  - **10 导航连坐**（NavigationRegistry 1 + bi-breadcrumb 3 + plugin-sync 4 + AppHeader 2 + navigation 1）：**22/24 批误删实锤**。回溯 e0f95f6ac「MONO 注册全部内建模块」：coreModuleNavConfigs 聚合 **31+ 条真实 NavConfig 数据**；22 批清 barrel 把聚合清成空数组（只留 import），24 批连锁删 34 个定义 → 运行时注册面归零（面包屑英文 fallback 回归 + pluginManager builtInCodes 空）。
+  - 剩余 **13 失败 = 预存在基线**（7 文件：route-nav-alignment/wms-tms-erp-integration 7/ScmWmsSrmComponents FilterHint/AiModelSettings/Dashboard/ErpOperational/FinancialReport i18n）。
+- **修复**：恢复 34 个 modules/*/config.ts 的 `*NavConfig` 定义（checkout 25795a2f3^）；modules/index.ts 重建聚合数组 34 条（**不 export 各 NavConfig 名**，避免 barrel 转发误判 → L1 不回弹）。
+- 验证：tsc 0、eslint 0、全量 vitest **53→13 收敛（恰为预存在基线）**；重扫 **L1=0、L2=77（values 74 = 40 活 + 34 NavConfig 活数据登记；types 3）、L3=4667**。
+- commit `cf807f103` → rebase 远端 7 commit（含 #18 批 B2/B3 登记）→ push `8a6c8351a`。
+- **方法论教训**：barrel 清理「0 消费」判定必须核**聚合对象本身的真消费**（coreModuleNavConfigs → navigation/index.ts 注册 + pluginManager.ts:497 builtInCodes）；detector 对聚合消费有盲区（判 L2），34 NavConfig 登记永久保留。
+### 状态与下批
+- 下批：L2 77（values 74 = 40 活 + 34 NavConfig 永久保留 / types 3 测试引用）——实质无可删项；可选：L3 中刷新 34 NavConfig 登记说明；或转向「继续推进 erp/qms」等其他主线。
