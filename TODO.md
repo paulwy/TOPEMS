@@ -3758,3 +3758,19 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [ ] 遗留：000014 portal:admin 落 iam 副本的绑定有效性存疑（运行时读 public.*）——若 portal 管理端点仅超管可用，需按 public.* 口径补绑（建议下批）；租户业务管理员自管 FAQ 需 IAM 面单独授权（运维）；ai:admin dict 描述未回填（非破坏，未做）
 ### 状态
 - 本轮 3 commits 落盘（085 收敛 + 000016/FAQ 编辑 + 本登记）；**未 push**；统一推送前用户 fetch+rebase
+
+## 审计修复实施登记 第六轮：凭证表契约收敛守卫（空库全链贯通）+ portal public 补绑（2026-10-24，未推送）
+### ① 迁移链 092 及后续守卫（核心，**空库全链 479/479 贯通**）
+- [x] **092 列存在性守卫**：`20261016000092_backfill_auth_session_tenant.sql` 两段 UPDATE（core_refresh_tokens/core_sessions）+ 末尾断言 DO 块全加 `information_schema.columns` 列守卫（用户决策：会话/刷新令牌全局认证设施无租户维度，守卫优于补列）
+- [x] **093 FK 守卫**：`20261016000093` 两条 `DROP CONSTRAINT sessions_user_id_fkey / refresh_tokens_user_id_fkey` 加 `IF EXISTS`（PG 原生，空库 FK 0 跳过）
+- [x] **20261017000004 空库缺列族**：4 条 `ALTER COLUMN DROP NOT NULL`（program_id/employee_id/employee_name/enrollment_date）包 DO 块列守卫（空库该表仅骨架列，全跳）
+- [x] **20261021000009 搬迁守卫**：ehs→public.qa_ehs_hazards 存量搬迁在既有 relkind 守卫上追加目标表 tenant_id 列存在条件（空库跳过空表搬迁）
+- [x] **空库全链重放（topems_prepare DROP+CREATE 全量）**：**479/479 Applied，EXIT=0，0 error**——089 类型收敛 + 092/093/004/009 同族守卫后，20261016→17→18→19→21→23→24 全链一次过，**迁移链空库重放缺陷彻底闭环**
+- [x] 门禁：validate 双跑 Errors=0 / Checksum errors=0；check-migrations 无序号重复（4 条「禁止修改已提交迁移」为授权豁免）
+### ② portal:admin public.* 补绑（落地）
+- [x] 勘察：000016 已确立 public.* 显式口径；portal:admin 在 public/iam 两副本均无字典行无绑定；测试库 `_sqlx_migrations` 账本仅到 20261019000001（000014 未应用，iam 孤儿问题在本库未体现、生产可能存在）
+- [x] **迁移 `20261024000017_portal_admin_permission_public.sql`**：三步同型 000016——public.core_permissions 字典兜底（portal:admin 插入 1）+ admin 角色兜底（幂等 0）+ admin→portal:admin 绑定（插入 1）；header 说明修正 000014 iam 副本口径、绑定保留历史不删改
+- [x] 测试库应用验证：绑定生效（admin 当前绑定 {ai:admin, portal:admin}）；iam 副本保持孤儿未触碰；check-migrations PASS
+- [ ] 遗留：000014 iam 副本绑定建议 header 注记「已被 000017 public.* 口径取代」（整合时补）；测试库账本后续走 sqlx 工具登记（DDL 幂等重跑安全）；portal 端到端登录签发未验（超范围）
+### 状态
+- 本轮 3 commits 落盘（守卫贯通 + portal 补绑 + 本登记）；**未 push**；统一推送前用户 fetch+rebase
