@@ -1,4 +1,20 @@
 
+## V517 泄露面清退（2026-10-24）✅ 完成
+
+> 对应「下一步工作规划」之「统一错误出口（V517）」子项。门禁 `check-error-handling.cjs` 报告模式较基线 +848 `ApiResponse::error` / +39 泄露面（远端并行会话新引入代码）——全量复扫后修复 39 处命中（raw-error-to-string 28 + leak-internal-error 11），统一出口 `Json(ApiResponse::from(TopemsError::internal("业务上下文", e)))`（classify() 保证细节只进日志，测试 `test_classify_does_not_leak_internal_details` 兜底）。
+
+| 域 | 形态 | 处数 | 代表文件 |
+|---|---|---|---|
+| monitor | raw（`ApiResponse::error(500, &e.to_string())`） | 6 | alert_evaluator.rs（宏/5 handler） |
+| master-data | raw（含宏 + map_err BusinessLogic 混合形态） | 22 | disaster_v56.rs 17 / semantic_v57.rs 3 / ai_governance_v59.rs 1 / governance_v58.rs 1 |
+| finance | leak（`format!("X失败: {}", e)` 拼接） | 4 | mod.rs（期初余额四端点） |
+| ehs | leak（单行/多行 format 拼接） | 7 | emergency_plan.rs（预案/版本 7 端点） |
+
+- **范围说明**：disaster_v56.rs 同文件同模式 `TopemsError::BusinessLogic(format!("X: {e}"))` 11 处（函数返回 Result 形态、非门禁命中）一并统一为 `internal("X", e)`——同为「原始错误拼接进客户端消息」，属 V517 清退范畴；测试无 message 文案断言，语义安全。
+- **验证**：全量复扫泄露面 39→0、`ApiResponse::error` 3869→3828；四域 `cargo test --lib` 1908 用例 0 失败（门禁口径，`mdm_crud_integration` 连真库需 DATABASE_URL 不在门禁内）；clippy `--all-targets -D warnings` 0 warning；fmt 通过；pre-commit 26 项 + pre-push 7 项全绿。
+- **提交**：`baeb934e43`（rebase 前 `6fa9a2ee6f`）。期间本地磁盘满（No space left on device）经用户手动删除 `target/` 释放后重编译验证。
+- **遗留登记**：CI 侧 `--changed-only` 拦截新增已按门禁约定生效；其余 svc（ai/pm/pdm/srm/qms/lims/wms/erp/gis/portal 等）无命中。monitor settings.rs 等非清单 `e.to_string()` 形态（脚本统计口径外）留待后续批次核对。
+
 ## 前端页面真断言补测（2026-10-24）📌 完成
 
 > 对应「下一步工作规划（2026-10-18）」五方向之「前端测试覆盖」长尾：空库域 + 弱域代表页面照 `CrmCrudPages.test.tsx` 范本补页面级真断言 spec（API 调用参数 / 响应解包 / 错误翻译 / 渲染断言），分域并行。14 个新 spec / 66 用例全绿，typecheck + eslint 绿，每域独立 commit（pre-commit 26 项逐提交通过）。
