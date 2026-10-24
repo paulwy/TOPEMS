@@ -514,5 +514,3 @@ export class CodeCompletion {
     this.moduleApiCache.clear();
   }
 }
-
-export const codeCompletion = CodeCompletion.getInstance();

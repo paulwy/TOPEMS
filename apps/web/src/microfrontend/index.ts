@@ -387,7 +387,6 @@ export {
 
 // 智能代码补全（模块 API + Props 提示 + 自动导入 + 代码片段）
 export {
-  codeCompletion,
   CodeCompletion,
   type CompletionItem,
   type CompletionKind,

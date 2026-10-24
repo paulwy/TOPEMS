@@ -1,7 +1,6 @@
 import { lazyWithRetry } from '@/routes/utils';
 import i18n from '@/i18n';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
-import type { ModuleNavConfig } from '@/lib/navigation/types';
 
 /**
  * Master Data 模块配置
@@ -141,92 +140,6 @@ export const masterModuleConfig: RouteModuleConfig = {
     aiGovernanceRoute,
     commercialRoute,
     publicMasterDataRoute,
-  ],
-};
-
-// ---- 导航菜单配置 ----
-export const masterNavConfig: ModuleNavConfig = {
-  code: 'master',
-  name: i18n.t('master.moduleName'),
-  nameKey: 'master.moduleName',
-  icon: 'Database',
-  path: MASTER_PATHS.root,
-  source: 'plugin' as const,
-  suite: 'platform',
-  order: 95,
-  navItems: [
-    {
-      code: 'master-data-asset-catalog',
-      label: i18n.t('master.dataAssetCatalog'),
-      labelKey: 'master.dataAssetCatalog',
-      icon: 'Database',
-      path: MASTER_PATHS.dataAssetCatalog,
-      permission: 'master:data-asset:read',
-      order: 0,
-      group: 'master',
-      showInSidebar: true,
-      description: i18n.t('master.data_asset_catalog.desc'),
-    },
-    {
-      code: 'master-schema-registry',
-      label: i18n.t('master.schemaRegistry'),
-      labelKey: 'master.schemaRegistry',
-      icon: 'Database',
-      path: MASTER_PATHS.schemaRegistry,
-      permission: 'master-data:schema:read',
-      order: 1,
-      group: 'master',
-      showInSidebar: true,
-      description: i18n.t('master.schema_registry.desc'),
-    },
-    {
-      code: 'master-lineage-analytics',
-      label: i18n.t('master.lineageAnalytics'),
-      labelKey: 'master.lineageAnalytics',
-      icon: 'AccountTree',
-      path: MASTER_PATHS.lineageAnalytics,
-      permission: 'master_data:lineage:read',
-      order: 2,
-      group: 'master',
-      showInSidebar: true,
-      description: i18n.t('master.lineage_analytics.desc'),
-    },
-    {
-      code: 'master-ai-governance',
-      label: i18n.t('master.aiGovernance'),
-      labelKey: 'master.aiGovernance',
-      icon: 'AutoAwesome',
-      path: MASTER_PATHS.aiGovernance,
-      permission: 'master_data:ai_governance:read',
-      order: 3,
-      group: 'master',
-      showInSidebar: true,
-      description: i18n.t('master.ai_governance.desc'),
-    },
-    {
-      code: 'master-commercial',
-      label: i18n.t('master.commercial'),
-      labelKey: 'master.commercial',
-      icon: 'Storefront',
-      path: MASTER_PATHS.commercial,
-      permission: 'master_data:commercial:read',
-      order: 4,
-      group: 'master',
-      showInSidebar: true,
-      description: i18n.t('master.commercial.desc'),
-    },
-    {
-      code: 'master-public-master-data',
-      label: i18n.t('master.publicMasterData'),
-      labelKey: 'master.publicMasterData',
-      icon: 'Boxes',
-      path: MASTER_PATHS.publicMasterData,
-      permission: 'master:data-asset:read',
-      order: 5,
-      group: 'master',
-      showInSidebar: true,
-      description: i18n.t('master.public_master_data.desc'),
-    },
   ],
 };
 

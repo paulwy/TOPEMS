@@ -3,11 +3,8 @@ import { pluginApi } from './plugin';
 
 export * from './types';
 
-export {
-  getSuites as SUITES,
-  PLUGIN_SUITE_MAP,
-  getPluginRegistry as PLUGIN_REGISTRY,
-} from './registry';
+export { PLUGIN_SUITE_MAP, getPluginRegistry as PLUGIN_REGISTRY } from './registry';
+export { getSuites as SUITES } from './registry';
 export { fetchAllPluginInfo, checkAllPluginsHealth } from './registry';
 
 export { pluginApi } from './plugin';

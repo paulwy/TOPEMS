@@ -29,7 +29,6 @@ export {
 } from './performance-analyzer';
 
 export {
-  codeCompletion,
   CodeCompletion,
   type CompletionItem,
   type CompletionKind,
