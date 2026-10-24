@@ -333,13 +333,4 @@ export class PrefetchEngine {
   }
 }
 
-let globalPrefetchEngine: PrefetchEngine | null = null;
-
-export function getPrefetchEngine(): PrefetchEngine {
-  if (!globalPrefetchEngine) {
-    globalPrefetchEngine = new PrefetchEngine();
-  }
-  return globalPrefetchEngine;
-}
-
 export default PrefetchEngine;

@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { getModuleThemes, getModuleTheme, getModuleThemeFromPath } from '../moduleThemes';
 
 describe('lib/moduleThemes', () => {
   describe('moduleThemes data', () => {
@@ -77,46 +76,6 @@ describe('lib/moduleThemes', () => {
     it('returns undefined for unknown module code', () => {
       expect(getModuleTheme('nonexistent')).toBeUndefined();
       expect(getModuleTheme('')).toBeUndefined();
-    });
-  });
-
-  describe('getModuleThemeFromPath', () => {
-    it('extracts module from simple pathname', () => {
-      const theme = getModuleThemeFromPath('/iam/users');
-      expect(theme).toBeDefined();
-      expect(theme?.code).toBe('iam');
-    });
-
-    it('extracts module from pathname with no sub-path', () => {
-      const theme = getModuleThemeFromPath('/crm');
-      expect(theme?.code).toBe('crm');
-    });
-
-    it('extracts module from deep pathname', () => {
-      const theme = getModuleThemeFromPath('/hrm/employees/123/edit');
-      expect(theme?.code).toBe('hrm');
-    });
-
-    it('returns undefined for root path', () => {
-      expect(getModuleThemeFromPath('/')).toBeUndefined();
-    });
-
-    it('returns undefined for empty path', () => {
-      expect(getModuleThemeFromPath('')).toBeUndefined();
-    });
-
-    it('returns undefined for unknown module in path', () => {
-      expect(getModuleThemeFromPath('/unknown/page')).toBeUndefined();
-    });
-
-    it('handles paths with trailing slashes', () => {
-      const theme = getModuleThemeFromPath('/workflow/');
-      expect(theme?.code).toBe('workflow');
-    });
-
-    it('handles paths with multiple leading slashes', () => {
-      const theme = getModuleThemeFromPath('///ai/chat');
-      expect(theme?.code).toBe('ai');
     });
   });
 });

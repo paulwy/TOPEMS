@@ -42,34 +42,6 @@ describe('WebSocket Optimizer', () => {
     });
   });
 
-  describe('fullJitterBackoff', () => {
-    it('returns value in [0, capped] range', () => {
-      for (let i = 0; i < 20; i++) {
-        const delay = fullJitterBackoff(0, 1000, 30000);
-        expect(delay).toBeGreaterThanOrEqual(0);
-        expect(delay).toBeLessThanOrEqual(1000);
-      }
-    });
-
-    it('returns random distribution', () => {
-      const samples = 1000;
-      const delays = Array.from({ length: samples }, () => fullJitterBackoff(0, 1000, 1000));
-      const min = Math.min(...delays);
-      const max = Math.max(...delays);
-      expect(max - min).toBeGreaterThan(500); // 充分分散
-    });
-  });
-
-  describe('equalJitterBackoff', () => {
-    it('returns value in [capped/2, capped] range', () => {
-      for (let i = 0; i < 20; i++) {
-        const delay = equalJitterBackoff(0, 1000, 1000);
-        expect(delay).toBeGreaterThanOrEqual(500);
-        expect(delay).toBeLessThanOrEqual(1000);
-      }
-    });
-  });
-
   describe('HeartbeatMonitor', () => {
     let sendPing: ReturnType<typeof vi.fn>;
     let onTimeout: ReturnType<typeof vi.fn>;

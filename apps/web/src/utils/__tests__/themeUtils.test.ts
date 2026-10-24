@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { invertColor } from '../themeUtils';
 
 // Mock @mui/material/styles before importing
 vi.mock('@mui/material/styles', () => ({

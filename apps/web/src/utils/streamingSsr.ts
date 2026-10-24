@@ -177,47 +177,6 @@ export function hydrateSSRData(): SSRDataCollection {
   }
 }
 
-/**
- * 客户端：按 key 读取单条 SSR 数据
- *
- * @param key 数据 key
- * @returns 数据载荷（未找到返回 undefined）
- */
-export function readSSRData<T = unknown>(key: string): T | undefined {
-  const collection = hydrateSSRData();
-  const entry = collection.entries.find((e) => e.key === key);
-  return entry?.payload as T | undefined;
-}
-
-/**
- * 客户端：解析流式注入的 HTML 注释块（用于流式替换场景）
- *
- * 扫描文档中的 `<!-- SSR:DATA -->` 标记，提取流式数据。
- */
-export function parseStreamingChunks(html: string): SSRDataEntry[] {
-  const chunks: SSRDataEntry[] = [];
-  const regex = new RegExp(
-    `${escapeRegExp(SSR_DATA_MARKER)}(.*?)${escapeRegExp(SSR_DATA_MARKER)}`,
-    'g'
-  );
-  let match: RegExpExecArray | null;
-  while ((match = regex.exec(html)) !== null) {
-    try {
-      const entry = deserializeSSRData(match[1]) as SSRDataEntry;
-      if (entry && typeof entry.key === 'string') {
-        chunks.push(entry);
-      }
-    } catch (e) {
-      ssrLogger.warn(i18n.t('shared.streaming-ssr.k3'), e);
-    }
-  }
-  return chunks;
-}
-
-function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 // ==================== StreamingSSRManager ====================
 
 /** 流式渲染选项 */
@@ -522,13 +481,6 @@ export async function collectSSRStream(stream: ReadableStream<Uint8Array>): Prom
   }
   result += decoder.decode();
   return result;
-}
-
-/**
- * 清除水合缓存（测试 / 路由切换时使用）
- */
-export function clearHydratedSSRData(): void {
-  hydratedData = null;
 }
 
 export default StreamingSSRManager;

@@ -27,40 +27,10 @@ export const glassSx = (theme: Theme) => ({
 
 export type GlowStrength = 'sm' | 'md' | 'lg';
 
-const GLOW_ALPHA: Record<GlowStrength, { ring: number; spread: number }> = {
-  sm: { ring: 0.12, spread: 0.08 },
-  md: { ring: 0.18, spread: 0.14 },
-  lg: { ring: 0.28, spread: 0.22 },
-};
-
-/** 品牌色外发光（design demo `shadow-glow` / `.selected-glow`） */
-export const shadowGlowSx =
-  (strength: GlowStrength = 'md') =>
-  (theme: Theme) => {
-    const { ring, spread } = GLOW_ALPHA[strength];
-    return {
-      boxShadow: `0 0 0 1px ${alpha(theme.palette.primary.main, ring)}, 0 0 20px ${alpha(
-        theme.palette.primary.main,
-        spread
-      )}`,
-    };
-  };
-
 /** 渐变文字（design demo `gradient-text`，primary → secondary） */
 export const gradientTextSx = (theme: Theme) => ({
   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
   backgroundClip: 'text',
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
-});
-
-/** 页面渐变背景（design demo `page-gradient-bg`：双椭圆品牌色径向渐变 + 底色） */
-export const pageGradientBgSx = (theme: Theme) => ({
-  background: `radial-gradient(ellipse at 10% 0%, ${alpha(
-    theme.palette.primary.main,
-    0.06
-  )} 0%, transparent 50%), radial-gradient(ellipse at 90% 10%, ${alpha(
-    theme.palette.secondary.main,
-    0.05
-  )} 0%, transparent 45%), ${theme.palette.background.default}`,
 });

@@ -269,8 +269,6 @@ class SessionStorage {
 }
 
 // 导出单例
-export const localStorage2 = new LocalStorage();
-export const sessionStorage2 = new SessionStorage();
 
 // 导出类用于自定义配置
 export { LocalStorage, SessionStorage };

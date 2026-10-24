@@ -104,30 +104,6 @@ describe('lib/security', () => {
     });
   });
 
-  describe('validateUrl', () => {
-    it('returns false for empty/null/undefined', () => {
-      expect(validateUrl('')).toBe(false);
-      expect(validateUrl(null as unknown)).toBe(false);
-      expect(validateUrl(undefined as unknown)).toBe(false);
-    });
-
-    it('accepts http and https URLs', () => {
-      expect(validateUrl('http://example.com')).toBe(true);
-      expect(validateUrl('https://example.com/path?q=1#hash')).toBe(true);
-    });
-
-    it('rejects other protocols (javascript, ftp, file)', () => {
-      expect(validateUrl('javascript:alert(1)')).toBe(false);
-      expect(validateUrl('ftp://files.example.com')).toBe(false);
-      expect(validateUrl('file:///etc/passwd')).toBe(false);
-    });
-
-    it('rejects malformed strings', () => {
-      expect(validateUrl('not a url')).toBe(false);
-      expect(validateUrl('www.example.com')).toBe(false); // missing protocol
-    });
-  });
-
   describe('validateEmail', () => {
     it('returns false for empty/null/undefined', () => {
       expect(validateEmail('')).toBe(false);
@@ -144,26 +120,6 @@ describe('lib/security', () => {
       expect(validateEmail('no.tld@domain')).toBe(false);
       expect(validateEmail('spaces here@example.com')).toBe(false);
       expect(validateEmail('@@example.com')).toBe(false);
-    });
-  });
-
-  describe('sanitizeInput', () => {
-    it('returns empty string for empty/null', () => {
-      expect(sanitizeInput('')).toBe('');
-      expect(sanitizeInput(null as unknown)).toBe('');
-    });
-
-    it('removes script blocks explicitly', () => {
-      const result = sanitizeInput('before <script type="text/javascript">alert(1)</script> after');
-      expect(result.toLowerCase()).not.toContain('<script');
-      expect(result).toContain('before');
-      expect(result).toContain('after');
-    });
-
-    it('escapes remaining HTML entities via escapeHtml', () => {
-      const result = sanitizeInput('<div class="x">text</div>');
-      expect(result).not.toContain('<div');
-      expect(result.toLowerCase()).toContain('&lt;');
     });
   });
 

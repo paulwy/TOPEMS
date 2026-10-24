@@ -10,8 +10,5 @@ export type { DataTableProps, DataTableColumn, DataTableAlign } from './DataTabl
 export { FilterChip } from './FilterChip';
 export type { FilterChipProps } from './FilterChip';
 
-export { TrendLine } from './TrendLine';
-export type { TrendLineProps } from './TrendLine';
-
 export { Pagination } from './Pagination';
 export type { PaginationProps } from './Pagination';

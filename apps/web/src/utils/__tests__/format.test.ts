@@ -193,30 +193,6 @@ describe('formatRelativeTime', () => {
   });
 });
 
-describe('formatStatus', () => {
-  it('should format numeric status 0', () => {
-    expect(formatStatus(0)).toBe('未启用');
-  });
-
-  it('should format numeric status 1', () => {
-    expect(formatStatus(1)).toBe('已启用');
-  });
-
-  it('should format string status', () => {
-    expect(formatStatus('active')).toBe('活跃');
-    expect(formatStatus('pending')).toBe('待处理');
-  });
-
-  it('should return original string for unknown status', () => {
-    expect(formatStatus('unknown_status')).toBe('unknown_status');
-  });
-
-  it('should handle case insensitive status', () => {
-    expect(formatStatus('Active')).toBe('活跃');
-    expect(formatStatus('PENDING')).toBe('待处理');
-  });
-});
-
 describe('formatPercent', () => {
   it('should format percentage with default decimals', () => {
     const result = formatPercent(0.456);
@@ -265,88 +241,5 @@ describe('formatFileSize', () => {
 
   it('should handle NaN string', () => {
     expect(formatFileSize('abc')).toBe('0 B');
-  });
-});
-
-describe('formatPhone', () => {
-  it('should mask middle 4 digits of phone', () => {
-    expect(formatPhone('13812345678')).toBe('138****5678');
-  });
-
-  it('should return empty string for empty input', () => {
-    expect(formatPhone('')).toBe('');
-  });
-
-  it('should return empty string for null/undefined input', () => {
-    expect(formatPhone(null as unknown as string)).toBe('');
-  });
-});
-
-describe('formatEmail', () => {
-  it('should mask email prefix', () => {
-    expect(formatEmail('testuser@example.com')).toBe('te***@example.com');
-  });
-
-  it('should return empty string for empty input', () => {
-    expect(formatEmail('')).toBe('');
-  });
-
-  it('should return original if no @ sign', () => {
-    expect(formatEmail('noatsign')).toBe('noatsign');
-  });
-});
-
-describe('formatIdCard', () => {
-  it('should mask id card middle digits', () => {
-    expect(formatIdCard('110101199001011234')).toBe('1101**********1234');
-  });
-
-  it('should return empty string for empty input', () => {
-    expect(formatIdCard('')).toBe('');
-  });
-});
-
-describe('formatDateRange', () => {
-  it('should format same day range', () => {
-    const result = formatDateRange('2024-01-15', '2024-01-15');
-    expect(result).toContain('2024-01-15');
-  });
-
-  it('should format same month range', () => {
-    const result = formatDateRange('2024-01-01', '2024-01-15');
-    expect(result).toContain('01-01');
-    expect(result).toContain('01-15');
-  });
-
-  it('should format same year range', () => {
-    const result = formatDateRange('2024-01-01', '2024-06-15');
-    expect(result).toContain('01-01');
-    expect(result).toContain('06-15');
-  });
-
-  it('should handle invalid dates by returning raw strings', () => {
-    expect(formatDateRange('invalid', 'dates')).toBe('invalid - dates');
-  });
-});
-
-describe('formatMonth', () => {
-  it('should format month', () => {
-    const result = formatMonth('2024-06-15');
-    expect(result).toContain('2024');
-    expect(result).toContain('06');
-    expect(result).toContain('月');
-  });
-});
-
-describe('formatWeek', () => {
-  it('should return original string for invalid date', () => {
-    expect(formatWeek('invalid')).toBe('invalid');
-  });
-
-  it('should format week range', () => {
-    // 2024-06-12 is a Wednesday
-    const result = formatWeek('2024-06-12T00:00:00Z');
-    // Week starts Monday (06-10) ends Sunday (06-16)
-    expect(result).toContain('~');
   });
 });

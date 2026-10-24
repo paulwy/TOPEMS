@@ -162,9 +162,6 @@ export { NumberField, type NumberFieldProps } from './NumberFields';
 export { CurrencyField, type CurrencyFieldProps } from './NumberFields';
 export { PercentField, type PercentFieldProps } from './NumberFields';
 
-// TouchButton - 触控按钮组件
-export { TouchButton } from './TouchButton';
-
 // Drawer - 抽屉组件
 export { Drawer } from './Drawer';
 export type { DrawerAnchor } from './Drawer';

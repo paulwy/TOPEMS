@@ -24,12 +24,4 @@ export { ObservabilityPanel } from './ObservabilityPanel';
 // V217: MF 运行时可观测性埋点
 export { initMFObservability } from './mf-runtime-plugin';
 
-export {
-  classifyMFError,
-  getUserMessage,
-  shouldShowToast,
-  shouldSuppressToast,
-  type MFErrorType,
-  type MFErrorSeverity,
-  type MFErrorEvent,
-} from './mf-error-classifier';
+export { type MFErrorType, type MFErrorSeverity, type MFErrorEvent } from './mf-error-classifier';

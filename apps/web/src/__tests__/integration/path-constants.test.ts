@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { DASHBOARD_PATHS, MOBILE_TAB_PATHS } from '@/routes/dashboard';
 import { AUTH_PATHS } from '@/routes/auth';
 import { ADMIN_PATHS } from '@/modules/admin/config';
 import { IAM_PATHS } from '@/modules/iam/config';

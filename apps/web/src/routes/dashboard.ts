@@ -16,13 +16,6 @@ export const DASHBOARD_PATHS = {
   systemSettings: '/system/settings',
 } as const;
 
-export const MOBILE_TAB_PATHS = {
-  tasks: '/tasks',
-  scan: '/scan',
-  approval: '/approval',
-  approvals: '/approvals',
-} as const;
-
 const safeLazy = createSafeLazy();
 
 const DashboardPage = safeLazy(() => import('../pages/shared/DashboardPage'));

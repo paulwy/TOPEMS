@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { classifyError, getUserFriendlyError } from '../errorHandler';
 
 describe('errorHandler', () => {
   describe('classifyError', () => {
@@ -107,26 +106,6 @@ describe('errorHandler', () => {
       const result = classifyError('string error');
       expect(result.category).toBe('unknown');
       expect(result.message).toBe('string error');
-    });
-  });
-
-  describe('getUserFriendlyError', () => {
-    it('should return friendly message for network error', () => {
-      const error = { code: 'ERR_NETWORK', message: 'Network Error' };
-      const message = getUserFriendlyError(error);
-      expect(message).toContain('网络');
-    });
-
-    it('should return friendly message for auth error', () => {
-      const error = { response: { status: 401, data: {} } };
-      const message = getUserFriendlyError(error);
-      expect(message).toContain('登录');
-    });
-
-    it('should return friendly message for server error', () => {
-      const error = { response: { status: 500, data: {} } };
-      const message = getUserFriendlyError(error);
-      expect(message).toContain('服务器');
     });
   });
 });

@@ -18,16 +18,6 @@ export const escapeHtml = (text: string): string => {
   return div.innerHTML;
 };
 
-export const validateUrl = (url: string): boolean => {
-  if (!url) return false;
-  try {
-    const parsed = new URL(url);
-    return ['http:', 'https:'].includes(parsed.protocol);
-  } catch {
-    return false;
-  }
-};
-
 export const validateEmail = (email: string): boolean => {
   if (!email) return false;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -73,10 +63,4 @@ export const initCsrfToken = (): string => {
     setCsrfToken(token);
   }
   return token;
-};
-
-export const sanitizeInput = (input: string): string => {
-  if (!input) return '';
-  const sanitized = escapeHtml(input);
-  return sanitized.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
 };

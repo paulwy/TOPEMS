@@ -94,25 +94,4 @@ describe('Tracing Utilities', () => {
       expect(headers['x-request-id']).toBe(context.traceId);
     });
   });
-
-  describe('instrumentFetch', () => {
-    it('should return a function that wraps fetch', () => {
-      const tracedFetch = instrumentFetch(fetch);
-      expect(typeof tracedFetch).toBe('function');
-    });
-  });
-
-  describe('instrumentAxios', () => {
-    it('should add interceptors to axios instance', () => {
-      const mockInterceptors = {
-        request: { use: vi.fn() },
-        response: { use: vi.fn() },
-      };
-      const mockAxios = { interceptors: mockInterceptors };
-      const result = instrumentAxios(mockAxios);
-      expect(mockInterceptors.request.use).toHaveBeenCalled();
-      expect(mockInterceptors.response.use).toHaveBeenCalled();
-      expect(result).toBe(mockAxios);
-    });
-  });
 });

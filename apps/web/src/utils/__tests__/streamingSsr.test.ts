@@ -121,44 +121,6 @@ describe('streamingSsr', () => {
     });
   });
 
-  describe('parseStreamingChunks', () => {
-    it('should parse a valid streaming chunk', () => {
-      const entry: SSRDataEntry = {
-        key: 'user',
-        payload: { id: 42 },
-        source: 'streaming',
-        injectedAt: Date.now(),
-      };
-      const html = `${SSR_DATA_MARKER}${serializeSSRData(entry)}${SSR_DATA_MARKER}`;
-      const chunks = parseStreamingChunks(html);
-      expect(chunks).toHaveLength(1);
-      expect(chunks[0].key).toBe('user');
-      expect(chunks[0].payload).toEqual({ id: 42 });
-    });
-
-    it('should parse multiple chunks', () => {
-      const entry1: SSRDataEntry = { key: 'a', payload: 1, source: 'static', injectedAt: 1 };
-      const entry2: SSRDataEntry = { key: 'b', payload: 2, source: 'deferred', injectedAt: 2 };
-      const html =
-        `${SSR_DATA_MARKER}${serializeSSRData(entry1)}${SSR_DATA_MARKER}` +
-        `text between` +
-        `${SSR_DATA_MARKER}${serializeSSRData(entry2)}${SSR_DATA_MARKER}`;
-      const chunks = parseStreamingChunks(html);
-      expect(chunks).toHaveLength(2);
-    });
-
-    it('should return empty array for no markers', () => {
-      expect(parseStreamingChunks('<html><body>hello</body></html>')).toEqual([]);
-    });
-
-    it('should skip invalid chunks without key', () => {
-      const badData = serializeSSRData({ foo: 'bar' }); // no key property
-      const html = `${SSR_DATA_MARKER}${badData}${SSR_DATA_MARKER}`;
-      const chunks = parseStreamingChunks(html);
-      expect(chunks).toEqual([]);
-    });
-  });
-
   describe('hydrateSSRData', () => {
     it('should return empty collection when window has no SSR data', () => {
       const result = hydrateSSRData();
@@ -202,40 +164,6 @@ describe('streamingSsr', () => {
       (window as unknown as Record<string, unknown>)[SSR_DATA_GLOBAL] = 'not an object';
       const result = hydrateSSRData();
       expect(result.entries).toEqual([]);
-    });
-  });
-
-  describe('readSSRData', () => {
-    it('should read data by key', () => {
-      (window as unknown as Record<string, unknown>)[SSR_DATA_GLOBAL] = {
-        entries: [{ key: 'user', payload: { name: 'Alice' }, source: 'static', injectedAt: 0 }],
-        version: 'v42.0',
-        renderedAt: '',
-      };
-      const user = readSSRData<{ name: string }>('user');
-      expect(user).toEqual({ name: 'Alice' });
-    });
-
-    it('should return undefined for missing key', () => {
-      expect(readSSRData('nonexistent')).toBeUndefined();
-    });
-  });
-
-  describe('clearHydratedSSRData', () => {
-    it('should reset hydration cache', () => {
-      // First call caches empty collection
-      hydrateSSRData();
-      // Clear
-      clearHydratedSSRData();
-      // Now set window data and re-hydrate
-      (window as unknown as Record<string, unknown>)[SSR_DATA_GLOBAL] = {
-        entries: [{ key: 'fresh', payload: 'hello', source: 'static', injectedAt: 0 }],
-        version: 'v42.0',
-        renderedAt: '',
-      };
-      const result = hydrateSSRData();
-      expect(result.entries).toHaveLength(1);
-      expect(result.entries[0].key).toBe('fresh');
     });
   });
 

@@ -40,31 +40,3 @@ export function toSnakeCase(str: string): string {
 export function pluralize(str: string): string {
   return str.endsWith('s') ? str : `${str}s`;
 }
-
-export function singularize(str: string): string {
-  return str.endsWith('s') ? str.slice(0, -1) : str;
-}
-
-export function buildQueryName(entity: string): string {
-  return `get${pluralize(entity)}`;
-}
-
-export function buildMutationName(entity: string, action: string): string {
-  return `${action}${entity}`;
-}
-
-export function generateEntityQueries(_schema: EntitySchema): string {
-  return '';
-}
-
-export function generateTypeScriptTypes(_schema: EntitySchema): string {
-  return '';
-}
-
-export function generateReactQueryHooks(_schema: EntitySchema): string {
-  return '';
-}
-
-export function generateListPageTemplate(_schema: EntitySchema): string {
-  return '';
-}

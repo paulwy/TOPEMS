@@ -1,12 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  parseFileExtension,
-  getImportModeLabel,
-  readFileAsBase64,
-  exportToCSV,
-  downloadTemplate,
-  type ExportColumn,
-} from '../importExport';
+import { exportToCSV, downloadTemplate, type ExportColumn } from '../importExport';
 
 // Mock @/i18n (i18n instance, used by importExport indirectly via i18n/index initialization)
 vi.mock('@/i18n', () => {
@@ -66,97 +59,6 @@ vi.mock('i18next', () => {
     default: instance,
     initReactI18next: { type: '3rdParty', init: () => {} },
   };
-});
-
-describe('utils/importExport - parseFileExtension', () => {
-  it('returns "xlsx" for .xlsx files', () => {
-    expect(parseFileExtension('data.xlsx')).toBe('xlsx');
-  });
-
-  it('returns "xlsx" for .xls files', () => {
-    expect(parseFileExtension('report.xls')).toBe('xlsx');
-  });
-
-  it('returns "csv" for .csv files', () => {
-    expect(parseFileExtension('export.csv')).toBe('csv');
-  });
-
-  it('returns "csv" for files without extension', () => {
-    expect(parseFileExtension('noextension')).toBe('csv');
-  });
-
-  it('returns "csv" for unknown extensions', () => {
-    expect(parseFileExtension('file.txt')).toBe('csv');
-    expect(parseFileExtension('file.json')).toBe('csv');
-  });
-
-  it('is case-insensitive', () => {
-    expect(parseFileExtension('DATA.XLSX')).toBe('xlsx');
-    expect(parseFileExtension('Report.XLS')).toBe('xlsx');
-    expect(parseFileExtension('EXPORT.CSV')).toBe('csv');
-  });
-});
-
-describe('utils/importExport - getImportModeLabel', () => {
-  it('returns label for "create"', () => {
-    expect(getImportModeLabel('create')).toBe('仅创建（跳过已存在）');
-  });
-
-  it('returns label for "update"', () => {
-    expect(getImportModeLabel('update')).toBe('仅更新');
-  });
-
-  it('returns label for "create_update"', () => {
-    expect(getImportModeLabel('create_update')).toBe('创建或更新');
-  });
-
-  it('returns the mode string as-is for unknown modes', () => {
-    expect(getImportModeLabel('unknown')).toBe('unknown');
-    expect(getImportModeLabel('custom')).toBe('custom');
-  });
-});
-
-describe('utils/importExport - readFileAsBase64', () => {
-  it('resolves with base64 string on successful read', async () => {
-    const file = new File(['hello'], 'test.csv', { type: 'text/csv' });
-
-    class MockFileReader {
-      onload: ((ev: unknown) => void) | null = null;
-      onerror: ((ev: unknown) => void) | null = null;
-      result: string | null = null;
-      readAsDataURL = vi.fn((f: File) => {
-        setTimeout(() => {
-          this.result = 'data:text/csv;base64,aGVsbG8=';
-          this.onload?.({ target: { result: this.result } });
-        }, 0);
-      });
-    }
-    vi.stubGlobal('FileReader', MockFileReader);
-
-    const result = await readFileAsBase64(file);
-    expect(result).toBe('aGVsbG8=');
-
-    vi.unstubAllGlobals();
-  });
-
-  it('rejects on read error', async () => {
-    const file = new File(['data'], 'test.csv');
-
-    class MockFileReader {
-      onload: ((ev: unknown) => void) | null = null;
-      onerror: ((ev: unknown) => void) | null = null;
-      readAsDataURL = vi.fn((f: File) => {
-        setTimeout(() => {
-          this.onerror(new Error('read failed'));
-        }, 0);
-      });
-    }
-    vi.stubGlobal('FileReader', MockFileReader);
-
-    await expect(readFileAsBase64(file)).rejects.toThrow('read failed');
-
-    vi.unstubAllGlobals();
-  });
 });
 
 describe('utils/importExport - exportToCSV', () => {

@@ -299,88 +299,9 @@ export function buildStandardFilterParams(
 }
 
 /**
- * 将结构化筛选条件转换为 nested 风格的对象数组
- *
- * [
- *   { field: 'age', op: 'gt', value: 18 },
- *   { field: 'status', op: 'eq', value: 'active' }
- * ]
- */
-export function buildNestedFilterArray(
-  filters: Record<string, unknown> | FilterCondition[],
-  options: {
-    fieldMapping?: Record<string, string>;
-  } = {}
-): FilterCondition[] {
-  const { fieldMapping = {} } = options;
-  const mapField = (field: string): string => fieldMapping[field] ?? field;
-
-  if (!Array.isArray(filters)) {
-    return Object.entries(filters)
-      .filter(([, v]) => v !== undefined && v !== null && v !== '')
-      .map(([field, value]) => ({
-        field: mapField(field),
-        op: 'eq' as FilterOperator,
-        value,
-      }));
-  }
-
-  return filters.map((cond) => ({
-    ...cond,
-    field: mapField(cond.field),
-  }));
-}
-
-/**
  * URL 查询参数 <-> 结构化筛选条件 的序列化/反序列化
  *
  * URL 格式：?f_status=active&f_age_gt=18&f_tags_in=a,b,c
  */
 
 export const FILTER_URL_PREFIX = 'f_';
-
-export function serializeFiltersToUrl(
-  filters: Record<string, unknown>,
-  prefix: string = FILTER_URL_PREFIX
-): Record<string, string> {
-  const result: Record<string, string> = {};
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === '') return;
-    const paramKey = `${prefix}${key}`;
-    if (typeof value === 'object') {
-      result[paramKey] = JSON.stringify(value);
-    } else {
-      result[paramKey] = String(value);
-    }
-  });
-  return result;
-}
-
-export function parseFiltersFromUrl(
-  searchParams: URLSearchParams,
-  prefix: string = FILTER_URL_PREFIX,
-  defaultFilters: Record<string, unknown> = {}
-): Record<string, unknown> {
-  const result: Record<string, unknown> = { ...defaultFilters };
-  searchParams.forEach((value, key) => {
-    if (!key.startsWith(prefix)) return;
-    const field = key.slice(prefix.length);
-    const defaultValue = defaultFilters[field];
-    if (typeof defaultValue === 'number') {
-      const n = Number(value);
-      result[field] = Number.isFinite(n) ? n : defaultValue;
-    } else if (typeof defaultValue === 'boolean') {
-      result[field] = value === 'true';
-    } else if (Array.isArray(defaultValue)) {
-      try {
-        const parsed = JSON.parse(value);
-        result[field] = Array.isArray(parsed) ? parsed : defaultValue;
-      } catch {
-        result[field] = value.split(',').filter(Boolean);
-      }
-    } else {
-      result[field] = value;
-    }
-  });
-  return result;
-}

@@ -324,7 +324,3 @@ export async function batchOperation<T = unknown>(
 
   return results;
 }
-
-export function createBatchAbortController(): AbortController {
-  return new AbortController();
-}

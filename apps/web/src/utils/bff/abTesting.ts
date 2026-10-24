@@ -125,26 +125,6 @@ export interface ExperimentResult {
   computed_at: string;
 }
 
-/** 用户分配记录 */
-// ==================== FNV-1a 哈希 ====================
-
-/**
- * FNV-1a 32 位哈希
- *
- * 用于将用户 ID + 实验 ID 映射到稳定的哈希值，
- * 保证同一用户在同一实验中始终分配到同一变体。
- */
-export function fnv1aHash(input: string): number {
-  let hash = 0x811c9dc5; // FNV offset basis (32-bit)
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
-    // FNV prime (32-bit): 16777619
-    hash = Math.imul(hash, 0x01000193);
-  }
-  // 转为无符号 32 位整数
-  return hash >>> 0;
-}
-
 // ==================== 统计检验 ====================
 
 /**

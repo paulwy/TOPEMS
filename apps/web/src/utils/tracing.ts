@@ -138,44 +138,6 @@ function sendSpanToCollector(span: Span): void {
   }).catch(() => {});
 }
 
-export function instrumentFetch(originalFetch: typeof fetch): typeof fetch {
-  return async function tracedFetch(
-    input: RequestInfo | URL,
-    init?: RequestInit
-  ): Promise<Response> {
-    const headers = init?.headers || {};
-    const traceHeaders = getTraceHeaders();
-
-    const newHeaders = {
-      ...headers,
-      ...traceHeaders,
-    };
-
-    const span = createSpan(`fetch: ${typeof input === 'string' ? input : input.toString()}`);
-
-    try {
-      const response = await originalFetch(input, { ...init, headers: newHeaders });
-      endSpan(span, {
-        status: response.status,
-        url: typeof input === 'string' ? input : input.toString(),
-        method: init?.method || 'GET',
-      });
-      return response;
-    } catch (error) {
-      endSpan(span, {
-        error: true,
-        errorMessage: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
-    }
-  };
-}
-
-export function resetTrace(): void {
-  currentTraceId = null;
-  currentSpanId = null;
-}
-
 interface AxiosInterceptorConfig {
   headers?: Record<string, string>;
 }
@@ -189,33 +151,4 @@ interface AxiosInterceptorManager<T> {
     onFulfilled?: (value: T) => T | Promise<T>,
     onRejected?: (error: unknown) => Promise<never>
   ): number;
-}
-
-interface AxiosInstance {
-  interceptors: {
-    request: AxiosInterceptorManager<AxiosInterceptorConfig>;
-    response: AxiosInterceptorManager<AxiosResponse>;
-  };
-}
-
-export function instrumentAxios<T extends AxiosInstance>(axiosInstance: T): T {
-  axiosInstance.interceptors.request.use((config: AxiosInterceptorConfig) => {
-    const traceHeaders = getTraceHeaders();
-    config.headers = {
-      ...config.headers,
-      ...traceHeaders,
-    };
-    return config;
-  });
-
-  axiosInstance.interceptors.response.use(
-    (response: AxiosResponse) => {
-      return response;
-    },
-    (error: unknown) => {
-      return Promise.reject(error);
-    }
-  );
-
-  return axiosInstance;
 }

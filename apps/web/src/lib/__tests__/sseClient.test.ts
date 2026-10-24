@@ -15,7 +15,6 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SSEClient, createSSEClient, SSEEvent } from '../sseClient';
 
 // ========== 辅助：构造 SSE 文本流 ==========
 function toSSEStream(chunks: string[]): ReadableStream<Uint8Array> {

@@ -243,9 +243,3 @@ export function getModuleThemes(): Record<string, ModuleTheme> {
 export function getModuleTheme(moduleCode: string): ModuleTheme | undefined {
   return getModuleThemes()[moduleCode.toLowerCase()];
 }
-
-export function getModuleThemeFromPath(pathname: string): ModuleTheme | undefined {
-  const pathParts = pathname.split('/').filter(Boolean);
-  if (pathParts.length === 0) return undefined;
-  return getModuleTheme(pathParts[0]);
-}

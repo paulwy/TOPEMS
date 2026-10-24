@@ -336,11 +336,4 @@ export class SSEClient {
   }
 }
 
-/**
- * 创建SSE客户端的便捷函数
- */
-export function createSSEClient(options: SSEClientOptions): SSEClient {
-  return new SSEClient(options);
-}
-
 export default SSEClient;

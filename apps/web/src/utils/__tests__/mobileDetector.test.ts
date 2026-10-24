@@ -130,53 +130,6 @@ describe('utils/mobileDetector', () => {
     });
   });
 
-  describe('getBreakpoint', () => {
-    it('returns xs for width < 576', () => {
-      mockInnerWidth(375);
-      expect(getBreakpoint()).toBe('xs');
-    });
-
-    it('returns sm for 576 <= width < 768', () => {
-      mockInnerWidth(600);
-      expect(getBreakpoint()).toBe('sm');
-    });
-
-    it('returns md for 768 <= width < 992', () => {
-      mockInnerWidth(800);
-      expect(getBreakpoint()).toBe('md');
-    });
-
-    it('returns lg for 992 <= width < 1200', () => {
-      mockInnerWidth(1100);
-      expect(getBreakpoint()).toBe('lg');
-    });
-
-    it('returns xl for width >= 1200', () => {
-      mockInnerWidth(1920);
-      expect(getBreakpoint()).toBe('xl');
-    });
-
-    it('boundary: 576 returns sm', () => {
-      mockInnerWidth(576);
-      expect(getBreakpoint()).toBe('sm');
-    });
-
-    it('boundary: 768 returns md', () => {
-      mockInnerWidth(768);
-      expect(getBreakpoint()).toBe('md');
-    });
-
-    it('boundary: 992 returns lg', () => {
-      mockInnerWidth(992);
-      expect(getBreakpoint()).toBe('lg');
-    });
-
-    it('boundary: 1200 returns xl', () => {
-      mockInnerWidth(1200);
-      expect(getBreakpoint()).toBe('xl');
-    });
-  });
-
   describe('isMobileView / isTabletView / isDesktopView', () => {
     it('isMobileView returns true for small screens', () => {
       mockInnerWidth(375);
@@ -231,44 +184,6 @@ describe('utils/mobileDetector', () => {
     it('returns "/" for desktop', () => {
       mockUserAgent('Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36');
       expect(getAppLink()).toBe('/');
-    });
-  });
-
-  describe('getDownloadUrl', () => {
-    it('returns iOS URL for iOS', () => {
-      mockUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) Mobile');
-      expect(getDownloadUrl()).toContain('apps.apple.com');
-    });
-
-    it('returns Android URL for Android', () => {
-      mockUserAgent('Mozilla/5.0 (Linux; Android 13) Mobile Safari/537.36');
-      expect(getDownloadUrl()).toContain('topems.com/download/android');
-    });
-
-    it('returns generic download URL for desktop', () => {
-      mockUserAgent('Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36');
-      expect(getDownloadUrl()).toBe('https://www.topems.com/download');
-    });
-  });
-
-  describe('shouldUseMobileLayout', () => {
-    it('returns true when isMobileView is true', () => {
-      mockInnerWidth(375);
-      expect(shouldUseMobileLayout()).toBe(true);
-    });
-
-    it('returns true when isTabletView is true', () => {
-      mockUserAgent('Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36');
-      mockScreen(800, 600);
-      mockInnerWidth(800);
-      expect(shouldUseMobileLayout()).toBe(true);
-    });
-
-    it('returns false for desktop', () => {
-      mockUserAgent('Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36');
-      mockScreen(1920, 1080);
-      mockInnerWidth(1920);
-      expect(shouldUseMobileLayout()).toBe(false);
     });
   });
 });

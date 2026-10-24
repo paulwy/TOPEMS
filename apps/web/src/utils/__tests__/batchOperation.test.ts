@@ -1,5 +1,4 @@
 import { describe, it, expect, vi } from 'vitest';
-import { batchOperation, createBatchAbortController } from '../batchOperation';
 
 describe('batchOperation', () => {
   it('should execute operations concurrently', async () => {
@@ -60,19 +59,5 @@ describe('batchOperation', () => {
     expect(onItemSuccess).toHaveBeenCalledWith(1, 0);
     expect(onItemFailure).toHaveBeenCalledTimes(1);
     expect(onItemFailure).toHaveBeenCalledWith(2, 1, undefined);
-  });
-});
-
-describe('createBatchAbortController', () => {
-  it('should create an AbortController', () => {
-    const controller = createBatchAbortController();
-    expect(controller).toBeInstanceOf(AbortController);
-    expect(controller.signal.aborted).toBe(false);
-  });
-
-  it('should abort correctly', () => {
-    const controller = createBatchAbortController();
-    controller.abort();
-    expect(controller.signal.aborted).toBe(true);
   });
 });

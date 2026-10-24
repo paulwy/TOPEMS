@@ -29,12 +29,3 @@ export const csrfResponseInterceptor = (response: AxiosResponse): AxiosResponse 
 export const initCsrfProtection = (): void => {
   initCsrfToken();
 };
-
-export const validateCsrfToken = (token: string | undefined): boolean => {
-  if (!token) return false;
-  return verifyCsrfToken(token);
-};
-
-export const getCsrfHeaderName = (): string => {
-  return CSRF_HEADER;
-};

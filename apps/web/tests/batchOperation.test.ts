@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { createBatchAbortController } from '@/utils/batchOperation';
 
 describe('utils/batchOperation - createBatchAbortController', () => {
   it('返回标准 AbortController 实例', () => {
