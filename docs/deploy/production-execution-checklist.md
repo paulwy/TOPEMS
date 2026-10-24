@@ -795,6 +795,16 @@ sudo bash scripts/deploy/rollback.sh /opt/topems/backups/<backup_dir>
 - **分析维度**：按 path 分组统计请求数，标记 30 天 0 请求的端点
 - **输出格式**：`artifacts/audit/traffic-observation-30d.md`（含 none 级清单 + 建议处置：下线/冻结/保留）
 
+**部署机 crontab 注册（照抄即可，幂等范式同 collect-usage-daily.sh 01:00）**：
+```bash
+# 目录准备
+sudo mkdir -p /var/lib/topems/audit /var/log/topems
+# crontab -e 追加（部署机脚本绝对路径按实际调整）
+TRAFFIC_LEDGER=/var/lib/topems/audit/traffic_daily.tsv
+0 1 * * * TRAFFIC_LEDGER=/var/lib/topems/audit/traffic_daily.tsv /opt/topems/scripts/audit/traffic-observe.sh --daily --log /var/log/nginx/access.log >> /var/log/topems/traffic-observe.log 2>&1
+```
+**≥30 天后取结果**：`TRAFFIC_LEDGER=/var/lib/topems/audit/traffic_daily.tsv scripts/audit/traffic-observe.sh --report --days 30` → 读 `artifacts/audit/traffic-observation-30d.md` 的 none 级清单（长期 0 请求端点），人工核对路由注册/前端引用后定处置（下线/冻结/保留），并将决策回写 TODO P-8 登记。
+
 ---
 
 ## 执行顺序建议

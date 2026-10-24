@@ -16,6 +16,13 @@
 #   <YYYY-MM-DD> \t <HTTP_STATUS> \t <PATH> \t <COUNT>
 #   同一 (日期,状态,路径) 重复运行只计一次（幂等：追加前检查已有记录）。
 #
+# 生产 crontab 条目（部署机照抄；01:00 每日，幂等范式同 collect-usage-daily.sh）：
+#   TRAFFIC_LEDGER=/var/lib/topems/audit/traffic_daily.tsv
+#   0 1 * * * TRAFFIC_LEDGER=/var/lib/topems/audit/traffic_daily.tsv \
+#     /opt/topems/scripts/audit/traffic-observe.sh --daily \
+#     --log /var/log/nginx/access.log >> /var/log/topems/traffic-observe.log 2>&1
+#   观测期 ≥30 天后运行一次 --report，报告落 artifacts/audit/traffic-observation-30d.md。
+#
 # 报告输出：artifacts/audit/traffic-observation-30d.md（每日增量追加，30 天窗口 none 级清单）
 set -uo pipefail
 
