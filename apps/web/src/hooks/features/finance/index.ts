@@ -1,7 +1,6 @@
 // 财务模块聚合导出
 
 // 外部 ERP 对接（包含多个 hooks）
-export { useErpConnections } from '../../useExternalErp';
 
 // 基础财务（账户/科目/期初余额等）
 export {
@@ -19,7 +18,6 @@ export {
 } from '../../useCrmFinance';
 
 // HRM 财务（员工薪资等）
-export { useEmployeeFinanceInfo, useUpdateEmployeeFinanceInfo } from '../../useHrmFinance';
 
 // 合并报表
 export {

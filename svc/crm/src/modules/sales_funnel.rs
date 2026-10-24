@@ -151,7 +151,7 @@ pub async fn get_funnel_data(
                    COALESCE(AVG(value), 0) as avg_value,
                    COALESCE(AVG(probability), 0)::int as avg_probability
             FROM crm.opportunities
-            WHERE stage = $1
+            WHERE stage = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             "#,
         )
         .bind(stage)
@@ -218,6 +218,7 @@ pub async fn get_funnel_metrics(
                COALESCE(AVG(value), 0) as avg_value,
                COALESCE(SUM(CASE WHEN stage = 'closed_won' THEN 1 ELSE 0 END), 0) as won_count
         FROM crm.opportunities
+        WHERE (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
     )
     .fetch_one(&mut **txn)
@@ -240,7 +241,7 @@ pub async fn get_funnel_metrics(
                 r#"
                 SELECT COALESCE(SUM(value * probability / 100), 0) as weighted_value
                 FROM crm.opportunities
-                WHERE stage != 'closed_lost'
+                WHERE stage != 'closed_lost' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                 "#,
             )
             .fetch_one(&mut **txn)
@@ -304,13 +305,13 @@ pub async fn get_funnel_conversion(
         let to_stage = stage_order[i + 1];
 
         let from_count_result: Result<i64, sqlx::Error> =
-            sqlx::query_scalar(r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1"#)
+            sqlx::query_scalar(r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#)
                 .bind(from_stage)
                 .fetch_one(&mut **txn)
                 .await;
 
         let to_count_result: Result<i64, sqlx::Error> =
-            sqlx::query_scalar(r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1"#)
+            sqlx::query_scalar(r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#)
                 .bind(to_stage)
                 .fetch_one(&mut **txn)
                 .await;
@@ -466,7 +467,7 @@ pub async fn get_stage_opportunities(
     match result {
         Ok(opportunities) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1"#,
+                r#"SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
             )
             .bind(&stage)
             .fetch_one(&mut **txn)

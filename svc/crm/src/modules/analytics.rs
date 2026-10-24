@@ -204,20 +204,20 @@ pub async fn dashboard_aggregate(State(state): State<ApiState>) -> impl IntoResp
     let db = &state.db;
 
     let total_opportunities: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL")
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
             .fetch_one(db)
             .await
             .unwrap_or(0);
 
     let won_amount: rust_decimal::Decimal = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL AND value IS NOT NULL",
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL AND value IS NOT NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .fetch_one(db)
     .await
     .unwrap_or(rust_decimal::Decimal::ZERO);
 
     let won_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .fetch_one(db)
     .await
@@ -230,28 +230,28 @@ pub async fn dashboard_aggregate(State(state): State<ApiState>) -> impl IntoResp
     };
 
     let average_cycle: f64 = sqlx::query_scalar(
-        "SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(close_date, updated_at) - created_at)) / 86400.0), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL",
+        "SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(close_date, updated_at) - created_at)) / 86400.0), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .fetch_one(db)
     .await
     .unwrap_or(0.0);
 
     let opportunity_stages: Vec<NameValue> = sqlx::query_as(
-        "SELECT stage AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL GROUP BY stage ORDER BY value DESC",
+        "SELECT stage AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) GROUP BY stage ORDER BY value DESC",
     )
     .fetch_all(db)
     .await
     .unwrap_or_default();
 
     let monthly_performance: Vec<NameValue> = sqlx::query_as(
-        "SELECT TO_CHAR(created_at, 'YYYY-MM') AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '6 months' GROUP BY TO_CHAR(created_at, 'YYYY-MM') ORDER BY name ASC",
+        "SELECT TO_CHAR(created_at, 'YYYY-MM') AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) AND created_at >= NOW() - INTERVAL '6 months' GROUP BY TO_CHAR(created_at, 'YYYY-MM') ORDER BY name ASC",
     )
     .fetch_all(db)
     .await
     .unwrap_or_default();
 
     let industries: Vec<NameValue> = sqlx::query_as(
-        "SELECT COALESCE(industry, 'unknown') AS name, COUNT(*) AS value FROM crm.customers WHERE deleted_at IS NULL GROUP BY COALESCE(industry, 'unknown') ORDER BY value DESC LIMIT 10",
+        "SELECT COALESCE(industry, 'unknown') AS name, COUNT(*) AS value FROM crm.customers WHERE deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) GROUP BY COALESCE(industry, 'unknown') ORDER BY value DESC LIMIT 10",
     )
     .fetch_all(db)
     .await

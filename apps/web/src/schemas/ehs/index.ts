@@ -1,4 +1,3 @@
-export { hazardSchema } from './hazard';
 export { safetyIssueSchema } from './safetyIssue';
 export { drillSchema } from './drill';
 export { occupationalDiseaseSchema } from './occupationalDisease';

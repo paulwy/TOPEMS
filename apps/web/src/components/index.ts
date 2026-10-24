@@ -318,10 +318,8 @@ export { MetricCard } from './bi/MetricCard';
 export { StatsChart } from './bi/StatsChart';
 export type { StatsChartProps } from './bi/StatsChart';
 export { ChartAnnotations } from './bi/ChartAnnotations';
-export { ChartExport } from './bi/ChartExport';
 export { ChartLinkerProvider } from './bi/ChartLinker';
 export { useChartLinker } from './bi/ChartLinker';
-export { DrillDownPanel } from './bi/DrillDownPanel';
 export { FullscreenChart } from './bi/FullscreenChart';
 // BISkeleton 默认导出是一个对象，包含多个 skeleton 组件
 

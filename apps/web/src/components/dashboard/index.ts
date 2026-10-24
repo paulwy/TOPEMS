@@ -1,4 +1,3 @@
-export { DashboardHeader } from './DashboardHeader';
 export { DashboardQuickActions, defaultQuickActions } from './DashboardQuickActions';
 export {
   ModuleStatusBadge as StatusBadge,
@@ -14,12 +13,8 @@ export {
   CARD_STYLE,
   ICON_WRAPPER_STYLE,
 } from './ModuleCard';
-export { ModuleStatsCard } from './ModuleStatsCard';
 export { ServiceStatusCard } from './ServiceStatusCard';
-export { ServiceStatusMonitor } from './ServiceStatusMonitor';
 export { RecentActivities, type ActivityItem } from './RecentActivities';
-export { MobileMenu } from './MobileMenu';
-export { HeroSection } from './HeroSection';
 export {
   DashboardSection,
   TodayOverviewSection,

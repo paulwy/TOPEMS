@@ -224,7 +224,7 @@ async fn fetch_customer_score(
         r#"
         SELECT score, score_level, trend, scoring_date, factors
         FROM crm.customer_scores
-        WHERE customer_id = $1
+        WHERE customer_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         ORDER BY scoring_date DESC
         LIMIT 1
         "#,
@@ -253,7 +253,7 @@ async fn fetch_customer_opportunities(
         r#"
         SELECT id, name, value, stage, probability, close_date
         FROM crm.opportunities
-        WHERE customer_id = $1
+        WHERE customer_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         ORDER BY created_at DESC
         LIMIT 10
         "#,
@@ -279,7 +279,7 @@ async fn fetch_customer_interactions(
         r#"
         SELECT id, interaction_type as "type_", subject, content, scheduled_at, completed_at, status, created_at
         FROM crm.interactions
-        WHERE customer_id = $1
+        WHERE customer_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         ORDER BY created_at DESC
         LIMIT 10
         "#,
