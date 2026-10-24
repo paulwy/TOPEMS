@@ -3989,3 +3989,29 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - L1：282 → **263**（values 129→110 净减 19，types 153 持平）；tsc 0 error、eslint 0。
 - commit 97485dc1c 已推送 origin/main（79732a9cd..97485dc1c）。
 - 下批候选：L1 values 110 按「聚合消费恢复后重新判定」口径再清；utils/bff 保留文件复核；detector 升级（聚合对象成员算消费）后重扫。
+
+## 第十四轮（2026-10-24）：detector v2 升级 + 第七批 L1 values 新口径清理
+
+### ① detector v2 升级（commit 59577d2dc，已推送）
+- 修复 barrel re-export 误计 defFiles（转发不算定义）——恢复的 30+ 文件不再被误判 L1。
+- L2 两级聚合消费链：被「有外部消费的聚合对象」（ehsApi = { accidents: accidentApi }）引用的成员升 L3（活）。
+- 重扫：L1 263 → 178（values 25 / types 153）；accidentApi/cashFlowApi/tenantConfigApi 等 30+ 全部移出 L1（此前 ref=0 是误报铁证）。
+
+### ② 第七批删除（commit c410205ac，已推送，-850 行）
+- L1 values 25 逐个全仓 grep 复核：14 个真死删除 + 11 个同文件实例消费（误报保留）。
+- 真死删除：
+  - api/bff/index.ts：bffApi / subscribeServiceHealth / masterDataApi / onBffPerformance（-144 行）。
+  - DashboardSections.tsx：MODULE_SECTIONS + 7 个 section 组件（-293 行；ModuleSection 保留，ModuleSectionKey 改字面量联合）。
+  - ServiceStatusCard.tsx：整文件删（113 行）。
+  - classification.ts：TEMPLATE_CLASSIFICATIONS + TemplateClassification（-276 行；PageTemplateType 保留）。
+- 保留（同文件实例/内部消费，L1 误报）：extractInitials（UserMenu 内部用）、authStore 4 hook（useAuth 同文件用）、SimplePredictor/MetricPredictor（metricPredictor 实例 + MetricPredictor 内部静态调用）、SmartAlertManager（smartAlertManager 实例）、fallbackManager（FallbackManager 实例）、autoShardingV2/fallbackStrategy 全部 type（类内部消费）。
+- 验证：tsc 0 error + eslint 0（含清死 import Paper/useTheme/useMediaQuery/designTokens/i18n/ApiResponse）。
+- 重扫：L1 178 → 164（values 11 / types 153）。
+
+### ③ utils/bff 保留文件复核（完成）
+- 5 文件：abTesting（已部分删）；autoShardingV2/fallbackStrategy（活跃导出被 fallbackStrategy.test.ts 测试消费保留）；codegen/queryBuilder（仅 default 导出，无死导出）。
+
+### ④ 状态
+- L1：164（values 11 全为同文件实例消费误报 + types 153 待 type 批清理）；tsc 0 error、eslint 0。
+- commit 59577d2dc（detector v2）+ c410205ac（第七批）已推送（13e3b6047..c410205ac）。
+- 下批候选：L1 types 153 精确判定（同文件消费模式：MasterDataRef/ListEntitiesParams 等）；detector v3 同文件消费识别（new X() 实例 + 函数内部调用）；L2 values 415 中「纯转发无消费链」项清理。
