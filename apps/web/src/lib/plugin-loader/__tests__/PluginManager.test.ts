@@ -35,9 +35,14 @@ vi.mock('@/api/plugin', () => ({
   },
 }));
 
-vi.mock('@/utils/logger', () => ({
-  apiLogger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
-}));
+vi.mock('@/utils/logger', () => {
+  const loggerStub = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
+  return {
+    apiLogger: { ...loggerStub },
+    createLogger: () => ({ ...loggerStub }),
+    default: () => ({ ...loggerStub }),
+  };
+});
 
 const registeredModules = new Set<string>();
 

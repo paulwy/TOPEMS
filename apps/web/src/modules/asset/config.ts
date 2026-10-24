@@ -1,5 +1,6 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
+import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 /** DashboardPage 路由 Props · 模板=dashboard */
@@ -130,5 +131,66 @@ export const assetModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['asset:transfer:read'],
       action: 'read',
     } satisfies RouteConfigV2<TransferPageProps>,
+  ],
+};
+
+export const assetNavConfig: ModuleNavConfig = {
+  code: 'asset',
+  name: i18n.t('asset.nav.module_name'),
+  nameKey: 'asset.nav.module_name',
+  icon: 'Package',
+  path: ASSET_PATHS.root,
+  source: 'plugin' as const,
+  suite: 'collaboration',
+  order: 91,
+  navItems: [
+    {
+      code: 'asset-dashboard',
+      label: i18n.t('asset.nav.asset-dashboard'),
+      labelKey: 'asset.nav.asset-dashboard',
+      icon: 'LayoutDashboard',
+      path: ASSET_PATHS.dashboard,
+      permission: 'asset:dashboard:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: i18n.t('asset.nav.asset-dashboard_desc'),
+    },
+    {
+      code: 'asset-list',
+      label: i18n.t('asset.nav.asset-list'),
+      labelKey: 'asset.nav.asset-list',
+      path: ASSET_PATHS.list,
+      permission: 'asset:list:read',
+      group: 'business',
+      showInSidebar: true,
+    },
+    {
+      code: 'asset-categories',
+      label: i18n.t('asset.nav.asset-categories'),
+      labelKey: 'asset.nav.asset-categories',
+      path: ASSET_PATHS.categories,
+      permission: 'asset:category:read',
+      group: 'master',
+      showInSidebar: true,
+    },
+    {
+      code: 'asset-depreciation',
+      label: i18n.t('asset.nav.asset-depreciation'),
+      labelKey: 'asset.nav.asset-depreciation',
+      path: ASSET_PATHS.depreciation,
+      permission: 'asset:depreciation:read',
+      group: 'analytics',
+      showInSidebar: true,
+    },
+    {
+      code: 'asset-transfers',
+      label: i18n.t('asset.nav.asset-transfers'),
+      labelKey: 'asset.nav.asset-transfers',
+      path: ASSET_PATHS.transfers,
+      permission: 'asset:transfer:read',
+      group: 'process',
+      showInSidebar: true,
+    },
   ],
 };

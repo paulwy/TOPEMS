@@ -1,5 +1,6 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
+import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 // ---- 路径常量：唯一真相源 ----
@@ -107,5 +108,80 @@ export const gisModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['gis:dashboard:read'],
       action: 'read',
     } as unknown as RouteConfigV2<Record<string, unknown>>,
+  ],
+};
+
+// ---- 导航配置（供导航注册表使用） ----
+export const gisNavConfig: ModuleNavConfig = {
+  code: 'gis',
+  name: i18n.t('gis.nav.module_name'),
+  nameKey: 'gis.nav.module_name',
+  icon: 'Map',
+  path: GIS_PATHS.root,
+  permission: 'gis:dashboard:read',
+  source: 'plugin',
+  suite: 'platform',
+  status: 'online',
+  order: 12,
+  description: i18n.t('gis.nav.module_name_desc'),
+  navItems: [
+    {
+      code: 'gis-dashboard',
+      label: i18n.t('gis.nav.gis-dashboard'),
+      labelKey: 'gis.nav.gis-dashboard',
+      icon: 'LayoutDashboard',
+      path: GIS_PATHS.dashboard,
+      permission: 'gis:dashboard:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: i18n.t('gis.nav.gis-dashboard_desc'),
+    },
+    {
+      code: 'gis-map',
+      label: i18n.t('gis.nav.gis-map'),
+      labelKey: 'gis.nav.gis-map',
+      icon: 'MapPin',
+      path: GIS_PATHS.map,
+      permission: 'gis:map:read',
+      order: 1,
+      group: 'process',
+      showInTabs: true,
+      description: i18n.t('gis.nav.gis-map_desc'),
+    },
+    {
+      code: 'gis-tracking',
+      label: i18n.t('gis.nav.gis-tracking'),
+      labelKey: 'gis.nav.gis-tracking',
+      icon: 'Navigation',
+      path: GIS_PATHS.tracking,
+      permission: 'gis:tracking:read',
+      order: 2,
+      group: 'process',
+      showInTabs: true,
+      description: i18n.t('gis.nav.gis-tracking_desc'),
+    },
+    {
+      code: 'gis-fence',
+      label: i18n.t('gis.nav.gis-fence'),
+      labelKey: 'gis.nav.gis-fence',
+      icon: 'MapPin',
+      path: GIS_PATHS.fence,
+      permission: 'gis:fence:read',
+      order: 3,
+      group: 'process',
+      description: i18n.t('gis.nav.gis-fence_desc'),
+    },
+    {
+      code: 'gis-devices',
+      label: i18n.t('gis.nav.gis-devices'),
+      labelKey: 'gis.nav.gis-devices',
+      icon: 'MapPin',
+      path: GIS_PATHS.devices,
+      permission: 'gis:dashboard:read',
+      order: 5,
+      group: 'master',
+      description: i18n.t('gis.nav.gis-devices_desc'),
+    },
   ],
 };

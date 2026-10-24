@@ -1,5 +1,6 @@
 import { lazyWithRetry } from '@/routes/utils';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
+import type { ModuleNavConfig } from '@/lib/navigation/types';
 import i18n from '@/i18n';
 
 const TICKET_PATHS = {
@@ -55,4 +56,44 @@ export const ticketModuleConfig: RouteModuleConfig = {
   description: i18n.t('ticket.nav.module_name_desc'),
   permission: 'system:center:read',
   routes: [dashboardRoute, ticketCenterRoute],
+};
+
+export const ticketNavConfig: ModuleNavConfig = {
+  code: 'ticket',
+  name: i18n.t('ticket.nav.module_name'),
+  nameKey: 'ticket.nav.module_name',
+  icon: 'Ticket',
+  path: TICKET_PATHS.root,
+  permission: 'system:center:read',
+  source: 'core',
+  suite: 'collaboration',
+  status: 'online',
+  order: 6,
+  description: i18n.t('ticket.nav.module_name_desc'),
+  navItems: [
+    {
+      code: 'ticket-dashboard',
+      label: i18n.t('ticket.nav.ticket-dashboard'),
+      labelKey: 'ticket.nav.ticket-dashboard',
+      icon: 'LayoutDashboard',
+      path: TICKET_PATHS.dashboard,
+      permission: 'ticket:dashboard:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: i18n.t('ticket.nav.ticket-dashboard_desc'),
+    },
+    {
+      code: 'ticket-center',
+      label: i18n.t('ticket.nav.ticket-center'),
+      labelKey: 'ticket.nav.ticket-center',
+      icon: 'Ticket',
+      path: TICKET_PATHS.center,
+      permission: 'system:center:read',
+      order: 1,
+      group: 'business',
+      showInTabs: true,
+      description: i18n.t('ticket.nav.ticket-center_desc'),
+    },
+  ],
 };
