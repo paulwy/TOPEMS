@@ -580,15 +580,28 @@ pub async fn list_devices_with_tracks(
     }
 }
 
+/// 计算明文凭证的 sha256 十六进制摘要（小写 hex）。
+/// 存储列 `gis.devices.device_token` 仅保存该摘要，不落明文。
+fn sha256_token_hex(plain: &str) -> String {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(plain.as_bytes());
+    hex::encode(hasher.finalize())
+}
+
 /// 通过 device_code 上报设备位置
 ///
-/// P1-22 修复：上报端点不再匿名。要求用户 JWT 认证（`Authorization: Bearer <JWT>`），
-/// 并校验：设备存在、状态 `active`、且属于 claims 租户（超管除外）；
-/// 上报记录租户取设备归属租户（`device.tenant_id`）。
-///
-/// 待产品确认：设备级凭证（`X-Device-Token`，与 `gis.devices` 绑定）——
-/// 当前 `gis.devices` 表无 token 列，且本批未引入迁移；
-/// IoT ingest 设备直连场景需先迁移加列再启用设备凭证模式。
+/// 双通道认证（满足其一即可）：
+/// - **设备级凭证通道**：请求头 `X-Device-Token: <明文>` → sha256(hex) 与
+///   `gis.devices.device_token` 比对（列存摘要、不落明文；列由并行迁移
+///   `ALTER TABLE gis.devices ADD COLUMN device_token varchar(64)` 落地）。
+///   IoT 设备直连场景使用；凭证与设备行绑定，命中即视为设备本人，
+///   不再校验用户租户（上报记录租户取设备归属租户）。
+/// - **用户 JWT 通道**：`Authorization: Bearer <JWT>`（P1-22 原逻辑，保留），
+///   并校验设备属于 claims 租户（超管除外）。
+/// 两通道共同校验：设备存在、状态 `active`。
+/// 两通道均缺失/无效 → 401；设备存在但凭证错误（token 通道）→ 401；
+/// JWT 通道下设备不存在 → 404（与原行为一致，避免枚举设备存在性）。
 pub async fn report_device_location(
     State(pool): State<PgPool>,
     State(ws_manager): State<SharedWebSocketManager>,
@@ -597,85 +610,139 @@ pub async fn report_device_location(
     Path(device_code): Path<String>,
     Json(payload): Json<UpdateDeviceLocation>,
 ) -> Json<ApiResponse<DeviceLocationRecord>> {
-    // 1) 认证：必须提供合法的 Authorization Bearer JWT
-    let jwt = headers
-        .get(axum::http::header::AUTHORIZATION)
-        .and_then(|v| v.to_str().ok())
-        .and_then(|h| h.strip_prefix("Bearer "))
-        .map(str::to_string);
-    let Some(jwt) = jwt else {
-        return Json(ApiResponse::error(
-            401,
-            "未认证：缺少 Authorization Bearer token",
-        ));
-    };
-    let claims = match verify_jwt_token(&jwt, &auth_state.jwt_secret) {
-        Ok(claims) => claims,
-        Err(_) => return Json(ApiResponse::error(401, "未认证：token 无效或已过期")),
+    // 1) 双通道认证解析出设备行
+    let device = if let Some(Ok(token)) = headers.get("X-Device-Token").map(|v| v.to_str()) {
+        // 1a) 设备级凭证通道：sha256(hex) 比对存储摘要列
+        let digest = sha256_token_hex(token);
+        match sqlx::query_as::<_, Device>(
+            only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1 AND device_token = $2"),
+        )
+        .bind(&device_code)
+        .bind(&digest)
+        .fetch_one(&pool)
+        .await
+        {
+            Ok(d) => d,
+            Err(sqlx::Error::RowNotFound) => {
+                return Json(ApiResponse::error(401, "未认证：设备凭证无效"));
+            }
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::internal("查询设备失败", e)));
+            }
+        }
+    } else {
+        // 1b) 用户 JWT 通道（原 P1-22 逻辑）
+        let jwt = headers
+            .get(axum::http::header::AUTHORIZATION)
+            .and_then(|v| v.to_str().ok())
+            .and_then(|h| h.strip_prefix("Bearer "))
+            .map(str::to_string);
+        let Some(jwt) = jwt else {
+            return Json(ApiResponse::error(
+                401,
+                "未认证：缺少 Authorization Bearer token 或 X-Device-Token",
+            ));
+        };
+        let claims = match verify_jwt_token(&jwt, &auth_state.jwt_secret) {
+            Ok(claims) => claims,
+            Err(_) => return Json(ApiResponse::error(401, "未认证：token 无效或已过期")),
+        };
+
+        // 2) 查设备（deleted_at 过滤）
+        match sqlx::query_as::<_, Device>(
+            only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1"),
+        )
+        .bind(&device_code)
+        .fetch_one(&pool)
+        .await
+        {
+            Ok(d) => {
+                // 租户归属校验（超管豁免）；凭证通道不适用（设备即本人）
+                if !claims.is_superuser {
+                    let claim_tenant = claims
+                        .tenant_id
+                        .as_deref()
+                        .and_then(|t| Uuid::parse_str(t).ok());
+                    let owned = match claim_tenant {
+                        Some(t) => t == d.tenant_id,
+                        None => false,
+                    };
+                    if !owned {
+                        return Json(ApiResponse::error(403, "无权上报该租户的设备"));
+                    }
+                }
+                d
+            }
+            Err(sqlx::Error::RowNotFound) => {
+                return Json(ApiResponse::error(404, "设备未找到"));
+            }
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::internal("查询设备失败", e)));
+            }
+        }
     };
 
-    // 2) 查设备（deleted_at 过滤）
-    match sqlx::query_as::<_, Device>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1"),
+    // 3) 两通道共用：状态启用校验（在租户/凭证校验之后）
+    if device.status != "active" {
+        return Json(ApiResponse::error(403, "设备未启用，禁止上报"));
+    }
+
+    // 4) 写入上报记录并广播（租户取设备归属租户）
+    match sqlx::query_as::<_, DeviceLocationRecord>(
+        only_own_schema_query!("gis", r#"
+        INSERT INTO gis.device_location_records
+        (device_id, tenant_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+        "#),
     )
-    .bind(&device_code)
+    .bind(device.id)
+    .bind(device.tenant_id)
+    .bind(&payload.position)
+    .bind(&payload.accuracy)
+    .bind(&payload.speed)
+    .bind(&payload.direction)
+    .bind(&payload.altitude)
+    .bind(&payload.battery_level)
+    .bind(&payload.signal_strength)
     .fetch_one(&pool)
     .await
     {
-        Ok(device) => {
-            // 2a) 状态启用校验
-            if device.status != "active" {
-                return Json(ApiResponse::error(403, "设备未启用，禁止上报"));
-            }
-            // 2b) 租户归属校验（超管豁免）
-            if !claims.is_superuser {
-                let claim_tenant = claims
-                    .tenant_id
-                    .as_deref()
-                    .and_then(|t| Uuid::parse_str(t).ok());
-                let owned = match claim_tenant {
-                    Some(t) => t == device.tenant_id,
-                    None => false,
-                };
-                if !owned {
-                    return Json(ApiResponse::error(403, "无权上报该租户的设备"));
-                }
-            }
-            match sqlx::query_as::<_, DeviceLocationRecord>(
-                only_own_schema_query!("gis", r#"
-                INSERT INTO gis.device_location_records 
-                (device_id, tenant_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                RETURNING *
-                "#),
-            )
-            .bind(device.id)
-            .bind(device.tenant_id)
-            .bind(&payload.position)
-            .bind(&payload.accuracy)
-            .bind(&payload.speed)
-            .bind(&payload.direction)
-            .bind(&payload.altitude)
-            .bind(&payload.battery_level)
-            .bind(&payload.signal_strength)
-            .fetch_one(&pool)
-            .await
-            {
-                Ok(record) => {
-                    let ws_msg = WebSocketMessage::LocationUpdate {
-                        device_code: device.device_code.clone(),
-                        device_name: device.device_name.clone(),
-                        position: payload.position.clone(),
-                        timestamp: record.recorded_at.to_rfc3339(),
-                        status: device.status.clone(),
-                    };
-                    ws_manager.broadcast_location_update(ws_msg).await;
-                    Json(ApiResponse::success(record, "上报位置成功"))
-                }
-                Err(e) => Json(ApiResponse::from(TopemsError::internal("上报位置失败", e))),
-            }
+        Ok(record) => {
+            let ws_msg = WebSocketMessage::LocationUpdate {
+                device_code: device.device_code.clone(),
+                device_name: device.device_name.clone(),
+                position: payload.position.clone(),
+                timestamp: record.recorded_at.to_rfc3339(),
+                status: device.status.clone(),
+            };
+            ws_manager.broadcast_location_update(ws_msg).await;
+            Json(ApiResponse::success(record, "上报位置成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "设备未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询设备失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("上报位置失败", e))),
+    }
+}
+
+#[cfg(test)]
+mod device_token_tests {
+    use super::sha256_token_hex;
+
+    #[test]
+    fn sha256_hex_known_vector() {
+        // 已知向量：sha256("abc") = ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+        assert_eq!(
+            sha256_token_hex("abc"),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+        // 空串向量
+        assert_eq!(
+            sha256_token_hex(""),
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        );
+        // 稳定 + 64 hex 字符
+        let h = sha256_token_hex("device-secret-token");
+        assert_eq!(h.len(), 64);
+        assert_eq!(h, sha256_token_hex("device-secret-token"));
+        assert_ne!(h, sha256_token_hex("device-secret-token2"));
     }
 }

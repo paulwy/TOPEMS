@@ -667,6 +667,86 @@ pub async fn detailed_health(
 
 // ==================== Reports Center Handlers ====================
 
+/// 角色标识 → 中文展示名映射（BI 报表中心角色分布）。
+/// 未知 key 回落原名（core_roles.name 可能随租户自定义扩展）。
+/// 与 main.rs 单部署副本保持同步。
+fn role_display_name(name: &str) -> String {
+    match name {
+        "superadmin" => "超级管理员".into(),
+        "admin" => "系统管理员".into(),
+        "wms_manager" => "仓库管理".into(),
+        "qms_manager" => "质量管理".into(),
+        "mes_manager" => "制造执行".into(),
+        "hrm_manager" => "人力资源".into(),
+        "hr_admin" => "人事行政".into(),
+        "finance_manager" => "财务管理".into(),
+        "crm_manager" => "客户关系".into(),
+        "scm_manager" => "供应链管理".into(),
+        "srm_manager" => "供应商管理".into(),
+        "ehs_manager" => "环境安全".into(),
+        "lims_manager" => "实验室管理".into(),
+        "pdm_manager" => "产品数据".into(),
+        "pm_manager" => "项目管理".into(),
+        "project_manager" => "项目经理".into(),
+        "report_manager" => "报表管理".into(),
+        "gis_manager" => "空间地图".into(),
+        "employee" => "普通员工".into(),
+        other => other.to_string(),
+    }
+}
+
+/// 审计动作标识 → 中文展示名映射（BI 报表中心活动类型）。
+/// 未知 key 回落原名（audit_logs.action 为开放枚举，按模块持续扩展）。
+/// 与 main.rs 单部署副本保持同步。
+fn activity_display_name(action: &str) -> String {
+    match action {
+        "login" => "登录".into(),
+        "logout" => "登出".into(),
+        "create" => "新建".into(),
+        "created" => "创建".into(),
+        "update" => "更新".into(),
+        "delete" => "删除".into(),
+        "read" => "查询".into(),
+        "list" => "列表查询".into(),
+        "detail" => "详情查看".into(),
+        "approve" => "审批通过".into(),
+        "approved" => "已审批".into(),
+        "reject" => "驳回".into(),
+        "rejected" => "已驳回".into(),
+        "cancel" => "取消".into(),
+        "complete" => "完成".into(),
+        "closed" => "关闭".into(),
+        "assigned" => "已分配".into(),
+        "grant" => "授权".into(),
+        "revoke" => "撤销授权".into(),
+        "block" => "封禁".into(),
+        "import" => "导入".into(),
+        "export" => "导出".into(),
+        "batch_create" => "批量新建".into(),
+        "batch_delete" => "批量删除".into(),
+        "bulk_create" => "批量创建".into(),
+        "bulk_update" => "批量更新".into(),
+        "bulk_delete" => "批量删除".into(),
+        "add_tag" => "添加标签".into(),
+        "remove_tag" => "移除标签".into(),
+        "update_risk" => "风险更新".into(),
+        "escalate" => "升级".into(),
+        "escalated" => "已升级".into(),
+        "review" => "评审".into(),
+        "check" => "核验".into(),
+        "execute" => "执行".into(),
+        "enter" => "录入".into(),
+        "route_optimized" => "路线优化".into(),
+        "shipment_created" => "发货创建".into(),
+        "shipment_dispatched" => "发货调度".into(),
+        "carry_forward" => "结转".into(),
+        "depreciate" => "折旧".into(),
+        "discover" => "发现".into(),
+        "acknowledged" => "已确认".into(),
+        other => other.to_string(),
+    }
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:report:read"])),
@@ -789,7 +869,8 @@ pub async fn reports_center_stats(
         .map(|row| {
             let name: String = row.try_get("role_name").unwrap_or_default();
             let value: i64 = row.try_get("user_count").unwrap_or_default();
-            serde_json::json!({ "name": name, "value": value })
+            // DB 真实标识（wms_manager 等）→ 中文展示名；未知 key 回落原名
+            serde_json::json!({ "name": role_display_name(&name), "value": value })
         })
         .collect()
     };
@@ -818,7 +899,8 @@ pub async fn reports_center_stats(
         .map(|row| {
             let name: String = row.try_get("activity").unwrap_or_default();
             let count: i64 = row.try_get("cnt").unwrap_or_default();
-            serde_json::json!({ "name": name, "count": count })
+            // audit_logs.action 真实标识（update_risk 等）→ 中文展示名；未知 key 回落原名
+            serde_json::json!({ "name": activity_display_name(&name), "count": count })
         })
         .collect()
     };

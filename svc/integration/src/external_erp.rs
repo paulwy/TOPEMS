@@ -24,9 +24,9 @@ fn tenant_uuid(claims: &Claims) -> Uuid {
         .unwrap_or(Uuid::nil())
 }
 
-// ===== SSRF 基础防护（P2 低风险配套） =====
+// ===== SSRF 防护（P2 低风险配套 + DNS 重绑定加固） =====
 //
-// 范围：仅做「回环/链路本地段封锁 + 错误回传脱敏」两项低风险措施。
+// 范围：「回环/链路本地/未指定段封锁 + 错误回传脱敏 + 域名目标 DNS 解析校验」。
 // 地址白名单策略（允许哪些内网网段访问 ERP）属产品决策项，暂不自动开启，
 // 标注待产品确认（TODO(product): 内网地址白名单策略）。
 //
@@ -45,9 +45,28 @@ fn has_egress_proxy() -> bool {
     false
 }
 
+/// 纯函数：单个 IP 是否命中 SSRF 封锁段。
+/// 封锁集合：回环 127.0.0.0/8、::1；链路本地 169.254.0.0/16、fe80::/10；
+/// 未指定地址 0.0.0.0、::。IP 直连判定与域名解析结果（DNS 重绑定防护）共用本函数。
+/// 注意：私网段（10/8、172.16/12、192.168/16）不在本函数封锁范围内
+/// （白名单策略待产品确认，本轮不改）。
+fn blocked_ip(ip: std::net::IpAddr) -> bool {
+    match ip {
+        std::net::IpAddr::V4(v4) => {
+            v4.is_loopback() || v4.is_link_local() || v4.is_unspecified()
+        }
+        std::net::IpAddr::V6(v6) => {
+            // ::1 回环；:: 未指定；fe80::/10 链路本地（std 未提供 is_link_local，手动判定）
+            v6.is_loopback() || v6.is_unspecified() || (v6.segments()[0] & 0xffc0 == 0xfe80)
+        }
+    }
+}
+
 /// 判断目标 URL 是否命中 SSRF 封锁规则（回环 127.0.0.0/8、::1；
-/// 链路本地 169.254.0.0/16；未指定地址 0.0.0.0；主机名 localhost）。
-/// 走代理时返回 false（跳过封锁，依赖代理策略）。
+/// 链路本地 169.254.0.0/16；未指定地址 0.0.0.0；主机名 localhost；
+/// host 为 IP 直连时按 blocked_ip 判定）。
+/// 域名形式 host 不在本同步函数内解析——DNS 校验由 ssrf_target_blocked_async
+/// 在异步调用点补齐（DNS 重绑定防护）。走代理时返回 false（跳过封锁，依赖代理策略）。
 fn ssrf_target_blocked(url: &str) -> bool {
     if has_egress_proxy() {
         tracing::warn!(
@@ -64,6 +83,7 @@ fn ssrf_target_blocked(url: &str) -> bool {
 }
 
 /// 纯函数：给定 URL host（可能带方括号 IPv6）判断是否命中封锁段。
+/// 域名形式返回 false（交由 ssrf_target_blocked_async 做 DNS 解析校验）。
 fn ssrf_host_blocked(host: &str) -> bool {
     let host = host
         .trim_start_matches('[')
@@ -73,16 +93,46 @@ fn ssrf_host_blocked(host: &str) -> bool {
         return true;
     }
     match host.parse::<std::net::IpAddr>() {
-        Ok(ip) => match ip {
-            std::net::IpAddr::V4(v4) => {
-                v4.is_loopback() || v4.is_link_local() || v4.is_unspecified()
-            }
-            std::net::IpAddr::V6(v6) => {
-                // ::1 回环；:: 未指定；fe80::/10 链路本地（std 未提供 is_link_local，手动判定）
-                v6.is_loopback() || v6.is_unspecified() || (v6.segments()[0] & 0xffc0 == 0xfe80)
-            }
-        },
-        Err(_) => false, // 域名：本轮不做 DNS 解析（DNS 重绑定风险见后续加固项）
+        Ok(ip) => blocked_ip(ip),
+        Err(_) => false, // 域名：异步侧做 DNS 解析校验（见 ssrf_target_blocked_async）
+    }
+}
+
+/// DNS 重绑定加固（异步）：对域名形式的目标 host 做 DNS 解析，
+/// 解析出的全部 IP 中任一命中 blocked_ip（回环/链路本地/未指定）即拒绝。
+/// 解析策略：
+/// - IP 直连 host：返回 false（已由 ssrf_host_blocked / blocked_ip 判定）；
+/// - 域名 host：`tokio::net::lookup_host` 解析，任一解析 IP 被封锁 → blocked；
+/// - 解析失败（NXDOMAIN / 解析器错误）且非 IP 直连 → 保守拒绝并 warn：
+///   无法证明目标安全即不放行（此时该域名本就无法建立 HTTP 连接，
+///   拒绝不损失真实可用性，仅堵死「解析器投毒/分裂 DNS」绕过路径）。
+/// 走代理时与 ssrf_target_blocked 一致：跳过本地校验（warn 已在同步侧打）。
+async fn ssrf_target_blocked_async(url: &str) -> bool {
+    if has_egress_proxy() {
+        return false;
+    }
+    let host = match url::Url::parse(url) {
+        Ok(u) => u.host().map(|h| h.to_string()).unwrap_or_default(),
+        Err(_) => return true, // 无法解析 URL：同步侧已拒绝，此处保持一致
+    };
+    let host = host
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .to_lowercase();
+    if host.is_empty() || host.parse::<std::net::IpAddr>().is_ok() {
+        return false; // IP 直连 / localhost 已在同步侧判定
+    }
+    let resolved = tokio::net::lookup_host((host.as_str(), 0)).await;
+    match resolved {
+        Ok(addrs) => addrs.into_iter().any(|sa| blocked_ip(sa.ip())),
+        Err(e) => {
+            tracing::warn!(
+                "external_erp SSRF: 目标域名 DNS 解析失败，保守拒绝 (host={}, err={})",
+                host,
+                e
+            );
+            true
+        }
     }
 }
 
@@ -258,8 +308,8 @@ pub(crate) struct ProbeResult {
 /// 不暴露内网地址/端口细节。地址白名单策略待产品确认（见模块头注释）。
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub(crate) async fn probe_http_url(api_url: &str, timeout_ms: u64) -> ProbeResult {
-    // SSRF 目标封锁：回环/链路本地段
-    if ssrf_target_blocked(api_url) {
+    // SSRF 目标封锁：回环/链路本地段 + 域名 DNS 解析校验（防 DNS 重绑定）
+    if ssrf_target_blocked(api_url) || ssrf_target_blocked_async(api_url).await {
         return ProbeResult {
             success: false,
             response_time_ms: 0,
@@ -693,7 +743,7 @@ async fn call_erp_api(
 ) -> Result<serde_json::Value, TopemsError> {
     let url = format!("{}{}", connection.api_url.trim_end_matches('/'), path);
 
-    if ssrf_target_blocked(&url) {
+    if ssrf_target_blocked(&url) || ssrf_target_blocked_async(&url).await {
         tracing::warn!("external_erp SSRF blocked: {}", url);
         return Err(TopemsError::BusinessLogic(
             "目标地址被安全策略拒绝（回环/链路本地段禁止访问）".to_string(),
@@ -1723,5 +1773,39 @@ mod ssrf_tests {
     #[test]
     fn rejects_unparseable_url() {
         assert!(ssrf_target_blocked("not-a-url"));
+    }
+
+    #[test]
+    fn blocked_ip_covers_loopback_link_local_unspecified() {
+        use std::net::IpAddr;
+        let parse = |s: &str| s.parse::<IpAddr>().unwrap();
+        // 回环（IPv4 整段 /8，不限 127.0.0.1）
+        assert!(blocked_ip(parse("127.0.0.1")));
+        assert!(blocked_ip(parse("127.255.255.255")));
+        assert!(blocked_ip(parse("::1")));
+        // 链路本地（含云元数据 169.254.169.254；IPv6 fe80::/10）
+        assert!(blocked_ip(parse("169.254.169.254")));
+        assert!(blocked_ip(parse("169.254.1.5")));
+        assert!(blocked_ip(parse("fe80::1")));
+        // 未指定地址
+        assert!(blocked_ip(parse("0.0.0.0")));
+        assert!(blocked_ip(parse("::")));
+        // 公网与私网（私网白名单策略待产品确认，本轮不封锁）
+        assert!(!blocked_ip(parse("8.8.8.8")));
+        assert!(!blocked_ip(parse("1.1.1.1")));
+        assert!(!blocked_ip(parse("10.0.0.5")));
+        assert!(!blocked_ip(parse("172.16.3.4")));
+        assert!(!blocked_ip(parse("192.168.1.1")));
+        // 其他公网 IPv6（非链路本地前缀）不封锁
+        assert!(!blocked_ip(parse("2606:4700:4700::1111")));
+    }
+
+    #[test]
+    fn ssrf_host_blocked_uses_blocked_ip_for_direct_ips() {
+        // IP 直连路径与 blocked_ip 判定一致；域名不做同步解析（交由异步 DNS 校验）
+        assert!(ssrf_host_blocked("169.254.169.254"));
+        assert!(ssrf_host_blocked("[fe80::dead:beef]"));
+        assert!(!ssrf_host_blocked("example.internal.erp"));
+        assert!(!ssrf_host_blocked("8.8.8.8"));
     }
 }
