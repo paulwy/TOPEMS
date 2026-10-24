@@ -783,7 +783,7 @@ sudo bash scripts/deploy/rollback.sh /opt/topems/backups/<backup_dir>
 
 ## P-8 · none 级流量观测立项
 
-**现状**：待业务/外部立项。
+**现状**：已立项（2026-10-24）。观测脚本 `scripts/audit/traffic-observe.sh` 已落地并本地验证（引号切分解析 nginx combined / 台账 TSV 幂等 / 30 天窗口 none 级判定含全史归零端点 / 报告增量生成）；观测期自生产机首次运行起算 ≥30 天。待办：部署机 crontab 注册每日运行（参考 `scripts/dev/collect-usage-daily.sh` 的 01:00 幂等范式）+ 30 天后人工核对路由注册/前端引用后定处置。
 
 **说明**：部署稳定后，对 8099 网关 access log 做 ≥30 天观测，确认 none 级（长期 0 请求）端点/服务，作为后续下线或冻结决策依据。此项不阻塞部署，可并行推进。
 
