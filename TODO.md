@@ -4142,3 +4142,13 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 下批：剩余 L2 值 ~39：hooks 7（useDataTable/useBatchSelection/useDeviceType/useThrottledCallback/useConsolidation 2）+ schemas 7 + pages hooks 13 + plugin-loader 3（ModuleLoadingOverlay/PluginRouteWrapper/PluginLoaderProvider）——页面 hook 高危（逐名复核消费链，防别名/动态引用误删）；api 3 保留（聚合对象）。
 
 
+
+## 第二十轮（2026-10-24/25）：L2 测试引用批4·高危组
+- 删 50 真死导出：validation 9 常量 + utils 8（FILTER_URL_PREFIX/classifyError/createSpan/deserializeSSRData/getTraceHeaders/isMobileView/isTabletView/pluralize）+ hooks 7 + schemas 7（useXxxDashboardSchema）+ pages hooks 13 + plugin-loader 3（PluginRouteWrapper/PluginLoaderProvider/ModuleLoadingOverlay）。
+- 清 13 处 barrel 转发（constants/hooks/features/finance、hooks/ui、plugin-loader、schemas 7、store、errorHandler）+ validation.ts 整删 + 7 空 dashboardSchema.ts 整删（index 清行）+ UseOperationAuditLog 死壳整删。
+- 测试联动：7 文件部分清理（DataTable mock/ModuleLoadingProgress/PluginLoader/useThrottle/useIsMobile/IamCompanyStructurePage）+ 16 测试整删（含补漏 useOperationAuditLog.test）。
+- 连锁 unused 治理：AST 批量删 import/interface/type/const 47 项（eslint 驱动 3 轮收敛）+ prettier --fix。
+- 验证：tsc 0 error、eslint src --max-warnings 0 全绿；commit 11241b595 + e0ad16c9a（rebase 后，远端竞争 rebase 3 次）。
+- 重扫：L1=1、L2=217（258→217）、L3=0。
+### 状态与下批
+- 下批：L1 残留 1 项 spot-check（防 string-literal 反射）+ L2 217 值候选；重点 api/index.ts 聚合消费链复核（createBaseAxiosClient/iamApi/meetingBookingApi）。
