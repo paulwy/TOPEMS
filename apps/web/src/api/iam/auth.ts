@@ -27,6 +27,9 @@ export const authModuleApi = {
     if (response.success && response.data) {
       localStorage.setItem('token', response.data.access_token);
       apiClient.setAuthToken(response.data.access_token);
+      // #18：refresh_token 不再写 localStorage——已由后端以 HttpOnly Cookie 下发，
+      // 浏览器自动携带；仅清理迁移期可能残留的旧键。
+      localStorage.removeItem('refresh_token');
     }
 
     return response;
@@ -34,22 +37,24 @@ export const authModuleApi = {
 
   logout: async (): Promise<void> => {
     try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      await apiClient.iam.post('/auth/logout', { refresh_token: refreshToken });
+      // #18：refresh_token 已入 HttpOnly Cookie——logout 无 body，Cookie 自动携带（后端 cookie 优先）
+      await apiClient.iam.post('/auth/logout');
     } catch {
       // Backend logout failed; continue with local cleanup
     }
     localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     localStorage.removeItem('roles');
     localStorage.removeItem('permissions');
     apiClient.clearAuthToken();
   },
 
-  refreshToken: async (token: string): Promise<ApiResponse<RefreshTokenResponseData>> => {
-    const response = await apiClient.iam.post<RefreshTokenResponseData>('/auth/refresh', {
-      refresh_token: token,
-    });
+  refreshToken: async (token?: string): Promise<ApiResponse<RefreshTokenResponseData>> => {
+    // #18：无 token 参数 → cookie 模式（HttpOnly Cookie 自动携带，后端 cookie 优先）；
+    // 传 token → body 模式（后端双轨兼容：迁移期旧客户端 / 测试 / 其它端）
+    const body = token ? { refresh_token: token } : undefined;
+    const response = await apiClient.iam.post<RefreshTokenResponseData>('/auth/refresh', body);
 
     if (response.success && response.data) {
       apiClient.setAuthToken(response.data.access_token);

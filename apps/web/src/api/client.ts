@@ -346,6 +346,8 @@ const createAxiosClient = ({
   const client = axios.create({
     baseURL,
     timeout,
+    // #18：HttpOnly Cookie 迁移——跨域请求携带 Cookie（后端 CORS allow_credentials 已开启）
+    withCredentials: true,
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',

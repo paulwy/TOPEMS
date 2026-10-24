@@ -232,13 +232,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }
 
-    const refreshTokenValue = localStorage.getItem('refresh_token');
-    if (!refreshTokenValue) {
-      return false;
-    }
+    // #18：refresh_token 已迁移 HttpOnly Cookie——优先 cookie 模式（无 body，Cookie 自动携带）；
+    // 迁移期降级：localStorage 仍有旧 refresh_token 时走 body（后端双轨兼容）。
+    const legacyRefreshToken = localStorage.getItem('refresh_token');
 
     try {
-      const response = await authApi.refreshToken(refreshTokenValue);
+      const response = legacyRefreshToken
+        ? await authApi.refreshToken(legacyRefreshToken)
+        : await authApi.refreshToken();
       if (response.success && response.data) {
         const { access_token: accessToken } = response.data;
         localStorage.setItem('token', accessToken);

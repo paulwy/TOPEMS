@@ -12,6 +12,54 @@ use crate::modules::audit::record_login_event;
 use topems_shared_auth::auth::generate_refresh_token;
 use topems_shared_auth::auth::Claims;
 
+/// #18 HttpOnly 迁移：refresh_token 走 HttpOnly Cookie（双轨兼容）
+///
+/// - cookie 优先：`refresh_token` 从 Cookie 头提取（Path=/，HttpOnly，SameSite=Lax）
+/// - body 降级：Cookie 缺失时回退到 JSON body 的 `refresh_token`（兼容旧客户端 / 测试 / 其它端）
+fn extract_refresh_token(headers: &HeaderMap, payload: &serde_json::Value) -> Option<String> {
+    if let Some(cookie) = headers
+        .get(axum::http::header::COOKIE)
+        .and_then(|v| v.to_str().ok())
+    {
+        for part in cookie.split(';') {
+            let part = part.trim();
+            if let Some((k, v)) = part.split_once('=') {
+                if k.trim() == "refresh_token" {
+                    let v = v.trim().to_string();
+                    if !v.is_empty() {
+                        return Some(v);
+                    }
+                }
+            }
+        }
+    }
+    payload
+        .get("refresh_token")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .filter(|s| !s.is_empty())
+}
+
+/// #18：构造 refresh_token HttpOnly Cookie（Set-Cookie 头值）
+///
+/// - HttpOnly：JS 不可读（缓解 XSS 窃取）
+/// - SameSite=Lax：跨站 POST 不携带（缓解 CSRF）
+/// - Secure：HTTPS 强制；localhost 属浏览器安全上下文，dev 下同样生效
+/// - Path=/：login/logout/refresh 全路径可携带
+fn build_refresh_token_cookie(value: &str, max_age_secs: Option<i64>) -> String {
+    let mut cookie = format!("refresh_token={}; Path=/; HttpOnly; SameSite=Lax", value);
+    if std::env::var("TOPEMS_COOKIE_SECURE")
+        .map(|v| v != "false")
+        .unwrap_or(true)
+    {
+        cookie.push_str("; Secure");
+    }
+    if let Some(max_age) = max_age_secs {
+        cookie.push_str(&format!("; Max-Age={}", max_age));
+    }
+    cookie
+}
+
 fn send_email_async(
     from: String,
     to: String,
@@ -131,7 +179,7 @@ pub async fn login(
     State(state): State<crate::AppState>,
     headers: HeaderMap,
     Json(payload): Json<serde_json::Value>,
-) -> Json<serde_json::Value> {
+) -> impl IntoResponse {
     let username = payload
         .get("username")
         .and_then(|v| v.as_str())
@@ -174,7 +222,8 @@ pub async fn login(
         return Json(topems_shared_core::response::error_value(
             400,
             "用户名和密码不能为空",
-        ));
+        ))
+        .into_response();
     }
 
     let user = match sqlx::query_as::<_, UserRow>(
@@ -209,7 +258,7 @@ pub async fn login(
                 Some("用户不存在"),
             )
             .await;
-            return Json(topems_shared_core::response::error_value(401, "用户名或密码错误"));
+            return Json(topems_shared_core::response::error_value(401, "用户名或密码错误")).into_response();
         }
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
@@ -224,7 +273,7 @@ pub async fn login(
                 Some("内部服务器错误"),
             )
             .await;
-            return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
+            return Json(topems_shared_core::response::error_value(500, "内部服务器错误")).into_response();
         }
     };
 
@@ -244,7 +293,8 @@ pub async fn login(
         return Json(topems_shared_core::response::error_value(
             401,
             "用户账号已被禁用",
-        ));
+        ))
+        .into_response();
     }
 
     if !verify_password(password, &user.password_hash) {
@@ -263,7 +313,8 @@ pub async fn login(
         return Json(topems_shared_core::response::error_value(
             401,
             "用户名或密码错误",
-        ));
+        ))
+        .into_response();
     }
 
     let jwt_expire_minutes = state.auth_state.token_expiry_hours * 60;
@@ -333,7 +384,8 @@ pub async fn login(
             return Json(topems_shared_core::response::error_value(
                 500,
                 "Token 生成失败",
-            ));
+            ))
+            .into_response();
         }
     };
 
@@ -408,6 +460,9 @@ pub async fn login(
 
     let username_clone = user.username.clone();
 
+    // #18：签发 refresh_token 的同时写 HttpOnly Cookie（前端不再依赖 localStorage 持久化）
+    let refresh_cookie = build_refresh_token_cookie(&refresh_token, None);
+
     let response_data = LoginResponseData {
         access_token,
         refresh_token,
@@ -441,12 +496,19 @@ pub async fn login(
     )
     .await;
 
-    Json(serde_json::json!({
+    let login_body = serde_json::json!({
         "success": true,
         "message": "登录成功",
         "data": response_data,
         "code": 0
-    }))
+    });
+
+    // #18：登录响应附带 refresh_token HttpOnly Cookie
+    let mut headers = HeaderMap::new();
+    if let Ok(cookie_value) = refresh_cookie.parse::<axum::http::HeaderValue>() {
+        headers.insert(axum::http::header::SET_COOKIE, cookie_value);
+    }
+    (headers, Json(login_body)).into_response()
 }
 
 #[allow(dead_code)]
@@ -458,7 +520,6 @@ struct RegisterRequest {
     password: String,
     full_name: Option<String>,
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["unified-core:iam:auth:write"])),
@@ -653,12 +714,11 @@ pub async fn register(
 )]
 pub async fn refresh_token(
     State(state): State<crate::AppState>,
+    headers: HeaderMap,
     Json(payload): Json<serde_json::Value>,
-) -> Json<serde_json::Value> {
-    let refresh_token = payload
-        .get("refresh_token")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+) -> impl IntoResponse {
+    // #18：HttpOnly Cookie 优先，body 降级（双轨兼容）
+    let refresh_token = extract_refresh_token(&headers, &payload).unwrap_or_default();
 
     tracing::info!("IAM auth refresh_token called");
 
@@ -666,10 +726,11 @@ pub async fn refresh_token(
         return Json(topems_shared_core::response::error_value(
             400,
             "refresh_token 不能为空",
-        ));
+        ))
+        .into_response();
     }
 
-    let refresh_token_hash = hash_token(refresh_token);
+    let refresh_token_hash = hash_token(&refresh_token);
 
     // RLS FORCE：refresh 请求无 JWT，中间件不设置连接上下文；此处以系统级上下文
     // （全 0 = RLS 策略管理分支）校验 token 归属，后续写路径再落真实租户上下文。
@@ -681,7 +742,8 @@ pub async fn refresh_token(
                 return Json(topems_shared_core::response::error_value(
                     500,
                     "内部服务器错误",
-                ));
+                ))
+                .into_response();
             }
         };
         if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -694,7 +756,8 @@ pub async fn refresh_token(
             return Json(topems_shared_core::response::error_value(
                 500,
                 "内部服务器错误",
-            ));
+            ))
+            .into_response();
         }
         let r = sqlx::query(
             "SELECT rt.user_id, u.username, u.is_superuser, u.email,
@@ -729,14 +792,16 @@ pub async fn refresh_token(
             return Json(topems_shared_core::response::error_value(
                 401,
                 "Refresh token 无效或已过期",
-            ));
+            ))
+            .into_response();
         }
         Err(e) => {
             tracing::error!("查询 refresh token 失败: {}", e);
             return Json(topems_shared_core::response::error_value(
                 500,
                 "内部服务器错误",
-            ));
+            ))
+            .into_response();
         }
     };
 
@@ -751,7 +816,8 @@ pub async fn refresh_token(
         return Json(topems_shared_core::response::error_value(
             401,
             "用户账号已被禁用",
-        ));
+        ))
+        .into_response();
     }
 
     // 生成新的 access_token
@@ -821,7 +887,8 @@ pub async fn refresh_token(
             return Json(topems_shared_core::response::error_value(
                 500,
                 "Token 生成失败",
-            ));
+            ))
+            .into_response();
         }
     };
 
@@ -844,7 +911,8 @@ pub async fn refresh_token(
             return Json(topems_shared_core::response::error_value(
                 500,
                 "内部服务器错误",
-            ));
+            ))
+            .into_response();
         }
     };
 
@@ -859,7 +927,8 @@ pub async fn refresh_token(
         return Json(topems_shared_core::response::error_value(
             500,
             "内部服务器错误",
-        ));
+        ))
+        .into_response();
     }
 
     let revoke_result = sqlx::query(
@@ -877,7 +946,8 @@ pub async fn refresh_token(
         return Json(topems_shared_core::response::error_value(
             500,
             "内部服务器错误",
-        ));
+        ))
+        .into_response();
     }
 
     let insert_result = sqlx::query(
@@ -897,7 +967,8 @@ pub async fn refresh_token(
         return Json(topems_shared_core::response::error_value(
             500,
             "内部服务器错误",
-        ));
+        ))
+        .into_response();
     }
 
     let session_result = sqlx::query(
@@ -917,7 +988,8 @@ pub async fn refresh_token(
         return Json(topems_shared_core::response::error_value(
             500,
             "内部服务器错误",
-        ));
+        ))
+        .into_response();
     }
 
     match tx.commit().await {
@@ -929,23 +1001,36 @@ pub async fn refresh_token(
             return Json(topems_shared_core::response::error_value(
                 500,
                 "内部服务器错误",
-            ));
+            ))
+            .into_response();
         }
     }
 
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Token刷新成功",
-        "data": {
-            "access_token": access_token,
-            "refresh_token": new_refresh_token,
-            "expires_in": jwt_expire_minutes * 60,
-            "refresh_expires_in": state.auth_state.token_expiry_hours * 7 * 3600,
-            "username": username,
-            "is_superuser": is_superuser
-        },
-        "code": 0
-    }))
+    // #18：刷新成功同步轮换 HttpOnly Cookie（双轨：body 仍返回新 refresh_token 供降级端使用）
+    let mut refresh_headers = HeaderMap::new();
+    if let Ok(cookie_value) =
+        build_refresh_token_cookie(&new_refresh_token, None).parse::<axum::http::HeaderValue>()
+    {
+        refresh_headers.insert(axum::http::header::SET_COOKIE, cookie_value);
+    }
+
+    (
+        refresh_headers,
+        Json(serde_json::json!({
+            "success": true,
+            "message": "Token刷新成功",
+            "data": {
+                "access_token": access_token,
+                "refresh_token": new_refresh_token,
+                "expires_in": jwt_expire_minutes * 60,
+                "refresh_expires_in": state.auth_state.token_expiry_hours * 7 * 3600,
+                "username": username,
+                "is_superuser": is_superuser
+            },
+            "code": 0
+        })),
+    )
+        .into_response()
 }
 
 /// 用户登出接口
@@ -953,20 +1038,20 @@ pub async fn refresh_token(
 /// 该接口不需要 access_token（access_token 可能已过期，但用户仍希望吊销 refresh token）。
 pub async fn logout(
     State(state): State<crate::AppState>,
+    headers: HeaderMap,
     Json(payload): Json<serde_json::Value>,
-) -> Json<serde_json::Value> {
-    let refresh_token = payload
-        .get("refresh_token")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
+) -> impl IntoResponse {
+    // #18：HttpOnly Cookie 优先，body 降级（双轨兼容）
+    let refresh_token = extract_refresh_token(&headers, &payload).unwrap_or_default();
 
-    let refresh_token = match refresh_token {
-        Some(t) if !t.is_empty() => t,
+    let refresh_token = match refresh_token.as_str() {
+        t if !t.is_empty() => t.to_string(),
         _ => {
             return Json(topems_shared_core::response::error_value(
                 400,
                 "缺少 refresh_token",
-            ));
+            ))
+            .into_response();
         }
     };
 
@@ -983,7 +1068,8 @@ pub async fn logout(
             Ok(tx) => tx,
             Err(e) => {
                 tracing::error!("开启事务失败: {}", e);
-                return Json(topems_shared_core::response::error_value(500, "登出失败"));
+                return Json(topems_shared_core::response::error_value(500, "登出失败"))
+                    .into_response();
             }
         };
         if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -993,7 +1079,8 @@ pub async fn logout(
         {
             tracing::error!("设置租户上下文失败: {}", e);
             let _ = ctx_tx.rollback().await;
-            return Json(topems_shared_core::response::error_value(500, "登出失败"));
+            return Json(topems_shared_core::response::error_value(500, "登出失败"))
+                .into_response();
         }
         let r = sqlx::query_scalar(
             "SELECT user_id FROM public.core_refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL",
@@ -1014,20 +1101,31 @@ pub async fn logout(
         Ok(uid) => uid,
         Err(e) => {
             tracing::error!("查询 refresh_token 失败: {}", e);
-            return Json(topems_shared_core::response::error_value(500, "登出失败"));
+            return Json(topems_shared_core::response::error_value(500, "登出失败"))
+                .into_response();
         }
     };
 
     let user_id = match user_id {
         Some(uid) => uid,
         None => {
-            // token 已不存在或已吊销，视为登出成功（幂等）
-            return Json(serde_json::json!({
-                "success": true,
-                "message": "登出成功",
-                "data": null,
-                "code": 0
-            }));
+            // token 已不存在或已吊销，视为登出成功（幂等）——清 HttpOnly Cookie
+            let mut headers = HeaderMap::new();
+            if let Ok(cookie_value) =
+                build_refresh_token_cookie("", Some(0)).parse::<axum::http::HeaderValue>()
+            {
+                headers.insert(axum::http::header::SET_COOKIE, cookie_value);
+            }
+            return (
+                headers,
+                Json(serde_json::json!({
+                    "success": true,
+                    "message": "登出成功",
+                    "data": null,
+                    "code": 0
+                })),
+            )
+                .into_response();
         }
     };
 
@@ -1055,7 +1153,8 @@ pub async fn logout(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            return Json(topems_shared_core::response::error_value(500, "登出失败"));
+            return Json(topems_shared_core::response::error_value(500, "登出失败"))
+                .into_response();
         }
     };
 
@@ -1066,7 +1165,7 @@ pub async fn logout(
     {
         tracing::error!("设置租户上下文失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(topems_shared_core::response::error_value(500, "登出失败"));
+        return Json(topems_shared_core::response::error_value(500, "登出失败")).into_response();
     }
 
     let delete_sessions = sqlx::query("DELETE FROM public.core_sessions WHERE user_id = $1")
@@ -1077,7 +1176,7 @@ pub async fn logout(
     if let Err(e) = delete_sessions {
         tracing::error!("删除会话失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(topems_shared_core::response::error_value(500, "登出失败"));
+        return Json(topems_shared_core::response::error_value(500, "登出失败")).into_response();
     }
 
     let revoke_refresh = sqlx::query(
@@ -1091,22 +1190,33 @@ pub async fn logout(
     if let Err(e) = revoke_refresh {
         tracing::error!("吊销 refresh token 失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(topems_shared_core::response::error_value(500, "登出失败"));
+        return Json(topems_shared_core::response::error_value(500, "登出失败")).into_response();
     }
 
     match tx.commit().await {
         Ok(_) => {
             tracing::info!("Logout successful for user_id: {}", user_id);
-            Json(serde_json::json!({
-                "success": true,
-                "message": "登出成功",
-                "data": null,
-                "code": 0
-            }))
+            // #18：登出后清 HttpOnly Cookie
+            let mut headers = HeaderMap::new();
+            if let Ok(cookie_value) =
+                build_refresh_token_cookie("", Some(0)).parse::<axum::http::HeaderValue>()
+            {
+                headers.insert(axum::http::header::SET_COOKIE, cookie_value);
+            }
+            (
+                headers,
+                Json(serde_json::json!({
+                    "success": true,
+                    "message": "登出成功",
+                    "data": null,
+                    "code": 0
+                })),
+            )
+                .into_response()
         }
         Err(e) => {
             tracing::error!("Logout commit failed: {}", e);
-            Json(topems_shared_core::response::error_value(500, "登出失败"))
+            Json(topems_shared_core::response::error_value(500, "登出失败")).into_response()
         }
     }
 }
