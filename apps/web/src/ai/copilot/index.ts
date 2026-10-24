@@ -1,6 +1,4 @@
-export type { SymbolInfo, ImportInfo, SearchResult } from './code-navigator';
-
-export type {} from './doc-generator';
+export type { SearchResult } from './code-navigator';
 
 export type { QAEntry, KnowledgeDocument } from './knowledge-qa';
 

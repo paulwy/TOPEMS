@@ -4275,3 +4275,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 说明：coreModuleNavConfigs 空数组 + ModuleNavConfig 类型仍活（空数组类型标注 + 测试引用）；34 NavConfig 删除后无导航消费影响（导航走 ModuleConfig 动态 import）。
 ### 状态与下批
 - L1 全清（里程碑）。下批：L2 90 推进——values 40 精确消费判定（含 coreModuleNavConfigs 空壳评估）+ types 50；detector v4 盲区（别名链/index.tsx）评估。
+## 第二十五轮（2026-10-25）：L2 type 批2·ai/ 61 真死 type 删除（L2 90→43）
+- L2 values 40 全活核证（34 ModuleConfig 动态 import 消费 + coreModuleRoutes 路由/测试 + useBIStore/useUIStore/useInstalledPlugins/errorLogger setup-mocks + DashboardQuickActions）——无一可删。
+- L2 types 50 逐名核：45 ai/ type（MemoryEntryType/Sentiment/CIProvider/GateType/... 等）全 0 实体消费（grep 命中=定义行+barrel，无函数签名/变量引用）→ del_any 批量删；8 个纯 type 文件删空（code-refactor/bias-detection/explainability/fairness-assurance/intelligent-router/continuous-performance/performance-auditor/privacy-enhancement——perf 类含连锁死 PerfCategory）。
+- 连锁：barrel 转发 40+ 处清（单行+多行 export 块，type 前缀识别）；tsc 报错驱动二次清（TS2305/2306）。
+- 11 个连锁降级 ai type（CIStatus/AttackType/AuditType/EmotionType 等，同文件引用被删后暴露）→ 再删 + 3 空文件；5 个组件/ai type（Valence/Arousal/EmotionType/ModuleCardStatus/ModuleCardQuota）→ 再删。
+- 验证：tsc 0、eslint 全绿；重扫 **L2=90→43（values 40 全活 + types 3 测试引用：VoucherItem/PeriodOption/DefectForm）**、L1=0、L3=4667。
+- vitest 24 批全量：13 文件 53 失败（较预存在 7/13 增多——需下批核失败清单判定是否本批引入；25 批删除项 grep 均无测试引用）。
+### 状态与下批
+- 下批：types 3（VoucherItem/PeriodOption/DefectForm——测试引用，删除需同步测试）评估；vitest 失败清单核（13 文件 53 失败的构成：预存在 7/13 vs 新增）；L3 4686 级不再动。

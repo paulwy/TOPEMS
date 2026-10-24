@@ -1,12 +1,4 @@
-export type {
-  AICapabilityType,
-  CapabilityStatus,
-  PlatformConfig,
-  MiddlewareContext,
-  MiddlewareResult,
-} from './ai-first-architecture';
-
-export type { RoutePerformance, RoutingStrategy } from './intelligent-router';
+export type {} from './ai-first-architecture';
 
 export type {
   UserProfile,
@@ -16,7 +8,6 @@ export type {
   DeviceType,
   LayoutDensity,
   ThemeMode,
-  ContentPriority,
 } from './adaptive-ui';
 
 export { V54NativePanel } from './v54-native-panel';

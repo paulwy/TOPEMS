@@ -17,17 +17,3 @@ export interface TestCase {
   created_at: string;
   updated_at?: string;
 }
-
-export interface TestResultDetail {
-  testCaseId: string;
-  passed: boolean;
-  duration_ms: number;
-  coverage: number;
-  error_message?: string;
-  assertion_results?: Array<{
-    name: string;
-    passed: boolean;
-    expected: string;
-    actual: string;
-  }>;
-}

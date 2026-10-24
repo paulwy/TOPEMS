@@ -1,5 +1,3 @@
-export type PerfIssueType = 'MemoryLeak' | 'LayoutThrash' | 'LongTask' | 'ExcessiveRenders';
-
 export interface PerformanceBudget {
   maxFpsDrop: number;
   maxMemoryUsage: number;

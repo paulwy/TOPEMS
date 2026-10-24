@@ -1,7 +1,6 @@
 export type DeviceType = 'mobile' | 'tablet' | 'desktop';
 export type LayoutDensity = 'compact' | 'normal' | 'relaxed';
 export type ThemeMode = 'light' | 'dark' | 'auto';
-export type ContentPriority = 'high' | 'medium' | 'low';
 
 export interface UserPreferences {
   theme: ThemeMode;

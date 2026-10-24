@@ -17,12 +17,6 @@ export {
   type WorkflowTemplate,
 } from './workflow-engine';
 
-export {
-  type ConversationMessage,
-  type Entity,
-  type MemoryEntryType,
-  type Sentiment,
-  type Intent,
-} from './context-engine';
+export { type ConversationMessage, type Entity } from './context-engine';
 
 export { V54AgentPanel } from './v54-agent-panel';

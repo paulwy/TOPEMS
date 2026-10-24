@@ -10,14 +10,6 @@ type IconComponent = React.ComponentType<{
   style?: React.CSSProperties;
 }>;
 
-export type ModuleCardStatus = 'active' | 'beta' | 'coming' | 'maintenance';
-
-export interface ModuleCardQuota {
-  used: number;
-  total: number;
-  label?: string;
-}
-
 export interface ModuleItem {
   title: string;
   icon: IconComponent;

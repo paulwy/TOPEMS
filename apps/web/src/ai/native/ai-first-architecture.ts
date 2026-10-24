@@ -1,43 +1,5 @@
 import i18n from '@/i18n';
 
-export type AICapabilityType =
-  | 'reasoning'
-  | 'generation'
-  | 'classification'
-  | 'routing'
-  | 'adaptation'
-  | 'prediction'
-  | 'optimization'
-  | 'monitoring';
-
-export type CapabilityStatus = 'active' | 'inactive' | 'degraded' | 'error';
-
-export interface PlatformConfig {
-  ai_enabled: boolean;
-  auto_optimize: boolean;
-  intelligent_routing: boolean;
-  adaptive_ui: boolean;
-  learning_rate: number;
-  max_concurrent_capabilities: number;
-  fallback_on_error: boolean;
-  telemetry_enabled: boolean;
-  config_version: string;
-}
-
-export interface MiddlewareContext {
-  timestamp: number;
-  requestId: string;
-  source: string;
-  metadata: Record<string, unknown>;
-}
-
-export interface MiddlewareResult {
-  success: boolean;
-  data?: unknown;
-  error?: string;
-  latency: number;
-}
-
 [
   {
     id: 'cap-reasoning',

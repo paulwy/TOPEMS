@@ -1,17 +1,3 @@
-/**
- * V53.0 前端 AI 增强 — 自动化测试生成
- *
- * 提供智能测试用例生成能力：
- * - 组件测试生成 (React Testing Library)
- * - Hook 测试生成
- * - API 集成测试生成
- * - 边界场景检测与覆盖率分析
- * - Mock 数据生成
- * - 测试套件组织
- * - 断言策略选择
- */
-
-export type TestFramework = 'jest' | 'vitest';
 export type TestType = 'component' | 'hook' | 'api' | 'integration';
 
 export interface TestCase {

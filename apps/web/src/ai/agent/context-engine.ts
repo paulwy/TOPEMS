@@ -1,8 +1,3 @@
-export type MemoryEntryType = 'user_query' | 'action_result' | 'system_event';
-export type Sentiment = 'positive' | 'negative' | 'neutral';
-export type Intent =
-  'query' | 'command' | 'exploration' | 'confirmation' | 'correction' | 'social' | 'unclear';
-
 export interface ConversationMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';

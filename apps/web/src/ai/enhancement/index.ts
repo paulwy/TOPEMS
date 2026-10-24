@@ -6,7 +6,7 @@
 
 export type { CompletionContext, CompletionItem } from './code-completion';
 
-export type { TestCase, TestMethod, TestFramework, TestType } from './test-generator';
+export type { TestCase, TestMethod, TestType } from './test-generator';
 
 export type { IntentCategory, ComponentMeta, ThemeMode } from './ui-recommender';
 

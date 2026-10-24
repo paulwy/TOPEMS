@@ -8,11 +8,4 @@ export type {
   SecuritySeverity,
 } from './security-scanner';
 
-export type {
-  PerfFinding,
-  AuditMetrics,
-  LighthouseScores,
-  PerfCategory,
-} from './performance-auditor';
-
 export { V56ReviewPanel } from './v56-review-panel';
