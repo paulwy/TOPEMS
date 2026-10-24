@@ -13,6 +13,20 @@
 
 - 说明：既有各域 spec 多为「渲染不崩 + 方法存在」弱断言，本次新增为真断言（适配器参数归一化 pageSize→page_size、`{success,data:{items,total}}` 解包、k0-k4 错误翻译、页面正文渲染）；srm SupplierProduct/Category、pm 表单/自绘页按页面真实行为适配（内存 store、无错误抛出的适配器、测试 harness 对 useMutation 闭包的 mock 限制等如实记录，未迁就测试改页面源码）。
 
+### 批次 2 · 剩余弱域（lims/mes/wms/erp/finance，2026-10-24）✅ 完成
+
+> 同范本形态与提交流程，分域并行。15 个新 spec / 73 用例全绿，typecheck + eslint 绿，每域独立 commit（pre-commit 26 项逐提交通过）。
+
+| 域 | 新增 spec 页面 | 用例数 | 提交哈希 |
+|---|---|---|---|
+| lims | ReagentPage / LimsTestMethodPage / AnalytePage | 15 | `29e15b4c69` |
+| mes | WorkOrderPage / MaterialRequirementPage / CapacityPage | 15 | `f69cb20d7b` |
+| wms | WarehouseManagementPage / InboundOrderPage / BatchManagementPage | 12 | `38bb05c4f4` |
+| erp | VoucherPage / BankAccountPage / MaterialManagementPage | 15 | `1cdc888f1c` |
+| finance | FinanceExpensePage / FinanceInvoicePage / FinanceCurrencyPage | 16 | `dc3064febd` |
+
+- 说明：本批新增形态含 ListPageTemplate（记录型 mock + crud 包装层断言）、itemsField 定制解包（inboundOrders→orders 等）、统计卡片 headerContent mount 查询（mockResolvedValueOnce 须在 render 后注入）、表单/自绘页 payload 归一化（trim/大写/字符串数值）与 UI 行为断言（受 harness useMutation 闭包冻结限制，create/update 精确 payload 不可经 UI 观测时改断言弹窗/回填/触发）。**登记页面缺陷 1 处（未修，待决策）**：mes MaterialIssuePage 的 `materialIssueApi` 仅暴露 list+create，无 update/delete 端点，适配器 update/delete 会落到未定义函数——已从本批候选剔除，建议后续按「修根因」批次补 API 端点后补测。
+
 ## MCP 接口修复（2026-10-23）📌 待办
 
 > 源自 `MCP修复方案-2026-10-23.md`（P0×1 / P1×3 / P2×7）。原则：先修根因再提交，lefthook 全跑，不绕过门禁。
