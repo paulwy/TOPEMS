@@ -812,9 +812,21 @@ pub async fn list_admin_faqs(
         .unwrap_or_else(Uuid::nil);
 
     // 超管不加租户过滤；普通管理员只看本租户行
-    let rows: Result<Vec<(Uuid, Uuid, String, String, String, serde_json::Value, String, String, String)>, sqlx::Error> =
-        if claims.is_superuser {
-            match query.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+    let rows: Result<
+        Vec<(
+            Uuid,
+            Uuid,
+            String,
+            String,
+            String,
+            serde_json::Value,
+            String,
+            String,
+            String,
+        )>,
+        sqlx::Error,
+    > = if claims.is_superuser {
+        match query.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
                 Some(q) => {
                     sqlx::query_as(
                         "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at::text
@@ -842,8 +854,8 @@ pub async fn list_admin_faqs(
                     .await
                 }
             }
-        } else {
-            match query.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+    } else {
+        match query.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
                 Some(q) => {
                     sqlx::query_as(
                         "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at::text
@@ -873,25 +885,37 @@ pub async fn list_admin_faqs(
                     .await
                 }
             }
-        };
+    };
 
     match rows {
         Ok(items) => {
             let items = items
                 .into_iter()
-                .map(|(id, tenant_id, module, question, answer, keywords, category, status, created_at)| {
-                    AdminFaqItem {
-                        id: id.to_string(),
-                        tenant_id: tenant_id.to_string(),
+                .map(
+                    |(
+                        id,
+                        tenant_id,
                         module,
                         question,
                         answer,
-                        keywords: jsonb_keywords_to_vec(keywords),
+                        keywords,
                         category,
                         status,
                         created_at,
-                    }
-                })
+                    )| {
+                        AdminFaqItem {
+                            id: id.to_string(),
+                            tenant_id: tenant_id.to_string(),
+                            module,
+                            question,
+                            answer,
+                            keywords: jsonb_keywords_to_vec(keywords),
+                            category,
+                            status,
+                            created_at,
+                        }
+                    },
+                )
                 .collect::<Vec<_>>();
             Json(ApiResponse::success(items, "ok")).into_response()
         }
@@ -949,7 +973,11 @@ pub async fn create_admin_faq(
     let tenant_uuid = if claims.is_superuser {
         Uuid::nil()
     } else {
-        match claims.tenant_id.as_ref().and_then(|t| Uuid::parse_str(t).ok()) {
+        match claims
+            .tenant_id
+            .as_ref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+        {
             Some(t) => t,
             None => {
                 return (

@@ -121,7 +121,11 @@ fn parse_allowed_entry(lower: &str) -> Option<AllowEntry> {
                 if prefix > 32 {
                     return None;
                 }
-                let mask = if prefix == 0 { 0u32 } else { u32::MAX << (32 - prefix) };
+                let mask = if prefix == 0 {
+                    0u32
+                } else {
+                    u32::MAX << (32 - prefix)
+                };
                 Some(AllowEntry::CidrV4 {
                     net: u32::from(v4) & mask,
                     mask,
@@ -131,7 +135,11 @@ fn parse_allowed_entry(lower: &str) -> Option<AllowEntry> {
                 if prefix > 128 {
                     return None;
                 }
-                let mask = if prefix == 0 { 0u128 } else { u128::MAX << (128 - prefix) };
+                let mask = if prefix == 0 {
+                    0u128
+                } else {
+                    u128::MAX << (128 - prefix)
+                };
                 Some(AllowEntry::CidrV6 {
                     net: u128::from(v6) & mask,
                     mask,
@@ -1986,7 +1994,7 @@ mod ssrf_tests {
     #[test]
     fn blocks_private_network_segments() {
         let _guard = env_lock_guard(); // 断言「白名单为空」语义，需与 env 注入测试互斥
-        // IPv4 私网段（RFC1918）并入默认封锁：同步侧 IP 直连路径
+                                       // IPv4 私网段（RFC1918）并入默认封锁：同步侧 IP 直连路径
         assert!(ssrf_host_blocked("10.0.0.1"));
         assert!(ssrf_target_blocked("http://10.0.0.1:8080/api"));
         assert!(ssrf_host_blocked("172.16.0.1"));
@@ -2003,9 +2011,8 @@ mod ssrf_tests {
 
     #[test]
     fn parse_allowed_hosts_domains_ips_cidrs() {
-        let entries = parse_allowed_hosts(
-            "erp.corp.local, 10.0.0.5, 10.0.0.0/8, 172.16.0.0/12, fd00::/8, ,",
-        );
+        let entries =
+            parse_allowed_hosts("erp.corp.local, 10.0.0.5, 10.0.0.0/8, 172.16.0.0/12, fd00::/8, ,");
         // 精确域名（整串、大小写不敏感）
         assert!(host_whitelisted("erp.corp.local", &entries));
         assert!(host_whitelisted("ERP.CORP.LOCAL", &entries));
@@ -2029,7 +2036,7 @@ mod ssrf_tests {
         // IPv6 CIDR
         assert!(host_whitelisted("fd00::1", &entries));
         assert!(!host_whitelisted("fc00::1", &entries)); // fd00::/8 不含 fc00::
-        // 解析后 IP 匹配（异步侧 DNS 校验路径）
+                                                         // 解析后 IP 匹配（异步侧 DNS 校验路径）
         use std::net::IpAddr;
         let parse = |s: &str| s.parse::<IpAddr>().unwrap();
         assert!(ip_whitelisted(parse("10.20.30.40"), &entries));
