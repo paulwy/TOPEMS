@@ -1,0 +1,66 @@
+-- ============================================================================
+-- 20261024000013_erp_voucher_no_unique.sql
+--
+-- erp.financial_vouchers 凭证号租户内唯一约束
+-- （由 docs/database/draft-2026-10-24-erp-voucher-no-unique.sql.draft 落地）。
+--
+-- 背景与候选键依据：
+--   database/migrations/20261023000020_erp_biz_unique_constraints.sql §注释 已登记：
+--   「erp.financial_vouchers.voucher_number 按会计期间(period)重号，
+--     唯一键应为 (tenant_id, period, voucher_number)，口径待财务确认，列入候选报告不补。」
+--   本迁移即该候选键的落地形态。
+--
+-- 表名勘误（任务书 vs 实测）：
+--   任务书原写 finance.vouchers；只读核对 topems_test 实际表为
+--   erp.financial_vouchers（finance.vouchers 不存在）。本索引按实际表写。
+--   实测列（2026-10-24，topems_test）：
+--     id            uuid PK default gen_random_uuid()
+--     tenant_id     uuid 可空
+--     period        varchar NOT NULL        -- 会计期间，如 '2026-10'
+--     voucher_number varchar NOT NULL
+--     deleted_at    timestamptz 可空        -- 软删
+--   当前全表 0 行，无存量重复；除 PK 外无任何二级索引。
+--
+-- 幂等：CREATE UNIQUE INDEX IF NOT EXISTS，可重复执行。
+--
+-- 遗留确认点（按任务授权先落地，口径待财务复核）：
+--   [Q1] 键序 (tenant_id, period, voucher_number)：表上另有 organization_id
+--        NOT NULL，若凭证按组织独立编号则应把 organization_id 加进键。
+--   [Q2] 部分索引 WHERE deleted_at IS NULL：软删凭证不占用唯一号、允许删后重开同号；
+--        若要求「历史号码永不复用」，去掉 WHERE 子句做全量唯一。
+--   [Q3] tenant_id 可空：Postgres 唯一索引视 NULL 互不相同 → 多 NULL 租户 +
+--        同 period+号 可共存（与既有可空设计兼容，未改表）。
+--   [Q4] status='draft' 草稿凭证是否参与唯一：当前参与；
+--        若草稿可自由编号、仅过账后才算号，谓词应追加 AND status <> 'draft'。
+--   [Q5] 生产/预发落地前必须重跑重复检查 SQL（见文件尾注释），
+--        有重复须先清洗再建索引，否则 CREATE UNIQUE INDEX 会硬失败。
+-- ============================================================================
+
+-- 唯一索引：租户 + 会计期间 + 凭证号，软删行豁免
+-- （索引名沿用任务书候选名 uq_finance_voucher_tenant_period_no；
+--   表已勘误为 erp.financial_vouchers。）
+CREATE UNIQUE INDEX IF NOT EXISTS uq_finance_voucher_tenant_period_no
+    ON erp.financial_vouchers (tenant_id, period, voucher_number)
+    WHERE deleted_at IS NULL;
+
+-- ---------------------------------------------------------------------------
+-- 生产/预发落地前只读核对（不写库；在目标环境执行）：
+--
+-- ① 确认表/列真实存在（防勘误遗漏）：
+--   SELECT column_name FROM information_schema.columns
+--    WHERE table_schema='erp' AND table_name='financial_vouchers'
+--      AND column_name IN ('tenant_id','period','voucher_number','deleted_at');
+--
+-- ② 存量重复检查（Q5）——有结果即必须先清洗，切勿直接建索引：
+--   SELECT tenant_id, period, voucher_number, count(*) AS cnt,
+--          array_agg(id) AS voucher_ids
+--     FROM erp.financial_vouchers
+--    WHERE deleted_at IS NULL
+--    GROUP BY tenant_id, period, voucher_number
+--   HAVING count(*) > 1
+--    ORDER BY cnt DESC;
+--
+-- ③ 草稿状态占比参考（Q4）：
+--   SELECT status, count(*) FROM erp.financial_vouchers WHERE deleted_at IS NULL
+--    GROUP BY status;
+-- ---------------------------------------------------------------------------
