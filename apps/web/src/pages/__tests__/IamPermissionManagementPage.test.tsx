@@ -13,7 +13,7 @@ vi.mock('@/api/iam', () => {
     updatePermission: vi.fn().mockResolvedValue({ success: true }),
     deletePermission: vi.fn().mockResolvedValue({ success: true }),
   };
-  return { authApi: mock, iamApi: mock, default: mock };
+  return { authApi: mock, default: mock };
 });
 
 vi.mock('@/store', () => ({

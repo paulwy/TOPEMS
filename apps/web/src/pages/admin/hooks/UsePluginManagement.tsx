@@ -1,5 +1,3 @@
-import i18n from '@/i18n';
-
 export interface MarketplacePlugin {
   code: string;
   name: string;
@@ -14,26 +12,6 @@ export interface MarketplacePlugin {
   permissions: Array<{ code: string; name: string }>;
 }
 export type UninstallTier = 'disable' | 'uninstall' | 'delete';
-export const getPluginDisplayNames = (_t: (key: string) => string): Record<string, string> => ({
-  workflow: i18n.t('admin.plugin_management.workflow_engine'),
-  erp: i18n.t('admin.plugin_management.enterprise_resource_planning'),
-  hrm: i18n.t('admin.plugin_management.human_resource_management'),
-  crm: i18n.t('admin.plugin_management.customer_relationship_management'),
-  mes: i18n.t('admin.plugin_management.manufacturing_execution_system'),
-  qa: i18n.t('admin.plugin_management.quality_management_safety'),
-  scm: i18n.t('admin.plugin_management.supply_chain_management'),
-  wms: i18n.t('admin.plugin_management.warehouse_management'),
-  bi: i18n.t('admin.plugin_management.business_intelligence'),
-  pm: i18n.t('admin.plugin_management.project_management'),
-  ai: i18n.t('admin.plugin_management_page.ai_e93885'),
-  gis: i18n.t('admin.plugin_management.geographic_information_service'),
-  mobile: i18n.t('admin.plugin_management.mobile_services'),
-  rs: i18n.t('admin.plugin_management.r_d_management'),
-  srm: i18n.t('admin.plugin_management.supplier_management'),
-  monitor: i18n.t('admin.plugin_management.monitoring_alerts'),
-  portal: i18n.t('admin.plugin_management.enterprise_portal'),
-  integration: i18n.t('admin.plugin_management.system_integration'),
-});
 export const PLUGIN_CATEGORIES: Record<string, string> = {
   workflow: 'System',
   erp: 'Business',

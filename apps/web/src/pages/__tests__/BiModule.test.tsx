@@ -6,42 +6,9 @@ import BIDashboardPage from '../bi/BIDashboardPage';
 import BIVisualizationPage from '../bi/BIVisualizationPage';
 import BIReportPage from '../bi/BIReportPage';
 import BIDataSourcePage from '../bi/BIDataSourcePage';
-import { biApi } from '@/api/bi';
 import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/bi', () => ({
-  biApi: {
-    dashboards: {
-      list: vi.fn().mockResolvedValue({ data: [], pagination: { total: 0 } }),
-      get: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    visualizations: {
-      list: vi.fn().mockResolvedValue({ data: [], pagination: { total: 0 } }),
-      get: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    reports: {
-      list: vi.fn().mockResolvedValue({ data: [], pagination: { total: 0 } }),
-      get: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      export: vi.fn(),
-    },
-    dataSources: {
-      list: vi.fn().mockResolvedValue({ data: [], pagination: { total: 0 } }),
-      get: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      test: vi.fn(),
-    },
-  },
   fetchDashboards: vi.fn().mockResolvedValue({ data: [], pagination: { total: 0 } }),
   fetchDashboard: vi.fn(),
   createDashboard: vi.fn(),
@@ -178,14 +145,6 @@ describe('BiModule', () => {
       );
       expect(container).toBeDefined();
     });
-
-    it('should have dashboard API methods defined', () => {
-      expect(biApi.dashboards.list).toBeDefined();
-      expect(biApi.dashboards.get).toBeDefined();
-      expect(biApi.dashboards.create).toBeDefined();
-      expect(biApi.dashboards.update).toBeDefined();
-      expect(biApi.dashboards.delete).toBeDefined();
-    });
   });
 
   describe('BIVisualizationPage', () => {
@@ -196,14 +155,6 @@ describe('BiModule', () => {
         </BrowserRouter>
       );
       expect(container).toBeDefined();
-    });
-
-    it('should have visualization API methods defined', () => {
-      expect(biApi.visualizations.list).toBeDefined();
-      expect(biApi.visualizations.get).toBeDefined();
-      expect(biApi.visualizations.create).toBeDefined();
-      expect(biApi.visualizations.update).toBeDefined();
-      expect(biApi.visualizations.delete).toBeDefined();
     });
   });
 
@@ -216,15 +167,6 @@ describe('BiModule', () => {
       );
       expect(container).toBeDefined();
     });
-
-    it('should have report API methods defined', () => {
-      expect(biApi.reports.list).toBeDefined();
-      expect(biApi.reports.get).toBeDefined();
-      expect(biApi.reports.create).toBeDefined();
-      expect(biApi.reports.update).toBeDefined();
-      expect(biApi.reports.delete).toBeDefined();
-      expect(biApi.reports.export).toBeDefined();
-    });
   });
 
   describe('BIDataSourcePage', () => {
@@ -235,15 +177,6 @@ describe('BiModule', () => {
         </BrowserRouter>
       );
       expect(container).toBeDefined();
-    });
-
-    it('should have data source API methods defined', () => {
-      expect(biApi.dataSources.list).toBeDefined();
-      expect(biApi.dataSources.get).toBeDefined();
-      expect(biApi.dataSources.create).toBeDefined();
-      expect(biApi.dataSources.update).toBeDefined();
-      expect(biApi.dataSources.delete).toBeDefined();
-      expect(biApi.dataSources.test).toBeDefined();
     });
   });
 });

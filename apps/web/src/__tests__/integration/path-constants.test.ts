@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { AUTH_PATHS } from '@/routes/auth';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { ADMIN_PATHS } from '@/modules/admin/config';
 import { IAM_PATHS } from '@/modules/iam/config';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
@@ -66,13 +67,6 @@ describe('Path Constants Validation', () => {
     it('should ensure auth paths are consistent', () => {
       expect(AUTH_PATHS.login).toBe('/login');
       expect(AUTH_PATHS.forgotPassword).toBe('/forgot-password');
-    });
-
-    it('should ensure mobile tab paths are consistent', () => {
-      expect(MOBILE_TAB_PATHS.tasks).toBe('/tasks');
-      expect(MOBILE_TAB_PATHS.scan).toBe('/scan');
-      expect(MOBILE_TAB_PATHS.approval).toBe('/approval');
-      expect(MOBILE_TAB_PATHS.approvals).toBe('/approvals');
     });
   });
 

@@ -15,6 +15,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import SSEClient from '../sseClient';
 
 // ========== 辅助：构造 SSE 文本流 ==========
 function toSSEStream(chunks: string[]): ReadableStream<Uint8Array> {
@@ -54,15 +55,6 @@ describe('SSEClient 单元测试', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.useRealTimers();
-  });
-
-  // ---- SSE-UT-001 ----
-  it('SSE-UT-001: createSSEClient 返回 SSEClient 实例', () => {
-    const client = createSSEClient({ url: '/api/sse/connect' });
-    expect(client).toBeInstanceOf(SSEClient);
-    expect(client.isClosed()).toBe(false);
-    expect(client.getReconnectAttempts()).toBe(0);
-    expect(client.getLastEventId()).toBeNull();
   });
 
   // ---- SSE-UT-002 ----

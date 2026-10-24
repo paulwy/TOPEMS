@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { batchOperation } from '../batchOperation';
 
 describe('batchOperation', () => {
   it('should execute operations concurrently', async () => {

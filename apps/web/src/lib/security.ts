@@ -58,11 +58,6 @@ export const getCsrfToken = (): string | null => {
   return token;
 };
 
-export const verifyCsrfToken = (token: string): boolean => {
-  const storedToken = getCsrfToken();
-  return storedToken === token;
-};
-
 export const initCsrfToken = (): string => {
   let token = getCsrfToken();
   if (!token) {

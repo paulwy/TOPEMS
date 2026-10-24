@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { BACKEND_PORTS, MF_PORTS, getBackendPort, getMfPort } from '@/config/ports';
+import { BACKEND_PORTS, MF_PORTS, getMfPort } from '@/config/ports';
 
 describe('config/ports - BACKEND_PORTS 常量', () => {
   it('unified-core 虚拟服务端口 8000', () => {
@@ -35,22 +35,6 @@ describe('config/ports - MF_PORTS 常量', () => {
   it('topems_bi=3015, topems_ai=3017', () => {
     expect(MF_PORTS.topems_bi).toBe(3015);
     expect(MF_PORTS.topems_ai).toBe(3017);
-  });
-});
-
-describe('config/ports - getBackendPort', () => {
-  it('存在服务返回对应端口', () => {
-    expect(getBackendPort('iam')).toBe(8000);
-    expect(getBackendPort('erp')).toBe(8010);
-    expect(getBackendPort('bi')).toBe(8060);
-  });
-
-  it('不存在服务使用默认 fallback 8000', () => {
-    expect(getBackendPort('nonexistent')).toBe(8000);
-  });
-
-  it('不存在服务使用自定义 fallback', () => {
-    expect(getBackendPort('nonexistent', 9999)).toBe(9999);
   });
 });
 

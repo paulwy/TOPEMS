@@ -25,8 +25,6 @@ export const glassSx = (theme: Theme) => ({
   WebkitBackdropFilter: 'blur(12px)',
 });
 
-export type GlowStrength = 'sm' | 'md' | 'lg';
-
 /** 渐变文字（design demo `gradient-text`，primary → secondary） */
 export const gradientTextSx = (theme: Theme) => ({
   background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,

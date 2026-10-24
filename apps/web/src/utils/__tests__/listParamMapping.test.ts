@@ -3,9 +3,6 @@ import {
   mapListParamsToBackend,
   parsePaginationFromResponse,
   buildStandardFilterParams,
-  buildNestedFilterArray,
-  serializeFiltersToUrl,
-  parseFiltersFromUrl,
   topemsStandardParams,
   nestedFilterParams,
   offsetStyleParams,
@@ -350,64 +347,5 @@ describe('utils/listParamMapping - buildStandardFilterParams', () => {
       ],
     });
     expect(result).toEqual({ status: 'active', age_gt: 18 });
-  });
-});
-
-describe('utils/listParamMapping - buildNestedFilterArray', () => {
-  it('converts simple object to FilterCondition array', () => {
-    const result = buildNestedFilterArray({ status: 'active', type: 'A' });
-    expect(result).toEqual([
-      { field: 'status', op: 'eq', value: 'active' },
-      { field: 'type', op: 'eq', value: 'A' },
-    ]);
-  });
-
-  it('skips null/undefined/empty values', () => {
-    const result = buildNestedFilterArray({ a: 'val', b: null, c: '', d: undefined });
-    expect(result).toEqual([{ field: 'a', op: 'eq', value: 'val' }]);
-  });
-
-  it('passes through FilterCondition array with fieldMapping', () => {
-    const result = buildNestedFilterArray(
-      [
-        { field: 'name', op: 'gt', value: 18 },
-        { field: 'status', op: 'eq', value: 'active' },
-      ],
-      { fieldMapping: { name: 'full_name' } }
-    );
-    expect(result).toEqual([
-      { field: 'full_name', op: 'gt', value: 18 },
-      { field: 'status', op: 'eq', value: 'active' },
-    ]);
-  });
-});
-
-describe('utils/listParamMapping - serializeFiltersToUrl / parseFiltersFromUrl', () => {});
-
-describe('utils/listParamMapping - preset configs', () => {
-  it('topemsStandardParams has correct defaults', () => {
-    expect(topemsStandardParams.style).toBe('standard');
-    expect(topemsStandardParams.searchParamName).toBe('keyword');
-    expect(topemsStandardParams.pageSizeParamName).toBe('page_size');
-  });
-
-  it('nestedFilterParams has correct defaults', () => {
-    expect(nestedFilterParams.style).toBe('nested');
-    expect(nestedFilterParams.sortOrderKey).toBe('direction');
-    expect(nestedFilterParams.sortOrderValues).toEqual({ asc: 'ASC', desc: 'DESC' });
-  });
-
-  it('offsetStyleParams has correct defaults', () => {
-    expect(offsetStyleParams.style).toBe('offset');
-    expect(offsetStyleParams.pageSizeParamName).toBe('limit');
-    expect(offsetStyleParams.sortOrderValues).toEqual({ asc: '1', desc: '-1' });
-  });
-
-  it('presets can be used with mapListParamsToBackend', () => {
-    const result = mapListParamsToBackend(
-      { ...baseState, page: 2, pageSize: 10 },
-      offsetStyleParams
-    );
-    expect(result).toEqual({ offset: 10, limit: 10 });
   });
 });

@@ -27,7 +27,6 @@ vi.mock('@/api/client', () => ({
   },
   handleResponse: vi.fn(),
   downloadBlob: vi.fn(),
-  createBaseAxiosClient: vi.fn(),
 }));
 
 vi.mock('@/api/request', () => ({

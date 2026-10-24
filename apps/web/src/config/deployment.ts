@@ -68,10 +68,4 @@ deploymentConfig.features.quotaEnabled && deploymentConfig.multiTenantEnabled;
 
 deploymentConfig.features.tenantManagement && deploymentConfig.multiTenantEnabled;
 
-/**
- * 获取功能开关状态
- */
-export const getFeatureFlag = (flag: keyof FeatureFlags): boolean =>
-  deploymentConfig.features[flag];
-
 export default deploymentConfig;

@@ -702,10 +702,6 @@ const createAxiosClient = ({
   return client;
 };
 
-export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
-  return createAxiosClient({ baseURL, withCsrf: false, returnData: false });
-};
-
 export const downloadBlob = async (
   serviceName: string,
   url: string,

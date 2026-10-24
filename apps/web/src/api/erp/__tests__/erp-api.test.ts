@@ -11,7 +11,7 @@ import { voucherApi } from '../../finance/voucher';
 import { bankAccountApi } from '../bankAccount';
 import { financeReportApi } from '../../finance/report';
 import { officeSupplyApi } from '../admin/officeSupplies';
-import { meetingRoomApi, meetingBookingApi } from '../admin/meeting';
+import { meetingRoomApi } from '../admin/meeting';
 import { vehicleApi, vehicleRequestApi } from '../core/vehicle';
 import { announcementApi } from '../core/announcement';
 import { documentApi } from '../core/document';
@@ -602,51 +602,6 @@ describe('ERP meetingRoomApi', () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: [] });
     await meetingRoomApi.getBookings('MR001');
     expect(mockApiClient.get).toHaveBeenCalledWith('/meeting-rooms/MR001/bookings');
-  });
-});
-
-describe('ERP meetingBookingApi', () => {
-  const mockApiClient = apiClient.erp as {
-    get: vi.Mock;
-    post: vi.Mock;
-    put: vi.Mock;
-    delete: vi.Mock;
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should call GET /meeting-bookings for list', async () => {
-    mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await meetingBookingApi.list({ page: 1 });
-    expect(mockApiClient.get).toHaveBeenCalled();
-  });
-
-  it('should call GET /meeting-bookings/:id for get', async () => {
-    mockApiClient.get.mockResolvedValue({ success: true, data: { id: 'BK001' } });
-    await meetingBookingApi.get('BK001');
-    expect(mockApiClient.get).toHaveBeenCalledWith('/meeting-bookings/BK001');
-  });
-
-  it('should call POST /meeting-bookings for create', async () => {
-    const data = { room_id: 'MR001', start_time: '09:00', end_time: '10:00' };
-    mockApiClient.post.mockResolvedValue({ success: true, data });
-    await meetingBookingApi.create(data);
-    expect(mockApiClient.post).toHaveBeenCalledWith('/meeting-bookings', data);
-  });
-
-  it('should call PUT /meeting-bookings/:id for update', async () => {
-    const data = { start_time: '10:00' };
-    mockApiClient.put.mockResolvedValue({ success: true, data });
-    await meetingBookingApi.update('BK001', data);
-    expect(mockApiClient.put).toHaveBeenCalledWith('/meeting-bookings/BK001', data);
-  });
-
-  it('should call DELETE /meeting-bookings/:id for delete', async () => {
-    mockApiClient.delete.mockResolvedValue({ success: true, data: 'deleted' });
-    await meetingBookingApi.delete('BK001');
-    expect(mockApiClient.delete).toHaveBeenCalledWith('/meeting-bookings/BK001');
   });
 });
 

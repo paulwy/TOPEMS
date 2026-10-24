@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { getModuleThemes, getModuleTheme } from '../moduleThemes';
 
 describe('lib/moduleThemes', () => {
   describe('moduleThemes data', () => {

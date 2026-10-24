@@ -8,7 +8,6 @@
  */
 
 // Core client and types
-export { apiClient, downloadBlob, createBaseAxiosClient } from './client';
 export type { ApiResponse, PaginatedResponse, PaginationParams } from './client';
 
 // Request utilities
@@ -19,7 +18,6 @@ export type { RequestOptions, PaginatedRequestParams } from './client';
 export { createPermissionInterceptor } from './permissionInterceptor';
 
 // Domain modules - Business APIs
-export { authApi, iamApi } from './iam';
 export { adminApi } from './admin';
 export { crmApi } from './crm';
 export { hrmApi } from './hrm';
@@ -31,7 +29,6 @@ export { limsApi } from './lims';
 export { ehsApi } from './ehs';
 export { pdmApi } from './pdm';
 export { pmApi } from './pm';
-export { biApi } from './bi';
 export { erpApi } from './erp';
 export { rdApi } from './rd';
 export { gisApi } from './gis';

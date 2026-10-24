@@ -17,7 +17,7 @@ vi.mock('@/api/iam', () => {
     addRolePermission: vi.fn().mockResolvedValue({ success: true }),
     removeRolePermission: vi.fn().mockResolvedValue({ success: true }),
   };
-  return { authApi: mock, iamApi: mock, default: mock };
+  return { authApi: mock, default: mock };
 });
 
 vi.mock('@/store', () => ({

@@ -6,10 +6,6 @@ import {
   nestedFilterParams,
   offsetStyleParams,
   buildStandardFilterParams,
-  buildNestedFilterArray,
-  serializeFiltersToUrl,
-  parseFiltersFromUrl,
-  FILTER_URL_PREFIX,
 } from '@/utils/listParamMapping';
 
 describe('utils/listParamMapping - mapListParamsToBackend standard 风格', () => {
@@ -34,7 +30,10 @@ describe('utils/listParamMapping - mapListParamsToBackend standard 风格', () =
   });
 
   it('standard 风格筛选字段平铺', () => {
-    const result = mapListParamsToBackend({ ...baseState, filters: { status: 'active', type: 'vip' } });
+    const result = mapListParamsToBackend({
+      ...baseState,
+      filters: { status: 'active', type: 'vip' },
+    });
     expect(result.status).toBe('active');
     expect(result.type).toBe('vip');
   });
@@ -104,7 +103,12 @@ describe('utils/listParamMapping - mapListParamsToBackend offset 风格', () => 
 
 describe('utils/listParamMapping - parsePaginationFromResponse', () => {
   it('items/total/page/pagesize 正常解析', () => {
-    const result = parsePaginationFromResponse({ items: [1, 2], total: 100, page: 2, pagesize: 20 });
+    const result = parsePaginationFromResponse({
+      items: [1, 2],
+      total: 100,
+      page: 2,
+      pagesize: 20,
+    });
     expect(result.items).toEqual([1, 2]);
     expect(result.total).toBe(100);
     expect(result.page).toBe(2);
@@ -157,45 +161,6 @@ describe('utils/listParamMapping - buildStandardFilterParams', () => {
     const r = buildStandardFilterParams({ userAge: 20 }, { fieldMapping: { userAge: 'age' } });
     expect(r.age).toBe(20);
     expect((r as Record<string, unknown>).userAge).toBeUndefined();
-  });
-});
-
-describe('utils/listParamMapping - buildNestedFilterArray', () => {
-  it('对象形式转 FilterCondition 数组（默认 eq）', () => {
-    const r = buildNestedFilterArray({ status: 'active' });
-    expect(r).toHaveLength(1);
-    expect(r[0].field).toBe('status');
-    expect(r[0].op).toBe('eq');
-    expect(r[0].value).toBe('active');
-  });
-
-  it('数组形式保留并做 fieldMapping', () => {
-    const r = buildNestedFilterArray(
-      [{ field: 'userStatus', op: 'ne', value: 'deleted' }],
-      { fieldMapping: { userStatus: 'status' } }
-    );
-    expect(r[0].field).toBe('status');
-    expect(r[0].op).toBe('ne');
-  });
-});
-
-describe('utils/listParamMapping - URL 序列化/反序列化', () => {
-  it('serializeFiltersToUrl 加前缀并转字符串', () => {
-    const r = serializeFiltersToUrl({ status: 'active', page: 2 });
-    expect(r[`${FILTER_URL_PREFIX}status`]).toBe('active');
-    expect(r[`${FILTER_URL_PREFIX}page`]).toBe('2');
-  });
-
-  it('parseFiltersFromUrl 能读取带前缀的参数（按 defaultFilters 类型转换）', () => {
-    const sp = new URLSearchParams();
-    sp.set(`${FILTER_URL_PREFIX}status`, 'active');
-    sp.set(`${FILTER_URL_PREFIX}limit`, '50');
-    sp.set(`${FILTER_URL_PREFIX}enabled`, 'true');
-    const defaults: Record<string, unknown> = { limit: 10, enabled: false };
-    const r = parseFiltersFromUrl(sp, FILTER_URL_PREFIX, defaults);
-    expect(r.status).toBe('active');
-    expect(r.limit).toBe(50);
-    expect(r.enabled).toBe(true);
   });
 });
 

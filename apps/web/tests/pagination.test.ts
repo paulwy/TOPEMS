@@ -2,12 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   pickPageSize,
   normalizePaginationParams,
-  toBackendPagination,
   DEFAULT_PAGE,
   DEFAULT_PAGE_SIZE,
-  PAGE_SIZES,
-  COMPACT_PAGE_SIZE,
-  LARGE_PAGE_SIZE,
 } from '@/constants/pagination';
 
 describe('constants/pagination - 常量', () => {
@@ -17,15 +13,6 @@ describe('constants/pagination - 常量', () => {
 
   it('DEFAULT_PAGE_SIZE 应为 20', () => {
     expect(DEFAULT_PAGE_SIZE).toBe(20);
-  });
-
-  it('PAGE_SIZES 应包含 [10,20,50,100]', () => {
-    expect(PAGE_SIZES).toEqual([10, 20, 50, 100]);
-  });
-
-  it('COMPACT_PAGE_SIZE 应为 10, LARGE_PAGE_SIZE 应为 50', () => {
-    expect(COMPACT_PAGE_SIZE).toBe(10);
-    expect(LARGE_PAGE_SIZE).toBe(50);
   });
 });
 
@@ -74,21 +61,5 @@ describe('constants/pagination - normalizePaginationParams', () => {
   it('page 无效时 fallback 到 DEFAULT_PAGE', () => {
     expect(normalizePaginationParams({ page: 0 }).page).toBe(DEFAULT_PAGE);
     expect(normalizePaginationParams({ page: -1 }).page).toBe(DEFAULT_PAGE);
-  });
-});
-
-describe('constants/pagination - toBackendPagination', () => {
-  it('仅保留 page, page_size, search', () => {
-    const result = toBackendPagination({ page: 2, pagesize: 40, search: 'x' });
-    expect(result).toEqual({ page: 2, page_size: 40, search: 'x' });
-    expect((result as Record<string, unknown>).pagesize).toBeUndefined();
-    expect((result as Record<string, unknown>).pageSize).toBeUndefined();
-  });
-
-  it('无 search 时返回不含 search', () => {
-    const result = toBackendPagination({ pageSize: 10 });
-    expect((result as Record<string, unknown>).search).toBeUndefined();
-    expect(result.page).toBe(DEFAULT_PAGE);
-    expect(result.page_size).toBe(10);
   });
 });

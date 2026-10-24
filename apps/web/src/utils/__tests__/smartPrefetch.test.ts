@@ -1,11 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import {
-  PrefetchEngine,
-  getPrefetchEngine,
-  type PrefetchStrategy,
-  type Prediction,
-} from '../smartPrefetch';
+import { PrefetchEngine, type PrefetchStrategy, type Prediction } from '../smartPrefetch';
 
 // Mock i18n
 vi.mock('@/i18n', () => ({
@@ -284,14 +279,6 @@ describe('smartPrefetch', () => {
       expect(strategies).toContain('time-based');
       expect(strategies).toContain('pattern-based');
       expect(strategies).not.toContain('route-based');
-    });
-  });
-
-  describe('getPrefetchEngine singleton', () => {
-    it('should return the same instance on subsequent calls', () => {
-      const instance1 = getPrefetchEngine();
-      const instance2 = getPrefetchEngine();
-      expect(instance1).toBe(instance2);
     });
   });
 });

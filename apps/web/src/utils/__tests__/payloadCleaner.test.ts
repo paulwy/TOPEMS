@@ -3,7 +3,6 @@ import {
   cleanEmptyOptionalFields,
   isForeignKeyField,
   isDateTimeField,
-  isValidUuid,
 } from '@/utils/payloadCleaner';
 
 describe('cleanEmptyOptionalFields', () => {
@@ -110,11 +109,5 @@ describe('field predicates', () => {
     expect(isDateTimeField('dueTime')).toBe(true);
     expect(isDateTimeField('startDate')).toBe(true);
     expect(isDateTimeField('name')).toBe(false);
-  });
-
-  it('validates UUID format', () => {
-    expect(isValidUuid('9e6f0c4a-1111-2222-3333-444444444444')).toBe(true);
-    expect(isValidUuid('')).toBe(false);
-    expect(isValidUuid('not-a-uuid')).toBe(false);
   });
 });

@@ -126,10 +126,3 @@ export const MF_PORTS: Record<string, number> = {
 export function getMfPort(name: string, fallback: number = 3000): number {
   return MF_PORTS[name] ?? fallback;
 }
-
-/**
- * 便捷查找：按名称获取后端端口（找不到时返回 fallback，默认 8000）
- */
-export function getBackendPort(name: string, fallback: number = 8000): number {
-  return BACKEND_PORTS[name] ?? fallback;
-}

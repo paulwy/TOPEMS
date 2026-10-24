@@ -29,35 +29,4 @@ describe('deployment config — pluginServiceEnabled feature flag', () => {
     const { deploymentConfig } = await import('../deployment');
     expect(deploymentConfig.features.pluginServiceEnabled).toBe(false);
   });
-
-  it('getFeatureFlag("pluginServiceEnabled") returns same value as features object', async () => {
-    vi.stubEnv('VITE_PLUGIN_SERVICE_ENABLED', 'false');
-    const { getFeatureFlag, deploymentConfig } = await import('../deployment');
-    expect(getFeatureFlag('pluginServiceEnabled')).toBe(
-      deploymentConfig.features.pluginServiceEnabled
-    );
-    expect(getFeatureFlag('pluginServiceEnabled')).toBe(false);
-  });
-});
-
-describe('deployment config — other feature flags sanity', () => {
-  beforeEach(() => {
-    vi.resetModules();
-    vi.unstubAllEnvs();
-  });
-
-  it('all FeatureFlags keys are accessible via getFeatureFlag', async () => {
-    const { getFeatureFlag } = await import('../deployment');
-    const keys = [
-      'quotaEnabled',
-      'tenantManagement',
-      'ssoEnabled',
-      'twoFactorRequired',
-      'ipWhitelistEnabled',
-      'pluginServiceEnabled',
-    ] as const;
-    for (const key of keys) {
-      expect(typeof getFeatureFlag(key)).toBe('boolean');
-    }
-  });
 });

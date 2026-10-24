@@ -4185,3 +4185,16 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 重扫：L1=1、L2=217（258→217）、L3=0。
 ### 状态与下批
 - 下批：L1 残留 1 项 spot-check（防 string-literal 反射）+ L2 217 值候选；重点 api/index.ts 聚合消费链复核（createBaseAxiosClient/iamApi/meetingBookingApi）。
+
+## 第二十一轮（2026-10-25）：L2 值批1·api 组 + 工具函数组（L1 归零）
+- L1 残留 getMockModels（useAiModelSettings.ts，0 消费）删除。
+- L2 值候选 84 项分类：config 盲区 69（*ModuleConfig/*NavConfig 动态 import，永久保留）；api 组 4 + other 11 逐名消费核 → **9 真死**：createBaseAxiosClient（client.ts）/iamApi（iam/index.ts）/biApi（bi/index.ts，biApi 对象树 236 行，页面仅用 fetch* 函数）/meetingBookingApi（erp/admin/meeting.ts）/verifyCsrfToken（lib/security.ts）/findHelpByPath（config/help-mapping.ts 整删 488 行+test）/getBackendPort（ports.ts）/getFeatureFlag（deployment.ts）/getPluginDisplayNames（UsePluginManagement.tsx）；**2 待判**：completeTodoGql（defFiles 空+grep 0，幽灵项）、useInstalledPlugins（setup-mocks 消费，按 errorLogger 先例保留）。
+- 转发清理 4 处（api/index.ts 3 名/api/erp/index.ts 1 名/components/security/index.ts 1 名）；**误删同行 meetingRoomApi 一次**（python 行过滤）→ tsc TS2724 定位后手动恢复。
+- 测试联动 8 文件：deployment.test（删 2 it）/apiClient.test（mock 行）/Iam×3（mock 键）/BiModule.test（biApi mock 树+4 个 API methods 断言块）/erp-api.test（meetingBookingApi describe 块）/security.test（verifyCsrfToken it+delegates 改名；预存在幽灵测试 validateCsrfToken/getCsrfHeaderName 引用了 HEAD 也不存在的导出——0 消费，删 3 坏 it+import 成员）/usePluginManagement.test（getPluginDisplayNames describe+UsePluginManagement describe 342 行——hook 20 批已删，测试漏清补删）。
+- 连锁 unused：eslint 驱动 3 轮收敛（第 1 轮 2 import + 99 非 import 项，第 2/3 轮 0）。
+- 验证：tsc 0 error、eslint src --max-warnings 0 全绿、相关测试 152/152 全绿、全量 vitest 复跑；commit 待 push。
+- 重扫：L1=0（归零）、L2=208（217→208，-9）、L3=4733。
+### 状态与下批
+- 下批：L2 208 值候选继续：api 组 8 项复核（含 completeTodoGql 幽灵项去向核）+ other 131 中纯转发无消费链项；config 盲区 68 永久保留。- 顺手清理（全量 vitest 24→7 收敛）：22 个测已删导出的死测试整删/清段——ports.test（getBackendPort 段）/validation/isrManager/TouchButton/TrendLine/EditCell/abTesting/pdm-material-product/WorkflowSettingsComponents/mf-error-classifier（模块已删或幽灵函数）/batchOperation.regression/codegen/effects/errorHandler/mobileDetector/storage/streamingSsr/themeUtils/tracing（utils 测已删导出）/useDictionaryManagement/useRateLimitConfig/useMobileApproval/useMobileQuality（20 批删 hooks 测试漏清）/AvatarGroup 段（Avatar.tsx 未导出）；修复缺 import 坏测试：batchOperation/sseClient/moduleThemes 补 import、path-constants 补 DASHBOARD_PATHS+删 MOBILE_TAB_PATHS 幽灵段、payloadCleaner/smartPrefetch 清幽灵 it 段。
+- L1 残留 GlowStrength（theme/effects.ts type，0 消费）AST 删除；重扫 L1=0、L2=207。
+- 残留 7 文件 13 失败（预存在实现问题，非删除引入）：route-nav-alignment 路由对齐断言/wms-tms-erp mock undefined/ScmWmsSrmComponents FilterHint caption/AiModelSettings+Dashboard+ErpOperational+FinancialReport i18n 渲染——标注不动（组件行为 bug，另立任务）。

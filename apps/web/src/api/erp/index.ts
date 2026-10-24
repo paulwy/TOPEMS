@@ -40,7 +40,7 @@ export { accountingSubjectApi } from '../finance/accountingSubject';
 export { bankAccountApi } from './bankAccount';
 
 export { officeSupplyApi } from './admin/officeSupplies';
-export { meetingRoomApi, meetingBookingApi } from './admin/meeting';
+export { meetingRoomApi } from './admin/meeting';
 export { vehicleApi, vehicleRequestApi } from './core/vehicle';
 export { announcementApi } from './core/announcement';
 

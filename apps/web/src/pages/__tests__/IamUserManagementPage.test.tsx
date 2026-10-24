@@ -19,7 +19,7 @@ vi.mock('@/api/iam', () => {
     batchUpdateUsers: vi.fn().mockResolvedValue({ success: true }),
     batchDeleteUsers: vi.fn().mockResolvedValue({ success: true }),
   };
-  return { authApi: mock, iamApi: mock, default: mock };
+  return { authApi: mock, default: mock };
 });
 
 vi.mock('@/store', () => ({

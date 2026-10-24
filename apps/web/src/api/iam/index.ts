@@ -68,6 +68,4 @@ export const authApi = {
   getSecuritySettings: authModuleApi.getSecuritySettings,
 };
 
-export const iamApi = authApi;
-
 export default authApi;

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 
-import { Avatar, AvatarGroup } from '../Avatar';
+import { Avatar } from '../Avatar';
 
 vi.mock('@/store', () => ({
   useNotificationStore: vi.fn((selector?: unknown) =>
@@ -144,56 +144,5 @@ describe('Avatar', () => {
       </Avatar>
     );
     expect(screen.getByTestId('child')).toBeInTheDocument();
-  });
-});
-
-describe('AvatarGroup', () => {
-  const avatars = [
-    { name: '张三', src: 'https://example.com/a.jpg' },
-    { name: '李四', src: 'https://example.com/b.jpg' },
-    { name: '王五', src: 'https://example.com/c.jpg' },
-  ];
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('renders all avatars in group', () => {
-    render(<AvatarGroup avatars={avatars} />);
-    const images = screen.getAllByRole('img');
-    // Each avatar has an img, plus possible tooltips
-    expect(images.length).toBeGreaterThanOrEqual(3);
-  });
-
-  it('renders with max overflow', () => {
-    render(
-      <AvatarGroup
-        avatars={avatars}
-        max={2}
-      />
-    );
-    // MUI AvatarGroup with max should show overflow indicator
-    // With 3 avatars and max=2, we expect 2 visible + 1 overflow
-    // The overflow indicator shows "+N" text
-    const overflowText = screen.getByText(/\+\d/);
-    expect(overflowText).toBeInTheDocument();
-  });
-
-  it('renders with different sizes', () => {
-    const { rerender } = render(
-      <AvatarGroup
-        avatars={avatars}
-        size='sm'
-      />
-    );
-    expect(screen.getAllByRole('img').length).toBeGreaterThanOrEqual(3);
-
-    rerender(
-      <AvatarGroup
-        avatars={avatars}
-        size='lg'
-      />
-    );
-    expect(screen.getAllByRole('img').length).toBeGreaterThanOrEqual(3);
   });
 });

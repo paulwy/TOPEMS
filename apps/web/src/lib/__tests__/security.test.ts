@@ -7,7 +7,6 @@ import {
   generateCsrfToken,
   setCsrfToken,
   getCsrfToken,
-  verifyCsrfToken,
   initCsrfToken,
   sanitizeInput,
 } from '@/lib/security';
@@ -157,12 +156,6 @@ describe('lib/security', () => {
 
     it('getCsrfToken returns null when key missing', () => {
       expect(getCsrfToken()).toBeNull();
-    });
-
-    it('verifyCsrfToken compares provided token against stored one', () => {
-      setCsrfToken('match-token');
-      expect(verifyCsrfToken('match-token')).toBe(true);
-      expect(verifyCsrfToken('wrong-token')).toBe(false);
     });
 
     it('initCsrfToken reuses existing non-expired token', () => {
