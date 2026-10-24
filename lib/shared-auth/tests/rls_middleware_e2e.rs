@@ -62,6 +62,7 @@ fn make_claims(tenant_id: Option<&str>, user_id: &str, role: &str) -> Claims {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     }
 }
 

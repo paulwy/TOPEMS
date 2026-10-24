@@ -125,6 +125,7 @@ fn test_jwt_expired_fails() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     let token = expired_claims
@@ -288,6 +289,7 @@ fn test_jwt_roundtrip_rs256_pem_sniff() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     let token = claims
@@ -337,6 +339,7 @@ fn build_auth_audit_claims(user_id: &str, tenant_id: &str) -> Claims {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     }
 }
 

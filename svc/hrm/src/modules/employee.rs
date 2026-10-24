@@ -1056,6 +1056,7 @@ mod tests {
             department_id: None,
             position_id: None,
             position_code: None,
+            must_change_password: false,
         };
         let mut headers = axum::http::HeaderMap::new();
         let tenant = Uuid::new_v4();
@@ -1084,6 +1085,7 @@ mod tests {
             department_id: None,
             position_id: None,
             position_code: None,
+            must_change_password: false,
         };
         let headers = axum::http::HeaderMap::new();
         let result = get_tenant_id(&claims, &headers);
@@ -1109,6 +1111,7 @@ mod tests {
             department_id: None,
             position_id: None,
             position_code: None,
+            must_change_password: false,
         };
         let headers = axum::http::HeaderMap::new();
         let result = get_tenant_id(&claims, &headers);

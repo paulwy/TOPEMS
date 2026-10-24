@@ -29,6 +29,7 @@ fn build_claims(tenant_id: Option<String>, role: &str, is_superuser: bool) -> Cl
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     }
 }
 
@@ -163,6 +164,7 @@ fn test_claims_tenant_serde_roundtrip() {
         department_id: Some(Uuid::new_v4().to_string()),
         position_id: None,
         position_code: Some("MGR".to_string()),
+        must_change_password: false,
     };
 
     let json = serde_json::to_string(&original).expect("serialize claims to JSON");

@@ -1396,6 +1396,7 @@ pub async fn switch_tenant(
         department_id: claims.department_id.clone(),
         position_id: claims.position_id.clone(),
         position_code: claims.position_code.clone(),
+        must_change_password: claims.must_change_password,
     };
 
     let access_token = match new_claims.encode(&state.auth_state.jwt_secret) {

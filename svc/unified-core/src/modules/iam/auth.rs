@@ -323,6 +323,7 @@ pub async fn login(
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: user.must_change_password,
     };
 
     let access_token = match claims.encode(&state.auth_state.jwt_secret) {
@@ -698,6 +699,7 @@ pub async fn refresh_token(
         let r = sqlx::query(
             "SELECT rt.user_id, u.username, u.is_superuser, u.email,
                (u.status = 'active') AS is_active,
+               COALESCE(u.must_change_password, false) AS must_change_password,
                COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur
                          JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
                COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
@@ -743,6 +745,7 @@ pub async fn refresh_token(
     let is_superuser: bool = row.get("is_superuser");
     let email: String = row.get("email");
     let is_active: bool = row.get("is_active");
+    let must_change_password: bool = row.get("must_change_password");
 
     if !is_active {
         return Json(topems_shared_core::response::error_value(
@@ -808,6 +811,7 @@ pub async fn refresh_token(
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password,
     };
 
     let access_token = match claims.encode(&state.auth_state.jwt_secret) {

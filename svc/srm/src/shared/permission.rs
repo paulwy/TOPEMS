@@ -264,6 +264,7 @@ mod tests {
             department_id: None,
             position_id: None,
             position_code: None,
+            must_change_password: false,
         };
         let result: Result<(), axum::Json<ApiResponse<()>>> =
             check_permission(&pool, &claims, &SrmPermission::SupplierRead).await;

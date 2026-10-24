@@ -175,6 +175,7 @@ pub fn issue_service_token(
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
     claims.encode(jwt_secret)
 }
@@ -233,6 +234,7 @@ mod tests {
             department_id: None,
             position_id: None,
             position_code: None,
+            must_change_password: false,
         };
         assert!(!is_service_claims(&user_claims));
     }

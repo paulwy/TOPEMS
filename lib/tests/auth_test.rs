@@ -79,6 +79,7 @@ fn test_claims_has_permission() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     assert!(claims.has_permission("iam:users_read"));
@@ -103,6 +104,7 @@ fn test_claims_has_permission_superuser() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     assert!(claims.has_permission("anything:permission"));
@@ -126,6 +128,7 @@ fn test_claims_has_role() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     assert!(claims.has_role("user"));
@@ -150,6 +153,7 @@ fn test_claims_has_role_superuser() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     assert!(claims.has_role("any_role"));
@@ -173,6 +177,7 @@ fn test_claims_has_any_permission() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     assert!(claims.has_any_permission(&["iam:users_read", "iam:users_create"]));
@@ -196,6 +201,7 @@ fn test_claims_has_any_permission_superuser() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     assert!(claims.has_any_permission(&["perm1", "perm2"]));
@@ -218,6 +224,7 @@ fn test_claims_has_all_permissions() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     assert!(claims.has_all_permissions(&["iam:users_read", "iam:users_create"]));
@@ -241,6 +248,7 @@ fn test_claims_has_all_permissions_superuser() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     assert!(claims.has_all_permissions(&["perm1", "perm2", "perm3"]));
@@ -264,6 +272,7 @@ fn test_claims_user_id_valid() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     assert_eq!(claims.user_id().unwrap(), user_id);
@@ -286,6 +295,7 @@ fn test_claims_user_id_invalid() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     assert!(claims.user_id().is_err());
@@ -314,6 +324,7 @@ fn test_claims_encode_and_verify() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     let token = claims.encode(TEST_SECRET).unwrap();
@@ -421,6 +432,7 @@ fn test_claims_serialization() {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
 
     let json = serde_json::to_string(&claims).unwrap();

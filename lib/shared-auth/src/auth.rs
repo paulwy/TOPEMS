@@ -33,6 +33,11 @@ pub struct Claims {
     pub department_id: Option<String>,
     pub position_id: Option<String>,
     pub position_code: Option<String>,
+    /// P1-4：未改密旗标（新播种 admin 首登须改密）。签发时由用户 must_change_password
+    /// 带出；auth_middleware 对 true 且非白名单路径（改密/登出）返回 403。
+    /// #[serde(default)] 保证旧 token（无该声明）反序列化不失败。
+    #[serde(default)]
+    pub must_change_password: bool,
 }
 
 impl Claims {
@@ -237,6 +242,7 @@ pub fn generate_jwt_token(user_id: &str, secret: &str, expire_minutes: i64) -> S
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     };
     claims.encode(secret).unwrap_or_else(|_| String::new())
 }
@@ -737,6 +743,7 @@ pub async fn auth_middleware(
             department_id: None,
             position_id: None,
             position_code: None,
+            must_change_password: false,
         };
         parts.extensions.insert(claims);
         let req = Request::from_parts(parts, body);
@@ -782,9 +789,32 @@ pub async fn auth_middleware(
         });
     }
 
+    // P1-4：未改密（must_change_password=true）硬拦截——除自服务改密与登出外一律 403。
+    // 新播种 admin / 开放注册待激活账号首登须改密；改密成功（change_my_password）会清旗标，
+    // 此后新签发 token 不再带 true。
+    if claims.must_change_password && !is_password_change_whitelisted(&path, &method) {
+        tracing::warn!(
+            user = %claims.sub,
+            path = %path,
+            "P1-4 拦截：用户未修改初始密码，访问被拒绝（仅放行改密/登出）"
+        );
+        return api_error::<()>(
+            403,
+            "首次登录须先修改初始密码（POST /users/me/password），当前仅允许改密与登出",
+        )
+        .into_response();
+    }
+
     parts.extensions.insert(claims);
     let req = Request::from_parts(parts, body);
     next.run(req).await
+}
+
+/// P1-4 白名单：未改密用户仅放行自服务改密与登出。
+fn is_password_change_whitelisted(path: &str, method: &str) -> bool {
+    let change_password = method == "POST" && path.ends_with("/users/me/password");
+    let logout = method == "POST" && path.ends_with("/iam/auth/logout");
+    change_password || logout
 }
 
 pub fn check_permission<T>(
@@ -879,6 +909,7 @@ mod tests {
             department_id: None,
             position_id: None,
             position_code: None,
+            must_change_password: false,
         };
         assert!(claims.has_permission("iam:users_read"));
         assert!(!claims.has_permission("iam:users_create"));
@@ -901,6 +932,7 @@ mod tests {
             department_id: None,
             position_id: None,
             position_code: None,
+            must_change_password: false,
         };
         assert!(claims.has_permission("any_permission"));
         assert!(claims.has_role("any_role"));
@@ -1007,6 +1039,7 @@ mod tests {
             department_id: None,
             position_id: None,
             position_code: None,
+            must_change_password: false,
         }
     }
 
@@ -1204,5 +1237,64 @@ mod tests {
         assert_eq!(p.unwrap().id, "iam:users_read");
 
         assert!(get_permission_by_id("iam:does_not_exist").is_none());
+    }
+
+    // ===== P1-4：must_change_password 旗标 =====
+    #[test]
+    fn test_password_change_whitelist() {
+        // 自服务改密与登出放行
+        assert!(is_password_change_whitelisted(
+            "/iam/users/me/password",
+            "POST"
+        ));
+        assert!(is_password_change_whitelisted("/iam/auth/logout", "POST"));
+        // 其余一律拦截
+        assert!(!is_password_change_whitelisted(
+            "/iam/users/me/password",
+            "GET"
+        ));
+        assert!(!is_password_change_whitelisted("/iam/users/me", "GET"));
+        assert!(!is_password_change_whitelisted(
+            "/iam/users/me/permissions",
+            "GET"
+        ));
+        assert!(!is_password_change_whitelisted(
+            "/iam/users/me/password",
+            "GET"
+        ));
+        // 管理端改他人密码不属白名单（路径不同，ends_with 精确匹配 me 前缀）
+        assert!(!is_password_change_whitelisted(
+            "/iam/users/123/password",
+            "PUT"
+        ));
+        assert!(!is_password_change_whitelisted(
+            "/iam/users/me/avatar",
+            "POST"
+        ));
+        assert!(!is_password_change_whitelisted("/", "POST"));
+    }
+
+    #[test]
+    fn test_claims_roundtrip_preserves_must_change_password() {
+        let mut c = make_claims("123e4567-e89b-12d3-a456-426614174000");
+        c.must_change_password = true;
+        let token = c.encode(super_long_secret()).expect("encode ok");
+        let decoded = verify_jwt_token(&token, super_long_secret()).expect("verify ok");
+        assert!(decoded.must_change_password);
+        c.must_change_password = false;
+        let token = c.encode(super_long_secret()).expect("encode ok");
+        let decoded = verify_jwt_token(&token, super_long_secret()).expect("verify ok");
+        assert!(!decoded.must_change_password);
+    }
+
+    #[test]
+    fn test_claims_deserializes_without_must_change_password_field() {
+        // 旧签发 token 无该声明：serde(default) 保证反序列化不失败
+        let legacy = r#"{"sub":"1","username":"u","role":"user","roles":["user"],
+            "permissions":[],"is_superuser":false,"exp":0,"iat":0,
+            "email":null,"department":null,"tenant_id":null,
+            "department_id":null,"position_id":null,"position_code":null}"#;
+        let c: Claims = serde_json::from_str(legacy).expect("legacy claims decode ok");
+        assert!(!c.must_change_password);
     }
 }

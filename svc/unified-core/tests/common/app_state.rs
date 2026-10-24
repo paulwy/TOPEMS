@@ -96,6 +96,7 @@ pub fn super_claims() -> Claims {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     }
 }
 
@@ -116,5 +117,6 @@ pub fn tenant_claims() -> Claims {
         department_id: None,
         position_id: None,
         position_code: None,
+        must_change_password: false,
     }
 }

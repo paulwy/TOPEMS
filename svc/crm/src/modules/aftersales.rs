@@ -3006,6 +3006,7 @@ mod tests {
             department_id: None,
             position_id: None,
             position_code: None,
+            must_change_password: false,
         }
     }
 
