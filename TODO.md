@@ -1,4 +1,15 @@
 
+## P1-4 后端硬拦截未改密用户（2026-10-24）✅ 完成
+
+> 活文档 §4.3 第 3 条登记项闭环：S2 后新播种 admin 带 `must_change_password=true`，登录下发旗标、自身改密即清除；此前仅前端软提示，**后端硬拦截（未改密禁止访问其他接口）已实现**。
+
+- **实现**：`Claims` 增 `#[serde(default)] must_change_password: bool`（旧 token 反序列化兼容）；`auth_middleware` 在注入 claims 前拦截——`must_change_password=true` 且非白名单（仅 `POST /users/me/password`、`POST /iam/auth/logout`）→ 403「首次登录须先修改初始密码」。
+- **签发链路**：登录（iam/auth.rs:307）/ refresh（:792）补 `COALESCE(u.must_change_password,false)` + 签发；租户切换重签继承（tenant/handlers.rs:1384）。
+- **构造点**：全仓 37 文件 55 处 Claims 构造点补 `must_change_password: false`（pdm/srm/rd/communication/finance/ai/hrm/crm/wms/unified-core middleware+tests/pm 等）+ `lib/tests/tenant_isolation.rs` roundtrip 补字段。
+- **测试**：新增 3 单测（白名单矩阵 / Claims roundtrip 旗标保真 / 旧 token 无字段反序列化）；shared-auth 205 + unified-core 538 测试全绿；workspace all-targets check 0 错误；pre-commit 26 项全绿。
+- **提交**：`244d23890b`（fix(auth)）。另修链接环境：Homebrew rust 1.95.0 std 为 macOS 26 构建、默认部署目标 11.0 致 test 二进制链接 `symbol(s) not found` → `.cargo/config.toml [env]` 注入 `MACOSX_DEPLOYMENT_TARGET=26.0`（Linux/CI 不受影响），提交 `f858078cea`（build(cargo)）。
+- **文档**：活文档 §4.3 第 3 条已闭环 + 变更日志 v1.111。
+
 ## B1 核销 · B2 缺列解除 · mes 类型回归修复（2026-10-24）✅ 完成
 
 > B1（`20261007000006_rebuild_orphan_tables.sql` 迁移：593 条 to_regclass + 全链 IF EXISTS 守卫已就位，空库全链 479/479 贯通背书）、B2（stub 缺列解除：topems_prepare 重建为 dev schema 克隆 + `app.tenant_id` GUC 声明，sqlx prepare 39/39）登记核销；mes 类型回归修复并入本次。

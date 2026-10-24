@@ -322,7 +322,7 @@
 
 1. **依赖先跑迁移**：`init_database` 内 `core_user_roles` 外键引用 `core_users`（`mod.rs:79`），该表由迁移 `001_iam.sql:1` 创建；未跑迁移时 `try_init` 吞错（`main.rs:305-313` 仅 warn），admin 插入可能被跳过。
 2. **`ADMIN_INITIAL_PASSWORD`**：S2（`7aff8b852`）已在 `.env.example` 声明，未设置回退 admin123 并打印区分告警。
-3. **默认 `admin123` 为弱口令**：S2 后新播种 admin 带 `must_change_password=true`，登录下发该旗标、自身改密即清除；**后端硬拦截（未改密禁止访问其他接口）仍缺**，前端强制跳转属 P1-4，暂为软提示。
+3. **默认 `admin123` 为弱口令**：S2 后新播种 admin 带 `must_change_password=true`，登录下发该旗标、自身改密即清除；**后端硬拦截已实现（P1-4 闭环，v1.111）**——auth_middleware 对 `must_change_password=true` 且非白名单（仅 `POST /users/me/password`、`POST /iam/auth/logout`）的请求返回 403「首次登录须先修改初始密码」，旧 token 无该字段默认 false 兼容；前端强制跳转仍为软提示补充层。
 4. **迁移链 SQL 本身不造用户**：`database/migrations/` 内无 `INSERT INTO iam.users`；`admin/admin123` 另存在于未自动挂载的孤儿脚本 `database/init/03_init_permissions.sql:423-432` 与测试数据 `database/test/iam_test_data.sql`，二者都不在 sqlx 迁移链，**不能依赖它们**。
 5. **后端已实现 `POST /tenant/onboard`（建租户+超管原子事务，`tenant/handlers.rs:424-530`）但未挂路由、前端无页**——这是替代"启动自举"的更规范首启方案，见 P0-1/P0-3 建议。
 
@@ -373,6 +373,7 @@
 
 | 日期 | 版本 | 提交 | 改动要点 |
 |---|---|---|---|
+| 2026-10-24 | v1.111 | P1-4 后端硬拦截未改密用户 ✅ | 核销 §4.3 第 3 条「后端硬拦截仍缺」：`Claims` 增 `#[serde(default)] must_change_password: bool`（旧 token 兼容）；`auth_middleware` 在注入 claims 前拦截——`must_change_password=true` 且非白名单（仅 `POST /users/me/password`、`POST /iam/auth/logout`）→ 403「首次登录须先修改初始密码」；登录（auth.rs:307）/refresh（:792）签发补旗标、租户切换重签继承（tenant/handlers.rs:1384）；全仓 37 文件 55 处 Claims 构造点补 false + roundtrip 测试；新增 3 单测（白名单矩阵/旗标保真/旧 token 兼容）。验证：shared-auth 205 + unified-core 538 测试全绿、workspace all-targets check 0 错误。提交 `244d23890b`。另修：Homebrew rust 1.95.0 std 为 macOS 26 构建致 test 二进制链接 `symbol(s) not found` → `.cargo/config.toml [env]` 注入 `MACOSX_DEPLOYMENT_TARGET=26.0`（Linux/CI 不受影响），提交 `f858078cea` |
 | 2026-10-23 | v1.110 | BFF WS 接线（/ws/mes/dashboard） ✅ | 核销 v1.107 暂缓项（Module 契约 Router<()> 与 State<AuthState> E0308）：**解法**——dashboard_websocket 独立 Router<AppState>（FromRef<AuthState> 已具备）route 后 with_state 固化再 merge 进顶层 Router<()>，免改 Module trait。认证对齐独立部署（URL token 自验 + is_websocket_path 豁免 /ws/*）。验证：WS 握手 **101**；WCS 4150/4150 0 FAIL；smoke-prod 20/0 PASS；smoke-prod 层2 H 指引已更新为"BFF 8099 已接线" |
 | 2026-10-23 | v1.109 | analytics_datasets 归属统一（bi 版补 tenant_id + RLS） ✅ | 核销 v1.108 观察：业务写入端在 **bi 版**（insert/update/delete 均 bi.analytics_datasets），RLS 迁移对三套均建策略唯独 bi.analytics_datasets 漏 tenant_id 列 → **统一 bi 版**。迁移 `20261023000005`（ADD COLUMN tenant_id + 索引 + ENABLE RLS + 同型宽松策略 FOR ALL，DO 块前置保护 prepare 无表跳过）；代码读路径 5 处改回 bi.analytics_datasets。验证：smoke **4150/4150 0 FAIL**；POST datasets **201** + GET search **可见**（写读闭环）；探针清理 0 行；checksums 更新 7ac43411 |
 | 2026-10-23 | v1.108 | web 契约 4150/4150 0 FAIL 收口 ✅ | 重启 BFF 至最新二进制（协作 v1.105/v1.106 代码此前未编译进旧进程）→ mobile approvals 18 FAIL 全消；**pm 项目更新 500**：`COALESCE($12::text[], tags)` 与 jsonb 列类型冲突（`COALESCE types text[] and jsonb cannot be matched`）→ `to_jsonb($12::text[])`（create 同型一并修）；**bi datasets 500**：BI 池 search_path=bi,public 致裸名解析到 bi 版（16 列无 tenant_id）→ 读路径统一 public 版（17 列含 tenant_id+RLS，list/count/get 5 处）；顺带补 cargo fmt 协作代码 2 处。验证：`web_contract_smoke.py` **4150/4150 PASS, 0 FAIL**。**观察**：analytics_datasets 双套表归属（bi 写/public 读，public/bi/analytics 三套并存 0 行）待统一 |
