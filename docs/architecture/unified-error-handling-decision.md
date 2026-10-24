@@ -354,6 +354,24 @@ pnpm check:error-handling / pnpm check:error-handling:changed
 
 ---
 
+### 6.6 存量泄露面全量清退（V517 收尾，2026-10-24）
+
+在 §6.1~6.5 服务级迁移（迁移路线图）之外，对门禁 `check-error-handling.cjs` 全量报告暴露的存量命中做最后一轮清退，**三批次共 150 处 → 泄露面 0（=基线）**：
+
+| 批次 | 形态 | 处数 | 分布 | 提交 |
+|---|---|---|---|---|
+| b1 | 非泛型 `error(500, &e.to_string())` / `format!("X: {}", e)` | 39 | monitor 6 / master-data 22 / finance 4 / ehs 7 | `baeb934e43` |
+| b2 | 泛型 `ApiResponse::<T>::error(... &e.to_string())` | 81 | ai 75 / finance 2 / monitor 4 | `38f55ba2a7` |
+| b3 | 泛型 `format!("X: {}", e)` 拼接 + **门禁口径扩展** | 30 | srm 7 / rd 13 / hrm 1 / ai 9 | `37eb697c30` |
+
+统一出口：`Json(ApiResponse::<T>::from(TopemsError::internal("业务上下文", e)))`（classify() 保证细节只进日志，§3.5 范式）。
+
+**门禁口径修正（重要）**：原 `CALL_RX = /ApiResponse::error\(/g` 仅匹配非泛型，漏检 `ApiResponse::<T>::error(` 两轮共 111 处。已升级为 `ApiResponse::(?:(?:<[^>]*>)?::)?error(`——此后 **CI `--changed-only` 可拦截全形态新增**（含泛型）。apiResponseError 总量基线更新为 4338（存量静态文案形态按 ADR 不在泄露面，`--changed-only` 不受影响）。
+
+验证：8 svc `cargo test --lib` 4183 用例 0 失败；clippy `--all-targets -D warnings` 0；fmt 通过；pre-commit 26 项 + pre-push 7 项逐批次全绿。边界：srm supplier_evaluation 9 处 `400, &msg.to_string()` 为业务验证消息（msg 不在 ERR_VAR 口径）未改。
+
+---
+
 ## 7. 本次顺带发现（不在本 ADR 范围内，建议单独处理）
 
 | # | 发现 | 证据 | 建议 |
