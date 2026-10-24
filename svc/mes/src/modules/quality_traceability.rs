@@ -222,7 +222,7 @@ pub async fn forward_traceability(
             id: record_node_id.clone(),
             node_type: "process".to_string(),
             name: process_name,
-            code: process_no.unwrap_or_default(),
+            code: process_no,
             quantity: Some(big_decimal_to_f64_non_opt(record.quantity_produced.clone())),
             unit: Some("件".to_string()),
             batch_no: None,

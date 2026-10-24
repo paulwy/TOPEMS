@@ -711,7 +711,7 @@ pub async fn get_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code.unwrap_or_default(),
+                    process_code: s.process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
@@ -803,7 +803,7 @@ pub async fn add_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, None),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
@@ -812,7 +812,7 @@ pub async fn add_route_step(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code: process_code.unwrap_or_default(),
+                    process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
@@ -904,7 +904,7 @@ pub async fn update_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, None),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
@@ -913,7 +913,7 @@ pub async fn update_route_step(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code: process_code.unwrap_or_default(),
+                    process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
@@ -1074,7 +1074,7 @@ pub async fn reorder_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code.unwrap_or_default(),
+                    process_code: s.process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes

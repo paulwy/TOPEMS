@@ -207,7 +207,7 @@ pub async fn get_dashboard(
     .await;
 
     let oee_avg = match oee_stats {
-        Ok(r) => big_decimal_to_f64(r.avg_oee) * 100.0,
+        Ok(r) => r.avg_oee.unwrap_or(0.0) * 100.0,
         Err(e) => {
             tracing::error!("Failed to fetch equipment OEE: {}", e);
             0.0
