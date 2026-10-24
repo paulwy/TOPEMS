@@ -29,6 +29,16 @@
 - **MaterialIssuePage 缺陷（已修）**：批次 2 登记——mes MaterialIssuePage 的 `materialIssueApi` 仅暴露 list+create，update/delete 落到未定义函数（后端 5 端点早已挂载，纯前端 API 层缺失）。修根因批次：`apps/web/src/api/mes/types.ts` 补 `UpdateMaterialIssueRequest`；`apps/web/src/api/mes/material.ts` 的 `materialIssueApi` 补齐 `get(id)`/`update(id,data)`/`delete(id)`（GET/PUT/DELETE `/material-issues/{id}`）；新增 `apps/web/src/pages/__tests__/MaterialIssuePage.test.tsx` 真断言补测 5 用例（渲染/参数归一化/itemsField 解包/三操作委托与 payload/四档错误翻译/headerContent 状态分桶统计）。vitest 5/5、tsc、eslint 全绿，pre-commit 26 项与 pre-push 7 项门禁通过。提交 `33d95fc0e3`，已推送 main（HEAD `33d95fc0e3`）。
 - **MaterialReturnPage 同类缺陷（已修）**：排查确认 `materialReturnApi` 同病（仅 list+create，后端 return_handlers.rs 5 端点齐备，前端缺失）。修根因：`types.ts` 补 `UpdateMaterialReturnRequest`；`materialReturnApi` 补齐 `get(id)`/`update(id,data)`/`delete(id)`；新增 `apps/web/src/pages/__tests__/MaterialReturnPage.test.tsx` 真断言补测 5 用例（含 itemsField='returns' 解包与 pending/approved/returned/total 统计桶）。vitest 10/10（含 MaterialIssue 无回归）、tsc、eslint 全绿；pre-push 首次因远端并行会话新提交 stale-base 拦截 → rebase `1edb8c3673` 后复验推送。提交 `9ee67e4ee3`（rebase 后哈希），已推送 main（HEAD `9ee67e4ee3`）。
 
+### 批次 3 · crm 域（2026-10-24）✅ 完成
+
+> 批次 1/2 遗漏域补齐，同范本形态与提交流程。3 个新 spec / 15 用例全绿，typecheck + eslint 绿，独立 commit（pre-commit 26 项通过）。
+
+| 域 | 新增 spec 页面 | 用例数 | 提交哈希 |
+|---|---|---|---|
+| crm | TagPage / CustomerCreatePage / OpportunityDetailPage | 15 | `0fcce9493a` |
+
+- 说明：crm 既有真断言已覆盖 Contact/Interaction/Return（CrmCrudPages 范本）、OpportunityManagement、CustomerManagement（2 文件），本次未重复。新增形态含自绘列表（in-spec 重 mock react-query 新鲜闭包，断言 create/update/remove 精确 payload 与成功/失败通知）、表单页 payload 归一化（trim/空串→undefined/type→customer_type/description→notes + 成功导航 + reject 不导航）、自绘详情页（useParams id 加载 + 关联客户加载 + 删除确认弹窗 → delete(id) + 导航/错误态）。eslint 3 条 no-explicit-any warning（与 CapacityPage 先例同类，不阻断）。
+
 ## MCP 接口修复（2026-10-23）📌 待办
 
 > 源自 `MCP修复方案-2026-10-23.md`（P0×1 / P1×3 / P2×7）。原则：先修根因再提交，lefthook 全跑，不绕过门禁。
