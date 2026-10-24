@@ -44,7 +44,8 @@ const INJECTION_PATTERNS: &[&str] = &[
 /// P2-4：收窄到高风险凭据/身份字段；email/phone/mobile/address/location 等业务联系字段
 /// 是工具核心价值（如 get_customer_profile 返回联系方式），移出全局脱敏，
 /// 不再被 ***REDACTED*** 误伤。
-const SENSITIVE_FIELDS: &[&str] = &[
+/// `pub(crate)`：外部 MCP 治理层（governance.rs）复用同一清单，避免双份漂移。
+pub(crate) const SENSITIVE_FIELDS: &[&str] = &[
     "password",
     "passwd",
     "secret",

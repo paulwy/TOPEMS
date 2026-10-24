@@ -238,7 +238,7 @@ python3 scripts/mcp\_stdio\_e2e\_test.py
 
 ---
 
-## 外部 MCP 消费（DSH 作为 Client）——Phase 1 POC（2026-10-24）
+## 外部 MCP 消费（DSH 作为 Client）——Phase 1 POC + Phase 2 治理化（2026-10-24）
 
 DSH 除向外部 AI IDE 暴露工具面（上述 server 角色）外，还可作为 **MCP Client** 消费外部
 MCP server 的工具，挂入共享 ToolRegistry 后由 AgentOrchestrator / 外部 AI IDE 透明调用。
@@ -254,6 +254,7 @@ McpClient (svc/ai/src/dsh/mcp/client.rs)
         ▼
 register_external_tools (svc/ai/src/dsh/mcp/external.rs)
         │  工具以 ext.<server>.<tool> 命名挂入共享 ToolRegistry
+        │  Phase 2：就地消毒（governance.rs）+ 审计日志 + 原子指标
         ▼
 DSH AgentOrchestrator / 外部 AI IDE（统一工具面，零改动）
 ```
@@ -277,18 +278,39 @@ DSH AgentOrchestrator / 外部 AI IDE（统一工具面，零改动）
 * `command`/`args`：子进程启动命令（stdio 传输）
 * `env`：可选，注入子进程环境
 
+### Phase 2 治理化（svc/ai/src/dsh/mcp/governance.rs）
+
+- **source=external 标记**：注册描述前缀 `[external-mcp]`；审计事件统一携带 `source = "external"`。
+- **结果消毒（就地，双入口生效）**：外部工具输出在注册闭包内治理——server 响应层
+  （server.rs 全局脱敏）只覆盖 AI IDE 入口，orchestrator 直调路径不经它，因此
+  `external.rs` 闭包内消毒是必要挂载点：
+  - **大小上限**：文本超 `max_output_bytes`（默认 64 KiB）→ JSON 走结构截断
+    （超长字符串值收缩 + 顶层 `__truncated` 标记，保持合法 JSON）；非 JSON 文本
+    UTF-8 安全截断 + 尾部 `[truncated]`。
+  - **敏感字段脱敏**：复用 `security::SENSITIVE_FIELDS` 单一清单（P2-4 收窄后的
+    高风险凭据/身份字段），递归掩码命中 key 为 `***REDACTED***`。
+  - **JSON 深度限制**：超过 `max_json_depth`（默认 8）的嵌套替换为
+    `***depth-limited***`。
+- **审计与可观测指标**：每次调用 `tracing::info!`/`warn!` 结构化事件
+  （event=`mcp.external.tool_call`，含 server/tool/status/duration_ms/output_bytes/
+  redacted_fields/truncated，不含参数原文）；模块级原子计数器
+  （calls_total/calls_failed/redacted_fields_total/truncated_total），快照经
+  `topems_ai::dsh::mcp::governance::metrics_snapshot()` 读取。
+
 ### 测试
 
-* 单元：`dsh::mcp::client`（2）+ `dsh::mcp::external`（3）
-* 集成：`cargo test -p topems-ai --test mcp_external_client_integration`（4/4）——真实 spawn
-  mock 外部 server（`scripts/tools/mcp_mock_external_server.py`，greet/echo 2 工具），覆盖
-  握手/探测/调用、注册挂载透明调用、不可达 server 跳过（fail-open）、空配置 noop
+* 单元：`dsh::mcp::client`（2）+ `dsh::mcp::external`（3）+ `dsh::mcp::governance`（6）
+* 集成：`cargo test -p topems-ai --test mcp_external_client_integration`（5/5）——真实 spawn
+  mock 外部 server（`scripts/tools/mcp_mock_external_server.py`，greet/echo/echo_secret 3 工具），
+  覆盖握手/探测/调用、注册挂载透明调用与 source 标记描述、不可达 server 跳过（fail-open）、
+  空配置 noop、**Phase 2 消毒**（echo_secret 返回嵌套 token/secret → 就地脱敏为
+  `***REDACTED***`，明文不透传，非敏感字段保留；审计指标递增）
 
-### 安全模型与边界（POC）
+### 安全模型与边界
 
 * **白名单**：仅显式配置的 server 会被连接，无自动发现
 * **命名空间隔离**：`ext.<server>.<tool>` 避免与本地 66 工具命名冲突
-* **不可信结果**：外部工具输出默认透传；Phase 2 计划叠加 `source=external` 标记 + 结果消毒
-  （复用 sensitive_output 机制）+ 审计日志
-* **传输**：Phase 1 仅 stdio（子进程沙箱天然隔离）；HTTP/SSE 传输与第三方开放属 Phase 3（需产品决策）
+* **不可信结果治理**：Phase 2 已落地就地消毒（大小/脱敏/深度）+ 审计指标；
+  `server.rs` 响应层全局脱敏作为第二道兜底
+* **传输**：当前仅 stdio（子进程沙箱天然隔离）；HTTP/SSE 传输与第三方开放属 Phase 3（需产品决策）
 * **日志透传**：外部 server 的 stderr 透传主进程 stderr，便于排障

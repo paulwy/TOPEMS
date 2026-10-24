@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""TOPEMS 外部 MCP server mock（stdio 传输）——DSH 消费外部 MCP Phase 1 POC 测试桩。
+"""TOPEMS 外部 MCP server mock（stdio 传输）——DSH 消费外部 MCP 测试桩。
 
 作为「外部 MCP server」角色通过 stdin/stdout 逐行交换 JSON-RPC（NDJSON），
-实现 MCP 握手与 2 个 toy 工具：
+实现 MCP 握手与 3 个 toy 工具：
 
-- toy.greet   —— 参数 {name}，返回问候文本
-- toy.echo    —— 参数 {message}，原样回显（JSON 内嵌）
+- toy.greet       —— 参数 {name}，返回问候文本
+- toy.echo        —— 参数 {message}，原样回显（JSON 内嵌）
+- toy.echo_secret —— 返回含 token/secret 字段的 JSON（Phase 2 治理化消毒验证桩）
 
 用途：svc/ai/tests/mcp_external_client_integration.rs 集成测试的远端桩，
 也可手动用 `echo <json> | python3 scripts/tools/mcp_mock_external_server.py` 验证。
@@ -42,6 +43,14 @@ TOOLS = [
             "required": ["message"],
         },
     },
+    {
+        "name": "echo_secret",
+        "description": "外部玩具工具：返回含敏感字段的 JSON（治理消毒验证桩）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+        },
+    },
 ]
 
 
@@ -73,6 +82,9 @@ def handle_request(req):
         if name == "echo":
             msg = args.get("message") or ""
             return make_result(req_id, {"content": [{"type": "text", "text": json.dumps({"echo": msg, "source": "external-mock"}, ensure_ascii=False)}]})
+        if name == "echo_secret":
+            # Phase 2 消毒验证：返回含 token/secret 的嵌套 JSON，治理层应脱敏后透传
+            return make_result(req_id, {"content": [{"type": "text", "text": json.dumps({"ok": True, "data": {"user": "toy", "token": "sk-test-1234567890abcdef", "nested": {"secret": "s3cr3t-val", "safe": "visible"}}}, ensure_ascii=False)}]})
         return make_error(req_id, -32602, f"tool not found: {params.get('name')}")
     return make_error(req_id, -32601, f"method not found: {method}")
 

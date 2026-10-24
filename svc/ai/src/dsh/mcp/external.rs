@@ -17,13 +17,18 @@
 //!
 //! 可选字段：`env`（键值对数组，注入子进程环境）。
 //!
-//! ## 安全模型（POC）
+//! ## 安全模型（POC → Phase 2 治理化）
 //!
 //! - **白名单**：仅显式配置的 server 会被连接，无自动发现。
 //! - **fail-open 配置面**：配置解析失败 / server 不可达仅记录 warn 并跳过，
 //!   不阻断主服务启动（外部能力可用性不影响内部工具面）。
-//! - **不可信结果**：外部工具输出默认透传，后续阶段叠加
-//!   `source=external` 标记与结果消毒（见 TODO.md 登记 Phase 2）。
+//! - **source=external 标记**：工具描述前缀 `[external-mcp]`；审计事件统一
+//!   携带 `source = "external"`（Phase 2，见 [`super::governance`]）。
+//! - **结果消毒**：外部工具输出就地治理（Phase 2）——大小上限（默认 64 KiB）
+//!   截断、敏感字段递归脱敏（复用 security::SENSITIVE_FIELDS 单一清单）、
+//!   JSON 深度限制；双入口（orchestrator 直调 / server 响应层）均生效。
+//! - **审计与指标**：每次调用结构化日志 + 原子计数器（calls_total/calls_failed/
+//!   redacted_fields_total/truncated_total，[`super::governance::metrics_snapshot`]）。
 //! - **命名空间隔离**：`ext.<server>.<tool>`，避免与本地 66 工具命名冲突。
 
 use std::sync::Arc;
@@ -33,6 +38,9 @@ use tokio::sync::Mutex;
 use tracing::{info, warn};
 
 use super::client::McpClient;
+use super::governance::{
+    audit_external_call, sanitize_external_output, AuditEvent, SanitizeLimits,
+};
 use super::server::McpServer;
 use super::tools::ToolExecutionError;
 
@@ -112,8 +120,9 @@ pub async fn register_external_tools(server: &McpServer, raw_config: &str) -> us
                         let mut registered = 0usize;
                         for tool in tools {
                             let full_name = format!("ext.{}.{}", cfg.name, tool.name);
+                            // source=external 标记：描述前缀显式标注来源
                             let description = format!(
-                                "外部 MCP 工具（server: {}）：{}",
+                                "[external-mcp] 外部 MCP 工具（server: {}）：{}",
                                 cfg.name, tool.description
                             );
                             let input_schema = tool.input_schema;
@@ -121,6 +130,7 @@ pub async fn register_external_tools(server: &McpServer, raw_config: &str) -> us
                             let handle = client_handle.clone();
                             let registry = server.tool_registry().clone();
                             let name_for_reg = full_name.clone();
+                            let server_name = cfg.name.clone();
                             registry
                                 .register_async(
                                     &name_for_reg,
@@ -129,22 +139,53 @@ pub async fn register_external_tools(server: &McpServer, raw_config: &str) -> us
                                     move |args| {
                                         let handle = handle.clone();
                                         let tool_name = raw_tool_name.clone();
+                                        let server_name = server_name.clone();
                                         Box::pin(async move {
+                                            let started = std::time::Instant::now();
                                             let mut guard = handle.lock().await;
                                             let client = guard.as_mut().ok_or_else(|| {
                                                 ToolExecutionError::Execution(
                                                     "外部 MCP client 已失效".to_string(),
                                                 )
                                             })?;
-                                            let result = client
+                                            let call = client
                                                 .call_tool(&tool_name, args)
                                                 .await
                                                 .map_err(|e| {
-                                                ToolExecutionError::Execution(format!(
-                                                    "外部 MCP 调用失败: {e}"
-                                                ))
-                                            })?;
-                                            Ok(super::client::normalize_result(result))
+                                                    ToolExecutionError::Execution(format!(
+                                                        "外部 MCP 调用失败: {e}"
+                                                    ))
+                                                });
+                                            let duration_ms =
+                                                u64::try_from(started.elapsed().as_millis())
+                                                    .unwrap_or(u64::MAX);
+                                            match call {
+                                                Ok(result) => {
+                                                    // Phase 2：就地消毒（大小上限/敏感字段脱敏/深度限制）
+                                                    let (clean, report) = sanitize_external_output(
+                                                        super::client::normalize_result(result),
+                                                        &SanitizeLimits::default(),
+                                                    );
+                                                    audit_external_call(&AuditEvent {
+                                                        server: &server_name,
+                                                        tool: &tool_name,
+                                                        status: "ok",
+                                                        duration_ms,
+                                                        report,
+                                                    });
+                                                    Ok(clean)
+                                                }
+                                                Err(e) => {
+                                                    audit_external_call(&AuditEvent {
+                                                        server: &server_name,
+                                                        tool: &tool_name,
+                                                        status: "error",
+                                                        duration_ms,
+                                                        report: Default::default(),
+                                                    });
+                                                    Err(e)
+                                                }
+                                            }
                                         })
                                     },
                                 )

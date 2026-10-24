@@ -45,7 +45,7 @@
 - [x] **P2-6 · shutdown 状态实现** ✅ 完成：新增 `shutdown` 方法处理（state → Shutdown，后续请求返回未初始化错误）
 - [x] **P2-7 · 认证双通道统一** ✅ 完成：`http_call` 统一附加 ai-service 身份 service token（OnceLock 幂等初始化 + 50 分钟自动重签，规避 1h TTL），与 TypedServiceClient 同一密钥体系；`McpServer::new` 自动初始化，51 处 http_call 调用点零改动受益
 
-## DSH 消费外部 MCP（2026-10-24）📌 待办 · Phase 1 POC 完成
+## DSH 消费外部 MCP（2026-10-24）📌 待办 · Phase 1 POC + Phase 2 治理化完成
 
 > 变化/优缺点/实现路径分析见 `MCP修复方案-2026-10-23.md` §6（已从"维持不实现"改为"Phase 1 POC 已落地"）。原则：白名单 + fail-open 配置面 + 命名空间隔离；stdio 先行，HTTP/SSE 与第三方开放留后续阶段。
 
@@ -53,7 +53,7 @@
 - [x] **Phase 1-2 · 外部工具注册器** ✅ 完成：`svc/ai/src/dsh/mcp/external.rs`——`MCP_EXTERNAL_SERVERS` JSON 白名单解析（fail-open：解析失败/不可达仅 warn 跳过）+ 握手探测 + 工具以 `ext.<server>.<tool>` 挂入共享 ToolRegistry（`Arc<Mutex<Option<McpClient>>>` 串行化单管道，闭包 'static 捕获）；单元测试 3 个
 - [x] **Phase 1-3 · mock 外部 server + 集成测试** ✅ 完成：`scripts/tools/mcp_mock_external_server.py`（python3 stdio NDJSON，greet/echo 2 工具）+ `svc/ai/tests/mcp_external_client_integration.rs`（握手/探测/调用、注册挂载透明调用、不可达跳过、空配置 noop，4/4 通过）
 - [x] **Phase 1-4 · 双入口接入** ✅ 完成：`routes.rs` spawn 块 + `bin/mcp-stdio.rs` 均挂 `register_external_tools`（日志含 external_count）；DSH AgentOrchestrator 直调 ToolRegistry 零改动受益
-- [ ] **Phase 2 · 治理化（后续）**：`source=external` 结果标记 + 结果消毒（复用 sensitive_output 机制）+ 审计日志（谁调了哪个外部工具/耗时/结果摘要）
+- [x] **Phase 2 · 治理化** ✅ 完成（2026-10-24）：`svc/ai/src/dsh/mcp/governance.rs` 新增——① `source=external` 标记（注册描述前缀 `[external-mcp]` + 审计事件 source 字段）；② 结果就地消毒（外部注册闭包内，双入口 orchestrator/server 均生效）：大小上限 64 KiB（JSON 结构截断顶层注入 `__truncated` 保持合法、非 JSON UTF-8 安全截断 `[truncated]`）+ 敏感字段递归脱敏（复用 security::SENSITIVE_FIELDS 单一清单）+ JSON 深度限制 8 层；③ 审计日志 + 原子指标（calls_total/calls_failed/redacted_fields_total/truncated_total，`metrics_snapshot()` 读取）。mock server 增 `echo_secret` 工具；单测 6 个 + 集成测试 5/5（脱敏断言：token/secret → `***REDACTED***`、明文不透传、非敏感字段保留、指标递增）；clippy -D warnings / fmt / mcp 模块 162 测试全绿
 - [ ] **Phase 3 · 第三方开放（后续）**：需产品决策——HTTP/SSE client 传输、server 认证（token）、工具级权限声明、外部 server 白名单管理入口
 
 ---

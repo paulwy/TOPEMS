@@ -65,6 +65,9 @@ regexes = [
   # 本地开发默认口令基线（文档/docker-compose/脚本示例，非生产密钥）
   '''topems_secret''',
   '''topems_app_secret''',
+  # 外部 MCP mock server 测试桩假凭据（Phase 2 消毒验证样例，仅出现在
+  # scripts/tools/mcp_mock_external_server.py 的 echo_secret 工具，非真实密钥）
+  '''sk-test-1234567890abcdef''',
   # 占位符 / 环境变量引用
   '''<TOPEMS_PG_PASSWORD>''',
   '''<PASS>''',
