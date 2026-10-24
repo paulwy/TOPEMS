@@ -979,15 +979,81 @@ vi.mock('recharts', () => ({
 vi.mock('@/components/templates/CrudPage', () => {
   const React = require('react');
   return {
-    default: ({ schema, breadcrumbs, headerContent, children }: any) => {
+    default: ({ schema, apiAdapter, customRowActions, actions, headerContent, children }: any) => {
+      const { useState, useEffect } = React;
+      const [rows, setRows] = useState<any[]>([]);
+      const [loading, setLoading] = useState<boolean>(true);
+      // 与 __listPageTemplate 的 crud 模式一致：adapter.list → 行数据（页面测试 mock 的 api 会经 adapter 命中）
+      useEffect(() => {
+        let active = true;
+        if (!apiAdapter?.list) {
+          setLoading(false);
+          return;
+        }
+        setLoading(true);
+        Promise.resolve(apiAdapter.list({ page: 1, pageSize: 1000, search: undefined }))
+          .then((resp: any) => {
+            if (!active) return;
+            const items =
+              resp?.data?.items ??
+              resp?.data?.data ??
+              resp?.data ??
+              (Array.isArray(resp) ? resp : []);
+            setRows(Array.isArray(items) ? items : []);
+            setLoading(false);
+          })
+          .catch(() => {
+            if (active) {
+              setRows([]);
+              setLoading(false);
+            }
+          });
+        return () => {
+          active = false;
+        };
+      }, [apiAdapter]);
+
       const title = schema?.title || 'CRUD';
-      return React.createElement(
-        'div',
-        { 'data-testid': 'crud-page' },
-        React.createElement('h1', null, title),
-        headerContent,
-        children
-      );
+      const nodes: React.ReactNode[] = [React.createElement('h1', { key: '__t' }, title)];
+      if (headerContent) nodes.push(headerContent);
+      if (loading) {
+        nodes.push(
+          React.createElement(
+            'div',
+            { key: '__loading', 'data-testid': 'crud-loading' },
+            'Loading...'
+          )
+        );
+      }
+      rows.forEach((row: any, ri: number) => {
+        const rowNodes: React.ReactNode[] = (schema?.fields ?? []).map((f: any) =>
+          React.createElement(
+            'span',
+            { key: f.name, 'data-testid': `cell-${f.name}-${ri}` },
+            String(row[f.name] ?? '')
+          )
+        );
+        (customRowActions ?? [])
+          .filter((a: any) => !a.show || a.show(row))
+          .forEach((a: any) => {
+            rowNodes.push(
+              React.createElement(
+                'button',
+                {
+                  key: a.key,
+                  'data-testid': `row-action-${a.key}-${ri}`,
+                  onClick: () => a.onClick(row),
+                },
+                a.label
+              )
+            );
+          });
+        nodes.push(
+          React.createElement('div', { key: ri, 'data-testid': `crud-row-${ri}` }, ...rowNodes)
+        );
+      });
+      if (children) nodes.push(children);
+      return React.createElement('div', { 'data-testid': 'crud-page' }, ...nodes);
     },
   };
 });
@@ -1309,10 +1375,6 @@ vi.mock('@/components/templates/KanbanPageTemplate', () => ({
 }));
 vi.mock('@/components/templates/ReportViewerTemplate', () => ({
   ReportViewerTemplate: __templateStub,
-  default: __templateStub,
-}));
-vi.mock('@/components/templates/CrudPage', () => ({
-  CrudPage: __templateStub,
   default: __templateStub,
 }));
 vi.mock('@/components/templates/TreeBuilder', () => ({
