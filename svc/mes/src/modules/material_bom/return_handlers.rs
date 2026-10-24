@@ -23,7 +23,7 @@ pub async fn create_material_return(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let return_no = format!(
         "MR{}{:04}",
         now.format("%Y%m%d"),
@@ -126,16 +126,10 @@ pub async fn create_material_return(
             .unwrap_or_else(|| "pending".to_string()),
         warehouse_id: return_record.warehouse_id.map(|u| u.to_string()),
         operator_id: return_record.operator_id.map(|u| u.to_string()),
-        return_time: return_record.return_time.map(|d| d.and_utc().to_rfc3339()),
+        return_time: return_record.return_time.map(|d| d.to_rfc3339()),
         notes: return_record.notes,
-        created_at: return_record
-            .created_at
-            .map(|d| d.and_utc())
-            .unwrap_or_else(Utc::now),
-        updated_at: return_record
-            .updated_at
-            .map(|d| d.and_utc())
-            .unwrap_or_else(Utc::now),
+        created_at: return_record.created_at.unwrap_or_else(Utc::now),
+        updated_at: return_record.updated_at.unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(response, "物料退库单创建成功"))
@@ -371,8 +365,8 @@ pub async fn get_material_return(
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
         "return_time": return_record.return_time,
         "notes": return_record.notes,
-        "created_at": return_record.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        "updated_at": return_record.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        "created_at": return_record.created_at.unwrap_or_else(Utc::now),
+        "updated_at": return_record.updated_at.unwrap_or_else(Utc::now),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "return_id": i.return_id.to_string(),
@@ -402,7 +396,7 @@ pub async fn update_material_return(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"
@@ -447,8 +441,8 @@ now,
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
         "return_time": return_record.return_time,
         "notes": return_record.notes,
-        "created_at": return_record.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        "updated_at": return_record.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        "created_at": return_record.created_at.unwrap_or_else(Utc::now),
+        "updated_at": return_record.updated_at.unwrap_or_else(Utc::now),
     });
 
     Json(ApiResponse::success(return_json, "物料退库单更新成功"))
