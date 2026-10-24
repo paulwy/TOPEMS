@@ -1,3 +1,6 @@
+## ai FAQ admin 补测闭环（2026-10-25）✅ 完成
+
+> 第七轮遗留「PUT 编辑端点与 status toggle 下批」核实：PUT 端点已由 `ad187d2915` 实现接线（routes.rs:644 + openapi.rs:148，COALESCE 部分更新 + status 枚举校验 active/disabled），仅缺测试覆盖 → 补 integration_tests FAQ admin CRUD 数据面 round-trip（`ea2f6e9067`）：部分更新保持未传列原值、status 切换、租户边界（全局行仅超管）、软删守卫；真库 0.04s 通过，ai lib 988 + integration 16 全绿，clippy/fmt/pre-commit 26 项全绿。ai:admin 权限中心显式登记（迁移 20261024000016 已含）属运维登记。
 
 ## P1-4 后端硬拦截未改密用户（2026-10-24）✅ 完成
 
@@ -9,7 +12,6 @@
 - **测试**：新增 3 单测（白名单矩阵 / Claims roundtrip 旗标保真 / 旧 token 无字段反序列化）；shared-auth 205 + unified-core 538 测试全绿；workspace all-targets check 0 错误；pre-commit 26 项全绿。
 - **提交**：`244d23890b`（fix(auth)）。另修链接环境：Homebrew rust 1.95.0 std 为 macOS 26 构建、默认部署目标 11.0 致 test 二进制链接 `symbol(s) not found` → `.cargo/config.toml [env]` 注入 `MACOSX_DEPLOYMENT_TARGET=26.0`（Linux/CI 不受影响），提交 `f858078cea`（build(cargo)）。
 - **文档**：活文档 §4.3 第 3 条已闭环 + 变更日志 v1.111。
-
 ## B1 核销 · B2 缺列解除 · mes 类型回归修复（2026-10-24）✅ 完成
 
 > B1（`20261007000006_rebuild_orphan_tables.sql` 迁移：593 条 to_regclass + 全链 IF EXISTS 守卫已就位，空库全链 479/479 贯通背书）、B2（stub 缺列解除：topems_prepare 重建为 dev schema 克隆 + `app.tenant_id` GUC 声明，sqlx prepare 39/39）登记核销；mes 类型回归修复并入本次。
@@ -3801,7 +3803,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] 后端：search_faq 改 DB（module+租户∪全局+q ILIKE；DB 空/错回落 curated）；admin GET list/POST create/DELETE {id}（ai:admin 权限，超管豁免，租户管理员限本租户）；openapi 登记
 - [x] 前端零改（FAQItem 字段与响应包裹不变）；测试库 round-trip 验证（seed 15、租户可见性、insert/软删）
 - [x] 验证：ai check/clippy 0、test lib 970 + integration 85 + doc 2 全过
-- [ ] 遗留：PUT 编辑端点与 status toggle 下批；ai:admin 权限中心显式登记属运维；seed 全局行=升级前行为等价
+- [x] 遗留 · PUT 编辑端点与 status toggle ✅ 已实现（`ad187d2915`，并行会话推送）+ **补测闭环（`ea2f6e9067`）**：integration_tests 新增 FAQ admin CRUD 数据面 round-trip（COALESCE 部分更新/status active↔disabled 切换/非本租户行 0 命中/软删行不可更新，core.ai_faqs 不存在自动跳过）；ai lib 988 + integration 16 全绿；ai:admin 权限中心显式登记属运维（`20261024000016` 已含字典兜底+admin 绑定）；seed 全局行=升级前行为等价已核销
 ### 状态
 - 本轮 5 commits 落盘（迁移守卫/SSRF/stub/FAQ/本登记）；**未 push**；统一推送前用户 fetch+rebase
 
@@ -4134,3 +4136,4 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 重扫：L1=0、L2=258（317→258）、L3=4743。
 ### 状态与下批
 - 下批：剩余 L2 值 ~39：hooks 7（useDataTable/useBatchSelection/useDeviceType/useThrottledCallback/useConsolidation 2）+ schemas 7 + pages hooks 13 + plugin-loader 3（ModuleLoadingOverlay/PluginRouteWrapper/PluginLoaderProvider）——页面 hook 高危（逐名复核消费链，防别名/动态引用误删）；api 3 保留（聚合对象）。
+
