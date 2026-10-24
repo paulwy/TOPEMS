@@ -1,3 +1,11 @@
+## L2 106 全活复核 + NavConfig 回归收口（2026-10-25）✅ 完成
+
+> **#27 轮下批执行**（detect v6-v8 升级后 L2 106 逐条复核）：
+> - **转发候选 76 条全核**：34 NavConfig（→ navigation/modules 聚合——已登记永久保留）+ 34 ModuleConfig（→ routes/v2 动态 import——活）+ 8 跨包转发（Model/Policy/RecentActivities/TrackPanel/Command/FormInput/Tablet/CORE_MODULES_CONFIG/getLoadedModules/listParamMapping——「跨包/转发勿删」登记项）
+> - **直接候选 16 条全核**：测试引用 14（FeatureCard/MiniChart/useAiChat/useDocumentsPage/useEhsHazardDetail/ConsolidationScopeTable/useMobileAttendance/useMobileScan/usePluginMarketplace/createAdapter/exportToCSV/downloadTemplate/errorLogger/useInstalledPlugins——测试消费=活）+ PeriodOption/DefectForm（hooks 消费——detect 样本盲区，活）
+> - **结论**：L2 106 = 全活/已登记保留，**无可删项**——L2 清理实质收口（v6-v8 新暴露均为活跃引用）
+> - **本会话 NavConfig 回归修复已推送**（`d29bbdbdb6`）：恢复 34+1 NavConfig（远端 8a6c8351a9 34 个 + 本会话补 masterNavConfig）——5 回归文件 29 用例绿、tsc/eslint 0、全量 12 failed 纯预存在基线
+
 ## #18 HttpOnly Cookie 迁移（refresh_token 出 localStorage）（2026-10-25）✅ 批 A 实施
 
 > **双轨兼容**：Cookie 优先 + body 降级（迁移期旧客户端 / 测试 / 其它端不受影响）
