@@ -141,6 +141,7 @@ use utoipa::OpenApi;
         crate::handlers::business_copilot_handlers::recognize_intent,
         crate::handlers::business_copilot_handlers::list_modules,
         crate::handlers::business_copilot_handlers::get_module_config,
+        crate::handlers::business_copilot_handlers::search_faq,
     ),
     tags()
 )]

@@ -210,8 +210,9 @@ export async function createSession(
  * 删除会话（hook 活调：useBusinessCopilot.ts:282）
  */
 export async function deleteSession(session_id: string): Promise<ApiResponse<void>> {
-  // 对齐 core 契约 stub（/copilot/sessions/{id} DELETE），svc/ai 未实现该子路径
-  return apiClient.core.delete(`/copilot/sessions/${session_id}`);
+  // svc/ai 已实现（2026-10-24）：DELETE /dsh/copilot/sessions/{id}
+  // （软删 core.ai_conversations，成功返回 204；core 侧 501 stub 已完成交接）
+  return apiClient.ai.delete(`/dsh/copilot/sessions/${session_id}`);
 }
 
 /**
@@ -256,8 +257,9 @@ export async function searchFAQ(
   module: BusinessModuleType,
   query: string
 ): Promise<ApiResponse<FAQItem[]>> {
-  // 对齐 core 契约 stub（/copilot/modules/{id}/faq GET），svc/ai 未实现该子路径
-  return apiClient.core.get(`/copilot/modules/${module}/faq`, {
+  // svc/ai 已实现（2026-10-24）：GET /dsh/copilot/modules/{module}/faq?q=...
+  // （curated 静态知识库按 q 过滤；core 侧 501 stub 已完成交接）
+  return apiClient.ai.get(`/dsh/copilot/modules/${module}/faq`, {
     params: { q: query },
   });
 }

@@ -13,7 +13,7 @@
 //!   承接会话头，messages/records/context 另加 jsonb 列。
 
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
@@ -26,6 +26,7 @@ use uuid::Uuid;
 use crate::dsh::business_copilot::{
     BusinessModule, ConversationMessage, CopilotRequest, CopilotSessionManager, SelectedRecord,
 };
+use topems_shared_core::response::ApiResponse;
 
 /// 应用状态（共享的会话管理器）
 #[derive(Clone)]
@@ -115,6 +116,21 @@ pub struct UpdateSelectedRecordsRequest {
 pub struct SetContextDataRequest {
     pub key: String,
     pub value: serde_json::Value,
+}
+
+/// FAQ 搜索查询参数（前端契约：GET /dsh/copilot/modules/{module}/faq?q=...）
+#[derive(Debug, Deserialize)]
+pub struct FaqQuery {
+    pub q: Option<String>,
+}
+
+/// FAQ 条目（字段对齐前端 businessCopilot.ts FAQItem）
+#[derive(Debug, Serialize)]
+pub struct FaqItem {
+    pub question: String,
+    pub answer: String,
+    pub keywords: Vec<String>,
+    pub category: String,
 }
 
 /// 写操作成功响应
@@ -600,6 +616,53 @@ pub async fn get_module_config(Path(module): Path<String>) -> impl IntoResponse 
     (StatusCode::OK, Json(config)).into_response()
 }
 
+/// 搜索模块 FAQ
+///
+/// 前端契约：GET /dsh/copilot/modules/{module}/faq?q=...（hook 活调 useBusinessCopilot.ts:258）。
+/// 数据来源：代码内 curated FAQ 知识库（静态、按模块分词），不查 DB；
+/// q 为空时返回该模块全量 FAQ。后续如需企业自有 FAQ 落库，另起表迁移。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/copilot/modules/{module}/faq",
+    params(
+        ("module" = String, Path, description = "module"),
+        ("q" = Option<String>, Query, description = "搜索关键词（问题/答案/关键词，大小写不敏感）")
+    ),
+    responses(
+        (status = 200, description = "OK", body = ApiResponse<Vec<FaqItem>>),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
+pub async fn search_faq(
+    Path(module): Path<String>,
+    Query(query): Query<FaqQuery>,
+) -> impl IntoResponse {
+    let business_module = parse_business_module(&module);
+    let items = curated_faq(&business_module);
+
+    let filtered = match query.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        Some(q) => {
+            let q_lower = q.to_lowercase();
+            items
+                .into_iter()
+                .filter(|item| {
+                    item.question.to_lowercase().contains(&q_lower)
+                        || item.answer.to_lowercase().contains(&q_lower)
+                        || item
+                            .keywords
+                            .iter()
+                            .any(|k| k.to_lowercase().contains(&q_lower))
+                })
+                .collect::<Vec<_>>()
+        }
+        None => items,
+    };
+
+    Json(ApiResponse::success(filtered, "ok")).into_response()
+}
+
 // ==================== 辅助函数 ====================
 
 /// 解析业务模块字符串
@@ -612,5 +675,121 @@ fn parse_business_module(module: &str) -> BusinessModule {
         "hr" | "hrm" => BusinessModule::HR,
         "oa" => BusinessModule::OA,
         _ => BusinessModule::General,
+    }
+}
+
+/// 模块 curated FAQ 知识库（静态内置；无 DB 表）。
+///
+/// 这是 Copilot 的兜底指引语料：当用户提问命中 FAQ 关键词时，前端可直接展示；
+/// 未命中的复杂问题仍由 LLM 会话（send_message）生成回答。qms/scm/aps/ehs/bi
+/// 等未单独建库的模块回落到 General 通用条目。
+fn curated_faq(module: &BusinessModule) -> Vec<FaqItem> {
+    let item = |q: &str, a: &str, keywords: &[&str], category: &str| FaqItem {
+        question: q.to_string(),
+        answer: a.to_string(),
+        keywords: keywords.iter().map(|k| k.to_string()).collect(),
+        category: category.to_string(),
+    };
+    match module {
+        BusinessModule::ERP => vec![
+            item(
+                "如何创建一张销售订单？",
+                "在 ERP 销售模块点击「新建订单」，选择客户与物料后录入数量、价格并提交；保存后可在订单列表跟踪审批与出库状态。",
+                &["销售订单", "创建", "客户", "订单"],
+                "订单管理",
+            ),
+            item(
+                "采购订单审批流程是怎样的？",
+                "采购订单提交后按金额分级审批：5 万以下部门经理审批，5 万以上需财务复核；审批通过后自动生成收货预告并通知仓储。",
+                &["采购", "审批", "流程", "金额"],
+                "采购管理",
+            ),
+            item(
+                "库存与 ERP 数据不一致怎么办？",
+                "先在库存模块发起盘点单核对账面与实物；差异经审批后调整库存并同步 ERP 物料账，全程留痕可追溯。",
+                &["库存", "盘点", "对账", "差异"],
+                "库存对账",
+            ),
+        ],
+        BusinessModule::Finance => vec![
+            item(
+                "如何提交一张费用报销单？",
+                "进入财务模块「费用报销」，选择费用类型、上传发票并填写金额后提交；发票会自动校验重复与真伪，审批流直达部门负责人。",
+                &["报销", "费用", "发票", "提交"],
+                "费用报销",
+            ),
+            item(
+                "付款审批需要哪些材料？",
+                "付款申请需关联对应采购合同与入库单；对公付款还需供应商银行账户信息复核，全部材料齐备后财务出纳方可付款。",
+                &["付款", "审批", "合同", "出纳"],
+                "资金管理",
+            ),
+            item(
+                "月结结账的步骤是什么？",
+                "先完成应收应付核销与折旧计提，再执行试算平衡；确认无误后锁定当期期间，生成月结报表，结账后不可再补录凭证。",
+                &["月结", "结账", "试算平衡", "报表"],
+                "总账月结",
+            ),
+        ],
+        BusinessModule::CRM => vec![
+            item(
+                "如何把一条线索转为客户？",
+                "在线索列表中选择记录，点击「转化为客户」并确认联系人、公司信息；转化后线索自动归档，客户进入跟进阶段。",
+                &["线索", "转化", "客户", "联系人"],
+                "线索管理",
+            ),
+            item(
+                "销售漏斗各阶段如何定义？",
+                "默认阶段为：初步接触 → 需求确认 → 方案报价 → 商务谈判 → 赢单/输单。阶段推进需填写下一步计划与预计成交日期。",
+                &["销售漏斗", "阶段", "赢单", "报价"],
+                "销售过程",
+            ),
+            item(
+                "如何查看客户的跟进记录？",
+                "进入客户详情页的「动态」页签，可看到该客户全部跟进记录、任务与商机历史；也可在工作台按时间线筛选。",
+                &["客户", "跟进", "动态", "历史"],
+                "客户跟进",
+            ),
+        ],
+        BusinessModule::WMS => vec![
+            item(
+                "入库收货的流程是什么？",
+                "到货后凭采购订单创建收货单，逐 SKU 扫码验收数量与批次；质检合格后上架，库存实时增加并回写 ERP。",
+                &["入库", "收货", "上架", "扫码"],
+                "入库作业",
+            ),
+            item(
+                "拣货任务如何分配？",
+                "系统按波次规则自动合并出库订单并分配拣货员；拣货员用 PDA 领取任务，按推荐库位路径作业，完成后提交复核。",
+                &["拣货", "波次", "PDA", "分配"],
+                "出库作业",
+            ),
+            item(
+                "库存预警在哪里设置？",
+                "在仓储「库存预警」中按物料设置上下限阈值；低于下限自动生成补货建议，超出上限提醒滞销处理，阈值可按仓库维度配置。",
+                &["预警", "阈值", "补货", "上下限"],
+                "库存预警",
+            ),
+        ],
+        _ => vec![
+            item(
+                "Copilot 能帮我做什么？",
+                "Copilot 可以理解你的业务提问，识别意图后调用相应模块工具回答，例如查询订单、提交报销、创建客户；涉及写操作时会先请你确认。",
+                &["Copilot", "能力", "意图", "帮助"],
+                "通用",
+            ),
+            item(
+                "操作提交后多久生效？",
+                "查询类请求即时返回；写操作经确认后由对应业务服务处理，审批类单据按企业配置的审批流流转，可在对应模块追踪进度。",
+                &["生效", "审批", "进度", "写操作"],
+                "通用",
+            ),
+            item(
+                "回答不准确怎么办？",
+                "可以换一种说法补充上下文（例如说明当前所在页面或选中的单据），Copilot 会结合会话上下文重新理解；仍不满意可反馈给管理员优化知识库。",
+                &["不准确", "反馈", "上下文", "重试"],
+                "通用",
+            ),
+        ],
     }
 }
