@@ -1,5 +1,6 @@
 use axum::{extract::Extension, extract::State, http::HeaderMap, Json};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::modules::models::*;
@@ -117,9 +118,8 @@ pub async fn sentiment(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<SentimentAnalysisResponse>::error(
-                500,
-                &e.to_string(),
+            Json(ApiResponse::<SentimentAnalysisResponse>::from(
+                TopemsError::internal("情感分析失败", e),
             ))
         }
     }
@@ -173,9 +173,8 @@ pub async fn classify(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<ClassifyTextResponse>::error(
-                500,
-                &e.to_string(),
+            Json(ApiResponse::<ClassifyTextResponse>::from(
+                TopemsError::internal("内容分类失败", e),
             ))
         }
     }
@@ -194,9 +193,8 @@ pub async fn extract_entities(
         .await
     {
         Ok(response) => Json(ApiResponse::success(response, "Success")),
-        Err(e) => Json(ApiResponse::<ExtractEntitiesResponse>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<ExtractEntitiesResponse>::from(
+            TopemsError::internal("实体抽取失败", e),
         )),
     }
 }
@@ -224,9 +222,8 @@ pub async fn extract_keywords(
         .await
     {
         Ok(response) => Json(ApiResponse::success(response, "Success")),
-        Err(e) => Json(ApiResponse::<ExtractKeywordsResponse>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<ExtractKeywordsResponse>::from(
+            TopemsError::internal("关键词抽取失败", e),
         )),
     }
 }
@@ -256,9 +253,8 @@ pub async fn history(
                 "Success",
             ))
         }
-        Err(e) => Json(ApiResponse::<AnalysisHistoryResponse>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<AnalysisHistoryResponse>::from(
+            TopemsError::internal("获取分析历史失败", e),
         )),
     }
 }

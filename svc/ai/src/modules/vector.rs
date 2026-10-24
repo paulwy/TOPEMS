@@ -5,6 +5,7 @@ use axum::{
 };
 use std::time::Instant;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -87,9 +88,8 @@ pub async fn store(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<StoreVectorResponse>::error(
-                500,
-                &e.to_string(),
+            Json(ApiResponse::<StoreVectorResponse>::from(
+                TopemsError::internal("存储向量失败", e),
             ))
         }
     }
@@ -137,9 +137,8 @@ pub async fn search(
                 "Success",
             ))
         }
-        Err(e) => Json(ApiResponse::<VectorSearchResponse>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<VectorSearchResponse>::from(
+            TopemsError::internal("向量检索失败", e),
         )),
     }
 }
@@ -157,7 +156,10 @@ pub async fn get(
             Json(ApiResponse::<crate::services::vector::VectorEmbedding>::error(404, "向量不存在"))
         }
         Err(e) => Json(
-            ApiResponse::<crate::services::vector::VectorEmbedding>::error(500, &e.to_string()),
+            ApiResponse::<crate::services::vector::VectorEmbedding>::from(TopemsError::internal(
+                "获取向量失败",
+                e,
+            )),
         ),
     }
 }
@@ -228,7 +230,10 @@ pub async fn delete(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<String>::error(500, &e.to_string()))
+            Json(ApiResponse::<String>::from(TopemsError::internal(
+                "删除向量失败",
+                e,
+            )))
         }
     }
 }
@@ -311,9 +316,8 @@ pub async fn batch_store(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<BatchStoreVectorsResponse>::error(
-                500,
-                &e.to_string(),
+            Json(ApiResponse::<BatchStoreVectorsResponse>::from(
+                TopemsError::internal("批量存储向量失败", e),
             ))
         }
     }
@@ -369,9 +373,8 @@ pub async fn hybrid_search(
                 "Success",
             ))
         }
-        Err(e) => Json(ApiResponse::<HybridSearchResponse>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<HybridSearchResponse>::from(
+            TopemsError::internal("混合检索失败", e),
         )),
     }
 }
@@ -388,7 +391,10 @@ pub async fn stats(State(state): State<AppState>) -> Json<ApiResponse<VectorStat
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<VectorStats>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<VectorStats>::from(TopemsError::internal(
+            "获取向量统计失败",
+            e,
+        ))),
     }
 }
 
@@ -409,7 +415,10 @@ pub async fn clear_all(State(state): State<AppState>) -> Json<ApiResponse<String
             "所有向量数据已清空".to_string(),
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<String>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<String>::from(TopemsError::internal(
+            "清空向量失败",
+            e,
+        ))),
     }
 }
 

@@ -36,6 +36,7 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -311,9 +312,8 @@ pub async fn list_sales_invoices(
     {
         Ok(r) => r.get(0),
         Err(e) => {
-            return Json(ApiResponse::<Paginated<SalesInvoiceOut>>::error(
-                500,
-                &e.to_string(),
+            return Json(ApiResponse::<Paginated<SalesInvoiceOut>>::from(
+                TopemsError::internal("获取销售发票列表失败", e),
             ))
         }
     };
@@ -783,9 +783,8 @@ pub async fn list_collections(
     {
         Ok(r) => r.get(0),
         Err(e) => {
-            return Json(ApiResponse::<Paginated<CollectionOut>>::error(
-                500,
-                &e.to_string(),
+            return Json(ApiResponse::<Paginated<CollectionOut>>::from(
+                TopemsError::internal("获取回款列表失败", e),
             ))
         }
     };

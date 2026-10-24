@@ -21,6 +21,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -103,7 +104,7 @@ pub async fn get_dashboard_stats(
         .await
         {
             Ok(row) => (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6)),
-            Err(e) => return Json(ApiResponse::<DashboardStats>::error(500, &e.to_string())),
+            Err(e) => return Json(ApiResponse::<DashboardStats>::from(TopemsError::internal("获取仪表盘统计失败", e))),
         };
 
     Json(ApiResponse::success(
@@ -185,7 +186,12 @@ pub async fn get_activity_trend(
                 });
             }
         }
-        Err(e) => return Json(ApiResponse::<Vec<TrendPoint>>::error(500, &e.to_string())),
+        Err(e) => {
+            return Json(ApiResponse::<Vec<TrendPoint>>::from(TopemsError::internal(
+                "获取活动趋势失败",
+                e,
+            )))
+        }
     }
 
     Json(ApiResponse::success(points, "Success"))
@@ -226,7 +232,7 @@ pub async fn get_feature_usage(
         Ok(rows) => rows
             .into_iter()
             .collect(),
-        Err(e) => return Json(ApiResponse::<Vec<FeatureUsageItem>>::error(500, &e.to_string())),
+        Err(e) => return Json(ApiResponse::<Vec<FeatureUsageItem>>::from(TopemsError::internal("获取功能使用统计失败", e))),
     };
 
     let sum: i64 = counts.iter().map(|(_, _, c)| c).sum();
@@ -353,7 +359,10 @@ pub async fn list_models(
                 .collect(),
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<Vec<ModelItem>>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<Vec<ModelItem>>::from(TopemsError::internal(
+            "获取模型列表失败",
+            e,
+        ))),
     }
 }
 
@@ -416,7 +425,7 @@ pub async fn get_model_config(
             "Success",
         )),
         Ok(None) => Json(ApiResponse::<ModelConfig>::error(404, "模型不存在")),
-        Err(e) => Json(ApiResponse::<ModelConfig>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<ModelConfig>::from(TopemsError::internal("获取模型配置失败", e))),
     }
 }
 
@@ -456,7 +465,9 @@ pub async fn update_model_config(
             "Success",
         )),
         Ok(_) => Json(ApiResponse::<serde_json::Value>::error(404, "模型不存在")),
-        Err(e) => Json(ApiResponse::<serde_json::Value>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<serde_json::Value>::from(
+            TopemsError::internal("更新模型配置失败", e),
+        )),
     }
 }
 
@@ -548,7 +559,12 @@ pub async fn get_model_usage(
             let tr: i64 = row.try_get("total_requests").unwrap_or(0);
             (tt, tr)
         }
-        Err(e) => return Json(ApiResponse::<UsageStats>::error(500, &e.to_string())),
+        Err(e) => {
+            return Json(ApiResponse::<UsageStats>::from(TopemsError::internal(
+                "获取模型使用统计失败",
+                e,
+            )))
+        }
     };
 
     // 2) 按日期+模型分组的明细
@@ -588,7 +604,12 @@ pub async fn get_model_usage(
                 });
             }
         }
-        Err(e) => return Json(ApiResponse::<UsageStats>::error(500, &e.to_string())),
+        Err(e) => {
+            return Json(ApiResponse::<UsageStats>::from(TopemsError::internal(
+                "获取模型使用统计失败",
+                e,
+            )))
+        }
     }
 
     Json(ApiResponse::success(

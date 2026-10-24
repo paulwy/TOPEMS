@@ -5,6 +5,7 @@ use axum::{
     Json,
 };
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -255,9 +256,8 @@ pub async fn upload(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<UploadDocumentResponse>::error(
-                500,
-                &e.to_string(),
+            Json(ApiResponse::<UploadDocumentResponse>::from(
+                TopemsError::internal("上传文档失败", e),
             ))
         }
     }
@@ -306,9 +306,8 @@ pub async fn process(
             404,
             "文档不存在",
         )),
-        Err(e) => Json(ApiResponse::<ProcessDocumentResponse>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<ProcessDocumentResponse>::from(
+            TopemsError::internal("处理文档失败", e),
         )),
     }
 }
@@ -326,9 +325,8 @@ pub async fn get(
             404,
             "文档不存在",
         )),
-        Err(e) => Json(ApiResponse::<crate::services::vector::Document>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<crate::services::vector::Document>::from(
+            TopemsError::internal("获取文档失败", e),
         )),
     }
 }
@@ -351,8 +349,10 @@ pub async fn download(
             return Json(ApiResponse::<serde_json::Value>::error(404, "文档不存在")).into_response()
         }
         Err(e) => {
-            return Json(ApiResponse::<serde_json::Value>::error(500, &e.to_string()))
-                .into_response()
+            return Json(ApiResponse::<serde_json::Value>::from(
+                TopemsError::internal("下载文档失败", e),
+            ))
+            .into_response()
         }
     };
 
@@ -443,7 +443,10 @@ pub async fn delete(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<String>::error(500, &e.to_string()))
+            Json(ApiResponse::<String>::from(TopemsError::internal(
+                "删除文档失败",
+                e,
+            )))
         }
     }
 }
@@ -456,9 +459,9 @@ pub async fn list(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state.document_service.list_documents(tenant_id).await {
         Ok(docs) => Json(ApiResponse::success(docs, "Success")),
-        Err(e) => {
-            Json(ApiResponse::<Vec<crate::services::vector::Document>>::error(500, &e.to_string()))
-        }
+        Err(e) => Json(ApiResponse::<Vec<crate::services::vector::Document>>::from(
+            TopemsError::internal("获取文档列表失败", e),
+        )),
     }
 }
 
@@ -664,9 +667,8 @@ pub async fn extract(
             404,
             "文档不存在",
         )),
-        Err(e) => Json(ApiResponse::<ExtractDocumentResponse>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<ExtractDocumentResponse>::from(
+            TopemsError::internal("提取文档内容失败", e),
         )),
     }
 }
@@ -704,9 +706,8 @@ pub async fn vectorize_from_file(
         )),
         Err(e) => {
             tracing::error!("从 File 服务向量化失败: {}", e);
-            Json(ApiResponse::<VectorizeFromFileResponse>::error(
-                500,
-                &e.to_string(),
+            Json(ApiResponse::<VectorizeFromFileResponse>::from(
+                TopemsError::internal("文档向量化失败", e),
             ))
         }
     }
@@ -732,9 +733,8 @@ pub async fn summarize(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<SummarizeDocumentResponse>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<SummarizeDocumentResponse>::from(
+            TopemsError::internal("生成文档摘要失败", e),
         )),
     }
 }
@@ -829,9 +829,8 @@ pub async fn document_qa(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<DocumentQAAnswerResponse>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<DocumentQAAnswerResponse>::from(
+            TopemsError::internal("文档问答失败", e),
         )),
     }
 }
@@ -850,7 +849,9 @@ macro_rules! doc_not_found_or_ok {
                 return Json(ApiResponse::<serde_json::Value>::error(404, "文档不存在"));
             }
             Err(e) => {
-                return Json(ApiResponse::<serde_json::Value>::error(500, &e.to_string()));
+                return Json(ApiResponse::<serde_json::Value>::from(
+                    TopemsError::internal("文档问答失败", e),
+                ));
             }
         }
     };

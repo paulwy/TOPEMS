@@ -19,6 +19,7 @@ use sqlx::Row;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Serialize)]
@@ -103,9 +104,8 @@ pub async fn list_settings(
         }
         Err(e) => {
             return Json(
-                ApiResponse::<std::collections::HashMap<String, JsonValue>>::error(
-                    500,
-                    &e.to_string(),
+                ApiResponse::<std::collections::HashMap<String, JsonValue>>::from(
+                    TopemsError::internal("获取设置列表失败", e),
                 ),
             )
         }
@@ -203,7 +203,10 @@ pub async fn get_setting(
             ))
         }
         Ok(None) => Json(ApiResponse::<SettingItem>::error(404, "设置不存在")),
-        Err(e) => Json(ApiResponse::<SettingItem>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<SettingItem>::from(TopemsError::internal(
+            "操作失败",
+            e,
+        ))),
     }
 }
 
@@ -249,7 +252,9 @@ pub async fn update_setting(
             serde_json::json!({ "key": key }),
             "设置更新成功",
         )),
-        Err(e) => Json(ApiResponse::<serde_json::Value>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<serde_json::Value>::from(
+            TopemsError::internal("操作失败", e),
+        )),
     }
 }
 
@@ -286,6 +291,6 @@ pub async fn delete_setting(
             Json(ApiResponse::success(serde_json::json!({ "key": key }), "设置删除成功"))
         }
         Ok(_) => Json(ApiResponse::<serde_json::Value>::error(404, "设置不存在")),
-        Err(e) => Json(ApiResponse::<serde_json::Value>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e))),
     }
 }

@@ -177,9 +177,8 @@ pub async fn list_prompt_templates(
     {
         Ok(row) => row.get(0),
         Err(e) => {
-            return Json(ApiResponse::<PromptTemplateList>::error(
-                500,
-                &e.to_string(),
+            return Json(ApiResponse::<PromptTemplateList>::from(
+                TopemsError::internal("获取提示词模板列表失败", e),
             ))
         }
     };
@@ -201,9 +200,8 @@ pub async fn list_prompt_templates(
                 match to_out(&row) {
                     Ok(item) => out.push(item),
                     Err(e) => {
-                        return Json(ApiResponse::<PromptTemplateList>::error(
-                            500,
-                            &e.to_string(),
+                        return Json(ApiResponse::<PromptTemplateList>::from(
+                            TopemsError::internal("获取提示词模板列表失败", e),
                         ))
                     }
                 }
@@ -211,9 +209,8 @@ pub async fn list_prompt_templates(
             out
         }
         Err(e) => {
-            return Json(ApiResponse::<PromptTemplateList>::error(
-                500,
-                &e.to_string(),
+            return Json(ApiResponse::<PromptTemplateList>::from(
+                TopemsError::internal("获取提示词模板列表失败", e),
             ))
         }
     };
@@ -270,10 +267,10 @@ pub async fn get_prompt_template(
     {
         Ok(Some(row)) => match to_out(&row) {
             Ok(item) => Json(ApiResponse::success(item, "Success")),
-            Err(e) => Json(ApiResponse::<PromptTemplateOut>::error(500, &e.to_string())),
+            Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("获取提示词模板失败", e))),
         },
         Ok(None) => Json(ApiResponse::<PromptTemplateOut>::error(404, "模板不存在")),
-        Err(e) => Json(ApiResponse::<PromptTemplateOut>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("获取提示词模板失败", e))),
     }
 }
 
@@ -300,9 +297,9 @@ pub async fn create_prompt_template(
     {
         Ok(row) => match to_out(&row) {
             Ok(item) => Json(ApiResponse::success(item, "Created")),
-            Err(e) => Json(ApiResponse::<PromptTemplateOut>::error(500, &e.to_string())),
+            Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("创建提示词模板失败", e))),
         },
-        Err(e) => Json(ApiResponse::<PromptTemplateOut>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("创建提示词模板失败", e))),
     }
 }
 
@@ -332,10 +329,10 @@ pub async fn update_prompt_template(
     {
         Ok(Some(row)) => match to_out(&row) {
             Ok(item) => Json(ApiResponse::success(item, "Success")),
-            Err(e) => Json(ApiResponse::<PromptTemplateOut>::error(500, &e.to_string())),
+            Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("更新提示词模板失败", e))),
         },
         Ok(None) => Json(ApiResponse::<PromptTemplateOut>::error(404, "模板不存在")),
-        Err(e) => Json(ApiResponse::<PromptTemplateOut>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("更新提示词模板失败", e))),
     }
 }
 
@@ -356,7 +353,7 @@ pub async fn delete_prompt_template(
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(id.to_string(), "Success")),
         Ok(_) => Json(ApiResponse::<String>::error(404, "模板不存在")),
-        Err(e) => Json(ApiResponse::<String>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<String>::from(TopemsError::internal("删除提示词模板失败", e))),
     }
 }
 
@@ -398,7 +395,10 @@ pub async fn toggle_prompt_favorite(
             "Success",
         )),
         Ok(None) => Json(ApiResponse::<FavoriteResult>::error(404, "模板不存在")),
-        Err(e) => Json(ApiResponse::<FavoriteResult>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<FavoriteResult>::from(TopemsError::internal(
+            "切换提示词收藏失败",
+            e,
+        ))),
     }
 }
 
@@ -438,9 +438,8 @@ pub async fn get_prompt_categories(
             }
             Json(ApiResponse::success(items, "Success"))
         }
-        Err(e) => Json(ApiResponse::<Vec<PromptCategory>>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<Vec<PromptCategory>>::from(
+            TopemsError::internal("获取提示词分类失败", e),
         )),
     }
 }
@@ -480,7 +479,12 @@ pub async fn use_prompt_template(
             .try_get::<String, _>("prompt_template")
             .unwrap_or_default(),
         Ok(None) => return Json(ApiResponse::<UsePromptResult>::error(404, "模板不存在")),
-        Err(e) => return Json(ApiResponse::<UsePromptResult>::error(500, &e.to_string())),
+        Err(e) => {
+            return Json(ApiResponse::<UsePromptResult>::from(TopemsError::internal(
+                "使用提示词模板失败",
+                e,
+            )))
+        }
     };
 
     // 变量替换：{name} 与 {{name}} 两种占位形式

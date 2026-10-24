@@ -3,6 +3,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -414,7 +415,10 @@ pub async fn ask(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<AskResponse>::error(500, &e.to_string()))
+            Json(ApiResponse::<AskResponse>::from(TopemsError::internal(
+                "问答失败",
+                e,
+            )))
         }
     }
 }
@@ -488,7 +492,10 @@ pub async fn ask_with_context(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<AskResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<AskResponse>::from(TopemsError::internal(
+            "上下文问答失败",
+            e,
+        ))),
     }
 }
 
@@ -552,9 +559,8 @@ pub async fn ask_structured(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<AskStructuredResponse>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<AskStructuredResponse>::from(
+            TopemsError::internal("结构化问答失败", e),
         )),
     }
 }
@@ -625,7 +631,10 @@ pub async fn ask_conversation(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<AskResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<AskResponse>::from(TopemsError::internal(
+            "对话问答失败",
+            e,
+        ))),
     }
 }
 
@@ -641,7 +650,9 @@ pub async fn classify(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<ClassifyResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<ClassifyResponse>::from(
+            TopemsError::internal("问题分类失败", e),
+        )),
     }
 }
 
@@ -670,10 +681,16 @@ pub async fn history(
             {
                 Ok(total) => (history, total as i32),
                 Err(e) => {
-                    return Json(ApiResponse::<QAHistoryResponse>::error(500, &e.to_string()))
+                    return Json(ApiResponse::<QAHistoryResponse>::from(
+                        TopemsError::internal("获取问答历史失败", e),
+                    ))
                 }
             },
-            Err(e) => return Json(ApiResponse::<QAHistoryResponse>::error(500, &e.to_string())),
+            Err(e) => {
+                return Json(ApiResponse::<QAHistoryResponse>::from(
+                    TopemsError::internal("获取问答历史失败", e),
+                ))
+            }
         }
     } else {
         match state
@@ -684,10 +701,16 @@ pub async fn history(
             Ok(history) => match state.qa_service.get_qa_history_count(tenant_id).await {
                 Ok(total) => (history, total as i32),
                 Err(e) => {
-                    return Json(ApiResponse::<QAHistoryResponse>::error(500, &e.to_string()))
+                    return Json(ApiResponse::<QAHistoryResponse>::from(
+                        TopemsError::internal("获取问答历史失败", e),
+                    ))
                 }
             },
-            Err(e) => return Json(ApiResponse::<QAHistoryResponse>::error(500, &e.to_string())),
+            Err(e) => {
+                return Json(ApiResponse::<QAHistoryResponse>::from(
+                    TopemsError::internal("获取问答历史失败", e),
+                ))
+            }
         }
     };
 
@@ -720,7 +743,10 @@ pub async fn delete_history(
     match state.qa_service.delete_qa_history(id, tenant_id).await {
         Ok(true) => Json(ApiResponse::success("删除成功".to_string(), "Success")),
         Ok(false) => Json(ApiResponse::<String>::error(404, "记录不存在")),
-        Err(e) => Json(ApiResponse::<String>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<String>::from(TopemsError::internal(
+            "删除问答历史失败",
+            e,
+        ))),
     }
 }
 
@@ -754,9 +780,8 @@ pub async fn batch_delete_history(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<BatchDeleteResponse>::error(
-            500,
-            &e.to_string(),
+        Err(e) => Json(ApiResponse::<BatchDeleteResponse>::from(
+            TopemsError::internal("批量删除问答历史失败", e),
         )),
     }
 }
@@ -780,6 +805,8 @@ pub async fn feedback(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<FeedbackResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<FeedbackResponse>::from(
+            TopemsError::internal("提交反馈失败", e),
+        )),
     }
 }
