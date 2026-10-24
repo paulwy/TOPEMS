@@ -1,3 +1,12 @@
+## #22 补测批：scm schemas 结构守卫（2026-10-25）✅ 完成
+
+> **#22 补测 · scm 线**：新增 `apps/web/src/schemas/__tests__/scmSchemas.test.ts`（表驱动 16 用例）：
+> - 覆盖 15 个 scm schema 导出（mrpPlan/mrpSuggestion+mrpMaterialSummary/purchaseOrder/supplier/purchaseRequisition/deliveryAppointment/evaluation/incomingInspection/incomingNotice/inventoryTurnover/priceComparison/purchaseContract+purchaseContractWizard/purchaseItem/supplierAdmission）
+> - 断言 entity/api 接线（module=scm + resource 路由）与关键字段存在性——防字段改名/接线路由回归
+> - 已验证：vitest 16/16 通过（unit project）、eslint 0
+> - **架构约束登记**：scm 页面层组件测试经实测不可行——`setup-mocks.ts` 全局 stub 模板组件（`__templateStub` 渲染空 div），CrudPage/DashboardTemplate 包装页面（MrpPlanPage 计算流、ScmOverviewPage 等 15 页）在 component project 渲染为空、queryFn 不触发；页面逻辑测试需模板解耦或逻辑抽取后方可行（后续专项）
+> - 提交：`e358b1364f`
+
 ## unused L2 续批：export-star barrel 条目 def 去 export（2026-10-25）✅ 完成
 
 > **#21 续批**：L2 剩 78 条中 65 条为 export-star barrel 引用（`export * from './x'`，脚本 named 删项不适用）——对 65 条 def 端去 export（8 文件，star 引用自动失效）；13 条（test 引用 7 + barrel+test 6）保留；routes 动态 import 的 automationModuleConfig/pdmModuleConfig 收敛时恢复 export（TS2339 不在收敛正则，手动恢复）
