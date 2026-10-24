@@ -5,10 +5,17 @@ const CSRF_TOKEN_EXPIRE_KEY = 'csrf_token_expire';
 
 export const sanitizeHtml = (html: string): string => {
   if (!html) return '';
-  return DOMPurify.sanitize(html, {
+  const clean = DOMPurify.sanitize(html, {
     ADD_TAGS: ['iframe'],
     ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling'],
   });
+  // 纵深防御（拍板 A，2026-10-25）：iframe 缺 sandbox 时强制注入空 sandbox
+  // （默认无脚本/无同源权限），防富文本内嵌 iframe 逃逸执行
+  const doc = new DOMParser().parseFromString(clean, 'text/html');
+  doc.querySelectorAll('iframe').forEach((el) => {
+    if (!el.hasAttribute('sandbox')) el.setAttribute('sandbox', '');
+  });
+  return doc.body.innerHTML;
 };
 
 export const escapeHtml = (text: string): string => {

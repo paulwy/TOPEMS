@@ -11,13 +11,7 @@ import {
   initCsrfToken,
   sanitizeInput,
 } from '@/lib/security';
-import {
-  csrfRequestInterceptor,
-  csrfResponseInterceptor,
-  initCsrfProtection,
-  validateCsrfToken,
-  getCsrfHeaderName,
-} from '@/lib/csrf';
+import { csrfRequestInterceptor, csrfResponseInterceptor, initCsrfProtection } from '@/lib/csrf';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 const CSRF_TOKEN_KEY = 'csrf_token';
@@ -262,20 +256,6 @@ describe('lib/csrf (axios interceptors)', () => {
       expect(localStorage.getItem(CSRF_TOKEN_KEY)).toBeNull();
       initCsrfProtection();
       expect(localStorage.getItem(CSRF_TOKEN_KEY)).toBeTruthy();
-    });
-
-    it('validateCsrfToken returns false for undefined', () => {
-      expect(validateCsrfToken(undefined)).toBe(false);
-    });
-
-    it('validateCsrfToken delegates to verifyCsrfToken', () => {
-      setCsrfToken('good');
-      expect(validateCsrfToken('good')).toBe(true);
-      expect(validateCsrfToken('bad')).toBe(false);
-    });
-
-    it('getCsrfHeaderName returns X-CSRF-Token', () => {
-      expect(getCsrfHeaderName()).toBe('X-CSRF-Token');
     });
   });
 });

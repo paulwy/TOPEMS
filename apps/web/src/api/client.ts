@@ -242,6 +242,10 @@ const isNotificationGraceRead = (
   return NOTIFICATION_READ_GRACE_PATHS.some((re) => re.test(url));
 };
 
+/// Plugin marketplace：可选功能（V64 收敛共享 client 后语义保留）——
+/// 401 仅静默 reject，不触发全局登出/清 token（插件市场不可用时降级而非登出）
+const isPluginMarketplaceRequest = (url: string): boolean => url.startsWith('/api/plugin/');
+
 const buildNotificationGraceFallback = (
   relativeUrl: string,
   pageParam: unknown,
@@ -615,6 +619,13 @@ const createAxiosClient = ({
           return returnData
             ? fallback
             : { data: fallback, status: 200, statusText: 'OK', headers: {}, config: error.config };
+        }
+
+        // Plugin marketplace（收敛共享 client，2026-10-25）：可选功能，
+        // 401 静默 reject 不触发登出（V64 语义保留）
+        if (isPluginMarketplaceRequest(fullUrl)) {
+          apiLogger.debug(`[Plugin Grace] 401 on ${fullUrl}, rejecting without logout`);
+          return Promise.reject(error);
         }
 
         const currentPath = window.location.pathname;

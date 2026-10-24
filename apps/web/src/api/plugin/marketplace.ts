@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { createBaseAxiosClient } from '../client';
 import type { ApiResponse } from '../client';
 import type {
   MarketplaceSummary,
@@ -13,33 +13,10 @@ import type {
 // V64: /api/v1/ 前缀已废弃，统一使用 /api/plugin/marketplace（与 moduleMapping 对齐）
 const MARKETPLACE_API = '/api/plugin/marketplace';
 
-const pluginAxios = axios.create({
-  baseURL: '',
-  timeout: 30000,
-});
-
-pluginAxios.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token && !config.headers['Authorization']) {
-    config.headers['Authorization'] = `Bearer ${token}`;
-  }
-  const tenantId = localStorage.getItem('tenant_id');
-  if (tenantId && !config.headers['X-Tenant-ID']) {
-    config.headers['X-Tenant-ID'] = tenantId;
-  }
-  return config;
-});
-
-pluginAxios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // V64: 插件 marketplace 是可选功能，401/500 不应触发全局登出
-    // 之前的问题：登录后 Dashboard 自动调用 plugin API，
-    // 因竞态条件导致首次请求未带 token → 401 → 误触发全局登出
-    // 现在改为静默降级，不影响主登录流程
-    return Promise.reject(error);
-  }
-);
+// 收敛共享 client（拍板 A，2026-10-25）：复用主 apiClient 的 axios 工厂
+// （token/租户头/Accept-Language/空串清洗/CSRF 统一注入），401 静默语义由
+// client.ts isPluginMarketplaceRequest 豁免保留
+const pluginAxios = createBaseAxiosClient('');
 
 export const marketplaceApi = {
   getSummary: async (): Promise<ApiResponse<MarketplaceSummary>> => {

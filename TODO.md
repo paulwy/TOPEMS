@@ -1,3 +1,15 @@
+## 决策全 A 实施批 2（2026-10-25）✅ 落地 + 排期登记
+
+> 拍板全 A 续批：
+> - **#11 broadcast 跨租户收件人（A=同租户默认+白名单，已实施）**：communication broadcast_notification 非超管发送方逐收件人校验 `iam.users.tenant_id == 发送方租户`，跨租户/不存在收件人跳过并计数回传（超管=全租户白名单）；51 notification 测试全绿
+> - **#17 DOMPurify iframe sandbox（A=加 sandbox，已实施）**：sanitizeHtml 对无 sandbox 的 iframe 强制注入空 sandbox（无脚本/无同源权限）——富文本内嵌 iframe 逃逸纵深防御；DocumentPreviewModal blob 预览不受影响
+> - **#19 marketplace 收敛共享 client（A=统一，已实施）**：plugin/marketplace.ts 自建 axios+双拦截器 → 复用 `createBaseAxiosClient('')`（主 apiClient 工厂统一注入 token/租户头/Accept-Language/空串清洗）；401 静默语义由 client.ts `isPluginMarketplaceRequest` 豁免保留（V64 竞态登出问题不复现）
+> - **#10 analytics 权限码（核实已满足，登记闭环）**：analytics 已为资源级权限码（analytics:datasource:admin / analytics:report:admin 等），全模块无 is_superuser 硬门限——A=权限码细化现状即满足
+> - **#6 scm 服务端重算（核实已满足，登记闭环）**：scm 前端仅展示层格式化（Math.round/toFixed 用于金额/比率展示），业务计算全在服务端（mrp confirm 等服务端端点）——A=服务端权威现状即满足
+> - **#18 refresh_token HttpOnly 迁移（A 已拍板，登记专项）**：涉及后端 set-cookie + 前端 axios withCredentials + CSRF 防护全链 + 三端验证，专项独立批次实施（风险中高，不做半吊子）
+> - **#21 unused L1 剩余 ~305 条（登记续批）**：第一批已闭环（第八轮），L1 剩余按 refCount 分级继续——本批未并入（量大独立成批）
+> - **#22 下批补测候选（登记排期）**：scm 余 15 页 / ehs Training / ai 域，本机可做独立成批
+
 ## 决策全 A 实施批 1（2026-10-25）✅ 本机可闭环项
 
 > 拍板：除 #2 待核实外全 A（用户 2026-10-25）。本批落地可快速闭环项：
