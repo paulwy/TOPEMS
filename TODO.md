@@ -3603,7 +3603,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **修复**：`svc/qms/src/modules/quality_inspection.rs` submit_result 成功路径（status→pending_audit）补发布块——对齐 mes ProductionOrderCreated 样板：`state.event_publisher` → `publish_event(EventType::QmsInspectionCompleted, QmsInspectionCompletedPayload)`（字段对齐消费端），失败入 `commit_retry::push_retry_typed("qms", …)`
 - [x] **编译**：`cargo check -p topems-qms` 通过（BigDecimal→f64 用 to_string+parse，无 to_f64 API）
 - [x] **实测边界**：qms 建单 200 落库（qa_quality_inspections tenant=0001）；submit 需租户 claims 账号（本机种子均为 superuser 无租户，超管 submit 404=租户隔离正确，v1.93 口径）；测试单已清理
-- [ ] **（v1.104 修订）**：上条「404=隔离正确」实证为 bug——超管 token 实带 tenant_id=0001（/users/me None 为接口 mask），短路 None+精确匹配致 404——已修复并全链实测闭环，见 v1.104
+- [x] **（v1.104 修订）**：上条「404=隔离正确」实证为 bug——超管 token 实带 tenant_id=0001（/users/me None 为接口 mask），短路 None+精确匹配致 404——**已修复并全链实测闭环（v1.104 小节登记，2026-10-23）**
 
 ## v1.104 qms 超管租户短路修复 + 层2 G 全链实测（2026-10-23）
 - [x] **根因实证（推翻 v1.103「404=隔离正确」）**：JWT 解包 admin token → `tenant_id=0001`（超管也带租户）；qms quality_inspection.rs 14 处写路径 handler（update/delete/assign/submit/audit/rework/approve/reject）`is_superuser→None` + SQL 精确 `tenant_id=$N` → 超管操作自己租户记录 no rows 404（GET 用 `($2 IS NULL OR tenant_id=$2)` 兼容式故 200）
@@ -3752,7 +3752,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### mes 租户谓词补齐（核心项）
 - [x] **47 处 UPDATE 租户谓词补齐**（14 文件）：production_orders×6/teams×5/work_reports×4/work_stations×4/production_plans×3/equipment×3/production_schedules×3/process_flows×2/equipment_oee×2/material_plans×2/process_routes+steps×4/quality 四表×8/equipment_maintenance_records×1；统一谓词 `AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id',true),'')::uuid, 全零)`（material_plans 为 text 列去 ::uuid）；17 处原有谓词未动
 - [x] **25 处豁免登记**：work_orders×7/wips×3/material_*×7/process_flow_steps×2/team_members/workshops/production_lines/shifts/work_calendars/quality_standard_values——表无 tenant_id 且 RLS=f；order_id FK 全部可空，EXISTS 子查询方案有 0 行回归风险，根治需 DDL 补列（对照 ehs 先例登记 `docs/database/mes-租户谓词补齐与豁免登记-2026-10-24.md`）
-- [ ] **验证阻塞（待授权）**：`sqlx-prepare -p topems-mes` 失败因 topems_test stub 库缺列 `public.process_flow_steps.flow_id`、`public.quality_standard_values.standard_id`（既有失配，基础迁移仅建 id 桩表）；且提交的根 .sqlx 缓存本就落后 TIMESTAMPTZ 迁移（干净代码离线 check 亦 111 处类型失配）。补丁 SQL 已用 psql PREPARE 抽验通过（t1/t2/t4 OK、material_plans 文本谓词 OK）。**需用户授权 2 条 ALTER 补列（或重放迁移链）后重跑 prepare+验证闭环**
+- [x] **验证阻塞（已闭环 · B2 批 2026-10-24）**：stub topems_prepare 重建为 dev schema 克隆（6 扩展 + 全授权 + app.tenant_id GUC），`cargo sqlx prepare` **39/39**，根 .sqlx 349 条按 dev 真实契约重生成（`fe1a663da8`，65 files），子目录缓存已清；验证阻塞解除，详见 B2 小节
 ### analytics 环境核对 + stats 真实化
 - [x] **环境根因修正**：integration_tests.rs:12 硬编码连 **topems** 库（非 .env topems_test）——topems.bi 仅 9 表（test 期望≥10）、analytics_dashboards.tenant_id 无 DEFAULT；migrations 期望 ≥16 表+默认值；_sqlx_migrations 台账空（selfheal bootstrap 未重放）→ **DB 环境落后非测试缺陷**，登记 `docs/database/analytics-环境DB与测试期望核对-2026-10-24.md`（DDL 修补/迁移重放/改连 topems_test 均待确认）
 - [x] **reports_center_stats 静态占位下线**：role_distribution（原 3/12/8）→ core_roles↔core_user_roles↔core_users 真实聚合 TOP10；activity_types（原 180/65/22/14）→ public.audit_logs.action 近 30 天 TOP10；unwrap_or_default 回落空数组不造假；routes.rs+main.rs 双副本；check/clippy 0
@@ -3782,7 +3782,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **stats 中文映射**：62 条字典（19 角色+43 动作，未知回落原名），routes/main 双副本
 - [x] **analytics 集成测试改连 topems_test**：integration_tests.rs 硬编码 topems 库 → TEST_DATABASE_URL 环境变量优先/fallback topems_test；6/6 集成测试通过（含此前 2 个环境型失败）
 ### 迁移链空库重放缺陷（评估，未改已提交迁移）
-- [ ] **20261007000006_rebuild_orphan_tables.sql**：机器生成迁移，304 处 ALTER 中 **99 处引用未在文件内 CREATE 的表**（iam/mes 等 schema 的 core_* 运行时自建表副本）——空库全量重放必失败（core_billing_invoices 为首个）。门禁不做空库重放（validate/check-migrations 为静态校验），严重性中低。修复方案：A 补 99 处 CREATE（需列定义）；B 存在性守卫 DO 块；C 空库重放跳过 06~09 运维快照迁移并标注；D 修生成器重生成。**待用户定夺后实施**
+- [x] **20261007000006_rebuild_orphan_tables.sql（已闭环 · B1 批 2026-10-24）**：方案 B（存在性守卫）实施——593 处 to_regclass 存在性守卫 + 1119 处 IF EXISTS/IF NOT EXISTS（守卫批次 `2a4591d509`），空库全链 479/479 贯通背书，详见 B1 小节
 - 状态：本轮 7 commits 落盘待推送（mes 3 + 决策项 4）；未 push
 
 ## 审计修复实施登记 第四轮：迁移链守卫 + SSRF 白名单 + core stub 收尾 + 租户 FAQ 库（2026-10-24，未推送）
@@ -3800,7 +3800,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] 引用确认：前端全走 apiClient.ai（businessCopilot.ts:215/:262），后端仅 stub 文件自身命中 → 零活引用
 - [x] 整模块移除：contract_stubs.rs 删除（86 行）+ routes/mod.rs mod/merge 清理 + 契约台账 contract-stub-mapping.md copilot 行清零
 - [x] 验证：unified-core check/clippy 0、lib 538 passed；前端 typecheck/lint 0；audit_e2e 3 例环境性失败（空 DATABASE_URL，与本次无关）
-- [ ] 遗留：core 侧两路径现 404（预期）；audit_e2e 需真库环境
+- [x] 遗留 · core copilot 501 stub 删除收尾：core 侧两路径现 404（**预期，登记保留**）；audit_e2e 3 例环境性失败（空 DATABASE_URL，与本次改动无关，需真库环境——外部依赖保留说明）
 ### ④ 租户级 FAQ 库（评估=轻量，已全落地）
 - [x] **评估结论：轻量**（1 表 core.ai_faqs + search 改造 + admin list/create/delete 3 端点 + 前端零改）→ 本轮全落地
 - [x] 迁移 20261024000015_copilot_faq_table.sql：id/tenant_id(默认全零)/module/question/answer/keywords(jsonb)/category/status/时间戳/deleted_at；RLS ENABLE+FORCE+tenant 谓词（全零=全局默认，所有租户可见）；seed curated 15 条（erp/finance/crm/wms/general 各 3）幂等
@@ -3841,7 +3841,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] 勘察：000016 已确立 public.* 显式口径；portal:admin 在 public/iam 两副本均无字典行无绑定；测试库 `_sqlx_migrations` 账本仅到 20261019000001（000014 未应用，iam 孤儿问题在本库未体现、生产可能存在）
 - [x] **迁移 `20261024000017_portal_admin_permission_public.sql`**：三步同型 000016——public.core_permissions 字典兜底（portal:admin 插入 1）+ admin 角色兜底（幂等 0）+ admin→portal:admin 绑定（插入 1）；header 说明修正 000014 iam 副本口径、绑定保留历史不删改
 - [x] 测试库应用验证：绑定生效（admin 当前绑定 {ai:admin, portal:admin}）；iam 副本保持孤儿未触碰；check-migrations PASS
-- [ ] 遗留：000014 iam 副本绑定建议 header 注记「已被 000017 public.* 口径取代」（整合时补）；测试库账本后续走 sqlx 工具登记（DDL 幂等重跑安全）；portal 端到端登录签发未验（超范围）
+- [x] 遗留：000014 iam 副本 header 注记——**000017 header L15 已含取代声明**（「000014 的 iam 副本绑定保留历史，不删改；本迁移在 public.* 同口径重新登记」，000014 为已提交迁移，文件不动零校验风险）；测试库账本 → **B2 批 stub 全链 479/479 重放 + prepare 39/39 已覆盖**；portal 端到端登录签发未验：超范围，待业务排期
 ### 状态
 - 本轮 3 commits 落盘（守卫贯通 + portal 补绑 + 本登记）；**未 push**；统一推送前用户 fetch+rebase
 
