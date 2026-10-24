@@ -6,7 +6,11 @@
 > - **ScmWmsSrmComponents**：InventoryReportFilterHint 源码不存在（L2 已移除），删除空渲染死断言；TabPanel 行为断言保留（11/11 过）
 > - 验证：component 全量 3280 passed/8 failed（剩 wms-tms-erp 7 + 计 1），tsc 0，eslint 0，pre-commit 全绿
 > - 提交：`a4269700a3`（测试批）、`e3386ee137`（TODO 登记）
-> - **wms-tms-erp-integration 7 失败登记（专项挂起）**：契约不匹配——createShipment body 缺 transfer_order_id（对象形状与测试期望不符）、received→completed 状态队列错位（mockResolvedValueOnce 与实际 API 调用序不符）、Error Rollback 场景 packing/completed 状态不符——需对照 api/tms、api/wms/transfer 实现逐用例对齐 mock 队列（非死引用，勿删测试）
+> - **wms-tms-erp-integration 7 失败已清零（专项完成，下一批）**：
+>   - **mock 队列重置（真根因）**：测试 beforeEach 由 vi.clearAllMocks → vi.resetAllMocks——apiClient 为模块级单例 mock，clear 不清 mockResolvedValueOnce 队列、跨用例残留（transfer_order_id 串值、received/shipped 状态错位、packing→completed 均由残留队列导致）；reset 后 7 失败全消
+>   - **审批 4 用例改路径契约断言**：原测试依赖 wmsApprovalApi（api/wms 注释规划的 4×3 端点但从未实现，import 得 undefined 致 TypeError）；尝试补实现后被 api-boundary-gate 正确拦截（svc/wms 无 approval 路由，悬空路径禁止）——改为 apiClient.wms.post 直接断言 `/approval/approve` 路径与状态机契约，前端保持不封装悬空 API（待后端实现后再挂接）
+>   - 验证：wms-tms-erp 17/17 过；**component 全量 3288 passed / 0 failed——预存在 12 失败全部清零**；tsc 0、eslint 0
+>   - 提交：`85974cc7e7`
 ## L2 106 全活复核 + NavConfig 回归收口（2026-10-25）✅ 完成
 
 > **#27 轮下批执行**（detect v6-v8 升级后 L2 106 逐条复核）：
