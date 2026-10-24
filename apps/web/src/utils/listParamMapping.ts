@@ -297,11 +297,3 @@ export function buildStandardFilterParams(
 
   return result;
 }
-
-/**
- * URL 查询参数 <-> 结构化筛选条件 的序列化/反序列化
- *
- * URL 格式：?f_status=active&f_age_gt=18&f_tags_in=a,b,c
- */
-
-export const FILTER_URL_PREFIX = 'f_';

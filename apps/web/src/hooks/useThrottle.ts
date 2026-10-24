@@ -39,48 +39,4 @@ export function useThrottle<T>(value: T, delay: number): T {
   return throttledValue;
 }
 
-export function useThrottledCallback<T extends (...args: Parameters<T>) => ReturnType<T>>(
-  callback: T,
-  delay: number
-): (...args: Parameters<T>) => void {
-  const callbackRef = useRef(callback);
-  const lastExecutedRef = useRef<number>(0);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    callbackRef.current = callback;
-  }, [callback]);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  return useMemo(
-    () =>
-      (...args: Parameters<T>) => {
-        const now = Date.now();
-        const timeSinceLastExecute = now - lastExecutedRef.current;
-
-        if (timeSinceLastExecute >= delay) {
-          lastExecutedRef.current = now;
-          callbackRef.current(...args);
-        } else {
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-          }
-
-          timeoutRef.current = setTimeout(() => {
-            lastExecutedRef.current = Date.now();
-            callbackRef.current(...args);
-          }, delay - timeSinceLastExecute);
-        }
-      },
-    [delay]
-  );
-}
-
 export default useThrottle;

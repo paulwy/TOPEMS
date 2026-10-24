@@ -1,4 +1,3 @@
-export { useMesDashboardSchema } from './dashboardSchema';
 export { workOrderSchema } from './workOrder';
 export { equipmentSchema } from './equipment';
 export { equipmentOeeSchema } from './equipmentOee';

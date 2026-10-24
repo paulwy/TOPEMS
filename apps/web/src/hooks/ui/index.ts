@@ -12,7 +12,6 @@ export type { ConfirmDialogConfig } from '../useConfirmDialog';
 // DialogForm
 
 // DataTable
-export { useDataTable, useExportData } from '../useDataTable';
 
 // WindowManager
 

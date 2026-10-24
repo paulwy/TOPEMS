@@ -35,8 +35,6 @@ export {
   useApproveConsolidationReport,
   usePublishConsolidationReport,
   useCompanyRelations,
-  useCreateCompanyRelation,
-  useUpdateCompanyRelation,
   useDeleteCompanyRelation,
   useCompanyTree,
 } from '../../useConsolidation';

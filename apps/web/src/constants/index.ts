@@ -9,7 +9,6 @@
  *    - api.ts      — web axios client retry strategy and public API paths
  *    - routes.ts   — default routes / public page whitelist
  *    - pagination.ts — pagination defaults (semantic aliases on top of shared)
- *    - validation.ts — validation regex and length limits
  *    - retry.ts   — lazy-load retry parameters
  * 3. Route-module-specific path sets (AUTH_PATHS / DASHBOARD_PATHS / *_PATHS)
  *    are still maintained by src/routes/{auth,dashboard,common}.ts and
@@ -21,7 +20,6 @@ export * from './storage';
 export * from './api';
 export * from './routes';
 export * from './pagination';
-export * from './validation';
 export * from './retry';
 export * from './time';
 

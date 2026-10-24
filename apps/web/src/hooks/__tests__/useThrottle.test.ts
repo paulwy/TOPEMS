@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useThrottle, useThrottledCallback } from '../useThrottle';
+import { useThrottle } from '../useThrottle';
 
 describe('useThrottle', () => {
   it('should return initial value', () => {
@@ -26,16 +26,5 @@ describe('useThrottle', () => {
 
     nowSpy.mockRestore();
     vi.useRealTimers();
-  });
-});
-
-describe('useThrottledCallback', () => {
-  it('should pass arguments to callback', () => {
-    const callback = vi.fn();
-    const { result } = renderHook(() => useThrottledCallback(callback, 500));
-
-    result.current('arg1', 'arg2');
-
-    expect(callback).toHaveBeenCalledWith('arg1', 'arg2');
   });
 });

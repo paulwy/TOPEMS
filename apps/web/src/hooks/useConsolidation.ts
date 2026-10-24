@@ -277,61 +277,6 @@ export const useCompanyRelations = (params?: {
 };
 
 /**
- * 创建公司关系
- */
-export const useCreateCompanyRelation = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (
-      data: Partial<{
-        parent_company_id: string;
-        child_company_id: string;
-        relation_type: CompanyRelationType;
-        ownership_percentage: number;
-      }>
-    ) => consolidationApi.createCompanyRelation(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.COMPANY_TREE_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-  });
-};
-
-/**
- * 更新公司关系
- */
-export const useUpdateCompanyRelation = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      relationId,
-      data,
-    }: {
-      relationId: string;
-      data: Partial<{
-        ownership_percentage: number;
-        status: 'active' | 'inactive';
-      }>;
-    }) => consolidationApi.updateCompanyRelation(relationId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.COMPANY_RELATIONS_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-    },
-  });
-};
-
-/**
  * 删除公司关系
  */
 export const useDeleteCompanyRelation = () => {

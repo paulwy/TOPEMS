@@ -88,19 +88,6 @@ export function serializeSSRData(data: unknown): string {
 }
 
 /**
- * 反序列化 SSR 数据（从已转义 JSON 还原）
- */
-export function deserializeSSRData(escaped: string): unknown {
-  const json = escaped
-    .replace(/\\u003c/g, '<')
-    .replace(/\\u003e/g, '>')
-    .replace(/\\u0026/g, '&')
-    .replace(/\\u2028/g, '\u2028')
-    .replace(/\\u2029/g, '\u2029');
-  return JSON.parse(json);
-}
-
-/**
  * 构建完整 SSR 数据集合（包含元信息）
  */
 export function buildSSRDataCollection(entries: SSRDataEntry[]): SSRDataCollection {

@@ -1,12 +1,11 @@
 /**
  * Tests for ModuleLoadingProgress.tsx
  *  - ModuleLoadingProgress: per-module + overall progress rendering, size/stroke props
- *  - ModuleLoadingOverlay: full-screen overlay wrapper
  */
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ModuleLoadingProgress, ModuleLoadingOverlay } from '../ModuleLoadingProgress';
+import { ModuleLoadingProgress } from '../ModuleLoadingProgress';
 import { useModuleLoadingStore } from '@/store/moduleLoadingStore';
 
 vi.mock('@/i18n', () => ({
@@ -87,16 +86,5 @@ describe('ModuleLoadingProgress', () => {
       />
     );
     expect(screen.getByText('30%')).toBeInTheDocument();
-  });
-});
-
-describe('ModuleLoadingOverlay', () => {
-  it('renders a fixed overlay containing the progress component', () => {
-    useModuleLoadingStore.getState().setLoading('mp-overlay');
-    useModuleLoadingStore.getState().setProgress('mp-overlay', 80);
-    const { container } = render(<ModuleLoadingOverlay moduleId='mp-overlay' />);
-    expect(screen.getByText('80%')).toBeInTheDocument();
-    const fixedBox = container.querySelector('div');
-    expect(fixedBox).toBeTruthy();
   });
 });

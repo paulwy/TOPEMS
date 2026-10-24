@@ -6,8 +6,6 @@ import CompanyStructurePage from '../iam/CompanyStructurePage';
 import {
   useCompanyRelations,
   useCompanyTree,
-  useCreateCompanyRelation,
-  useUpdateCompanyRelation,
   useDeleteCompanyRelation,
 } from '@/hooks/useConsolidation';
 import { useNotificationStore, useAuthStore } from '@/store';
@@ -15,8 +13,6 @@ import { useNotificationStore, useAuthStore } from '@/store';
 vi.mock('@/hooks/useConsolidation', () => ({
   useCompanyRelations: vi.fn(() => ({ data: { data: [] }, isLoading: false })),
   useCompanyTree: vi.fn(() => ({ data: { data: null }, isLoading: false })),
-  useCreateCompanyRelation: vi.fn(() => ({ mutate: vi.fn() })),
-  useUpdateCompanyRelation: vi.fn(() => ({ mutate: vi.fn() })),
   useDeleteCompanyRelation: vi.fn(() => ({ mutate: vi.fn() })),
 }));
 
@@ -129,8 +125,6 @@ describe('IamCompanyStructurePage', () => {
     );
     expect(useCompanyRelations).toBeDefined();
     expect(useCompanyTree).toBeDefined();
-    expect(useCreateCompanyRelation).toBeDefined();
-    expect(useUpdateCompanyRelation).toBeDefined();
     expect(useDeleteCompanyRelation).toBeDefined();
   });
 

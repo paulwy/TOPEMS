@@ -139,32 +139,3 @@ export const ModuleLoadingProgress: React.FC<ModuleLoadingProgressProps> = ({
     </Box>
   );
 };
-/**
- * Full screen loading overlay with progress
- */
-export const ModuleLoadingOverlay: React.FC<{
-  moduleId?: string;
-}> = ({ moduleId }) => (
-  <Box
-    sx={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: 'background.paper',
-      zIndex: (theme) =>
-        (
-          theme.zIndex as {
-            modal: number;
-          }
-        ).modal + 1,
-    }}
-  >
-    <ModuleLoadingProgress moduleId={moduleId} />
-  </Box>
-);

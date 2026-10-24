@@ -4,7 +4,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ColumnDef } from '@tanstack/react-table';
 import DataTable from '../DataTable';
 import { useNotificationStore, useAuthStore } from '@/store';
-import { useExportData } from '@/hooks/useDataTable';
 
 vi.mock('react-i18next', () => {
   const i18nMap: Record<string, string> = {
@@ -160,13 +159,8 @@ vi.mock('@/store', () => ({
   ),
 }));
 
-vi.mock('@/hooks/useDataTable', () => ({
-  useExportData: vi.fn(),
-}));
-
 const mockAddNotification = vi.fn();
 const mockUseAppStore = useNotificationStore as vi.Mock;
-const mockUseExportData = useExportData as vi.Mock;
 
 interface TestData {
   id: string;
@@ -201,10 +195,6 @@ describe('DataTable', () => {
     vi.clearAllMocks();
     mockUseAppStore.mockReturnValue({
       addNotification: mockAddNotification,
-    });
-    mockUseExportData.mockReturnValue({
-      exportToCSV: vi.fn().mockReturnValue({ success: true }),
-      exportToExcel: vi.fn().mockReturnValue({ success: true }),
     });
   });
 

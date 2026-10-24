@@ -1,4 +1,3 @@
-export { useFinanceDashboardSchema } from './dashboardSchema';
 export { getBudgetSchema } from './budget';
 export { costSchema } from './cost';
 export { assetSchema } from './asset';

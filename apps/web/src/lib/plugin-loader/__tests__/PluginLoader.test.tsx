@@ -2,7 +2,7 @@
  * Tests for PluginLoader.tsx
  *  - PluginLoader class (loading state machine, manifest validation, dependencies, caching)
  *  - ModuleLoadingFallback / ModuleErrorFallback presentational components
- *  - ModuleLoader (lazy wrapper), PluginRouteWrapper, PluginLoaderProvider React components
+ *  - ModuleLoader (lazy wrapper) React component
  */
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -13,8 +13,6 @@ import {
   ModuleLoadingFallback,
   ModuleErrorFallback,
   ModuleLoader,
-  PluginRouteWrapper,
-  PluginLoaderProvider,
 } from '../PluginLoader';
 import type { PluginManifest } from '../PluginLoader';
 
@@ -192,89 +190,5 @@ describe('ModuleLoader (lazy wrapper from PluginLoader.tsx)', () => {
       />
     );
     expect(screen.getByText('custom-fallback')).toBeInTheDocument();
-  });
-});
-
-describe('PluginRouteWrapper', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('renders the loaded module component on success', async () => {
-    const RouteComp = () => <div>route-component-here</div>;
-    vi.spyOn(pluginLoader, 'loadModule').mockResolvedValue({ default: RouteComp });
-    render(
-      <PluginRouteWrapper
-        routePath='/route-a'
-        component={() => Promise.resolve({})}
-      />
-    );
-    expect(await screen.findByText('route-component-here')).toBeInTheDocument();
-  });
-
-  it('renders ModuleErrorFallback when loadModule rejects', async () => {
-    vi.spyOn(pluginLoader, 'loadModule').mockRejectedValue(new Error('route load boom'));
-    render(
-      <PluginRouteWrapper
-        routePath='/route-b'
-        component={() => Promise.resolve({})}
-      />
-    );
-    expect(await screen.findByText('route load boom')).toBeInTheDocument();
-    expect(screen.getByText('lib.plugin_loader.k1')).toBeInTheDocument();
-  });
-
-  it('shows the default loading fallback while loading', () => {
-    vi.spyOn(pluginLoader, 'loadModule').mockReturnValue(new Promise(() => {}));
-    render(
-      <PluginRouteWrapper
-        routePath='/route-c'
-        component={() => Promise.resolve({})}
-      />
-    );
-    expect(screen.getByText('lib.plugin_loader.k0')).toBeInTheDocument();
-  });
-});
-
-describe('PluginLoaderProvider', () => {
-  const PLUGINS = [makeManifest({ pluginCode: 'provider-plugin' })];
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('renders children directly when no plugins are supplied', () => {
-    render(
-      <PluginLoaderProvider>
-        <span>child-node</span>
-      </PluginLoaderProvider>
-    );
-    expect(screen.getByText('child-node')).toBeInTheDocument();
-  });
-
-  it('renders children after all plugins finish loading', async () => {
-    vi.spyOn(pluginLoader, 'loadPlugin').mockResolvedValue({
-      code: 'provider-plugin',
-      name: 'P',
-      version: '1',
-      status: 'running',
-    });
-    render(
-      <PluginLoaderProvider plugins={PLUGINS}>
-        <span>provider-children</span>
-      </PluginLoaderProvider>
-    );
-    expect(await screen.findByText('provider-children')).toBeInTheDocument();
-  });
-
-  it('shows an error alert for failed plugins but still renders children', async () => {
-    vi.spyOn(pluginLoader, 'loadPlugin').mockRejectedValue(new Error('install exploded'));
-    render(
-      <PluginLoaderProvider plugins={PLUGINS}>
-        <span>still-children</span>
-      </PluginLoaderProvider>
-    );
-    expect(await screen.findByText(/install exploded/)).toBeInTheDocument();
-    expect(screen.getByText('still-children')).toBeInTheDocument();
   });
 });

@@ -1,4 +1,3 @@
-export { useQmsDashboardSchema } from './dashboardSchema';
 export { eightDSchema } from './eightD';
 export { apqpSchema, apqpWizard } from './apqp';
 export { fmeaSchema } from './fmea';

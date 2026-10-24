@@ -43,11 +43,3 @@ export function getDeviceInfo(): DeviceInfo {
     pixelRatio,
   };
 }
-
-export function isMobileView(): boolean {
-  return getDeviceInfo().isMobile || window.innerWidth < 768;
-}
-
-export function isTabletView(): boolean {
-  return getDeviceInfo().isTablet || (window.innerWidth >= 768 && window.innerWidth < 1024);
-}

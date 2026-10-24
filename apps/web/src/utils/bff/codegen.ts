@@ -36,7 +36,3 @@ export function toSnakeCase(str: string): string {
     .toLowerCase()
     .replace(/\s+/g, '_');
 }
-
-export function pluralize(str: string): string {
-  return str.endsWith('s') ? str : `${str}s`;
-}

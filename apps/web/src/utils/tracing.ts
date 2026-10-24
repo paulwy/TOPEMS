@@ -52,38 +52,12 @@ export function getCurrentSpanId(): string | null {
   return currentSpanId;
 }
 
-export function createSpan(name: string, parentSpanId?: string): Span {
-  const spanId = generateId().substring(0, 16);
-  currentSpanId = spanId;
-  return {
-    name,
-    startTime: Date.now(),
-    spanContext: {
-      traceId: currentTraceId || generateTraceId(),
-      spanId,
-      traceFlags: 1,
-    },
-    parentSpanId,
-  };
-}
-
 export function endSpan(span: Span, attributes?: Record<string, string | number | boolean>): void {
   span.endTime = Date.now();
   if (attributes) {
     span.attributes = { ...span.attributes, ...attributes };
   }
   sendSpanToCollector(span);
-}
-
-export function getTraceHeaders(): Record<string, string> {
-  if (!currentTraceId || !currentSpanId) {
-    return {};
-  }
-  return {
-    traceparent: `00-${currentTraceId}-${currentSpanId}-01`,
-    tracestate: '',
-    'x-request-id': currentTraceId,
-  };
 }
 
 function sendSpanToCollector(span: Span): void {

@@ -11,4 +11,3 @@ export { warehouseSchema } from './warehouse';
 export { areaSchema } from './area';
 export { locationSchema } from './location';
 export { stockTakeSchema } from './stockTake';
-export { useWmsDashboardSchema } from './dashboardSchema';
