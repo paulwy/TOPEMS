@@ -4112,3 +4112,14 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### 状态与下批
 - L1 = 0；L2 317（值 ~209 / types ~108）；L3 4764+。
 - 下批：L2 测试引用剩余（B 组 index+test 28：createBaseAxiosClient/meetingBookingApi/iamApi/TouchButton/DashboardQuickActions/TrendLine/sanitizeInput/useCreateCompanyRelation 等——api/index.ts 聚合对象消费链待核）。
+
+## 第十九轮（2026-10-24）：L2 测试引用批3·纯函数
+- 删 74 个真死导出：utils 46（format 7/mobileDetector 5/queryCostAnalyzer 5/listParamMapping 3/streamingSsr 3/tracing 3/importExport 3/websocketOptimizer 2/storage 2/bff 8/batchOperation/errorHandler/payloadCleaner/smartPrefetch/themeUtils/sseClient 等）+ constants 12（pagination 4+validation 8）+ lib 9（csrf 2/security 2/moduleThemes/sseClient/plugin-loader 3）+ theme effects 2 + routes MOBILE_TAB_PATHS + microfrontend 4 + components 3（TouchButton/TrendLine/EditCell）+ DesignTokens ColorSwatch。
+- 删 3 死壳文件：TouchButton/EditCell/DesignTokens（组件删后只剩 import+type）。
+- 测试联动：33 测试文件清理（删 import/describe/it）；修复 importExport.test 顶层 describe 误删（悬空 it 区+describe 尾）。
+- 连锁 unused 治理：mf-classifier 9 helper、tracing 3 interface、csrf/queryCostAnalyzer import 成员等。
+- barrel 清理：4 处转发（common/redesign/security/observability index + microfrontend 二级）。
+- 验证：tsc 0 error、eslint src --max-warnings 0 全绿；commit cbc245095（-2762 行）；L1 残留清理 78c0dd310（TrendLineProps/IsrManager 壳文件）。
+- 重扫：L1=0、L2=258（317→258）、L3=4743。
+### 状态与下批
+- 下批：剩余 L2 值 ~39：hooks 7（useDataTable/useBatchSelection/useDeviceType/useThrottledCallback/useConsolidation 2）+ schemas 7 + pages hooks 13 + plugin-loader 3（ModuleLoadingOverlay/PluginRouteWrapper/PluginLoaderProvider）——页面 hook 高危（逐名复核消费链，防别名/动态引用误删）；api 3 保留（聚合对象）。
