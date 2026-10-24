@@ -1,3 +1,12 @@
+## 补测续：ehs 域 CrudPage 三页真断言（2026-10-25）✅ 完成
+
+> **#22 补测批 2 续（模板 stub 改造受益）**：照 `CrmCrudPages.test.tsx` 冻结范本补 ehs 域走 CrudPage 包装的代表页
+> - `EhsHazardousMaterialPage.test`（hazardousMaterialSchema + ehs.title/pages.ehs_hazardous_material_page.k0 breadcrumbs；list 参数归一化 pageSize→page_size + 响应解包；create/update/delete 委托与 payload；四档错误翻译）
+> - `EnvironmentPage.test`（environmentMonitorSchema + ehs.title/ehs.environment_page.list；list monitor_type 透传；三操作委托；四档错误翻译；**顶部 useQuery 统计用部分 mock（importOriginal 保 QueryCache）**）
+> - `HealthManagementPage.test`（healthManagementSchema + ehs.title/ehs.health_management_page.list；list keyword→q 归一化；**createHealthRecord 后端 /health 无写路由（API 层对齐 GET+params）如实断言**；四档错误翻译）
+> - 验证：12/12 passed；tsc 0；eslint 0（prettier --fix 9 处）
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## wms 审批端点前端封装恢复（wmsApprovalApi，2026-10-25）✅ 完成
 
 > **续「前端 component 预存在失败清理」wms-tms-erp 专项登记项——后端 svc/wms 审批端点实际已实现，本次恢复前端封装并升级测试断言**：
