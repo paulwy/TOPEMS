@@ -3930,3 +3930,22 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   恢复文件候选与保留 131 的精确处理留后续）、typeOnly 87 按口径不动。
 - 经验：删除器对「函数签名行」（`export function X(`）与「配平块边界」需 seen_brace 扩展；git checkout -- <dir> 在
   staged 目录恢复不可靠，用 `git checkout HEAD -- <file>` 显式单文件。
+
+## 第十一轮登记（unused 第四批 · 恢复文件候选精确清理）2026-10-24
+
+### ① 内容（commit 6a41680b6，已推送）
+- **整删 14 零消费文件**（全仓无 import + 定义文件内无聚合引用）：
+  - `components/ai/copilot/AISelectionBubble.tsx`、`components/bi/ChartAnnotations.tsx`、`components/export/ImportExportModal.tsx`、`components/gis/modules/MapModule/OfflineManager.tsx`（唯一导出 tileToLatLng）、`components/bff/BffFallback.tsx`（10 导出全零）
+  - `hooks/bff/useBffSuspense.tsx`、`useBffErrorHandling.ts`、`useBffSubscription.ts`、`useEdgeCompute.ts`、`useSlowQueryAlert.ts`、`useABTest.ts`、`useIsr.ts`、`useRouteDataLoader.ts`
+  - `microfrontend/security/csp-manager.ts`（CSPStrategy/CSPPolicy/CSPViolation/CSPDirective 全零）
+- **useBffPage.ts 部分删**：720→291 行（删 UseBffListPage*/useBffListPage 31-120 + 函数 121-290、UseBffDetailPage*/useBffDetailPage 291-459；保留 FormFieldConfig/useBffFormPage/UseBffFormPage*）。
+- **3 barrel 清理**：`hooks/bff/index.ts` 重写（保留 useBffCrud/useBffFormPage/useAutoSharding/useBffPerformance/useBffDashboard/useQueryCost/useSmartPrefetch/usePartialPreRender 段）；`microfrontend/security/index.ts` 删 csp-manager 行；`components/bff/index.ts` 159→145 行删 BffFallback 段。
+- 验证：tsc 0 error、eslint 0（pre-commit 门禁全绿，frontend-lint 3 "File ignored" warning 为 .eslintignore 预期）。
+
+### ② 判定口径（本批验证）
+- 真死 = 全仓无 `import NAME`（排除定义文件自身/barrel index.ts 转发行）+ 定义文件内无聚合引用（`= NAME`/`: NAME`/`NAME.`/`...NAME`/`new NAME`/`(NAME)`/`<NAME`）。
+- 有 `export const x = new X()` 类实例或 `{...X}` 展开即保留（ABTestEngine/CrossFrameworkBridge/UIRecommender 等 24 个维持保留）。
+
+### ③ 状态
+- L1：删除 17 个导出后重扫仍 261（删除 14+3 与「删除后新暴露」候选相抵：registerRouteShell/unregisterRouteShell/useBffPerformance/useQueryCost/useSmartPrefetch/BffErrorBoundary/BffErrorType/ErrorRecoveryStrategy/onErrorReport/reportError/uiRecommender/ResponsiveStrategy/UILibrary 等新进 L1——多为 barrel 转发零消费，下一批精确判定）。
+- 下批候选：新暴露 32（恢复文件相关）+ ModuleCardV2（真死候选）+ cross-framework AngularAdapter/SvelteAdapter + design-system PRESET_TOKENS 等 6 残余。
