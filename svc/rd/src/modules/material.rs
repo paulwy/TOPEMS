@@ -130,7 +130,10 @@ pub async fn list_material_tests(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
@@ -211,7 +214,10 @@ pub async fn list_by_project(
     >,
 ) -> Json<ApiResponse<Vec<MaterialTest>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
         SELECT id, project_id, experiment_id, material_name, supplier, batch_number,
@@ -255,7 +261,10 @@ pub async fn list_by_experiment(
     >,
 ) -> Json<ApiResponse<Vec<MaterialTest>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
         SELECT id, project_id, experiment_id, material_name, supplier, batch_number,
@@ -287,7 +296,10 @@ pub async fn create_material_test(
     Json(req): Json<CreateMaterialTestRequest>,
 ) -> Json<ApiResponse<MaterialTest>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if req.material_name.is_empty() {
         return Json(ApiResponse::error(400, "原料名称不能为空"));
     }
@@ -397,7 +409,10 @@ pub async fn get_material_test(
     >,
 ) -> Json<ApiResponse<MaterialTest>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
         SELECT id, project_id, experiment_id, material_name, supplier, batch_number,
@@ -429,7 +444,10 @@ pub async fn update_material_test(
     Json(req): Json<UpdateMaterialTestRequest>,
 ) -> Json<ApiResponse<MaterialTest>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let existing = sqlx::query_as::<_, MaterialTest>(
         "SELECT id, project_id, experiment_id, material_name, supplier, batch_number, test_results, conclusion, tested_by, tested_at, created_at FROM rs.material_tests WHERE deleted_at IS NULL AND id = $1",
     )
@@ -532,7 +550,10 @@ pub async fn delete_material_test(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query("UPDATE rs.material_tests SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&mut **txn)

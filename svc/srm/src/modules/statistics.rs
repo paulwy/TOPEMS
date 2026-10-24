@@ -187,7 +187,10 @@ pub async fn get_statistics(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -300,7 +303,10 @@ pub async fn get_detailed_statistics(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -565,7 +571,10 @@ pub async fn get_suppliers_with_stats(
     >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {

@@ -129,7 +129,10 @@ pub async fn get_customer_profile(
     Query(params): Query<ProfileQueryParams>,
 ) -> Json<ApiResponse<CustomerProfile>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -391,7 +394,10 @@ pub async fn add_profile_tags(
     Json(req): Json<AddProfileTagRequest>,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -454,7 +460,10 @@ pub async fn remove_profile_tags(
     Json(req): Json<AddProfileTagRequest>,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -516,7 +525,10 @@ pub async fn list_customer_profiles(
     Query(params): Query<CustomerPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,

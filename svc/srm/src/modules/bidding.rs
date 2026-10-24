@@ -65,7 +65,10 @@ pub async fn list_biddings(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -145,7 +148,10 @@ pub async fn create_bidding(
     Json(req): Json<CreateBiddingRequest>,
 ) -> Json<ApiResponse<Bidding>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if req.bidding_no.is_empty() || req.title.is_empty() {
         return Json(ApiResponse::<Bidding>::error(400, "招标编号和标题不能为空"));
     }
@@ -244,7 +250,10 @@ pub async fn get_bidding(
     >,
 ) -> Json<ApiResponse<Bidding>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
         SELECT id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
@@ -277,7 +286,10 @@ pub async fn update_bidding(
     Json(req): Json<UpdateBiddingRequest>,
 ) -> Json<ApiResponse<Bidding>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -362,7 +374,10 @@ pub async fn delete_bidding(
     >,
 ) -> Json<ApiResponse<bool>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -422,7 +437,10 @@ pub async fn publish_bidding(
     >,
 ) -> Json<ApiResponse<Bidding>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -492,7 +510,10 @@ pub async fn open_bidding(
     >,
 ) -> Json<ApiResponse<Bidding>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -562,7 +583,10 @@ pub async fn evaluate_bidding(
     >,
 ) -> Json<ApiResponse<Bidding>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -632,7 +656,10 @@ pub async fn award_bidding(
     Json(req): Json<AwardBiddingRequest>,
 ) -> Json<ApiResponse<Bidding>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -714,7 +741,10 @@ pub async fn list_bidding_suppliers(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, (Uuid, String)>(only_own_schema_query!(
         "srm",
         r#"

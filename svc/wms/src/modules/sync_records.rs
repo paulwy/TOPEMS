@@ -147,7 +147,10 @@ pub async fn list_sync_records(
     Query(params): Query<ListSyncParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
         return e;
     }
@@ -233,7 +236,10 @@ pub async fn get_sync_record(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
         return e;
     }
@@ -278,7 +284,10 @@ pub async fn create_sync_record(
     Json(req): Json<CreateSyncRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e;
     }
@@ -355,7 +364,10 @@ pub async fn list_sync_items(
     Query(params): Query<ListSyncParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
         return e;
     }
@@ -424,7 +436,10 @@ pub async fn retry_sync_record(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SyncResult>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e;
     }
@@ -495,7 +510,10 @@ pub async fn retry_failed_items(
     Json(req): Json<RetryItemsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e;
     }
@@ -554,7 +572,10 @@ pub async fn get_sync_statistics(
     >,
 ) -> Json<ApiResponse<SyncStatistics>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
         return e;
     }
@@ -651,7 +672,10 @@ async fn trigger_sync(
     payload: serde_json::Value,
 ) -> Json<ApiResponse<SyncResult>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e;
     }

@@ -55,7 +55,10 @@ pub async fn list_billing_records(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::BillingRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -157,7 +160,10 @@ pub async fn get_billing_record(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<BillingRecord>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::BillingRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -209,7 +215,10 @@ async fn create_billing_record(
     Json(req): Json<CreateBillingRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::BillingWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -303,7 +312,10 @@ async fn update_billing_record(
     Json(req): Json<UpdateBillingRequest>,
 ) -> Json<ApiResponse<BillingRecord>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::BillingWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -386,7 +398,10 @@ async fn delete_billing_record(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::BillingWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -459,7 +474,10 @@ pub async fn mark_billing_paid(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::BillingWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -537,7 +555,10 @@ pub async fn send_billing_notification(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::BillingWrite).await {
         Ok(_) => {}
         Err(e) => return e,

@@ -95,7 +95,10 @@ pub async fn list_formulas(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -179,7 +182,10 @@ pub async fn create_formula(
     Json(req): Json<CreateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -317,7 +323,10 @@ pub async fn get_formula(
     >,
 ) -> Json<ApiResponse<Formula>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -361,7 +370,10 @@ pub async fn update_formula(
     Json(req): Json<UpdateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -499,7 +511,10 @@ pub async fn delete_formula(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -591,7 +606,10 @@ pub async fn get_formula_versions(
     >,
 ) -> Json<ApiResponse<Vec<FormulaVersion>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -638,7 +656,10 @@ pub async fn create_formula_version(
     Json(req): Json<CreateFormulaVersionRequest>,
 ) -> Json<ApiResponse<FormulaVersion>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -761,7 +782,10 @@ pub async fn approve_formula(
     Json(_req): Json<crate::models::ApproveFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {

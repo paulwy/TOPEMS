@@ -630,6 +630,7 @@ pub async fn delete_apqp_phase(
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::error(404, "APQP阶段不存在")),
         Ok(_) => Json(ApiResponse::success(true, "APQP阶段删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete APQP phase: {}", e);
@@ -884,6 +885,7 @@ pub async fn delete_apqp_task(
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::error(404, "APQP任务不存在")),
         Ok(_) => Json(ApiResponse::success(true, "APQP任务删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete APQP task: {}", e);
@@ -1133,6 +1135,7 @@ pub async fn delete_apqp_risk(
     .await;
 
     match result {
+        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::error(404, "APQP风险不存在")),
         Ok(_) => Json(ApiResponse::success(true, "APQP风险删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete APQP risk: {}", e);

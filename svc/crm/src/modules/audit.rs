@@ -68,7 +68,10 @@ pub async fn list_audit_logs(
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::All).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -174,7 +177,10 @@ pub async fn get_audit_log(
     Path(id): Path<i64>,
 ) -> Json<ApiResponse<AuditLog>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::All).await {
         Ok(_) => {}
         Err(e) => return e,

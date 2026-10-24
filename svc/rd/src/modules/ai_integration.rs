@@ -114,7 +114,13 @@ async fn list_analyses(
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<PaginatedResponse<AiAnalysis>>::error(500, "rls transaction unavailable")),
+        ),
+    };
 
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
@@ -171,7 +177,13 @@ async fn create_analysis(
     Json(request): Json<CreateAnalysisRequest>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<AiAnalysis>::error(500, "rls transaction unavailable")),
+        ),
+    };
 
     let ai_service_url = resolve_ai_service_url();
 
@@ -249,7 +261,13 @@ async fn get_analysis(
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<AiAnalysis>::error(500, "rls transaction unavailable")),
+        ),
+    };
 
     let result: Result<Option<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at
@@ -325,7 +343,13 @@ async fn get_entity_analyses(
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<Vec<AiAnalysis>>::error(500, "rls transaction unavailable")),
+        ),
+    };
 
     let result: Result<Vec<AiAnalysis>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, analysis_type, prompt, response, ai_service_url, created_by, created_at

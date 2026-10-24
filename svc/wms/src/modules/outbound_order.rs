@@ -110,7 +110,10 @@ pub async fn list_outbound_orders(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -207,7 +210,10 @@ pub async fn create_outbound_order(
     Json(req): Json<CreateOutboundOrderRequest>,
 ) -> Json<ApiResponse<OutboundOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -334,7 +340,10 @@ pub async fn get_outbound_order(
     >,
 ) -> Json<ApiResponse<OutboundOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -395,7 +404,10 @@ pub async fn update_outbound_order(
     Json(req): Json<UpdateOutboundOrderRequest>,
 ) -> Json<ApiResponse<OutboundOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -556,7 +568,10 @@ pub async fn delete_outbound_order(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -653,7 +668,10 @@ pub async fn list_outbound_order_items(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -736,7 +754,10 @@ pub async fn create_outbound_order_item(
     Json(req): Json<OutboundOrderItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -876,7 +897,10 @@ pub async fn update_outbound_order_item(
     Json(req): Json<ShipItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -982,7 +1006,10 @@ pub async fn delete_outbound_order_item(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1074,7 +1101,10 @@ pub async fn confirm_outbound_order(
     >,
 ) -> Json<ApiResponse<OutboundOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1187,7 +1217,10 @@ pub async fn pick_outbound_order(
     >,
 ) -> Json<ApiResponse<OutboundOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1299,7 +1332,10 @@ pub async fn pack_outbound_order(
     >,
 ) -> Json<ApiResponse<OutboundOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1420,7 +1456,10 @@ pub async fn ship_outbound_order(
     Json(items): Json<Vec<ShipItemRequest>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1773,7 +1812,10 @@ pub async fn complete_outbound_order(
     >,
 ) -> Json<ApiResponse<OutboundOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1894,7 +1936,10 @@ pub async fn start_outbound_approval(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1958,7 +2003,10 @@ pub async fn approve_outbound(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundApprove).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -2046,7 +2094,10 @@ pub async fn reject_outbound(
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundApprove).await {
         Ok(_) => {}
         Err(e) => return e,

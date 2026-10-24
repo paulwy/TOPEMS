@@ -50,7 +50,10 @@ pub async fn list_picking_lists(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<WavePick>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
     }
@@ -141,7 +144,10 @@ pub async fn get_picking_list(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
     }
@@ -227,7 +233,10 @@ pub async fn picking_statistics(
     >,
 ) -> Json<ApiResponse<PickingStats>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
     }

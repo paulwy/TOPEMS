@@ -98,7 +98,10 @@ pub async fn list_inquiries(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -178,7 +181,10 @@ pub async fn get_inquiry(
     >,
 ) -> Json<ApiResponse<Inquiry>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, Inquiry>(
         r#"
         SELECT id, inquiry_no, title, description, status, creator, tenant_id,
@@ -223,7 +229,10 @@ pub async fn create_inquiry(
     Json(req): Json<CreateInquiryRequest>,
 ) -> Json<ApiResponse<Inquiry>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_id = current_tenant_id(&claims).await.unwrap_or_else(Uuid::nil);
     let creator = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
     let inquiry_no = format!("INQ-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
@@ -276,7 +285,10 @@ pub async fn update_inquiry(
     Json(req): Json<UpdateInquiryRequest>,
 ) -> Json<ApiResponse<Inquiry>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, Inquiry>(
         r#"
         UPDATE srm.inquiries
@@ -329,7 +341,10 @@ pub async fn delete_inquiry(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query(
         "UPDATE srm.inquiries SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
     )
@@ -420,7 +435,10 @@ async fn transition_inquiry(
     txn_arc: std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
 ) -> Json<ApiResponse<Inquiry>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
 
     let current = sqlx::query_scalar::<_, String>(
         "SELECT status FROM srm.inquiries WHERE id = $1 AND deleted_at IS NULL",

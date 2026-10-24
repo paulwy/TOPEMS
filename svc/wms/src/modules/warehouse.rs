@@ -109,7 +109,10 @@ pub async fn list_warehouses(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -223,7 +226,10 @@ pub async fn create_warehouse(
     axum::extract::Json(req): axum::extract::Json<CreateWarehouseRequest>,
 ) -> Json<ApiResponse<Warehouse>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -345,7 +351,10 @@ pub async fn get_warehouse(
     >,
 ) -> Json<ApiResponse<Warehouse>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -422,7 +431,10 @@ pub async fn update_warehouse(
     axum::extract::Json(req): axum::extract::Json<UpdateWarehouseRequest>,
 ) -> Json<ApiResponse<Warehouse>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let request_data = serde_json::to_value(&req).ok();
     // 超管→None（SQL NULL，匹配 RLS 公共行）；普通用户→claims.tenant_id，与 get/list 对齐
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -572,7 +584,10 @@ pub async fn delete_warehouse(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     // 超管→None（SQL NULL，匹配 RLS 公共行）；普通用户→claims.tenant_id，与 get/list 对齐
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None

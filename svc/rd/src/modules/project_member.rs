@@ -40,7 +40,10 @@ pub async fn create_member(
     Json(payload): Json<CreateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -166,7 +169,10 @@ pub async fn get_project_members(
     >,
 ) -> Json<ApiResponse<Vec<ProjectMember>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -242,7 +248,10 @@ pub async fn update_member(
     Json(payload): Json<UpdateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -375,7 +384,10 @@ pub async fn delete_member(
     >,
 ) -> Json<ApiResponse<()>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {

@@ -65,7 +65,10 @@ pub async fn list_interactions(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<ListResponse<Interaction>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -176,7 +179,10 @@ pub async fn get_interaction(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Interaction>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -228,7 +234,10 @@ async fn create_interaction(
     Json(req): Json<CreateInteractionRequest>,
 ) -> Json<ApiResponse<Interaction>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -306,7 +315,10 @@ async fn update_interaction(
     Json(req): Json<UpdateInteractionRequest>,
 ) -> Json<ApiResponse<Interaction>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -391,7 +403,10 @@ async fn delete_interaction(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -461,7 +476,10 @@ pub async fn batch_delete_interactions(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
         Ok(_) => {}
         Err(e) => return e,

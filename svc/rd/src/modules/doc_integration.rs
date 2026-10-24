@@ -83,7 +83,13 @@ pub async fn list_documents(
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<PaginatedResponse<DocumentRelation>>::error(500, "rls transaction unavailable")),
+        ),
+    };
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let offset = ((page - 1) * page_size) as i64;
@@ -140,7 +146,13 @@ pub async fn create_document_relation(
     Json(request): Json<CreateDocumentRelationRequest>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<DocumentRelation>::error(500, "rls transaction unavailable")),
+        ),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -209,7 +221,13 @@ pub async fn get_document_relation(
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<DocumentRelation>::error(500, "rls transaction unavailable")),
+        ),
+    };
     let result: Result<Option<DocumentRelation>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, doc_service_file_id, doc_service_url, file_name, file_size, file_type, description, created_by, created_at, updated_at
          FROM rs.document_relations WHERE id = $1"
@@ -256,7 +274,13 @@ pub async fn delete_document_relation(
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<()>::error(500, "rls transaction unavailable")),
+        ),
+    };
     let result: Result<sqlx::postgres::PgQueryResult, sqlx::Error> =
         sqlx::query("DELETE FROM rs.document_relations WHERE id = $1")
             .bind(id)
@@ -310,7 +334,13 @@ pub async fn get_entity_documents(
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<Vec<DocumentRelation>>::error(500, "rls transaction unavailable")),
+        ),
+    };
     let result: Result<Vec<DocumentRelation>, sqlx::Error> = sqlx::query_as(
         "SELECT id, entity_type, entity_id, doc_service_file_id, doc_service_url, file_name, file_size, file_type, description, created_by, created_at, updated_at
          FROM rs.document_relations

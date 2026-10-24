@@ -49,7 +49,7 @@ pub async fn calculate_project_progress(
         0
     };
 
-    Ok(calculated_progress.min(100))
+    Ok(calculated_progress.clamp(0, 100))
 }
 
 #[instrument(level = "info", skip(db, project_id))]

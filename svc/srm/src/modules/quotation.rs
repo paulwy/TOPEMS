@@ -60,7 +60,10 @@ pub async fn list_quotations(
     >,
 ) -> Json<ApiResponse<Vec<Quotation>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let inquiry_id = params.inquiry_id.and_then(|s| Uuid::parse_str(&s).ok());
 
     let result = if inquiry_id.is_some() {
@@ -117,7 +120,10 @@ pub async fn create_quotation(
     Json(req): Json<CreateQuotationRequest>,
 ) -> Json<ApiResponse<Quotation>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let inquiry_id = match Uuid::parse_str(&req.inquiry_id) {
         Ok(id) => id,
         Err(_) => return Json(ApiResponse::<Quotation>::error(400, "无效的询价ID")),
@@ -127,6 +133,10 @@ pub async fn create_quotation(
         Ok(id) => id,
         Err(_) => return Json(ApiResponse::<Quotation>::error(400, "无效的供应商ID")),
     };
+
+    if !req.total_amount.is_finite() || req.total_amount < 0.0 {
+        return Json(ApiResponse::<Quotation>::error(400, "报价金额不能为负数"));
+    }
 
     let inquiry = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
         "srm",
@@ -239,7 +249,10 @@ pub async fn get_quotation(
     >,
 ) -> Json<ApiResponse<Quotation>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, Quotation>(
         only_own_schema_query!("srm", r#"
         SELECT q.id, q.quotation_no, q.inquiry_id, i.inquiry_no, q.supplier_id, s.name as supplier_name,
@@ -275,7 +288,10 @@ pub async fn update_quotation(
     Json(req): Json<UpdateQuotationRequest>,
 ) -> Json<ApiResponse<Quotation>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -291,6 +307,12 @@ pub async fn update_quotation(
             .ok()
             .map(|d| d.with_timezone(&Utc))
     });
+
+    if let Some(amount) = req.total_amount {
+        if !amount.is_finite() || amount < 0.0 {
+            return Json(ApiResponse::<Quotation>::error(400, "报价金额不能为负数"));
+        }
+    }
 
     let result = sqlx::query_as::<_, Quotation>(
         only_own_schema_query!("srm", r#"
@@ -351,7 +373,10 @@ pub async fn delete_quotation(
     >,
 ) -> Json<ApiResponse<bool>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -411,7 +436,10 @@ pub async fn award_quotation(
     >,
 ) -> Json<ApiResponse<Quotation>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -479,7 +507,10 @@ pub async fn reject_quotation(
     >,
 ) -> Json<ApiResponse<Quotation>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None

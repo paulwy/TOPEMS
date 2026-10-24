@@ -190,7 +190,7 @@ pub async fn list_shipments(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:shipment:read"])),
+    security(("BearerAuth" = ["tms:shipment:write"])),
     path = "/api/tms/shipments",
     request_body = CreateShipmentRequest,
     responses(
@@ -329,7 +329,7 @@ pub async fn get_shipment(
 
 #[utoipa::path(
     put,
-    security(("BearerAuth" = ["tms:shipment:read"])),
+    security(("BearerAuth" = ["tms:shipment:write"])),
     path = "/api/tms/shipments/{id}",
     request_body = UpdateShipmentRequest,
     params(
@@ -421,7 +421,7 @@ pub async fn update_shipment(
 
 #[utoipa::path(
     delete,
-    security(("BearerAuth" = ["tms:shipment:read"])),
+    security(("BearerAuth" = ["tms:shipment:write"])),
     path = "/api/tms/shipments/{id}",
     params(
         ("id" = Uuid, Path, description = "运单 ID")
@@ -480,7 +480,7 @@ pub async fn delete_shipment(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:shipment:read"])),
+    security(("BearerAuth" = ["tms:shipment:write"])),
     path = "/api/tms/shipments/{id}/dispatch",
     params(
         ("id" = Uuid, Path, description = "运单 ID")
@@ -579,7 +579,7 @@ pub async fn dispatch_shipment(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:shipment:read"])),
+    security(("BearerAuth" = ["tms:shipment:write"])),
     path = "/api/tms/shipments/{id}/arrive",
     params(
         ("id" = Uuid, Path, description = "运单 ID")
@@ -678,7 +678,7 @@ pub async fn arrive_shipment(
 
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:shipment:read"])),
+    security(("BearerAuth" = ["tms:shipment:write"])),
     path = "/api/tms/shipments/{id}/cancel",
     params(
         ("id" = Uuid, Path, description = "运单 ID")
@@ -887,7 +887,7 @@ pub async fn submit_approval(
 /// Approve shipment (pending → in_transit, approve and dispatch)
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:shipment:read"])),
+    security(("BearerAuth" = ["tms:shipment:write"])),
     path = "/api/tms/shipments/{id}/approve",
     request_body = ApprovalRequest,
     params(
@@ -992,7 +992,7 @@ pub async fn approve_shipment(
 /// Reject shipment (pending → cancelled, reject dispatch)
 #[utoipa::path(
     post,
-    security(("BearerAuth" = ["tms:shipment:read"])),
+    security(("BearerAuth" = ["tms:shipment:write"])),
     path = "/api/tms/shipments/{id}/reject",
     request_body = ApprovalRequest,
     params(

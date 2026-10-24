@@ -22,7 +22,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
 use shared::AppState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
@@ -250,7 +250,7 @@ async fn main() -> anyhow::Result<()> {
             api_state.pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(axum::middleware::from_fn(require_permission("ehs:admin")))
+        .layer(axum::middleware::from_fn(require_module_access("ehs")))
         .with_state(api_state.clone());
 
     let openapi_json = serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_default();

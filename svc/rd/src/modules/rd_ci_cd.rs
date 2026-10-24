@@ -155,7 +155,10 @@ pub async fn list_bugs(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let (total, rows) = match list_typed(&mut *txn, "bugs", "bug_no,bug_title", &params).await {
@@ -194,7 +197,10 @@ pub async fn get_bug(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let row = sqlx::query("SELECT * FROM rd.bugs WHERE id = $1")
         .bind(id)
         .fetch_optional(&mut **txn)
@@ -218,7 +224,10 @@ pub async fn create_bug(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let severity = req.severity.unwrap_or_else(|| "medium".to_string());
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
     let bug_no = format!("BUG-{:X}", Uuid::new_v4().as_u128() % 1_000_000);
@@ -262,7 +271,10 @@ pub async fn update_bug(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let row = sqlx::query(
         "UPDATE rd.bugs SET \
          bug_title = COALESCE($2, bug_title), \
@@ -320,7 +332,10 @@ pub async fn delete_bug(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let result = sqlx::query("DELETE FROM rd.bugs WHERE id = $1")
         .bind(id)
         .execute(&mut **txn)
@@ -395,7 +410,10 @@ pub async fn list_builds(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let (total, rows) =
@@ -435,7 +453,10 @@ pub async fn get_build(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let row = sqlx::query("SELECT * FROM rd.builds WHERE id = $1")
         .bind(id)
         .fetch_optional(&mut **txn)
@@ -462,7 +483,10 @@ pub async fn create_build(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let build_type = req.build_type.unwrap_or_else(|| "ci".to_string());
     let trigger_type = req.trigger_type.unwrap_or_else(|| "manual".to_string());
     let build_no = format!("BUILD-{:X}", Uuid::new_v4().as_u128() % 1_000_000);
@@ -555,7 +579,10 @@ pub async fn list_deploys(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let (total, rows) =
@@ -595,7 +622,10 @@ pub async fn get_deploy(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let row = sqlx::query("SELECT * FROM rd.deploys WHERE id = $1")
         .bind(id)
         .fetch_optional(&mut **txn)
@@ -622,7 +652,10 @@ pub async fn create_deploy(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let deploy_type = req.deploy_type.unwrap_or_else(|| "rolling".to_string());
     let deploy_no = format!("DEPLOY-{:X}", Uuid::new_v4().as_u128() % 1_000_000);
     let row = sqlx::query(
@@ -714,7 +747,10 @@ pub async fn list_tests(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let (total, rows) =
@@ -754,7 +790,10 @@ pub async fn get_test(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let row = sqlx::query("SELECT * FROM rd.test_cases WHERE id = $1")
         .bind(id)
         .fetch_optional(&mut **txn)
@@ -781,7 +820,10 @@ pub async fn create_test(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let case_type = req.case_type.unwrap_or_else(|| "function".to_string());
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
     let case_no = format!("TC-{:X}", Uuid::new_v4().as_u128() % 1_000_000);
@@ -829,7 +871,10 @@ pub async fn update_test(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let row = sqlx::query(
         "UPDATE rd.test_cases SET \
          case_name = COALESCE($2, case_name), \
@@ -879,7 +924,10 @@ pub async fn delete_test(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Err(internal_error("rls transaction unavailable")),
+    };
     let result = sqlx::query("DELETE FROM rd.test_cases WHERE id = $1")
         .bind(id)
         .execute(&mut **txn)

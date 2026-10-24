@@ -50,7 +50,10 @@ pub async fn list_batches(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -147,7 +150,10 @@ pub async fn create_batch(
     Json(req): Json<CreateBatchRequest>,
 ) -> Json<ApiResponse<Batch>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -249,7 +255,10 @@ pub async fn get_batch(
     >,
 ) -> Json<ApiResponse<Batch>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -308,7 +317,10 @@ pub async fn update_batch(
     Json(req): Json<UpdateBatchRequest>,
 ) -> Json<ApiResponse<Batch>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -425,7 +437,10 @@ pub async fn delete_batch(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -495,7 +510,10 @@ pub async fn get_batch_statistics(
     >,
 ) -> Json<ApiResponse<BatchStatistics>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -570,7 +588,10 @@ pub async fn get_expiring_soon(
     >,
 ) -> Json<ApiResponse<Vec<Batch>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -625,7 +646,10 @@ pub async fn get_expired(
     >,
 ) -> Json<ApiResponse<Vec<Batch>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -679,7 +703,10 @@ pub async fn adjust_quantity(
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Batch>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -763,7 +790,10 @@ pub async fn transfer_location(
     Json(data): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Batch>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,

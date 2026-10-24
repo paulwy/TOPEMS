@@ -1367,9 +1367,9 @@ pub async fn calculate_combined(
 
     let expanded_uncertainty = combined_uncertainty * coverage_factor;
 
-    let _ = sqlx::query(
+    match sqlx::query(
         r#"
-        UPDATE qa_lims_uncertainty_projects 
+        UPDATE qa_lims_uncertainty_projects
         SET combined_uncertainty = $2, expanded_uncertainty = $3, updated_at = NOW()
         WHERE id = $1
         "#,
@@ -1378,7 +1378,16 @@ pub async fn calculate_combined(
     .bind(combined_uncertainty)
     .bind(expanded_uncertainty)
     .execute(&state.pool)
-    .await;
+    .await
+    {
+        Ok(r) if r.rows_affected() == 0 => {
+            tracing::warn!("uncertainty project {} not found when persisting recalculated values", id);
+        }
+        Ok(_) => {}
+        Err(e) => {
+            tracing::error!("failed to persist recalculated uncertainty for project {}: {}", id, e);
+        }
+    }
 
     let result = serde_json::json!({
         "combined_uncertainty": combined_uncertainty,

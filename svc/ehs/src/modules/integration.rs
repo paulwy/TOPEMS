@@ -56,7 +56,7 @@ pub struct CreateIntegrationHazardRequest {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:write"])),
-    path = "/api/ehs/api/internal/ehs/hazards/integration",
+    path = "/api/internal/ehs/hazards/integration",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -126,7 +126,7 @@ pub struct CreateIntegrationAlertRequest {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:write"])),
-    path = "/api/ehs/api/internal/ehs/alerts/integration",
+    path = "/api/internal/ehs/alerts/integration",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")

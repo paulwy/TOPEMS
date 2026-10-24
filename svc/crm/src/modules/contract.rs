@@ -54,7 +54,10 @@ pub async fn list_contracts(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &CrmPermission::ContractRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -165,7 +168,10 @@ pub async fn create_contract(
     Json(req): Json<CreateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &CrmPermission::ContractWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -304,7 +310,10 @@ pub async fn get_contract(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Contract>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &CrmPermission::ContractRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -375,7 +384,10 @@ pub async fn update_contract(
     Json(req): Json<UpdateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &CrmPermission::ContractWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -483,7 +495,10 @@ pub async fn delete_contract(
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &CrmPermission::ContractWrite).await {
         Ok(_) => {}
         Err(e) => return e,

@@ -11,7 +11,6 @@ pub mod demand_forecast;
 pub mod energy_management;
 pub mod equipment;
 pub mod equipment_oee;
-pub mod equipment_oee_calc;
 pub mod material_bom;
 pub mod material_plan;
 pub mod material_requirement;
@@ -33,7 +32,6 @@ pub mod settings;
 pub mod team;
 pub mod wip;
 pub mod work_order;
-pub mod work_order_calc;
 pub mod work_report;
 pub mod work_station;
 
@@ -241,7 +239,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .ok();
 
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_production_orders_order_no ON production_orders(order_number)",
+        "CREATE INDEX IF NOT EXISTS idx_production_orders_order_no ON production_orders(order_no)",
     )
     .execute(pool)
             .await

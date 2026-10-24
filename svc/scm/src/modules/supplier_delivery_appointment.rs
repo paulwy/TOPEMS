@@ -357,7 +357,10 @@ pub async fn list_appointments(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(
         &state.db,
         &claims,
@@ -458,7 +461,10 @@ pub async fn create_appointment(
     Json(req): Json<CreateSupplierDeliveryAppointmentRequest>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(
         &state.db,
         &claims,
@@ -595,7 +601,10 @@ pub async fn get_appointment(
     >,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(
         &state.db,
         &claims,
@@ -641,7 +650,10 @@ pub async fn update_appointment(
     Json(req): Json<UpdateSupplierDeliveryAppointmentRequest>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(
         &state.db,
         &claims,
@@ -798,7 +810,10 @@ pub async fn delete_appointment(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(
         &state.db,
         &claims,
@@ -910,7 +925,10 @@ pub async fn approve_appointment(
     Json(req): Json<ApprovalBody>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(
         &state.db,
         &claims,
@@ -1064,7 +1082,10 @@ pub async fn reject_appointment(
     Json(req): Json<ApprovalBody>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(
         &state.db,
         &claims,
@@ -1221,7 +1242,10 @@ pub async fn confirm_arrival(
     Json(req): Json<ArrivalConfirmRequest>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(
         &state.db,
         &claims,
@@ -1365,7 +1389,10 @@ pub async fn complete_appointment(
     Json(req): Json<CompleteRequest>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(
         &state.db,
         &claims,
@@ -1506,7 +1533,10 @@ pub async fn cancel_appointment(
     Json(req): Json<CancelRequest>,
 ) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(
         &state.db,
         &claims,
@@ -1642,7 +1672,10 @@ pub async fn appointment_stats(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(
         &state.db,
         &claims,

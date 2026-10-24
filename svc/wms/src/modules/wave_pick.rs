@@ -99,7 +99,10 @@ pub async fn list_wave_picks(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<WavePick>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -189,7 +192,10 @@ pub async fn create_wave_pick(
     Json(req): Json<CreateWavePickRequest>,
 ) -> Json<ApiResponse<WavePick>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -299,7 +305,10 @@ pub async fn get_wave_pick(
     >,
 ) -> Json<ApiResponse<WavePick>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -352,7 +361,10 @@ pub async fn update_wave_pick(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<WavePick>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -472,7 +484,10 @@ pub async fn delete_wave_pick(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -585,7 +600,10 @@ pub async fn list_wave_pick_items(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -645,7 +663,10 @@ pub async fn assign_wave_pick(
     Json(req): Json<AssignWavePickRequest>,
 ) -> Json<ApiResponse<WavePick>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -754,7 +775,10 @@ pub async fn start_wave_pick(
     >,
 ) -> Json<ApiResponse<WavePick>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -864,7 +888,10 @@ pub async fn complete_wave_pick(
     >,
 ) -> Json<ApiResponse<WavePick>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -974,7 +1001,10 @@ pub async fn cancel_wave_pick(
     >,
 ) -> Json<ApiResponse<WavePick>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1087,7 +1117,10 @@ pub async fn pick_line(
     Json(req): Json<PickLineRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WavePickWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1168,7 +1201,10 @@ pub async fn short_pick_line(
     Json(req): Json<PickLineRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::WavePickWrite).await {
         Ok(_) => {}
         Err(e) => return e,

@@ -140,7 +140,10 @@ pub async fn list_costs(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
@@ -255,7 +258,10 @@ pub async fn create_cost(
     Json(req): Json<CreateResearchCostRequest>,
 ) -> Json<ApiResponse<ResearchCost>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if req.amount <= 0.0 {
         return Json(ApiResponse::error(400, "费用金额必须大于0"));
     }
@@ -339,7 +345,10 @@ pub async fn get_cost(
     >,
 ) -> Json<ApiResponse<ResearchCost>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, ResearchCost>(
         r#"
         SELECT id, project_id, category, sub_category, amount, currency,
@@ -371,7 +380,10 @@ pub async fn update_cost(
     Json(req): Json<UpdateResearchCostRequest>,
 ) -> Json<ApiResponse<ResearchCost>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let existing = sqlx::query_as::<_, ResearchCost>(
         r#"
         SELECT id, project_id, category, sub_category, amount, currency,
@@ -464,7 +476,10 @@ pub async fn delete_cost(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query("UPDATE rs.research_costs SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&mut **txn)
@@ -512,7 +527,10 @@ pub async fn list_costs_by_project(
     >,
 ) -> Json<ApiResponse<Vec<ResearchCost>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, ResearchCost>(
         r#"
         SELECT id, project_id, category, sub_category, amount, currency,
@@ -559,7 +577,10 @@ pub async fn get_cost_statistics(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let mut query = String::from(
         r#"
         SELECT 

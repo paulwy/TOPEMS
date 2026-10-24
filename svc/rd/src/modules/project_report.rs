@@ -89,7 +89,10 @@ pub async fn get_project_summary(
     >,
 ) -> Json<ApiResponse<ProjectSummary>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let start_date = query.start_date.clone().unwrap_or_else(|| {
         (Utc::now() - Duration::days(30))
             .format("%Y-%m-%d")
@@ -173,7 +176,10 @@ pub async fn get_project_trends(
     >,
 ) -> Json<ApiResponse<Vec<TrendData>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let start_date = query.start_date.clone().unwrap_or_else(|| {
         (Utc::now() - Duration::days(90))
             .format("%Y-%m-%d")
@@ -242,7 +248,10 @@ pub async fn get_project_type_stats(
     >,
 ) -> Json<ApiResponse<Vec<ProjectTypeStats>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query(
         r#"
         SELECT 
@@ -297,7 +306,10 @@ pub async fn get_performance_metrics(
     >,
 ) -> Json<ApiResponse<PerformanceMetrics>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let on_time_result = sqlx::query(
         r#"
         SELECT 
@@ -424,7 +436,10 @@ pub async fn get_project_detail_report(
     >,
 ) -> Json<ApiResponse<ProjectDetailReport>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let project = sqlx::query_as::<_, ProjectDetailReport>(
         r#"
         SELECT 

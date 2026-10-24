@@ -227,7 +227,10 @@ pub async fn list_returns(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -330,7 +333,10 @@ async fn create_return(
     Json(req): Json<CreateReturnRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -468,7 +474,10 @@ pub async fn get_return(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -524,7 +533,10 @@ async fn update_return(
     Json(req): Json<UpdateReturnRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -683,7 +695,10 @@ async fn delete_return(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -829,7 +844,10 @@ pub async fn approve_return(
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -954,7 +972,10 @@ pub async fn reject_return(
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1079,7 +1100,10 @@ pub async fn receive_return(
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1211,7 +1235,10 @@ pub async fn complete_return(
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
@@ -1424,7 +1451,10 @@ pub async fn cancel_return(
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1547,7 +1577,10 @@ pub async fn list_return_items(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ReturnItem>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1599,7 +1632,10 @@ async fn add_return_item(
     Json(req): Json<CreateReturnItemRequest>,
 ) -> Json<ApiResponse<ReturnItem>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1986,7 +2022,10 @@ pub async fn get_return_finance_status(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -2088,7 +2127,10 @@ pub async fn get_return_inventory_status(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -2198,7 +2240,10 @@ async fn accept_return(
     Json(_req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -2327,7 +2372,10 @@ pub async fn process_return(
     Json(_req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -2462,7 +2510,10 @@ pub async fn resolve_return(
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -2602,7 +2653,10 @@ pub async fn confirm_return(
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}

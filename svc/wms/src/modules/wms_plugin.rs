@@ -188,7 +188,10 @@ pub async fn plugin_health_check(
     >,
 ) -> Json<ApiResponse<()>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match sqlx::query(only_own_schema_query!("wms", "SELECT 1"))
         .fetch_one(&mut **txn)
         .await

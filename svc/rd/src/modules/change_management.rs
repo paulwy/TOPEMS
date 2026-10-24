@@ -159,7 +159,13 @@ pub async fn create_change_request(
     Json(req): Json<CreateChangeRequest>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<ChangeRequest>::error(500, "rls transaction unavailable")),
+        ),
+    };
     let id = Uuid::new_v4();
     let tenant_id = Uuid::nil();
     let now = Utc::now();
@@ -234,7 +240,13 @@ pub async fn list_change_requests(
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<PaginatedResponse<ChangeRequest>>::error(500, "rls transaction unavailable")),
+        ),
+    };
     let page = params
         .get("page")
         .and_then(|v| v.as_i64())
@@ -306,7 +318,13 @@ pub async fn get_change_request(
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<ChangeRequest>::error(500, "rls transaction unavailable")),
+        ),
+    };
     let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(&format!(
         "SELECT {CHANGE_REQUEST_RETURN} FROM rs.change_requests WHERE id = $1"
     ))
@@ -342,7 +360,13 @@ pub async fn update_change_request(
     Json(req): Json<UpdateChangeRequest>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<ChangeRequest>::error(500, "rls transaction unavailable")),
+        ),
+    };
     let now = Utc::now();
     let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(&format!(
         r#"UPDATE rs.change_requests SET
@@ -413,7 +437,13 @@ pub async fn delete_change_request(
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<serde_json::Value>::error(500, "rls transaction unavailable")),
+        ),
+    };
     match sqlx::query("DELETE FROM rs.change_requests WHERE id = $1")
         .bind(id)
         .execute(&mut **txn)
@@ -475,7 +505,13 @@ pub async fn transition_change_request(
     Json(req): Json<TransitionRequest>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<ChangeRequest>::error(500, "rls transaction unavailable")),
+        ),
+    };
     let current: Result<Option<String>, sqlx::Error> =
         sqlx::query_scalar("SELECT status FROM rs.change_requests WHERE id = $1")
             .bind(id)
@@ -574,7 +610,13 @@ pub async fn create_change_order(
     Json(req): Json<CreateChangeOrder>,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<ChangeOrder>::error(500, "rls transaction unavailable")),
+        ),
+    };
     // 仅 Approved 状态可创建变更单
     let status: Result<Option<String>, sqlx::Error> =
         sqlx::query_scalar("SELECT status FROM rs.change_requests WHERE id = $1")
@@ -673,7 +715,13 @@ pub async fn list_change_orders(
     >,
 ) -> impl IntoResponse {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<Vec<ChangeOrder>>::error(500, "rls transaction unavailable")),
+        ),
+    };
     let result: Result<Vec<ChangeOrder>, sqlx::Error> = sqlx::query_as(&format!(
         "SELECT {CHANGE_ORDER_RETURN} FROM rs.change_orders ORDER BY created_at DESC"
     ))

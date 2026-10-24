@@ -76,7 +76,10 @@ async fn list_inventory_movements(
     Query(params): Query<InventoryMovementQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         return e;
     }
@@ -201,7 +204,10 @@ async fn create_inventory_movement(
     Json(req): Json<CreateInventoryMovementRequest>,
 ) -> Json<ApiResponse<InventoryMovement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         return e;
     }
@@ -307,7 +313,10 @@ async fn get_inventory_movement(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<InventoryMovement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         return e;
     }

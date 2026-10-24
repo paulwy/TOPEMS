@@ -242,7 +242,10 @@ pub async fn list_opportunities(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -370,7 +373,10 @@ pub async fn create_opportunity(
     Json(req): Json<CreateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -520,7 +526,10 @@ pub async fn get_opportunity(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Opportunity>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -596,7 +605,10 @@ async fn update_opportunity(
     Json(req): Json<UpdateOpportunityRequest>,
 ) -> Json<ApiResponse<Opportunity>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -754,7 +766,10 @@ async fn delete_opportunity(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -865,7 +880,10 @@ pub async fn batch_delete_opportunities(
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -967,7 +985,10 @@ async fn get_sales_funnel(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<FunnelStage>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1054,7 +1075,10 @@ pub async fn get_opportunity_stats(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<OpportunityStats>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1165,7 +1189,10 @@ pub async fn get_opportunity_forecast(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<OpportunityForecast>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1273,7 +1300,10 @@ pub async fn get_stage_transitions(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<StageTransition>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1366,7 +1396,10 @@ pub async fn advance_opportunity(
     Json(req): Json<AdvanceOpportunityRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1564,7 +1597,10 @@ pub async fn rollback_opportunity(
     Json(req): Json<RollbackOpportunityRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
         Err(e) => return e,

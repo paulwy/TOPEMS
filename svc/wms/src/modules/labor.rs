@@ -129,7 +129,10 @@ pub async fn list_labor_efficiency(
     >,
 ) -> Json<ApiResponse<Vec<LaborEfficiencyRow>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
     }
@@ -162,7 +165,10 @@ pub async fn user_labor_efficiency(
     >,
 ) -> Json<ApiResponse<Vec<LaborEfficiencyRow>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
     }
@@ -216,7 +222,10 @@ pub async fn labor_productivity(
     >,
 ) -> Json<ApiResponse<ProductivityStats>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
     }
@@ -315,7 +324,10 @@ pub async fn labor_workload(
     >,
 ) -> Json<ApiResponse<Vec<WorkloadItem>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
     }
@@ -404,7 +416,10 @@ pub async fn labor_performance_dashboard(
     >,
 ) -> Json<ApiResponse<PerformanceDashboard>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
     }
@@ -536,7 +551,10 @@ pub async fn list_labor_shifts(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<LaborShift>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
     }
@@ -601,7 +619,10 @@ pub async fn create_labor_shift(
     Json(req): Json<CreateShiftRequest>,
 ) -> Json<ApiResponse<LaborShift>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickWrite).await {
         return e;
     }

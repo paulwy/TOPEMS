@@ -167,7 +167,10 @@ pub async fn list_patents(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
@@ -250,7 +253,10 @@ pub async fn list_patents_by_project(
     >,
 ) -> Json<ApiResponse<Vec<Patent>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query(
         r#"
         SELECT id, project_id, name, patent_number, application_date, grant_date,
@@ -285,7 +291,10 @@ pub async fn create_patent(
     Json(req): Json<CreatePatentRequest>,
 ) -> Json<ApiResponse<Patent>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -357,7 +366,10 @@ pub async fn get_patent(
     >,
 ) -> Json<ApiResponse<Patent>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query(
         r#"
         SELECT id, project_id, name, patent_number, application_date, grant_date,
@@ -390,7 +402,10 @@ pub async fn update_patent(
     Json(req): Json<UpdatePatentRequest>,
 ) -> Json<ApiResponse<Patent>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let existing_result = sqlx::query(
         "SELECT id, name, patent_number, application_date, grant_date, status, type, inventors, assignee, description, abstract, created_by, created_at, updated_at FROM rs.patents WHERE deleted_at IS NULL AND id = $1",
     )
@@ -467,7 +482,10 @@ pub async fn delete_patent(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     let result = sqlx::query("UPDATE rs.patents SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&mut **txn)

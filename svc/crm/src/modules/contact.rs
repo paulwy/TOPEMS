@@ -73,7 +73,10 @@ pub async fn list_contacts(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ContactRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -179,7 +182,10 @@ pub async fn create_contact(
     Json(req): Json<CreateContactRequest>,
 ) -> Json<ApiResponse<Contact>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -305,7 +311,10 @@ pub async fn get_contact(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Contact>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ContactRead).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -358,7 +367,10 @@ async fn update_contact(
     Json(req): Json<UpdateContactRequest>,
 ) -> Json<ApiResponse<Contact>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -498,7 +510,10 @@ async fn delete_contact(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -603,7 +618,10 @@ pub async fn batch_delete_contacts(
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -727,7 +745,10 @@ pub async fn start_contact_approval(
     Json(req): Json<StartContactApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -868,7 +889,10 @@ pub async fn approve_contact(
     Json(req): Json<ContactApprovalActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -985,7 +1009,10 @@ pub async fn reject_contact(
     Json(req): Json<ContactApprovalActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+    };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
         Err(e) => return e,

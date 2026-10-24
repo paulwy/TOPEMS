@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use utoipa::OpenApi;
 
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
@@ -269,7 +269,7 @@ async fn main() -> Result<()> {
 
     // 业务路由
     let protected_routes = modules::create_routes::<AppState>()
-        .layer(axum::middleware::from_fn(require_permission("tms:admin")))
+        .layer(axum::middleware::from_fn(require_module_access("tms")))
         .with_state(app_state)
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),
