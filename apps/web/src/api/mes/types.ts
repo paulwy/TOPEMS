@@ -544,6 +544,19 @@ export interface CreateMaterialIssueRequest {
   remark?: string;
 }
 
+export interface UpdateMaterialIssueRequest {
+  status?: string;
+  operator?: string;
+  remark?: string;
+  items?: Array<{
+    material_code: string;
+    material_name: string;
+    quantity: number;
+    unit?: string;
+    batch_no?: string;
+  }>;
+}
+
 export interface MaterialReturn {
   id: string;
   return_no: string;

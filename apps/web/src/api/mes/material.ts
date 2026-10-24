@@ -7,6 +7,7 @@ import type {
   UpdateMaterialBomRequest,
   MaterialIssue,
   CreateMaterialIssueRequest,
+  UpdateMaterialIssueRequest,
   MaterialReturn,
   CreateMaterialReturnRequest,
 } from './types';
@@ -68,6 +69,18 @@ export const materialIssueApi = {
 
   async create(data: CreateMaterialIssueRequest): Promise<ApiResponse<MaterialIssue>> {
     return apiClient.mes.post('/material-issues', data);
+  },
+
+  async get(id: string): Promise<ApiResponse<MaterialIssue>> {
+    return apiClient.mes.get(`/material-issues/${id}`);
+  },
+
+  async update(id: string, data: UpdateMaterialIssueRequest): Promise<ApiResponse<MaterialIssue>> {
+    return apiClient.mes.put(`/material-issues/${id}`, data);
+  },
+
+  async delete(id: string): Promise<ApiResponse<string>> {
+    return apiClient.mes.delete(`/material-issues/${id}`);
   },
 };
 
