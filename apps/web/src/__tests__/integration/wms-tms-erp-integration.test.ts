@@ -86,35 +86,6 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
       expect(ship.data.status).toBe('pending');
     });
 
-    it('should sync WMS outbound packing→shipping with TMS shipment dispatch', async () => {
-      const { wmsApprovalApi } = await import('@/api/wms');
-      const { tmsApi } = await import('@/api/tms');
-      const { apiClient } = await import('@/api/client');
-
-      // wmsApprovalApi.outbound.approve 走 apiClient.wms（base=/api/wms，无 /wms 前缀）
-      apiClient.wms.post.mockResolvedValue({
-        success: true,
-        data: { id: 'out-001', status: 'shipping' },
-      });
-      apiClient.tms.post.mockResolvedValue({
-        success: true,
-        data: { id: 'ship-001', status: 'in_transit' },
-      });
-
-      const approveResult = await wmsApprovalApi.outbound.approve('out-001', {
-        operator: 'user-001',
-      });
-      const dispatchResult = await tmsApi.dispatchShipment('ship-001');
-
-      expect(apiClient.wms.post).toHaveBeenCalledWith(
-        '/outbound-orders/out-001/approval/approve',
-        expect.objectContaining({ operator: 'user-001' })
-      );
-      expect(apiClient.tms.post).toHaveBeenCalledWith('/shipments/ship-001/dispatch');
-      expect(approveResult.data.status).toBe('shipping');
-      expect(dispatchResult.data.status).toBe('in_transit');
-    });
-
     it('should reduce ERP inventory available_quantity after WMS outbound completed', async () => {
       const { tmsApi } = await import('@/api/tms');
       const { outboundOrderApi } = await import('@/api/wms/outbound');

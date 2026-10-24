@@ -21,8 +21,6 @@ import { slottingApi } from './slotting';
 import { laborApi } from './labor';
 import { pickingApi } from './picking';
 import { wmsAnalyticsApi } from './analytics';
-import apiClient from '../client';
-import type { ApprovalStartRequest, ApprovalApproveRequest, ApprovalRejectRequest } from './types';
 
 export * from './types';
 
@@ -162,39 +160,5 @@ export const wmsApi = {
 //   /stock-takes/${id}/approval/{start,approve,reject}
 //   /transfers/${id}/approval/{start,approve,reject}（调拨真实命名为 transfers）
 // ============================================================================
-export const wmsApprovalApi = {
-  inbound: {
-    start: (id: string, body: ApprovalStartRequest) =>
-      apiClient.wms.post(`/inbound-orders/${id}/approval/start`, body),
-    approve: (id: string, body: ApprovalApproveRequest) =>
-      apiClient.wms.post(`/inbound-orders/${id}/approval/approve`, body),
-    reject: (id: string, body: ApprovalRejectRequest) =>
-      apiClient.wms.post(`/inbound-orders/${id}/approval/reject`, body),
-  },
-  outbound: {
-    start: (id: string, body: ApprovalStartRequest) =>
-      apiClient.wms.post(`/outbound-orders/${id}/approval/start`, body),
-    approve: (id: string, body: ApprovalApproveRequest) =>
-      apiClient.wms.post(`/outbound-orders/${id}/approval/approve`, body),
-    reject: (id: string, body: ApprovalRejectRequest) =>
-      apiClient.wms.post(`/outbound-orders/${id}/approval/reject`, body),
-  },
-  stockTake: {
-    start: (id: string, body: ApprovalStartRequest) =>
-      apiClient.wms.post(`/stock-takes/${id}/approval/start`, body),
-    approve: (id: string, body: ApprovalApproveRequest) =>
-      apiClient.wms.post(`/stock-takes/${id}/approval/approve`, body),
-    reject: (id: string, body: ApprovalRejectRequest) =>
-      apiClient.wms.post(`/stock-takes/${id}/approval/reject`, body),
-  },
-  transferOrder: {
-    start: (id: string, body: ApprovalStartRequest) =>
-      apiClient.wms.post(`/transfers/${id}/approval/start`, body),
-    approve: (id: string, body: ApprovalApproveRequest) =>
-      apiClient.wms.post(`/transfers/${id}/approval/approve`, body),
-    reject: (id: string, body: ApprovalRejectRequest) =>
-      apiClient.wms.post(`/transfers/${id}/approval/reject`, body),
-  },
-};
 
 export default wmsApi;
