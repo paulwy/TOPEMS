@@ -620,10 +620,20 @@ pub fn create_routes(
             "/dsh/copilot/modules/{module}",
             get(crate::handlers::business_copilot_handlers::get_module_config),
         )
-        // 前端契约收口（2026-10-24）：FAQ 搜索（curated 静态知识库，对齐 core contract_stubs 指向）
+        // 前端契约收口（2026-10-24）：FAQ 搜索（租户级 core.ai_faqs，空回落 curated 静态语料）
         .route(
             "/dsh/copilot/modules/{module}/faq",
             get(crate::handlers::business_copilot_handlers::search_faq),
+        )
+        // FAQ 管理端（2026-10-24，迁移 20261024000015）：列表 / 创建 / 软删（ai:admin）
+        .route(
+            "/dsh/copilot/admin/faqs",
+            get(crate::handlers::business_copilot_handlers::list_admin_faqs)
+                .post(crate::handlers::business_copilot_handlers::create_admin_faq),
+        )
+        .route(
+            "/dsh/copilot/admin/faqs/{id}",
+            delete(crate::handlers::business_copilot_handlers::delete_admin_faq),
         )
         // BE-P0：补 auth + tenant 中间件（此前裸奔，对齐 dsh_agent_router :469-476 范式）。
         .layer(axum::middleware::from_fn_with_state(

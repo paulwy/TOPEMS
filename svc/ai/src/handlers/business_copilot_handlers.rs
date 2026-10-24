@@ -13,7 +13,7 @@
 //!   承接会话头，messages/records/context 另加 jsonb 列。
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
     Json,
@@ -26,7 +26,12 @@ use uuid::Uuid;
 use crate::dsh::business_copilot::{
     BusinessModule, ConversationMessage, CopilotRequest, CopilotSessionManager, SelectedRecord,
 };
+use crate::shared::permission::{has_ai_permission, AiPermission};
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+
+/// 全局默认 FAQ 行的 tenant_id（全零 UUID，RLS 策略对所有租户放行）。
+const GLOBAL_TENANT_ID: &str = "00000000-0000-0000-0000-000000000000";
 
 /// 应用状态（共享的会话管理器）
 #[derive(Clone)]
@@ -131,6 +136,39 @@ pub struct FaqItem {
     pub answer: String,
     pub keywords: Vec<String>,
     pub category: String,
+}
+
+// ==================== FAQ 管理端（admin CRUD）类型 ====================
+
+/// 管理端 FAQ 条目（含 id / tenant_id / status 等管理字段）
+#[derive(Debug, Serialize)]
+pub struct AdminFaqItem {
+    pub id: String,
+    pub tenant_id: String,
+    pub module: String,
+    pub question: String,
+    pub answer: String,
+    pub keywords: Vec<String>,
+    pub category: String,
+    pub status: String,
+    pub created_at: String,
+}
+
+/// 管理端 FAQ 列表查询参数
+#[derive(Debug, Deserialize)]
+pub struct AdminFaqQuery {
+    pub module: Option<String>,
+    pub q: Option<String>,
+}
+
+/// 创建 FAQ 请求
+#[derive(Debug, Deserialize)]
+pub struct CreateFaqRequest {
+    pub module: String,
+    pub question: String,
+    pub answer: String,
+    pub keywords: Option<Vec<String>>,
+    pub category: Option<String>,
 }
 
 /// 写操作成功响应
@@ -619,8 +657,10 @@ pub async fn get_module_config(Path(module): Path<String>) -> impl IntoResponse 
 /// 搜索模块 FAQ
 ///
 /// 前端契约：GET /dsh/copilot/modules/{module}/faq?q=...（hook 活调 useBusinessCopilot.ts:258）。
-/// 数据来源：代码内 curated FAQ 知识库（静态、按模块分词），不查 DB；
-/// q 为空时返回该模块全量 FAQ。后续如需企业自有 FAQ 落库，另起表迁移。
+/// 数据来源（2026-10-24 升级，迁移 20261024000015）：
+///   1. 优先查 core.ai_faqs（本租户自有行 ∪ 全零全局行，按 module + q 过滤）；
+///   2. 表未迁移 / 查询失败 / 该模块无任何行 → 回落代码内 curated_faq()，
+///      保持前端体验不回空，响应结构（ApiResponse<Vec<FaqItem>>）不变。
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ai:read"])),
@@ -636,34 +676,436 @@ pub async fn get_module_config(Path(module): Path<String>) -> impl IntoResponse 
     tag = "ai"
 )]
 pub async fn search_faq(
+    State(state): State<CopilotAppState>,
+    Extension(claims): Extension<Claims>,
     Path(module): Path<String>,
     Query(query): Query<FaqQuery>,
 ) -> impl IntoResponse {
     let business_module = parse_business_module(&module);
-    let items = curated_faq(&business_module);
+    let module_key = business_module.as_str();
+    let tenant_uuid = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+    let q = query.q.as_deref().map(str::trim).filter(|s| !s.is_empty());
 
-    let filtered = match query.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+    // 1. DB 查询（本租户 ∪ 全局行）
+    let db_result: Result<Vec<(String, String, serde_json::Value, String)>, sqlx::Error> = match q {
         Some(q) => {
-            let q_lower = q.to_lowercase();
-            items
-                .into_iter()
-                .filter(|item| {
-                    item.question.to_lowercase().contains(&q_lower)
-                        || item.answer.to_lowercase().contains(&q_lower)
-                        || item
-                            .keywords
-                            .iter()
-                            .any(|k| k.to_lowercase().contains(&q_lower))
-                })
-                .collect::<Vec<_>>()
+            sqlx::query_as(
+                "SELECT question, answer, keywords, category FROM core.ai_faqs
+                 WHERE deleted_at IS NULL AND status = 'active'
+                   AND module = $1
+                   AND (tenant_id = $2 OR tenant_id = $3::uuid)
+                   AND (question || ' ' || answer || ' ' || COALESCE(keywords::text, '') ILIKE '%' || $4 || '%')
+                 ORDER BY updated_at DESC",
+            )
+            .bind(module_key)
+            .bind(tenant_uuid)
+            .bind(GLOBAL_TENANT_ID)
+            .bind(q)
+            .fetch_all(&state.pool)
+            .await
         }
-        None => items,
+        None => {
+            sqlx::query_as(
+                "SELECT question, answer, keywords, category FROM core.ai_faqs
+                 WHERE deleted_at IS NULL AND status = 'active'
+                   AND module = $1
+                   AND (tenant_id = $2 OR tenant_id = $3::uuid)
+                 ORDER BY updated_at DESC",
+            )
+            .bind(module_key)
+            .bind(tenant_uuid)
+            .bind(GLOBAL_TENANT_ID)
+            .fetch_all(&state.pool)
+            .await
+        }
     };
 
-    Json(ApiResponse::success(filtered, "ok")).into_response()
+    // 2. DB 有数据 → 直接返回；否则回落 curated 静态语料（与历史行为一致）
+    match db_result {
+        Ok(rows) if !rows.is_empty() => {
+            let items = rows
+                .into_iter()
+                .map(|(question, answer, keywords, category)| FaqItem {
+                    question,
+                    answer,
+                    keywords: jsonb_keywords_to_vec(keywords),
+                    category,
+                })
+                .collect::<Vec<_>>();
+            Json(ApiResponse::success(items, "ok")).into_response()
+        }
+        other => {
+            if let Err(e) = &other {
+                tracing::error!("search_faq DB 查询失败，回落 curated: {}", e);
+            }
+            let items = curated_faq(&business_module);
+            let filtered = match q {
+                Some(q) => {
+                    let q_lower = q.to_lowercase();
+                    items
+                        .into_iter()
+                        .filter(|item| {
+                            item.question.to_lowercase().contains(&q_lower)
+                                || item.answer.to_lowercase().contains(&q_lower)
+                                || item
+                                    .keywords
+                                    .iter()
+                                    .any(|k| k.to_lowercase().contains(&q_lower))
+                        })
+                        .collect::<Vec<_>>()
+                }
+                None => items,
+            };
+            Json(ApiResponse::success(filtered, "ok")).into_response()
+        }
+    }
+}
+
+// ==================== FAQ 管理端 Handlers ====================
+
+/// 管理端鉴权：需 ai:admin（或超管）。
+fn faq_admin_forbidden() -> (StatusCode, Json<ApiError>) {
+    (
+        StatusCode::FORBIDDEN,
+        Json(ApiError {
+            error: "forbidden".to_string(),
+            message: "需要 ai:admin 权限".to_string(),
+        }),
+    )
+}
+
+/// 列表查询 FAQ（admin）
+///
+/// GET /dsh/copilot/admin/faqs?module=&q=...：超管看全部（含全局行），
+/// 普通租户管理员仅看本租户自有行。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:admin"])),
+    path = "/dsh/copilot/admin/faqs",
+    params(
+        ("module" = Option<String>, Query, description = "按模块过滤"),
+        ("q" = Option<String>, Query, description = "按问题/答案关键词过滤")
+    ),
+    responses(
+        (status = 200, description = "OK", body = ApiResponse<Vec<AdminFaqItem>>),
+        (status = 403, description = "Forbidden"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
+pub async fn list_admin_faqs(
+    State(state): State<CopilotAppState>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<AdminFaqQuery>,
+) -> impl IntoResponse {
+    if !has_ai_permission(&claims, &AiPermission::Manage) {
+        return faq_admin_forbidden().into_response();
+    }
+    let tenant_uuid = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+
+    // 超管不加租户过滤；普通管理员只看本租户行
+    let rows: Result<Vec<(Uuid, Uuid, String, String, String, serde_json::Value, String, String, String)>, sqlx::Error> =
+        if claims.is_superuser {
+            match query.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+                Some(q) => {
+                    sqlx::query_as(
+                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at::text
+                         FROM core.ai_faqs
+                         WHERE deleted_at IS NULL
+                           AND ($1::text IS NULL OR module = $1)
+                           AND (question || ' ' || answer || ' ' || COALESCE(keywords::text, '') ILIKE '%' || $2 || '%')
+                         ORDER BY updated_at DESC LIMIT 200",
+                    )
+                    .bind(query.module.as_deref())
+                    .bind(q)
+                    .fetch_all(&state.pool)
+                    .await
+                }
+                None => {
+                    sqlx::query_as(
+                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at::text
+                         FROM core.ai_faqs
+                         WHERE deleted_at IS NULL
+                           AND ($1::text IS NULL OR module = $1)
+                         ORDER BY updated_at DESC LIMIT 200",
+                    )
+                    .bind(query.module.as_deref())
+                    .fetch_all(&state.pool)
+                    .await
+                }
+            }
+        } else {
+            match query.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+                Some(q) => {
+                    sqlx::query_as(
+                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at::text
+                         FROM core.ai_faqs
+                         WHERE deleted_at IS NULL AND tenant_id = $1
+                           AND ($2::text IS NULL OR module = $2)
+                           AND (question || ' ' || answer || ' ' || COALESCE(keywords::text, '') ILIKE '%' || $3 || '%')
+                         ORDER BY updated_at DESC LIMIT 200",
+                    )
+                    .bind(tenant_uuid)
+                    .bind(query.module.as_deref())
+                    .bind(q)
+                    .fetch_all(&state.pool)
+                    .await
+                }
+                None => {
+                    sqlx::query_as(
+                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at::text
+                         FROM core.ai_faqs
+                         WHERE deleted_at IS NULL AND tenant_id = $1
+                           AND ($2::text IS NULL OR module = $2)
+                         ORDER BY updated_at DESC LIMIT 200",
+                    )
+                    .bind(tenant_uuid)
+                    .bind(query.module.as_deref())
+                    .fetch_all(&state.pool)
+                    .await
+                }
+            }
+        };
+
+    match rows {
+        Ok(items) => {
+            let items = items
+                .into_iter()
+                .map(|(id, tenant_id, module, question, answer, keywords, category, status, created_at)| {
+                    AdminFaqItem {
+                        id: id.to_string(),
+                        tenant_id: tenant_id.to_string(),
+                        module,
+                        question,
+                        answer,
+                        keywords: jsonb_keywords_to_vec(keywords),
+                        category,
+                        status,
+                        created_at,
+                    }
+                })
+                .collect::<Vec<_>>();
+            Json(ApiResponse::success(items, "ok")).into_response()
+        }
+        Err(e) => {
+            tracing::error!("list_admin_faqs DB failed: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    error: "db_error".to_string(),
+                    message: "FAQ 列表查询失败".to_string(),
+                }),
+            )
+                .into_response()
+        }
+    }
+}
+
+/// 创建 FAQ（admin）
+///
+/// POST /dsh/copilot/admin/faqs：普通管理员落本租户行；超管落全局行（tenant_id = 全零）。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:admin"])),
+    path = "/dsh/copilot/admin/faqs",
+    responses(
+        (status = 200, description = "OK", body = ApiResponse<AdminFaqItem>),
+        (status = 400, description = "Bad request"),
+        (status = 403, description = "Forbidden"),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
+pub async fn create_admin_faq(
+    State(state): State<CopilotAppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<CreateFaqRequest>,
+) -> impl IntoResponse {
+    if !has_ai_permission(&claims, &AiPermission::Manage) {
+        return faq_admin_forbidden().into_response();
+    }
+    if req.module.trim().is_empty()
+        || req.question.trim().is_empty()
+        || req.answer.trim().is_empty()
+    {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(ApiError {
+                error: "validation_failed".to_string(),
+                message: "module / question / answer 不能为空".to_string(),
+            }),
+        )
+            .into_response();
+    }
+    // 超管 → 全局行（全零）；普通管理员 → 本租户行（缺租户则 400）
+    let tenant_uuid = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        match claims.tenant_id.as_ref().and_then(|t| Uuid::parse_str(t).ok()) {
+            Some(t) => t,
+            None => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(ApiError {
+                        error: "validation_failed".to_string(),
+                        message: "缺少租户ID".to_string(),
+                    }),
+                )
+                    .into_response()
+            }
+        }
+    };
+    let keywords_vec: Vec<String> = req.keywords.unwrap_or_default();
+    let keywords_json = serde_json::to_value(&keywords_vec).unwrap_or(serde_json::json!([]));
+    let category = req.category.unwrap_or_default();
+
+    let row: Result<(Uuid, String), sqlx::Error> = sqlx::query_as(
+        "INSERT INTO core.ai_faqs (tenant_id, module, question, answer, keywords, category)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6)
+         RETURNING id, created_at::text",
+    )
+    .bind(tenant_uuid)
+    .bind(req.module.trim())
+    .bind(req.question.trim())
+    .bind(req.answer.trim())
+    .bind(keywords_json)
+    .bind(&category)
+    .fetch_one(&state.pool)
+    .await;
+
+    match row {
+        Ok((id, created_at)) => Json(ApiResponse::success(
+            AdminFaqItem {
+                id: id.to_string(),
+                tenant_id: tenant_uuid.to_string(),
+                module: req.module.trim().to_string(),
+                question: req.question.trim().to_string(),
+                answer: req.answer.trim().to_string(),
+                keywords: keywords_vec,
+                category,
+                status: "active".to_string(),
+                created_at,
+            },
+            "ok",
+        ))
+        .into_response(),
+        Err(e) => {
+            tracing::error!("create_admin_faq DB failed: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    error: "db_error".to_string(),
+                    message: "FAQ 创建失败".to_string(),
+                }),
+            )
+                .into_response()
+        }
+    }
+}
+
+/// 删除 FAQ（admin，软删）
+///
+/// DELETE /dsh/copilot/admin/faqs/{id}：普通管理员仅可删本租户自有行；
+/// 全局行（全零）仅超管可删。
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ai:admin"])),
+    path = "/dsh/copilot/admin/faqs/{id}",
+    params(
+        ("id" = String, Path, description = "faq id")
+    ),
+    responses(
+        (status = 204, description = "No content"),
+        (status = 403, description = "Forbidden"),
+        (status = 404, description = "Not found")
+    ),
+    tag = "ai"
+)]
+pub async fn delete_admin_faq(
+    State(state): State<CopilotAppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    if !has_ai_permission(&claims, &AiPermission::Manage) {
+        return faq_admin_forbidden().into_response();
+    }
+    let faq_id = match Uuid::parse_str(&id) {
+        Ok(v) => v,
+        Err(_) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(ApiError {
+                    error: "not_found".to_string(),
+                    message: format!("FAQ {} 不存在", id),
+                }),
+            )
+                .into_response()
+        }
+    };
+    let tenant_uuid = claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::nil);
+
+    // 超管不加租户过滤；普通管理员仅软删本租户行
+    let affected = if claims.is_superuser {
+        sqlx::query(
+            "UPDATE core.ai_faqs SET deleted_at = now(), updated_at = now()
+             WHERE id = $1 AND deleted_at IS NULL",
+        )
+        .bind(faq_id)
+        .execute(&state.pool)
+        .await
+        .map(|r| r.rows_affected())
+        .unwrap_or(0)
+    } else {
+        sqlx::query(
+            "UPDATE core.ai_faqs SET deleted_at = now(), updated_at = now()
+             WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2",
+        )
+        .bind(faq_id)
+        .bind(tenant_uuid)
+        .execute(&state.pool)
+        .await
+        .map(|r| r.rows_affected())
+        .unwrap_or(0)
+    };
+
+    if affected > 0 {
+        StatusCode::NO_CONTENT.into_response()
+    } else {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: "not_found".to_string(),
+                message: format!("FAQ {} 不存在或无权删除", id),
+            }),
+        )
+            .into_response()
+    }
 }
 
 // ==================== 辅助函数 ====================
+
+/// jsonb keywords 列（字符串数组）→ Vec<String>；非数组/元素非字符串时降级为空数组。
+fn jsonb_keywords_to_vec(v: serde_json::Value) -> Vec<String> {
+    v.as_array()
+        .map(|a| {
+            a.iter()
+                .filter_map(|x| x.as_str().map(str::to_string))
+                .collect()
+        })
+        .unwrap_or_default()
+}
 
 /// 解析业务模块字符串
 fn parse_business_module(module: &str) -> BusinessModule {

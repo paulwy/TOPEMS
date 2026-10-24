@@ -142,6 +142,9 @@ use utoipa::OpenApi;
         crate::handlers::business_copilot_handlers::list_modules,
         crate::handlers::business_copilot_handlers::get_module_config,
         crate::handlers::business_copilot_handlers::search_faq,
+        crate::handlers::business_copilot_handlers::list_admin_faqs,
+        crate::handlers::business_copilot_handlers::create_admin_faq,
+        crate::handlers::business_copilot_handlers::delete_admin_faq,
     ),
     tags()
 )]
