@@ -1,4 +1,18 @@
 
+## 前端页面真断言补测（2026-10-24）📌 完成
+
+> 对应「下一步工作规划（2026-10-18）」五方向之「前端测试覆盖」长尾：空库域 + 弱域代表页面照 `CrmCrudPages.test.tsx` 范本补页面级真断言 spec（API 调用参数 / 响应解包 / 错误翻译 / 渲染断言），分域并行。14 个新 spec / 66 用例全绿，typecheck + eslint 绿，每域独立 commit（pre-commit 26 项逐提交通过）。
+
+| 域 | 新增 spec 页面 | 用例数 | 提交哈希 |
+|---|---|---|---|
+| qms | QmsFmeaPage / QmsSpcPage / QmsQualityCostPage | 12 | `a11c9ef2e6` |
+| srm | SrmContractPage / SrmSupplierProductPage / SrmCategoryPage | 14 | `b6aade4ec3` |
+| pm | PmProjectTypeConfigPage / PmProjectCreatePage / PmTemplatePage | 14 | `d6c7c61e22` |
+| pdm | PdmProcessPage / MaterialPage / PdmBatchPage | 14 | `21040a54d1` |
+| gis | DevicePage / GisFencePage | 12 | `1e289962d0` |
+
+- 说明：既有各域 spec 多为「渲染不崩 + 方法存在」弱断言，本次新增为真断言（适配器参数归一化 pageSize→page_size、`{success,data:{items,total}}` 解包、k0-k4 错误翻译、页面正文渲染）；srm SupplierProduct/Category、pm 表单/自绘页按页面真实行为适配（内存 store、无错误抛出的适配器、测试 harness 对 useMutation 闭包的 mock 限制等如实记录，未迁就测试改页面源码）。
+
 ## MCP 接口修复（2026-10-23）📌 待办
 
 > 源自 `MCP修复方案-2026-10-23.md`（P0×1 / P1×3 / P2×7）。原则：先修根因再提交，lefthook 全跑，不绕过门禁。
