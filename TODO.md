@@ -1,3 +1,16 @@
+## 决策全 A 实施批 1（2026-10-25）✅ 本机可闭环项
+
+> 拍板：除 #2 待核实外全 A（用户 2026-10-25）。本批落地可快速闭环项：
+> - **#2 api_security 死面删除（核实结论：svc/apps 零消费，仅 lib 自引用+6 测试）**：api_security.rs 813 行整删 + shared-core `pub mod` + topems-shared AuditContextExt impl + audit_security_test 6 测试删（文件保留 audit_soft_delete 部分）
+> - **#7 pm 超支硬拦截（A=硬拦截）**：assert_budget_not_exceeded——create_budget_item/update_budget_item 写路径校验「预算项合计 ≤ 预算总额」，超支 422 回显口径、预算不存在 404；rust_decimal 精确比较；pm 497 单测全绿
+> - **#20 三端版本统一 5.15.0**：desktop/mobile package.json 5.14.0 → 5.15.0（与 web 对齐）
+> - **#5 金额 f64 展示（核实已实现，登记闭环）**：financial_reports amount_as_f64 仅展示/聚合层，DB NUMERIC(Decimal) 权威不变——A 方案现状即满足
+> - **#9 stub 200 vs 501（核实载体已不存在，登记闭环）**：contract_stubs 已清零删除（routes/mod.rs:193），V289 R4/R6 32 stub 路由已删——无 stub 返回 200 的实例
+> - **#3 双客户端栈分工（登记）**：web/desktop 职责边界现状固化，维持分工（web=业务主端、desktop=桌面壳+本地能力）
+> - **#4 vite 升级（登记归前端专项）**：vite 升级归前端专项排期，不并入本批
+> - **#12 核销落账立项（登记）**：collection 核销回显已修（第七轮），**落账立项**——收入确认/核销冲销至总账的财务闭环，需财务口径确认后单独实施
+> - **#16 测试库台账收敛（登记）**：stub 479/479 全链已贯通；5432/5433 残余台账碎片属陈旧遗留，后续单独台账归并批
+
 ## SSRF TOCTOU 钉 IP 闭环（2026-10-25）✅ 完成
 
 > 遗留「TOCTOU 钉 IP」闭环：`ssrf_target_blocked_async` 校验用一次 DNS 解析、reqwest 连接时二次解析，攻击者可在校验后切换 DNS 应答。`build_pinned_client`（external_erp.rs）在 SSRF 校验后立即解析（2s 短超时防卡顿）并把首个解析 IP 经 `ClientBuilder::resolve` 钉入——连接/SNI/证书仍按原域名，消除二次解析窗口；IP 直连无需钉、解析失败回退默认（前置校验已保守拒绝）。接线 `probe_http_url` + `call_erp_api` 两处 client 构建。+3 测试（IP 直连构建 / 钉 IP 命中本地双栈 server 200 / 不可解析域名回退不 panic），ssrf_tests 13 全绿、integration lib 194 passed、clippy/fmt 过。提交 `828c4890fb`。
