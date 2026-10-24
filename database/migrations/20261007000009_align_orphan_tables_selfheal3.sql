@@ -5800,6 +5800,9 @@ BEGIN
         CREATE POLICY "gis_allow_all_geofences" ON "gis"."geofences" USING (true) WITH CHECK (true);
     END IF;
 END $$;
+-- v1.98 P3-3 巡检口径注释：gis.track_positions 按 20261003000008_b5_gis_rls 设计内 RLS-off
+-- （GPS 轨迹流按 track_id 归属，无 tenant_id）。本 USING(true) 策略为历史库兼容保留——
+-- RLS 关闭时策略不生效，属死策略，巡检误报可忽略；如需清理可在新迁移中 DROP POLICY IF EXISTS。
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'gis_allow_all_track_positions' AND polrelid = to_regclass('"gis"."track_positions"')) THEN

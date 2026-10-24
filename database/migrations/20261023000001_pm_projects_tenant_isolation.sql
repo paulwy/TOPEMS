@@ -73,6 +73,7 @@ DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'pm' AND tablename = 'projects' AND policyname = 'tenant_isolation_projects') THEN
     ALTER TABLE pm.projects ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE pm.projects FORCE ROW LEVEL SECURITY;
     CREATE POLICY tenant_isolation_projects ON pm.projects USING (
       (current_setting('app.tenant_id', true) IS NULL) OR
       (current_setting('app.tenant_id', true) = '') OR

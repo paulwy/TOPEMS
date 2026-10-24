@@ -88,6 +88,10 @@ BEGIN
   IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='rs' AND c.relname='qa_ehs_hazards' AND c.relkind='r') AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='rs' AND table_name='qa_ehs_hazards' AND column_name='tenant_id') THEN
     ALTER TABLE rs.qa_ehs_hazards ADD COLUMN tenant_id UUID;
   END IF;
+  -- v1.98 P3-4 豁免登记：qa_ehs_sync_records 实际由 20260926120000 建于 ehs schema（系统级同步台账，
+  -- svc/ehs data_sync 含 DELETE、无租户过滤），按"全局系统日志"设计内豁免 tenant 隔离。
+  -- 本分支条件指向不存在的 rs.qa_ehs_sync_records，永不命中（死分支，无害）；
+  -- 切勿改指 ehs——补列会破坏全局台账设计。
   IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='rs' AND c.relname='qa_ehs_sync_records' AND c.relkind='r') AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='rs' AND table_name='qa_ehs_sync_records' AND column_name='tenant_id') THEN
     ALTER TABLE rs.qa_ehs_sync_records ADD COLUMN tenant_id UUID;
   END IF;

@@ -40,7 +40,9 @@ PSQL="psql $MIGRATE_URL"
 
 # --- 0. 探活 -------------------------------------------------------------------
 echo "== 空库建库守卫（纯链全量验证）=="
-echo "  MIGRATE_URL: $MIGRATE_URL"
+# v1.98 P3-10：回显脱敏——凭据部分替换为 ***，避免日志/CI 输出泄露口令
+MASKED_URL="$(printf '%s' "$MIGRATE_URL" | sed -E 's#(postgres(ql)?://)[^/]*@#\1***:***@#')"
+echo "  MIGRATE_URL: $MASKED_URL"
 if ! $PSQL -tA -c "SELECT 1" >/dev/null 2>&1; then
     echo "错误: 无法连接 MIGRATE_URL（探活失败）" >&2
     exit 2
