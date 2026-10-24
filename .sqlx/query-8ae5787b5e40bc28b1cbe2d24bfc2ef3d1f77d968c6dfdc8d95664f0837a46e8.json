@@ -6,37 +6,37 @@
       {
         "ordinal": 0,
         "name": "planned_production_time",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       },
       {
         "ordinal": 1,
         "name": "actual_run_time",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       },
       {
         "ordinal": 2,
         "name": "downtime",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       },
       {
         "ordinal": 3,
         "name": "ideal_cycle_time",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       },
       {
         "ordinal": 4,
         "name": "actual_output",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       },
       {
         "ordinal": 5,
         "name": "good_output",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       },
       {
         "ordinal": 6,
         "name": "defective_output",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       }
     ],
     "parameters": {

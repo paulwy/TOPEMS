@@ -21,12 +21,12 @@
       {
         "ordinal": 3,
         "name": "standard",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
         "name": "actual_value",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 5,
@@ -46,7 +46,7 @@
     },
     "nullable": [
       false,
-      false,
+      true,
       false,
       true,
       true,

@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "effective_date",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 9,
@@ -71,11 +71,11 @@
     },
     "nullable": [
       false,
-      false,
+      true,
       false,
       true,
       true,
-      false,
+      true,
       true,
       true,
       true,

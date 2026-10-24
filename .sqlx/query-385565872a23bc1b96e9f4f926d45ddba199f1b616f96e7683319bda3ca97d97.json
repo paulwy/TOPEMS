@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE teams SET member_count = (\n            SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND status = 'active'\n        ), updated_at = $2 WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "385565872a23bc1b96e9f4f926d45ddba199f1b616f96e7683319bda3ca97d97"
+}
