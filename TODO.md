@@ -91,8 +91,8 @@
 
 | 批 | 内容 | 依赖 |
 |---|---|---|
-| 批 2 | P1-6 MES 车间/产线/班次/工作日历（含工位 `workshop_id` 回填） | 无 |
-| 批 3 | P1-7 QMS 检验项/检验方案/抽样方案 + LIMS 检验项目(analyte) | 无 |
+| 批 2 ✅ | P1-6 MES 车间/产线/班次/工作日历（含工位 `workshop_id` 回填）（`faa3d12a1e`；迁移 `20261021000006` 建 4 表 + basics.rs 四实体全 CRUD + MesMasterDataPage 4 Tab + route/nav/i18n，BFF 冒烟全 200；门禁 hardcoded-precise/icon-page/glossary-verify 三连拦修复） | 无 |
+| 批 3 ✅ | P1-7 QMS 检验项/检验方案/抽样方案 + LIMS 检验项目(analyte)（`7f769d0f54`；迁移 `20261021000007` 建 5 表 + inspection_standard.rs/analyte.rs CRUD + InspectionStandardPage/AnalytePage，BFF 冒烟全 200；clippy as_conversions 修正 `db1b6d07a4`；文档回写 `46221ebd83`） | 无 |
 | 批 4 ✅ | P1-9 其余管理页：MES 产能日历 / LIMS 方法分类 / CRM 标签 / ERP 字典 / EHS 危险源 / GIS 设备注册（`cdeeef76b`） | 批 2 产能日历相关 |
 | 批 5 | P2-5 路由清理（`common.ts` 10 处重复注册 + 9 孤儿路由 + `/settings` 死链 + BackupPage 无引用）+ P2-7 菜单种子 tenant 错位 | ✅ 完成（`69d7a42f5`）：`common.ts` 22 条路由收敛为 3 条 common 特有（v4-demo/desktop×2），删 10 处重复注册（8 字面 + EHS accident + DOC documents，均以模块 config 为准）；9 孤儿路由迁入 wms（4）/qms（2）/crm（1）/erp（2）模块 config（PATHS + route + i18n zh/en 8 key，含 wms-locations 已有）；`/settings` 死链核销（GlobalLayoutV3 实指 `/admin/system-settings`，admin config:241 route + :498 nav 已挂载，无裸 `/settings` 引用）；BackupPage 无引用删除（含 `__tests__/BackupPage.test.tsx`）；P2-7 菜单种子 tenant 全 0 统一为默认租户 0001（39 处）并手动应用——core_menus 184 行 + core_menu_groups 53 行落地；pre-commit 全绿、pre-push 全绿已推 origin/main |
 | 批 6 | P2-8 财务默认科目/期间按新租户补播 + P2-10 技术债（roles.rs 空桩 / LoginFormV2 / authStore / OpenAPI 双块） | ✅ 完成（`fb944841d`）：P2-8 迁移 `20261021000004`（幂等函数 `finance.bootstrap_defaults` + 存量 30 租户补播）+ `POST /api/finance/bootstrap` 播种 API（BFF 实跑 200 幂等）；P2-10 roles.rs 标注 DEPRECATED、LoginFormV2 死代码删除（含 index re-export + i18n 68 key）、authStore 旧版标注废弃 + 5 读取方迁移 localStorage/useAuth、OpenAPI 双块实勘不存在核销 |
