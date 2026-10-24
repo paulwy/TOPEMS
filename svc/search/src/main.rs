@@ -7,6 +7,7 @@ use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
 mod handlers;
+mod mcp;
 mod models;
 pub mod openapi;
 mod projection;
@@ -72,8 +73,17 @@ async fn main() -> anyhow::Result<()> {
     // ── 组装 Application ─────────────────────────────────────────────
     let app = build_application(&ctx, &config, public_routes, protected_routes, None);
 
+    // Phase 3 B 档第 1 步：MCP 端点（POST /mcp，Streamable HTTP）。
+    // build_application 返回后 merge 有状态路由：MCP 走 server token 认证（MCP_SERVER_TOKEN），
+    // 不套业务 JWT/tenant 中间件；注意此路由不受 build_application 内层 rate_limit/metrics 层覆盖
+    // （端点是内网 server-token 面，第 1 步不叠加额外限流）。
+    let mut app = app;
+    app.router = app
+        .router
+        .merge(mcp::mcp_routes().with_state(ctx.db.clone()));
+
     tracing::info!(
-        "✅ Search Service is running at http://0.0.0.0:{} (prefix: {}, legacy: {:?})",
+        "✅ Search Service is running at http://0.0.0.0:{} (prefix: {}, legacy: {:?}, mcp: /mcp)",
         app.port,
         config.api_prefix,
         config.legacy_prefixes

@@ -6155,6 +6155,7 @@ dependencies = [
  "topems-shared-core",
  "topems-shared-db",
  "topems-shared-event",
+ "topems-shared-mcp",
  "topems-shared-service-client",
  "tracing",
  "url",

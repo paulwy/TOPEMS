@@ -194,7 +194,11 @@ async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRe
     results
 }
 
-async fn search_documents(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
+pub(crate) async fn search_documents(
+    pool: &PgPool,
+    keyword: &str,
+    limit: i64,
+) -> Vec<SearchResult> {
     let keyword_like = format!("%{}%", keyword);
 
     // 表归属：unqualified `core_files` 命中 public.core_files（tenant_id uuid NOT NULL，
@@ -241,7 +245,7 @@ async fn search_documents(pool: &PgPool, keyword: &str, limit: i64) -> Vec<Searc
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss
 )]
-async fn search_all(
+pub(crate) async fn search_all(
     pool: &PgPool,
     keyword: &str,
     modules: &Option<Vec<String>>,
@@ -441,13 +445,10 @@ pub struct SuggestionsResponse {
         (status = 200, description = "搜索建议"),
     ),
 )]
-pub async fn suggestions_handler(
-    State(pool): State<PgPool>,
-    Query(params): Query<SuggestionsQuery>,
-) -> Json<ApiResponse<SuggestionsResponse>> {
-    let limit = params.limit.unwrap_or(10).clamp(1, 50);
-
-    let suggestions: Vec<String> = if let Some(q) = params.q.filter(|s| !s.trim().is_empty()) {
+/// 搜索建议词聚合（供 HTTP handler 与 MCP 工具共用）：有前缀匹配历史搜索词 ILIKE，
+/// 无前缀返回最近 7 天热门搜索词；按频次排序。查询失败返回空列表（best-effort）。
+pub(crate) async fn suggest_terms(pool: &PgPool, q: Option<&str>, limit: i64) -> Vec<String> {
+    if let Some(q) = q.map(str::trim).filter(|s| !s.is_empty()) {
         // 有前缀：匹配历史搜索词中以该前缀开头的，按频次排序
         match sqlx::query_scalar::<_, String>(
             "SELECT query FROM public.search_logs
@@ -456,9 +457,9 @@ pub async fn suggestions_handler(
              ORDER BY COUNT(*) DESC, MAX(created_at) DESC
              LIMIT $2",
         )
-        .bind(format!("{}%", q.trim()))
+        .bind(format!("{}%", q))
         .bind(limit)
-        .fetch_all(&pool)
+        .fetch_all(pool)
         .await
         {
             Ok(rows) => rows,
@@ -474,13 +475,22 @@ pub async fn suggestions_handler(
              LIMIT $1",
         )
         .bind(limit)
-        .fetch_all(&pool)
+        .fetch_all(pool)
         .await
         {
             Ok(rows) => rows,
             Err(_) => Vec::new(),
         }
-    };
+    }
+}
+
+pub async fn suggestions_handler(
+    State(pool): State<PgPool>,
+    Query(params): Query<SuggestionsQuery>,
+) -> Json<ApiResponse<SuggestionsResponse>> {
+    let limit = params.limit.unwrap_or(10).clamp(1, 50);
+
+    let suggestions = suggest_terms(&pool, params.q.as_deref(), limit).await;
 
     Json(api_success(SuggestionsResponse { suggestions }))
 }

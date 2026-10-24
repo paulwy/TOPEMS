@@ -23,6 +23,7 @@ topems-shared-bootstrap = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-event = { workspace = true }
 topems-shared-service-client = { workspace = true }
+topems-shared-mcp = { path = "../../lib/shared-mcp" }
 url = { workspace = true }
 utoipa.workspace = true
 anyhow.workspace = true
