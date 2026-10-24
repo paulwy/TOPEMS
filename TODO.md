@@ -1,3 +1,12 @@
+## 补测续：scm 域 CrudPage 三页真断言（2026-10-25）✅ 完成
+
+> **模板 stub 架构改造受益（续 MrpPlanPage）**：照 `CrmCrudPages.test.tsx` 冻结范本补 scm 域走 CrudPage 包装的代表页（`ScmCrudPages.test.tsx` 已覆盖 PurchaseOrder/Supplier，本批扩展）
+> - `SupplierAdmissionPage.test`（supplierAdmissionSchema + 'SCM'/scm.supplier_admission_page.k24 breadcrumbs；list 参数归一化 + 响应解包；三操作委托 payload；四档错误翻译）
+> - `ScmPriceComparisonPage.test`（**动态 schema 断言**：useMemo 构造 `{...priceComparisonSchema, exportConfig:{enabled:true}}`——断言 exportConfig.enabled + breadcrumbs 'SCM'/k1；其余同范本）
+> - `ScmDeliveryAppointmentPage.test`（deliveryAppointmentSchema + 'SCM'/k24；list status 透传；三操作委托；四档错误翻译）
+> - 验证：12/12 passed；eslint 0（prettier --fix 10 处）；tsc 0
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：ehs 域 CrudPage 三页真断言（2026-10-25）✅ 完成
 
 > **#22 补测批 2 续（模板 stub 改造受益）**：照 `CrmCrudPages.test.tsx` 冻结范本补 ehs 域走 CrudPage 包装的代表页
