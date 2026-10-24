@@ -52,10 +52,10 @@ pub async fn get_user_profile(
     let user_id = match Uuid::parse_str(user_id_str) {
         Ok(id) => id,
         Err(e) => {
-            return Json(ApiResponse::<UserProfile>::error(
-                500,
-                &format!("无效的用户ID: {}", e),
-            ));
+            return Json(ApiResponse::<UserProfile>::from(TopemsError::internal(
+                "无效的用户ID",
+                e,
+            )));
         }
     };
 
@@ -89,10 +89,10 @@ pub async fn update_user_profile(
     let user_id = match Uuid::parse_str(user_id_str) {
         Ok(id) => id,
         Err(e) => {
-            return Json(ApiResponse::<UserProfile>::error(
-                500,
-                &format!("无效的用户ID: {}", e),
-            ));
+            return Json(ApiResponse::<UserProfile>::from(TopemsError::internal(
+                "无效的用户ID",
+                e,
+            )));
         }
     };
 

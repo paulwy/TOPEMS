@@ -1295,9 +1295,8 @@ pub async fn execute_renewal(
             ));
         }
         Err(e) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                500,
-                &format!("查询续签记录失败: {}", e),
+            return Json(ApiResponse::<serde_json::Value>::from(
+                TopemsError::internal("查询续签记录失败", e),
             ))
         }
     };

@@ -178,7 +178,8 @@ async fn create_analysis(
     let ai_response = match call_ai_service(&request.prompt, &ai_service_url).await {
         Ok(resp) => resp,
         Err(e) => {
-            let response = ApiResponse::<AiAnalysis>::error(500, &format!("AI服务调用失败: {}", e));
+            let response =
+                ApiResponse::<AiAnalysis>::from(TopemsError::internal("AI服务调用失败", e));
             return (StatusCode::INTERNAL_SERVER_ERROR, Json(response));
         }
     };
@@ -219,7 +220,8 @@ async fn create_analysis(
             (StatusCode::CREATED, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<AiAnalysis>::error(500, &format!("创建AI分析失败: {}", e));
+            let response =
+                ApiResponse::<AiAnalysis>::from(TopemsError::internal("创建AI分析失败", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -267,7 +269,8 @@ async fn get_analysis(
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<AiAnalysis>::error(500, &format!("获取AI分析失败: {}", e));
+            let response =
+                ApiResponse::<AiAnalysis>::from(TopemsError::internal("获取AI分析失败", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -292,7 +295,8 @@ async fn ai_chat(Json(request): Json<AiChatRequest>) -> impl IntoResponse {
             (StatusCode::OK, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<AiChatResponse>::error(500, &format!("AI聊天失败: {}", e));
+            let response =
+                ApiResponse::<AiChatResponse>::from(TopemsError::internal("AI聊天失败", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }

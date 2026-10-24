@@ -535,9 +535,8 @@ pub async fn update_evaluation(
             ))
         }
         Err(e) => {
-            return Json(ApiResponse::<SupplierEvaluation>::error(
-                500,
-                &format!("查询供应商评估失败: {}", e),
+            return Json(ApiResponse::<SupplierEvaluation>::from(
+                TopemsError::internal("查询供应商评估失败", e),
             ))
         }
     };

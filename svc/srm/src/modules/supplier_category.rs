@@ -18,6 +18,7 @@ use crate::models::{
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -420,9 +421,8 @@ pub async fn update_category(
             ))
         }
         Err(e) => {
-            return Json(ApiResponse::<SupplierCategory>::error(
-                500,
-                &format!("查询供应商分类失败: {}", e),
+            return Json(ApiResponse::<SupplierCategory>::from(
+                TopemsError::internal("查询供应商分类失败", e),
             ))
         }
     };

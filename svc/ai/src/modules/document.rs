@@ -519,9 +519,8 @@ pub async fn extract(
             {
                 Ok(c) => c,
                 Err(e) => {
-                    return Json(ApiResponse::<ExtractDocumentResponse>::error(
-                        500,
-                        &format!("获取文档分块失败: {}", e),
+                    return Json(ApiResponse::<ExtractDocumentResponse>::from(
+                        TopemsError::internal("获取文档分块失败", e),
                     ));
                 }
             };
@@ -565,9 +564,8 @@ pub async fn extract(
                             serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
                         }
                         Err(e) => {
-                            return Json(ApiResponse::<ExtractDocumentResponse>::error(
-                                500,
-                                &format!("调用 AI 服务失败: {}", e),
+                            return Json(ApiResponse::<ExtractDocumentResponse>::from(
+                                TopemsError::internal("调用 AI 服务失败", e),
                             ));
                         }
                     }
@@ -587,9 +585,8 @@ pub async fn extract(
                             serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
                         }
                         Err(e) => {
-                            return Json(ApiResponse::<ExtractDocumentResponse>::error(
-                                500,
-                                &format!("调用 AI 服务失败: {}", e),
+                            return Json(ApiResponse::<ExtractDocumentResponse>::from(
+                                TopemsError::internal("调用 AI 服务失败", e),
                             ));
                         }
                     }
@@ -609,9 +606,8 @@ pub async fn extract(
                             serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
                         }
                         Err(e) => {
-                            return Json(ApiResponse::<ExtractDocumentResponse>::error(
-                                500,
-                                &format!("调用 AI 服务失败: {}", e),
+                            return Json(ApiResponse::<ExtractDocumentResponse>::from(
+                                TopemsError::internal("调用 AI 服务失败", e),
                             ));
                         }
                     }
@@ -631,9 +627,8 @@ pub async fn extract(
                             serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
                         }
                         Err(e) => {
-                            return Json(ApiResponse::<ExtractDocumentResponse>::error(
-                                500,
-                                &format!("调用 AI 服务失败: {}", e),
+                            return Json(ApiResponse::<ExtractDocumentResponse>::from(
+                                TopemsError::internal("调用 AI 服务失败", e),
                             ));
                         }
                     }

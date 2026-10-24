@@ -18,6 +18,7 @@ use crate::models::{
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::AsyncL2Cache;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -629,10 +630,10 @@ pub async fn update_supplier(
         Ok(Some(s)) => s,
         Ok(None) => return Json(ApiResponse::<Supplier>::error(404, "供应商不存在")),
         Err(e) => {
-            return Json(ApiResponse::<Supplier>::error(
-                500,
-                &format!("查询供应商失败: {}", e),
-            ))
+            return Json(ApiResponse::<Supplier>::from(TopemsError::internal(
+                "查询供应商失败",
+                e,
+            )))
         }
     };
 

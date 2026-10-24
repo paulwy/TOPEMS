@@ -404,9 +404,8 @@ pub async fn update_dimension(
             ))
         }
         Err(e) => {
-            return Json(ApiResponse::<ScoringDimension>::error(
-                500,
-                &format!("查询评分维度失败: {}", e),
+            return Json(ApiResponse::<ScoringDimension>::from(
+                TopemsError::internal("查询评分维度失败", e),
             ))
         }
     };

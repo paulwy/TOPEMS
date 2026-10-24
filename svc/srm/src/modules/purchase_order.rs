@@ -17,6 +17,7 @@ use crate::models::purchase_order::{
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -393,10 +394,10 @@ pub async fn update_purchase_order(
         Ok(Some(o)) => o,
         Ok(None) => return Json(ApiResponse::<PurchaseOrder>::error(404, "采购订单不存在")),
         Err(e) => {
-            return Json(ApiResponse::<PurchaseOrder>::error(
-                500,
-                &format!("查询采购订单失败: {}", e),
-            ))
+            return Json(ApiResponse::<PurchaseOrder>::from(TopemsError::internal(
+                "查询采购订单失败",
+                e,
+            )))
         }
     };
 

@@ -17,6 +17,7 @@ use crate::models::{
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -443,9 +444,8 @@ pub async fn update_contract(
             ))
         }
         Err(e) => {
-            return Json(ApiResponse::<SupplierContract>::error(
-                500,
-                &format!("查询供应商合同失败: {}", e),
+            return Json(ApiResponse::<SupplierContract>::from(
+                TopemsError::internal("查询供应商合同失败", e),
             ))
         }
     };

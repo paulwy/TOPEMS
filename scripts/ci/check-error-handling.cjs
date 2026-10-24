@@ -109,7 +109,8 @@ function* walkRustFiles(...dirs) {
 // -----------------------------------------------------------------------------
 // 语句级参数提取（括号配平，跳过字符串字面量）
 // -----------------------------------------------------------------------------
-const CALL_RX = /ApiResponse::error\(/g;
+// [V517-b2] 兼容泛型形态 ApiResponse::<T>::error(（此前仅匹配非泛型，81 处漏检已清退）
+const CALL_RX = /ApiResponse::(?:(?:<[^>]*>)?::)?error\(/g;
 
 /**
  * 从 `(` 的位置起做括号配平，返回该调用的参数文本。
@@ -213,7 +214,7 @@ function scan() {
     const relPath = path.relative(ROOT, file);
     const isSvc = relPath.startsWith('svc/');
 
-    if (isSvc) totals.apiResponseError += (content.match(/ApiResponse::error\(/g) || []).length;
+    if (isSvc) totals.apiResponseError += (content.match(/ApiResponse::(?:(?:<[^>]*>)?::)?error\(/g) || []).length;
 
     // 语句级检测（仅 svc：ApiResponse 是客户端出口语义，lib 共享库不直接面向客户端）
     if (isSvc) {

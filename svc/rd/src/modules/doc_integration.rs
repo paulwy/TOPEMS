@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -181,7 +182,7 @@ pub async fn create_document_relation(
         }
         Err(e) => {
             let response =
-                ApiResponse::<DocumentRelation>::error(500, &format!("创建文档关联失败: {}", e));
+                ApiResponse::<DocumentRelation>::from(TopemsError::internal("创建文档关联失败", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -228,7 +229,7 @@ pub async fn get_document_relation(
         }
         Err(e) => {
             let response =
-                ApiResponse::<DocumentRelation>::error(500, &format!("获取文档关联失败: {}", e));
+                ApiResponse::<DocumentRelation>::from(TopemsError::internal("获取文档关联失败", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }
@@ -281,7 +282,7 @@ pub async fn delete_document_relation(
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
-            let response = ApiResponse::<()>::error(500, &format!("删除文档关联失败: {}", e));
+            let response = ApiResponse::<()>::from(TopemsError::internal("删除文档关联失败", e));
             (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
         }
     }

@@ -23,6 +23,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::ApiState;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::{ApiResponse, PaginatedResponse};
 
 // ==================== 纯逻辑引擎 ====================
@@ -207,10 +208,10 @@ pub async fn create_change_request(
         }
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<ChangeRequest>::error(
-                500,
-                &format!("创建变更请求失败: {}", e),
-            )),
+            Json(ApiResponse::<ChangeRequest>::from(TopemsError::internal(
+                "创建变更请求失败",
+                e,
+            ))),
         ),
     }
 }
@@ -324,10 +325,10 @@ pub async fn get_change_request(
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<ChangeRequest>::error(
-                500,
-                &format!("获取变更请求失败: {}", e),
-            )),
+            Json(ApiResponse::<ChangeRequest>::from(TopemsError::internal(
+                "获取变更请求失败",
+                e,
+            ))),
         ),
     }
 }
@@ -396,10 +397,10 @@ pub async fn update_change_request(
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<ChangeRequest>::error(
-                500,
-                &format!("更新变更请求失败: {}", e),
-            )),
+            Json(ApiResponse::<ChangeRequest>::from(TopemsError::internal(
+                "更新变更请求失败",
+                e,
+            ))),
         ),
     }
 }
@@ -445,9 +446,8 @@ pub async fn delete_change_request(
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
-                &format!("删除变更请求失败: {}", e),
+            Json(ApiResponse::<serde_json::Value>::from(
+                TopemsError::internal("删除变更请求失败", e),
             )),
         ),
     }
@@ -493,10 +493,10 @@ pub async fn transition_change_request(
         Err(e) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeRequest>::error(
-                    500,
-                    &format!("查询变更请求失败: {}", e),
-                )),
+                Json(ApiResponse::<ChangeRequest>::from(TopemsError::internal(
+                    "查询变更请求失败",
+                    e,
+                ))),
             )
         }
     };
@@ -544,10 +544,10 @@ pub async fn transition_change_request(
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<ChangeRequest>::error(
-                500,
-                &format!("状态流转失败: {}", e),
-            )),
+            Json(ApiResponse::<ChangeRequest>::from(TopemsError::internal(
+                "状态流转失败",
+                e,
+            ))),
         ),
     }
 }
@@ -593,10 +593,10 @@ pub async fn create_change_order(
         Err(e) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeOrder>::error(
-                    500,
-                    &format!("查询变更请求失败: {}", e),
-                )),
+                Json(ApiResponse::<ChangeOrder>::from(TopemsError::internal(
+                    "查询变更请求失败",
+                    e,
+                ))),
             )
         }
     };
@@ -648,10 +648,10 @@ pub async fn create_change_order(
         }
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<ChangeOrder>::error(
-                500,
-                &format!("创建变更单失败: {}", e),
-            )),
+            Json(ApiResponse::<ChangeOrder>::from(TopemsError::internal(
+                "创建变更单失败",
+                e,
+            ))),
         ),
     }
 }

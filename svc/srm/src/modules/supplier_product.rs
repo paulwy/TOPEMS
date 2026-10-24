@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::models::{CreateSupplierProductRequest, SupplierProduct, UpdateSupplierProductRequest};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -422,10 +423,10 @@ pub async fn update_product(
             ))
         }
         Err(e) => {
-            return Json(ApiResponse::<SupplierProduct>::error(
-                500,
-                &format!("查询供应商产品失败: {}", e),
-            ))
+            return Json(ApiResponse::<SupplierProduct>::from(TopemsError::internal(
+                "查询供应商产品失败",
+                e,
+            )))
         }
     };
 
