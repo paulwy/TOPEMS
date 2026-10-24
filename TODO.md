@@ -1,3 +1,11 @@
+## unused L1 残余清零（2026-10-25）✅ 完成
+
+> **#21 续批 · L1-SAFE 归零**：detect-ts-unused-exports 复核全仓 L1 仅余 4 条真孤儿（前批已删 2814+ 条），本批删除并验证：
+> - 值导出 2：`getMockModels`（useAiModelSettings.ts，99 行 mock 数组块）+ `ReviewStatus`（smartCodeReviewer.ts，enum 块）
+> - 类型导出 2：`AIUIGenerationRequest`（aiUiGenerator.ts）+ `AutoTestRequest`（autoTestGenerator.ts）
+> - 每条全仓 grep 零引用核实（仅定义处命中）；删除后 `tsc --noEmit` 0 错、eslint 0、detect 复跑 **L1=0**（值 0/类型 0）
+> - L2-CAUTION 现 219 条（值 87/类型 132，barrel/test 引用，按批谨慎续清）
+
 ## 决策全 A 实施批 2（2026-10-25）✅ 落地 + 排期登记
 
 > 拍板全 A 续批：
