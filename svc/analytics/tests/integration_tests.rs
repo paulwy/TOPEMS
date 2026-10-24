@@ -9,10 +9,15 @@ mod tests {
     use super::*;
     use sqlx::Row;
 
-    const TEST_DATABASE_URL: &str = "postgres://topems:topems_secret@localhost:5432/topems";
+    // 测试库优先取环境变量，默认连 topems_test（本地测试库，schema 完整）；
+    // 历史默认 topems 库为陈旧 bootstrap（bi schema 缺表缺默认值），不再使用。
+    fn test_database_url() -> String {
+        std::env::var("TEST_DATABASE_URL")
+            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems_test".to_string())
+    }
 
     async fn setup_test_pool() -> Result<PgPool, sqlx::Error> {
-        PgPool::connect(TEST_DATABASE_URL).await
+        PgPool::connect(&test_database_url()).await
     }
 
     async fn ensure_db_available() -> bool {
@@ -22,7 +27,7 @@ mod tests {
         {
             return false;
         }
-        match PgPool::connect(TEST_DATABASE_URL).await {
+        match PgPool::connect(&test_database_url()).await {
             Ok(pool) => sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'bi' AND table_name = 'analytics_dashboards'",
             )

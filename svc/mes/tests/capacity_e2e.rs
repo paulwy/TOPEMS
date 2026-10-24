@@ -81,5 +81,5 @@ async fn list_returns_inserted_row(pool: sqlx::PgPool) {
 
     let body = body_of(pool).await;
     assert_eq!(body["total"], 1);
-    assert_eq!(body["capacities"][0]["work_center_name"], "WC-01");
+    assert_eq!(body["items"][0]["work_center_name"], "WC-01");
 }
