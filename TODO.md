@@ -27,6 +27,7 @@
 
 - 说明：本批新增形态含 ListPageTemplate（记录型 mock + crud 包装层断言）、itemsField 定制解包（inboundOrders→orders 等）、统计卡片 headerContent mount 查询（mockResolvedValueOnce 须在 render 后注入）、表单/自绘页 payload 归一化（trim/大写/字符串数值）与 UI 行为断言（受 harness useMutation 闭包冻结限制，create/update 精确 payload 不可经 UI 观测时改断言弹窗/回填/触发）。
 - **MaterialIssuePage 缺陷（已修）**：批次 2 登记——mes MaterialIssuePage 的 `materialIssueApi` 仅暴露 list+create，update/delete 落到未定义函数（后端 5 端点早已挂载，纯前端 API 层缺失）。修根因批次：`apps/web/src/api/mes/types.ts` 补 `UpdateMaterialIssueRequest`；`apps/web/src/api/mes/material.ts` 的 `materialIssueApi` 补齐 `get(id)`/`update(id,data)`/`delete(id)`（GET/PUT/DELETE `/material-issues/{id}`）；新增 `apps/web/src/pages/__tests__/MaterialIssuePage.test.tsx` 真断言补测 5 用例（渲染/参数归一化/itemsField 解包/三操作委托与 payload/四档错误翻译/headerContent 状态分桶统计）。vitest 5/5、tsc、eslint 全绿，pre-commit 26 项与 pre-push 7 项门禁通过。提交 `33d95fc0e3`，已推送 main（HEAD `33d95fc0e3`）。
+- **MaterialReturnPage 同类缺陷（已修）**：排查确认 `materialReturnApi` 同病（仅 list+create，后端 return_handlers.rs 5 端点齐备，前端缺失）。修根因：`types.ts` 补 `UpdateMaterialReturnRequest`；`materialReturnApi` 补齐 `get(id)`/`update(id,data)`/`delete(id)`；新增 `apps/web/src/pages/__tests__/MaterialReturnPage.test.tsx` 真断言补测 5 用例（含 itemsField='returns' 解包与 pending/approved/returned/total 统计桶）。vitest 10/10（含 MaterialIssue 无回归）、tsc、eslint 全绿；pre-push 首次因远端并行会话新提交 stale-base 拦截 → rebase `1edb8c3673` 后复验推送。提交 `9ee67e4ee3`（rebase 后哈希），已推送 main（HEAD `9ee67e4ee3`）。
 
 ## MCP 接口修复（2026-10-23）📌 待办
 
