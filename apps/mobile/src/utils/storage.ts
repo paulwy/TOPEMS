@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEYS = {
   TOKEN: 'topems_token',
+  REFRESH_TOKEN: 'topems_refresh_token',
   USER: 'topems_user',
   THEME: 'topems_theme',
   LANGUAGE: 'topems_language',
@@ -20,6 +21,30 @@ export const storage = {
   setToken: async (token: string): Promise<void> => {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token);
+    } catch {
+      /* ignore */
+    }
+  },
+
+  getRefreshToken: async (): Promise<string | null> => {
+    try {
+      return await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+    } catch {
+      return null;
+    }
+  },
+
+  setRefreshToken: async (token: string): Promise<void> => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token);
+    } catch {
+      /* ignore */
+    }
+  },
+
+  removeRefreshToken: async (): Promise<void> => {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     } catch {
       /* ignore */
     }

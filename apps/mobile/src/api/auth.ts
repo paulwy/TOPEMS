@@ -29,22 +29,37 @@ export const authApi = {
         await storage.setToken(token);
         await storage.setUser(data.data.user);
       }
+      // #18 双轨兼容：移动端无 WebView cookie 栈——refresh_token 走 body 模式，
+      // 从 login 响应持久化，供 refreshToken() 刷新时携带（后端 body 降级路径）。
+      if (data.data.refresh_token) {
+        await storage.setRefreshToken(data.data.refresh_token);
+      }
     }
     return data;
   },
 
   logout: async (): Promise<ApiResponse<void>> => {
     await storage.removeToken();
+    await storage.removeRefreshToken();
     await storage.removeUser();
     const response = await authClient.post('/auth/logout');
     return response.data;
   },
 
   refreshToken: async (): Promise<ApiResponse<{ token: string }>> => {
-    const response = await authClient.post('/auth/refresh');
+    // #18 双轨兼容：body 模式（RN 无 cookie）——携带持久化的 refresh_token
+    const refreshToken = await storage.getRefreshToken();
+    const response = await authClient.post(
+      '/auth/refresh',
+      refreshToken ? { refresh_token: refreshToken } : undefined,
+    );
     const data = response.data;
     if (data.success && data.data && data.data.access_token) {
       await storage.setToken(data.data.access_token);
+      // 轮换：后端刷新成功会签发新 refresh_token（body 返回）——同步持久化
+      if (data.data.refresh_token) {
+        await storage.setRefreshToken(data.data.refresh_token);
+      }
     }
     return data;
   },
