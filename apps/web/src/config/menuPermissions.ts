@@ -27,7 +27,8 @@ export const MENU_PERMISSIONS: Record<string, string> = {
   '/hrm/dashboard': 'hrm:dashboard:read',
   '/im/dashboard': 'im:dashboard:read',
   '/lims/dashboard': 'lims:sample:read',
-  '/master/dashboard': 'master:data-asset:read',
+  // '/master/dashboard' —— P3-1 已移除悬挂 key：master 模块实际根路径为 /master
+  // （modules/master/config.ts），navItems 无 /master/dashboard 注册项，保留为死映射。
   '/mes/dashboard': 'mes:dashboard:read',
   '/pdm/dashboard': 'pdm:product:read',
   '/pm/dashboard': 'pm:dashboard:read',

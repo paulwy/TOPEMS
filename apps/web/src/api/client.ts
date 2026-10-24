@@ -698,12 +698,14 @@ export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
 export const downloadBlob = async (
   serviceName: string,
   url: string,
-  options?: { params?: Record<string, unknown> }
+  options?: { params?: Record<string, unknown>; timeout?: number }
 ): Promise<Blob> => {
   const serviceClient = apiClient.getClient(serviceName);
   const response = await serviceClient.get(url, {
     responseType: 'blob' as const,
     params: options?.params,
+    // P3-3：大报表/Excel 导出生成耗时远超全局 5s 超时，默认放宽到 120s（可按需覆盖）
+    timeout: options?.timeout ?? 120_000,
     validateStatus: () => true,
   });
 
