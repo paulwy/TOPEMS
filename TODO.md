@@ -8,7 +8,10 @@
 > - 提交：`c42055565e`
 > - **批 B1 已实施**：401 自动刷新重试（单飞 + 单次，`d579954704`）
 > - **批 B2 已实施（API 层实测）**：curl 全链路验证通过——login Set-Cookie（HttpOnly+Secure+SameSite=Lax+Path=/）→ refresh cookie 模式（200 + 新 access_token + 轮换 cookie）→ refresh body 降级（200，双轨兼容）→ logout（登出成功 + 清 cookie Max-Age=0）；测试用户与残留已清理、.env 还原
-> - **待办（批 B3）**：Tauri 桌面端真机验证（WebView cookie 行为，需构建）、移动端（第三端待确认）
+> - **批 B3 已实施（桌面/移动端验证）**：
+>   - 桌面（Tauri）：HTTP 走 WebView 网络栈（axios 同构 + withCredentials）——cookie 自动携带，与 web 同构可用；TauriAuth 无 refresh_token 持久层（仅 access_token），#18 迁移无桌面残留
+>   - 移动端（RN/Expo）：无 WebView cookie 栈——补 body 模式刷新通路（storage 新增 topems_refresh_token + login 持久化 + refresh 携带 + 轮换同步 + logout 清理），`97f9318d26`
+> - **真机验证待办**：Tauri 桌面构建运行实测（WebView cookie 行为）、移动端模拟器/真机刷新实测
 
 ## #22 补测批 2：ai/ehs 域页面补测（2026-10-25）✅ 完成
 
