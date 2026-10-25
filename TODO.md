@@ -1,3 +1,12 @@
+## 冻结面解冻 ⑧：NavigationRegistryV2 死方法删除（2026-10-26）✅ 完成
+
+> 用户拍板解冻删除。MF 远程注册清理后，`CORE_MODULES_CONFIG` 无 `source` 字段（category 代替），两个按 source 过滤的方法恒返回 `[]` 且 0 消费者——死方法删除（commit `e206fcbbd3`）。
+
+- **删 getCoreModules**（`source==='core'` 过滤，恒空，0 消费）、**getBusinessModules**（`source==='plugin'` 过滤，恒空，0 消费）
+- **保留**：getModuleCards（无 source 过滤，3 消费者，活）、toModuleCard 的 source 输出字段（getModuleCards 经其输出）
+- **验证**：tsc --noEmit exit 0 / eslint 目标文件 0 error / 导航测试 2 passed / smoke 三件套 22 passed
+- **冻结面状态**：⑧ 已解冻删除；①-⑦ 维持冻结（前端触发再补，见解冻矩阵）。
+
 ## F10 · 502 语义化补漏 + 演练实例停复（2026-10-26）✅ 完成
 
 > F10 语义构造器最后一块：补齐 502 `bad_gateway`，并停掉演练实例恢复端口。
