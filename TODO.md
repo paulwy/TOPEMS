@@ -1,3 +1,10 @@
+## 补测续：asset 域自绘 hooks 页（AssetListPage）（2026-10-25）✅ 完成
+
+> **自绘 hooks 页补测（第 4 例）**：AssetListPage 模块级 **createCrudPageAdapter(assetApi.\*)**（unmock 真实适配器）+ useQuery 拉资产（extractListData 双形态解包）+ stats + **useMutation 状态流转**（customRowActions 3 项：投用 idle→in_use / 维修 in_use|active→maintenance / 退役 非 retired/disposed，**带 show 条件**）
+> - `AssetListPage.test.tsx`（9 用例）：经 CrudPage 渲染（schema + breadcrumbs 两层 + tabs + defaultTab='list' + 3 actions + header/detail 函数）；list 归一化 pageSize→page_size + 解包；list 失败 rejects 加载列表失败（**i18n mock 需补 crud_page_adapter 翻译表**）；show 条件矩阵（投用仅 idle/维修仅 in_use|active/退役非 retired/disposed）；3 个 onClick 均委托 assetApi.update + 正确 status
+> - 验证：9/9 passed；eslint 0；tsc 0；component 全量 329 files / 3415 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：finance 域自绘 hooks 页（FinanceAssetPage）（2026-10-25）✅ 完成
 
 > **自绘 hooks 页补测（第 3 例）**：FinanceAssetPage 手写 CrudApiAdapter（accountApi.list + category:'asset' 固定入参 + keyword/status 筛选）+ **折旧/停用动作**（customRowActions 弹窗 → 确认后 financeApi.voucher.create 借 1602/贷资产 / accountApi.update status:disabled）+ headerContent(rows) 统计 6 卡
