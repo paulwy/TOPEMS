@@ -106,7 +106,7 @@ pub async fn create_integration_hazard(
         )),
         Err(e) => {
             tracing::error!("[integration] 创建隐患失败: {}", e);
-            Json(ApiResponse::error(500, "集成隐患创建失败"))
+            Json(ApiResponse::server_error("集成隐患创建失败"))
         }
     }
 }
@@ -172,7 +172,7 @@ pub async fn create_integration_alert(
         )),
         Err(e) => {
             tracing::error!("[integration] 创建告警失败: {}", e);
-            Json(ApiResponse::error(500, "集成告警创建失败"))
+            Json(ApiResponse::server_error("集成告警创建失败"))
         }
     }
 }

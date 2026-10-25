@@ -211,7 +211,7 @@ pub async fn list_plans(
         }
         Err(e) => {
             tracing::error!("获取生产计划列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取生产计划列表失败"))
+            Json(ApiResponse::server_error("获取生产计划列表失败"))
         }
     }
 }
@@ -251,10 +251,10 @@ pub async fn get_plan(
 
     match result {
         Ok(Some(plan)) => Json(ApiResponse::success(plan, "获取生产计划成功")),
-        Ok(None) => Json(ApiResponse::error(404, "生产计划不存在")),
+        Ok(None) => Json(ApiResponse::not_found("生产计划不存在")),
         Err(e) => {
             tracing::error!("获取生产计划失败: {}", e);
-            Json(ApiResponse::error(500, "获取生产计划失败"))
+            Json(ApiResponse::server_error("获取生产计划失败"))
         }
     }
 }
@@ -298,7 +298,7 @@ pub async fn create_plan(
         Ok(plan) => Json(ApiResponse::success(plan, "生产计划创建成功")),
         Err(e) => {
             tracing::error!("创建生产计划失败: {}", e);
-            Json(ApiResponse::error(500, "创建生产计划失败"))
+            Json(ApiResponse::server_error("创建生产计划失败"))
         }
     }
 }
@@ -326,7 +326,7 @@ pub async fn update_plan(
 
     let existing = match existing {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::error(404, "生产计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("生产计划不存在")),
         Err(e) => {
             return Json(ApiResponse::from(TopemsError::internal(
                 "查询生产计划失败",
@@ -376,7 +376,7 @@ pub async fn update_plan(
         Ok(plan) => Json(ApiResponse::success(plan, "生产计划更新成功")),
         Err(e) => {
             tracing::error!("更新生产计划失败: {}", e);
-            Json(ApiResponse::error(500, "更新生产计划失败"))
+            Json(ApiResponse::server_error("更新生产计划失败"))
         }
     }
 }
@@ -399,10 +399,10 @@ pub async fn delete_plan(
             serde_json::json!({"id": id}),
             "生产计划删除成功",
         )),
-        Ok(_) => Json(ApiResponse::error(404, "生产计划不存在")),
+        Ok(_) => Json(ApiResponse::not_found("生产计划不存在")),
         Err(e) => {
             tracing::error!("删除生产计划失败: {}", e);
-            Json(ApiResponse::error(500, "删除生产计划失败"))
+            Json(ApiResponse::server_error("删除生产计划失败"))
         }
     }
 }
@@ -438,7 +438,7 @@ pub async fn submit_plan(
     .await
     {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::error(404, "生产计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("生产计划不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
@@ -462,7 +462,7 @@ pub async fn submit_plan(
         Ok(plan) => Json(ApiResponse::success(plan, "生产计划提交成功")),
         Err(e) => {
             tracing::error!("提交生产计划失败: {}", e);
-            Json(ApiResponse::error(500, "提交生产计划失败"))
+            Json(ApiResponse::server_error("提交生产计划失败"))
         }
     }
 }
@@ -497,7 +497,7 @@ pub async fn approve_plan(
     .await
     {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::error(404, "生产计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("生产计划不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
@@ -521,7 +521,7 @@ pub async fn approve_plan(
         Ok(plan) => Json(ApiResponse::success(plan, "生产计划审批通过")),
         Err(e) => {
             tracing::error!("审批生产计划失败: {}", e);
-            Json(ApiResponse::error(500, "审批生产计划失败"))
+            Json(ApiResponse::server_error("审批生产计划失败"))
         }
     }
 }
@@ -556,7 +556,7 @@ pub async fn reject_plan(
     .await
     {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::error(404, "生产计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("生产计划不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
@@ -580,7 +580,7 @@ pub async fn reject_plan(
         Ok(plan) => Json(ApiResponse::success(plan, "生产计划已驳回")),
         Err(e) => {
             tracing::error!("驳回生产计划失败: {}", e);
-            Json(ApiResponse::error(500, "驳回生产计划失败"))
+            Json(ApiResponse::server_error("驳回生产计划失败"))
         }
     }
 }

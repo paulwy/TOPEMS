@@ -120,7 +120,7 @@ async fn list_analytes(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[lims] analyte 计数失败: {}", e);
-            return Json(ApiResponse::error(500, "查询检验项目失败"));
+            return Json(ApiResponse::server_error("查询检验项目失败"));
         }
     };
     let fetch_sql = format!(
@@ -136,7 +136,7 @@ async fn list_analytes(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[lims] analyte 查询失败: {}", e);
-            return Json(ApiResponse::error(500, "查询检验项目失败"));
+            return Json(ApiResponse::server_error("查询检验项目失败"));
         }
     };
     let items: Vec<AnalyteResponse> = rows
@@ -193,10 +193,10 @@ async fn get_analyte(
             }),
             "查询成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "检验项目不存在")),
+        Ok(None) => Json(ApiResponse::not_found("检验项目不存在")),
         Err(e) => {
             tracing::error!("[lims] analyte 查询失败: {}", e);
-            Json(ApiResponse::error(500, "查询检验项目失败"))
+            Json(ApiResponse::server_error("查询检验项目失败"))
         }
     }
 }
@@ -234,13 +234,13 @@ async fn create_analyte(
                 "检验项目创建成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(500, "检验项目创建失败")),
+        Ok(None) => Json(ApiResponse::server_error("检验项目创建失败")),
         Err(e) => {
             tracing::error!("[lims] analyte 创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::error(409, "检验项目编码已存在"));
+                return Json(ApiResponse::conflict("检验项目编码已存在"));
             }
-            Json(ApiResponse::error(500, "检验项目创建失败"))
+            Json(ApiResponse::server_error("检验项目创建失败"))
         }
     }
 }
@@ -295,10 +295,10 @@ async fn update_analyte(
             serde_json::json!({ "id": id }),
             "检验项目更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "检验项目不存在")),
+        Ok(None) => Json(ApiResponse::not_found("检验项目不存在")),
         Err(e) => {
             tracing::error!("[lims] analyte 更新失败: {}", e);
-            Json(ApiResponse::error(500, "检验项目更新失败"))
+            Json(ApiResponse::server_error("检验项目更新失败"))
         }
     }
 }
@@ -328,10 +328,10 @@ async fn delete_analyte(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "检验项目删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "检验项目不存在")),
+        Ok(_) => Json(ApiResponse::not_found("检验项目不存在")),
         Err(e) => {
             tracing::error!("[lims] analyte 删除失败: {}", e);
-            Json(ApiResponse::error(500, "检验项目删除失败"))
+            Json(ApiResponse::server_error("检验项目删除失败"))
         }
     }
 }

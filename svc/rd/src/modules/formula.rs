@@ -97,7 +97,7 @@ pub async fn list_formulas(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -167,7 +167,7 @@ pub async fn list_formulas(
         }
         Err(e) => {
             tracing::error!("获取配方列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取配方列表失败"))
+            Json(ApiResponse::server_error("获取配方列表失败"))
         }
     }
 }
@@ -184,7 +184,7 @@ pub async fn create_formula(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -197,11 +197,11 @@ pub async fn create_formula(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     if req.name.is_empty() {
-        return Json(ApiResponse::error(400, "配方名称不能为空"));
+        return Json(ApiResponse::bad_request("配方名称不能为空"));
     }
 
     if req.code.is_empty() {
-        return Json(ApiResponse::error(400, "配方编码不能为空"));
+        return Json(ApiResponse::bad_request("配方编码不能为空"));
     }
 
     let id = Uuid::new_v4();
@@ -256,7 +256,7 @@ pub async fn create_formula(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
@@ -268,7 +268,7 @@ pub async fn create_formula(
         Err(e) => {
             tracing::error!("创建配方失败: {}", e);
             (
-                Json(ApiResponse::error(500, "配方创建失败")),
+                Json(ApiResponse::server_error("配方创建失败")),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -325,7 +325,7 @@ pub async fn get_formula(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -351,10 +351,10 @@ pub async fn get_formula(
 
     match result {
         Ok(Some(formula)) => Json(ApiResponse::success(formula, "获取配方成功")),
-        Ok(None) => Json(ApiResponse::error(404, "配方不存在")),
+        Ok(None) => Json(ApiResponse::not_found("配方不存在")),
         Err(e) => {
             tracing::error!("获取配方失败: {}", e);
-            Json(ApiResponse::error(500, "获取配方失败"))
+            Json(ApiResponse::server_error("获取配方失败"))
         }
     }
 }
@@ -372,7 +372,7 @@ pub async fn update_formula(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -402,10 +402,10 @@ pub async fn update_formula(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
-            return Json(ApiResponse::error(404, "配方不存在"));
+            return Json(ApiResponse::not_found("配方不存在"));
         }
 
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询配方失败", e))),
@@ -457,7 +457,7 @@ pub async fn update_formula(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
@@ -469,7 +469,7 @@ pub async fn update_formula(
         Err(e) => {
             tracing::error!("更新配方失败: {}", e);
             (
-                Json(ApiResponse::error(500, "配方更新失败")),
+                Json(ApiResponse::server_error("配方更新失败")),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -513,7 +513,7 @@ pub async fn delete_formula(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -540,11 +540,11 @@ pub async fn delete_formula(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
-                Json(ApiResponse::error(404, "配方不存在")),
+                Json(ApiResponse::not_found("配方不存在")),
                 "error".to_string(),
                 Some("配方不存在".to_string()),
             )
@@ -552,7 +552,7 @@ pub async fn delete_formula(
         Err(e) => {
             tracing::error!("删除配方失败: {}", e);
             (
-                Json(ApiResponse::error(500, "配方删除失败")),
+                Json(ApiResponse::server_error("配方删除失败")),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -608,7 +608,7 @@ pub async fn get_formula_versions(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -641,7 +641,7 @@ pub async fn get_formula_versions(
         Ok(versions) => Json(ApiResponse::success(versions, "获取配方版本历史成功")),
         Err(e) => {
             tracing::error!("获取配方版本历史失败: {}", e);
-            Json(ApiResponse::error(500, "获取配方版本历史失败"))
+            Json(ApiResponse::server_error("获取配方版本历史失败"))
         }
     }
 }
@@ -658,7 +658,7 @@ pub async fn create_formula_version(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -689,7 +689,7 @@ pub async fn create_formula_version(
 
     let existing_formula = match existing_formula {
         Ok(Some(f)) => f,
-        Ok(None) => return Json(ApiResponse::error(404, "配方不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("配方不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询配方失败", e))),
     };
 
@@ -747,14 +747,14 @@ pub async fn create_formula_version(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(version, "配方版本创建成功"))
         }
         Err(e) => {
             tracing::error!("创建配方版本失败: {}", e);
-            Json(ApiResponse::error(500, "创建配方版本失败"))
+            Json(ApiResponse::server_error("创建配方版本失败"))
         }
     }
 }
@@ -784,7 +784,7 @@ pub async fn approve_formula(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -822,16 +822,16 @@ pub async fn approve_formula(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(formula, "配方审批成功"))
         }
         // RowNotFound：被审批配方不存在，转为业务内层 404（HTTP 仍为 200）
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "配方不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("配方不存在")),
         Err(e) => {
             tracing::error!("审批配方失败: {}", e);
-            Json(ApiResponse::error(500, "审批配方失败"))
+            Json(ApiResponse::server_error("审批配方失败"))
         }
     }
 }

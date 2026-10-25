@@ -293,7 +293,7 @@ pub async fn list_materials(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list materials: {}", e);
-            return Json(ApiResponse::error(500, "获取危险品列表失败"));
+            return Json(ApiResponse::server_error("获取危险品列表失败"));
         }
     };
     let list: Vec<HazardousMaterial> = rows.iter().map(material_from_row).collect();
@@ -363,7 +363,7 @@ pub async fn create_material(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create material: {}", e);
-            return Json(ApiResponse::error(500, "危险品创建失败"));
+            return Json(ApiResponse::server_error("危险品创建失败"));
         }
     };
     let record = material_from_row(&row);
@@ -411,10 +411,10 @@ pub async fn get_material(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "危险品不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("危险品不存在")),
         Err(e) => {
             tracing::error!("Failed to get material: {}", e);
-            return Json(ApiResponse::error(500, "获取危险品详情失败"));
+            return Json(ApiResponse::server_error("获取危险品详情失败"));
         }
     };
     let material = material_from_row(&row);
@@ -539,10 +539,10 @@ pub async fn update_material(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "危险品不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("危险品不存在")),
         Err(e) => {
             tracing::error!("Failed to update material: {}", e);
-            return Json(ApiResponse::error(500, "危险品更新失败"));
+            return Json(ApiResponse::server_error("危险品更新失败"));
         }
     };
     let record = material_from_row(&row);
@@ -582,11 +582,11 @@ pub async fn delete_material(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete material: {}", e);
-            return Json(ApiResponse::error(500, "危险品删除失败"));
+            return Json(ApiResponse::server_error("危险品删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "危险品不存在"));
+        return Json(ApiResponse::not_found("危险品不存在"));
     }
     Json(ApiResponse::success((), "危险品删除成功"))
 }
@@ -624,7 +624,7 @@ pub async fn list_stock_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list stock records: {}", e);
-            return Json(ApiResponse::error(500, "出入库记录列表获取失败"));
+            return Json(ApiResponse::server_error("出入库记录列表获取失败"));
         }
     };
     let list: Vec<StockRecord> = rows
@@ -697,10 +697,10 @@ pub async fn get_stock_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "出入库记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("出入库记录不存在")),
         Err(e) => {
             tracing::error!("Failed to get stock record {}: {}", id, e);
-            return Json(ApiResponse::error(500, "出入库记录获取失败"));
+            return Json(ApiResponse::server_error("出入库记录获取失败"));
         }
     };
     let rec = StockRecord {
@@ -770,10 +770,10 @@ pub async fn get_material_msds(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "该危险品暂无 MSDS")),
+        Ok(None) => return Json(ApiResponse::not_found("该危险品暂无 MSDS")),
         Err(e) => {
             tracing::error!("Failed to get material MSDS: {}", e);
-            return Json(ApiResponse::error(500, "获取 MSDS 失败"));
+            return Json(ApiResponse::server_error("获取 MSDS 失败"));
         }
     };
     let record = msds_from_row(&row);
@@ -906,7 +906,7 @@ pub async fn list_material_categories(
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     // 危险品分类无持久化配置源；待建字典表后再接真。
     tracing::warn!("Material categories data source not yet enabled");
-    Json(ApiResponse::error(501, "危险品分类数据源尚未启用"))
+    Json(ApiResponse::not_implemented("危险品分类数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -1045,7 +1045,7 @@ pub async fn update_stock_record(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<StockRecord>> {
     tracing::warn!("Stock record update called but data source not yet enabled");
-    Json(ApiResponse::error(501, "出入库记录数据源尚未启用"))
+    Json(ApiResponse::not_implemented("出入库记录数据源尚未启用"))
 }
 
 pub async fn delete_stock_record(
@@ -1086,7 +1086,7 @@ pub async fn update_msds_by_id(
 ) -> Json<ApiResponse<MsdsData>> {
     // 待上游支持：MSDS 按 ID 更新，入参宽松映射占位。
     let _ = (state, claims, headers, id, req);
-    Json(ApiResponse::error(404, "MSDS 不存在"))
+    Json(ApiResponse::not_found("MSDS 不存在"))
 }
 
 pub async fn delete_msds_by_id(

@@ -65,7 +65,7 @@ async fn stub_efficiency_detail(
 
     let equipment_uuid = match Uuid::parse_str(&equipment_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的设备ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的设备ID")),
     };
 
     let tenant_id = get_tenant_id(&claims);
@@ -101,7 +101,7 @@ async fn stub_efficiency_detail(
                 .collect();
             Json(ApiResponse::success(records, "设备效率详情查询成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {e}"))),
+        Err(e) => Json(ApiResponse::server_error(&format!("查询失败: {e}"))),
     }
 }
 
@@ -355,7 +355,7 @@ pub async fn list_oee_records(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count OEE records: {}", e);
-            return Json(ApiResponse::error(500, "获取OEE记录列表失败"));
+            return Json(ApiResponse::server_error("获取OEE记录列表失败"));
         }
     };
 
@@ -391,7 +391,7 @@ pub async fn list_oee_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch OEE records: {}", e);
-            return Json(ApiResponse::error(500, "获取OEE记录列表失败"));
+            return Json(ApiResponse::server_error("获取OEE记录列表失败"));
         }
     };
 
@@ -566,7 +566,7 @@ pub async fn create_oee_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create OEE record: {}", e);
-            return Json(ApiResponse::error(500, "创建OEE记录失败"));
+            return Json(ApiResponse::server_error("创建OEE记录失败"));
         }
     };
 
@@ -652,7 +652,7 @@ pub async fn get_oee_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch OEE record: {}", e);
-            return Json(ApiResponse::error(500, "获取OEE记录失败"));
+            return Json(ApiResponse::server_error("获取OEE记录失败"));
         }
     };
 
@@ -683,7 +683,7 @@ pub async fn get_oee_record(
             };
             Json(ApiResponse::success(record, "获取OEE记录成功"))
         }
-        None => Json(ApiResponse::error(404, "OEE记录不存在")),
+        None => Json(ApiResponse::not_found("OEE记录不存在")),
     }
 }
 
@@ -726,10 +726,10 @@ pub async fn update_oee_record(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::error(404, "OEE记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("OEE记录不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch OEE record: {}", e);
-            return Json(ApiResponse::error(500, "更新OEE记录失败"));
+            return Json(ApiResponse::server_error("更新OEE记录失败"));
         }
     };
 
@@ -809,7 +809,7 @@ pub async fn update_oee_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update OEE record: {}", e);
-            return Json(ApiResponse::error(500, "更新OEE记录失败"));
+            return Json(ApiResponse::server_error("更新OEE记录失败"));
         }
     };
 
@@ -840,7 +840,7 @@ pub async fn update_oee_record(
             };
             Json(ApiResponse::success(record, "OEE记录更新成功"))
         }
-        None => Json(ApiResponse::error(404, "OEE记录不存在")),
+        None => Json(ApiResponse::not_found("OEE记录不存在")),
     }
 }
 
@@ -879,14 +879,14 @@ pub async fn delete_oee_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete OEE record: {}", e);
-            return Json(ApiResponse::error(500, "删除OEE记录失败"));
+            return Json(ApiResponse::server_error("删除OEE记录失败"));
         }
     };
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success("".to_string(), "OEE记录删除成功"))
     } else {
-        Json(ApiResponse::error(404, "OEE记录不存在"))
+        Json(ApiResponse::not_found("OEE记录不存在"))
     }
 }
 
@@ -1120,7 +1120,7 @@ pub async fn get_equipment_efficiency_analysis(
     let equipment_uuid = match Uuid::parse_str(&equipment_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的设备ID"));
+            return Json(ApiResponse::bad_request("无效的设备ID"));
         }
     };
 
@@ -1149,7 +1149,7 @@ pub async fn get_equipment_efficiency_analysis(
         Ok(e) => e,
         Err(err) => {
             tracing::error!("Failed to fetch equipment efficiency: {}", err);
-            return Json(ApiResponse::error(500, "获取设备效率分析失败"));
+            return Json(ApiResponse::server_error("获取设备效率分析失败"));
         }
     };
 

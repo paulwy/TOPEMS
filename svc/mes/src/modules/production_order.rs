@@ -318,7 +318,7 @@ pub async fn list_production_orders(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count production orders: {}", e);
-            return Json(ApiResponse::error(500, "获取生产工单列表失败"));
+            return Json(ApiResponse::server_error("获取生产工单列表失败"));
         }
     };
 
@@ -354,7 +354,7 @@ pub async fn list_production_orders(
         Ok(o) => o,
         Err(e) => {
             tracing::error!("Failed to fetch production orders: {}", e);
-            return Json(ApiResponse::error(500, "获取生产工单列表失败"));
+            return Json(ApiResponse::server_error("获取生产工单列表失败"));
         }
     };
 
@@ -481,7 +481,7 @@ pub async fn create_production_order(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin tx for create_production_order: {}", e);
-            return Json(ApiResponse::error(500, "创建生产工单失败"));
+            return Json(ApiResponse::server_error("创建生产工单失败"));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -493,7 +493,7 @@ pub async fn create_production_order(
             "Failed to set RLS context for create_production_order: {}",
             e
         );
-        return Json(ApiResponse::error(500, "创建生产工单失败"));
+        return Json(ApiResponse::server_error("创建生产工单失败"));
     }
 
     let result = sqlx::query!(
@@ -530,13 +530,13 @@ req.planned_end_date.map(|d| d.date_naive()),
         Ok(r) => {
             if let Err(e) = tx.commit().await {
                 tracing::error!("Failed to commit tx for create_production_order: {}", e);
-                return Json(ApiResponse::error(500, "创建生产工单失败"));
+                return Json(ApiResponse::server_error("创建生产工单失败"));
             }
             r
         }
         Err(e) => {
             tracing::error!("Failed to create production order: {}", e);
-            return Json(ApiResponse::error(500, "创建生产工单失败"));
+            return Json(ApiResponse::server_error("创建生产工单失败"));
         }
     };
 
@@ -646,7 +646,7 @@ pub async fn create_order_from_erp(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin tx for create_order_from_erp: {}", e);
-            return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
+            return Json(ApiResponse::server_error("从ERP订单创建生产工单失败"));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -658,7 +658,7 @@ pub async fn create_order_from_erp(
             "Failed to set nil RLS context for create_order_from_erp: {}",
             e
         );
-        return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
+        return Json(ApiResponse::server_error("从ERP订单创建生产工单失败"));
     }
 
     let result = sqlx::query!(
@@ -695,14 +695,14 @@ planned_end.date_naive(),
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit tx for create_order_from_erp: {}", e);
-        return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
+        return Json(ApiResponse::server_error("从ERP订单创建生产工单失败"));
     }
 
     let result = match result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create production order from ERP: {}", e);
-            return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
+            return Json(ApiResponse::server_error("从ERP订单创建生产工单失败"));
         }
     };
 
@@ -784,7 +784,7 @@ pub async fn get_production_order(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch production order: {}", e);
-            return Json(ApiResponse::error(500, "获取生产工单失败"));
+            return Json(ApiResponse::server_error("获取生产工单失败"));
         }
     };
 
@@ -813,7 +813,7 @@ pub async fn get_production_order(
             };
             Json(ApiResponse::success(order, "获取生产工单成功"))
         }
-        None => Json(ApiResponse::error(404, "生产工单不存在")),
+        None => Json(ApiResponse::not_found("生产工单不存在")),
     }
 }
 
@@ -885,7 +885,7 @@ pub async fn update_production_order(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update production order: {}", e);
-            return Json(ApiResponse::error(500, "更新生产工单失败"));
+            return Json(ApiResponse::server_error("更新生产工单失败"));
         }
     };
 
@@ -914,7 +914,7 @@ pub async fn update_production_order(
             };
             Json(ApiResponse::success(order, "生产工单更新成功"))
         }
-        None => Json(ApiResponse::error(404, "生产工单不存在或状态不允许修改")),
+        None => Json(ApiResponse::not_found("生产工单不存在或状态不允许修改")),
     }
 }
 
@@ -960,14 +960,14 @@ pub async fn delete_production_order(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete production order: {}", e);
-            return Json(ApiResponse::error(500, "删除生产工单失败"));
+            return Json(ApiResponse::server_error("删除生产工单失败"));
         }
     };
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success("".to_string(), "生产工单删除成功"))
     } else {
-        Json(ApiResponse::error(404, "生产工单不存在或状态不允许删除"))
+        Json(ApiResponse::not_found("生产工单不存在或状态不允许删除"))
     }
 }
 
@@ -1027,7 +1027,7 @@ pub async fn start_production_order(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to start production order: {}", e);
-            return Json(ApiResponse::error(500, "启动生产工单失败"));
+            return Json(ApiResponse::server_error("启动生产工单失败"));
         }
     };
 
@@ -1056,7 +1056,7 @@ pub async fn start_production_order(
             };
             Json(ApiResponse::success(order, "生产工单启动成功"))
         }
-        None => Json(ApiResponse::error(404, "生产工单不存在或状态不允许启动")),
+        None => Json(ApiResponse::not_found("生产工单不存在或状态不允许启动")),
     }
 }
 
@@ -1117,7 +1117,7 @@ pub async fn complete_production_order(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to complete production order: {}", e);
-            return Json(ApiResponse::error(500, "完成生产工单失败"));
+            return Json(ApiResponse::server_error("完成生产工单失败"));
         }
     };
 
@@ -1146,7 +1146,7 @@ pub async fn complete_production_order(
             };
             Json(ApiResponse::success(order, "生产工单完成成功"))
         }
-        None => Json(ApiResponse::error(404, "生产工单不存在或状态不允许完成")),
+        None => Json(ApiResponse::not_found("生产工单不存在或状态不允许完成")),
     }
 }
 
@@ -1204,7 +1204,7 @@ pub async fn cancel_production_order(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to cancel production order: {}", e);
-            return Json(ApiResponse::error(500, "取消生产工单失败"));
+            return Json(ApiResponse::server_error("取消生产工单失败"));
         }
     };
 
@@ -1233,7 +1233,7 @@ pub async fn cancel_production_order(
             };
             Json(ApiResponse::success(order, "生产工单取消成功"))
         }
-        None => Json(ApiResponse::error(404, "生产工单不存在或状态不允许取消")),
+        None => Json(ApiResponse::not_found("生产工单不存在或状态不允许取消")),
     }
 }
 
@@ -1291,7 +1291,7 @@ pub async fn release_production_order(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to release production order: {}", e);
-            return Json(ApiResponse::error(500, "发布生产工单失败"));
+            return Json(ApiResponse::server_error("发布生产工单失败"));
         }
     };
 
@@ -1320,7 +1320,7 @@ pub async fn release_production_order(
             };
             Json(ApiResponse::success(order, "生产工单发布成功"))
         }
-        None => Json(ApiResponse::error(404, "生产工单不存在或状态不允许发布")),
+        None => Json(ApiResponse::not_found("生产工单不存在或状态不允许发布")),
     }
 }
 
@@ -1370,7 +1370,7 @@ pub async fn start_order_approval(
     // 校验当前 status + 创建 approval 记录并写入 audit log
     let approver_id = match claims.user_id() {
         Ok(uid) => uid,
-        Err(_) => return Json(ApiResponse::error(401, "无效的用户身份")),
+        Err(_) => return Json(ApiResponse::unauthorized("无效的用户身份")),
     };
     let approval_id = match create_approval_and_log(
         &state.pool,
@@ -1385,7 +1385,7 @@ pub async fn start_order_approval(
         Ok(aid) => aid,
         Err(e) => {
             tracing::error!("发起生产订单审批失败: {}", e);
-            return Json(ApiResponse::error(500, "发起审批失败"));
+            return Json(ApiResponse::server_error("发起审批失败"));
         }
     };
     Json(ApiResponse::success(
@@ -1433,7 +1433,7 @@ pub async fn approve_order(
     .await
     {
         tracing::error!("生产订单审批通过失败: {}", e);
-        return Json(ApiResponse::error(500, "审批通过失败"));
+        return Json(ApiResponse::server_error("审批通过失败"));
     }
     Json(ApiResponse::success(
         build_approve_response(req.approval_id),
@@ -1478,7 +1478,7 @@ pub async fn reject_order(
     .await
     {
         tracing::error!("生产订单审批驳回失败: {}", e);
-        return Json(ApiResponse::error(500, "审批驳回失败"));
+        return Json(ApiResponse::server_error("审批驳回失败"));
     }
     Json(ApiResponse::success(
         build_reject_response(req.approval_id),

@@ -79,6 +79,6 @@ async fn rd_health(State(state): State<ApiState>) -> Json<ApiResponse<String>> {
     if db_ok {
         Json(ApiResponse::success("ok".to_string(), "rd 服务健康"))
     } else {
-        Json(ApiResponse::error(500, "rd 数据库探活失败"))
+        Json(ApiResponse::server_error("rd 数据库探活失败"))
     }
 }

@@ -142,7 +142,7 @@ pub async fn list_tasks_by_sample(
 ) -> Json<ApiResponse<Vec<InspectionTask>>> {
     let sample_uuid = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -166,7 +166,7 @@ pub async fn list_tasks_by_sample(
         }
         Err(e) => {
             tracing::error!("Failed to list tasks by sample: {}", e);
-            Json(ApiResponse::error(500, "获取样品检测任务失败"))
+            Json(ApiResponse::server_error("获取样品检测任务失败"))
         }
     }
 }
@@ -192,7 +192,7 @@ pub async fn complete_step(
 ) -> Json<ApiResponse<InspectionTask>> {
     let task_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     // 校验任务存在
@@ -205,10 +205,10 @@ pub async fn complete_step(
     .await;
 
     match task_row {
-        Ok(None) => return Json(ApiResponse::error(404, "任务不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("任务不存在")),
         Err(e) => {
             tracing::error!("Failed to query task: {}", e);
-            return Json(ApiResponse::error(500, "查询任务失败"));
+            return Json(ApiResponse::server_error("查询任务失败"));
         }
         Ok(Some(_)) => {}
     }
@@ -238,7 +238,7 @@ pub async fn complete_step(
 
     if let Err(e) = insert_res {
         tracing::error!("Failed to insert step record: {}", e);
-        return Json(ApiResponse::error(500, "步骤记录写入失败"));
+        return Json(ApiResponse::server_error("步骤记录写入失败"));
     }
 
     // 2) 更新任务结果
@@ -261,7 +261,7 @@ pub async fn complete_step(
         )),
         Err(e) => {
             tracing::error!("Failed to update task after step: {}", e);
-            Json(ApiResponse::error(500, "任务更新失败"))
+            Json(ApiResponse::server_error("任务更新失败"))
         }
     }
 }
@@ -336,7 +336,7 @@ pub async fn list_tasks(
         }
         Err(e) => {
             tracing::error!("Failed to fetch tasks: {}", e);
-            Json(ApiResponse::error(500, "获取检测任务列表失败"))
+            Json(ApiResponse::server_error("获取检测任务列表失败"))
         }
     }
 }
@@ -359,7 +359,7 @@ pub async fn create_task(
 ) -> Json<ApiResponse<InspectionTask>> {
     let sample_id = match Uuid::parse_str(&req.sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
     };
 
     let row = sqlx::query("SELECT id, sample_no FROM public.qa_lab_samples WHERE id = $1")
@@ -371,7 +371,7 @@ pub async fn create_task(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to fetch sample: {}", e);
-            return Json(ApiResponse::error(404, "样品不存在"));
+            return Json(ApiResponse::not_found("样品不存在"));
         }
     };
 
@@ -440,7 +440,7 @@ pub async fn create_task(
         }
         Err(e) => {
             tracing::error!("Failed to create task: {}", e);
-            Json(ApiResponse::error(500, "检测任务创建失败"))
+            Json(ApiResponse::server_error("检测任务创建失败"))
         }
     }
 }
@@ -467,7 +467,7 @@ pub async fn get_task(
 ) -> Json<ApiResponse<InspectionTask>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -520,11 +520,11 @@ pub async fn get_task(
             }
             Json(ApiResponse::success(task, "获取检测任务成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch task: {}", e);
-            Json(ApiResponse::error(500, "获取检测任务失败"))
+            Json(ApiResponse::server_error("获取检测任务失败"))
         }
     }
 }
@@ -537,7 +537,7 @@ pub async fn update_task(
 ) -> Json<ApiResponse<InspectionTask>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     let instrument_id = req
@@ -602,11 +602,11 @@ pub async fn update_task(
             }
             Json(ApiResponse::success(task, "检测任务更新成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to update task: {}", e);
-            Json(ApiResponse::error(500, "检测任务更新失败"))
+            Json(ApiResponse::server_error("检测任务更新失败"))
         }
     }
 }
@@ -632,7 +632,7 @@ pub async fn submit_result(
 ) -> Json<ApiResponse<InspectionTask>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     let row = sqlx::query(&format!(
@@ -757,7 +757,7 @@ pub async fn submit_result(
         }
         Err(e) => {
             tracing::error!("Failed to submit result: {}", e);
-            Json(ApiResponse::error(500, "检测结果提交失败"))
+            Json(ApiResponse::server_error("检测结果提交失败"))
         }
     }
 }
@@ -769,7 +769,7 @@ pub async fn delete_task(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     let result = sqlx::query(
@@ -806,7 +806,7 @@ pub async fn delete_task(
         }
         Err(e) => {
             tracing::error!("Failed to delete task: {}", e);
-            Json(ApiResponse::error(500, "检测任务删除失败"))
+            Json(ApiResponse::server_error("检测任务删除失败"))
         }
     }
 }

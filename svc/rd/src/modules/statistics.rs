@@ -50,7 +50,7 @@ pub async fn get_statistics(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let total_projects: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM rs_projects")
         .fetch_one(&mut **txn)

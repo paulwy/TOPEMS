@@ -154,7 +154,7 @@ pub async fn list_risks(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list risks: {}", e);
-            return Json(ApiResponse::error(500, "获取风险列表失败"));
+            return Json(ApiResponse::server_error("获取风险列表失败"));
         }
     };
 
@@ -253,7 +253,7 @@ pub async fn create_risk(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
-            return Json(ApiResponse::error(500, "创建风险失败"));
+            return Json(ApiResponse::server_error("创建风险失败"));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -262,7 +262,7 @@ pub async fn create_risk(
         .await
     {
         tracing::error!("Failed to set RLS context for risk create: {}", e);
-        return Json(ApiResponse::error(500, "创建风险失败"));
+        return Json(ApiResponse::server_error("创建风险失败"));
     }
     let result = sqlx::query(
         r#"
@@ -293,12 +293,12 @@ pub async fn create_risk(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create risk: {}", e);
-            return Json(ApiResponse::error(500, "创建风险失败"));
+            return Json(ApiResponse::server_error("创建风险失败"));
         }
     };
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit risk create: {}", e);
-        return Json(ApiResponse::error(500, "创建风险失败"));
+        return Json(ApiResponse::server_error("创建风险失败"));
     }
 
     Json(ApiResponse::success(
@@ -406,12 +406,12 @@ pub async fn get_risk(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to get risk: {}", e);
-            return Json(ApiResponse::error(500, "获取风险详情失败"));
+            return Json(ApiResponse::server_error("获取风险详情失败"));
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::error(404, "风险不存在")),
+        None => return Json(ApiResponse::not_found("风险不存在")),
     };
 
     Json(ApiResponse::success(
@@ -506,7 +506,7 @@ pub async fn update_risk(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
-            return Json(ApiResponse::error(500, "风险操作失败"));
+            return Json(ApiResponse::server_error("风险操作失败"));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -515,7 +515,7 @@ pub async fn update_risk(
         .await
     {
         tracing::error!("Failed to set RLS context for risk op: {}", e);
-        return Json(ApiResponse::error(500, "风险操作失败"));
+        return Json(ApiResponse::server_error("风险操作失败"));
     }
     let result = sqlx::query(
         r#"
@@ -554,16 +554,16 @@ pub async fn update_risk(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update risk: {}", e);
-            return Json(ApiResponse::error(500, "更新风险失败"));
+            return Json(ApiResponse::server_error("更新风险失败"));
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::error(404, "风险不存在或无权访问")),
+        None => return Json(ApiResponse::not_found("风险不存在或无权访问")),
     };
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit risk update: {}", e);
-        return Json(ApiResponse::error(500, "更新风险失败"));
+        return Json(ApiResponse::server_error("更新风险失败"));
     }
 
     Json(ApiResponse::success(
@@ -659,7 +659,7 @@ pub async fn assess_risk(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
-            return Json(ApiResponse::error(500, "风险操作失败"));
+            return Json(ApiResponse::server_error("风险操作失败"));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -668,7 +668,7 @@ pub async fn assess_risk(
         .await
     {
         tracing::error!("Failed to set RLS context for risk op: {}", e);
-        return Json(ApiResponse::error(500, "风险操作失败"));
+        return Json(ApiResponse::server_error("风险操作失败"));
     }
     let result = sqlx::query(
         r#"
@@ -703,16 +703,16 @@ pub async fn assess_risk(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to assess risk: {}", e);
-            return Json(ApiResponse::error(500, "风险评估失败"));
+            return Json(ApiResponse::server_error("风险评估失败"));
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::error(404, "风险不存在或无权访问")),
+        None => return Json(ApiResponse::not_found("风险不存在或无权访问")),
     };
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit risk assess: {}", e);
-        return Json(ApiResponse::error(500, "风险评估失败"));
+        return Json(ApiResponse::server_error("风险评估失败"));
     }
 
     Json(ApiResponse::success(
@@ -824,7 +824,7 @@ pub async fn delete_risk(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
-            return Json(ApiResponse::error(500, "风险操作失败"));
+            return Json(ApiResponse::server_error("风险操作失败"));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -833,7 +833,7 @@ pub async fn delete_risk(
         .await
     {
         tracing::error!("Failed to set RLS context for risk op: {}", e);
-        return Json(ApiResponse::error(500, "风险操作失败"));
+        return Json(ApiResponse::server_error("风险操作失败"));
     }
     let result = sqlx::query(
         r#"
@@ -849,15 +849,15 @@ pub async fn delete_risk(
 
     match result {
         Ok(Some(_)) => {}
-        Ok(None) => return Json(ApiResponse::error(404, "风险不存在或无权访问")),
+        Ok(None) => return Json(ApiResponse::not_found("风险不存在或无权访问")),
         Err(e) => {
             tracing::error!("Failed to delete risk: {}", e);
-            return Json(ApiResponse::error(500, "删除风险失败"));
+            return Json(ApiResponse::server_error("删除风险失败"));
         }
     }
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit risk delete: {}", e);
-        return Json(ApiResponse::error(500, "删除风险失败"));
+        return Json(ApiResponse::server_error("删除风险失败"));
     }
 
     Json(ApiResponse::success((), "风险删除成功"))
@@ -923,7 +923,7 @@ pub async fn list_control_measures(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list control measures: {}", e);
-            return Json(ApiResponse::error(500, "获取控制措施列表失败"));
+            return Json(ApiResponse::server_error("获取控制措施列表失败"));
         }
     };
     let measures = rows
@@ -1012,7 +1012,7 @@ pub async fn create_control_measure(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin control measure txn: {}", e);
-            return Json(ApiResponse::error(500, "创建控制措施失败"));
+            return Json(ApiResponse::server_error("创建控制措施失败"));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -1021,7 +1021,7 @@ pub async fn create_control_measure(
         .await
     {
         tracing::error!("Failed to set RLS context for control create: {}", e);
-        return Json(ApiResponse::error(500, "创建控制措施失败"));
+        return Json(ApiResponse::server_error("创建控制措施失败"));
     }
 
     let owned = sqlx::query_as::<_, (String,)>(
@@ -1040,11 +1040,11 @@ pub async fn create_control_measure(
         Ok(o) => o,
         Err(e) => {
             tracing::error!("Failed to verify risk ownership: {}", e);
-            return Json(ApiResponse::error(500, "创建控制措施失败"));
+            return Json(ApiResponse::server_error("创建控制措施失败"));
         }
     };
     if owned.is_none() {
-        return Json(ApiResponse::error(404, "风险不存在或无权访问"));
+        return Json(ApiResponse::not_found("风险不存在或无权访问"));
     }
 
     let result = sqlx::query(
@@ -1067,16 +1067,16 @@ pub async fn create_control_measure(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create control measure: {}", e);
-            return Json(ApiResponse::error(500, "创建控制措施失败"));
+            return Json(ApiResponse::server_error("创建控制措施失败"));
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::error(500, "创建控制措施失败")),
+        None => return Json(ApiResponse::server_error("创建控制措施失败")),
     };
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit control create: {}", e);
-        return Json(ApiResponse::error(500, "创建控制措施失败"));
+        return Json(ApiResponse::server_error("创建控制措施失败"));
     }
 
     Json(ApiResponse::success(
@@ -1163,7 +1163,7 @@ pub async fn update_control_measure(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin control update txn: {}", e);
-            return Json(ApiResponse::error(500, "更新控制措施失败"));
+            return Json(ApiResponse::server_error("更新控制措施失败"));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -1172,7 +1172,7 @@ pub async fn update_control_measure(
         .await
     {
         tracing::error!("Failed to set RLS context for control update: {}", e);
-        return Json(ApiResponse::error(500, "更新控制措施失败"));
+        return Json(ApiResponse::server_error("更新控制措施失败"));
     }
 
     let result = sqlx::query(
@@ -1202,16 +1202,16 @@ pub async fn update_control_measure(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update control measure: {}", e);
-            return Json(ApiResponse::error(500, "更新控制措施失败"));
+            return Json(ApiResponse::server_error("更新控制措施失败"));
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::error(404, "控制措施不存在或无权访问")),
+        None => return Json(ApiResponse::not_found("控制措施不存在或无权访问")),
     };
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit control update: {}", e);
-        return Json(ApiResponse::error(500, "更新控制措施失败"));
+        return Json(ApiResponse::server_error("更新控制措施失败"));
     }
 
     Json(ApiResponse::success(
@@ -1291,7 +1291,7 @@ pub async fn delete_control_measure(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin control delete txn: {}", e);
-            return Json(ApiResponse::error(500, "删除控制措施失败"));
+            return Json(ApiResponse::server_error("删除控制措施失败"));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -1300,7 +1300,7 @@ pub async fn delete_control_measure(
         .await
     {
         tracing::error!("Failed to set RLS context for control delete: {}", e);
-        return Json(ApiResponse::error(500, "删除控制措施失败"));
+        return Json(ApiResponse::server_error("删除控制措施失败"));
     }
 
     let result = sqlx::query(
@@ -1319,15 +1319,15 @@ pub async fn delete_control_measure(
 
     match result {
         Ok(Some(_)) => {}
-        Ok(None) => return Json(ApiResponse::error(404, "控制措施不存在或无权访问")),
+        Ok(None) => return Json(ApiResponse::not_found("控制措施不存在或无权访问")),
         Err(e) => {
             tracing::error!("Failed to delete control measure: {}", e);
-            return Json(ApiResponse::error(500, "删除控制措施失败"));
+            return Json(ApiResponse::server_error("删除控制措施失败"));
         }
     }
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit control delete: {}", e);
-        return Json(ApiResponse::error(500, "删除控制措施失败"));
+        return Json(ApiResponse::server_error("删除控制措施失败"));
     }
 
     Json(ApiResponse::success((), "控制措施删除成功"))

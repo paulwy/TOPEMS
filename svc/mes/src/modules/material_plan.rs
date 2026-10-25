@@ -86,7 +86,7 @@ pub struct SubmitMaterialPlanRequest {
 fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::error(500, msg)),
+        Json(ApiResponse::server_error(msg)),
     )
 }
 
@@ -218,7 +218,7 @@ pub async fn get_material_plan(
         ))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "材料计划不存在")),
+            Json(ApiResponse::not_found("材料计划不存在")),
         )),
         Err(e) => {
             tracing::error!("查询材料计划失败: {}", e);
@@ -321,7 +321,7 @@ pub async fn update_material_plan(
         ))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "材料计划不存在")),
+            Json(ApiResponse::not_found("材料计划不存在")),
         )),
         Err(e) => {
             tracing::error!("更新材料计划失败: {}", e);
@@ -345,7 +345,7 @@ pub async fn delete_material_plan(
             if res.rows_affected() == 0 {
                 return Err((
                     StatusCode::NOT_FOUND,
-                    Json(ApiResponse::error(404, "材料计划不存在")),
+                    Json(ApiResponse::not_found("材料计划不存在")),
                 ));
             }
             Ok(Json(ApiResponse::success(
@@ -404,7 +404,7 @@ pub async fn submit_material_plan(
         ))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "材料计划不存在")),
+            Json(ApiResponse::not_found("材料计划不存在")),
         )),
         Err(e) => {
             tracing::error!("提交材料计划失败: {}", e);
@@ -439,7 +439,7 @@ pub async fn requisition_material_plan(
         ))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "材料计划不存在")),
+            Json(ApiResponse::not_found("材料计划不存在")),
         )),
         Err(e) => {
             tracing::error!("请购材料计划失败: {}", e);
@@ -474,7 +474,7 @@ pub async fn cancel_material_plan(
         ))),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "材料计划不存在")),
+            Json(ApiResponse::not_found("材料计划不存在")),
         )),
         Err(e) => {
             tracing::error!("取消材料计划失败: {}", e);

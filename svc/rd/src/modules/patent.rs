@@ -169,7 +169,7 @@ pub async fn list_patents(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -227,7 +227,7 @@ pub async fn list_patents(
         }
         Err(e) => {
             tracing::error!("获取专利列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取专利列表失败"))
+            Json(ApiResponse::server_error("获取专利列表失败"))
         }
     }
 }
@@ -255,7 +255,7 @@ pub async fn list_patents_by_project(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query(
         r#"
@@ -278,7 +278,7 @@ pub async fn list_patents_by_project(
         }
         Err(e) => {
             tracing::error!("获取项目专利列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目专利列表失败"))
+            Json(ApiResponse::server_error("获取项目专利列表失败"))
         }
     }
 }
@@ -293,7 +293,7 @@ pub async fn create_patent(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -333,14 +333,14 @@ pub async fn create_patent(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(patent, "专利创建成功"))
         }
         Err(e) => {
             tracing::error!("创建专利失败: {}", e);
-            Json(ApiResponse::error(500, "专利创建失败"))
+            Json(ApiResponse::server_error("专利创建失败"))
         }
     }
 }
@@ -368,7 +368,7 @@ pub async fn get_patent(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query(
         r#"
@@ -384,10 +384,10 @@ pub async fn get_patent(
 
     match result {
         Ok(Some(row)) => Json(ApiResponse::success(row_to_patent(row), "获取专利成功")),
-        Ok(None) => Json(ApiResponse::error(404, "专利不存在")),
+        Ok(None) => Json(ApiResponse::not_found("专利不存在")),
         Err(e) => {
             tracing::error!("获取专利失败: {}", e);
-            Json(ApiResponse::error(500, "获取专利失败"))
+            Json(ApiResponse::server_error("获取专利失败"))
         }
     }
 }
@@ -404,7 +404,7 @@ pub async fn update_patent(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let existing_result = sqlx::query(
         "SELECT id, name, patent_number, application_date, grant_date, status, type, inventors, assignee, description, abstract, created_by, created_at, updated_at FROM rs.patents WHERE deleted_at IS NULL AND id = $1",
@@ -415,7 +415,7 @@ pub async fn update_patent(
 
     let existing = match existing_result {
         Ok(Some(r)) => row_to_patent(r),
-        Ok(None) => return Json(ApiResponse::error(404, "专利不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("专利不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询专利失败", e))),
     };
 
@@ -461,7 +461,7 @@ pub async fn update_patent(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(row_to_patent(row), "专利更新成功"))
@@ -469,7 +469,7 @@ pub async fn update_patent(
 
         Err(e) => {
             tracing::error!("更新专利失败: {}", e);
-            Json(ApiResponse::error(500, "专利更新失败"))
+            Json(ApiResponse::server_error("专利更新失败"))
         }
     }
 }
@@ -484,7 +484,7 @@ pub async fn delete_patent(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query("UPDATE rs.patents SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
@@ -499,15 +499,15 @@ pub async fn delete_patent(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
-            Json(ApiResponse::error(404, "专利不存在"))
+            Json(ApiResponse::not_found("专利不存在"))
         }
 
         Err(e) => {
             tracing::error!("删除专利失败: {}", e);
-            Json(ApiResponse::error(500, "专利删除失败"))
+            Json(ApiResponse::server_error("专利删除失败"))
         }
     }
 }

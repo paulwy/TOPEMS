@@ -78,7 +78,7 @@ pub async fn list_inspections(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count inspections: {}", e);
-            return Json(ApiResponse::error(500, "获取质量检查列表失败"));
+            return Json(ApiResponse::server_error("获取质量检查列表失败"));
         }
     };
 
@@ -112,7 +112,7 @@ pub async fn list_inspections(
         Ok(d) => d,
         Err(e) => {
             tracing::error!("Failed to fetch inspections: {}", e);
-            return Json(ApiResponse::error(500, "获取质量检查列表失败"));
+            return Json(ApiResponse::server_error("获取质量检查列表失败"));
         }
     };
 
@@ -167,7 +167,7 @@ pub async fn create_inspection(
         Ok(data) => Json(ApiResponse::success(data, "质量检查创建成功")),
         Err(e) => {
             tracing::error!("Failed to create inspection: {}", e);
-            Json(ApiResponse::error(500, "质量检查创建失败"))
+            Json(ApiResponse::server_error("质量检查创建失败"))
         }
     }
 }
@@ -203,7 +203,7 @@ pub async fn get_inspection(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的检查ID")),
     };
 
     let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id.to_string()).bind(tenant_opt).bind(Locale::from_headers(&headers).as_sql())
@@ -212,11 +212,11 @@ pub async fn get_inspection(
 
     match inspection {
         Ok(data) => Json(ApiResponse::success(data, "获取质量检查成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch inspection: {}", e);
-            Json(ApiResponse::error(500, "获取质量检查失败"))
+            Json(ApiResponse::server_error("获取质量检查失败"))
         }
     }
 }
@@ -246,7 +246,7 @@ pub async fn update_inspection(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的检查ID")),
     };
 
     let product_id = req
@@ -264,10 +264,10 @@ pub async fn update_inspection(
 
     match inspection {
         Ok(data) => Json(ApiResponse::success(data, "质量检查更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update inspection: {}", e);
-            Json(ApiResponse::error(500, "质量检查更新失败"))
+            Json(ApiResponse::server_error("质量检查更新失败"))
         }
     }
 }
@@ -295,7 +295,7 @@ pub async fn delete_inspection(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的检查ID")),
     };
 
     let result = sqlx::query(
@@ -308,10 +308,10 @@ pub async fn delete_inspection(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "质量检查删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "检查不存在或已删除")),
+        Ok(_) => Json(ApiResponse::not_found("检查不存在或已删除")),
         Err(e) => {
             tracing::error!("Failed to delete inspection: {}", e);
-            Json(ApiResponse::error(500, "质量检查删除失败"))
+            Json(ApiResponse::server_error("质量检查删除失败"))
         }
     }
 }
@@ -344,7 +344,7 @@ pub async fn assign_inspection(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的检查ID")),
     };
 
     let current = sqlx::query(
@@ -360,7 +360,7 @@ pub async fn assign_inspection(
             let status_opt = row.get::<Option<String>, _>("status");
             let current_status = status_opt.as_deref().unwrap_or("");
             if inspection_can_transition(current_status, STATUS_IN_PROGRESS).is_err() {
-                return Json(ApiResponse::error(400, "当前状态不允许分配"));
+                return Json(ApiResponse::bad_request("当前状态不允许分配"));
             }
 
             let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET assignee = $2, status = 'in_progress', updated_at = NOW() WHERE id::TEXT = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $4 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(req.assignee).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql())
@@ -376,13 +376,13 @@ pub async fn assign_inspection(
                 }
                 Err(e) => {
                     tracing::error!("Failed to assign inspection: {}", e);
-                    Json(ApiResponse::error(500, "质量检查分配失败"))
+                    Json(ApiResponse::server_error("质量检查分配失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find inspection: {}", e);
-            Json(ApiResponse::error(404, "质量检查不存在"))
+            Json(ApiResponse::not_found("质量检查不存在"))
         }
     }
 }
@@ -418,7 +418,7 @@ pub async fn submit_result(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的检查ID")),
     };
 
     let current = sqlx::query(
@@ -434,7 +434,7 @@ pub async fn submit_result(
             let status_opt = row.get::<Option<String>, _>("status");
             let current_status = status_opt.as_deref().unwrap_or("");
             if inspection_can_transition(current_status, STATUS_PENDING_AUDIT).is_err() {
-                return Json(ApiResponse::error(400, "当前状态不允许提交结果"));
+                return Json(ApiResponse::bad_request("当前状态不允许提交结果"));
             }
 
             // 数量勾稽校验（P2 制造域 B 审计）：合格数 + 不合格数 不得大于检验总量；
@@ -526,13 +526,13 @@ pub async fn submit_result(
                 }
                 Err(e) => {
                     tracing::error!("Failed to submit inspection result: {}", e);
-                    Json(ApiResponse::error(500, "提交检查结果失败"))
+                    Json(ApiResponse::server_error("提交检查结果失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find inspection: {}", e);
-            Json(ApiResponse::error(404, "质量检查不存在"))
+            Json(ApiResponse::not_found("质量检查不存在"))
         }
     }
 }
@@ -568,7 +568,7 @@ pub async fn audit_inspection(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的检查ID")),
     };
 
     let current = sqlx::query(
@@ -586,11 +586,11 @@ pub async fn audit_inspection(
             let target_status = match req.action.as_str() {
                 "approve" => STATUS_COMPLETED,
                 "reject" => STATUS_REJECTED,
-                _ => return Json(ApiResponse::error(400, "无效的审核动作")),
+                _ => return Json(ApiResponse::bad_request("无效的审核动作")),
             };
 
             if inspection_can_transition(current_status, target_status).is_err() {
-                return Json(ApiResponse::error(400, "当前状态不允许此操作"));
+                return Json(ApiResponse::bad_request("当前状态不允许此操作"));
             }
 
             let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = $2, updated_at = NOW() WHERE id::TEXT = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $4 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(target_status).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql())
@@ -616,13 +616,13 @@ pub async fn audit_inspection(
                 }
                 Err(e) => {
                     tracing::error!("Failed to audit inspection: {}", e);
-                    Json(ApiResponse::error(500, "审核失败"))
+                    Json(ApiResponse::server_error("审核失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find inspection: {}", e);
-            Json(ApiResponse::error(404, "质量检查不存在"))
+            Json(ApiResponse::not_found("质量检查不存在"))
         }
     }
 }
@@ -658,7 +658,7 @@ pub async fn rework_inspection(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的检查ID")),
     };
 
     let current = sqlx::query(
@@ -674,7 +674,7 @@ pub async fn rework_inspection(
             let status_opt = row.get::<Option<String>, _>("status");
             let current_status = status_opt.as_deref().unwrap_or("");
             if inspection_can_transition(current_status, STATUS_IN_PROGRESS).is_err() {
-                return Json(ApiResponse::error(400, "当前状态不允许返工"));
+                return Json(ApiResponse::bad_request("当前状态不允许返工"));
             }
 
             let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = 'in_progress', updated_at = NOW() WHERE id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql())
@@ -702,13 +702,13 @@ pub async fn rework_inspection(
                 }
                 Err(e) => {
                     tracing::error!("Failed to rework inspection: {}", e);
-                    Json(ApiResponse::error(500, "返工申请失败"))
+                    Json(ApiResponse::server_error("返工申请失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find inspection: {}", e);
-            Json(ApiResponse::error(404, "质量检查不存在"))
+            Json(ApiResponse::not_found("质量检查不存在"))
         }
     }
 }
@@ -743,7 +743,7 @@ pub async fn get_inspection_results(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的检查ID")),
     };
 
     let results = sqlx::query_as::<_, InspectionResult>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_id, CASE WHEN $3 = 'en' THEN COALESCE(item_name_en, item_name) ELSE item_name END AS item_name, standard_value, measured_value, is_qualified, remark, created_at FROM qms.qa_inspection_results WHERE inspection_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"#)).bind(id).bind(tenant_opt).bind(Locale::from_headers(&headers).as_sql())
@@ -754,7 +754,7 @@ pub async fn get_inspection_results(
         Ok(data) => Json(ApiResponse::success(data, "获取检查结果明细成功")),
         Err(e) => {
             tracing::error!("Failed to fetch inspection results: {}", e);
-            Json(ApiResponse::error(500, "获取检查结果明细失败"))
+            Json(ApiResponse::server_error("获取检查结果明细失败"))
         }
     }
 }
@@ -789,7 +789,7 @@ pub async fn get_inspection_audits(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的检查ID")),
     };
 
     let audits = sqlx::query_as::<_, InspectionAudit>(only_own_schema_query!("qms", r#"SELECT id::TEXT, COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id, inspection_id, status_from, status_to, action, operator, comment, created_at FROM qms.qa_inspection_audits WHERE inspection_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"#)).bind(id).bind(tenant_opt)
@@ -800,7 +800,7 @@ pub async fn get_inspection_audits(
         Ok(data) => Json(ApiResponse::success(data, "获取检查审核记录成功")),
         Err(e) => {
             tracing::error!("Failed to fetch inspection audits: {}", e);
-            Json(ApiResponse::error(500, "获取检查审核记录失败"))
+            Json(ApiResponse::server_error("获取检查审核记录失败"))
         }
     }
 }
@@ -861,7 +861,7 @@ pub async fn approve_inspection(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的检查ID")),
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
@@ -874,7 +874,7 @@ pub async fn approve_inspection(
                 && crate::shared::fsm::inspection_can_transition(&current_status, STATUS_COMPLETED)
                     .is_err()
             {
-                return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
+                return Json(ApiResponse::bad_request("当前状态不允许审批通过"));
             }
             let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = 'completed', updated_at = NOW() WHERE id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql())
                 .fetch_one(&state.pool).await;
@@ -896,13 +896,13 @@ pub async fn approve_inspection(
                 }
                 Err(e) => {
                     tracing::error!("Failed to approve inspection: {}", e);
-                    Json(ApiResponse::error(500, "审批失败"))
+                    Json(ApiResponse::server_error("审批失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find inspection: {}", e);
-            Json(ApiResponse::error(404, "质量检查不存在"))
+            Json(ApiResponse::not_found("质量检查不存在"))
         }
     }
 }
@@ -939,7 +939,7 @@ pub async fn reject_inspection(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的检查ID")),
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
@@ -951,7 +951,7 @@ pub async fn reject_inspection(
             if crate::shared::fsm::inspection_can_transition(&current_status, STATUS_REJECTED)
                 .is_err()
             {
-                return Json(ApiResponse::error(400, "当前状态不允许驳回"));
+                return Json(ApiResponse::bad_request("当前状态不允许驳回"));
             }
             let inspection = sqlx::query_as::<_, Inspection>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_inspections SET status = 'rejected', updated_at = NOW() WHERE id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, inspection_no, inspection_type, product_id, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at, result, memo, created_by, created_at, updated_at"#)).bind(id.to_string()).bind(tenant_id).bind(Locale::from_headers(&headers).as_sql())
                 .fetch_one(&state.pool).await;
@@ -973,13 +973,13 @@ pub async fn reject_inspection(
                 }
                 Err(e) => {
                     tracing::error!("Failed to reject inspection: {}", e);
-                    Json(ApiResponse::error(500, "驳回失败"))
+                    Json(ApiResponse::server_error("驳回失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find inspection: {}", e);
-            Json(ApiResponse::error(404, "质量检查不存在"))
+            Json(ApiResponse::not_found("质量检查不存在"))
         }
     }
 }

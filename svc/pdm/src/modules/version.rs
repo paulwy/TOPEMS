@@ -153,7 +153,7 @@ pub async fn list_versions(
         }
         Err(e) => {
             tracing::error!("获取版本列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取版本列表失败"))
+            Json(ApiResponse::server_error("获取版本列表失败"))
         }
     }
 }
@@ -184,10 +184,10 @@ pub async fn create_version(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.version_no.is_empty() {
-        return Json(ApiResponse::error(400, "版本号不能为空"));
+        return Json(ApiResponse::bad_request("版本号不能为空"));
     }
     if req.version_label.is_empty() {
-        return Json(ApiResponse::error(400, "版本标签不能为空"));
+        return Json(ApiResponse::bad_request("版本标签不能为空"));
     }
 
     let result = sqlx::query_as::<_, Version>(
@@ -216,7 +216,7 @@ pub async fn create_version(
         Ok(version) => Json(ApiResponse::success(version, "版本创建成功")),
         Err(e) => {
             tracing::error!("创建版本失败: {}", e);
-            Json(ApiResponse::error(500, "创建版本失败"))
+            Json(ApiResponse::server_error("创建版本失败"))
         }
     }
 }
@@ -264,10 +264,10 @@ pub async fn get_version(
 
     match result {
         Ok(Some(version)) => Json(ApiResponse::success(version, "获取版本成功")),
-        Ok(None) => Json(ApiResponse::error(404, "版本不存在")),
+        Ok(None) => Json(ApiResponse::not_found("版本不存在")),
         Err(e) => {
             tracing::error!("获取版本失败: {}", e);
-            Json(ApiResponse::error(500, "获取版本失败"))
+            Json(ApiResponse::server_error("获取版本失败"))
         }
     }
 }
@@ -336,10 +336,10 @@ pub async fn update_version(
 
     match result {
         Ok(Some(version)) => Json(ApiResponse::success(version, "版本更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "版本不存在")),
+        Ok(None) => Json(ApiResponse::not_found("版本不存在")),
         Err(e) => {
             tracing::error!("更新版本失败: {}", e);
-            Json(ApiResponse::error(500, "更新版本失败"))
+            Json(ApiResponse::server_error("更新版本失败"))
         }
     }
 }
@@ -381,10 +381,10 @@ pub async fn delete_version(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "版本删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "版本不存在")),
+        Ok(_) => Json(ApiResponse::not_found("版本不存在")),
         Err(e) => {
             tracing::error!("删除版本失败: {}", e);
-            Json(ApiResponse::error(500, "删除版本失败"))
+            Json(ApiResponse::server_error("删除版本失败"))
         }
     }
 }

@@ -226,7 +226,7 @@ pub async fn list_projects(
         Ok(projects) => Json(ApiResponse::success(projects, "获取项目列表成功")),
         Err(e) => {
             tracing::error!("获取项目列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目列表失败"))
+            Json(ApiResponse::server_error("获取项目列表失败"))
         }
     }
 }
@@ -249,10 +249,10 @@ pub async fn create_project(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.project_no.trim().is_empty() {
-        return Json(ApiResponse::error(400, "项目编号不能为空"));
+        return Json(ApiResponse::bad_request("项目编号不能为空"));
     }
     if req.name.trim().is_empty() {
-        return Json(ApiResponse::error(400, "项目名称不能为空"));
+        return Json(ApiResponse::bad_request("项目名称不能为空"));
     }
     let status = req.status.unwrap_or_else(|| "planning".to_string());
     let phase = req.phase.unwrap_or_else(|| "initiation".to_string());
@@ -288,9 +288,9 @@ pub async fn create_project(
         Err(e) => {
             tracing::error!("创建项目失败: {}", e);
             if e.to_string().contains("unique") {
-                Json(ApiResponse::error(409, "项目编号已存在"))
+                Json(ApiResponse::conflict("项目编号已存在"))
             } else {
-                Json(ApiResponse::error(500, "创建项目失败"))
+                Json(ApiResponse::server_error("创建项目失败"))
             }
         }
     }
@@ -328,10 +328,10 @@ pub async fn get_project(
 
     match result {
         Ok(Some(project)) => Json(ApiResponse::success(project, "获取项目成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
         Err(e) => {
             tracing::error!("获取项目失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目失败"))
+            Json(ApiResponse::server_error("获取项目失败"))
         }
     }
 }
@@ -394,10 +394,10 @@ pub async fn update_project(
 
     match result {
         Ok(Some(project)) => Json(ApiResponse::success(project, "更新项目成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
         Err(e) => {
             tracing::error!("更新项目失败: {}", e);
-            Json(ApiResponse::error(500, "更新项目失败"))
+            Json(ApiResponse::server_error("更新项目失败"))
         }
     }
 }
@@ -429,10 +429,10 @@ pub async fn delete_project(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "删除项目成功")),
-        Ok(_) => Json(ApiResponse::error(404, "项目不存在")),
+        Ok(_) => Json(ApiResponse::not_found("项目不存在")),
         Err(e) => {
             tracing::error!("删除项目失败: {}", e);
-            Json(ApiResponse::error(500, "删除项目失败"))
+            Json(ApiResponse::server_error("删除项目失败"))
         }
     }
 }
@@ -457,7 +457,7 @@ pub async fn update_project_status(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.status.trim().is_empty() {
-        return Json(ApiResponse::error(400, "项目状态不能为空"));
+        return Json(ApiResponse::bad_request("项目状态不能为空"));
     }
     let result = sqlx::query_as::<_, PdmProject>(&format!(
         "UPDATE pdm_projects p SET status = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL RETURNING {PROJECT_COLUMNS}"
@@ -469,10 +469,10 @@ pub async fn update_project_status(
     .await;
     match result {
         Ok(Some(project)) => Json(ApiResponse::success(project, "更新项目状态成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
         Err(e) => {
             tracing::error!("更新项目状态失败: {}", e);
-            Json(ApiResponse::error(500, "更新项目状态失败"))
+            Json(ApiResponse::server_error("更新项目状态失败"))
         }
     }
 }
@@ -496,7 +496,7 @@ pub async fn update_project_phase(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.phase.trim().is_empty() {
-        return Json(ApiResponse::error(400, "项目阶段不能为空"));
+        return Json(ApiResponse::bad_request("项目阶段不能为空"));
     }
     let result = sqlx::query_as::<_, PdmProject>(&format!(
         "UPDATE pdm_projects p SET phase = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL RETURNING {PROJECT_COLUMNS}"
@@ -508,10 +508,10 @@ pub async fn update_project_phase(
     .await;
     match result {
         Ok(Some(project)) => Json(ApiResponse::success(project, "更新项目阶段成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
         Err(e) => {
             tracing::error!("更新项目阶段失败: {}", e);
-            Json(ApiResponse::error(500, "更新项目阶段失败"))
+            Json(ApiResponse::server_error("更新项目阶段失败"))
         }
     }
 }
@@ -550,7 +550,7 @@ pub async fn list_members(
         Ok(members) => Json(ApiResponse::success(members, "获取项目成员成功")),
         Err(e) => {
             tracing::error!("获取项目成员失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目成员失败"))
+            Json(ApiResponse::server_error("获取项目成员失败"))
         }
     }
 }
@@ -575,7 +575,7 @@ pub async fn add_member(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.user_id.trim().is_empty() || req.role.trim().is_empty() {
-        return Json(ApiResponse::error(400, "成员用户和角色不能为空"));
+        return Json(ApiResponse::bad_request("成员用户和角色不能为空"));
     }
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
@@ -601,7 +601,7 @@ pub async fn add_member(
         Ok(member) => Json(ApiResponse::success(member, "保存项目成员成功")),
         Err(e) => {
             tracing::error!("保存项目成员失败: {}", e);
-            Json(ApiResponse::error(500, "保存项目成员失败"))
+            Json(ApiResponse::server_error("保存项目成员失败"))
         }
     }
 }
@@ -646,10 +646,10 @@ pub async fn update_member(
     .await;
     match result {
         Ok(Some(member)) => Json(ApiResponse::success(member, "更新项目成员成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目成员不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目成员不存在")),
         Err(e) => {
             tracing::error!("更新项目成员失败: {}", e);
-            Json(ApiResponse::error(500, "更新项目成员失败"))
+            Json(ApiResponse::server_error("更新项目成员失败"))
         }
     }
 }
@@ -682,10 +682,10 @@ pub async fn remove_member(
     .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "移除项目成员成功")),
-        Ok(_) => Json(ApiResponse::error(404, "项目成员不存在")),
+        Ok(_) => Json(ApiResponse::not_found("项目成员不存在")),
         Err(e) => {
             tracing::error!("移除项目成员失败: {}", e);
-            Json(ApiResponse::error(500, "移除项目成员失败"))
+            Json(ApiResponse::server_error("移除项目成员失败"))
         }
     }
 }
@@ -724,7 +724,7 @@ pub async fn list_phases(
         Ok(phases) => Json(ApiResponse::success(phases, "获取项目阶段成功")),
         Err(e) => {
             tracing::error!("获取项目阶段失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目阶段失败"))
+            Json(ApiResponse::server_error("获取项目阶段失败"))
         }
     }
 }
@@ -748,7 +748,7 @@ pub async fn create_phase(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.phase.trim().is_empty() || req.name.trim().is_empty() {
-        return Json(ApiResponse::error(400, "阶段标识和名称不能为空"));
+        return Json(ApiResponse::bad_request("阶段标识和名称不能为空"));
     }
     let status = req.status.unwrap_or_else(|| "pending".to_string());
     let result = sqlx::query_as::<_, ProjectPhase>(
@@ -775,7 +775,7 @@ pub async fn create_phase(
         Ok(phase) => Json(ApiResponse::success(phase, "创建项目阶段成功")),
         Err(e) => {
             tracing::error!("创建项目阶段失败: {}", e);
-            Json(ApiResponse::error(500, "创建项目阶段失败"))
+            Json(ApiResponse::server_error("创建项目阶段失败"))
         }
     }
 }
@@ -828,10 +828,10 @@ pub async fn update_phase(
     .await;
     match result {
         Ok(Some(phase)) => Json(ApiResponse::success(phase, "更新项目阶段成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目阶段不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目阶段不存在")),
         Err(e) => {
             tracing::error!("更新项目阶段失败: {}", e);
-            Json(ApiResponse::error(500, "更新项目阶段失败"))
+            Json(ApiResponse::server_error("更新项目阶段失败"))
         }
     }
 }
@@ -863,10 +863,10 @@ pub async fn delete_phase(
     .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "删除项目阶段成功")),
-        Ok(_) => Json(ApiResponse::error(404, "项目阶段不存在")),
+        Ok(_) => Json(ApiResponse::not_found("项目阶段不存在")),
         Err(e) => {
             tracing::error!("删除项目阶段失败: {}", e);
-            Json(ApiResponse::error(500, "删除项目阶段失败"))
+            Json(ApiResponse::server_error("删除项目阶段失败"))
         }
     }
 }

@@ -238,7 +238,7 @@ pub async fn list_work_orders(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count work orders: {}", e);
-            return Json(ApiResponse::error(500, "获取工单列表失败"));
+            return Json(ApiResponse::server_error("获取工单列表失败"));
         }
     };
 
@@ -278,7 +278,7 @@ pub async fn list_work_orders(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch work orders: {}", e);
-            return Json(ApiResponse::error(500, "获取工单列表失败"));
+            return Json(ApiResponse::server_error("获取工单列表失败"));
         }
     };
 
@@ -407,7 +407,7 @@ pub async fn get_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工单ID"));
+            return Json(ApiResponse::bad_request("无效的工单ID"));
         }
     };
 
@@ -461,10 +461,10 @@ pub async fn get_work_order(
             },
             "获取工单成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "工单不存在")),
+        Ok(None) => Json(ApiResponse::not_found("工单不存在")),
         Err(e) => {
             tracing::error!("Failed to get work order: {}", e);
-            Json(ApiResponse::error(500, "获取工单失败"))
+            Json(ApiResponse::server_error("获取工单失败"))
         }
     }
 }
@@ -578,11 +578,11 @@ pub async fn create_work_order(
         Err(e) => {
             if let Some(db_err) = e.as_database_error() {
                 if db_err.is_unique_violation() {
-                    return Json(ApiResponse::error(409, "工单号已存在"));
+                    return Json(ApiResponse::conflict("工单号已存在"));
                 }
             }
             tracing::error!("Failed to create work order: {}", e);
-            Json(ApiResponse::error(500, "创建工单失败"))
+            Json(ApiResponse::server_error("创建工单失败"))
         }
     }
 }
@@ -616,7 +616,7 @@ pub async fn update_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工单ID"));
+            return Json(ApiResponse::bad_request("无效的工单ID"));
         }
     };
 
@@ -711,15 +711,15 @@ pub async fn update_work_order(
             },
             "更新工单成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "工单不存在")),
+        Ok(None) => Json(ApiResponse::not_found("工单不存在")),
         Err(e) => {
             if let Some(db_err) = e.as_database_error() {
                 if db_err.is_unique_violation() {
-                    return Json(ApiResponse::error(409, "工单号已存在"));
+                    return Json(ApiResponse::conflict("工单号已存在"));
                 }
             }
             tracing::error!("Failed to update work order: {}", e);
-            Json(ApiResponse::error(500, "更新工单失败"))
+            Json(ApiResponse::server_error("更新工单失败"))
         }
     }
 }
@@ -751,7 +751,7 @@ pub async fn delete_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工单ID"));
+            return Json(ApiResponse::bad_request("无效的工单ID"));
         }
     };
 
@@ -770,12 +770,12 @@ pub async fn delete_work_order(
             if r.rows_affected() > 0 {
                 Json(ApiResponse::success(id, "删除工单成功"))
             } else {
-                Json(ApiResponse::error(404, "工单不存在或状态不允许删除"))
+                Json(ApiResponse::not_found("工单不存在或状态不允许删除"))
             }
         }
         Err(e) => {
             tracing::error!("Failed to delete work order: {}", e);
-            Json(ApiResponse::error(500, "删除工单失败"))
+            Json(ApiResponse::server_error("删除工单失败"))
         }
     }
 }
@@ -807,7 +807,7 @@ pub async fn start_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工单ID"));
+            return Json(ApiResponse::bad_request("无效的工单ID"));
         }
     };
 
@@ -868,7 +868,7 @@ pub async fn start_work_order(
         )),
         Err(e) => {
             tracing::error!("Failed to start work order: {}", e);
-            Json(ApiResponse::error(500, "开始工单失败"))
+            Json(ApiResponse::server_error("开始工单失败"))
         }
     }
 }
@@ -900,7 +900,7 @@ pub async fn complete_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工单ID"));
+            return Json(ApiResponse::bad_request("无效的工单ID"));
         }
     };
 
@@ -961,7 +961,7 @@ pub async fn complete_work_order(
         )),
         Err(e) => {
             tracing::error!("Failed to complete work order: {}", e);
-            Json(ApiResponse::error(500, "完成工单失败"))
+            Json(ApiResponse::server_error("完成工单失败"))
         }
     }
 }
@@ -993,7 +993,7 @@ pub async fn cancel_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工单ID"));
+            return Json(ApiResponse::bad_request("无效的工单ID"));
         }
     };
 
@@ -1054,7 +1054,7 @@ pub async fn cancel_work_order(
         )),
         Err(e) => {
             tracing::error!("Failed to cancel work order: {}", e);
-            Json(ApiResponse::error(500, "取消工单失败"))
+            Json(ApiResponse::server_error("取消工单失败"))
         }
     }
 }
@@ -1086,7 +1086,7 @@ pub async fn pause_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工单ID"));
+            return Json(ApiResponse::bad_request("无效的工单ID"));
         }
     };
 
@@ -1147,7 +1147,7 @@ pub async fn pause_work_order(
         )),
         Err(e) => {
             tracing::error!("Failed to pause work order: {}", e);
-            Json(ApiResponse::error(500, "暂停工单失败"))
+            Json(ApiResponse::server_error("暂停工单失败"))
         }
     }
 }
@@ -1179,7 +1179,7 @@ pub async fn resume_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工单ID"));
+            return Json(ApiResponse::bad_request("无效的工单ID"));
         }
     };
 
@@ -1240,7 +1240,7 @@ pub async fn resume_work_order(
         )),
         Err(e) => {
             tracing::error!("Failed to resume work order: {}", e);
-            Json(ApiResponse::error(500, "恢复工单失败"))
+            Json(ApiResponse::server_error("恢复工单失败"))
         }
     }
 }

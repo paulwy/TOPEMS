@@ -259,7 +259,7 @@ async fn list_inspection_items(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[qms] 检验项计数失败: {}", e);
-            return Json(ApiResponse::error(500, "查询检验项失败"));
+            return Json(ApiResponse::server_error("查询检验项失败"));
         }
     };
     let fetch_sql = format!(
@@ -275,7 +275,7 @@ async fn list_inspection_items(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 检验项查询失败: {}", e);
-            return Json(ApiResponse::error(500, "查询检验项失败"));
+            return Json(ApiResponse::server_error("查询检验项失败"));
         }
     };
     let items: Vec<InspectionItemResponse> = rows
@@ -334,10 +334,10 @@ async fn get_inspection_item(
             }),
             "查询成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "检验项不存在")),
+        Ok(None) => Json(ApiResponse::not_found("检验项不存在")),
         Err(e) => {
             tracing::error!("[qms] 检验项查询失败: {}", e);
-            Json(ApiResponse::error(500, "查询检验项失败"))
+            Json(ApiResponse::server_error("查询检验项失败"))
         }
     }
 }
@@ -375,13 +375,13 @@ async fn create_inspection_item(
                 "检验项创建成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(500, "检验项创建失败")),
+        Ok(None) => Json(ApiResponse::server_error("检验项创建失败")),
         Err(e) => {
             tracing::error!("[qms] 检验项创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::error(409, "检验项编码已存在"));
+                return Json(ApiResponse::conflict("检验项编码已存在"));
             }
-            Json(ApiResponse::error(500, "检验项创建失败"))
+            Json(ApiResponse::server_error("检验项创建失败"))
         }
     }
 }
@@ -445,10 +445,10 @@ async fn update_inspection_item(
             serde_json::json!({ "id": id }),
             "检验项更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "检验项不存在")),
+        Ok(None) => Json(ApiResponse::not_found("检验项不存在")),
         Err(e) => {
             tracing::error!("[qms] 检验项更新失败: {}", e);
-            Json(ApiResponse::error(500, "检验项更新失败"))
+            Json(ApiResponse::server_error("检验项更新失败"))
         }
     }
 }
@@ -478,10 +478,10 @@ async fn delete_inspection_item(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "检验项删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "检验项不存在")),
+        Ok(_) => Json(ApiResponse::not_found("检验项不存在")),
         Err(e) => {
             tracing::error!("[qms] 检验项删除失败: {}", e);
-            Json(ApiResponse::error(500, "检验项删除失败"))
+            Json(ApiResponse::server_error("检验项删除失败"))
         }
     }
 }
@@ -526,7 +526,7 @@ async fn list_sampling_plans(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[qms] 抽样方案计数失败: {}", e);
-            return Json(ApiResponse::error(500, "查询抽样方案失败"));
+            return Json(ApiResponse::server_error("查询抽样方案失败"));
         }
     };
     let fetch_sql = format!(
@@ -542,7 +542,7 @@ async fn list_sampling_plans(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 抽样方案查询失败: {}", e);
-            return Json(ApiResponse::error(500, "查询抽样方案失败"));
+            return Json(ApiResponse::server_error("查询抽样方案失败"));
         }
     };
     let items: Vec<SamplingPlanResponse> = rows
@@ -597,10 +597,10 @@ async fn get_sampling_plan(
             }),
             "查询成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "抽样方案不存在")),
+        Ok(None) => Json(ApiResponse::not_found("抽样方案不存在")),
         Err(e) => {
             tracing::error!("[qms] 抽样方案查询失败: {}", e);
-            Json(ApiResponse::error(500, "查询抽样方案失败"))
+            Json(ApiResponse::server_error("查询抽样方案失败"))
         }
     }
 }
@@ -636,13 +636,13 @@ async fn create_sampling_plan(
                 "抽样方案创建成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(500, "抽样方案创建失败")),
+        Ok(None) => Json(ApiResponse::server_error("抽样方案创建失败")),
         Err(e) => {
             tracing::error!("[qms] 抽样方案创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::error(409, "抽样方案编码已存在"));
+                return Json(ApiResponse::conflict("抽样方案编码已存在"));
             }
-            Json(ApiResponse::error(500, "抽样方案创建失败"))
+            Json(ApiResponse::server_error("抽样方案创建失败"))
         }
     }
 }
@@ -695,10 +695,10 @@ async fn update_sampling_plan(
             serde_json::json!({ "id": id }),
             "抽样方案更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "抽样方案不存在")),
+        Ok(None) => Json(ApiResponse::not_found("抽样方案不存在")),
         Err(e) => {
             tracing::error!("[qms] 抽样方案更新失败: {}", e);
-            Json(ApiResponse::error(500, "抽样方案更新失败"))
+            Json(ApiResponse::server_error("抽样方案更新失败"))
         }
     }
 }
@@ -728,10 +728,10 @@ async fn delete_sampling_plan(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "抽样方案删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "抽样方案不存在")),
+        Ok(_) => Json(ApiResponse::not_found("抽样方案不存在")),
         Err(e) => {
             tracing::error!("[qms] 抽样方案删除失败: {}", e);
-            Json(ApiResponse::error(500, "抽样方案删除失败"))
+            Json(ApiResponse::server_error("抽样方案删除失败"))
         }
     }
 }
@@ -778,7 +778,7 @@ async fn list_inspection_plans(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[qms] 检验方案计数失败: {}", e);
-            return Json(ApiResponse::error(500, "查询检验方案失败"));
+            return Json(ApiResponse::server_error("查询检验方案失败"));
         }
     };
     let fetch_sql = format!(
@@ -794,7 +794,7 @@ async fn list_inspection_plans(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 检验方案查询失败: {}", e);
-            return Json(ApiResponse::error(500, "查询检验方案失败"));
+            return Json(ApiResponse::server_error("查询检验方案失败"));
         }
     };
     let items: Vec<InspectionPlanResponse> = rows
@@ -847,10 +847,10 @@ async fn get_inspection_plan(
             }),
             "查询成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "检验方案不存在")),
+        Ok(None) => Json(ApiResponse::not_found("检验方案不存在")),
         Err(e) => {
             tracing::error!("[qms] 检验方案查询失败: {}", e);
-            Json(ApiResponse::error(500, "查询检验方案失败"))
+            Json(ApiResponse::server_error("查询检验方案失败"))
         }
     }
 }
@@ -885,13 +885,13 @@ async fn create_inspection_plan(
                 "检验方案创建成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(500, "检验方案创建失败")),
+        Ok(None) => Json(ApiResponse::server_error("检验方案创建失败")),
         Err(e) => {
             tracing::error!("[qms] 检验方案创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::error(409, "检验方案编码已存在"));
+                return Json(ApiResponse::conflict("检验方案编码已存在"));
             }
-            Json(ApiResponse::error(500, "检验方案创建失败"))
+            Json(ApiResponse::server_error("检验方案创建失败"))
         }
     }
 }
@@ -941,10 +941,10 @@ async fn update_inspection_plan(
             serde_json::json!({ "id": id }),
             "检验方案更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "检验方案不存在")),
+        Ok(None) => Json(ApiResponse::not_found("检验方案不存在")),
         Err(e) => {
             tracing::error!("[qms] 检验方案更新失败: {}", e);
-            Json(ApiResponse::error(500, "检验方案更新失败"))
+            Json(ApiResponse::server_error("检验方案更新失败"))
         }
     }
 }
@@ -974,10 +974,10 @@ async fn delete_inspection_plan(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "检验方案删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "检验方案不存在")),
+        Ok(_) => Json(ApiResponse::not_found("检验方案不存在")),
         Err(e) => {
             tracing::error!("[qms] 检验方案删除失败: {}", e);
-            Json(ApiResponse::error(500, "检验方案删除失败"))
+            Json(ApiResponse::server_error("检验方案删除失败"))
         }
     }
 }
@@ -1006,7 +1006,7 @@ async fn list_plan_items(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 方案检验项查询失败: {}", e);
-            return Json(ApiResponse::error(500, "查询方案检验项失败"));
+            return Json(ApiResponse::server_error("查询方案检验项失败"));
         }
     };
     let items: Vec<PlanItemResponse> = rows
@@ -1045,7 +1045,7 @@ async fn add_plan_item(
         .await
         .unwrap_or(0);
         if ok == 0 {
-            return Json(ApiResponse::error(404, "检验方案不存在"));
+            return Json(ApiResponse::not_found("检验方案不存在"));
         }
     }
     let result = sqlx::query(
@@ -1066,13 +1066,13 @@ async fn add_plan_item(
                 "检验项添加成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(500, "检验项添加失败")),
+        Ok(None) => Json(ApiResponse::server_error("检验项添加失败")),
         Err(e) => {
             tracing::error!("[qms] 检验项添加失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::error(409, "该检验项已在方案中"));
+                return Json(ApiResponse::conflict("该检验项已在方案中"));
             }
-            Json(ApiResponse::error(500, "检验项添加失败"))
+            Json(ApiResponse::server_error("检验项添加失败"))
         }
     }
 }
@@ -1094,10 +1094,10 @@ async fn remove_plan_item(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "检验项移除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "关联不存在")),
+        Ok(_) => Json(ApiResponse::not_found("关联不存在")),
         Err(e) => {
             tracing::error!("[qms] 检验项移除失败: {}", e);
-            Json(ApiResponse::error(500, "检验项移除失败"))
+            Json(ApiResponse::server_error("检验项移除失败"))
         }
     }
 }

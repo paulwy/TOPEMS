@@ -208,7 +208,7 @@ pub async fn create_change_request(
                     tracing::error!("事务提交失败: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::error(500, "事务提交失败")),
+                        Json(ApiResponse::server_error("事务提交失败")),
                     );
                 }
             }
@@ -354,7 +354,7 @@ pub async fn get_change_request(
         ),
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::<ChangeRequest>::error(404, "变更请求不存在")),
+            Json(ApiResponse::<ChangeRequest>::not_found("变更请求不存在")),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -426,7 +426,7 @@ pub async fn update_change_request(
                     tracing::error!("事务提交失败: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::error(500, "事务提交失败")),
+                        Json(ApiResponse::server_error("事务提交失败")),
                     );
                 }
             }
@@ -437,7 +437,7 @@ pub async fn update_change_request(
         }
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::<ChangeRequest>::error(404, "变更请求不存在")),
+            Json(ApiResponse::<ChangeRequest>::not_found("变更请求不存在")),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -480,7 +480,7 @@ pub async fn delete_change_request(
                     tracing::error!("事务提交失败: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::error(500, "事务提交失败")),
+                        Json(ApiResponse::server_error("事务提交失败")),
                     );
                 }
             }
@@ -553,7 +553,7 @@ pub async fn transition_change_request(
         Ok(None) => {
             return (
                 StatusCode::NOT_FOUND,
-                Json(ApiResponse::<ChangeRequest>::error(404, "变更请求不存在")),
+                Json(ApiResponse::<ChangeRequest>::not_found("变更请求不存在")),
             )
         }
         Err(e) => {
@@ -595,7 +595,7 @@ pub async fn transition_change_request(
                     tracing::error!("rls commit failed: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::error(500, "提交事务失败")),
+                        Json(ApiResponse::server_error("提交事务失败")),
                     );
                 }
             }
@@ -606,7 +606,7 @@ pub async fn transition_change_request(
         }
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::<ChangeRequest>::error(404, "变更请求不存在")),
+            Json(ApiResponse::<ChangeRequest>::not_found("变更请求不存在")),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -664,7 +664,7 @@ pub async fn create_change_order(
         Ok(None) => {
             return (
                 StatusCode::NOT_FOUND,
-                Json(ApiResponse::<ChangeOrder>::error(404, "变更请求不存在")),
+                Json(ApiResponse::<ChangeOrder>::not_found("变更请求不存在")),
             )
         }
         Err(e) => {
@@ -714,7 +714,7 @@ pub async fn create_change_order(
                     tracing::error!("事务提交失败: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::error(500, "事务提交失败")),
+                        Json(ApiResponse::server_error("事务提交失败")),
                     );
                 }
             }

@@ -140,7 +140,7 @@ pub async fn list_workflows(
         )),
         Err(e) => {
             tracing::error!("获取工作流列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取工作流列表失败"))
+            Json(ApiResponse::server_error("获取工作流列表失败"))
         }
     }
 }
@@ -171,7 +171,7 @@ pub async fn create_workflow(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.name.is_empty() {
-        return Json(ApiResponse::error(400, "工作流名称不能为空"));
+        return Json(ApiResponse::bad_request("工作流名称不能为空"));
     }
 
     let id = Uuid::new_v4();
@@ -180,7 +180,7 @@ pub async fn create_workflow(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("序列化工作流步骤失败: {}", e);
-            return Json(ApiResponse::error(500, "工作流步骤数据格式错误"));
+            return Json(ApiResponse::server_error("工作流步骤数据格式错误"));
         }
     };
 
@@ -212,7 +212,7 @@ pub async fn create_workflow(
         Ok(workflow) => Json(ApiResponse::success(workflow, "工作流创建成功")),
         Err(e) => {
             tracing::error!("创建工作流失败: {}", e);
-            Json(ApiResponse::error(500, "创建工作流失败"))
+            Json(ApiResponse::server_error("创建工作流失败"))
         }
     }
 }
@@ -260,10 +260,10 @@ pub async fn get_workflow(
 
     match result {
         Ok(Some(workflow)) => Json(ApiResponse::success(workflow, "获取工作流成功")),
-        Ok(None) => Json(ApiResponse::error(404, "工作流不存在")),
+        Ok(None) => Json(ApiResponse::not_found("工作流不存在")),
         Err(e) => {
             tracing::error!("获取工作流失败: {}", e);
-            Json(ApiResponse::error(500, "获取工作流失败"))
+            Json(ApiResponse::server_error("获取工作流失败"))
         }
     }
 }
@@ -325,10 +325,10 @@ pub async fn update_workflow(
 
     match result {
         Ok(Some(workflow)) => Json(ApiResponse::success(workflow, "工作流更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "工作流不存在")),
+        Ok(None) => Json(ApiResponse::not_found("工作流不存在")),
         Err(e) => {
             tracing::error!("更新工作流失败: {}", e);
-            Json(ApiResponse::error(500, "更新工作流失败"))
+            Json(ApiResponse::server_error("更新工作流失败"))
         }
     }
 }
@@ -370,10 +370,10 @@ pub async fn delete_workflow(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "工作流删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "工作流不存在")),
+        Ok(_) => Json(ApiResponse::not_found("工作流不存在")),
         Err(e) => {
             tracing::error!("删除工作流失败: {}", e);
-            Json(ApiResponse::error(500, "删除工作流失败"))
+            Json(ApiResponse::server_error("删除工作流失败"))
         }
     }
 }
@@ -413,10 +413,10 @@ pub async fn start_workflow(
 
     let workflow = match workflow_result {
         Ok(Some(w)) => w,
-        Ok(None) => return Json(ApiResponse::error(404, "工作流不存在或未激活")),
+        Ok(None) => return Json(ApiResponse::not_found("工作流不存在或未激活")),
         Err(e) => {
             tracing::error!("查询工作流失败: {}", e);
-            return Json(ApiResponse::error(500, "查询工作流失败"));
+            return Json(ApiResponse::server_error("查询工作流失败"));
         }
     };
 
@@ -485,7 +485,7 @@ pub async fn start_workflow(
         Ok(instance) => Json(ApiResponse::success(instance, "工作流已启动")),
         Err(e) => {
             tracing::error!("启动工作流失败: {}", e);
-            Json(ApiResponse::error(500, "启动工作流失败"))
+            Json(ApiResponse::server_error("启动工作流失败"))
         }
     }
 }
@@ -537,7 +537,7 @@ pub async fn list_workflow_instances(
         )),
         Err(e) => {
             tracing::error!("获取工作流实例列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取工作流实例列表失败"))
+            Json(ApiResponse::server_error("获取工作流实例列表失败"))
         }
     }
 }
@@ -586,10 +586,10 @@ pub async fn get_workflow_instance(
 
     match result {
         Ok(Some(instance)) => Json(ApiResponse::success(instance, "获取工作流实例成功")),
-        Ok(None) => Json(ApiResponse::error(404, "工作流实例不存在")),
+        Ok(None) => Json(ApiResponse::not_found("工作流实例不存在")),
         Err(e) => {
             tracing::error!("获取工作流实例失败: {}", e);
-            Json(ApiResponse::error(500, "获取工作流实例失败"))
+            Json(ApiResponse::server_error("获取工作流实例失败"))
         }
     }
 }
@@ -640,15 +640,15 @@ pub async fn advance_workflow(
 
     let instance = match instance_result {
         Ok(Some(i)) => i,
-        Ok(None) => return Json(ApiResponse::error(404, "工作流实例不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("工作流实例不存在")),
         Err(e) => {
             tracing::error!("查询工作流实例失败: {}", e);
-            return Json(ApiResponse::error(500, "查询工作流实例失败"));
+            return Json(ApiResponse::server_error("查询工作流实例失败"));
         }
     };
 
     if instance.status != "running" {
-        return Json(ApiResponse::error(400, "工作流状态不正确"));
+        return Json(ApiResponse::bad_request("工作流状态不正确"));
     }
 
     let workflow_result = sqlx::query_as::<_, WorkflowDefinition>(
@@ -661,10 +661,10 @@ pub async fn advance_workflow(
 
     let workflow = match workflow_result {
         Ok(Some(w)) => w,
-        Ok(None) => return Json(ApiResponse::error(404, "工作流定义不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("工作流定义不存在")),
         Err(e) => {
             tracing::error!("查询工作流定义失败: {}", e);
-            return Json(ApiResponse::error(500, "查询工作流定义失败"));
+            return Json(ApiResponse::server_error("查询工作流定义失败"));
         }
     };
 
@@ -750,7 +750,7 @@ pub async fn advance_workflow(
         Ok(instance) => Json(ApiResponse::success(instance, "工作流已推进")),
         Err(e) => {
             tracing::error!("推进工作流失败: {}", e);
-            Json(ApiResponse::error(500, "推进工作流失败"))
+            Json(ApiResponse::server_error("推进工作流失败"))
         }
     }
 }

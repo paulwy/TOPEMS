@@ -249,7 +249,7 @@ pub async fn list_barcodes(
         Ok(data) => Json(ApiResponse::success(data, "获取条码列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch barcodes: {}", e);
-            Json(ApiResponse::error(500, "获取条码列表失败"))
+            Json(ApiResponse::server_error("获取条码列表失败"))
         }
     }
 }
@@ -260,12 +260,12 @@ pub async fn generate_barcode(
 ) -> Json<ApiResponse<Vec<SampleBarcode>>> {
     let valid_type = BARCODE_TYPES.iter().any(|(t, _)| *t == req.barcode_type);
     if !valid_type {
-        return Json(ApiResponse::error(400, "无效的条码类型"));
+        return Json(ApiResponse::bad_request("无效的条码类型"));
     }
 
     let count = req.count.unwrap_or(1);
     if count <= 0 || count > 100 {
-        return Json(ApiResponse::error(400, "生成数量必须在1-100之间"));
+        return Json(ApiResponse::bad_request("生成数量必须在1-100之间"));
     }
 
     let mut sample_no: Option<String> = None;
@@ -273,7 +273,7 @@ pub async fn generate_barcode(
         Some(sid) => {
             let id = match Uuid::parse_str(sid) {
                 Ok(u) => u,
-                Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
+                Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
             };
             let sample_row =
                 sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE id = $1")
@@ -285,7 +285,7 @@ pub async fn generate_barcode(
                     sample_no = Some(row.get::<String, _>("sample_no"));
                     Some(id)
                 }
-                Ok(None) => return Json(ApiResponse::error(404, "样品不存在")),
+                Ok(None) => return Json(ApiResponse::not_found("样品不存在")),
                 Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
             }
         }
@@ -339,7 +339,7 @@ pub async fn generate_barcode(
             }),
             Err(e) => {
                 tracing::error!("Failed to generate barcode: {}", e);
-                return Json(ApiResponse::error(500, "生成条码失败"));
+                return Json(ApiResponse::server_error("生成条码失败"));
             }
         }
     }
@@ -366,7 +366,7 @@ pub async fn get_barcode(
 ) -> Json<ApiResponse<SampleBarcode>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的条码ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的条码ID")),
     };
 
     let row = sqlx::query(
@@ -396,11 +396,11 @@ pub async fn get_barcode(
             },
             "获取条码成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch barcode: {}", e);
-            Json(ApiResponse::error(500, "获取条码失败"))
+            Json(ApiResponse::server_error("获取条码失败"))
         }
     }
 }
@@ -412,7 +412,7 @@ pub async fn update_barcode(
 ) -> Json<ApiResponse<SampleBarcode>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的条码ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的条码ID")),
     };
 
     let row = sqlx::query(
@@ -445,11 +445,11 @@ pub async fn update_barcode(
             },
             "条码更新成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to update barcode: {}", e);
-            Json(ApiResponse::error(500, "条码更新失败"))
+            Json(ApiResponse::server_error("条码更新失败"))
         }
     }
 }
@@ -473,7 +473,7 @@ pub async fn print_barcode(
 ) -> Json<ApiResponse<SampleBarcode>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的条码ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的条码ID")),
     };
 
     let row = sqlx::query(
@@ -505,7 +505,7 @@ pub async fn print_barcode(
         )),
         Err(e) => {
             tracing::error!("Failed to print barcode: {}", e);
-            Json(ApiResponse::error(500, "条码打印失败"))
+            Json(ApiResponse::server_error("条码打印失败"))
         }
     }
 }
@@ -525,7 +525,7 @@ pub async fn print_barcodes_batch(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let copies = req.copies.unwrap_or(1).max(1);
     if req.barcode_ids.is_empty() {
-        return Json(ApiResponse::error(400, "barcode_ids 不能为空"));
+        return Json(ApiResponse::bad_request("barcode_ids 不能为空"));
     }
     let mut printed: Vec<String> = Vec::new();
     let mut failed: Vec<String> = Vec::new();
@@ -561,7 +561,7 @@ pub async fn delete_barcode(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的条码ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的条码ID")),
     };
 
     let result = sqlx::query("UPDATE qa_lims_sample_barcodes SET deleted_at = NOW() WHERE id = $1")
@@ -573,7 +573,7 @@ pub async fn delete_barcode(
         Ok(_) => Json(ApiResponse::success(true, "条码删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete barcode: {}", e);
-            Json(ApiResponse::error(500, "条码删除失败"))
+            Json(ApiResponse::server_error("条码删除失败"))
         }
     }
 }
@@ -595,7 +595,7 @@ pub async fn scan_barcode(
 ) -> Json<ApiResponse<BarcodeScanRecord>> {
     let valid_scan_types = ["receive", "transfer", "destroy", "check"];
     if !valid_scan_types.contains(&req.scan_type.as_str()) {
-        return Json(ApiResponse::error(400, "无效的扫描类型"));
+        return Json(ApiResponse::bad_request("无效的扫描类型"));
     }
 
     let barcode_row = sqlx::query(
@@ -611,7 +611,7 @@ pub async fn scan_barcode(
             row.get::<Option<Uuid>, _>("sample_id"),
             row.get::<Option<String>, _>("sample_no"),
         ),
-        Ok(None) => return Json(ApiResponse::error(404, "条码不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("条码不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询条码失败", e))),
     };
 
@@ -686,7 +686,7 @@ pub async fn scan_barcode(
         }
         Err(e) => {
             tracing::error!("Failed to scan barcode: {}", e);
-            Json(ApiResponse::error(500, "条码扫描登记失败"))
+            Json(ApiResponse::server_error("条码扫描登记失败"))
         }
     }
 }
@@ -843,7 +843,7 @@ pub async fn list_rfid_tags(
         Ok(data) => Json(ApiResponse::success(data, "获取RFID标签列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch RFID tags: {}", e);
-            Json(ApiResponse::error(500, "获取RFID标签列表失败"))
+            Json(ApiResponse::server_error("获取RFID标签列表失败"))
         }
     }
 }
@@ -888,7 +888,7 @@ pub async fn create_rfid_tag(
         )),
         Err(e) => {
             tracing::error!("Failed to create RFID tag: {}", e);
-            Json(ApiResponse::error(500, "RFID标签创建失败"))
+            Json(ApiResponse::server_error("RFID标签创建失败"))
         }
     }
 }
@@ -913,12 +913,12 @@ pub async fn assign_rfid_tag(
 ) -> Json<ApiResponse<RfidTag>> {
     let tag_uuid = match Uuid::parse_str(&tag_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的RFID标签ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的RFID标签ID")),
     };
 
     let sample_uuid = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
     };
 
     let sample_row = sqlx::query("SELECT sample_no FROM public.qa_lab_samples WHERE id = $1")
@@ -928,7 +928,7 @@ pub async fn assign_rfid_tag(
 
     let sample_no = match sample_row {
         Ok(Some(row)) => row.get::<String, _>("sample_no"),
-        Ok(None) => return Json(ApiResponse::error(404, "样品不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("样品不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
     };
 
@@ -966,7 +966,7 @@ pub async fn assign_rfid_tag(
         )),
         Err(e) => {
             tracing::error!("Failed to assign RFID tag: {}", e);
-            Json(ApiResponse::error(500, "RFID标签绑定失败"))
+            Json(ApiResponse::server_error("RFID标签绑定失败"))
         }
     }
 }
@@ -990,7 +990,7 @@ pub async fn unassign_rfid_tag(
 ) -> Json<ApiResponse<RfidTag>> {
     let tag_uuid = match Uuid::parse_str(&tag_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的RFID标签ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的RFID标签ID")),
     };
 
     let row = sqlx::query(
@@ -1023,11 +1023,11 @@ pub async fn unassign_rfid_tag(
             },
             "RFID标签解绑成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to unassign RFID tag: {}", e);
-            Json(ApiResponse::error(500, "RFID标签解绑失败"))
+            Json(ApiResponse::server_error("RFID标签解绑失败"))
         }
     }
 }
@@ -1051,7 +1051,7 @@ pub async fn delete_rfid_tag(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的RFID标签ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的RFID标签ID")),
     };
 
     let result = sqlx::query("UPDATE qa_lims_rfid_tags SET deleted_at = NOW() WHERE id = $1")
@@ -1063,7 +1063,7 @@ pub async fn delete_rfid_tag(
         Ok(_) => Json(ApiResponse::success(true, "RFID标签删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete RFID tag: {}", e);
-            Json(ApiResponse::error(500, "RFID标签删除失败"))
+            Json(ApiResponse::server_error("RFID标签删除失败"))
         }
     }
 }
@@ -1097,7 +1097,7 @@ pub async fn trace_sample_by_barcode(
             row.get::<Option<Uuid>, _>("sample_id"),
             row.get::<Option<String>, _>("sample_no"),
         ),
-        Ok(None) => return Json(ApiResponse::error(404, "条码不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("条码不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询条码失败", e))),
     };
 

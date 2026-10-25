@@ -357,7 +357,7 @@ pub async fn list_plans_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list inspection plans: {}", e);
-            return Json(ApiResponse::error(500, "获取检查计划列表失败"));
+            return Json(ApiResponse::server_error("获取检查计划列表失败"));
         }
     };
     let list: Vec<InspectionPlan> = rows.iter().map(inspection_plan_from_row).collect();
@@ -407,7 +407,7 @@ pub async fn create_plan_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create inspection plan: {}", e);
-            return Json(ApiResponse::error(500, "检查计划创建失败"));
+            return Json(ApiResponse::server_error("检查计划创建失败"));
         }
     };
     let record = inspection_plan_from_row(&row);
@@ -446,10 +446,10 @@ pub async fn get_plan_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "检查计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("检查计划不存在")),
         Err(e) => {
             tracing::error!("Failed to get inspection plan: {}", e);
-            return Json(ApiResponse::error(500, "获取检查计划失败"));
+            return Json(ApiResponse::server_error("获取检查计划失败"));
         }
     };
     let record = inspection_plan_from_row(&row);
@@ -525,10 +525,10 @@ pub async fn update_plan_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "检查计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("检查计划不存在")),
         Err(e) => {
             tracing::error!("Failed to update inspection plan: {}", e);
-            return Json(ApiResponse::error(500, "检查计划更新失败"));
+            return Json(ApiResponse::server_error("检查计划更新失败"));
         }
     };
     let record = inspection_plan_from_row(&row);
@@ -566,11 +566,11 @@ pub async fn delete_plan_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete inspection plan: {}", e);
-            return Json(ApiResponse::error(500, "检查计划删除失败"));
+            return Json(ApiResponse::server_error("检查计划删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "检查计划不存在"));
+        return Json(ApiResponse::not_found("检查计划不存在"));
     }
     Json(ApiResponse::success((), "检查计划删除成功"))
 }
@@ -637,7 +637,7 @@ pub async fn list_records_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list inspection records: {}", e);
-            return Json(ApiResponse::error(500, "获取检查记录列表失败"));
+            return Json(ApiResponse::server_error("获取检查记录列表失败"));
         }
     };
     let list: Vec<InspectionRecord> = rows.iter().map(inspection_record_from_row).collect();
@@ -694,7 +694,7 @@ pub async fn create_record_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create inspection record: {}", e);
-            return Json(ApiResponse::error(500, "检查记录创建失败"));
+            return Json(ApiResponse::server_error("检查记录创建失败"));
         }
     };
     let record_id: String = row.try_get("id").unwrap_or_default();
@@ -781,10 +781,10 @@ pub async fn update_record_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "检查记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("检查记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update inspection record: {}", e);
-            return Json(ApiResponse::error(500, "检查记录更新失败"));
+            return Json(ApiResponse::server_error("检查记录更新失败"));
         }
     };
     let record = inspection_record_from_row(&row);
@@ -822,11 +822,11 @@ pub async fn delete_record_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete inspection record: {}", e);
-            return Json(ApiResponse::error(500, "检查记录删除失败"));
+            return Json(ApiResponse::server_error("检查记录删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "检查记录不存在"));
+        return Json(ApiResponse::not_found("检查记录不存在"));
     }
     Json(ApiResponse::success((), "检查记录删除成功"))
 }
@@ -867,10 +867,10 @@ pub async fn get_record_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "检查记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("检查记录不存在")),
         Err(e) => {
             tracing::error!("Failed to get inspection record: {}", e);
-            return Json(ApiResponse::error(500, "获取检查记录失败"));
+            return Json(ApiResponse::server_error("获取检查记录失败"));
         }
     };
     let record = inspection_record_from_row(&row);
@@ -968,7 +968,7 @@ pub async fn list_safety_checks_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list safety checks: {}", e);
-            return Json(ApiResponse::error(500, "获取安全检查列表失败"));
+            return Json(ApiResponse::server_error("获取安全检查列表失败"));
         }
     };
     let list: Vec<serde_json::Value> = rows.iter().map(safety_check_to_json).collect();
@@ -1006,10 +1006,10 @@ pub async fn get_safety_check_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "安全检查不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("安全检查不存在")),
         Err(e) => {
             tracing::error!("Failed to get safety check: {}", e);
-            return Json(ApiResponse::error(500, "获取安全检查失败"));
+            return Json(ApiResponse::server_error("获取安全检查失败"));
         }
     };
     Json(ApiResponse::success(
@@ -1089,10 +1089,10 @@ pub async fn update_safety_check_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "安全检查不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("安全检查不存在")),
         Err(e) => {
             tracing::error!("Failed to update safety check: {}", e);
-            return Json(ApiResponse::error(500, "安全检查更新失败"));
+            return Json(ApiResponse::server_error("安全检查更新失败"));
         }
     };
     Json(ApiResponse::success(
@@ -1132,11 +1132,11 @@ pub async fn delete_safety_check_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete safety check: {}", e);
-            return Json(ApiResponse::error(500, "安全检查删除失败"));
+            return Json(ApiResponse::server_error("安全检查删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "安全检查不存在"));
+        return Json(ApiResponse::not_found("安全检查不存在"));
     }
     Json(ApiResponse::success((), "安全检查删除成功"))
 }

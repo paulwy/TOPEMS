@@ -432,7 +432,7 @@ pub async fn list_versions(
         Ok(versions) => Json(ApiResponse::success(versions, "获取文档版本成功")),
         Err(e) => {
             tracing::error!("获取文档版本失败: {}", e);
-            Json(ApiResponse::error(500, "获取文档版本失败"))
+            Json(ApiResponse::server_error("获取文档版本失败"))
         }
     }
 }
@@ -456,7 +456,7 @@ pub async fn create_version(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.version_number.trim().is_empty() || req.title.trim().is_empty() {
-        return Json(ApiResponse::error(400, "版本号和标题不能为空"));
+        return Json(ApiResponse::bad_request("版本号和标题不能为空"));
     }
     let changes = req.changes.unwrap_or_default();
     let created_by = req.created_by.unwrap_or_else(|| "system".to_string());
@@ -489,7 +489,7 @@ pub async fn create_version(
         Ok(version) => Json(ApiResponse::success(version, "创建文档版本成功")),
         Err(e) => {
             tracing::error!("创建文档版本失败: {}", e);
-            Json(ApiResponse::error(500, "创建文档版本失败"))
+            Json(ApiResponse::server_error("创建文档版本失败"))
         }
     }
 }
@@ -526,10 +526,10 @@ pub async fn get_version(
     .await;
     match result {
         Ok(Some(version)) => Json(ApiResponse::success(version, "获取文档版本成功")),
-        Ok(None) => Json(ApiResponse::error(404, "文档版本不存在")),
+        Ok(None) => Json(ApiResponse::not_found("文档版本不存在")),
         Err(e) => {
             tracing::error!("获取文档版本失败: {}", e);
-            Json(ApiResponse::error(500, "获取文档版本失败"))
+            Json(ApiResponse::server_error("获取文档版本失败"))
         }
     }
 }
@@ -591,10 +591,10 @@ pub async fn update_version(
     .await;
     match result {
         Ok(Some(version)) => Json(ApiResponse::success(version, "更新文档版本成功")),
-        Ok(None) => Json(ApiResponse::error(404, "文档版本不存在")),
+        Ok(None) => Json(ApiResponse::not_found("文档版本不存在")),
         Err(e) => {
             tracing::error!("更新文档版本失败: {}", e);
-            Json(ApiResponse::error(500, "更新文档版本失败"))
+            Json(ApiResponse::server_error("更新文档版本失败"))
         }
     }
 }
@@ -626,10 +626,10 @@ pub async fn delete_version(
     .await;
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "删除文档版本成功")),
-        Ok(_) => Json(ApiResponse::error(404, "文档版本不存在")),
+        Ok(_) => Json(ApiResponse::not_found("文档版本不存在")),
         Err(e) => {
             tracing::error!("删除文档版本失败: {}", e);
-            Json(ApiResponse::error(500, "删除文档版本失败"))
+            Json(ApiResponse::server_error("删除文档版本失败"))
         }
     }
 }
@@ -656,7 +656,7 @@ pub async fn publish_version(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("启动发布事务失败: {}", e);
-            return Json(ApiResponse::error(500, "发布文档版本失败"));
+            return Json(ApiResponse::server_error("发布文档版本失败"));
         }
     };
 
@@ -676,10 +676,10 @@ pub async fn publish_version(
 
     let version = match result {
         Ok(Some(v)) => v,
-        Ok(None) => return Json(ApiResponse::error(404, "文档版本不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("文档版本不存在")),
         Err(e) => {
             tracing::error!("发布文档版本失败: {}", e);
-            return Json(ApiResponse::error(500, "发布文档版本失败"));
+            return Json(ApiResponse::server_error("发布文档版本失败"));
         }
     };
 
@@ -700,12 +700,12 @@ pub async fn publish_version(
     .await
     {
         tracing::error!("同步文档当前版本失败: {}", e);
-        return Json(ApiResponse::error(500, "发布文档版本失败"));
+        return Json(ApiResponse::server_error("发布文档版本失败"));
     }
 
     if let Err(e) = tx.commit().await {
         tracing::error!("提交发布事务失败: {}", e);
-        return Json(ApiResponse::error(500, "发布文档版本失败"));
+        return Json(ApiResponse::server_error("发布文档版本失败"));
     }
 
     Json(ApiResponse::success(version, "发布文档版本成功"))
@@ -742,7 +742,7 @@ pub async fn upload_version(
                 Ok(data) => bytes = Some(data.to_vec()),
                 Err(e) => {
                     tracing::error!("读取上传文件失败: {}", e);
-                    return Json(ApiResponse::error(400, "读取上传文件失败"));
+                    return Json(ApiResponse::bad_request("读取上传文件失败"));
                 }
             }
         }
@@ -750,7 +750,7 @@ pub async fn upload_version(
 
     let bytes = match bytes {
         Some(b) if !b.is_empty() => b,
-        _ => return Json(ApiResponse::error(400, "上传文件不能为空")),
+        _ => return Json(ApiResponse::bad_request("上传文件不能为空")),
     };
     let doc_type = get_document_type(&state, tenant_id, document_id).await;
     let version_number = next_version_number(&state, tenant_id, document_id).await;
@@ -797,7 +797,7 @@ pub async fn upload_version(
         Ok(version) => Json(ApiResponse::success(version, "上传文档版本成功")),
         Err(e) => {
             tracing::error!("上传文档版本失败: {}", e);
-            Json(ApiResponse::error(500, "上传文档版本失败"))
+            Json(ApiResponse::server_error("上传文档版本失败"))
         }
     }
 }
@@ -849,10 +849,10 @@ pub async fn download_version(
                 .unwrap_or_default();
             Json(ApiResponse::success(download, "获取文档下载地址成功"))
         }
-        Ok(None) => Json(ApiResponse::error(404, "文档版本不存在")),
+        Ok(None) => Json(ApiResponse::not_found("文档版本不存在")),
         Err(e) => {
             tracing::error!("获取文档下载地址失败: {}", e);
-            Json(ApiResponse::error(500, "获取文档下载地址失败"))
+            Json(ApiResponse::server_error("获取文档下载地址失败"))
         }
     }
 }

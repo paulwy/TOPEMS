@@ -238,7 +238,7 @@ pub async fn list_forecasts(
         }
         Err(e) => {
             tracing::error!("获取需求预测列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取需求预测列表失败"))
+            Json(ApiResponse::server_error("获取需求预测列表失败"))
         }
     }
 }
@@ -279,10 +279,10 @@ pub async fn get_forecast(
 
     match result {
         Ok(Some(fc)) => Json(ApiResponse::success(fc, "获取需求预测详情成功")),
-        Ok(None) => Json(ApiResponse::error(404, "需求预测不存在")),
+        Ok(None) => Json(ApiResponse::not_found("需求预测不存在")),
         Err(e) => {
             tracing::error!("获取需求预测详情失败: {}", e);
-            Json(ApiResponse::error(500, "获取需求预测详情失败"))
+            Json(ApiResponse::server_error("获取需求预测详情失败"))
         }
     }
 }
@@ -331,7 +331,7 @@ pub async fn create_forecast(
         Ok(fc) => Json(ApiResponse::success(fc, "需求预测创建成功")),
         Err(e) => {
             tracing::error!("创建需求预测失败: {}", e);
-            Json(ApiResponse::error(500, "创建需求预测失败"))
+            Json(ApiResponse::server_error("创建需求预测失败"))
         }
     }
 }
@@ -354,7 +354,7 @@ pub async fn update_forecast(
 
     let existing = match existing {
         Ok(Some(f)) => f,
-        Ok(None) => return Json(ApiResponse::error(404, "需求预测不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("需求预测不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
@@ -402,7 +402,7 @@ pub async fn update_forecast(
         Ok(fc) => Json(ApiResponse::success(fc, "需求预测更新成功")),
         Err(e) => {
             tracing::error!("更新需求预测失败: {}", e);
-            Json(ApiResponse::error(500, "更新需求预测失败"))
+            Json(ApiResponse::server_error("更新需求预测失败"))
         }
     }
 }
@@ -425,10 +425,10 @@ pub async fn delete_forecast(
             serde_json::json!({"id": id}),
             "需求预测删除成功",
         )),
-        Ok(_) => Json(ApiResponse::error(404, "需求预测不存在")),
+        Ok(_) => Json(ApiResponse::not_found("需求预测不存在")),
         Err(e) => {
             tracing::error!("删除需求预测失败: {}", e);
-            Json(ApiResponse::error(500, "删除需求预测失败"))
+            Json(ApiResponse::server_error("删除需求预测失败"))
         }
     }
 }
@@ -464,7 +464,7 @@ pub async fn calculate_forecast(
     .await
     {
         Ok(Some(f)) => f,
-        Ok(None) => return Json(ApiResponse::error(404, "需求预测不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("需求预测不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
@@ -502,7 +502,7 @@ pub async fn calculate_forecast(
         Ok(fc) => Json(ApiResponse::success(fc, "需求预测计算完成")),
         Err(e) => {
             tracing::error!("计算需求预测失败: {}", e);
-            Json(ApiResponse::error(500, "计算需求预测失败"))
+            Json(ApiResponse::server_error("计算需求预测失败"))
         }
     }
 }
@@ -536,7 +536,7 @@ pub async fn validate_forecast(
     .await
     {
         Ok(Some(f)) => f,
-        Ok(None) => return Json(ApiResponse::error(404, "需求预测不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("需求预测不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
@@ -549,7 +549,7 @@ pub async fn validate_forecast(
 
     // 验证：检查预测数量是否合理（>0）
     if existing.forecast_quantity.unwrap_or(0.0) <= 0.0 {
-        return Json(ApiResponse::error(400, "预测数量必须大于0，无法验证"));
+        return Json(ApiResponse::bad_request("预测数量必须大于0，无法验证"));
     }
 
     let now = Utc::now();
@@ -572,7 +572,7 @@ pub async fn validate_forecast(
         Ok(fc) => Json(ApiResponse::success(fc, "需求预测验证通过")),
         Err(e) => {
             tracing::error!("验证需求预测失败: {}", e);
-            Json(ApiResponse::error(500, "验证需求预测失败"))
+            Json(ApiResponse::server_error("验证需求预测失败"))
         }
     }
 }
@@ -606,7 +606,7 @@ pub async fn adopt_forecast(
     .await
     {
         Ok(Some(f)) => f,
-        Ok(None) => return Json(ApiResponse::error(404, "需求预测不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("需求预测不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
@@ -637,7 +637,7 @@ pub async fn adopt_forecast(
         Ok(fc) => Json(ApiResponse::success(fc, "需求预测已采纳")),
         Err(e) => {
             tracing::error!("采纳需求预测失败: {}", e);
-            Json(ApiResponse::error(500, "采纳需求预测失败"))
+            Json(ApiResponse::server_error("采纳需求预测失败"))
         }
     }
 }

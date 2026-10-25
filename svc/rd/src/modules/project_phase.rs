@@ -47,7 +47,7 @@ pub async fn create_phase(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -86,7 +86,7 @@ pub async fn create_phase(
             request_id = %request_id,
             "创建项目阶段失败: 阶段名称不能为空"
         );
-        return Json(ApiResponse::error(400, "阶段名称不能为空"));
+        return Json(ApiResponse::bad_request("阶段名称不能为空"));
     }
 
     let id = Uuid::new_v4();
@@ -138,7 +138,7 @@ pub async fn create_phase(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(phase, "项目阶段创建成功"))
@@ -151,9 +151,9 @@ pub async fn create_phase(
                 "创建项目阶段数据库错误"
             );
             if db_err.code().map(|c| c == "23503").unwrap_or(false) {
-                Json(ApiResponse::error(400, "关联的项目不存在"))
+                Json(ApiResponse::bad_request("关联的项目不存在"))
             } else {
-                Json(ApiResponse::error(500, "数据库操作失败"))
+                Json(ApiResponse::server_error("数据库操作失败"))
             }
         }
         Err(e) => {
@@ -163,7 +163,7 @@ pub async fn create_phase(
                 duration_ms = duration.num_milliseconds(),
                 "创建项目阶段失败"
             );
-            Json(ApiResponse::error(500, "创建项目阶段失败"))
+            Json(ApiResponse::server_error("创建项目阶段失败"))
         }
     }
 }
@@ -192,7 +192,7 @@ pub async fn get_project_phases(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -259,7 +259,7 @@ pub async fn get_project_phases(
                 duration_ms = duration.num_milliseconds(),
                 "获取项目阶段列表失败"
             );
-            Json(ApiResponse::error(500, "获取项目阶段列表失败"))
+            Json(ApiResponse::server_error("获取项目阶段列表失败"))
         }
     }
 }
@@ -289,7 +289,7 @@ pub async fn update_phase(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -308,10 +308,10 @@ pub async fn update_phase(
     .await
     {
         Ok(Some(pid)) => pid,
-        Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("阶段不存在")),
         Err(e) => {
             tracing::error!("查询阶段所属项目失败: {}", e);
-            return Json(ApiResponse::error(500, "查询阶段失败"));
+            return Json(ApiResponse::server_error("查询阶段失败"));
         }
     };
 
@@ -343,7 +343,7 @@ pub async fn update_phase(
                 phase_id = %id,
                 "更新项目阶段失败: 阶段名称不能为空"
             );
-            return Json(ApiResponse::error(400, "阶段名称不能为空"));
+            return Json(ApiResponse::bad_request("阶段名称不能为空"));
         }
     }
 
@@ -395,7 +395,7 @@ pub async fn update_phase(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(phase, "项目阶段更新成功"))
@@ -407,7 +407,7 @@ pub async fn update_phase(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目阶段失败: 阶段不存在"
             );
-            Json(ApiResponse::error(404, "阶段不存在"))
+            Json(ApiResponse::not_found("阶段不存在"))
         }
         Err(SqlxError::Database(db_err)) => {
             tracing::error!(
@@ -417,7 +417,7 @@ pub async fn update_phase(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目阶段数据库错误"
             );
-            Json(ApiResponse::error(500, "数据库操作失败"))
+            Json(ApiResponse::server_error("数据库操作失败"))
         }
         Err(e) => {
             tracing::error!(
@@ -427,7 +427,7 @@ pub async fn update_phase(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目阶段失败"
             );
-            Json(ApiResponse::error(500, "更新项目阶段失败"))
+            Json(ApiResponse::server_error("更新项目阶段失败"))
         }
     }
 }
@@ -456,7 +456,7 @@ pub async fn delete_phase(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -488,15 +488,15 @@ pub async fn delete_phase(
             if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::error(500, "事务提交失败"));
+            return Json(ApiResponse::server_error("事务提交失败"));
         }
     }
-            return Json(ApiResponse::error(404, "阶段不存在"))
+            return Json(ApiResponse::not_found("阶段不存在"))
         }
 
         Err(e) => {
             tracing::error!("查询阶段所属项目失败: {}", e);
-            return Json(ApiResponse::error(500, "查询阶段失败"));
+            return Json(ApiResponse::server_error("查询阶段失败"));
         }
     };
 
@@ -531,7 +531,7 @@ pub async fn delete_phase(
                 error = %e,
                 "获取项目阶段项目ID失败"
             );
-            return Json(ApiResponse::error(500, "数据库操作失败"));
+            return Json(ApiResponse::server_error("数据库操作失败"));
         }
     };
 
@@ -569,7 +569,7 @@ pub async fn delete_phase(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目阶段失败: 阶段不存在"
             );
-            Json(ApiResponse::error(404, "阶段不存在"))
+            Json(ApiResponse::not_found("阶段不存在"))
         }
         Err(e) => {
             tracing::error!(
@@ -579,7 +579,7 @@ pub async fn delete_phase(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目阶段失败"
             );
-            Json(ApiResponse::error(500, "删除项目阶段失败"))
+            Json(ApiResponse::server_error("删除项目阶段失败"))
         }
     }
 }

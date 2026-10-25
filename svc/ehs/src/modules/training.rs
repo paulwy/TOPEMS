@@ -174,7 +174,7 @@ pub async fn list_trainings(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list trainings: {}", e);
-            return Json(ApiResponse::error(500, "培训列表获取失败"));
+            return Json(ApiResponse::server_error("培训列表获取失败"));
         }
     };
     let list: Vec<Training> = rows
@@ -269,7 +269,7 @@ pub async fn create_training(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create training: {}", e);
-            return Json(ApiResponse::error(500, "培训创建失败"));
+            return Json(ApiResponse::server_error("培训创建失败"));
         }
     };
     let training = Training {
@@ -332,10 +332,10 @@ pub async fn get_training(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "培训不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("培训不存在")),
         Err(e) => {
             tracing::error!("Failed to get training {}: {}", id, e);
-            return Json(ApiResponse::error(500, "培训获取失败"));
+            return Json(ApiResponse::server_error("培训获取失败"));
         }
     };
     let training = Training {
@@ -440,10 +440,10 @@ pub async fn update_training(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "培训不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("培训不存在")),
         Err(e) => {
             tracing::error!("Failed to update training {}: {}", id, e);
-            return Json(ApiResponse::error(500, "培训更新失败"));
+            return Json(ApiResponse::server_error("培训更新失败"));
         }
     };
     let training = Training {
@@ -501,11 +501,11 @@ pub async fn delete_training(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training {}: {}", id, e);
-            return Json(ApiResponse::error(500, "培训删除失败"));
+            return Json(ApiResponse::server_error("培训删除失败"));
         }
     };
     if res.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "培训不存在"));
+        return Json(ApiResponse::not_found("培训不存在"));
     }
     Json(ApiResponse::success((), "培训删除成功"))
 }
@@ -542,10 +542,10 @@ pub async fn get_training_plan(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "培训计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("培训计划不存在")),
         Err(e) => {
             tracing::error!("Failed to get training plan: {}", e);
-            return Json(ApiResponse::error(500, "获取培训计划失败"));
+            return Json(ApiResponse::server_error("获取培训计划失败"));
         }
     };
     let plan = training_plan_from_row(&row);
@@ -622,10 +622,10 @@ pub async fn update_training_plan(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "培训计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("培训计划不存在")),
         Err(e) => {
             tracing::error!("Failed to update training plan: {}", e);
-            return Json(ApiResponse::error(500, "培训计划更新失败"));
+            return Json(ApiResponse::server_error("培训计划更新失败"));
         }
     };
     let plan = training_plan_from_row(&row);
@@ -663,11 +663,11 @@ pub async fn delete_training_plan(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training plan: {}", e);
-            return Json(ApiResponse::error(500, "培训计划删除失败"));
+            return Json(ApiResponse::server_error("培训计划删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "培训计划不存在"));
+        return Json(ApiResponse::not_found("培训计划不存在"));
     }
     Json(ApiResponse::success((), "培训计划删除成功"))
 }
@@ -706,10 +706,10 @@ pub async fn get_training_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "培训记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("培训记录不存在")),
         Err(e) => {
             tracing::error!("Failed to get training record: {}", e);
-            return Json(ApiResponse::error(500, "获取培训记录失败"));
+            return Json(ApiResponse::server_error("获取培训记录失败"));
         }
     };
     let record = training_record_from_row(&row);
@@ -824,10 +824,10 @@ pub async fn update_training_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "培训记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("培训记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update training record: {}", e);
-            return Json(ApiResponse::error(500, "培训记录更新失败"));
+            return Json(ApiResponse::server_error("培训记录更新失败"));
         }
     };
     let record = training_record_from_row(&row);
@@ -865,11 +865,11 @@ pub async fn delete_training_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training record: {}", e);
-            return Json(ApiResponse::error(500, "培训记录删除失败"));
+            return Json(ApiResponse::server_error("培训记录删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "培训记录不存在"));
+        return Json(ApiResponse::not_found("培训记录不存在"));
     }
     Json(ApiResponse::success((), "培训记录删除成功"))
 }
@@ -908,10 +908,10 @@ pub async fn get_certificate(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "培训证书不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("培训证书不存在")),
         Err(e) => {
             tracing::error!("Failed to get training certificate: {}", e);
-            return Json(ApiResponse::error(500, "获取培训证书失败"));
+            return Json(ApiResponse::server_error("获取培训证书失败"));
         }
     };
     let certificate = training_certificate_from_row(&row);
@@ -998,10 +998,10 @@ pub async fn update_certificate(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "培训证书不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("培训证书不存在")),
         Err(e) => {
             tracing::error!("Failed to update training certificate: {}", e);
-            return Json(ApiResponse::error(500, "培训证书更新失败"));
+            return Json(ApiResponse::server_error("培训证书更新失败"));
         }
     };
     let certificate = training_certificate_from_row(&row);
@@ -1039,11 +1039,11 @@ pub async fn delete_certificate(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training certificate: {}", e);
-            return Json(ApiResponse::error(500, "培训证书删除失败"));
+            return Json(ApiResponse::server_error("培训证书删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "培训证书不存在"));
+        return Json(ApiResponse::not_found("培训证书不存在"));
     }
     Json(ApiResponse::success((), "培训证书删除成功"))
 }
@@ -1171,7 +1171,7 @@ pub async fn list_training_plans(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list training plans: {}", e);
-            return Json(ApiResponse::error(500, "获取培训计划列表失败"));
+            return Json(ApiResponse::server_error("获取培训计划列表失败"));
         }
     };
 
@@ -1247,7 +1247,7 @@ pub async fn create_training_plan(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create training plan: {}", e);
-            return Json(ApiResponse::error(500, "培训计划创建失败"));
+            return Json(ApiResponse::server_error("培训计划创建失败"));
         }
     };
     let plan = training_plan_from_row(&row);
@@ -1333,7 +1333,7 @@ pub async fn list_training_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list training records: {}", e);
-            return Json(ApiResponse::error(500, "获取培训记录列表失败"));
+            return Json(ApiResponse::server_error("获取培训记录列表失败"));
         }
     };
 
@@ -1448,7 +1448,7 @@ pub async fn create_training_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create training record: {}", e);
-            return Json(ApiResponse::error(500, "培训记录创建失败"));
+            return Json(ApiResponse::server_error("培训记录创建失败"));
         }
     };
     let record = training_record_from_row(&row);
@@ -1532,7 +1532,7 @@ pub async fn list_certificates(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list training certificates: {}", e);
-            return Json(ApiResponse::error(500, "获取证书列表失败"));
+            return Json(ApiResponse::server_error("获取证书列表失败"));
         }
     };
 
@@ -1633,7 +1633,7 @@ pub async fn create_certificate(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create training certificate: {}", e);
-            return Json(ApiResponse::error(500, "证书创建失败"));
+            return Json(ApiResponse::server_error("证书创建失败"));
         }
     };
     let certificate = training_certificate_from_row(&row);

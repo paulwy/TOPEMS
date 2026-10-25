@@ -303,7 +303,7 @@ pub async fn get_quality_trend(
         }
         Err(e) => {
             tracing::error!("Failed to fetch quality trend: {}", e);
-            Json(ApiResponse::error(500, "获取质量趋势失败"))
+            Json(ApiResponse::server_error("获取质量趋势失败"))
         }
     }
 }
@@ -369,7 +369,7 @@ pub async fn get_defect_distribution(
         }
         Err(e) => {
             tracing::error!("Failed to fetch defect distribution: {}", e);
-            Json(ApiResponse::error(500, "获取不良分布失败"))
+            Json(ApiResponse::server_error("获取不良分布失败"))
         }
     }
 }
@@ -411,7 +411,7 @@ pub async fn list_alert_rules(
         Ok(data) => Json(ApiResponse::success(data, "获取预警规则列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch alert rules: {}", e);
-            Json(ApiResponse::error(500, "获取预警规则列表失败"))
+            Json(ApiResponse::server_error("获取预警规则列表失败"))
         }
     }
 }
@@ -438,7 +438,7 @@ pub async fn create_alert_rule(
         Ok(data) => Json(ApiResponse::success(data, "预警规则创建成功")),
         Err(e) => {
             tracing::error!("Failed to create alert rule: {}", e);
-            Json(ApiResponse::error(500, "预警规则创建失败"))
+            Json(ApiResponse::server_error("预警规则创建失败"))
         }
     }
 }
@@ -462,7 +462,7 @@ pub async fn get_alert_rule(
 ) -> Json<ApiResponse<AlertRule>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的预警规则ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的预警规则ID")),
     };
 
     let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at FROM qms.qa_alert_rules WHERE deleted_at IS NULL AND id = $1"#)).bind(id)
@@ -471,11 +471,11 @@ pub async fn get_alert_rule(
 
     match rule {
         Ok(data) => Json(ApiResponse::success(data, "获取预警规则成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch alert rule: {}", e);
-            Json(ApiResponse::error(500, "获取预警规则失败"))
+            Json(ApiResponse::server_error("获取预警规则失败"))
         }
     }
 }
@@ -500,7 +500,7 @@ pub async fn update_alert_rule(
 ) -> Json<ApiResponse<AlertRule>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的预警规则ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的预警规则ID")),
     };
 
     let rule = sqlx::query_as::<_, AlertRule>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_rules SET rule_name = COALESCE($2, rule_name), alert_type = COALESCE($3, alert_type), metric = COALESCE($4, metric), condition = COALESCE($5, condition), threshold = COALESCE($6, threshold), duration = COALESCE($7, duration), severity = COALESCE($8, severity), status = COALESCE($9, status), notification_type = COALESCE($10, notification_type), recipients = COALESCE($11, recipients), description = COALESCE($12, description), updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, rule_name, alert_type, metric, condition, threshold, duration, severity, status, notification_type, recipients, description, created_by, created_at, updated_at"#)).bind(id).bind(req.rule_name).bind(req.alert_type).bind(req.metric).bind(req.condition).bind(req.threshold).bind(req.duration).bind(req.severity).bind(req.status).bind(req.notification_type).bind(req.recipients).bind(req.description)
@@ -511,7 +511,7 @@ pub async fn update_alert_rule(
         Ok(data) => Json(ApiResponse::success(data, "预警规则更新成功")),
         Err(e) => {
             tracing::error!("Failed to update alert rule: {}", e);
-            Json(ApiResponse::error(500, "预警规则更新失败"))
+            Json(ApiResponse::server_error("预警规则更新失败"))
         }
     }
 }
@@ -535,7 +535,7 @@ pub async fn delete_alert_rule(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的预警规则ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的预警规则ID")),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -550,7 +550,7 @@ pub async fn delete_alert_rule(
         Ok(_) => Json(ApiResponse::success(true, "预警规则删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete alert rule: {}", e);
-            Json(ApiResponse::error(500, "预警规则删除失败"))
+            Json(ApiResponse::server_error("预警规则删除失败"))
         }
     }
 }
@@ -592,7 +592,7 @@ pub async fn list_alert_messages(
         Ok(data) => Json(ApiResponse::success(data, "获取预警消息列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch alert messages: {}", e);
-            Json(ApiResponse::error(500, "获取预警消息列表失败"))
+            Json(ApiResponse::server_error("获取预警消息列表失败"))
         }
     }
 }
@@ -621,7 +621,7 @@ pub async fn create_alert_message(
         Ok(data) => Json(ApiResponse::success(data, "预警消息创建成功")),
         Err(e) => {
             tracing::error!("Failed to create alert message: {}", e);
-            Json(ApiResponse::error(500, "预警消息创建失败"))
+            Json(ApiResponse::server_error("预警消息创建失败"))
         }
     }
 }
@@ -646,7 +646,7 @@ pub async fn acknowledge_alert(
 ) -> Json<ApiResponse<AlertMessage>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的预警消息ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的预警消息ID")),
     };
 
     let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_messages SET status = 'acknowledged', acknowledged_at = NOW() WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at"#)).bind(id)
@@ -657,7 +657,7 @@ pub async fn acknowledge_alert(
         Ok(data) => Json(ApiResponse::success(data, "预警已确认")),
         Err(e) => {
             tracing::error!("Failed to acknowledge alert: {}", e);
-            Json(ApiResponse::error(500, "预警确认失败"))
+            Json(ApiResponse::server_error("预警确认失败"))
         }
     }
 }

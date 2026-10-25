@@ -191,7 +191,7 @@ pub async fn list_audit_logs(
         }
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::error(500, "获取审计日志失败"))
+            Json(ApiResponse::server_error("获取审计日志失败"))
         }
     }
 }
@@ -246,10 +246,10 @@ pub async fn get_audit_log(
             };
             Json(ApiResponse::success(log, "获取审计日志成功"))
         }
-        Ok(None) => Json(ApiResponse::error(404, "审计日志不存在")),
+        Ok(None) => Json(ApiResponse::not_found("审计日志不存在")),
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::error(500, "获取审计日志失败"))
+            Json(ApiResponse::server_error("获取审计日志失败"))
         }
     }
 }

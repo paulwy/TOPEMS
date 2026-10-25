@@ -190,7 +190,7 @@ pub async fn list_processes(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count processes: {}", e);
-            return Json(ApiResponse::error(500, "获取生产工序列表失败"));
+            return Json(ApiResponse::server_error("获取生产工序列表失败"));
         }
     };
 
@@ -221,7 +221,7 @@ pub async fn list_processes(
         Ok(p) => p,
         Err(e) => {
             tracing::error!("Failed to fetch processes: {}", e);
-            return Json(ApiResponse::error(500, "获取生产工序列表失败"));
+            return Json(ApiResponse::server_error("获取生产工序列表失败"));
         }
     };
 
@@ -333,7 +333,7 @@ pub async fn create_process(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create process: {}", e);
-            return Json(ApiResponse::error(500, "创建生产工序失败"));
+            return Json(ApiResponse::server_error("创建生产工序失败"));
         }
     };
 
@@ -387,7 +387,7 @@ pub async fn get_process(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch process: {}", e);
-            return Json(ApiResponse::error(500, "获取生产工序失败"));
+            return Json(ApiResponse::server_error("获取生产工序失败"));
         }
     };
 
@@ -396,7 +396,7 @@ pub async fn get_process(
             ProductionProcessResponse::from(r),
             "获取生产工序成功",
         )),
-        None => Json(ApiResponse::error(404, "生产工序不存在")),
+        None => Json(ApiResponse::not_found("生产工序不存在")),
     }
 }
 
@@ -450,7 +450,7 @@ pub async fn update_process(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update process: {}", e);
-            return Json(ApiResponse::error(500, "更新生产工序失败"));
+            return Json(ApiResponse::server_error("更新生产工序失败"));
         }
     };
 
@@ -459,7 +459,7 @@ pub async fn update_process(
             ProductionProcessResponse::from(r),
             "生产工序更新成功",
         )),
-        None => Json(ApiResponse::error(404, "生产工序不存在或状态不允许修改")),
+        None => Json(ApiResponse::not_found("生产工序不存在或状态不允许修改")),
     }
 }
 
@@ -486,14 +486,14 @@ pub async fn delete_process(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete process: {}", e);
-            return Json(ApiResponse::error(500, "删除生产工序失败"));
+            return Json(ApiResponse::server_error("删除生产工序失败"));
         }
     };
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success("".to_string(), "生产工序删除成功"))
     } else {
-        Json(ApiResponse::error(404, "生产工序不存在"))
+        Json(ApiResponse::not_found("生产工序不存在"))
     }
 }
 
@@ -540,7 +540,7 @@ pub async fn deactivate_process(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to deactivate process: {}", e);
-            return Json(ApiResponse::error(500, "停用生产工序失败"));
+            return Json(ApiResponse::server_error("停用生产工序失败"));
         }
     };
 
@@ -561,6 +561,6 @@ pub async fn deactivate_process(
             };
             Json(ApiResponse::success(process, "生产工序停用成功"))
         }
-        None => Json(ApiResponse::error(404, "生产工序不存在或状态不允许停用")),
+        None => Json(ApiResponse::not_found("生产工序不存在或状态不允许停用")),
     }
 }

@@ -1250,7 +1250,7 @@ pub async fn start_anomaly_handling_approval(
     // 校验当前 status=acknowledged，创建 approval 记录并写入 audit log
     let approver_id = match claims.user_id() {
         Ok(uid) => uid,
-        Err(_) => return Json(ApiResponse::error(401, "无效的用户身份")),
+        Err(_) => return Json(ApiResponse::unauthorized("无效的用户身份")),
     };
     let record_id = uuid::Uuid::parse_str(&id).unwrap_or_default();
     let approval_id = match create_approval_and_log(
@@ -1266,7 +1266,7 @@ pub async fn start_anomaly_handling_approval(
         Ok(aid) => aid,
         Err(e) => {
             tracing::error!("发起异常处置审批失败: {}", e);
-            return Json(ApiResponse::error(500, "发起审批失败"));
+            return Json(ApiResponse::server_error("发起审批失败"));
         }
     };
     Json(ApiResponse::success(
@@ -1315,7 +1315,7 @@ pub async fn approve_anomaly_handling(
     .await
     {
         tracing::error!("异常处置审批通过失败: {}", e);
-        return Json(ApiResponse::error(500, "审批通过失败"));
+        return Json(ApiResponse::server_error("审批通过失败"));
     }
     Json(ApiResponse::success(
         build_approve_response(req.approval_id),
@@ -1361,7 +1361,7 @@ pub async fn reject_anomaly_handling(
     .await
     {
         tracing::error!("异常处置审批驳回失败: {}", e);
-        return Json(ApiResponse::error(500, "审批驳回失败"));
+        return Json(ApiResponse::server_error("审批驳回失败"));
     }
     Json(ApiResponse::success(
         build_reject_response(req.approval_id),

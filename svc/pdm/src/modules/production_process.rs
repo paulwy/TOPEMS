@@ -149,7 +149,7 @@ pub async fn list_processes(
         }
         Err(e) => {
             tracing::error!("获取工序列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取工序列表失败"))
+            Json(ApiResponse::server_error("获取工序列表失败"))
         }
     }
 }
@@ -180,10 +180,10 @@ pub async fn create_process(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.process_no.is_empty() {
-        return Json(ApiResponse::error(400, "工序编号不能为空"));
+        return Json(ApiResponse::bad_request("工序编号不能为空"));
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::error(400, "工序名称不能为空"));
+        return Json(ApiResponse::bad_request("工序名称不能为空"));
     }
 
     let status = req.status.unwrap_or_else(|| "active".to_string());
@@ -210,7 +210,7 @@ pub async fn create_process(
         Ok(process) => Json(ApiResponse::success(process, "工序创建成功")),
         Err(e) => {
             tracing::error!("创建工序失败: {}", e);
-            Json(ApiResponse::error(500, "创建工序失败"))
+            Json(ApiResponse::server_error("创建工序失败"))
         }
     }
 }
@@ -261,10 +261,10 @@ pub async fn get_process(
 
     match result {
         Ok(Some(process)) => Json(ApiResponse::success(process, "获取工序成功")),
-        Ok(None) => Json(ApiResponse::error(404, "工序不存在")),
+        Ok(None) => Json(ApiResponse::not_found("工序不存在")),
         Err(e) => {
             tracing::error!("获取工序失败: {}", e);
-            Json(ApiResponse::error(500, "获取工序失败"))
+            Json(ApiResponse::server_error("获取工序失败"))
         }
     }
 }
@@ -330,10 +330,10 @@ pub async fn update_process(
 
     match result {
         Ok(Some(process)) => Json(ApiResponse::success(process, "工序更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "工序不存在")),
+        Ok(None) => Json(ApiResponse::not_found("工序不存在")),
         Err(e) => {
             tracing::error!("更新工序失败: {}", e);
-            Json(ApiResponse::error(500, "更新工序失败"))
+            Json(ApiResponse::server_error("更新工序失败"))
         }
     }
 }
@@ -376,10 +376,10 @@ pub async fn delete_process(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "工序删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "工序不存在")),
+        Ok(_) => Json(ApiResponse::not_found("工序不存在")),
         Err(e) => {
             tracing::error!("删除工序失败: {}", e);
-            Json(ApiResponse::error(500, "删除工序失败"))
+            Json(ApiResponse::server_error("删除工序失败"))
         }
     }
 }

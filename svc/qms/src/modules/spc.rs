@@ -177,7 +177,7 @@ pub async fn list_spc_charts(
         Ok(data) => Json(ApiResponse::success(data, "获取SPC控制图列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch SPC charts: {}", e);
-            Json(ApiResponse::error(500, "获取SPC控制图列表失败"))
+            Json(ApiResponse::server_error("获取SPC控制图列表失败"))
         }
     }
 }
@@ -217,7 +217,7 @@ pub async fn create_spc_chart(
         Ok(data) => Json(ApiResponse::success(data, "SPC控制图创建成功")),
         Err(e) => {
             tracing::error!("Failed to create SPC chart: {}", e);
-            Json(ApiResponse::error(500, "SPC控制图创建失败"))
+            Json(ApiResponse::server_error("SPC控制图创建失败"))
         }
     }
 }
@@ -252,7 +252,7 @@ pub async fn get_spc_chart(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的控制图ID")),
     };
 
     let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
@@ -261,11 +261,11 @@ pub async fn get_spc_chart(
 
     match chart {
         Ok(data) => Json(ApiResponse::success(data, "获取SPC控制图成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch SPC chart: {}", e);
-            Json(ApiResponse::error(500, "获取SPC控制图失败"))
+            Json(ApiResponse::server_error("获取SPC控制图失败"))
         }
     }
 }
@@ -293,7 +293,7 @@ pub async fn update_spc_chart(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的控制图ID")),
     };
 
     let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"UPDATE qms.qa_spc_charts SET chart_type = COALESCE($2, chart_type), parameter_name = COALESCE($3, parameter_name), chart_name = COALESCE($4, chart_name), process_name = COALESCE($5, process_name), unit = COALESCE($6, unit), usl = COALESCE($7, usl), lsl = COALESCE($8, lsl), target = COALESCE($9, target), sample_size = COALESCE($10, sample_size), sampling_frequency = COALESCE($11, sampling_frequency), description = COALESCE($12, description), ucl = COALESCE($13, ucl), cl = COALESCE($14, cl), lcl = COALESCE($15, lcl), status = COALESCE($16, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $17 RETURNING id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at"#)).bind(id).bind(req.chart_type).bind(req.parameter_name).bind(req.chart_name).bind(req.process_name).bind(req.unit).bind(req.usl).bind(req.lsl).bind(req.target).bind(req.sample_size).bind(req.sampling_frequency).bind(req.description).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.status).bind(tenant_id)
@@ -302,10 +302,10 @@ pub async fn update_spc_chart(
 
     match chart {
         Ok(data) => Json(ApiResponse::success(data, "SPC控制图更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update SPC chart: {}", e);
-            Json(ApiResponse::error(500, "SPC控制图更新失败"))
+            Json(ApiResponse::server_error("SPC控制图更新失败"))
         }
     }
 }
@@ -332,7 +332,7 @@ pub async fn delete_spc_chart(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的控制图ID")),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -348,7 +348,7 @@ pub async fn delete_spc_chart(
         Ok(_) => Json(ApiResponse::success(true, "SPC控制图删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete SPC chart: {}", e);
-            Json(ApiResponse::error(500, "SPC控制图删除失败"))
+            Json(ApiResponse::server_error("SPC控制图删除失败"))
         }
     }
 }
@@ -380,7 +380,7 @@ pub async fn get_spc_data_points(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let chart_id = match Uuid::parse_str(&query.chart_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的控制图ID")),
     };
 
     let limit = query.limit.unwrap_or(100);
@@ -396,7 +396,7 @@ pub async fn get_spc_data_points(
         }
         Err(e) => {
             tracing::error!("Failed to fetch SPC data points: {}", e);
-            Json(ApiResponse::error(500, "获取SPC数据点失败"))
+            Json(ApiResponse::server_error("获取SPC数据点失败"))
         }
     }
 }
@@ -428,7 +428,7 @@ pub async fn add_spc_data_point(
     let tenant_id = get_tenant_id(&claims, &headers);
     let chart_id = match Uuid::parse_str(&req.chart_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的控制图ID")),
     };
 
     let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(chart_id.to_string()).bind(tenant_opt)
@@ -468,7 +468,7 @@ pub async fn add_spc_data_point(
         }
         Err(e) => {
             tracing::error!("Failed to add SPC data point: {}", e);
-            Json(ApiResponse::error(500, "SPC数据点添加失败"))
+            Json(ApiResponse::server_error("SPC数据点添加失败"))
         }
     }
 }
@@ -498,7 +498,7 @@ pub async fn calculate_control_limits(
     let subgroup_size = req.subgroup_size.unwrap_or(5);
 
     if values.is_empty() {
-        return Json(ApiResponse::error(400, "数据点不能为空"));
+        return Json(ApiResponse::bad_request("数据点不能为空"));
     }
 
     let (ucl, cl, lcl, cp, cpk, pp, ppk) = match req.chart_type.as_str() {
@@ -683,7 +683,7 @@ pub async fn get_spc_chart_data_points(
     let _ = get_tenant_id(&claims, &headers);
     let chart_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的控制图ID")),
     };
     let points = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, mean, range, operator, remark, measured_at, created_at FROM qms.qa_spc_data_points WHERE chart_id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY sample_no ASC"#))
         .bind(chart_id.to_string())
@@ -697,7 +697,7 @@ pub async fn get_spc_chart_data_points(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch chart data points: {}", e);
-            Json(ApiResponse::error(500, "获取SPC数据点失败"))
+            Json(ApiResponse::server_error("获取SPC数据点失败"))
         }
     }
 }
@@ -722,7 +722,7 @@ pub async fn calculate_spc_chart_limits(
     let _ = get_tenant_id(&claims, &headers);
     let chart_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的控制图ID")),
     };
     let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(chart_id.to_string()).bind(tenant_opt).fetch_one(&state.pool).await;
     match chart {
@@ -740,10 +740,10 @@ pub async fn calculate_spc_chart_limits(
                 "控制限计算成功",
             ))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
         Err(e) => {
             tracing::error!("Failed to calculate chart limits: {}", e);
-            Json(ApiResponse::error(500, "控制限计算失败"))
+            Json(ApiResponse::server_error("控制限计算失败"))
         }
     }
 }

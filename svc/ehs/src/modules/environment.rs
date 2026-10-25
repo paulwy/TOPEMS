@@ -153,7 +153,7 @@ pub async fn list_records(
         }
         Err(e) => {
             tracing::error!("Failed to list environment monitors: {}", e);
-            Json(ApiResponse::error(500, "获取环境监测点列表失败"))
+            Json(ApiResponse::server_error("获取环境监测点列表失败"))
         }
     }
 }
@@ -245,7 +245,7 @@ pub async fn create_record(
     .await;
     if let Err(e) = res {
         tracing::error!("Failed to insert environment monitor: {}", e);
-        return Json(ApiResponse::error(500, "环境监测点创建失败"));
+        return Json(ApiResponse::server_error("环境监测点创建失败"));
     }
     Json(ApiResponse::success(
         EnvironmentMonitor {
@@ -328,10 +328,10 @@ pub async fn get_record(
             },
             "获取环境监测点成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "环境监测点不存在")),
+        Ok(None) => Json(ApiResponse::not_found("环境监测点不存在")),
         Err(e) => {
             tracing::error!("Failed to get environment monitor: {}", e);
-            Json(ApiResponse::error(500, "获取环境监测点失败"))
+            Json(ApiResponse::server_error("获取环境监测点失败"))
         }
     }
 }
@@ -358,10 +358,10 @@ pub async fn update_record(
     .await;
     let _existing = match existing {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "环境监测点不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("环境监测点不存在")),
         Err(e) => {
             tracing::error!("Failed to load environment monitor for update: {}", e);
-            return Json(ApiResponse::error(500, "更新环境监测点失败"));
+            return Json(ApiResponse::server_error("更新环境监测点失败"));
         }
     };
 
@@ -408,7 +408,7 @@ pub async fn update_record(
     .await;
     if let Err(e) = r {
         tracing::error!("Failed to update environment monitor: {}", e);
-        return Json(ApiResponse::error(500, "更新环境监测点失败"));
+        return Json(ApiResponse::server_error("更新环境监测点失败"));
     }
     Json(ApiResponse::success(
         EnvironmentMonitor {
@@ -452,7 +452,7 @@ pub async fn delete_record(
         Ok(_) => Json(ApiResponse::success((), "环境监测点删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete environment monitor: {}", e);
-            Json(ApiResponse::error(500, "环境监测点删除失败"))
+            Json(ApiResponse::server_error("环境监测点删除失败"))
         }
     }
 }

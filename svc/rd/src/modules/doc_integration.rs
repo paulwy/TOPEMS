@@ -195,7 +195,7 @@ pub async fn create_document_relation(
                     tracing::error!("rls commit failed: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::error(500, "提交事务失败")),
+                        Json(ApiResponse::server_error("提交事务失败")),
                     );
                 }
             }
@@ -257,7 +257,7 @@ pub async fn get_document_relation(
             (StatusCode::OK, Json(response))
         }
         Ok(None) => {
-            let response = ApiResponse::<DocumentRelation>::error(404, "文档关联不存在");
+            let response = ApiResponse::<DocumentRelation>::not_found("文档关联不存在");
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {
@@ -294,7 +294,7 @@ pub async fn delete_document_relation(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<()>::error(500, "rls transaction unavailable")),
+                Json(ApiResponse::<()>::server_error("rls transaction unavailable")),
             )
         }
     };
@@ -311,7 +311,7 @@ pub async fn delete_document_relation(
                     tracing::error!("事务提交失败: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::error(500, "事务提交失败")),
+                        Json(ApiResponse::server_error("事务提交失败")),
                     );
                 }
             }
@@ -319,7 +319,7 @@ pub async fn delete_document_relation(
             (StatusCode::OK, Json(response))
         }
         Ok(_) => {
-            let response = ApiResponse::<()>::error(404, "文档关联不存在");
+            let response = ApiResponse::<()>::not_found("文档关联不存在");
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {

@@ -83,7 +83,7 @@ pub async fn list_apqp_projects(
         Ok(data) => Json(ApiResponse::success(data, "获取APQP项目列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch APQP projects: {}", e);
-            Json(ApiResponse::error(500, "获取APQP项目列表失败"))
+            Json(ApiResponse::server_error("获取APQP项目列表失败"))
         }
     }
 }
@@ -147,7 +147,7 @@ pub async fn create_apqp_project(
         }
         Err(e) => {
             tracing::error!("Failed to create APQP project: {}", e);
-            Json(ApiResponse::error(500, "APQP项目创建失败"))
+            Json(ApiResponse::server_error("APQP项目创建失败"))
         }
     }
 }
@@ -198,7 +198,7 @@ pub async fn get_apqp_project(
 ) -> Json<ApiResponse<ApqpProject>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的APQP项目ID")),
     };
 
     let project = sqlx::query_as::<_, ApqpProject>(
@@ -210,11 +210,11 @@ pub async fn get_apqp_project(
 
     match project {
         Ok(data) => Json(ApiResponse::success(data, "获取APQP项目成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch APQP project: {}", e);
-            Json(ApiResponse::error(500, "获取APQP项目失败"))
+            Json(ApiResponse::server_error("获取APQP项目失败"))
         }
     }
 }
@@ -240,7 +240,7 @@ pub async fn update_apqp_project(
 ) -> Json<ApiResponse<ApqpProject>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的APQP项目ID")),
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -289,10 +289,10 @@ pub async fn update_apqp_project(
 
     match project {
         Ok(data) => Json(ApiResponse::success(data, "APQP项目更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update APQP project: {}", e);
-            Json(ApiResponse::error(500, "APQP项目更新失败"))
+            Json(ApiResponse::server_error("APQP项目更新失败"))
         }
     }
 }
@@ -317,7 +317,7 @@ pub async fn delete_apqp_project(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的APQP项目ID")),
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -341,7 +341,7 @@ pub async fn delete_apqp_project(
         Ok(_) => Json(ApiResponse::success(true, "APQP项目删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete APQP project: {}", e);
-            Json(ApiResponse::error(500, "APQP项目删除失败"))
+            Json(ApiResponse::server_error("APQP项目删除失败"))
         }
     }
 }
@@ -367,7 +367,7 @@ pub async fn transition_project_status(
 ) -> Json<ApiResponse<ApqpProject>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的APQP项目ID")),
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -381,7 +381,7 @@ pub async fn transition_project_status(
     let valid_statuses = ["planning", "developing", "verifying", "released", "closed"];
 
     if !valid_statuses.contains(&req.target_status.as_str()) {
-        return Json(ApiResponse::error(400, "无效的状态值"));
+        return Json(ApiResponse::bad_request("无效的状态值"));
     }
 
     let project = sqlx::query_as::<_, ApqpProject>(
@@ -397,7 +397,7 @@ pub async fn transition_project_status(
         Ok(data) => Json(ApiResponse::success(data, "状态流转成功")),
         Err(e) => {
             tracing::error!("Failed to transition project status: {}", e);
-            Json(ApiResponse::error(500, "状态流转失败"))
+            Json(ApiResponse::server_error("状态流转失败"))
         }
     }
 }
@@ -419,7 +419,7 @@ pub async fn list_apqp_phases(
     let project_id = match query.get("project_id") {
         Some(pid) => match Uuid::parse_str(pid) {
             Ok(u) => Some(u),
-            Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+            Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
         },
         None => None,
     };
@@ -443,7 +443,7 @@ pub async fn list_apqp_phases(
         Ok(data) => Json(ApiResponse::success(data, "获取APQP阶段列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch APQP phases: {}", e);
-            Json(ApiResponse::error(500, "获取APQP阶段列表失败"))
+            Json(ApiResponse::server_error("获取APQP阶段列表失败"))
         }
     }
 }
@@ -464,7 +464,7 @@ pub async fn create_apqp_phase(
 ) -> Json<ApiResponse<ApqpPhase>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let start_dt = req
@@ -492,7 +492,7 @@ pub async fn create_apqp_phase(
         Ok(data) => Json(ApiResponse::success(data, "APQP阶段创建成功")),
         Err(e) => {
             tracing::error!("Failed to create APQP phase: {}", e);
-            Json(ApiResponse::error(500, "APQP阶段创建失败"))
+            Json(ApiResponse::server_error("APQP阶段创建失败"))
         }
     }
 }
@@ -516,7 +516,7 @@ pub async fn get_apqp_phase(
 ) -> Json<ApiResponse<ApqpPhase>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的阶段ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的阶段ID")),
     };
 
     let phase = sqlx::query_as::<_, ApqpPhase>(
@@ -528,11 +528,11 @@ pub async fn get_apqp_phase(
 
     match phase {
         Ok(data) => Json(ApiResponse::success(data, "获取APQP阶段成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch APQP phase: {}", e);
-            Json(ApiResponse::error(500, "获取APQP阶段失败"))
+            Json(ApiResponse::server_error("获取APQP阶段失败"))
         }
     }
 }
@@ -557,7 +557,7 @@ pub async fn update_apqp_phase(
 ) -> Json<ApiResponse<ApqpPhase>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的阶段ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的阶段ID")),
     };
 
     let start_dt = req
@@ -591,10 +591,10 @@ pub async fn update_apqp_phase(
 
     match phase {
         Ok(data) => Json(ApiResponse::success(data, "APQP阶段更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update APQP phase: {}", e);
-            Json(ApiResponse::error(500, "APQP阶段更新失败"))
+            Json(ApiResponse::server_error("APQP阶段更新失败"))
         }
     }
 }
@@ -618,7 +618,7 @@ pub async fn delete_apqp_phase(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的阶段ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的阶段ID")),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -630,11 +630,11 @@ pub async fn delete_apqp_phase(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::error(404, "APQP阶段不存在")),
+        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::not_found("APQP阶段不存在")),
         Ok(_) => Json(ApiResponse::success(true, "APQP阶段删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete APQP phase: {}", e);
-            Json(ApiResponse::error(500, "APQP阶段删除失败"))
+            Json(ApiResponse::server_error("APQP阶段删除失败"))
         }
     }
 }
@@ -701,7 +701,7 @@ pub async fn list_apqp_tasks(
         Ok(data) => Json(ApiResponse::success(data, "获取APQP任务列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch APQP tasks: {}", e);
-            Json(ApiResponse::error(500, "获取APQP任务列表失败"))
+            Json(ApiResponse::server_error("获取APQP任务列表失败"))
         }
     }
 }
@@ -722,11 +722,11 @@ pub async fn create_apqp_task(
 ) -> Json<ApiResponse<ApqpTask>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
     let phase_id = match Uuid::parse_str(&req.phase_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的阶段ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的阶段ID")),
     };
 
     let due_dt = req
@@ -753,7 +753,7 @@ pub async fn create_apqp_task(
         Ok(data) => Json(ApiResponse::success(data, "APQP任务创建成功")),
         Err(e) => {
             tracing::error!("Failed to create APQP task: {}", e);
-            Json(ApiResponse::error(500, "APQP任务创建失败"))
+            Json(ApiResponse::server_error("APQP任务创建失败"))
         }
     }
 }
@@ -777,7 +777,7 @@ pub async fn get_apqp_task(
 ) -> Json<ApiResponse<ApqpTask>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     let task = sqlx::query_as::<_, ApqpTask>(
@@ -789,11 +789,11 @@ pub async fn get_apqp_task(
 
     match task {
         Ok(data) => Json(ApiResponse::success(data, "获取APQP任务成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch APQP task: {}", e);
-            Json(ApiResponse::error(500, "获取APQP任务失败"))
+            Json(ApiResponse::server_error("获取APQP任务失败"))
         }
     }
 }
@@ -818,7 +818,7 @@ pub async fn update_apqp_task(
 ) -> Json<ApiResponse<ApqpTask>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     let due_dt = req
@@ -846,10 +846,10 @@ pub async fn update_apqp_task(
 
     match task {
         Ok(data) => Json(ApiResponse::success(data, "APQP任务更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update APQP task: {}", e);
-            Json(ApiResponse::error(500, "APQP任务更新失败"))
+            Json(ApiResponse::server_error("APQP任务更新失败"))
         }
     }
 }
@@ -873,7 +873,7 @@ pub async fn delete_apqp_task(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -885,11 +885,11 @@ pub async fn delete_apqp_task(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::error(404, "APQP任务不存在")),
+        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::not_found("APQP任务不存在")),
         Ok(_) => Json(ApiResponse::success(true, "APQP任务删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete APQP task: {}", e);
-            Json(ApiResponse::error(500, "APQP任务删除失败"))
+            Json(ApiResponse::server_error("APQP任务删除失败"))
         }
     }
 }
@@ -953,7 +953,7 @@ pub async fn list_apqp_risks(
         Ok(data) => Json(ApiResponse::success(data, "获取APQP风险列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch APQP risks: {}", e);
-            Json(ApiResponse::error(500, "获取APQP风险列表失败"))
+            Json(ApiResponse::server_error("获取APQP风险列表失败"))
         }
     }
 }
@@ -974,7 +974,7 @@ pub async fn create_apqp_risk(
 ) -> Json<ApiResponse<ApqpRisk>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let rpn = req.severity * req.occurrence * req.detection;
@@ -1004,7 +1004,7 @@ pub async fn create_apqp_risk(
         Ok(data) => Json(ApiResponse::success(data, "APQP风险创建成功")),
         Err(e) => {
             tracing::error!("Failed to create APQP risk: {}", e);
-            Json(ApiResponse::error(500, "APQP风险创建失败"))
+            Json(ApiResponse::server_error("APQP风险创建失败"))
         }
     }
 }
@@ -1028,7 +1028,7 @@ pub async fn get_apqp_risk(
 ) -> Json<ApiResponse<ApqpRisk>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的风险ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的风险ID")),
     };
 
     let risk = sqlx::query_as::<_, ApqpRisk>(
@@ -1040,11 +1040,11 @@ pub async fn get_apqp_risk(
 
     match risk {
         Ok(data) => Json(ApiResponse::success(data, "获取APQP风险成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch APQP risk: {}", e);
-            Json(ApiResponse::error(500, "获取APQP风险失败"))
+            Json(ApiResponse::server_error("获取APQP风险失败"))
         }
     }
 }
@@ -1069,7 +1069,7 @@ pub async fn update_apqp_risk(
 ) -> Json<ApiResponse<ApqpRisk>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的风险ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的风险ID")),
     };
 
     let target_dt = req
@@ -1096,10 +1096,10 @@ pub async fn update_apqp_risk(
 
     match risk {
         Ok(data) => Json(ApiResponse::success(data, "APQP风险更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update APQP risk: {}", e);
-            Json(ApiResponse::error(500, "APQP风险更新失败"))
+            Json(ApiResponse::server_error("APQP风险更新失败"))
         }
     }
 }
@@ -1123,7 +1123,7 @@ pub async fn delete_apqp_risk(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的风险ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的风险ID")),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1135,11 +1135,11 @@ pub async fn delete_apqp_risk(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::error(404, "APQP风险不存在")),
+        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::not_found("APQP风险不存在")),
         Ok(_) => Json(ApiResponse::success(true, "APQP风险删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete APQP risk: {}", e);
-            Json(ApiResponse::error(500, "APQP风险删除失败"))
+            Json(ApiResponse::server_error("APQP风险删除失败"))
         }
     }
 }
@@ -1164,7 +1164,7 @@ pub async fn get_apqp_progress(
 ) -> Json<ApiResponse<ApqpProgressStatistics>> {
     let project_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let total_phases: Option<i64> = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -1310,7 +1310,7 @@ pub async fn list_apqp_approvals(
         Ok(data) => Json(ApiResponse::success(data, "获取APQP审批列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch APQP approvals: {}", e);
-            Json(ApiResponse::error(500, "获取APQP审批列表失败"))
+            Json(ApiResponse::server_error("获取APQP审批列表失败"))
         }
     }
 }
@@ -1331,7 +1331,7 @@ pub async fn create_apqp_approval(
 ) -> Json<ApiResponse<ApqpApproval>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let approval = sqlx::query_as::<_, ApqpApproval>(
@@ -1349,7 +1349,7 @@ pub async fn create_apqp_approval(
         Ok(data) => Json(ApiResponse::success(data, "APQP审批创建成功")),
         Err(e) => {
             tracing::error!("Failed to create APQP approval: {}", e);
-            Json(ApiResponse::error(500, "APQP审批创建失败"))
+            Json(ApiResponse::server_error("APQP审批创建失败"))
         }
     }
 }
@@ -1374,7 +1374,7 @@ pub async fn process_apqp_approval(
 ) -> Json<ApiResponse<ApqpApproval>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的审批ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的审批ID")),
     };
 
     let status = if req.approved { "approved" } else { "rejected" };
@@ -1394,7 +1394,7 @@ pub async fn process_apqp_approval(
         Ok(data) => Json(ApiResponse::success(data, "APQP审批处理成功")),
         Err(e) => {
             tracing::error!("Failed to process APQP approval: {}", e);
-            Json(ApiResponse::error(500, "APQP审批处理失败"))
+            Json(ApiResponse::server_error("APQP审批处理失败"))
         }
     }
 }
@@ -1428,7 +1428,7 @@ pub async fn approve_apqp(
 ) -> Json<ApiResponse<ApqpProject>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的APQP项目ID")),
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -1454,10 +1454,10 @@ pub async fn approve_apqp(
             if apqp_requires_approval(&current_status, STATUS_IN_PRODUCTION)
                 && !crate::shared::permission::has_qms_permission(&claims, "apqp.approve")
             {
-                return Json(ApiResponse::error(403, "无审批权限"));
+                return Json(ApiResponse::forbidden("无审批权限"));
             }
             if apqp_can_transition(&current_status, STATUS_IN_PRODUCTION).is_err() {
-                return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
+                return Json(ApiResponse::bad_request("当前状态不允许审批通过"));
             }
             let project = sqlx::query_as::<_, ApqpProject>(
                 format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_IN_PRODUCTION, APQP_SELECT_COLS).as_str()
@@ -1481,13 +1481,13 @@ pub async fn approve_apqp(
                 }
                 Err(e) => {
                     tracing::error!("Failed to approve APQP: {}", e);
-                    Json(ApiResponse::error(500, "审批失败"))
+                    Json(ApiResponse::server_error("审批失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find APQP project: {}", e);
-            Json(ApiResponse::error(404, "APQP项目不存在"))
+            Json(ApiResponse::not_found("APQP项目不存在"))
         }
     }
 }
@@ -1514,7 +1514,7 @@ pub async fn complete_apqp(
 ) -> Json<ApiResponse<ApqpProject>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的APQP项目ID")),
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -1540,10 +1540,10 @@ pub async fn complete_apqp(
             if apqp_requires_approval(&current_status, STATUS_COMPLETED)
                 && !crate::shared::permission::has_qms_permission(&claims, "apqp.approve")
             {
-                return Json(ApiResponse::error(403, "无审批权限"));
+                return Json(ApiResponse::forbidden("无审批权限"));
             }
             if apqp_can_transition(&current_status, STATUS_COMPLETED).is_err() {
-                return Json(ApiResponse::error(400, "当前状态不允许完成"));
+                return Json(ApiResponse::bad_request("当前状态不允许完成"));
             }
             let project = sqlx::query_as::<_, ApqpProject>(
                 format!("UPDATE qms.qa_apqp_projects SET status = '{}', actual_end_date = COALESCE(actual_end_date, NOW()), progress = 100, updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_COMPLETED, APQP_SELECT_COLS).as_str()
@@ -1567,13 +1567,13 @@ pub async fn complete_apqp(
                 }
                 Err(e) => {
                     tracing::error!("Failed to complete APQP: {}", e);
-                    Json(ApiResponse::error(500, "完成失败"))
+                    Json(ApiResponse::server_error("完成失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find APQP project: {}", e);
-            Json(ApiResponse::error(404, "APQP项目不存在"))
+            Json(ApiResponse::not_found("APQP项目不存在"))
         }
     }
 }
@@ -1600,7 +1600,7 @@ pub async fn cancel_apqp(
 ) -> Json<ApiResponse<ApqpProject>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的APQP项目ID")),
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -1624,7 +1624,7 @@ pub async fn cancel_apqp(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if apqp_can_transition(&current_status, STATUS_CANCELLED).is_err() {
-                return Json(ApiResponse::error(400, "当前状态不允许取消"));
+                return Json(ApiResponse::bad_request("当前状态不允许取消"));
             }
             let project = sqlx::query_as::<_, ApqpProject>(
                 format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_CANCELLED, APQP_SELECT_COLS).as_str()
@@ -1648,13 +1648,13 @@ pub async fn cancel_apqp(
                 }
                 Err(e) => {
                     tracing::error!("Failed to cancel APQP: {}", e);
-                    Json(ApiResponse::error(500, "取消失败"))
+                    Json(ApiResponse::server_error("取消失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find APQP project: {}", e);
-            Json(ApiResponse::error(404, "APQP项目不存在"))
+            Json(ApiResponse::not_found("APQP项目不存在"))
         }
     }
 }

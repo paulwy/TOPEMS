@@ -99,7 +99,7 @@ pub async fn list_parse_rules(
         Ok(data) => Json(ApiResponse::success(data, "获取解析规则列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch parse rules: {}", e);
-            Json(ApiResponse::error(500, "获取解析规则列表失败"))
+            Json(ApiResponse::server_error("获取解析规则列表失败"))
         }
     }
 }
@@ -123,7 +123,7 @@ pub async fn get_parse_rule(
 ) -> Json<ApiResponse<ParseRule>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的规则ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的规则ID")),
     };
 
     let row = sqlx::query(
@@ -159,10 +159,10 @@ pub async fn get_parse_rule(
             },
             "获取解析规则成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "解析规则不存在")),
+        Ok(None) => Json(ApiResponse::not_found("解析规则不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch parse rule: {}", e);
-            Json(ApiResponse::error(500, "获取解析规则失败"))
+            Json(ApiResponse::server_error("获取解析规则失败"))
         }
     }
 }
@@ -220,7 +220,7 @@ pub async fn create_parse_rule(
         )),
         Err(e) => {
             tracing::error!("Failed to create parse rule: {}", e);
-            Json(ApiResponse::error(500, "创建解析规则失败"))
+            Json(ApiResponse::server_error("创建解析规则失败"))
         }
     }
 }
@@ -232,7 +232,7 @@ pub async fn update_parse_rule(
 ) -> Json<ApiResponse<ParseRule>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的规则ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的规则ID")),
     };
 
     let row = sqlx::query(
@@ -280,10 +280,10 @@ pub async fn update_parse_rule(
             },
             "解析规则更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "解析规则不存在")),
+        Ok(None) => Json(ApiResponse::not_found("解析规则不存在")),
         Err(e) => {
             tracing::error!("Failed to update parse rule: {}", e);
-            Json(ApiResponse::error(500, "更新解析规则失败"))
+            Json(ApiResponse::server_error("更新解析规则失败"))
         }
     }
 }
@@ -294,7 +294,7 @@ pub async fn delete_parse_rule(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的规则ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的规则ID")),
     };
 
     let result = sqlx::query("UPDATE qa_lims_parse_rules SET deleted_at = NOW() WHERE id = $1")
@@ -306,7 +306,7 @@ pub async fn delete_parse_rule(
         Ok(_) => Json(ApiResponse::success(true, "解析规则删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete parse rule: {}", e);
-            Json(ApiResponse::error(500, "删除解析规则失败"))
+            Json(ApiResponse::server_error("删除解析规则失败"))
         }
     }
 }

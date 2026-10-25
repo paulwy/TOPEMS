@@ -249,7 +249,7 @@ pub async fn list_process_routes(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count process routes: {}", e);
-            return Json(ApiResponse::error(500, "获取工艺路线列表失败"));
+            return Json(ApiResponse::server_error("获取工艺路线列表失败"));
         }
     };
 
@@ -281,7 +281,7 @@ pub async fn list_process_routes(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch process routes: {}", e);
-            return Json(ApiResponse::error(500, "获取工艺路线列表失败"));
+            return Json(ApiResponse::server_error("获取工艺路线列表失败"));
         }
     };
 
@@ -366,7 +366,7 @@ pub async fn get_process_route(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺路线ID"));
+            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
         }
     };
 
@@ -428,10 +428,10 @@ pub async fn get_process_route(
                 "获取工艺路线成功",
             ))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工艺路线不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工艺路线不存在")),
         Err(e) => {
             tracing::error!("Failed to get process route: {}", e);
-            Json(ApiResponse::error(500, "获取工艺路线失败"))
+            Json(ApiResponse::server_error("获取工艺路线失败"))
         }
     }
 }
@@ -504,7 +504,7 @@ pub async fn create_process_route(
         }
         Err(e) => {
             tracing::error!("Failed to create process route: {}", e);
-            Json(ApiResponse::error(500, "创建工艺路线失败"))
+            Json(ApiResponse::server_error("创建工艺路线失败"))
         }
     }
 }
@@ -524,7 +524,7 @@ pub async fn update_process_route(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺路线ID"));
+            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
         }
     };
 
@@ -587,10 +587,10 @@ pub async fn update_process_route(
                 "更新工艺路线成功",
             ))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工艺路线不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工艺路线不存在")),
         Err(e) => {
             tracing::error!("Failed to update process route: {}", e);
-            Json(ApiResponse::error(500, "更新工艺路线失败"))
+            Json(ApiResponse::server_error("更新工艺路线失败"))
         }
     }
 }
@@ -609,7 +609,7 @@ pub async fn delete_process_route(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺路线ID"));
+            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
         }
     };
 
@@ -648,7 +648,7 @@ pub async fn delete_process_route(
         }
         Err(e) => {
             tracing::error!("Failed to delete process route: {}", e);
-            Json(ApiResponse::error(500, "删除工艺路线失败"))
+            Json(ApiResponse::server_error("删除工艺路线失败"))
         }
     }
 }
@@ -679,7 +679,7 @@ pub async fn get_route_steps(
     let route_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺路线ID"));
+            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
         }
     };
 
@@ -730,7 +730,7 @@ pub async fn get_route_steps(
         }
         Err(e) => {
             tracing::error!("Failed to get route steps: {}", e);
-            Json(ApiResponse::error(500, "获取工艺路线步骤失败"))
+            Json(ApiResponse::server_error("获取工艺路线步骤失败"))
         }
     }
 }
@@ -750,14 +750,14 @@ pub async fn add_route_step(
     let route_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺路线ID"));
+            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
         }
     };
 
     let process_uuid = match Uuid::parse_str(&body.process_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工序ID"));
+            return Json(ApiResponse::bad_request("无效的工序ID"));
         }
     };
 
@@ -827,7 +827,7 @@ pub async fn add_route_step(
         }
         Err(e) => {
             tracing::error!("Failed to add route step: {}", e);
-            Json(ApiResponse::error(500, "添加工艺路线步骤失败"))
+            Json(ApiResponse::server_error("添加工艺路线步骤失败"))
         }
     }
 }
@@ -861,7 +861,7 @@ pub async fn update_route_step(
     let step_uuid = match Uuid::parse_str(&step_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的步骤ID"));
+            return Json(ApiResponse::bad_request("无效的步骤ID"));
         }
     };
 
@@ -926,10 +926,10 @@ pub async fn update_route_step(
                 "更新工艺路线步骤成功",
             ))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工艺路线步骤不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工艺路线步骤不存在")),
         Err(e) => {
             tracing::error!("Failed to update route step: {}", e);
-            Json(ApiResponse::error(500, "更新工艺路线步骤失败"))
+            Json(ApiResponse::server_error("更新工艺路线步骤失败"))
         }
     }
 }
@@ -948,7 +948,7 @@ pub async fn remove_route_step(
     let step_uuid = match Uuid::parse_str(&step_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的步骤ID"));
+            return Json(ApiResponse::bad_request("无效的步骤ID"));
         }
     };
 
@@ -965,7 +965,7 @@ pub async fn remove_route_step(
         Ok(_) => Json(ApiResponse::success(step_id, "删除工艺路线步骤成功")),
         Err(e) => {
             tracing::error!("Failed to remove route step: {}", e);
-            Json(ApiResponse::error(500, "删除工艺路线步骤失败"))
+            Json(ApiResponse::server_error("删除工艺路线步骤失败"))
         }
     }
 }
@@ -1003,7 +1003,7 @@ pub async fn reorder_route_steps(
     let route_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺路线ID"));
+            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
         }
     };
 
@@ -1011,7 +1011,7 @@ pub async fn reorder_route_steps(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::error(500, "重排序工艺路线步骤失败"));
+            return Json(ApiResponse::server_error("重排序工艺路线步骤失败"));
         }
     };
 
@@ -1019,7 +1019,7 @@ pub async fn reorder_route_steps(
         let step_uuid = match Uuid::parse_str(step_id) {
             Ok(u) => u,
             Err(_) => {
-                return Json(ApiResponse::error(400, "无效的步骤ID"));
+                return Json(ApiResponse::bad_request("无效的步骤ID"));
             }
         };
 
@@ -1037,13 +1037,13 @@ pub async fn reorder_route_steps(
         .await
         {
             tracing::error!("Failed to reorder step: {}", e);
-            return Json(ApiResponse::error(500, "重排序工艺路线步骤失败"));
+            return Json(ApiResponse::server_error("重排序工艺路线步骤失败"));
         }
     }
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::error(500, "重排序工艺路线步骤失败"));
+        return Json(ApiResponse::server_error("重排序工艺路线步骤失败"));
     }
 
     let result = sqlx::query!(
@@ -1093,7 +1093,7 @@ pub async fn reorder_route_steps(
         }
         Err(e) => {
             tracing::error!("Failed to fetch reordered steps: {}", e);
-            Json(ApiResponse::error(500, "获取重排序后的步骤失败"))
+            Json(ApiResponse::server_error("获取重排序后的步骤失败"))
         }
     }
 }

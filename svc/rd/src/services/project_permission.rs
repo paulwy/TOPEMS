@@ -129,7 +129,7 @@ pub async fn check_project_permission<T>(
     let user_id = match claims.user_id() {
         Ok(id) => id,
         Err(_) => {
-            return Err(axum::Json(ApiResponse::error(401, "无效的用户ID")));
+            return Err(axum::Json(ApiResponse::unauthorized("无效的用户ID")));
         }
     };
 
@@ -141,7 +141,7 @@ pub async fn check_project_permission<T>(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("查询项目角色失败: {}", e);
-            return Err(axum::Json(ApiResponse::error(500, "权限检查失败")));
+            return Err(axum::Json(ApiResponse::server_error("权限检查失败")));
         }
     };
 
@@ -177,7 +177,7 @@ pub async fn check_project_owner<T>(
     let user_id = match claims.user_id() {
         Ok(id) => id,
         Err(_) => {
-            return Err(axum::Json(ApiResponse::error(401, "无效的用户ID")));
+            return Err(axum::Json(ApiResponse::unauthorized("无效的用户ID")));
         }
     };
 
@@ -189,7 +189,7 @@ pub async fn check_project_owner<T>(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("查询项目角色失败: {}", e);
-            return Err(axum::Json(ApiResponse::error(500, "权限检查失败")));
+            return Err(axum::Json(ApiResponse::server_error("权限检查失败")));
         }
     };
 

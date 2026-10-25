@@ -495,7 +495,7 @@ pub async fn list_regulations(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list environmental regulations: {}", e);
-            return Json(ApiResponse::error(500, "获取环保法规列表失败"));
+            return Json(ApiResponse::server_error("获取环保法规列表失败"));
         }
     };
 
@@ -568,7 +568,7 @@ pub async fn create_regulation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create environmental regulation: {}", e);
-            return Json(ApiResponse::error(500, "环保法规创建失败"));
+            return Json(ApiResponse::server_error("环保法规创建失败"));
         }
     };
     let regulation = environmental_regulation_from_row(&row);
@@ -609,10 +609,10 @@ pub async fn get_regulation(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "环保法规不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("环保法规不存在")),
         Err(e) => {
             tracing::error!("Failed to get environmental regulation: {}", e);
-            return Json(ApiResponse::error(500, "获取环保法规失败"));
+            return Json(ApiResponse::server_error("获取环保法规失败"));
         }
     };
     let regulation = environmental_regulation_from_row(&row);
@@ -720,10 +720,10 @@ pub async fn update_regulation(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "环保法规不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("环保法规不存在")),
         Err(e) => {
             tracing::error!("Failed to update environmental regulation: {}", e);
-            return Json(ApiResponse::error(500, "环保法规更新失败"));
+            return Json(ApiResponse::server_error("环保法规更新失败"));
         }
     };
     let regulation = environmental_regulation_from_row(&row);
@@ -761,11 +761,11 @@ pub async fn delete_regulation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete environmental regulation: {}", e);
-            return Json(ApiResponse::error(500, "环保法规删除失败"));
+            return Json(ApiResponse::server_error("环保法规删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "环保法规不存在"));
+        return Json(ApiResponse::not_found("环保法规不存在"));
     }
     Json(ApiResponse::success((), "环保法规删除成功"))
 }
@@ -816,7 +816,7 @@ pub async fn update_monitor_record(
     add("remarks", req.remarks);
 
     if sets.is_empty() {
-        return Json(ApiResponse::error(400, "无更新字段"));
+        return Json(ApiResponse::bad_request("无更新字段"));
     }
     sets.push(format!("updated_at = ${}", params.len() + 1));
     params.push(chrono::Utc::now().to_rfc3339());
@@ -847,7 +847,7 @@ pub async fn update_monitor_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update monitor record: {}", e);
-            return Json(ApiResponse::error(404, "监测记录不存在或更新失败"));
+            return Json(ApiResponse::not_found("监测记录不存在或更新失败"));
         }
     };
     Json(ApiResponse::success(
@@ -889,10 +889,10 @@ pub async fn get_permit(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "排污许可不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("排污许可不存在")),
         Err(e) => {
             tracing::error!("Failed to get discharge permit: {}", e);
-            return Json(ApiResponse::error(500, "获取排污许可失败"));
+            return Json(ApiResponse::server_error("获取排污许可失败"));
         }
     };
     let permit = discharge_permit_from_row(&row);
@@ -1004,10 +1004,10 @@ pub async fn update_permit(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "排污许可不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("排污许可不存在")),
         Err(e) => {
             tracing::error!("Failed to update discharge permit: {}", e);
-            return Json(ApiResponse::error(500, "排污许可更新失败"));
+            return Json(ApiResponse::server_error("排污许可更新失败"));
         }
     };
     let permit = discharge_permit_from_row(&row);
@@ -1045,11 +1045,11 @@ pub async fn delete_permit(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete discharge permit: {}", e);
-            return Json(ApiResponse::error(500, "排污许可删除失败"));
+            return Json(ApiResponse::server_error("排污许可删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "排污许可不存在"));
+        return Json(ApiResponse::not_found("排污许可不存在"));
     }
     Json(ApiResponse::success((), "排污许可删除成功"))
 }
@@ -1132,7 +1132,7 @@ pub async fn list_evaluations(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list compliance assessments: {}", e);
-            return Json(ApiResponse::error(500, "获取合规性评价列表失败"));
+            return Json(ApiResponse::server_error("获取合规性评价列表失败"));
         }
     };
     let list: Vec<ComplianceAssessment> = rows.iter().map(compliance_assessment_from_row).collect();
@@ -1201,7 +1201,7 @@ pub async fn create_evaluation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create compliance assessment: {}", e);
-            return Json(ApiResponse::error(500, "合规性评价创建失败"));
+            return Json(ApiResponse::server_error("合规性评价创建失败"));
         }
     };
     let assessment = compliance_assessment_from_row(&row);
@@ -1246,10 +1246,10 @@ pub async fn get_evaluation(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "合规性评价不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("合规性评价不存在")),
         Err(e) => {
             tracing::error!("Failed to get compliance assessment: {}", e);
-            return Json(ApiResponse::error(500, "获取评价详情失败"));
+            return Json(ApiResponse::server_error("获取评价详情失败"));
         }
     };
     let assessment = compliance_assessment_from_row(&row);
@@ -1365,10 +1365,10 @@ pub async fn update_evaluation(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "合规性评价不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("合规性评价不存在")),
         Err(e) => {
             tracing::error!("Failed to update compliance assessment: {}", e);
-            return Json(ApiResponse::error(500, "评价更新失败"));
+            return Json(ApiResponse::server_error("评价更新失败"));
         }
     };
     let assessment = compliance_assessment_from_row(&row);
@@ -1409,11 +1409,11 @@ pub async fn delete_evaluation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete compliance assessment: {}", e);
-            return Json(ApiResponse::error(500, "评价删除失败"));
+            return Json(ApiResponse::server_error("评价删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "合规性评价不存在"));
+        return Json(ApiResponse::not_found("合规性评价不存在"));
     }
     Json(ApiResponse::success((), "评价删除成功"))
 }
@@ -1469,7 +1469,7 @@ pub async fn list_monitor_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list monitor records: {}", e);
-            return Json(ApiResponse::error(500, "获取环境监测记录列表失败"));
+            return Json(ApiResponse::server_error("获取环境监测记录列表失败"));
         }
     };
     let records: Vec<EnvironmentMonitor> = rows.iter().map(monitor_record_from_row).collect();
@@ -1534,7 +1534,7 @@ pub async fn create_monitor_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create monitor record: {}", e);
-            return Json(ApiResponse::error(500, "创建环境监测记录失败"));
+            return Json(ApiResponse::server_error("创建环境监测记录失败"));
         }
     };
     Json(ApiResponse::success(
@@ -1619,7 +1619,7 @@ pub async fn list_permits(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list discharge permits: {}", e);
-            return Json(ApiResponse::error(500, "获取排污许可列表失败"));
+            return Json(ApiResponse::server_error("获取排污许可列表失败"));
         }
     };
     let list: Vec<DischargePermit> = rows.iter().map(discharge_permit_from_row).collect();
@@ -1688,7 +1688,7 @@ pub async fn create_permit(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create discharge permit: {}", e);
-            return Json(ApiResponse::error(500, "排污许可创建失败"));
+            return Json(ApiResponse::server_error("排污许可创建失败"));
         }
     };
     let permit = discharge_permit_from_row(&row);
@@ -1755,7 +1755,7 @@ pub async fn list_incidents(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list incidents: {}", e);
-            return Json(ApiResponse::error(500, "获取环境事件列表失败"));
+            return Json(ApiResponse::server_error("获取环境事件列表失败"));
         }
     };
     let records: Vec<EnvironmentIncident> = rows.iter().map(incident_from_row).collect();
@@ -1819,7 +1819,7 @@ pub async fn create_incident(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create incident: {}", e);
-            return Json(ApiResponse::error(500, "创建环境事件失败"));
+            return Json(ApiResponse::server_error("创建环境事件失败"));
         }
     };
     Json(ApiResponse::success(
@@ -1868,7 +1868,7 @@ pub async fn get_incident(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to get incident: {}", e);
-            return Json(ApiResponse::error(404, "环境事件不存在"));
+            return Json(ApiResponse::not_found("环境事件不存在"));
         }
     };
     Json(ApiResponse::success(
@@ -1913,7 +1913,7 @@ pub async fn update_incident(
     add("preventive_measures", req.preventive_measures);
 
     if sets.is_empty() {
-        return Json(ApiResponse::error(400, "无更新字段"));
+        return Json(ApiResponse::bad_request("无更新字段"));
     }
     sets.push(format!("updated_at = ${}", params.len() + 1));
     params.push(chrono::Utc::now().to_rfc3339());
@@ -1946,7 +1946,7 @@ pub async fn update_incident(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update incident: {}", e);
-            return Json(ApiResponse::error(404, "环境事件不存在或更新失败"));
+            return Json(ApiResponse::not_found("环境事件不存在或更新失败"));
         }
     };
     Json(ApiResponse::success(
@@ -1988,10 +1988,10 @@ pub async fn delete_incident(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "环境事件删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "环境事件不存在")),
+        Ok(_) => Json(ApiResponse::not_found("环境事件不存在")),
         Err(e) => {
             tracing::error!("Failed to delete incident: {}", e);
-            Json(ApiResponse::error(500, "删除环境事件失败"))
+            Json(ApiResponse::server_error("删除环境事件失败"))
         }
     }
 }
@@ -2129,7 +2129,7 @@ pub async fn list_regulation_categories(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     tracing::warn!("Environmental regulation categories data source not yet enabled");
-    Json(ApiResponse::error(501, "法规分类数据源尚未启用"))
+    Json(ApiResponse::not_implemented("法规分类数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -2145,7 +2145,7 @@ pub async fn list_monitor_types(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     tracing::warn!("Environmental monitor types data source not yet enabled");
-    Json(ApiResponse::error(501, "监测类型数据源尚未启用"))
+    Json(ApiResponse::not_implemented("监测类型数据源尚未启用"))
 }
 
 /// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。

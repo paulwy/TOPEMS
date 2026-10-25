@@ -193,7 +193,7 @@ pub async fn list_documents(
         }
         Err(e) => {
             tracing::error!("获取文档列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取文档列表失败"))
+            Json(ApiResponse::server_error("获取文档列表失败"))
         }
     }
 }
@@ -288,7 +288,7 @@ pub async fn search_documents(
         }
         Err(e) => {
             tracing::error!("搜索文档失败: {}", e);
-            Json(ApiResponse::error(500, "搜索文档失败"))
+            Json(ApiResponse::server_error("搜索文档失败"))
         }
     }
 }
@@ -319,10 +319,10 @@ pub async fn create_document(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.document_no.is_empty() {
-        return Json(ApiResponse::error(400, "文档编号不能为空"));
+        return Json(ApiResponse::bad_request("文档编号不能为空"));
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::error(400, "文档名称不能为空"));
+        return Json(ApiResponse::bad_request("文档名称不能为空"));
     }
 
     let id = Uuid::new_v4();
@@ -361,9 +361,9 @@ pub async fn create_document(
         Err(e) => {
             tracing::error!("创建文档失败: {}", e);
             if e.to_string().contains("unique constraint") {
-                Json(ApiResponse::error(409, "文档编号已存在"))
+                Json(ApiResponse::conflict("文档编号已存在"))
             } else {
-                Json(ApiResponse::error(500, "创建文档失败"))
+                Json(ApiResponse::server_error("创建文档失败"))
             }
         }
     }
@@ -412,10 +412,10 @@ pub async fn get_document(
 
     match result {
         Ok(Some(document)) => Json(ApiResponse::success(document, "获取文档成功")),
-        Ok(None) => Json(ApiResponse::error(404, "文档不存在")),
+        Ok(None) => Json(ApiResponse::not_found("文档不存在")),
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            Json(ApiResponse::error(500, "获取文档失败"))
+            Json(ApiResponse::server_error("获取文档失败"))
         }
     }
 }
@@ -464,10 +464,10 @@ pub async fn update_document(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::error(404, "文档不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("文档不存在")),
         Err(e) => {
             tracing::error!("查询文档失败: {}", e);
-            return Json(ApiResponse::error(500, "查询文档失败"));
+            return Json(ApiResponse::server_error("查询文档失败"));
         }
     };
 
@@ -517,9 +517,9 @@ pub async fn update_document(
         Err(e) => {
             tracing::error!("更新文档失败: {}", e);
             if e.to_string().contains("unique constraint") {
-                Json(ApiResponse::error(409, "文档编号已存在"))
+                Json(ApiResponse::conflict("文档编号已存在"))
             } else {
-                Json(ApiResponse::error(500, "更新文档失败"))
+                Json(ApiResponse::server_error("更新文档失败"))
             }
         }
     }
@@ -551,7 +551,7 @@ pub async fn update_document_status(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.status.trim().is_empty() {
-        return Json(ApiResponse::error(400, "文档状态不能为空"));
+        return Json(ApiResponse::bad_request("文档状态不能为空"));
     }
 
     let result = sqlx::query_as::<_, Document>(
@@ -571,10 +571,10 @@ pub async fn update_document_status(
 
     match result {
         Ok(Some(document)) => Json(ApiResponse::success(document, "更新文档状态成功")),
-        Ok(None) => Json(ApiResponse::error(404, "文档不存在")),
+        Ok(None) => Json(ApiResponse::not_found("文档不存在")),
         Err(e) => {
             tracing::error!("更新文档状态失败: {}", e);
-            Json(ApiResponse::error(500, "更新文档状态失败"))
+            Json(ApiResponse::server_error("更新文档状态失败"))
         }
     }
 }
@@ -616,10 +616,10 @@ pub async fn delete_document(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "删除文档成功")),
-        Ok(_) => Json(ApiResponse::error(404, "文档不存在")),
+        Ok(_) => Json(ApiResponse::not_found("文档不存在")),
         Err(e) => {
             tracing::error!("删除文档失败: {}", e);
-            Json(ApiResponse::error(500, "删除文档失败"))
+            Json(ApiResponse::server_error("删除文档失败"))
         }
     }
 }
@@ -670,15 +670,15 @@ pub async fn start_document_approval(
 
     let document = match document_result {
         Ok(Some(d)) => d,
-        Ok(None) => return Json(ApiResponse::error(404, "文档不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("文档不存在")),
         Err(e) => {
             tracing::error!("查询文档失败: {}", e);
-            return Json(ApiResponse::error(500, "查询文档失败"));
+            return Json(ApiResponse::server_error("查询文档失败"));
         }
     };
 
     if document.status != "active" {
-        return Json(ApiResponse::error(400, "文档状态不正确，无法发起审批"));
+        return Json(ApiResponse::bad_request("文档状态不正确，无法发起审批"));
     }
 
     let workflow_result = sqlx::query(
@@ -694,10 +694,10 @@ pub async fn start_document_approval(
 
     let workflow = match workflow_result {
         Ok(Some(w)) => w,
-        Ok(None) => return Json(ApiResponse::error(404, "工作流不存在或未激活")),
+        Ok(None) => return Json(ApiResponse::not_found("工作流不存在或未激活")),
         Err(e) => {
             tracing::error!("查询工作流失败: {}", e);
-            return Json(ApiResponse::error(500, "查询工作流失败"));
+            return Json(ApiResponse::server_error("查询工作流失败"));
         }
     };
 
@@ -783,7 +783,7 @@ pub async fn start_document_approval(
         }
         Err(e) => {
             tracing::error!("启动文档审批失败: {}", e);
-            Json(ApiResponse::error(500, "启动文档审批失败"))
+            Json(ApiResponse::server_error("启动文档审批失败"))
         }
     }
 }
@@ -861,7 +861,7 @@ pub async fn get_document_approval_history(
         }
         Err(e) => {
             tracing::error!("获取文档审批历史失败: {}", e);
-            Json(ApiResponse::error(500, "获取文档审批历史失败"))
+            Json(ApiResponse::server_error("获取文档审批历史失败"))
         }
     }
 }
@@ -937,7 +937,7 @@ pub async fn list_pending_documents(
         }
         Err(e) => {
             tracing::error!("获取待审批文档列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取待审批文档列表失败"))
+            Json(ApiResponse::server_error("获取待审批文档列表失败"))
         }
     }
 }

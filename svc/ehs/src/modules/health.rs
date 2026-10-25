@@ -147,7 +147,7 @@ pub async fn list_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list health records: {}", e);
-            return Json(ApiResponse::error(500, "获取健康监测记录列表失败"));
+            return Json(ApiResponse::server_error("获取健康监测记录列表失败"));
         }
     };
 
@@ -207,7 +207,7 @@ pub async fn create_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create health record: {}", e);
-            return Json(ApiResponse::error(500, "创建健康监测记录失败"));
+            return Json(ApiResponse::server_error("创建健康监测记录失败"));
         }
     };
 
@@ -245,7 +245,7 @@ pub async fn get_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to get health record: {}", e);
-            return Json(ApiResponse::error(404, "健康记录不存在"));
+            return Json(ApiResponse::not_found("健康记录不存在"));
         }
     };
     Json(ApiResponse::success(
@@ -281,7 +281,7 @@ pub async fn update_record(
     add("remarks", req.remarks);
 
     if sets.is_empty() {
-        return Json(ApiResponse::error(400, "无更新字段"));
+        return Json(ApiResponse::bad_request("无更新字段"));
     }
     sets.push(format!("updated_at = ${}", params.len() + 1));
     params.push(chrono::Utc::now().to_rfc3339());
@@ -315,7 +315,7 @@ pub async fn update_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update health record: {}", e);
-            return Json(ApiResponse::error(404, "健康记录不存在或更新失败"));
+            return Json(ApiResponse::not_found("健康记录不存在或更新失败"));
         }
     };
     Json(ApiResponse::success(
@@ -346,10 +346,10 @@ pub async fn delete_record(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "健康记录删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "健康记录不存在")),
+        Ok(_) => Json(ApiResponse::not_found("健康记录不存在")),
         Err(e) => {
             tracing::error!("Failed to delete health record: {}", e);
-            Json(ApiResponse::error(500, "删除健康记录失败"))
+            Json(ApiResponse::server_error("删除健康记录失败"))
         }
     }
 }

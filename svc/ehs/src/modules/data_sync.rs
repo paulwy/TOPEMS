@@ -150,7 +150,7 @@ pub async fn list_sync_records(
         Ok(data) => Json(ApiResponse::success(data, "获取同步记录列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch sync records: {}", e);
-            Json(ApiResponse::error(500, "获取同步记录列表失败"))
+            Json(ApiResponse::server_error("获取同步记录列表失败"))
         }
     }
 }
@@ -172,7 +172,7 @@ pub async fn get_sync_record(
 ) -> Json<ApiResponse<SyncRecord>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的同步记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的同步记录ID")),
     };
 
     let row = sqlx::query(
@@ -200,10 +200,10 @@ pub async fn get_sync_record(
             },
             "获取同步记录成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "同步记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("同步记录不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch sync record: {}", e);
-            Json(ApiResponse::error(500, "获取同步记录失败"))
+            Json(ApiResponse::server_error("获取同步记录失败"))
         }
     }
 }
@@ -222,7 +222,7 @@ pub async fn sync_hazard_to_qms(
     Json(_req): Json<SyncHazardToQmsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
+    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -238,7 +238,7 @@ pub async fn sync_accident_to_lims(
     Json(_req): Json<SyncAccidentToLimsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
+    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -258,7 +258,7 @@ pub async fn retry_sync(
 ) -> Json<ApiResponse<SyncRecord>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的同步记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的同步记录ID")),
     };
 
     let row = sqlx::query(
@@ -286,10 +286,10 @@ pub async fn retry_sync(
             },
             "同步记录已重置为待处理",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "同步记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("同步记录不存在")),
         Err(e) => {
             tracing::error!("Failed to retry sync: {}", e);
-            Json(ApiResponse::error(500, "同步重试失败"))
+            Json(ApiResponse::server_error("同步重试失败"))
         }
     }
 }
@@ -311,7 +311,7 @@ pub async fn delete_sync_record(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的同步记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的同步记录ID")),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -326,7 +326,7 @@ pub async fn delete_sync_record(
         Ok(_) => Json(ApiResponse::success(true, "同步记录删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete sync record: {}", e);
-            Json(ApiResponse::error(500, "同步记录删除失败"))
+            Json(ApiResponse::server_error("同步记录删除失败"))
         }
     }
 }
@@ -353,7 +353,7 @@ pub async fn list_sync_configs(
     State(_state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<SyncConfig>> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
+    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -369,7 +369,7 @@ pub async fn update_sync_configs(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<SyncConfig>> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
+    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -385,7 +385,7 @@ pub async fn get_sync_config(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<SyncConfig>> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
+    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -401,5 +401,5 @@ pub async fn batch_retry_sync(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::error(501, "数据同步数据源尚未启用"))
+    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
 }

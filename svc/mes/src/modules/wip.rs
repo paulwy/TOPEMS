@@ -83,7 +83,7 @@ async fn stub_wip_transfer_detail(
             Json(ApiResponse::success(vec![record], "调拨记录查询成功"))
         }
         Ok(None) => Json(ApiResponse::success(vec![], "调拨单不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {e}"))),
+        Err(e) => Json(ApiResponse::server_error(&format!("查询失败: {e}"))),
     }
 }
 
@@ -284,7 +284,7 @@ pub async fn list_wips(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count WIPs: {}", e);
-            return Json(ApiResponse::error(500, "获取WIP列表失败"));
+            return Json(ApiResponse::server_error("获取WIP列表失败"));
         }
     };
 
@@ -321,7 +321,7 @@ pub async fn list_wips(
         Ok(w) => w,
         Err(e) => {
             tracing::error!("Failed to fetch WIP list: {}", e);
-            return Json(ApiResponse::error(500, "获取WIP列表失败"));
+            return Json(ApiResponse::server_error("获取WIP列表失败"));
         }
     };
 
@@ -477,7 +477,7 @@ Utc::now(),
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create WIP: {}", e);
-            return Json(ApiResponse::error(500, "创建WIP失败"));
+            return Json(ApiResponse::server_error("创建WIP失败"));
         }
     };
 
@@ -553,7 +553,7 @@ pub async fn get_wip(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch WIP: {}", e);
-            return Json(ApiResponse::error(500, "获取WIP失败"));
+            return Json(ApiResponse::server_error("获取WIP失败"));
         }
     };
 
@@ -583,7 +583,7 @@ pub async fn get_wip(
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
-        None => Json(ApiResponse::error(404, "WIP不存在")),
+        None => Json(ApiResponse::not_found("WIP不存在")),
     }
 }
 
@@ -641,7 +641,7 @@ pub async fn update_wip(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update WIP: {}", e);
-            return Json(ApiResponse::error(500, "更新WIP失败"));
+            return Json(ApiResponse::server_error("更新WIP失败"));
         }
     };
 
@@ -671,7 +671,7 @@ pub async fn update_wip(
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }
-        None => Json(ApiResponse::error(404, "WIP不存在")),
+        None => Json(ApiResponse::not_found("WIP不存在")),
     }
 }
 
@@ -711,14 +711,14 @@ pub async fn delete_wip(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete WIP: {}", e);
-            return Json(ApiResponse::error(500, "删除WIP失败"));
+            return Json(ApiResponse::server_error("删除WIP失败"));
         }
     };
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success("".to_string(), "WIP删除成功"))
     } else {
-        Json(ApiResponse::error(404, "WIP不存在或状态不允许删除"))
+        Json(ApiResponse::not_found("WIP不存在或状态不允许删除"))
     }
 }
 
@@ -753,7 +753,7 @@ pub async fn transfer_wip(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::error(500, "WIP转移失败"));
+            return Json(ApiResponse::server_error("WIP转移失败"));
         }
     };
 
@@ -768,19 +768,19 @@ pub async fn transfer_wip(
         Ok(Some(w)) => w,
         Ok(None) => {
             let _ = tx.rollback().await;
-            return Json(ApiResponse::error(404, "WIP不存在"));
+            return Json(ApiResponse::not_found("WIP不存在"));
         }
         Err(e) => {
             tracing::error!("Failed to fetch WIP: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::error(500, "WIP转移失败"));
+            return Json(ApiResponse::server_error("WIP转移失败"));
         }
     };
 
     let current_qty = big_decimal_to_f64(Some(wip.quantity));
     if req.quantity > current_qty {
         let _ = tx.rollback().await;
-        return Json(ApiResponse::error(400, "转移数量不能大于当前WIP数量"));
+        return Json(ApiResponse::bad_request("转移数量不能大于当前WIP数量"));
     }
 
     let transfer_result = sqlx::query!(
@@ -819,7 +819,7 @@ pub async fn transfer_wip(
         Err(e) => {
             tracing::error!("Failed to create WIP transfer: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::error(500, "WIP转移失败"));
+            return Json(ApiResponse::server_error("WIP转移失败"));
         }
     };
 
@@ -842,7 +842,7 @@ pub async fn transfer_wip(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::error(500, "WIP转移失败"));
+        return Json(ApiResponse::server_error("WIP转移失败"));
     }
 
     let from_process_name = if let Some(pid) = req.from_process_id {
@@ -975,7 +975,7 @@ pub async fn list_wip_transfers(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to fetch WIP transfers: {}", e);
-            return Json(ApiResponse::error(500, "获取WIP转移记录失败"));
+            return Json(ApiResponse::server_error("获取WIP转移记录失败"));
         }
     };
 
@@ -1045,7 +1045,7 @@ pub async fn get_wip_statistics(
         }
         Err(e) => {
             tracing::error!("Failed to fetch WIP statistics: {}", e);
-            return Json(ApiResponse::error(500, "获取WIP统计失败"));
+            return Json(ApiResponse::server_error("获取WIP统计失败"));
         }
     };
 
@@ -1077,7 +1077,7 @@ pub async fn get_wip_statistics(
             .collect(),
         Err(e) => {
             tracing::error!("Failed to fetch WIP status stats: {}", e);
-            return Json(ApiResponse::error(500, "获取WIP统计失败"));
+            return Json(ApiResponse::server_error("获取WIP统计失败"));
         }
     };
 
@@ -1113,7 +1113,7 @@ pub async fn get_wip_statistics(
             .collect(),
         Err(e) => {
             tracing::error!("Failed to fetch WIP process stats: {}", e);
-            return Json(ApiResponse::error(500, "获取WIP统计失败"));
+            return Json(ApiResponse::server_error("获取WIP统计失败"));
         }
     };
 

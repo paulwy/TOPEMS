@@ -72,7 +72,7 @@ pub async fn create_integration_sample(
         )),
         Err(e) => {
             tracing::error!("[integration] 创建样本失败: {}", e);
-            Json(ApiResponse::error(500, "集成样本创建失败"))
+            Json(ApiResponse::server_error("集成样本创建失败"))
         }
     }
 }
@@ -101,7 +101,7 @@ pub async fn create_integration_task(
     .unwrap_or(None);
 
     let Some(sample_id) = sample_id else {
-        return Json(ApiResponse::error(404, "关联样本不存在，无法创建集成任务"));
+        return Json(ApiResponse::not_found("关联样本不存在，无法创建集成任务"));
     };
 
     let status = req.status.unwrap_or_else(|| "pending".to_string());
@@ -134,7 +134,7 @@ pub async fn create_integration_task(
         )),
         Err(e) => {
             tracing::error!("[integration] 创建任务失败: {}", e);
-            Json(ApiResponse::error(500, "集成任务创建失败"))
+            Json(ApiResponse::server_error("集成任务创建失败"))
         }
     }
 }

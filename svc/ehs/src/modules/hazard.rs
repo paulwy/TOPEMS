@@ -253,7 +253,7 @@ pub async fn list_hazards(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list hazards: {}", e);
-            return Json(ApiResponse::error(500, "获取隐患列表失败"));
+            return Json(ApiResponse::server_error("获取隐患列表失败"));
         }
     };
 
@@ -481,12 +481,12 @@ pub async fn get_hazard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to get hazard: {}", e);
-            return Json(ApiResponse::error(500, "获取隐患详情失败"));
+            return Json(ApiResponse::server_error("获取隐患详情失败"));
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::error(404, "隐患不存在")),
+        None => return Json(ApiResponse::not_found("隐患不存在")),
     };
 
     let hazard = Hazard {
@@ -622,10 +622,10 @@ pub async fn update_hazard(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "隐患不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("隐患不存在")),
         Err(e) => {
             tracing::error!("Failed to update hazard: {}", e);
-            return Json(ApiResponse::error(500, "隐患更新失败"));
+            return Json(ApiResponse::server_error("隐患更新失败"));
         }
     };
 
@@ -744,12 +744,12 @@ pub async fn start_hazard_approval(
     .await;
     match upd {
         Ok(r) if r.rows_affected() == 0 => {
-            return Json(ApiResponse::error(404, "隐患不存在"));
+            return Json(ApiResponse::not_found("隐患不存在"));
         }
         Ok(_) => {}
         Err(e) => {
             tracing::error!("Failed to start hazard approval: {}", e);
-            return Json(ApiResponse::error(500, "启动隐患审批失败"));
+            return Json(ApiResponse::server_error("启动隐患审批失败"));
         }
     }
 
@@ -780,7 +780,7 @@ pub async fn start_hazard_approval(
             hazard.approval_status = Some("pending".to_string());
             Json(ApiResponse::success(hazard, "隐患审批流程已启动"))
         }
-        Ok(None) => Json(ApiResponse::error(404, "隐患不存在")),
+        Ok(None) => Json(ApiResponse::not_found("隐患不存在")),
         Err((code, msg)) => Json(ApiResponse::error(code, msg)),
     }
 }
@@ -817,12 +817,12 @@ pub async fn close_hazard(
     .await;
     match upd {
         Ok(r) if r.rows_affected() == 0 => {
-            return Json(ApiResponse::error(404, "隐患不存在"));
+            return Json(ApiResponse::not_found("隐患不存在"));
         }
         Ok(_) => {}
         Err(e) => {
             tracing::error!("Failed to close hazard: {}", e);
-            return Json(ApiResponse::error(500, "关闭隐患失败"));
+            return Json(ApiResponse::server_error("关闭隐患失败"));
         }
     }
     let cache_key = hazard_cache_key(tenant_id, &id);
@@ -830,7 +830,7 @@ pub async fn close_hazard(
     state.hazard_cache.clear_l1();
     match fetch_hazard_row(&state, &id, &tenant_bind).await {
         Ok(Some(row)) => Json(ApiResponse::success(hazard_from_row(&row), "隐患已关闭")),
-        Ok(None) => Json(ApiResponse::error(404, "隐患不存在")),
+        Ok(None) => Json(ApiResponse::not_found("隐患不存在")),
         Err((code, msg)) => Json(ApiResponse::error(code, msg)),
     }
 }
@@ -884,7 +884,7 @@ pub async fn create_rectification(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create rectification: {}", e);
-            return Json(ApiResponse::error(500, "整改方案创建失败"));
+            return Json(ApiResponse::server_error("整改方案创建失败"));
         }
     };
 
@@ -972,10 +972,10 @@ pub async fn update_rectification(
     .await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "整改方案不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("整改方案不存在")),
         Err(e) => {
             tracing::error!("Failed to update rectification: {}", e);
-            return Json(ApiResponse::error(500, "整改方案更新失败"));
+            return Json(ApiResponse::server_error("整改方案更新失败"));
         }
     };
 
@@ -1028,12 +1028,12 @@ pub async fn submit_rectification(
     .await;
     match upd {
         Ok(r) if r.rows_affected() == 0 => {
-            return Json(ApiResponse::error(404, "整改方案不存在"));
+            return Json(ApiResponse::not_found("整改方案不存在"));
         }
         Ok(_) => {}
         Err(e) => {
             tracing::error!("Failed to submit rectification: {}", e);
-            return Json(ApiResponse::error(500, "整改提交失败"));
+            return Json(ApiResponse::server_error("整改提交失败"));
         }
     }
 
@@ -1111,7 +1111,7 @@ pub async fn verify_hazard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to verify hazard: {}", e);
-            return Json(ApiResponse::error(500, "隐患验收失败"));
+            return Json(ApiResponse::server_error("隐患验收失败"));
         }
     };
 
@@ -1269,7 +1269,7 @@ pub async fn list_safety_hazards(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list safety hazards: {}", e);
-            return Json(ApiResponse::error(500, "获取危险源列表失败"));
+            return Json(ApiResponse::server_error("获取危险源列表失败"));
         }
     };
     let list: Vec<SafetyHazard> = rows.iter().map(safety_hazard_from_row).collect();
@@ -1332,7 +1332,7 @@ pub async fn create_safety_hazard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create safety hazard: {}", e);
-            return Json(ApiResponse::error(500, "危险源创建失败"));
+            return Json(ApiResponse::server_error("危险源创建失败"));
         }
     };
     let record = safety_hazard_from_row(&row);
@@ -1371,10 +1371,10 @@ pub async fn get_safety_hazard(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "危险源不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("危险源不存在")),
         Err(e) => {
             tracing::error!("Failed to get safety hazard: {}", e);
-            return Json(ApiResponse::error(500, "获取危险源失败"));
+            return Json(ApiResponse::server_error("获取危险源失败"));
         }
     };
     let record = safety_hazard_from_row(&row);
@@ -1472,10 +1472,10 @@ pub async fn update_safety_hazard(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "危险源不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("危险源不存在")),
         Err(e) => {
             tracing::error!("Failed to update safety hazard: {}", e);
-            return Json(ApiResponse::error(500, "危险源更新失败"));
+            return Json(ApiResponse::server_error("危险源更新失败"));
         }
     };
     let record = safety_hazard_from_row(&row);
@@ -1513,11 +1513,11 @@ pub async fn delete_safety_hazard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete safety hazard: {}", e);
-            return Json(ApiResponse::error(500, "危险源删除失败"));
+            return Json(ApiResponse::server_error("危险源删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "危险源不存在"));
+        return Json(ApiResponse::not_found("危险源不存在"));
     }
     Json(ApiResponse::success((), "危险源删除成功"))
 }
@@ -1734,7 +1734,7 @@ pub async fn list_risk_assessments_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list hazard risk assessments: {}", e);
-            return Json(ApiResponse::error(500, "获取风险评估列表失败"));
+            return Json(ApiResponse::server_error("获取风险评估列表失败"));
         }
     };
     let list: Vec<RiskAssessment> = rows.iter().map(hazard_risk_assessment_from_row).collect();
@@ -1775,7 +1775,7 @@ pub async fn list_control_measures_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list hazard control measures: {}", e);
-            return Json(ApiResponse::error(500, "获取管控措施列表失败"));
+            return Json(ApiResponse::server_error("获取管控措施列表失败"));
         }
     };
     let list: Vec<ControlMeasure> = rows.iter().map(hazard_control_measure_from_row).collect();
@@ -1822,7 +1822,7 @@ pub async fn create_control_measure_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create hazard control measure: {}", e);
-            return Json(ApiResponse::error(500, "管控措施创建失败"));
+            return Json(ApiResponse::server_error("管控措施创建失败"));
         }
     };
     let record = hazard_control_measure_from_row(&row);
@@ -1863,11 +1863,11 @@ pub async fn delete_control_measure_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete hazard control measure: {}", e);
-            return Json(ApiResponse::error(500, "管控措施删除失败"));
+            return Json(ApiResponse::server_error("管控措施删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "管控措施不存在"));
+        return Json(ApiResponse::not_found("管控措施不存在"));
     }
     Json(ApiResponse::success((), "管控措施删除成功"))
 }

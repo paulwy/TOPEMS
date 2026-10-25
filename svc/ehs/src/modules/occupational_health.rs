@@ -405,7 +405,7 @@ pub async fn list_exam_plans(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list exam plans: {}", e);
-            return Json(ApiResponse::error(500, "体检计划列表获取失败"));
+            return Json(ApiResponse::server_error("体检计划列表获取失败"));
         }
     };
     let list: Vec<HealthExamPlan> = rows
@@ -498,10 +498,10 @@ pub async fn get_exam_plan(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "体检计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("体检计划不存在")),
         Err(e) => {
             tracing::error!("Failed to get exam plan {}: {}", id, e);
-            return Json(ApiResponse::error(500, "体检计划获取失败"));
+            return Json(ApiResponse::server_error("体检计划获取失败"));
         }
     };
     let plan = HealthExamPlan {
@@ -614,7 +614,7 @@ pub async fn list_exam_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list exam records: {}", e);
-            return Json(ApiResponse::error(500, "体检记录列表获取失败"));
+            return Json(ApiResponse::server_error("体检记录列表获取失败"));
         }
     };
     let list: Vec<HealthExamRecord> = rows
@@ -724,10 +724,10 @@ pub async fn get_exam_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "体检记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("体检记录不存在")),
         Err(e) => {
             tracing::error!("Failed to get exam record {}: {}", id, e);
-            return Json(ApiResponse::error(500, "体检记录获取失败"));
+            return Json(ApiResponse::server_error("体检记录获取失败"));
         }
     };
     let rec = HealthExamRecord {
@@ -855,7 +855,7 @@ pub async fn list_contraindications(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list contraindications: {}", e);
-            return Json(ApiResponse::error(500, "职业禁忌症列表获取失败"));
+            return Json(ApiResponse::server_error("职业禁忌症列表获取失败"));
         }
     };
     let list: Vec<Contraindication> = rows
@@ -946,10 +946,10 @@ pub async fn get_contraindication(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "职业禁忌症不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("职业禁忌症不存在")),
         Err(e) => {
             tracing::error!("Failed to get contraindication {}: {}", id, e);
-            return Json(ApiResponse::error(500, "职业禁忌症获取失败"));
+            return Json(ApiResponse::server_error("职业禁忌症获取失败"));
         }
     };
     let contra = Contraindication {
@@ -1181,7 +1181,7 @@ pub async fn list_health_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list health records: {}", e);
-            return Json(ApiResponse::error(500, "获取健康档案列表失败"));
+            return Json(ApiResponse::server_error("获取健康档案列表失败"));
         }
     };
     let list: Vec<HealthRecord> = rows.iter().map(health_record_from_row).collect();
@@ -1244,7 +1244,7 @@ pub async fn create_health_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create health record: {}", e);
-            return Json(ApiResponse::error(500, "健康档案创建失败"));
+            return Json(ApiResponse::server_error("健康档案创建失败"));
         }
     };
     let record = health_record_from_row(&row);
@@ -1284,10 +1284,10 @@ pub async fn get_health_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "健康档案不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("健康档案不存在")),
         Err(e) => {
             tracing::error!("Failed to get health record: {}", e);
-            return Json(ApiResponse::error(500, "获取健康档案失败"));
+            return Json(ApiResponse::server_error("获取健康档案失败"));
         }
     };
     let record = health_record_from_row(&row);
@@ -1390,10 +1390,10 @@ pub async fn update_health_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "健康档案不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("健康档案不存在")),
         Err(e) => {
             tracing::error!("Failed to update health record: {}", e);
-            return Json(ApiResponse::error(500, "健康档案更新失败"));
+            return Json(ApiResponse::server_error("健康档案更新失败"));
         }
     };
     let record = health_record_from_row(&row);
@@ -1431,11 +1431,11 @@ pub async fn delete_health_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete health record: {}", e);
-            return Json(ApiResponse::error(500, "健康档案删除失败"));
+            return Json(ApiResponse::server_error("健康档案删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "健康档案不存在"));
+        return Json(ApiResponse::not_found("健康档案不存在"));
     }
     Json(ApiResponse::success((), "健康档案删除成功"))
 }

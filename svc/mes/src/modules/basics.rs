@@ -233,7 +233,7 @@ async fn list_workshops(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 车间计数失败: {}", e);
-            return Json(ApiResponse::error(500, "查询车间失败"));
+            return Json(ApiResponse::server_error("查询车间失败"));
         }
     };
     let mut fetch_sql = format!(
@@ -253,7 +253,7 @@ async fn list_workshops(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[mes] 车间查询失败: {}", e);
-            return Json(ApiResponse::error(500, "查询车间失败"));
+            return Json(ApiResponse::server_error("查询车间失败"));
         }
     };
     let items: Vec<WorkshopResponse> = rows
@@ -304,10 +304,10 @@ async fn get_workshop(
             }),
             "查询成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "车间不存在")),
+        Ok(None) => Json(ApiResponse::not_found("车间不存在")),
         Err(e) => {
             tracing::error!("[mes] 车间查询失败: {}", e);
-            Json(ApiResponse::error(500, "查询车间失败"))
+            Json(ApiResponse::server_error("查询车间失败"))
         }
     }
 }
@@ -340,13 +340,13 @@ async fn create_workshop(
                 "车间创建成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(500, "车间创建失败")),
+        Ok(None) => Json(ApiResponse::server_error("车间创建失败")),
         Err(e) => {
             tracing::error!("[mes] 车间创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::error(409, "车间编码已存在"));
+                return Json(ApiResponse::conflict("车间编码已存在"));
             }
-            Json(ApiResponse::error(500, "车间创建失败"))
+            Json(ApiResponse::server_error("车间创建失败"))
         }
     }
 }
@@ -380,10 +380,10 @@ async fn update_workshop(
             serde_json::json!({ "id": id }),
             "车间更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "车间不存在")),
+        Ok(None) => Json(ApiResponse::not_found("车间不存在")),
         Err(e) => {
             tracing::error!("[mes] 车间更新失败: {}", e);
-            Json(ApiResponse::error(500, "车间更新失败"))
+            Json(ApiResponse::server_error("车间更新失败"))
         }
     }
 }
@@ -404,10 +404,10 @@ async fn delete_workshop(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "车间删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "车间不存在")),
+        Ok(_) => Json(ApiResponse::not_found("车间不存在")),
         Err(e) => {
             tracing::error!("[mes] 车间删除失败: {}", e);
-            Json(ApiResponse::error(500, "车间删除失败"))
+            Json(ApiResponse::server_error("车间删除失败"))
         }
     }
 }
@@ -451,7 +451,7 @@ async fn list_production_lines(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 产线计数失败: {}", e);
-            return Json(ApiResponse::error(500, "查询产线失败"));
+            return Json(ApiResponse::server_error("查询产线失败"));
         }
     };
     let fetch_sql = format!(
@@ -470,7 +470,7 @@ async fn list_production_lines(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[mes] 产线查询失败: {}", e);
-            return Json(ApiResponse::error(500, "查询产线失败"));
+            return Json(ApiResponse::server_error("查询产线失败"));
         }
     };
     let items: Vec<ProductionLineResponse> = rows
@@ -521,10 +521,10 @@ async fn get_production_line(
             }),
             "查询成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "产线不存在")),
+        Ok(None) => Json(ApiResponse::not_found("产线不存在")),
         Err(e) => {
             tracing::error!("[mes] 产线查询失败: {}", e);
-            Json(ApiResponse::error(500, "查询产线失败"))
+            Json(ApiResponse::server_error("查询产线失败"))
         }
     }
 }
@@ -558,13 +558,13 @@ async fn create_production_line(
                 "产线创建成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(500, "产线创建失败")),
+        Ok(None) => Json(ApiResponse::server_error("产线创建失败")),
         Err(e) => {
             tracing::error!("[mes] 产线创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::error(409, "产线编码已存在"));
+                return Json(ApiResponse::conflict("产线编码已存在"));
             }
-            Json(ApiResponse::error(500, "产线创建失败"))
+            Json(ApiResponse::server_error("产线创建失败"))
         }
     }
 }
@@ -599,10 +599,10 @@ async fn update_production_line(
             serde_json::json!({ "id": id }),
             "产线更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "产线不存在")),
+        Ok(None) => Json(ApiResponse::not_found("产线不存在")),
         Err(e) => {
             tracing::error!("[mes] 产线更新失败: {}", e);
-            Json(ApiResponse::error(500, "产线更新失败"))
+            Json(ApiResponse::server_error("产线更新失败"))
         }
     }
 }
@@ -625,10 +625,10 @@ async fn delete_production_line(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "产线删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "产线不存在")),
+        Ok(_) => Json(ApiResponse::not_found("产线不存在")),
         Err(e) => {
             tracing::error!("[mes] 产线删除失败: {}", e);
-            Json(ApiResponse::error(500, "产线删除失败"))
+            Json(ApiResponse::server_error("产线删除失败"))
         }
     }
 }
@@ -670,7 +670,7 @@ async fn list_shifts(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 班次计数失败: {}", e);
-            return Json(ApiResponse::error(500, "查询班次失败"));
+            return Json(ApiResponse::server_error("查询班次失败"));
         }
     };
     let fetch_sql = format!(
@@ -689,7 +689,7 @@ async fn list_shifts(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[mes] 班次查询失败: {}", e);
-            return Json(ApiResponse::error(500, "查询班次失败"));
+            return Json(ApiResponse::server_error("查询班次失败"));
         }
     };
     let items: Vec<ShiftResponse> = rows
@@ -742,10 +742,10 @@ async fn get_shift(
             }),
             "查询成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "班次不存在")),
+        Ok(None) => Json(ApiResponse::not_found("班次不存在")),
         Err(e) => {
             tracing::error!("[mes] 班次查询失败: {}", e);
-            Json(ApiResponse::error(500, "查询班次失败"))
+            Json(ApiResponse::server_error("查询班次失败"))
         }
     }
 }
@@ -779,13 +779,13 @@ async fn create_shift(
                 "班次创建成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(500, "班次创建失败")),
+        Ok(None) => Json(ApiResponse::server_error("班次创建失败")),
         Err(e) => {
             tracing::error!("[mes] 班次创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::error(409, "班次编码已存在"));
+                return Json(ApiResponse::conflict("班次编码已存在"));
             }
-            Json(ApiResponse::error(500, "班次创建失败"))
+            Json(ApiResponse::server_error("班次创建失败"))
         }
     }
 }
@@ -821,10 +821,10 @@ async fn update_shift(
             serde_json::json!({ "id": id }),
             "班次更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "班次不存在")),
+        Ok(None) => Json(ApiResponse::not_found("班次不存在")),
         Err(e) => {
             tracing::error!("[mes] 班次更新失败: {}", e);
-            Json(ApiResponse::error(500, "班次更新失败"))
+            Json(ApiResponse::server_error("班次更新失败"))
         }
     }
 }
@@ -845,10 +845,10 @@ async fn delete_shift(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "班次删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "班次不存在")),
+        Ok(_) => Json(ApiResponse::not_found("班次不存在")),
         Err(e) => {
             tracing::error!("[mes] 班次删除失败: {}", e);
-            Json(ApiResponse::error(500, "班次删除失败"))
+            Json(ApiResponse::server_error("班次删除失败"))
         }
     }
 }
@@ -892,7 +892,7 @@ async fn list_work_calendars(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[mes] 日历计数失败: {}", e);
-            return Json(ApiResponse::error(500, "查询日历失败"));
+            return Json(ApiResponse::server_error("查询日历失败"));
         }
     };
     let fetch_sql = format!(
@@ -911,7 +911,7 @@ async fn list_work_calendars(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[mes] 日历查询失败: {}", e);
-            return Json(ApiResponse::error(500, "查询日历失败"));
+            return Json(ApiResponse::server_error("查询日历失败"));
         }
     };
     let items: Vec<WorkCalendarResponse> = rows
@@ -966,10 +966,10 @@ async fn get_work_calendar(
             }),
             "查询成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "日历不存在")),
+        Ok(None) => Json(ApiResponse::not_found("日历不存在")),
         Err(e) => {
             tracing::error!("[mes] 日历查询失败: {}", e);
-            Json(ApiResponse::error(500, "查询日历失败"))
+            Json(ApiResponse::server_error("查询日历失败"))
         }
     }
 }
@@ -1005,13 +1005,13 @@ async fn create_work_calendar(
                 "日历创建成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(500, "日历创建失败")),
+        Ok(None) => Json(ApiResponse::server_error("日历创建失败")),
         Err(e) => {
             tracing::error!("[mes] 日历创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::error(409, "日历编码已存在"));
+                return Json(ApiResponse::conflict("日历编码已存在"));
             }
-            Json(ApiResponse::error(500, "日历创建失败"))
+            Json(ApiResponse::server_error("日历创建失败"))
         }
     }
 }
@@ -1049,10 +1049,10 @@ async fn update_work_calendar(
             serde_json::json!({ "id": id }),
             "日历更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "日历不存在")),
+        Ok(None) => Json(ApiResponse::not_found("日历不存在")),
         Err(e) => {
             tracing::error!("[mes] 日历更新失败: {}", e);
-            Json(ApiResponse::error(500, "日历更新失败"))
+            Json(ApiResponse::server_error("日历更新失败"))
         }
     }
 }
@@ -1075,10 +1075,10 @@ async fn delete_work_calendar(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "日历删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "日历不存在")),
+        Ok(_) => Json(ApiResponse::not_found("日历不存在")),
         Err(e) => {
             tracing::error!("[mes] 日历删除失败: {}", e);
-            Json(ApiResponse::error(500, "日历删除失败"))
+            Json(ApiResponse::server_error("日历删除失败"))
         }
     }
 }

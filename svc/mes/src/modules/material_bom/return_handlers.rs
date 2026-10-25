@@ -48,7 +48,7 @@ pub async fn create_material_return(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::error(500, "创建物料退库单失败"));
+            return Json(ApiResponse::server_error("创建物料退库单失败"));
         }
     };
 
@@ -81,7 +81,7 @@ pub async fn create_material_return(
         Err(e) => {
             tracing::error!("Failed to create material return: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::error(500, "创建物料退库单失败"));
+            return Json(ApiResponse::server_error("创建物料退库单失败"));
         }
     };
 
@@ -113,7 +113,7 @@ pub async fn create_material_return(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::error(500, "创建物料退库单失败"));
+        return Json(ApiResponse::server_error("创建物料退库单失败"));
     }
 
     let response = MaterialReturnResponse {
@@ -198,7 +198,7 @@ pub async fn list_material_returns(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count material returns: {}", e);
-            return Json(ApiResponse::error(500, "获取物料退库单列表失败"));
+            return Json(ApiResponse::server_error("获取物料退库单列表失败"));
         }
     };
 
@@ -229,7 +229,7 @@ pub async fn list_material_returns(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch material returns: {}", e);
-            return Json(ApiResponse::error(500, "获取物料退库单列表失败"));
+            return Json(ApiResponse::server_error("获取物料退库单列表失败"));
         }
     };
 
@@ -327,10 +327,10 @@ pub async fn get_material_return(
 
     let return_record = match return_result {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "物料退库单不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("物料退库单不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch material return: {}", e);
-            return Json(ApiResponse::error(500, "获取物料退库单失败"));
+            return Json(ApiResponse::server_error("获取物料退库单失败"));
         }
     };
 
@@ -351,7 +351,7 @@ pub async fn get_material_return(
         Ok(i) => i,
         Err(e) => {
             tracing::error!("Failed to fetch return items: {}", e);
-            return Json(ApiResponse::error(500, "获取退库单明细失败"));
+            return Json(ApiResponse::server_error("获取退库单明细失败"));
         }
     };
 
@@ -424,10 +424,10 @@ now,
 
     let return_record = match result {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "物料退库单不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("物料退库单不存在")),
         Err(e) => {
             tracing::error!("Failed to update material return: {}", e);
-            return Json(ApiResponse::error(500, "更新物料退库单失败"));
+            return Json(ApiResponse::server_error("更新物料退库单失败"));
         }
     };
 
@@ -463,7 +463,7 @@ pub async fn delete_material_return(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::error(500, "删除物料退库单失败"));
+            return Json(ApiResponse::server_error("删除物料退库单失败"));
         }
     };
 
@@ -483,18 +483,18 @@ pub async fn delete_material_return(
         Err(e) => {
             let _ = tx.rollback().await;
             tracing::error!("Failed to delete material return: {}", e);
-            return Json(ApiResponse::error(500, "删除物料退库单失败"));
+            return Json(ApiResponse::server_error("删除物料退库单失败"));
         }
     };
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::error(500, "删除物料退库单失败"));
+        return Json(ApiResponse::server_error("删除物料退库单失败"));
     }
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success("".to_string(), "物料退库单删除成功"))
     } else {
-        Json(ApiResponse::error(404, "物料退库单不存在或状态不允许删除"))
+        Json(ApiResponse::not_found("物料退库单不存在或状态不允许删除"))
     }
 }

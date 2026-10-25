@@ -38,14 +38,14 @@ pub fn create_routes() -> Router<ApiState> {
 fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::error(500, msg)),
+        Json(ApiResponse::server_error(msg)),
     )
 }
 
 /// 业务"资源不存在"：HTTP 200 + 内层 body.code=404（与跨服务契约一致，
 /// 前端 apiClient 按 body.code 判定；避免裸 HTTP 404 被冒烟判为路由缺失）。
 fn not_found(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
-    (StatusCode::OK, Json(ApiResponse::error(404, msg)))
+    (StatusCode::OK, Json(ApiResponse::not_found(msg)))
 }
 
 // ==================== 缺陷 Bug ====================

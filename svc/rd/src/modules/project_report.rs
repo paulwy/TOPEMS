@@ -91,7 +91,7 @@ pub async fn get_project_summary(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let start_date = query.start_date.clone().unwrap_or_else(|| {
         (Utc::now() - Duration::days(30))
@@ -153,7 +153,7 @@ pub async fn get_project_summary(
         }
         Err(e) => {
             tracing::error!("获取项目汇总失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目汇总失败"))
+            Json(ApiResponse::server_error("获取项目汇总失败"))
         }
     }
 }
@@ -178,7 +178,7 @@ pub async fn get_project_trends(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let start_date = query.start_date.clone().unwrap_or_else(|| {
         (Utc::now() - Duration::days(90))
@@ -226,7 +226,7 @@ pub async fn get_project_trends(
         }
         Err(e) => {
             tracing::error!("获取项目趋势失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目趋势失败"))
+            Json(ApiResponse::server_error("获取项目趋势失败"))
         }
     }
 }
@@ -250,7 +250,7 @@ pub async fn get_project_type_stats(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query(
         r#"
@@ -283,7 +283,7 @@ pub async fn get_project_type_stats(
         }
         Err(e) => {
             tracing::error!("获取项目类型统计失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目类型统计失败"))
+            Json(ApiResponse::server_error("获取项目类型统计失败"))
         }
     }
 }
@@ -308,7 +308,7 @@ pub async fn get_performance_metrics(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let on_time_result = sqlx::query(
         r#"
@@ -391,7 +391,7 @@ pub async fn get_performance_metrics(
 
             Json(ApiResponse::success(metrics, "获取绩效指标成功"))
         }
-        _ => Json(ApiResponse::error(500, "获取绩效指标失败")),
+        _ => Json(ApiResponse::server_error("获取绩效指标失败")),
     }
 }
 
@@ -438,7 +438,7 @@ pub async fn get_project_detail_report(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let project = sqlx::query_as::<_, ProjectDetailReport>(
         r#"
@@ -463,10 +463,10 @@ pub async fn get_project_detail_report(
 
     match project {
         Ok(Some(report)) => Json(ApiResponse::success(report, "获取项目详情报告成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
         Err(e) => {
             tracing::error!("获取项目详情报告失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目详情报告失败"))
+            Json(ApiResponse::server_error("获取项目详情报告失败"))
         }
     }
 }

@@ -455,7 +455,7 @@ pub async fn list_plans(
         Ok(data) => Json(ApiResponse::success(data, "获取能力验证计划列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch PT plans: {}", e);
-            Json(ApiResponse::error(500, "获取能力验证计划列表失败"))
+            Json(ApiResponse::server_error("获取能力验证计划列表失败"))
         }
     }
 }
@@ -528,7 +528,7 @@ pub async fn create_plan(
         )),
         Err(e) => {
             tracing::error!("Failed to create PT plan: {}", e);
-            Json(ApiResponse::error(500, "能力验证计划创建失败"))
+            Json(ApiResponse::server_error("能力验证计划创建失败"))
         }
     }
 }
@@ -552,7 +552,7 @@ pub async fn get_plan(
 ) -> Json<ApiResponse<ProficiencyTestingPlan>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
     };
 
     let row = sqlx::query(
@@ -587,11 +587,11 @@ pub async fn get_plan(
             },
             "获取能力验证计划成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch PT plan: {}", e);
-            Json(ApiResponse::error(500, "获取能力验证计划失败"))
+            Json(ApiResponse::server_error("获取能力验证计划失败"))
         }
     }
 }
@@ -603,7 +603,7 @@ pub async fn update_plan(
 ) -> Json<ApiResponse<ProficiencyTestingPlan>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
     };
 
     let row = sqlx::query(
@@ -674,11 +674,11 @@ pub async fn update_plan(
             },
             "能力验证计划更新成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to update PT plan: {}", e);
-            Json(ApiResponse::error(500, "能力验证计划更新失败"))
+            Json(ApiResponse::server_error("能力验证计划更新失败"))
         }
     }
 }
@@ -689,7 +689,7 @@ pub async fn delete_plan(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
     };
 
     let result = sqlx::query("UPDATE qa_lims_pt_plans SET deleted_at = NOW() WHERE id = $1")
@@ -701,7 +701,7 @@ pub async fn delete_plan(
         Ok(_) => Json(ApiResponse::success(true, "能力验证计划删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete PT plan: {}", e);
-            Json(ApiResponse::error(500, "能力验证计划删除失败"))
+            Json(ApiResponse::server_error("能力验证计划删除失败"))
         }
     }
 }
@@ -723,7 +723,7 @@ pub async fn receive_sample(
 ) -> Json<ApiResponse<PtSample>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
     };
 
     let plan_row = sqlx::query(
@@ -738,7 +738,7 @@ pub async fn receive_sample(
             row.get::<String, _>("plan_no"),
             row.get::<String, _>("plan_name"),
         ),
-        Ok(None) => return Json(ApiResponse::error(404, "能力验证计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("能力验证计划不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询计划失败", e))),
     };
 
@@ -796,7 +796,7 @@ pub async fn receive_sample(
         )),
         Err(e) => {
             tracing::error!("Failed to receive PT sample: {}", e);
-            Json(ApiResponse::error(500, "能力验证样品接收登记失败"))
+            Json(ApiResponse::server_error("能力验证样品接收登记失败"))
         }
     }
 }
@@ -826,7 +826,7 @@ pub async fn list_plan_samples(
     };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
     };
 
     let rows = sqlx::query(
@@ -868,7 +868,7 @@ pub async fn list_plan_samples(
         }
         Err(e) => {
             tracing::error!("Failed to fetch PT samples: {}", e);
-            Json(ApiResponse::error(500, "获取能力验证样品列表失败"))
+            Json(ApiResponse::server_error("获取能力验证样品列表失败"))
         }
     }
 }
@@ -881,12 +881,12 @@ pub async fn submit_result(
 ) -> Json<ApiResponse<PtResult>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
     };
 
     let sample_id = match Uuid::parse_str(&req.sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
     };
 
     let plan_row =
@@ -897,7 +897,7 @@ pub async fn submit_result(
 
     let plan_no = match plan_row {
         Ok(Some(row)) => row.get::<String, _>("plan_no"),
-        Ok(None) => return Json(ApiResponse::error(404, "能力验证计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("能力验证计划不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询计划失败", e))),
     };
 
@@ -908,7 +908,7 @@ pub async fn submit_result(
 
     let sample_code = match sample_row {
         Ok(Some(row)) => row.get::<String, _>("sample_code"),
-        Ok(None) => return Json(ApiResponse::error(404, "能力验证样品不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("能力验证样品不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
     };
 
@@ -1011,7 +1011,7 @@ pub async fn submit_result(
         )),
         Err(e) => {
             tracing::error!("Failed to submit PT result: {}", e);
-            Json(ApiResponse::error(500, "能力验证结果录入失败"))
+            Json(ApiResponse::server_error("能力验证结果录入失败"))
         }
     }
 }
@@ -1041,7 +1041,7 @@ pub async fn list_plan_results(
     };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
     };
 
     let rows = sqlx::query(
@@ -1092,7 +1092,7 @@ pub async fn list_plan_results(
         }
         Err(e) => {
             tracing::error!("Failed to fetch PT results: {}", e);
-            Json(ApiResponse::error(500, "获取能力验证结果列表失败"))
+            Json(ApiResponse::server_error("获取能力验证结果列表失败"))
         }
     }
 }
@@ -1114,12 +1114,12 @@ pub async fn evaluate_result(
 ) -> Json<ApiResponse<PtEvaluation>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
     };
 
     let result_id = match Uuid::parse_str(&req.result_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的结果ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的结果ID")),
     };
 
     let result_row = sqlx::query(
@@ -1137,7 +1137,7 @@ pub async fn evaluate_result(
             row.get::<String, _>("test_item"),
             row.get::<Option<f64>, _>("test_result"),
         ),
-        Ok(None) => return Json(ApiResponse::error(404, "能力验证结果不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("能力验证结果不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询结果失败", e))),
     };
 
@@ -1230,7 +1230,7 @@ pub async fn evaluate_result(
         )),
         Err(e) => {
             tracing::error!("Failed to evaluate PT result: {}", e);
-            Json(ApiResponse::error(500, "能力验证结果评价失败"))
+            Json(ApiResponse::server_error("能力验证结果评价失败"))
         }
     }
 }
@@ -1260,7 +1260,7 @@ pub async fn list_plan_evaluations(
     };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
     };
 
     let rows = sqlx::query(
@@ -1313,7 +1313,7 @@ pub async fn list_plan_evaluations(
         }
         Err(e) => {
             tracing::error!("Failed to fetch PT evaluations: {}", e);
-            Json(ApiResponse::error(500, "获取能力验证评价列表失败"))
+            Json(ApiResponse::server_error("获取能力验证评价列表失败"))
         }
     }
 }
@@ -1335,12 +1335,12 @@ pub async fn create_corrective_action(
 ) -> Json<ApiResponse<PtCorrectiveAction>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
     };
 
     let evaluation_id = match Uuid::parse_str(&req.evaluation_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的评价ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的评价ID")),
     };
 
     let plan_row =
@@ -1351,7 +1351,7 @@ pub async fn create_corrective_action(
 
     let plan_no = match plan_row {
         Ok(Some(row)) => row.get::<String, _>("plan_no"),
-        Ok(None) => return Json(ApiResponse::error(404, "能力验证计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("能力验证计划不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询计划失败", e))),
     };
 
@@ -1403,7 +1403,7 @@ pub async fn create_corrective_action(
         )),
         Err(e) => {
             tracing::error!("Failed to create PT corrective action: {}", e);
-            Json(ApiResponse::error(500, "不满意结果整改记录创建失败"))
+            Json(ApiResponse::server_error("不满意结果整改记录创建失败"))
         }
     }
 }
@@ -1428,7 +1428,7 @@ pub async fn update_corrective_action(
 ) -> Json<ApiResponse<PtCorrectiveAction>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的整改记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的整改记录ID")),
     };
 
     let verified_at = if req.verification_result.is_some() {
@@ -1490,11 +1490,11 @@ pub async fn update_corrective_action(
             },
             "不满意结果整改记录更新成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to update PT corrective action: {}", e);
-            Json(ApiResponse::error(500, "不满意结果整改记录更新失败"))
+            Json(ApiResponse::server_error("不满意结果整改记录更新失败"))
         }
     }
 }
@@ -1524,7 +1524,7 @@ pub async fn list_plan_corrective_actions(
     };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
     };
 
     let rows = sqlx::query(
@@ -1570,7 +1570,7 @@ pub async fn list_plan_corrective_actions(
         }
         Err(e) => {
             tracing::error!("Failed to fetch PT corrective actions: {}", e);
-            Json(ApiResponse::error(500, "获取整改记录列表失败"))
+            Json(ApiResponse::server_error("获取整改记录列表失败"))
         }
     }
 }

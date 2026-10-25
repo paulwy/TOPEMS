@@ -128,7 +128,7 @@ pub async fn list_issues(
         Ok(data) => Json(ApiResponse::success(data, "获取质量问题列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch issues: {}", e);
-            Json(ApiResponse::error(500, "获取质量问题列表失败"))
+            Json(ApiResponse::server_error("获取质量问题列表失败"))
         }
     }
 }
@@ -215,7 +215,7 @@ pub async fn create_issue(
         }
         Err(e) => {
             tracing::error!("Failed to create issue: {}", e);
-            Json(ApiResponse::error(500, "质量问题创建失败"))
+            Json(ApiResponse::server_error("质量问题创建失败"))
         }
     }
 }
@@ -249,7 +249,7 @@ pub async fn get_issue(
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -264,11 +264,11 @@ pub async fn get_issue(
 
     match issue {
         Ok(data) => Json(ApiResponse::success(data, "获取质量问题成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch issue: {}", e);
-            Json(ApiResponse::error(500, "获取质量问题失败"))
+            Json(ApiResponse::server_error("获取质量问题失败"))
         }
     }
 }
@@ -296,7 +296,7 @@ pub async fn update_issue(
 ) -> Json<ApiResponse<QualityIssue>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -311,10 +311,10 @@ pub async fn update_issue(
 
     match issue {
         Ok(data) => Json(ApiResponse::success(data, "质量问题更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update issue: {}", e);
-            Json(ApiResponse::error(500, "质量问题更新失败"))
+            Json(ApiResponse::server_error("质量问题更新失败"))
         }
     }
 }
@@ -338,7 +338,7 @@ pub async fn resolve_issue(
 ) -> Json<ApiResponse<QualityIssue>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -355,7 +355,7 @@ pub async fn resolve_issue(
         Ok(data) => Json(ApiResponse::success(data, "质量问题已解决")),
         Err(e) => {
             tracing::error!("Failed to resolve issue: {}", e);
-            Json(ApiResponse::error(500, "质量问题解决失败"))
+            Json(ApiResponse::server_error("质量问题解决失败"))
         }
     }
 }
@@ -381,7 +381,7 @@ pub async fn delete_issue(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -398,7 +398,7 @@ pub async fn delete_issue(
         Ok(_) => Json(ApiResponse::success(true, "质量问题删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete issue: {}", e);
-            Json(ApiResponse::error(500, "质量问题删除失败"))
+            Json(ApiResponse::server_error("质量问题删除失败"))
         }
     }
 }
@@ -442,7 +442,7 @@ pub async fn start_issue_approval(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
     };
 
     tracing::info!(
@@ -497,7 +497,7 @@ pub async fn start_issue_approval(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch issue: {}", e);
-            Json(ApiResponse::error(500, "获取质量问题失败"))
+            Json(ApiResponse::server_error("获取质量问题失败"))
         }
     }
 }
@@ -525,7 +525,7 @@ pub async fn approve_issue(
     let tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
     };
 
     tracing::info!("Approving issue {}", id);
@@ -553,7 +553,7 @@ pub async fn approve_issue(
         )),
         Err(e) => {
             tracing::error!("Failed to approve issue: {}", e);
-            Json(ApiResponse::error(500, "质量问题审批失败"))
+            Json(ApiResponse::server_error("质量问题审批失败"))
         }
     }
 }
@@ -581,7 +581,7 @@ pub async fn reject_issue(
     let tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
     };
 
     tracing::info!("Rejecting issue {}", id);
@@ -609,7 +609,7 @@ pub async fn reject_issue(
         )),
         Err(e) => {
             tracing::error!("Failed to reject issue: {}", e);
-            Json(ApiResponse::error(500, "质量问题审批驳回失败"))
+            Json(ApiResponse::server_error("质量问题审批驳回失败"))
         }
     }
 }
@@ -662,7 +662,7 @@ pub async fn approve_issue_status(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
@@ -674,10 +674,10 @@ pub async fn approve_issue_status(
             if issue_requires_approval(&current_status, STATUS_CLOSED)
                 && !crate::shared::permission::has_qms_permission(&claims, "issue.approve")
             {
-                return Json(ApiResponse::error(403, "无审批权限"));
+                return Json(ApiResponse::forbidden("无审批权限"));
             }
             if issue_can_transition(&current_status, STATUS_CLOSED).is_err() {
-                return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
+                return Json(ApiResponse::bad_request("当前状态不允许审批通过"));
             }
             let locale = Locale::from_headers(&headers).as_sql();
             let issue = sqlx::query_as::<_, QualityIssue>(
@@ -701,13 +701,13 @@ pub async fn approve_issue_status(
                 }
                 Err(e) => {
                     tracing::error!("Failed to approve issue: {}", e);
-                    Json(ApiResponse::error(500, "审批失败"))
+                    Json(ApiResponse::server_error("审批失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find issue: {}", e);
-            Json(ApiResponse::error(404, "质量问题不存在"))
+            Json(ApiResponse::not_found("质量问题不存在"))
         }
     }
 }
@@ -744,7 +744,7 @@ pub async fn reject_issue_status(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
@@ -754,7 +754,7 @@ pub async fn reject_issue_status(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if issue_can_transition(&current_status, STATUS_IN_PROGRESS).is_err() {
-                return Json(ApiResponse::error(400, "当前状态不允许驳回"));
+                return Json(ApiResponse::bad_request("当前状态不允许驳回"));
             }
             let locale = Locale::from_headers(&headers).as_sql();
             let issue = sqlx::query_as::<_, QualityIssue>(
@@ -778,13 +778,13 @@ pub async fn reject_issue_status(
                 }
                 Err(e) => {
                     tracing::error!("Failed to reject issue: {}", e);
-                    Json(ApiResponse::error(500, "驳回失败"))
+                    Json(ApiResponse::server_error("驳回失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find issue: {}", e);
-            Json(ApiResponse::error(404, "质量问题不存在"))
+            Json(ApiResponse::not_found("质量问题不存在"))
         }
     }
 }
@@ -821,7 +821,7 @@ pub async fn cancel_issue(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
@@ -831,7 +831,7 @@ pub async fn cancel_issue(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if issue_can_transition(&current_status, STATUS_CANCELLED).is_err() {
-                return Json(ApiResponse::error(400, "当前状态不允许取消"));
+                return Json(ApiResponse::bad_request("当前状态不允许取消"));
             }
             let locale = Locale::from_headers(&headers).as_sql();
             let issue = sqlx::query_as::<_, QualityIssue>(
@@ -855,13 +855,13 @@ pub async fn cancel_issue(
                 }
                 Err(e) => {
                     tracing::error!("Failed to cancel issue: {}", e);
-                    Json(ApiResponse::error(500, "取消失败"))
+                    Json(ApiResponse::server_error("取消失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find issue: {}", e);
-            Json(ApiResponse::error(404, "质量问题不存在"))
+            Json(ApiResponse::not_found("质量问题不存在"))
         }
     }
 }

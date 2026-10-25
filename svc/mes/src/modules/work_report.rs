@@ -295,7 +295,7 @@ pub async fn list_work_reports(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count work reports: {}", e);
-            return Json(ApiResponse::error(500, "获取工报列表失败"));
+            return Json(ApiResponse::server_error("获取工报列表失败"));
         }
     };
 
@@ -331,7 +331,7 @@ pub async fn list_work_reports(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch work reports: {}", e);
-            return Json(ApiResponse::error(500, "获取工报列表失败"));
+            return Json(ApiResponse::server_error("获取工报列表失败"));
         }
     };
 
@@ -453,7 +453,7 @@ pub async fn get_work_report(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工报ID"));
+            return Json(ApiResponse::bad_request("无效的工报ID"));
         }
     };
 
@@ -501,10 +501,10 @@ pub async fn get_work_report(
             },
             "获取工报成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工报不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工报不存在")),
         Err(e) => {
             tracing::error!("Failed to get work report: {}", e);
-            Json(ApiResponse::error(500, "获取工报失败"))
+            Json(ApiResponse::server_error("获取工报失败"))
         }
     }
 }
@@ -569,7 +569,7 @@ pub async fn create_work_report(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin tx for create_work_report: {}", e);
-            return Json(ApiResponse::error(500, "创建工报失败"));
+            return Json(ApiResponse::server_error("创建工报失败"));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -581,7 +581,7 @@ pub async fn create_work_report(
             "Failed to set nil RLS context for create_work_report: {}",
             e
         );
-        return Json(ApiResponse::error(500, "创建工报失败"));
+        return Json(ApiResponse::server_error("创建工报失败"));
     }
 
     let result = sqlx::query!(
@@ -625,7 +625,7 @@ pub async fn create_work_report(
         Ok(r) => {
             if let Err(e) = tx.commit().await {
                 tracing::error!("Failed to commit tx for create_work_report: {}", e);
-                return Json(ApiResponse::error(500, "创建工报失败"));
+                return Json(ApiResponse::server_error("创建工报失败"));
             }
 
             // D2 U2 环2（决策 A）：mes→erp 报工进度回传由同步 HTTP（erp_client.sync_mes_progress）
@@ -714,7 +714,7 @@ pub async fn create_work_report(
         }
         Err(e) => {
             tracing::error!("Failed to create work report: {}", e);
-            Json(ApiResponse::error(500, "创建工报失败"))
+            Json(ApiResponse::server_error("创建工报失败"))
         }
     }
 }
@@ -748,7 +748,7 @@ pub async fn update_work_report(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工报ID"));
+            return Json(ApiResponse::bad_request("无效的工报ID"));
         }
     };
 
@@ -857,10 +857,10 @@ pub async fn update_work_report(
             },
             "更新工报成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工报不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工报不存在")),
         Err(e) => {
             tracing::error!("Failed to update work report: {}", e);
-            Json(ApiResponse::error(500, "更新工报失败"))
+            Json(ApiResponse::server_error("更新工报失败"))
         }
     }
 }
@@ -892,7 +892,7 @@ pub async fn delete_work_report(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工报ID"));
+            return Json(ApiResponse::bad_request("无效的工报ID"));
         }
     };
 
@@ -909,7 +909,7 @@ pub async fn delete_work_report(
         Ok(_) => Json(ApiResponse::success(id, "删除工报成功")),
         Err(e) => {
             tracing::error!("Failed to delete work report: {}", e);
-            Json(ApiResponse::error(500, "删除工报失败"))
+            Json(ApiResponse::server_error("删除工报失败"))
         }
     }
 }
@@ -941,7 +941,7 @@ pub async fn approve_work_report(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工报ID"));
+            return Json(ApiResponse::bad_request("无效的工报ID"));
         }
     };
 
@@ -997,10 +997,10 @@ pub async fn approve_work_report(
             },
             "审批通过成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工报不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工报不存在")),
         Err(e) => {
             tracing::error!("Failed to approve work report: {}", e);
-            Json(ApiResponse::error(500, "审批通过失败"))
+            Json(ApiResponse::server_error("审批通过失败"))
         }
     }
 }
@@ -1034,7 +1034,7 @@ pub async fn reject_work_report(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工报ID"));
+            return Json(ApiResponse::bad_request("无效的工报ID"));
         }
     };
 
@@ -1092,10 +1092,10 @@ pub async fn reject_work_report(
             },
             "审批驳回成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工报不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工报不存在")),
         Err(e) => {
             tracing::error!("Failed to reject work report: {}", e);
-            Json(ApiResponse::error(500, "审批驳回失败"))
+            Json(ApiResponse::server_error("审批驳回失败"))
         }
     }
 }
@@ -1146,7 +1146,7 @@ pub async fn start_rework_approval(
     // 校验当前 status=rejected，创建 approval 记录并写入 audit log
     let approver_id = match claims.user_id() {
         Ok(uid) => uid,
-        Err(_) => return Json(ApiResponse::error(401, "无效的用户身份")),
+        Err(_) => return Json(ApiResponse::unauthorized("无效的用户身份")),
     };
     let record_id = Uuid::parse_str(&id).unwrap_or_default();
     let approval_id = match create_approval_and_log(
@@ -1162,7 +1162,7 @@ pub async fn start_rework_approval(
         Ok(aid) => aid,
         Err(e) => {
             tracing::error!("发起返工审批失败: {}", e);
-            return Json(ApiResponse::error(500, "发起审批失败"));
+            return Json(ApiResponse::server_error("发起审批失败"));
         }
     };
     Json(ApiResponse::success(
@@ -1211,7 +1211,7 @@ pub async fn approve_rework(
     .await
     {
         tracing::error!("返工审批通过失败: {}", e);
-        return Json(ApiResponse::error(500, "审批通过失败"));
+        return Json(ApiResponse::server_error("审批通过失败"));
     }
     Json(ApiResponse::success(
         build_approve_response(req.approval_id),
@@ -1257,7 +1257,7 @@ pub async fn reject_rework(
     .await
     {
         tracing::error!("返工审批驳回失败: {}", e);
-        return Json(ApiResponse::error(500, "审批驳回失败"));
+        return Json(ApiResponse::server_error("审批驳回失败"));
     }
     Json(ApiResponse::success(
         build_reject_response(req.approval_id),

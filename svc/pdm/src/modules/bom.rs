@@ -562,7 +562,7 @@ fn parse_optional_uuid(
     match value {
         Some(raw) if !raw.trim().is_empty() => Uuid::parse_str(raw)
             .map(Some)
-            .map_err(|_| Json(ApiResponse::error(400, "product_id 不是有效 UUID"))),
+            .map_err(|_| Json(ApiResponse::bad_request("product_id 不是有效 UUID"))),
         _ => Ok(None),
     }
 }
@@ -576,7 +576,7 @@ fn json_value<T: Serialize>(
         Ok(value) => Json(ApiResponse::success(value, success_msg)),
         Err(e) => {
             tracing::error!("PDM BOM 响应序列化失败: {}", e);
-            Json(ApiResponse::error(500, error_msg))
+            Json(ApiResponse::server_error(error_msg))
         }
     }
 }
@@ -634,7 +634,7 @@ pub async fn list_bom_versions(
         Ok(items) => json_value(items, "获取 BOM 版本列表成功", "获取 BOM 版本列表失败"),
         Err(e) => {
             tracing::error!("获取 BOM 版本列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取 BOM 版本列表失败"))
+            Json(ApiResponse::server_error("获取 BOM 版本列表失败"))
         }
     }
 }
@@ -679,10 +679,10 @@ pub async fn get_bom_version(
 
     match result {
         Ok(Some(item)) => json_value(item, "获取 BOM 版本成功", "获取 BOM 版本失败"),
-        Ok(None) => Json(ApiResponse::error(404, "BOM 版本不存在")),
+        Ok(None) => Json(ApiResponse::not_found("BOM 版本不存在")),
         Err(e) => {
             tracing::error!("获取 BOM 版本失败: {}", e);
-            Json(ApiResponse::error(500, "获取 BOM 版本失败"))
+            Json(ApiResponse::server_error("获取 BOM 版本失败"))
         }
     }
 }
@@ -738,7 +738,7 @@ pub async fn create_bom_version(
         Ok(item) => json_value(item, "创建 BOM 版本成功", "创建 BOM 版本失败"),
         Err(e) => {
             tracing::error!("创建 BOM 版本失败: {}", e);
-            Json(ApiResponse::error(500, "创建 BOM 版本失败"))
+            Json(ApiResponse::server_error("创建 BOM 版本失败"))
         }
     }
 }
@@ -801,10 +801,10 @@ pub async fn update_bom_version(
 
     match result {
         Ok(Some(item)) => json_value(item, "更新 BOM 版本成功", "更新 BOM 版本失败"),
-        Ok(None) => Json(ApiResponse::error(404, "BOM 版本不存在")),
+        Ok(None) => Json(ApiResponse::not_found("BOM 版本不存在")),
         Err(e) => {
             tracing::error!("更新 BOM 版本失败: {}", e);
-            Json(ApiResponse::error(500, "更新 BOM 版本失败"))
+            Json(ApiResponse::server_error("更新 BOM 版本失败"))
         }
     }
 }
@@ -843,10 +843,10 @@ pub async fn delete_bom_version(
         Ok(done) if done.rows_affected() > 0 => {
             json_value(true, "删除 BOM 版本成功", "删除 BOM 版本失败")
         }
-        Ok(_) => Json(ApiResponse::error(404, "BOM 版本不存在")),
+        Ok(_) => Json(ApiResponse::not_found("BOM 版本不存在")),
         Err(e) => {
             tracing::error!("删除 BOM 版本失败: {}", e);
-            Json(ApiResponse::error(500, "删除 BOM 版本失败"))
+            Json(ApiResponse::server_error("删除 BOM 版本失败"))
         }
     }
 }
@@ -886,10 +886,10 @@ async fn update_bom_status(
 
     match result {
         Ok(Some(item)) => json_value(item, message, "更新 BOM 状态失败"),
-        Ok(None) => Json(ApiResponse::error(404, "BOM 版本不存在")),
+        Ok(None) => Json(ApiResponse::not_found("BOM 版本不存在")),
         Err(e) => {
             tracing::error!("更新 BOM 状态失败: {}", e);
-            Json(ApiResponse::error(500, "更新 BOM 状态失败"))
+            Json(ApiResponse::server_error("更新 BOM 状态失败"))
         }
     }
 }
@@ -974,7 +974,7 @@ pub async fn list_bom_items(
         Ok(items) => json_value(items, "获取 BOM 明细列表成功", "获取 BOM 明细列表失败"),
         Err(e) => {
             tracing::error!("获取 BOM 明细列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取 BOM 明细列表失败"))
+            Json(ApiResponse::server_error("获取 BOM 明细列表失败"))
         }
     }
 }
@@ -1019,10 +1019,10 @@ pub async fn get_bom_item(
 
     match result {
         Ok(Some(item)) => json_value(item, "获取 BOM 明细成功", "获取 BOM 明细失败"),
-        Ok(None) => Json(ApiResponse::error(404, "BOM 明细不存在")),
+        Ok(None) => Json(ApiResponse::not_found("BOM 明细不存在")),
         Err(e) => {
             tracing::error!("获取 BOM 明细失败: {}", e);
-            Json(ApiResponse::error(500, "获取 BOM 明细失败"))
+            Json(ApiResponse::server_error("获取 BOM 明细失败"))
         }
     }
 }
@@ -1056,7 +1056,7 @@ pub async fn create_bom_item(
         Ok(item) => json_value(item, "创建 BOM 明细成功", "创建 BOM 明细失败"),
         Err(e) => {
             tracing::error!("创建 BOM 明细失败: {}", e);
-            Json(ApiResponse::error(500, "创建 BOM 明细失败"))
+            Json(ApiResponse::server_error("创建 BOM 明细失败"))
         }
     }
 }
@@ -1141,10 +1141,10 @@ pub async fn update_bom_item(
 
     match result {
         Ok(Some(item)) => json_value(item, "更新 BOM 明细成功", "更新 BOM 明细失败"),
-        Ok(None) => Json(ApiResponse::error(404, "BOM 明细不存在")),
+        Ok(None) => Json(ApiResponse::not_found("BOM 明细不存在")),
         Err(e) => {
             tracing::error!("更新 BOM 明细失败: {}", e);
-            Json(ApiResponse::error(500, "更新 BOM 明细失败"))
+            Json(ApiResponse::server_error("更新 BOM 明细失败"))
         }
     }
 }
@@ -1183,10 +1183,10 @@ pub async fn delete_bom_item(
         Ok(done) if done.rows_affected() > 0 => {
             json_value(true, "删除 BOM 明细成功", "删除 BOM 明细失败")
         }
-        Ok(_) => Json(ApiResponse::error(404, "BOM 明细不存在")),
+        Ok(_) => Json(ApiResponse::not_found("BOM 明细不存在")),
         Err(e) => {
             tracing::error!("删除 BOM 明细失败: {}", e);
-            Json(ApiResponse::error(500, "删除 BOM 明细失败"))
+            Json(ApiResponse::server_error("删除 BOM 明细失败"))
         }
     }
 }
@@ -1224,7 +1224,7 @@ pub async fn batch_create_bom_items(
             Ok(row) => created.push(row),
             Err(e) => {
                 tracing::error!("批量创建 BOM 明细失败: {}", e);
-                return Json(ApiResponse::error(500, "批量创建 BOM 明细失败"));
+                return Json(ApiResponse::server_error("批量创建 BOM 明细失败"));
             }
         }
     }
@@ -1263,7 +1263,7 @@ pub async fn compare_bom_versions(
         (Ok(a), Ok(b)) => (a, b),
         (Err(e), _) | (_, Err(e)) => {
             tracing::error!("BOM 对比读取明细失败: {}", e);
-            return Json(ApiResponse::error(500, "BOM 对比失败"));
+            return Json(ApiResponse::server_error("BOM 对比失败"));
         }
     };
 

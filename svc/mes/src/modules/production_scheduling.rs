@@ -274,7 +274,7 @@ pub async fn list_production_schedules(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count production schedules: {}", e);
-            return Json(ApiResponse::error(500, "获取生产排产列表失败"));
+            return Json(ApiResponse::server_error("获取生产排产列表失败"));
         }
     };
 
@@ -317,7 +317,7 @@ pub async fn list_production_schedules(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to fetch production schedules: {}", e);
-            return Json(ApiResponse::error(500, "获取生产排产列表失败"));
+            return Json(ApiResponse::server_error("获取生产排产列表失败"));
         }
     };
 
@@ -505,7 +505,7 @@ Utc::now(),
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create production schedule: {}", e);
-            return Json(ApiResponse::error(500, "创建生产排产失败"));
+            return Json(ApiResponse::server_error("创建生产排产失败"));
         }
     };
 
@@ -595,7 +595,7 @@ pub async fn get_production_schedule(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch production schedule: {}", e);
-            return Json(ApiResponse::error(500, "获取生产排产失败"));
+            return Json(ApiResponse::server_error("获取生产排产失败"));
         }
     };
 
@@ -629,7 +629,7 @@ pub async fn get_production_schedule(
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
-        None => Json(ApiResponse::error(404, "生产排产不存在")),
+        None => Json(ApiResponse::not_found("生产排产不存在")),
     }
 }
 
@@ -705,7 +705,7 @@ pub async fn update_production_schedule(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update production schedule: {}", e);
-            return Json(ApiResponse::error(500, "更新生产排产失败"));
+            return Json(ApiResponse::server_error("更新生产排产失败"));
         }
     };
 
@@ -739,7 +739,7 @@ pub async fn update_production_schedule(
             };
             Json(ApiResponse::success(schedule, "生产排产更新成功"))
         }
-        None => Json(ApiResponse::error(404, "生产排产不存在")),
+        None => Json(ApiResponse::not_found("生产排产不存在")),
     }
 }
 
@@ -785,14 +785,14 @@ pub async fn delete_production_schedule(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete production schedule: {}", e);
-            return Json(ApiResponse::error(500, "删除生产排产失败"));
+            return Json(ApiResponse::server_error("删除生产排产失败"));
         }
     };
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success("".to_string(), "生产排产删除成功"))
     } else {
-        Json(ApiResponse::error(404, "生产排产不存在或状态不允许删除"))
+        Json(ApiResponse::not_found("生产排产不存在或状态不允许删除"))
     }
 }
 
@@ -847,7 +847,7 @@ pub async fn adjust_schedule(
 
         if let Err(e) = result {
             tracing::error!("Failed to adjust schedule {}: {}", schedule_id, e);
-            return Json(ApiResponse::error(500, "调整生产排产失败"));
+            return Json(ApiResponse::server_error("调整生产排产失败"));
         }
     }
 
@@ -900,7 +900,7 @@ pub async fn get_gantt_data(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to fetch gantt data: {}", e);
-            return Json(ApiResponse::error(500, "获取甘特图数据失败"));
+            return Json(ApiResponse::server_error("获取甘特图数据失败"));
         }
     };
 
@@ -1072,12 +1072,12 @@ async fn transition_schedule(
         Ok(None) => None,
         Err(e) => {
             tracing::error!("查询排产单状态失败: {}", e);
-            return Json(ApiResponse::error(500, "查询排产单状态失败"));
+            return Json(ApiResponse::server_error("查询排产单状态失败"));
         }
     };
 
     let Some((current_status,)) = existing else {
-        return Json(ApiResponse::error(404, "排产单不存在"));
+        return Json(ApiResponse::not_found("排产单不存在"));
     };
 
     if let Err(_e) = schedule_can_transition(&current_status, to_status) {
@@ -1108,10 +1108,10 @@ async fn transition_schedule(
             },
             "操作成功",
         )),
-        Ok(_) => Json(ApiResponse::error(404, "排产单不存在")),
+        Ok(_) => Json(ApiResponse::not_found("排产单不存在")),
         Err(e) => {
             tracing::error!("更新排产单状态失败: {}", e);
-            Json(ApiResponse::error(500, "更新排产单状态失败"))
+            Json(ApiResponse::server_error("更新排产单状态失败"))
         }
     }
 }

@@ -19,6 +19,14 @@
 - **验证**：残留 grep 计数 0；`SQLX_OFFLINE=true cargo check -p topems-erp -p topems-srm -p topems-hrm -p topems-finance -p topems-crm` exit 0；5 包 `cargo test --lib` 全部 0 failed（erp 870 / srm 559 / hrm 291 / finance 1086 / crm 504）；`git diff --stat` 110 files changed, +845/-845 对称。
 - **commit 哈希**：`ee6ffaa8a`
 
+## F10 · mes,pdm,qms,rd,ehs,lims 语义化收敛（批次3，2005 处）（2026-10-26）✅ 完成
+
+> ApiResponse 语义构造器机械替换（范本 wms 批次1 已完成）：svc/{mes,pdm,qms,rd,ehs,lims} 下 `ApiResponse::error(<码>, msg)` → 语义构造器（500→server_error / 400→bad_request / 404→not_found / 401→unauthorized / 403→forbidden / 409→conflict / 501→not_implemented / 503→unavailable），行为严格等价，消息文本/状态码/控制流零改动。
+
+- **替换数**：2005 处（替换前 grep 计数 2005 → 替换后残留 0）；perl 单轮带空格形态即全覆盖（无空格变体 grep 复跑仍 0）；泛型形态 `ApiResponse::<T>::error(...)` 同步收敛为 `ApiResponse::<T>::server_error(...)` 等；115 个 .rs 文件。
+- **验证**：残留 grep 计数 0；`SQLX_OFFLINE=true cargo check -p topems-mes -p topems-pdm -p topems-qms -p topems-rd -p topems-ehs -p topems-lims` exit 0；6 包 `cargo test --lib` 全部 0 failed（mes 368 / pdm 322 / qms 262 / rd 155 / ehs 231 / lims 151）；`git diff --stat` 115 files changed, +2005/-2005 对称。
+- **commit 哈希**：`8dc0461041`
+
 ## 生产部署就绪核对（2026-10-25）✅ 完成
 
 > 外部阻塞项（生产机实跑）的本地可闭环交付前准备：部署脚本链/单元/nginx/清单四维一致性核对。
