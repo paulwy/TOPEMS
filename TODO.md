@@ -7,7 +7,17 @@
 - **批次3（qms+hrm，commit `c20e469af7`）**：检验→QmsInspectionRedesignPage（1012行/27hooks）；不合格品→QmsNonconformanceRedesignPage（1116行/28hooks）；考勤→HrmAttendanceRedesignPage（993行/24hooks）
 - **每批验证**：tsc 0 / eslint 0（批次2/3 各 2 prettier --fix）/ core+extended+form-open smoke 23 passed（每批复跑）；CrmCustomerRedesignPage.test 12 passed
 - **后端路由可达（全部 401 认证保护=已挂载非 404）**：/api/crm/customers、/api/crm/opportunities(+/stats/funnel)、/api/hrm/employees、/api/hrm/performance-reviews、/api/hrm/performance-goals、/api/qms/checks、/api/qms/issues、/api/hrm/attendance
-- **遗留备注**：QmsInspectionRedesignPage.tsx / QmsNonconformanceRedesignPage.tsx 内部 export 名仍为旧名（文件名/组件名复制遗留，不影响 lazy import 路径；随后续卫生批次对齐）；被替换薄壳页（CustomerManagementPage 等 7 个）待功能差异核对后处置（另批次）
+- **遗留备注**：QmsInspectionRedesignPage.tsx / QmsNonconformanceRedesignPage.tsx 内部 export 名仍为旧名（文件名/组件名复制遗留，不影响 lazy import 路径；随后续卫生批次对齐）
+
+## 冗余清理 R2：删除被 redesign 替换的 9 个旧页 + 连测 + 死配套（2026-10-26）✅ 完成
+
+> commit `f2d74ae327`（已推送 HEAD==origin/main）。R1（Cargo 未引用依赖 6 个）与 MF 远程注册残留（registry/core-modules.ts、remote-modules.d.ts 的 topems_crm 块）另行批次。
+
+- **删 9 个旧页**：crm/CustomerManagementPage、crm/OpportunityManagementPage、hrm/HrmEmployeePage(目录)、hrm/HrmPerformancePage、hrm/HrmAttendancePage、qms/QmsInspectionPage、qms/QmsNonconformancePage、erp/SalesOrderPage、wms/WmsInventoryPage
+- **删 10 个页面专属测试**：CustomerManagementPage / CrmCustomerManagementPage / CrmOpportunityManagementPage / HrmEmployeePage(+form) / HrmAttendancePage / QmsInspectionPage / QmsNonconformancePage / SalesOrderPage / WmsInventoryPage .test
+- **删死配套**：deploy/docker/consul/（3 文件）+ etcd-compose.yml（对应 F7 三套未启用服务发现）；apps/web/src/_archive-microfrontend（MF 遗留 MicroAppRouter.tsx）
+- **编辑同步**：ErpModule.test（删 SalesOrderPage 用例，erp/CustomerManagementPage 活页保留）、HrmWmsMesCrudPages.test（删 HrmPerformancePage 条目）、QmsModule.test（删 QmsInspection/QmsNonconformance 用例）、extended-pages-data.smoke.test（删 WmsInventoryPage 条目）
+- **验证**：tsc --noEmit exit 0 / vitest 6 文件 52 passed / eslint 0 errors
 
 ## 补测续：erp 域剩余复杂/自绘形态页（批次7，33 用例）（2026-10-28）✅ 完成
 
