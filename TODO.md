@@ -1,3 +1,11 @@
+## 补测续：13 页纯包装收尾（标准 9 + 特殊 4）（2026-10-25）✅ 完成
+
+> **模板 stub 架构改造受益（续批，纯包装页 25 个全部清零）**：承接 tms/aps + hrm/wms/mes 两批，本批补完剩余 13 个 0-hooks CrudPage 包装页
+> - `StandardCrudPages3.test.tsx`（36 用例，9 标准页）：ForecastManagement/ProductionPlan（APS）+ QmsApqp（QMS，qmsApi.listApqpProjects 等）+ FinanceExpenseApproval（financeApi.expenseApproval 整对象）+ ScmPurchaseContract（purchaseContractWizardSchema + purchaseContracts 整对象）+ VehicleRequest/MeetingRoom（**三层 breadcrumbs 含 href**）+ PdmProductCategory（documentApi 整对象）/PdmStep（pdmApi.listSteps 等）
+> - `SpecialCrudPages.test.tsx`（16 用例，4 特殊页）：**ScmPurchaseItem/ScmIncomingNotice**（手写 adapter：params 原样透传非归一化、页面自有 k0-k3 错误 key、delete 恒定抛 k3——后端无 DELETE 路由）；**FinanceReceipt**（createCrudPageAdapter 包装 + update/delete no-op 桩——update 原样返 data 经 adapter 无信封 → 返回 {}，delete 返 undefined，照真实行为）；**RsMilestone**（动态 schema getMilestoneSchema() + 手写 adapter：list 归一化 + builds 解包、**create 固定 payload**{project_id/branch/commit_hash/build_type}、update/delete 恒定抛 k2/k3、**命名导入 CrudPage 需 mock 命名导出**）
+> - 验证：52/52 passed；eslint 0；tsc 0；component 全量 332 files / 3431 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：hrm/wms/mes 域 CrudPage 六页真断言（2026-10-25）✅ 完成
 
 > **模板 stub 架构改造受益（续批，纯包装页第二波）**：承接 tms/aps 批次，补 hrm（4）+ wms（1）+ mes（1）最纯包装页
