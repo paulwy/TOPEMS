@@ -1,3 +1,16 @@
+## 补测续：erp 域剩余复杂/自绘形态页（批次7，33 用例）（2026-10-28）✅ 完成
+
+> **erp 域自绘/复杂形态页收尾补测**：包装页已全覆盖（批次6），本批补 5 个复杂页 + 修 setup-mocks useMutation 陈旧闭包缺陷
+> - **附修（本批前置）**：`setup-mocks.ts` useMutation 陈旧闭包——mock 的 `mutate` 用 `useCallback([mutationFn.toString()])`，函数体不变导致 mutate 冻结在首渲染闭包，form/editingId 等 state 变化后仍调旧 mutationFn → create 永远传空 form。改为 **refs 存 mutationFn/onSuccess/onError/onMutate/onSettled**，mutate 稳定但始终调最新回调。全量回归 0 破窗
+> - `ErpComplexCrudPages.test.tsx`（10 用例）：ReceivablePayablePage（Tabs 应收/应付 + CrudPage + headerContent 函数统计卡 4 卡）+ BudgetManagementPage（Tabs 预算/报销 + 4 统计卡）；覆盖默认 tab schema、统计卡计算（同值卡用 getAllByText 长度断言）、tab 切换、adapter list 归一化、create/update/delete 错误翻译 k0-k5
+> - `ErpAccountingPage.test.tsx`（6 用例）：AccountingManagementPage（Tabs 会计科目/期初余额 + CrudPage + 期初余额结转 useMutation）；覆盖默认 tab schema/breadcrumbs、tab 切换、期初余额 adapter、结转 mutation 调 carryForward + 成功通知
+> - `ErpDashboardPage.test.tsx`（4 用例）：DashboardPage（DashboardTemplate + useQuery 8 统计卡）；覆盖 8 卡 title 渲染、value toLocaleString 格式化、空数据兜底
+> - `ErpDictionaryPage.test.tsx`（6 用例）：DictionaryPage（自绘 useQuery + useMutation + Dialog + Table）；覆盖列渲染、list 参数归一化、新建 create+通知、编辑预填、删除 remove+通知、搜索触发 list
+> - `ErpDictManagementPage.test.tsx`（7 用例）：DictManagementPage（左字典类型 CRUD：useQuery + 3 useMutation + useConfirmDialog；右 CrudPage 字典项：itemApiAdapter 依赖 selectedTypeId）；覆盖类型列表+自动选中、新建 create、编辑 update+预填、删除 confirm+delete、itemApiAdapter list 归一化、create 注入 dict_type_id、刷新按钮 invalidateQueries
+> - **可测性要点**：useNotificationStore selector 式 mock；useConfirmDialog mock 捕获 openConfirm 入参后直接调 onConfirm 走删除；CrudPage mock 记录 props；PageContainer mock 需渲染 title+headerActions（setup-mocks 默认只渲染 children）；itemApiAdapter 从 mockCrudPage props 取出直接调
+> - 验证：本批 33/33 passed；eslint 0（setup-mocks 被 ignore，测试文件 0 error/warning）；tsc 0；**全量 vitest 463 files / 6198 passed / 1 skipped / 0 failed / 0 errors**；lefthook pre-commit 全绿（含 frontend-typecheck/lint/api-boundary-gate/i18n 多门禁）
+> - 提交：6 commits（setup-mocks fix + 5 测试文件各自独立 commit），HEAD `a1c45e1a2`
+
 ## 补测续：erp 域剩余 CrudPage 包装页（批次6，14 用例）（2026-10-25）✅ 完成
 
 > **erp 域收尾补测**：3 纯包装（Supplier/VehicleRequest/MeetingRoom）+ 3 带 headerContent 统计卡（Vehicle/Material/Asset，useQuery 部分 mock）
