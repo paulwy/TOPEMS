@@ -1,3 +1,11 @@
+## 补测续：admin 域权限审计页（PermissionAuditPage）（2026-10-25）✅ 完成
+
+> **权限审计页补测（4 useQuery 按 queryKey 区分的部分 mock + tabs + headerContent JSX）**：PermissionAuditPage 4 useQuery（permissionChanges/accessLogs/changeStats/accessStats）+ tabs（permissionChanges/accessControl）+ 2 个 ListPageTemplate（templates 路径）+ stats 卡 + 筛选/搜索/分页 + refresh/export 动作
+> - `PermissionAuditPage.test.tsx`（5 用例）：默认 tab ListPageTemplate（title/columns/data 1 行/pagination{1,20,total:1}/actions 2/searchable）；列渲染（change_type/status chip + **operator 列 id='operator'**）；**headerContent 为 JSX（stats 卡 + tabs）——渲染后点击切换 accessControl**（access 列 response_time→'32ms'）；refresh（permissionChanges tab 仅 changes+changeStats）；export → exportPermissionChanges({format:'excel'}) + addNotification
+> - **可测性要点**：本页 **useNotificationStore 为 selector 式**（MonitorPage 是解构式）；useDebounce 来自 @topems/shared-hooks（mock 直通避免定时器）；4 useQuery 按 **queryKey[1] 标识**区分；jsdom export 需 mock `window.URL.createObjectURL`；headerContent 含 stats+tabs 需单独渲染才能交互
+> - 验证：5/5 passed；eslint 0；tsc 0；component 全量 336 files / 3457 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：admin 域监控页（MonitorPage）（2026-10-25）✅ 完成
 
 > **监控页补测（3 useQuery 按 queryKey 区分的部分 mock 新范式）**：MonitorPage 3 useQuery（systemMetrics/serviceHealth/alerts）+ 4 统计卡（CPU/Memory/Disk/Uptime）+ 2 个 ListPageTemplate（templates 路径）+ handleRefresh refetch×3 + isError → addNotification
