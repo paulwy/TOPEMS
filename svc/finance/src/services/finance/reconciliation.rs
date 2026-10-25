@@ -146,10 +146,7 @@ impl ReconciliationService {
             count_qb = count_qb.bind(s);
         }
 
-        let total: i64 = count_qb
-            .fetch_one(&self.db_pool)
-            .await
-            .unwrap_or(0);
+        let total: i64 = count_qb.fetch_one(&self.db_pool).await.unwrap_or(0);
 
         Ok((sessions, total))
     }
