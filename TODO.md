@@ -1,3 +1,10 @@
+## 补测续：erp 域核心业务页 SalesOrder/PurchaseOrder 补测（2026-10-25）✅ 完成
+
+> **第三十一轮下批承接（erp 核心业务页测试缺口）**：PurchaseOrderPage（ListPageTemplate + useQuery 手写页）+ SalesOrderPage（CrudPage + createCrudPageAdapter 包装页）两形态代表页
+> - `PurchaseOrderPage.test.tsx`（5 用例）：ListPageTemplate 直通形态——mount 固定参数 `list({page:1,pageSize:50})`；header title（erp.purchase_order.title）+ **9 列 + actions 列**；字段映射（order_number→order_no、supplier_id→supplier_code、created_by→buyer）+ **状态归一化**（pending→pending_approval、partially_received→received）；状态 tabs 五档（all/pending_approval/approved/ordered/received）；**API success:false 回退内置 6 行 mock**（照真实行为）
+> - `SalesOrderPage.test.tsx`（4 用例）：**vi.unmock 真实 crudPageAdapter**——CrudPage 渲染（salesOrderSchema + ERP 三层 breadcrumbs：首页/ERP/销售订单）；list 参数归一化 pageSize→page_size + **itemsField:'orders' 响应解包**；create/update/delete 委托；四档错误翻译（k0-k3，i18n mock 补 crud_page_adapter 翻译表）
+> - 验证：两文件 9/9 passed；tsc 0；eslint 0；**全量 vitest 453 files / 6119 passed / 1 skipped / 0 failed**；lefthook 全绿（含 frontend-typecheck/lint/api-boundary-gate）；推送前 rebase 远端 3 测试提交（MonitorPage/PermissionAuditPage/WmsInventoryPage），HEAD `5a7943277`
+
 ## 补测续：desktop 审计日志页（AuditLogPage）（2026-10-25）✅ 完成
 
 > **desktop 审计日志页补测（非 useQuery 手动 state 范式）**：AuditLogPage（12 hooks）——tauriAuth 触发 + fetchLogs + ListPageTemplate（templates 路径）+ 排序/分页/expandable + 3 actions（refresh/export_json/auto_refresh）
@@ -4518,3 +4525,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 验证：tsc 0、eslint 全绿、全量 vitest **449 文件 / 6090 通过 / 0 failed**（+50：FinancialReport 3 + Voucher 15 + 其余）+1 skipped、detector L1=0/L2=88/L3Dead=0。
 ### 状态与下批
 - erp 域：FinancialReport 区域 + Voucher 三组件已补测（erp 组件层覆盖齐）。下批：erp 核心业务页面 SalesOrder/PurchaseOrder 页面测试，或 qms i18n 硬编码 12 处清理，或 pm 2 处。
+## 第三十二轮（2026-10-25）：erp 核心业务页 SalesOrder/PurchaseOrder 补测（批次5，9 用例）+ 全量 6119 测试 0 failed
+- **erp 核心业务页补测**（第三十一轮下批承接，两形态代表页）：
+  - `PurchaseOrderPage.test.tsx`（5 用例）：ListPageTemplate 直通形态——mount 固定参数 `list({page:1,pageSize:50})`；header title + 9 列 + actions 列；字段映射（order_number→order_no、supplier_id→supplier_code、created_by→buyer）+ 状态归一化（pending→pending_approval、partially_received→received）；状态 tabs 五档；**API success:false 回退内置 6 行 mock**（照真实行为）。
+  - `SalesOrderPage.test.tsx`（4 用例）：**vi.unmock 真实 crudPageAdapter**——CrudPage 渲染（salesOrderSchema + ERP 三层 breadcrumbs）；list 归一化 pageSize→page_size + **itemsField:'orders' 解包**；create/update/delete 委托；四档错误翻译（k0-k3）。
+- 验证：两文件 9/9 passed；tsc 0；eslint 0；全量 vitest **453 文件 / 6119 通过 / 0 failed**（+1 skipped）；lefthook 29 门禁全绿；推送前 rebase 远端 3 测试提交（MonitorPage/PermissionAuditPage/WmsInventoryPage，同批并行线），HEAD `5a7943277`。
+### 状态与下批
+- erp 域：FinancialReport 区域 + Voucher 三组件 + SalesOrder/PurchaseOrder 核心业务页已补测。下批：剩余 erp 无测试页（ReceivablePayable/Budget/Accounting/Inventory/Material/Supplier/Dashboard 等），或 qms i18n 硬编码 12 处清理，或 pm 2 处。
