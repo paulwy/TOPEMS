@@ -74,8 +74,8 @@ const crmDashboardRoute: RouteConfigV2<CrmDashboardPageProps> = {
 const customerManagementRoute: RouteConfigV2<CustomerManagementPageProps> = {
   path: CRM_PATHS.customers,
   element: lazyWithRetry(
-    () => import('@/pages/crm/CustomerManagementPage'),
-    'CustomerManagementPage'
+    () => import('@/pages/crm/CrmCustomerRedesignPage'),
+    'CrmCustomerRedesignPage'
   ),
   module: 'crm',
   code: 'crm-customers',
@@ -132,8 +132,8 @@ const contactDetailRoute: RouteConfigV2<ContactDetailPageProps> = {
 const opportunityManagementRoute: RouteConfigV2<OpportunityManagementPageProps> = {
   path: CRM_PATHS.opportunities,
   element: lazyWithRetry(
-    () => import('@/pages/crm/OpportunityManagementPage'),
-    'OpportunityManagementPage'
+    () => import('@/pages/crm/CrmOpportunityRedesignPage'),
+    'CrmOpportunityRedesignPage'
   ),
   module: 'crm',
   code: 'crm-opportunities',
