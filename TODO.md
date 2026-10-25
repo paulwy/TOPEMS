@@ -1,3 +1,14 @@
+## 生产 nginx reload · 本机演练闭环（2026-10-26）✅ 完成（演练侧）
+
+> 目标：P-5/P-6 在本机做"校验→reload"一次到位闭环。仓库 conf 为 Linux 生产主 conf（use epoll//run//etc/nginx/www-data/443 证书），本机 macOS 无法原样加载 → 走 runbook §1 演练路径（gen-nginx-drill-conf.sh 生成等价演练 conf，upstream 统一 8099）。
+
+- **本机校验**：仓库事实源 `server_service → localhost:8099` 无遗留 map（MAP_OK）；演练 conf `nginx -t` 语法通过（syntax is ok）。
+- **reload 闭环**：演练 conf 修正 root → 演练 html（生产 root /var/www 本机无，原 500 rewrite 循环 → 200）；`kill -HUP <master>` 平滑重载生效（macOS 无 systemctl，`nginx -s reload` 读默认 pid 路径无效，HUP 为等价动作）；80→301→443 index **200 "ok"**。
+- **verify 全流程 PASS**：`verify-nginx-prod.sh --conf 演练conf --repo-conf 仓库conf --base https://localhost --insecure` → UPSTREAM_OK + **SMOKE 6/6 200**（起 BFF 8099 后经 nginx 反代 erp/bi/hrm/portal/core/wms 全 200）；[1/3] NGINX_T_SKIP_WARN 为 macOS 已知（-t 已单独通过）。
+- **--target 能力补推**：`verify-nginx-prod.sh` 的 `--target user@host` SSH reload 支持（BatchMode 探活 + 远程 nginx -t && systemctl reload）为遗留未提交改动，本轮补 commit 推送（f3535c737d）。
+- **遗留（外部，需目标 Linux 机）**：生产 reload 本身（--target 已就位，等待用户提供生产机 SSH 端点）；演练实例已停（80/443 复检空闲；BFF 8099 停止动作等待用户确认未执行，若需保留可继续使用）。
+- 演练产物：/tmp/topems-nginx-dev/（topems-drill.conf + certs/ + html/）。
+
 ## 冗余清理批次1-3：7 个 redesign 页全部挂载（2026-10-26）✅ 完成
 
 > 全项目冗余审计（2026-10-26 只读扫盘）→ 确认 7 个 redesign 页为"已完成开发、单测齐备、API 契约全绿但路由未切换"的高完成度页面（erp 域同模式已上线先例）→ 用户决策：全部挂载、分三批切换。
