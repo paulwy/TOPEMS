@@ -1,7 +1,5 @@
 // STATUS: WIRED | Integrated in App.tsx DevTools panel
 
-export type { ModelVersion, VersionStatus } from './model-versioning';
-
 export type { Experiment, Variant, ExperimentResult, ExperimentStatus } from './ab-testing';
 
 export type { SecuritySeverity, ThreatSeverity } from './security-hardening';

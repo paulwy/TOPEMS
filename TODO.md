@@ -4425,3 +4425,8 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### 状态与下批
 - L2 91：34 NavConfig + 34 ModuleConfig + 7 无定义转发 + setup-mocks 6 + 内部活引用 2 + VoucherItem/PeriodOption/DefectForm 3（消费核销保留）= **全永久保留登记，实质零可删**；L1=0。
 - 下批：L2 无可删项——unused 主线可收官；或转向 L3 4172 可选核销 / 其他主线（erp/qms 推进）。
+## 第二十九轮（2026-10-25）：L2 连锁收官——ai 5 type 真死 + PeriodOption 连锁 L1（L2 91→88）
+- **ai 5 type 真死整删**：批 28 删 Model/Policy value 后残留——model-versioning.ts（ModelVersion/VersionStatus 整文件）+ policy-enforcement.ts（EnforcementMode/PolicyStatus/PolicyRule 整文件）——外部 0 消费（唯一命中为 version-platform 同名本地 type）→ git rm 2 文件 + barrel 转发删（evolution/index.ts 3 行 / governance/index.ts 10 行）。
+- **PeriodOption 连锁 L1**：远端 a4269700a 删 FinancialReport 死测试后，其唯一引用（测试）消失 → useFinancialReport.ts:1 定义删（保留 TabConfig，detector 未报勿动）。
+- 验证：tsc 0、eslint 全绿（--fix）、erp 相关测试 3/3；重扫 **L1=0、L2=91→88（values 85 + types 3 全保留核销：VoucherItem/ExpandedRowRenderProps/DefectForm）、L3Dead=0**。
+- **unused 主线最终收官**：L1=0、L2 88 全保留登记（34 NavConfig + 34 ModuleConfig + 7 无定义转发 + 6 setup-mocks + 2 内部活引用 + 3 消费核销 type + 其余 values 活数据）、L3 4867 活代码不动。
