@@ -382,45 +382,58 @@ vi.mock('@tanstack/react-query', () => {
     const [status, setStatus] = React.useState<string>('idle');
     const [variables, setVariables] = React.useState<any>(undefined);
 
-    const mutate = React.useCallback(
-      async (vars: any) => {
-        setIsPending(true);
-        setIsError(false);
-        setError(null);
-        setIsSuccess(false);
-        setStatus('pending');
-        setVariables(vars);
+    // Use refs so the stable `mutate` callback always invokes the latest
+    // mutationFn / callbacks (avoids stale-closure when state captured by the
+    // mutationFn changes between renders).
+    const mutationFnRef = React.useRef(mutationFn);
+    const onSuccessRef = React.useRef(onSuccess);
+    const onErrorRef = React.useRef(onError);
+    const onMutateRef = React.useRef(onMutate);
+    const onSettledRef = React.useRef(onSettled);
+    React.useEffect(() => {
+      mutationFnRef.current = mutationFn;
+      onSuccessRef.current = onSuccess;
+      onErrorRef.current = onError;
+      onMutateRef.current = onMutate;
+      onSettledRef.current = onSettled;
+    });
 
-        let context: any;
-        if (onMutate) {
-          try {
-            context = onMutate(vars);
-          } catch (e) {
-            // ignore
-          }
-        }
+    const mutate = React.useCallback(async (vars: any) => {
+      setIsPending(true);
+      setIsError(false);
+      setError(null);
+      setIsSuccess(false);
+      setStatus('pending');
+      setVariables(vars);
 
+      let context: any;
+      if (onMutateRef.current) {
         try {
-          const result = mutationFn ? await mutationFn(vars) : undefined;
-          setData(result);
-          setIsSuccess(true);
-          setStatus('success');
-          if (onSuccess) onSuccess(result, vars, context);
-          if (onSettled) onSettled(result, null, vars, context);
-          return result;
-        } catch (err: any) {
-          setIsError(true);
-          setError(err);
-          setStatus('error');
-          if (onError) onError(err, vars, context);
-          if (onSettled) onSettled(undefined, err, vars, context);
-          throw err;
-        } finally {
-          setIsPending(false);
+          context = onMutateRef.current(vars);
+        } catch (e) {
+          // ignore
         }
-      },
-      [mutationFn ? mutationFn.toString() : '']
-    );
+      }
+
+      try {
+        const result = mutationFnRef.current ? await mutationFnRef.current(vars) : undefined;
+        setData(result);
+        setIsSuccess(true);
+        setStatus('success');
+        if (onSuccessRef.current) onSuccessRef.current(result, vars, context);
+        if (onSettledRef.current) onSettledRef.current(result, null, vars, context);
+        return result;
+      } catch (err: any) {
+        setIsError(true);
+        setError(err);
+        setStatus('error');
+        if (onErrorRef.current) onErrorRef.current(err, vars, context);
+        if (onSettledRef.current) onSettledRef.current(undefined, err, vars, context);
+        throw err;
+      } finally {
+        setIsPending(false);
+      }
+    }, []);
 
     const mutateAsync = React.useCallback(
       async (vars: any) => {
