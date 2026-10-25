@@ -23,6 +23,15 @@
 - **唯一漂移已修**：smoke-prod.sh 头注释"经 nginx map 路由"过时（P0-3 已移除 map），改"经 BFF 统一入口 :8099"；bash -n 语法 OK、shellcheck 复跑 0。
 - 结论：生产部署三件套（verify-nginx/health-check/smoke-prod）与 install/update/rollback 链就绪待目标机实跑，无本地可修缺陷。
 
+## 生产架构双模式核对 + 注释漂移修正（2026-10-25）✅ 完成
+
+> 生产（nginx 8099 单体）与开发/standalone（独立服务端口表）双模式厘清，两处过时注释/文档修正。
+
+- **双模式厘清（并存成立，非漂移）**：生产 = `deploy/nginx/topems.conf` upstream `server_service:8099`（`svc/server/src/main.rs:529` `unwrap_or(8099)` 权威）→ topems-server 模块化单体聚合全部域 real_module；`topems.target` `Requires` 29 个 systemd 单元（install.sh 只 `enable topems.target`）。开发/standalone = 29 独立服务各自监听 8000-8079（`config/services.yaml` 权威源 → `config/ports.env` 生成 → `scripts/windows/ports.ps1` 同源，均一致无漂移）。
+- **漂移已修 1**：`svc/server/src/main.rs:534` 注释"生产 nginx 把 /api/mes/* 转发独立 svc/mes:8030"与 nginx 实际不符（nginx 无 8030 转发、全 /api/* 统一代理 8099）→ 改"生产 nginx 全 /api/* 统一代理 topems-server:8099（无 per-service 转发，P0-3 双轨合一）"；纯注释改动，不影响编译。
+- **漂移已修 2**：`scripts/windows/README_WINDOWS.md` 目录结构漏列 `install-deps.ps1`（存在 16KB，前置依赖安装脚本）→ 补行并标注 ports.ps1 与 config 同源。
+- 验证：diff 仅 3+/2-（纯注释/文档）；server 全量 cargo check 本地耗时过长未跑完（纯注释改动无编译影响，已按 diff 判定）；shellcheck 不受影响。
+
 ## 补测续：crm 客户页（CrmCustomerRedesignPage·redesign 形态 19 hooks）（2026-10-25）✅ 完成
 
 > **crm redesign 形态页补测首例**：CrmCustomerRedesignPage（19 hooks / 1049 行）——useQuery（服务端分页）+ 3 mutations（delete/create/update）+ ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环

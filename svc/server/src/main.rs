@@ -531,7 +531,7 @@ async fn main() -> Result<()> {
     let app = registry.lock().unwrap().merge_routes();
     // [U1-b2 D1] 原 3 行借用 unified-core mes 投影 handler 的根层路由（/ws/mes/dashboard、
     // /api/mes/dashboard/stats、/api/mes/dashboard/initial）已随 unified-core mes 镜像模块删除而解引用。
-    // 生产 nginx 把 /api/mes/* 转发独立 svc/mes:8030；本处仅模块化单体直跑(:8099)的临时补丁，投影零入向流量。
+    // 生产 nginx 全 /api/* 统一代理 topems-server:8099（无 per-service 转发，P0-3 双轨合一）；
     // 真实 mes 模块（mes_real_module → topems_mes::create_routes 挂 /api/mes）已提供业务路由；ws 看板如需在
     // :8099 恢复，应由 mes_real_module 内嵌 topems_mes::dashboard_ws（属 server 侧后续接线，非 U1 范围）。
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
