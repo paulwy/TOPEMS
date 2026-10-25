@@ -1,3 +1,11 @@
+## 补测续：desktop 审计日志页（AuditLogPage）（2026-10-25）✅ 完成
+
+> **desktop 审计日志页补测（非 useQuery 手动 state 范式）**：AuditLogPage（12 hooks）——tauriAuth 触发 + fetchLogs + ListPageTemplate（templates 路径）+ 排序/分页/expandable + 3 actions（refresh/export_json/auto_refresh）
+> - `AuditLogPage.test.tsx`（6 用例）：首次 fetch（tauriAuth isAvailable→true + 无过滤参数传 undefined）+ 数据映射（created_at→timestamp/resource→target_type/resource_id→target_id/request_params→details）；列渲染 5（timestamp/action chip/target_type/target_id/user_id）；expandable（有 details JSON/无 —）；refresh 再触发 fetch；export_json（Blob + createObjectURL）；auto_refresh toggle 变体 outlined→contained
+> - **可测性要点**：页面手动 state + fetchLogs（非 useQuery）；**tauriAuth 需 mock**（`../../services/TauriAuth` isAvailable→true 才 fetch）；ListPageTemplate 走 **barrel `@/components/templates`**（同 Monitor/PermissionAudit）；expandable 是函数（row）=> JSX
+> - 验证：6/6 passed；eslint 0；tsc 0；component 全量 338 files / 3471 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：wms 库存页（WmsInventoryPage·redesign 组件库形态）（2026-10-25）✅ 完成
 
 > **redesign 形态页补测首例**：WmsInventoryPage（12 hooks / 719 行）——ListPageTemplate（redesign）+ 4 StatTile（footer）+ Tabs（children）+ Drawer + 搜索/仓库筛选/tab 过滤 + refresh/adjust 动作
