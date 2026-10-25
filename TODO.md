@@ -1,3 +1,14 @@
+## 冗余清理批次1-3：7 个 redesign 页全部挂载（2026-10-26）✅ 完成
+
+> 全项目冗余审计（2026-10-26 只读扫盘）→ 确认 7 个 redesign 页为"已完成开发、单测齐备、API 契约全绿但路由未切换"的高完成度页面（erp 域同模式已上线先例）→ 用户决策：全部挂载、分三批切换。
+
+- **批次1（crm，commit `43aa03d00e`）**：customers 路由→CrmCustomerRedesignPage（1049行/24hooks）；opportunities 路由→CrmOpportunityRedesignPage（1041行/24hooks）
+- **批次2（hrm，commit `854bfce7fd`）**：员工路由→HrmEmployeeRedesignPage（1040行/24hooks）；绩效路由→HrmPerformanceRedesignPage（1060行/24hooks）
+- **批次3（qms+hrm，commit `c20e469af7`）**：检验→QmsInspectionRedesignPage（1012行/27hooks）；不合格品→QmsNonconformanceRedesignPage（1116行/28hooks）；考勤→HrmAttendanceRedesignPage（993行/24hooks）
+- **每批验证**：tsc 0 / eslint 0（批次2/3 各 2 prettier --fix）/ core+extended+form-open smoke 23 passed（每批复跑）；CrmCustomerRedesignPage.test 12 passed
+- **后端路由可达（全部 401 认证保护=已挂载非 404）**：/api/crm/customers、/api/crm/opportunities(+/stats/funnel)、/api/hrm/employees、/api/hrm/performance-reviews、/api/hrm/performance-goals、/api/qms/checks、/api/qms/issues、/api/hrm/attendance
+- **遗留备注**：QmsInspectionRedesignPage.tsx / QmsNonconformanceRedesignPage.tsx 内部 export 名仍为旧名（文件名/组件名复制遗留，不影响 lazy import 路径；随后续卫生批次对齐）；被替换薄壳页（CustomerManagementPage 等 7 个）待功能差异核对后处置（另批次）
+
 ## 补测续：erp 域剩余复杂/自绘形态页（批次7，33 用例）（2026-10-28）✅ 完成
 
 > **erp 域自绘/复杂形态页收尾补测**：包装页已全覆盖（批次6），本批补 5 个复杂页 + 修 setup-mocks useMutation 陈旧闭包缺陷
