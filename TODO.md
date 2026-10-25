@@ -136,6 +136,14 @@
 - **验证**：替换后续行首 token 仅余 `410,`×4 与局部单参形态 `"性能监控未启用",`×1（按约束保留）；行级残留 grep 0；`SQLX_OFFLINE=true cargo check` 对 21 包 exit 0；21 包 `cargo test --lib` 全部 0 failed；`git diff --stat -- lib/shared-core/src/response.rs` 为空（范本文件零改动）；.rs diff 消息串多重集 +/- 均 0（消息文本零改动）。
 - **commit 哈希**：`9bdeee3828`
 
+## F10 · 502 收尾（bad_gateway 构造器，3 处）（2026-10-26）✅ 完成
+
+> ApiResponse 语义构造器补漏：`lib/shared-core/src/response.rs` 新增 `pub fn bad_gateway(message: &str) -> Self { Self::error(502, message) }`（风格与 not_found…unavailable 完全一致），并在 `test_semantic_error_constructors_equivalent_to_error` 等价性循环中补入 502 臂（`502 => ApiResponse::bad_gateway(ctor_msg)`），与 `Self::error(502, msg)` 行为逐字等价。3 处调用点 `error(502, …)` → `bad_gateway(…)`，消息文本零改动。
+
+- **转换数**：3 处（`svc/portal/src/modules/monitoring.rs:235` 告警确认 502；`svc/portal/tests/bff_finance_integration.rs:238` 字面量串；`:373` `error_msg` 变量）。
+- **验证**：`grep -rnE 'ApiResponse::(<[^>]*>::)?error\(502,'` 残留 0；`SQLX_OFFLINE=true cargo check -p topems-shared-core -p topems-portal --all-targets` exit 0（覆盖 tests/ 编译）；`cargo test -p topems-shared-core --lib` 766 passed / 0 failed（含 502 等价性单测 ok）；`cargo test -p topems-portal --lib` 582 passed / 0 failed；`cargo test -p topems-portal --test bff_finance_integration` 24 passed / 0 failed（本地可跑，无外部服务/DB 依赖）。
+- **commit 哈希**：`b2180df440`
+
 ## 生产部署就绪核对（2026-10-25）✅ 完成
 
 > 外部阻塞项（生产机实跑）的本地可闭环交付前准备：部署脚本链/单元/nginx/清单四维一致性核对。
