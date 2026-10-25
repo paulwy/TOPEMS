@@ -108,6 +108,19 @@
 - **验证**：`cargo check` 4 crate exit 0；shared-core 766 / shared-auth 205 / shared-ai 71 / topems-ai mcp 174 passed，全 0 failed；生产侧残留 grep 仅 2 处注释。
 - 提交：见 git log 本批。
 
+## P-5/P-6 · nginx 本机演练闭环：语法校验 → reload → 6 域冒烟（2026-10-26）✅ 完成（生产 Linux 侧仍待目标机）
+
+> "一次到位：本机校验 → reload"。仓库 `deploy/nginx/topems.conf` 为 **Linux 生产主 conf**（use epoll / /run/nginx.pid / /etc/nginx 路径 / www-data / 443 证书——本机 macOS 无法原样加载，这正是脚本标注"需生产 Linux"的根因）；目标机 SSH 端点仓库与 ssh config 均未配置，用户确认"目标机就是本机"→ 走 runbook §1 本机演练路径闭环。
+
+- **本机校验（仓库侧）**：`deploy/nginx/topems.conf` upstream `server_service → localhost:8099`（ip_hash+keepalive 64）✅、无遗留 `map $request_uri $api_upstream`（MAP_OK）✅。
+- **演练 conf 生成**：`scripts/gen-nginx-drill-conf.sh /tmp/topems-nginx-dev`（等价 conf + 自签证书，upstream 统一 8099）。
+- **nginx -t 语法校验**：`nginx -t -c /tmp/topems-nginx-dev/topems-drill.conf` → **syntax is ok / test successful** ✅。
+- **启动 + reload**：`nginx -c 演练conf` 启动（master 监听 80/443）→ `kill -HUP <master>` 平滑重载生效（`nginx -s reload` 读 brew 默认 pid 路径不可用，演练 conf pid 在 /tmp——用 HUP 等价）；80 → 301 → https://localhost、443 index **200**。
+- **演练 conf 修正 1 处**：gen 脚本保留生产 `root /var/www/topems/web`（本机无此目录 → try_files 内部重定向循环 500）；演练 conf root 改 `/tmp/topems-nginx-dev/html`（仅改 /tmp 演练文件，不碰仓库事实源）→ 200。⚠️ 此 root 漂移建议回补 gen-nginx-drill-conf.sh（可选小批）。
+- **verify-nginx-prod.sh 全流程（BFF 8099 起栈后）**：`bash scripts/verify-nginx-prod.sh --conf /tmp/.../topems-drill.conf --repo-conf ./deploy/nginx/topems.conf --base https://localhost --insecure` → **UPSTREAM_OK + SMOKE 6/6 200（erp/bi/hrm/portal/core/wms）+ 结果 PASS（exit 0）**（[1/3] NGINX_T_SKIP_WARN 为 macOS 已知跳过，nginx -t 已单独 PASS）。
+- **收尾**：演练 nginx 实例按 runbook §4 停止（80/443 已释放）；BFF 8099 由 run-e2e-stack.sh up 起、保留运行（日志 /tmp/topems_monolith_e2e.log）。
+- **边界（如实标注）**：生产 Linux 机 `nginx -t && systemctl reload nginx` + 6 域冒烟仍待目标机执行（P-5/P-6 生产侧 🟡 不勾）；本机演练证明配置加载/SSL/upstream/反代链路全部正确。
+
 ## 补测续：crm 客户页（CrmCustomerRedesignPage·redesign 形态 19 hooks）（2026-10-25）✅ 完成
 
 > **crm redesign 形态页补测首例**：CrmCustomerRedesignPage（19 hooks / 1049 行）——useQuery（服务端分页）+ 3 mutations（delete/create/update）+ ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环
