@@ -1,3 +1,11 @@
+## 补测续：wms 库存页（WmsInventoryPage·redesign 组件库形态）（2026-10-25）✅ 完成
+
+> **redesign 形态页补测首例**：WmsInventoryPage（12 hooks / 719 行）——ListPageTemplate（redesign）+ 4 StatTile（footer）+ Tabs（children）+ Drawer + 搜索/仓库筛选/tab 过滤 + refresh/adjust 动作
+> - `WmsInventoryPage.test.tsx`（6 用例）：ListPageTemplate props（header 3 层 breadcrumbs/data 2 行/rowKey/columns 8/loading/empty）；footer 4 StatTile（totalSKU 2/lowStock 1/¥1,200/overstock 0）；列渲染（sku/quantity 格式化/status Badge/actions 2）；Tabs 切换（点击 low → data 过滤 1 行）；搜索过滤（300ms debounce 后 1 行）；toolbar adjust 弹 toast
+> - **可测性要点（redesign 组件库 mock）**：`@/components/redesign` 12 组件全 mock（ListPageTemplate 记录 props+渲染 children；StatTile 渲染 label:value；Tabs 可点击；Drawer open 才渲染；Button/Input/Select/Badge/Tag/Card/Pagination/ToastContainer 轻 mock）；**footer/toolbar 是 JSX props 需单独渲染**；vi.hoisted 提升 mock 数据（vi.mock 工厂禁用顶层变量）；Tabs button 文本含 badge 拼接（用正则匹配）
+> - 验证：6/6 passed；eslint 0；tsc 0；component 全量 337 files / 3464 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：admin 域权限审计页（PermissionAuditPage）（2026-10-25）✅ 完成
 
 > **权限审计页补测（4 useQuery 按 queryKey 区分的部分 mock + tabs + headerContent JSX）**：PermissionAuditPage 4 useQuery（permissionChanges/accessLogs/changeStats/accessStats）+ tabs（permissionChanges/accessControl）+ 2 个 ListPageTemplate（templates 路径）+ stats 卡 + 筛选/搜索/分页 + refresh/export 动作
