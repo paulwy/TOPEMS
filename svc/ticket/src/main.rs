@@ -18,7 +18,7 @@ mod util;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "ticket, public");
+    std::env::set_var("SEARCH_PATH", "ticket, public, shared");
 
     let config = ServiceConfig {
         name: "topems-ticket",

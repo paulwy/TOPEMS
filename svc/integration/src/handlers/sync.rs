@@ -788,28 +788,44 @@ pub async fn get_sync_history(
         "SELECT id, sync_type, source_module, target_module, status, created_at \
          FROM integration.core_inter_module_sync WHERE 1=1",
     );
-    let mut cond = Vec::new();
-    if let Some(st) = &q.sync_type {
-        cond.push(format!("sync_type = '{}'", st.replace('\'', "")));
-    }
-    if let Some(st) = &q.status {
-        cond.push(format!("status = '{}'", st.replace('\'', "")));
-    }
-    if let Some(conn) = &q.connection_id {
-        if let Ok(_uuid) = Uuid::parse_str(conn) {
-            cond.push(format!("source_id = '{}'", conn));
-        }
-    }
-    if !cond.is_empty() {
-        sql.push_str(" AND ");
-        sql.push_str(&cond.join(" AND "));
-    }
-    sql.push_str(" ORDER BY created_at DESC LIMIT $1 OFFSET $2");
+    let mut param_idx = 1i32;
+    let sync_type_param = q.sync_type.clone();
+    let status_param = q.status.clone();
+    let connection_id_param = q
+        .connection_id
+        .as_ref()
+        .and_then(|c| Uuid::parse_str(c).ok());
 
-    // 仅支持已过滤条件构造，字段全部白名单内；LIMIT/OFFSET 参数化
-    let query = sqlx::query_as::<_, SyncHistoryRow>(&sql)
-        .bind(page_size)
-        .bind(offset);
+    if sync_type_param.is_some() {
+        sql.push_str(&format!(" AND sync_type = ${}", param_idx));
+        param_idx += 1;
+    }
+    if status_param.is_some() {
+        sql.push_str(&format!(" AND status = ${}", param_idx));
+        param_idx += 1;
+    }
+    if connection_id_param.is_some() {
+        sql.push_str(&format!(" AND source_id = ${}", param_idx));
+        param_idx += 1;
+    }
+    sql.push_str(&format!(
+        " ORDER BY created_at DESC LIMIT ${} OFFSET ${}",
+        param_idx,
+        param_idx + 1
+    ));
+
+    // 全部条件参数化绑定，杜绝字符串拼接注入
+    let mut query = sqlx::query_as::<_, SyncHistoryRow>(&sql);
+    if let Some(st) = sync_type_param {
+        query = query.bind(st);
+    }
+    if let Some(s) = status_param {
+        query = query.bind(s);
+    }
+    if let Some(cid) = connection_id_param {
+        query = query.bind(cid);
+    }
+    query = query.bind(page_size).bind(offset);
 
     let result: Result<Vec<SyncHistoryItemResp>, sqlx::Error> = async {
         let rows = query.fetch_all(&state.pool).await?;

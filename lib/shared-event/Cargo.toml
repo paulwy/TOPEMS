@@ -44,7 +44,7 @@ reqwest = { workspace = true, features = ["json"] }
 sqlx.workspace = true
 
 # Consul 依赖
-serde_yaml.workspace = true
+serde_yml.workspace = true
 
 # 正则表达式依赖（config_center 用）
 regex.workspace = true

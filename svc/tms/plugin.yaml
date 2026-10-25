@@ -10,7 +10,8 @@ deployment:
   type: standalone
   port: 8073
   base_path: /api/tms
-runtime: {}
+runtime:
+  health_endpoint: /health
 permissions:
   # 车辆管理
   - code: tms:read

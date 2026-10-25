@@ -10,7 +10,8 @@ deployment:
   type: standalone
   port: 8090
   base_path: /api/master-data
-runtime: {}
+runtime:
+  health_endpoint: /health
 permissions:
   - code: master-data:quality:read
     name: 查看质量检查

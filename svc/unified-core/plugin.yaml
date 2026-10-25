@@ -7,6 +7,8 @@ version: 1.0.0
 icon: admin_panel_settings
 plugin_type: system
 dependencies: []
+runtime:
+  health_endpoint: /health
 deployment:
   type: standalone
   port: 8000

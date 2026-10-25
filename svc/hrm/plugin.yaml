@@ -6,6 +6,8 @@ description: HRM 人力资源管理系统，包含员工管理、部门管理、
 version: 1.0.0
 plugin_type: business
 dependencies: []
+runtime:
+  health_endpoint: /health
 deployment:
   type: standalone
   port: 8020

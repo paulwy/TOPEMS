@@ -234,10 +234,12 @@ pub async fn list_metrics(
     Query(q): Query<ListMetricsQuery>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let now = chrono::Utc::now().to_rfc3339();
+    // 元数据兜底：仅返回指标定义（id/名称/类别/单位/阈值），不返回伪造的当前值。
+    // 真实采集由 get_system_metrics / Prometheus 提供；value=null 表示暂无采样数据。
     let all: Vec<serde_json::Value> = vec![
-        serde_json::json!({"id":"cpu_usage","name":"CPU 使用率","category":"system","value":23.5,"unit":"%","status":"normal","threshold_warning":70.0,"threshold_critical":90.0,"timestamp":now}),
-        serde_json::json!({"id":"memory_usage","name":"内存使用率","category":"system","value":45.2,"unit":"%","status":"normal","threshold_warning":75.0,"threshold_critical":90.0,"timestamp":now}),
-        serde_json::json!({"id":"disk_usage","name":"磁盘使用率","category":"system","value":32.8,"unit":"%","status":"normal","threshold_warning":80.0,"threshold_critical":95.0,"timestamp":now}),
+        serde_json::json!({"id":"cpu_usage","name":"CPU 使用率","category":"system","value":null,"unit":"%","status":"unknown","threshold_warning":70.0,"threshold_critical":90.0,"timestamp":now}),
+        serde_json::json!({"id":"memory_usage","name":"内存使用率","category":"system","value":null,"unit":"%","status":"unknown","threshold_warning":75.0,"threshold_critical":90.0,"timestamp":now}),
+        serde_json::json!({"id":"disk_usage","name":"磁盘使用率","category":"system","value":null,"unit":"%","status":"unknown","threshold_warning":80.0,"threshold_critical":95.0,"timestamp":now}),
         serde_json::json!({"id":"request_count","name":"请求总数","category":"performance","value":0,"unit":"req","status":"normal","timestamp":now}),
         serde_json::json!({"id":"error_count","name":"错误总数","category":"performance","value":0,"unit":"err","status":"normal","threshold_warning":100,"threshold_critical":500,"timestamp":now}),
         serde_json::json!({"id":"active_connections","name":"活跃连接","category":"network","value":0,"unit":"conn","status":"normal","timestamp":now}),
@@ -272,15 +274,17 @@ pub async fn get_system_metrics(
         service_name: "topems-monitor".to_string(),
         uptime: state.metrics.get_uptime(),
         uptime_seconds: state.metrics.get_uptime_seconds(),
-        cpu_usage: 23.5,
-        memory_usage: 45.2,
-        memory_total: 16_000_000_000,
-        memory_used: 7_232_000_000,
-        disk_usage: 32.8,
-        disk_total: 500_000_000_000,
-        disk_used: 164_000_000_000,
-        network_in: 1_234_567_890,
-        network_out: 987_654_321,
+        // 硬件指标（CPU/内存/磁盘/网络）需 OS 级采集（sysinfo/Prometheus node_exporter），
+        // 当前未接入，置 0 避免返回伪造数据误导告警评估。
+        cpu_usage: 0.0,
+        memory_usage: 0.0,
+        memory_total: 0,
+        memory_used: 0,
+        disk_usage: 0.0,
+        disk_total: 0,
+        disk_used: 0,
+        network_in: 0,
+        network_out: 0,
         request_count: state.metrics.get_request_count(),
         error_count: state.metrics.get_error_count(),
         active_connections: state.metrics.get_active_connections(),

@@ -1401,8 +1401,8 @@ mod tests {
     #[test]
     fn database_config_serde_yaml_roundtrip() {
         let c = build_database_config();
-        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
-        let back: DatabaseConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
+        let back: DatabaseConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.url, c.url);
         assert_eq!(back.host, c.host);
         assert_eq!(back.port, c.port);
@@ -1437,8 +1437,8 @@ mod tests {
     #[test]
     fn auth_config_serde_yaml_roundtrip() {
         let c = build_auth_config();
-        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
-        let back: AuthConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
+        let back: AuthConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.jwt_secret, c.jwt_secret);
         assert_eq!(back.jwt_expiry_hours, c.jwt_expiry_hours);
         assert_eq!(back.session_timeout_minutes, c.session_timeout_minutes);
@@ -1471,8 +1471,8 @@ mod tests {
     #[test]
     fn server_config_serde_yaml_roundtrip() {
         let c = build_server_config();
-        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
-        let back: ServerConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
+        let back: ServerConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.host, c.host);
         assert_eq!(back.port, c.port);
         assert_eq!(back.cors_origins.len(), 2);
@@ -1505,8 +1505,8 @@ mod tests {
     #[test]
     fn redis_config_serde_yaml_roundtrip() {
         let c = build_redis_config();
-        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
-        let back: RedisConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
+        let back: RedisConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.url, c.url);
         assert_eq!(back.password, c.password);
         assert_eq!(back.db, c.db);
@@ -1535,8 +1535,8 @@ mod tests {
     #[test]
     fn cache_config_serde_yaml_roundtrip() {
         let c = CacheConfig::default();
-        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
-        let back: CacheConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
+        let back: CacheConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.prefix, c.prefix);
         assert_eq!(back.default_ttl, c.default_ttl);
         assert_eq!(back.l1_ttl, c.l1_ttl);
@@ -1568,8 +1568,8 @@ mod tests {
     #[test]
     fn storage_config_serde_yaml_roundtrip() {
         let c = build_storage_config();
-        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
-        let back: StorageConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
+        let back: StorageConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.upload_dir, c.upload_dir);
         assert_eq!(back.upload_max_size, c.upload_max_size);
         assert_eq!(back.allowed_file_types.len(), 2);
@@ -1594,8 +1594,8 @@ mod tests {
     #[test]
     fn mail_config_serde_yaml_roundtrip() {
         let c = build_mail_config();
-        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
-        let back: MailConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
+        let back: MailConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.smtp_host, c.smtp_host);
         assert_eq!(back.smtp_port, c.smtp_port);
         assert_eq!(back.smtp_use_tls, c.smtp_use_tls);
@@ -1619,8 +1619,8 @@ mod tests {
     #[test]
     fn ai_config_serde_yaml_roundtrip() {
         let c = build_ai_config();
-        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
-        let back: AiConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
+        let back: AiConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.ollama_base_url, c.ollama_base_url);
         assert_eq!(back.ollama_model, c.ollama_model);
         assert_eq!(back.rag_max_results, c.rag_max_results);
@@ -1643,8 +1643,8 @@ mod tests {
     #[test]
     fn logging_config_serde_yaml_roundtrip() {
         let c = build_logging_config();
-        let yaml = serde_yaml::to_string(&c).expect("serialize yaml");
-        let back: LoggingConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
+        let back: LoggingConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.level, c.level);
         assert_eq!(back.format, c.format);
         assert_eq!(back.file_path, c.file_path);
@@ -1674,8 +1674,8 @@ mod tests {
     #[test]
     fn app_config_serde_yaml_roundtrip() {
         let cfg: AppConfig = build_testenv().into();
-        let yaml = serde_yaml::to_string(&cfg).expect("serialize yaml");
-        let back: AppConfig = serde_yaml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yml::to_string(&cfg).expect("serialize yaml");
+        let back: AppConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.database.name, cfg.database.name);
         assert_eq!(back.database.pool_max_size, cfg.database.pool_max_size);
         assert_eq!(back.auth.jwt_expiry_hours, cfg.auth.jwt_expiry_hours);

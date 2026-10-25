@@ -13,4 +13,13 @@ runtime:
   health_endpoint: /health
   base_path: /api/pdm
 deployment: {}
-permissions: {}
+permissions:
+  - code: pdm:read
+    name: PDM 查询
+    description: 查询产品数据/BOM/工艺
+  - code: pdm:write
+    name: PDM 录入
+    description: 录入产品数据/BOM/工艺
+  - code: pdm:admin
+    name: PDM 管理
+    description: PDM 模块管理权限

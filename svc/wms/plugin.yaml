@@ -10,7 +10,8 @@ deployment:
   type: standalone
   port: 8041
   base_path: /api/wms
-runtime: {}
+runtime:
+  health_endpoint: /health
 permissions:
   # 仓库管理
   - code: wms:read

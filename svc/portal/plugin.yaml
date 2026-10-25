@@ -9,7 +9,8 @@ dependencies: []
 deployment:
   port: 8063
   base_path: /api/portal
-runtime: {}
+runtime:
+  health_endpoint: /health
 permissions:
   - code: announcement
   - code: shortcut

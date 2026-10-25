@@ -6,6 +6,8 @@ description: CRM 客户关系管理系统，包含客户管理、联系人管理
 version: 1.0.0
 plugin_type: business
 dependencies: []
+runtime:
+  health_endpoint: /health
 deployment:
   type: standalone
   port: 8029

@@ -6,6 +6,8 @@ description: BI 商业智能系统，包含数据分析、仪表盘、数据源�
 version: 1.0.0
 plugin_type: system
 dependencies: []
+runtime:
+  health_endpoint: /health
 deployment:
   type: standalone
   port: 8060

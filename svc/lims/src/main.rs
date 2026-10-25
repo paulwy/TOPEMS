@@ -71,7 +71,7 @@ async fn init_cache<T: Clone + Send + Sync + 'static>(
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "lims, public");
+    std::env::set_var("SEARCH_PATH", "lims, public, shared");
 
     let config = ServiceConfig {
         name: "topems-lims",

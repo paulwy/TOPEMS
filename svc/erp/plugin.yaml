@@ -6,6 +6,8 @@ description: ERP 企业资源计划系统，包含资产管理、财务管理、
 version: 1.0.0
 plugin_type: system
 dependencies: []
+runtime:
+  health_endpoint: /health
 deployment:
   type: standalone
   port: 8010

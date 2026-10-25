@@ -144,7 +144,7 @@ pub struct ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "finance, public");
+    std::env::set_var("SEARCH_PATH", "finance, public, shared");
 
     let config = ServiceConfig {
         name: "topems-finance",

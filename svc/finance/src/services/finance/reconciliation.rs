@@ -99,31 +99,54 @@ impl ReconciliationService {
         let mut count_query = String::from(
             "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)",
         );
-        let _params: Vec<String> = vec![];
 
-        if let Some(rt) = &reco_type {
-            query.push_str(&format!(" AND reco_type = '{}'", rt));
-            count_query.push_str(&format!(" AND reco_type = '{}'", rt));
+        let reco_type_param = reco_type.clone();
+        let status_param = status.clone();
+        let mut data_param_idx = 2i32;
+        let mut count_param_idx = 2i32;
+
+        if reco_type_param.is_some() {
+            query.push_str(&format!(" AND reco_type = ${}", data_param_idx));
+            count_query.push_str(&format!(" AND reco_type = ${}", count_param_idx));
+            data_param_idx += 1;
+            count_param_idx += 1;
         }
-        if let Some(s) = &status {
-            query.push_str(&format!(" AND status = '{}'", s));
-            count_query.push_str(&format!(" AND status = '{}'", s));
+        if status_param.is_some() {
+            query.push_str(&format!(" AND status = ${}", data_param_idx));
+            count_query.push_str(&format!(" AND status = ${}", count_param_idx));
+            data_param_idx += 1;
+            // count_param_idx 无需自增：count 查询不使用 LIMIT/OFFSET，这是最后一次引用
         }
 
         query.push_str(&format!(
-            " ORDER BY created_at DESC LIMIT {} OFFSET {}",
-            page_size,
-            (page - 1) * page_size
+            " ORDER BY created_at DESC LIMIT ${} OFFSET ${}",
+            data_param_idx,
+            data_param_idx + 1
         ));
 
-        let sessions = sqlx::query_as::<_, ReconciliationSession>(&query)
-            .bind(tenant_id)
+        let mut sessions_qb = sqlx::query_as::<_, ReconciliationSession>(&query).bind(tenant_id);
+        if let Some(rt) = reco_type_param {
+            sessions_qb = sessions_qb.bind(rt);
+        }
+        if let Some(s) = status_param {
+            sessions_qb = sessions_qb.bind(s);
+        }
+        sessions_qb = sessions_qb.bind(page_size).bind((page - 1) * page_size);
+
+        let sessions = sessions_qb
             .fetch_all(&self.db_pool)
             .await
             .map_err(|e| TopemsError::Database(e.to_string()))?;
 
-        let total: i64 = sqlx::query_scalar(&count_query)
-            .bind(tenant_id)
+        let mut count_qb = sqlx::query_scalar(&count_query).bind(tenant_id);
+        if let Some(rt) = reco_type.clone() {
+            count_qb = count_qb.bind(rt);
+        }
+        if let Some(s) = status.clone() {
+            count_qb = count_qb.bind(s);
+        }
+
+        let total: i64 = count_qb
             .fetch_one(&self.db_pool)
             .await
             .unwrap_or(0);
@@ -490,18 +513,31 @@ impl ReconciliationService {
             "SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)",
         );
 
-        if let Some(st) = &source_type {
-            query.push_str(&format!(" AND source_type = '{}'", st));
+        let source_type_param = source_type.clone();
+        let match_status_param = match_status.clone();
+        let mut param_idx = 3i32;
+
+        if source_type_param.is_some() {
+            query.push_str(&format!(" AND source_type = ${}", param_idx));
+            param_idx += 1;
         }
-        if let Some(ms) = &match_status {
-            query.push_str(&format!(" AND match_status = '{}'", ms));
+        if match_status_param.is_some() {
+            query.push_str(&format!(" AND match_status = ${}", param_idx));
         }
 
         query.push_str(" ORDER BY transaction_date, amount");
 
-        let items = sqlx::query_as::<_, ReconciliationItem>(&query)
+        let mut qb = sqlx::query_as::<_, ReconciliationItem>(&query)
             .bind(session_id)
-            .bind(tenant_id)
+            .bind(tenant_id);
+        if let Some(st) = source_type_param {
+            qb = qb.bind(st);
+        }
+        if let Some(ms) = match_status_param {
+            qb = qb.bind(ms);
+        }
+
+        let items = qb
             .fetch_all(&self.db_pool)
             .await
             .map_err(|e| TopemsError::Database(e.to_string()))?;

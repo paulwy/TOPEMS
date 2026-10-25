@@ -10,7 +10,8 @@ deployment:
   type: standalone
   port: 8040
   base_path: /api/scm
-runtime: {}
+runtime:
+  health_endpoint: /health
 permissions:
   # 供应商管理
   - code: scm:read

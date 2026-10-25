@@ -627,28 +627,39 @@ impl FinanceService {
         req: ExportVoucherRequest,
     ) -> Result<ExportVoucherResponse, TopemsError> {
         let mut query = "SELECT v.*, vl.* FROM finance.core_finance_vouchers v JOIN finance.core_finance_voucher_lines vl ON v.id = vl.voucher_id WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR v.tenant_id = $1::uuid)".to_string();
+        let mut param_idx = 2i32;
+        let status_param = req.status.map(|s| s.to_string());
+        let period_param = req.period.clone();
+        let ids_param = if req.voucher_ids.is_empty() {
+            None
+        } else {
+            Some(req.voucher_ids.clone())
+        };
 
-        if let Some(status) = req.status {
-            query.push_str(&format!(" AND v.status = '{}'", status));
+        if status_param.is_some() {
+            query.push_str(&format!(" AND v.status = ${}", param_idx));
+            param_idx += 1;
         }
-        if let Some(period) = req.period {
-            query.push_str(&format!(" AND v.period = '{}'", period));
+        if period_param.is_some() {
+            query.push_str(&format!(" AND v.period = ${}", param_idx));
+            param_idx += 1;
         }
-
-        if !req.voucher_ids.is_empty() {
-            let ids_str = req
-                .voucher_ids
-                .iter()
-                .map(|id| format!("'{}'", id))
-                .collect::<Vec<_>>()
-                .join(",");
-            query.push_str(&format!(" AND v.id IN ({})", ids_str));
+        if ids_param.is_some() {
+            query.push_str(&format!(" AND v.id = ANY(${}::uuid[])", param_idx));
         }
 
-        let rows = sqlx::query(&query)
-            .bind(tenant_id)
-            .fetch_all(&self.db_pool)
-            .await?;
+        let mut qb = sqlx::query(&query).bind(tenant_id);
+        if let Some(s) = status_param {
+            qb = qb.bind(s);
+        }
+        if let Some(p) = period_param {
+            qb = qb.bind(p);
+        }
+        if let Some(ids) = ids_param {
+            qb = qb.bind(ids);
+        }
+
+        let rows = qb.fetch_all(&self.db_pool).await?;
 
         let mut total_debit = Decimal::ZERO;
         let mut total_credit = Decimal::ZERO;

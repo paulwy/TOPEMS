@@ -29,7 +29,7 @@ utoipa.workspace = true
 reqwest = { workspace = true, features = ["json"] }
 futures.workspace = true
 hostname.workspace = true
-serde_yaml.workspace = true
+serde_yml.workspace = true
 parking_lot.workspace = true
 envy.workspace = true
 

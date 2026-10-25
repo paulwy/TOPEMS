@@ -10,7 +10,8 @@ deployment:
   port: 8023
   base_path: /api/pm
 auth_required: true
-runtime: {}
+runtime:
+  health_endpoint: /health
 permissions:
   - code: project
     tier: basic

@@ -10,7 +10,8 @@ deployment:
   type: standalone
   port: 8095
   base_path: /api/monitor
-runtime: {}
+runtime:
+  health_endpoint: /health
 permissions:
   - code: monitor:read
     name: 查看监控

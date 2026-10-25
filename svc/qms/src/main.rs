@@ -57,7 +57,7 @@ impl axum::extract::FromRef<AppState> for TypedServiceClient<WorkflowApi> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "qms, public");
+    std::env::set_var("SEARCH_PATH", "qms, public, shared");
 
     let config = ServiceConfig {
         name: "topems-qms",

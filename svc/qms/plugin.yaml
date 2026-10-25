@@ -15,4 +15,13 @@ runtime:
   health_endpoint: /health
   base_path: /api/qms
 deployment: {}
-permissions: {}
+permissions:
+  - code: qms:read
+    name: QMS 查询
+    description: 查询质量管理数据
+  - code: qms:write
+    name: QMS 录入
+    description: 录入质量检查/纠正措施等数据
+  - code: qms:admin
+    name: QMS 管理
+    description: QMS 模块管理权限

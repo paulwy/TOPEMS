@@ -14,4 +14,13 @@ runtime:
   health_endpoint: /health
   base_path: /api/ehs
 deployment: {}
-permissions: {}
+permissions:
+  - code: ehs:read
+    name: EHS 查询
+    description: 查询环境健康安全数据
+  - code: ehs:write
+    name: EHS 录入
+    description: 录入隐患/检查/培训等数据
+  - code: ehs:admin
+    name: EHS 管理
+    description: EHS 模块管理权限

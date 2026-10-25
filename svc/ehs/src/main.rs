@@ -33,7 +33,7 @@ use modules::ApiDoc;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "ehs, public");
+    std::env::set_var("SEARCH_PATH", "ehs, public, shared");
 
     let config = ServiceConfig {
         name: "topems-ehs",

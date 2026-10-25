@@ -13,4 +13,13 @@ runtime:
   health_endpoint: /health
   base_path: /api/lims
 deployment: {}
-permissions: {}
+permissions:
+  - code: lims:read
+    name: LIMS 查询
+    description: 查询实验室检测数据
+  - code: lims:write
+    name: LIMS 录入
+    description: 录入样品/检测结果等数据
+  - code: lims:admin
+    name: LIMS 管理
+    description: LIMS 模块管理权限

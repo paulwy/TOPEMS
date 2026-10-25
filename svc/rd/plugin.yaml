@@ -9,7 +9,8 @@ dependencies: [mes, pm]
 deployment:
   port: 8053
   base_path: /api/rd
-runtime: {}
+runtime:
+  health_endpoint: /health
 permissions:
   - project
   - experiment

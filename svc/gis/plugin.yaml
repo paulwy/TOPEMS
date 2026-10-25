@@ -6,6 +6,8 @@ description: "GIS 地理信息服务 - 位置服务、轨迹追踪、地理围�
 version: 1.0.0
 plugin_type: business
 dependencies: [mes]
+runtime:
+  health_endpoint: /health
 deployment: {}
 port: 8071
 base_path: /api/gis

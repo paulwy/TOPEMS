@@ -54,7 +54,7 @@ lazy_static::lazy_static! {
 #[tokio::main]
 #[allow(clippy::indexing_slicing)] // tokio::main 宏展开渲染（runtime/lazy_static 内部索引），真实源码无索引
 async fn main() -> Result<()> {
-    std::env::set_var("SEARCH_PATH", "erp, public");
+    std::env::set_var("SEARCH_PATH", "erp, public, shared");
 
     let config = ServiceConfig {
         name: "topems-erp",
