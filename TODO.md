@@ -1,3 +1,11 @@
+## 补测续：tms/aps 域 CrudPage 六页真断言（2026-10-25）✅ 完成
+
+> **模板 stub 架构改造受益（续批，tms/aps 两域零覆盖清零）**：106 个真未覆盖 CrudPage 包装页盘点后选 tms/aps 最纯包装页补（无自绘 hooks，照 CrmCrudPages 冻结范本）
+> - `TmsApsCrudPages.test.tsx`（24 用例）：DriverManagementPage/RouteManagementPage/CarrierManagementPage（driverSchema/routeSchema/carrierSchema + 'TMS'/k14 breadcrumbs）+ ScheduleManagementPage/CapacityManagementPage/MaterialPlanPage（scheduleSchema/capacitySchema/materialPlanSchema + 'APS'/k5/k4/k6）
+> - 每页 4 用例：渲染（schema + breadcrumbs）、list 参数归一化 pageSize→page_size + {items,total}→{data,total} 解包、create/update/delete 委托 payload、四档错误翻译（success=false 无 message 时走 k0-k4 翻译）
+> - 验证：24/24 passed；eslint 0（prettier --fix 多处）；tsc 0；component 全量 329 files / 3352 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 空库域真数据流补测：qms/pdm（+gis API 冒烟）（2026-10-25）✅ 完成
 
 > **补测线最后一块（原登记：qms/pdm/gis 三域空库需先 API 造数才能闭环）**——真起 8099 模块化单体（run-e2e-stack.sh up，7min 编译）+ admin 真登录 + 造数 + 页面真数据流断言
