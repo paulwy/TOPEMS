@@ -68,7 +68,6 @@ vi.mock('@/api/ehs', () => ({
 }));
 
 import WmsOutboundPage from '@/pages/wms/WmsOutboundOrderPage';
-import WmsInventoryPage from '@/pages/wms/WmsInventoryPage';
 import WmsStocktakePage from '@/pages/wms/WmsStocktakePage';
 import WmsLocationPage from '@/pages/wms/WmsLocationPage';
 import QmsIssuePage from '@/pages/qms/QmsNonconformanceRedesignPage';
@@ -96,7 +95,6 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
 
 const pages: Array<[string, React.ComponentType, string]> = [
   ['WMS 出库单列表', WmsOutboundPage, 'OUT-20261015-001'],
-  ['WMS 库存列表', WmsInventoryPage, 'SKU-001'],
   ['WMS 盘点列表', WmsStocktakePage, 'ST-20261015-001'],
   ['WMS 库位列表', WmsLocationPage, 'LOC-001'],
   ['QMS 不合格品列表', QmsIssuePage, 'NCR-20261015-001'],

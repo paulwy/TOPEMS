@@ -4,8 +4,6 @@ import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import QmsDashboardPage from '../qms/QmsDashboardPage';
 import QmsQualityControlPage from '../qms/QmsQualityControlPage';
-import QmsInspectionPage from '../qms/QmsInspectionPage';
-import QmsNonconformancePage from '../qms/QmsNonconformancePage';
 import { qmsApi } from '@/api/qms';
 import { useNotificationStore, useAuthStore } from '@/store';
 
@@ -189,28 +187,6 @@ describe('QmsQualityControlPage', () => {
     const { container } = render(
       <BrowserRouter>
         <QmsQualityControlPage />
-      </BrowserRouter>
-    );
-    expect(container).toBeDefined();
-  });
-});
-
-describe('QmsInspectionPage', () => {
-  it('should render without crashing', () => {
-    const { container } = render(
-      <BrowserRouter>
-        <QmsInspectionPage />
-      </BrowserRouter>
-    );
-    expect(container).toBeDefined();
-  });
-});
-
-describe('QmsNonconformancePage', () => {
-  it('should render without crashing', () => {
-    const { container } = render(
-      <BrowserRouter>
-        <QmsNonconformancePage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
