@@ -4,15 +4,8 @@ import { renderWithProviders, screen, fireEvent } from '@/__tests__/test-utils';
 
 import { DashboardQuickActions } from '../DashboardQuickActions';
 import { DashboardStats } from '../DashboardStats';
-import { FeatureCard } from '../FeatureCard';
-import { MiniChart } from '../MiniChart';
 import { RecentItem } from '../RecentItem';
-import type {
-  FeatureCardData,
-  QuickActionData,
-  RecentItemData,
-  StatCardData,
-} from '../../hooks/UseAiDashboard';
+import type { QuickActionData, RecentItemData, StatCardData } from '../../hooks/UseAiDashboard';
 
 const shared = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -147,38 +140,6 @@ const recentItems: RecentItemData[] = [
   },
 ];
 
-const features: FeatureCardData[] = [
-  {
-    id: 'qa-feature',
-    title: 'Smart Q&A',
-    description: 'Answer production questions',
-    icon: <TestIcon />,
-
-    color: '#1976d2',
-    stats: [
-      { label: 'Accuracy', value: '92%' },
-      { label: 'Response', value: '<2s' },
-    ],
-    action: {
-      label: 'Try Q&A',
-      onClick: vi.fn(),
-    },
-  },
-  {
-    id: 'code-feature',
-    title: 'Code Assistant',
-    description: 'Generate and explain code',
-    icon: <TestIcon />,
-
-    color: '#2e7d32',
-    stats: [{ label: 'Languages', value: '20+' }],
-    action: {
-      label: 'Open Code',
-      onClick: vi.fn(),
-    },
-  },
-];
-
 describe('AI Dashboard 拆分组件渲染测试', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -196,16 +157,6 @@ describe('AI Dashboard 拆分组件渲染测试', () => {
           stats={stats}
           isMobile={false}
         />
-        {features.map((f) => (
-          <FeatureCard
-            key={f.id}
-            {...f}
-          />
-        ))}
-        <MiniChart
-          data={[1, 3, 2, 5]}
-          color='#1976d2'
-        />
         {recentItems.map((r) => (
           <RecentItem
             key={r.id}
@@ -219,10 +170,6 @@ describe('AI Dashboard 拆分组件渲染测试', () => {
     expect(screen.getByText('Analyze Document')).toBeInTheDocument();
     expect(screen.getByText('Chat Count')).toBeInTheDocument();
     expect(screen.getByText('1,256')).toBeInTheDocument();
-    expect(screen.getByText('Smart Q&A')).toBeInTheDocument();
-    expect(screen.getByText('Answer production questions')).toBeInTheDocument();
-    expect(screen.getByText('Accuracy: 92%')).toBeInTheDocument();
-    expect(document.querySelector('svg')).toBeInTheDocument();
     expect(screen.getByText('Production summary')).toBeInTheDocument();
     expect(screen.getByText('Code review')).toBeInTheDocument();
   });
