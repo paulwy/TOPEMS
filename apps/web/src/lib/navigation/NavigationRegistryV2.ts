@@ -117,20 +117,6 @@ export class NavigationRegistryV2 {
     return items.sort((a, b) => (a.order || 0) - (b.order || 0));
   }
 
-  getCoreModules(hasPermission?: (perm: string) => boolean): ModuleCardConfig[] {
-    return this.getAllModules()
-      .filter((m) => m.source === 'core')
-      .filter((m) => !m.permission || !hasPermission || hasPermission(m.permission))
-      .map((m) => this.toModuleCard(m));
-  }
-
-  getBusinessModules(hasPermission?: (perm: string) => boolean): ModuleCardConfig[] {
-    return this.getAllModules()
-      .filter((m) => m.source === 'plugin')
-      .filter((m) => !m.permission || !hasPermission || hasPermission(m.permission))
-      .map((m) => this.toModuleCard(m));
-  }
-
   getModuleCards(hasPermission?: (perm: string) => boolean): ModuleCardConfig[] {
     return this.getAllModules()
       .filter((m) => !m.permission || !hasPermission || hasPermission(m.permission))
