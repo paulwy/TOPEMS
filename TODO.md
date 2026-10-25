@@ -1,3 +1,11 @@
+## 冻结面 ③⑤ 删除决策（2026-10-26）✅ 完成
+
+> 用户拍板：③⑤ 按"已声明不做前端接线"处理。⑤ 执行删除（死封装+别名路由），③ 保留后端（已接真 39 行数据+测试，删除损失>收益）仅标注。
+
+- **⑤ enviro events 删除**：前端删 compliance.ts 5 个 events 方法 + 4 类型（environment.ts）+ index.ts 再导出 5 行；后端删 `/environmental-compliance/events` + `/events/{id}` 两条**别名路由**（= incidents handler 复用，incidents 路由保留）。验证：tsc 0 / eslint 0 / 前端 3 文件 75 passed / 后端 incident 相关 30 passed / cargo check --tests 0 error。
+- **③ training 基础 /training 决策**：**保留后端、不删**——list/create/get/update/delete 已接真 `ehs.qa_ehs_trainings`（39 行数据），`test_create_training` 有覆盖；前端 trainingApi 无基础方法（无死封装可删）。标注：前端不接线（已声明不做），解冻成本=前端接入 ≤0.5 人日。
+- **冻结面状态**：③ 已声明不做（后端保留）；⑤ 已删除（冻结面消除）；①-⑦ 中 ⑧ 已删，①-④⑥⑦ 维持冻结（前端触发再补）。
+
 ## 冻结面解冻 ⑧：NavigationRegistryV2 死方法删除（2026-10-26）✅ 完成
 
 > 用户拍板解冻删除。MF 远程注册清理后，`CORE_MODULES_CONFIG` 无 `source` 字段（category 代替），两个按 source 过滤的方法恒返回 `[]` 且 0 消费者——死方法删除（commit `e206fcbbd3`）。

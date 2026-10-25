@@ -5,18 +5,14 @@ import type {
   ComplianceAssessmentListQueryParams,
   CreateComplianceAssessmentRequest,
   CreateDischargePermitRequest,
-  CreateEnvironmentalEventRequest,
   CreateEnvironmentalRegulationRequest,
   DischargePermit,
   DischargePermitListQueryParams,
-  EnvironmentalEvent,
-  EnvironmentalEventListQueryParams,
   EnvironmentalRegulation,
   EnvironmentalRegulationListQueryParams,
   PaginatedResponse,
   UpdateComplianceAssessmentRequest,
   UpdateDischargePermitRequest,
-  UpdateEnvironmentalEventRequest,
   UpdateEnvironmentalRegulationRequest,
 } from './types';
 
@@ -141,46 +137,6 @@ export const complianceApi = {
 
   deleteDischargePermit: async (id: string): Promise<ApiResponse<void>> => {
     return apiClient.ehs.delete<void>(`/environmental-compliance/permits/${id}`);
-  },
-
-  listEnvironmentalEvents: async (
-    params?: EnvironmentalEventListQueryParams
-  ): Promise<ApiResponse<PaginatedResponse<EnvironmentalEvent>>> => {
-    const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
-    if (params?.search) queryParams.append('search', params.search);
-    if (params?.event_type) queryParams.append('event_type', params.event_type);
-    if (params?.event_category) queryParams.append('event_category', params.event_category);
-    if (params?.severity) queryParams.append('severity', params.severity);
-    if (params?.status) queryParams.append('status', params.status);
-    if (params?.start_date) queryParams.append('start_date', params.start_date);
-    if (params?.end_date) queryParams.append('end_date', params.end_date);
-
-    return apiClient.ehs.get<PaginatedResponse<EnvironmentalEvent>>(
-      `/environmental-compliance/events?${queryParams.toString()}`
-    );
-  },
-
-  getEnvironmentalEvent: async (id: string): Promise<ApiResponse<EnvironmentalEvent>> => {
-    return apiClient.ehs.get<EnvironmentalEvent>(`/environmental-compliance/events/${id}`);
-  },
-
-  createEnvironmentalEvent: async (
-    data: CreateEnvironmentalEventRequest
-  ): Promise<ApiResponse<EnvironmentalEvent>> => {
-    return apiClient.ehs.post<EnvironmentalEvent>('/environmental-compliance/events', data);
-  },
-
-  updateEnvironmentalEvent: async (
-    id: string,
-    data: Partial<UpdateEnvironmentalEventRequest>
-  ): Promise<ApiResponse<EnvironmentalEvent>> => {
-    return apiClient.ehs.put<EnvironmentalEvent>(`/environmental-compliance/events/${id}`, data);
-  },
-
-  deleteEnvironmentalEvent: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/environmental-compliance/events/${id}`);
   },
 };
 

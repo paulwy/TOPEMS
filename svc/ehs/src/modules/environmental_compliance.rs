@@ -84,16 +84,7 @@ pub fn create_routes() -> Router<AppState> {
             "/environmental-compliance/statistics",
             get(get_compliance_statistics),
         )
-        .route(
-            "/environmental-compliance/events",
-            get(list_incidents).post(create_incident),
-        )
-        .route(
-            "/environmental-compliance/events/{id}",
-            get(get_incident)
-                .put(update_incident)
-                .delete(delete_incident),
-        )
+
 }
 
 #[derive(Debug, Deserialize)]
