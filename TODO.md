@@ -11,6 +11,14 @@
 > - 验证：本批 33/33 passed；eslint 0（setup-mocks 被 ignore，测试文件 0 error/warning）；tsc 0；**全量 vitest 463 files / 6198 passed / 1 skipped / 0 failed / 0 errors**；lefthook pre-commit 全绿（含 frontend-typecheck/lint/api-boundary-gate/i18n 多门禁）
 > - 提交：6 commits（setup-mocks fix + 5 测试文件各自独立 commit），HEAD `a1c45e1a2`
 
+## 补测续：crm 客户页（CrmCustomerRedesignPage·redesign 形态 19 hooks）（2026-10-25）✅ 完成
+
+> **crm redesign 形态页补测首例**：CrmCustomerRedesignPage（19 hooks / 1049 行）——useQuery（服务端分页）+ 3 mutations（delete/create/update）+ ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环
+> - `CrmCustomerRedesignPage.test.tsx`（6 用例）：ListPageTemplate props（header 3 层 breadcrumbs/data 2 行/rowKey/columns）；footer 4 StatTile（total 2/active 1/aLevel 0——**useQuery 全 mock 直返原始 API 形态 level 未映射**/totalAmount）；列渲染（customer_name localizedName/level/status/actions 3 按钮）；Tabs（label 为 status_* 键 + badge）；toolbar（refresh/create）；**删除确认闭环**（actions children[2] 删除按钮 act() 包裹 → Modal（**footer 需 mock 渲染**）→ btn_confirm_delete → customerApi.delete('c-1') + invalidateQueries + toast）
+> - **可测性要点**：全 mock react-query（useMutation mutate 执行 mutationFn+onSuccess；useQueryClient 返 invalidateQueries）；redesign 13 组件 mock（**Modal 需渲染 footer**）；直接调闭包 onClick 需 act()；**mutationFn 含 300ms 延迟需 waitFor**；mapApiCustomers 未跑（全 mock useQuery）——stats 按原始字段算
+> - 验证：6/6 passed；eslint 0；tsc 0；component 全量 343 files / 3510 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：erp 域剩余 CrudPage 包装页（批次6，14 用例）（2026-10-25）✅ 完成
 
 > **erp 域收尾补测**：3 纯包装（Supplier/VehicleRequest/MeetingRoom）+ 3 带 headerContent 统计卡（Vehicle/Material/Asset，useQuery 部分 mock）
@@ -24,6 +32,14 @@
 > - `PurchaseOrderPage.test.tsx`（5 用例）：ListPageTemplate 直通形态——mount 固定参数 `list({page:1,pageSize:50})`；header title（erp.purchase_order.title）+ **9 列 + actions 列**；字段映射（order_number→order_no、supplier_id→supplier_code、created_by→buyer）+ **状态归一化**（pending→pending_approval、partially_received→received）；状态 tabs 五档（all/pending_approval/approved/ordered/received）；**API success:false 回退内置 6 行 mock**（照真实行为）
 > - `SalesOrderPage.test.tsx`（4 用例）：**vi.unmock 真实 crudPageAdapter**——CrudPage 渲染（salesOrderSchema + ERP 三层 breadcrumbs：首页/ERP/销售订单）；list 参数归一化 pageSize→page_size + **itemsField:'orders' 响应解包**；create/update/delete 委托；四档错误翻译（k0-k3，i18n mock 补 crud_page_adapter 翻译表）
 > - 验证：两文件 9/9 passed；tsc 0；eslint 0；**全量 vitest 453 files / 6119 passed / 1 skipped / 0 failed**；lefthook 全绿（含 frontend-typecheck/lint/api-boundary-gate）；推送前 rebase 远端 3 测试提交（MonitorPage/PermissionAuditPage/WmsInventoryPage），HEAD `5a7943277`
+
+## 补测续：desktop 监控页（DesktopMonitorPage）（2026-10-25）✅ 完成
+
+> **desktop 监控页补测（StatsPageTemplate + Promise.allSettled 范式）**：DesktopMonitorPage（9 hooks / 366 行）——fetchAll（tauriApi.getMetrics/checkHealth/getSystemConfig Promise.allSettled）+ isDesktop 分支 + StatsPageTemplate + 4 statCards + 后端健康表 + 系统配置 JSON
+> - `DesktopMonitorPage.test.tsx`（5 用例）：非桌面分支（browser_notice + fetchAll 仍触发）；桌面分支（3 api 调用 + StatsPageTemplate props：title/statCards 4/loading/showSearch false）；statCards（success_rate 100% JSX）；后端健康表（status/version/uptime 数据行）；系统配置 JSON（env production）
+> - **可测性要点**：**StatsPageTemplate 新模板**（templates barrel 同 mock 形态）；tauriApi/tauriAuth 需 mock（isAvailable 用 hoisted vi.fn 控制分支）；ensureNamespacesLoaded（@/i18n）mock resolve；MUI Table/Grid 真实渲染
+> - 验证：5/5 passed；eslint 0；tsc 0；component 全量 341 files / 3488 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
 
 ## 补测续：desktop 审计日志页（AuditLogPage）（2026-10-25）✅ 完成
 
@@ -4545,17 +4561,3 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 验证：tsc 0、eslint 全绿、全量 vitest **449 文件 / 6090 通过 / 0 failed**（+50：FinancialReport 3 + Voucher 15 + 其余）+1 skipped、detector L1=0/L2=88/L3Dead=0。
 ### 状态与下批
 - erp 域：FinancialReport 区域 + Voucher 三组件已补测（erp 组件层覆盖齐）。下批：erp 核心业务页面 SalesOrder/PurchaseOrder 页面测试，或 qms i18n 硬编码 12 处清理，或 pm 2 处。
-## 第三十二轮（2026-10-25）：erp 核心业务页 SalesOrder/PurchaseOrder 补测（批次5，9 用例）+ 全量 6119 测试 0 failed
-- **erp 核心业务页补测**（第三十一轮下批承接，两形态代表页）：
-  - `PurchaseOrderPage.test.tsx`（5 用例）：ListPageTemplate 直通形态——mount 固定参数 `list({page:1,pageSize:50})`；header title + 9 列 + actions 列；字段映射（order_number→order_no、supplier_id→supplier_code、created_by→buyer）+ 状态归一化（pending→pending_approval、partially_received→received）；状态 tabs 五档；**API success:false 回退内置 6 行 mock**（照真实行为）。
-  - `SalesOrderPage.test.tsx`（4 用例）：**vi.unmock 真实 crudPageAdapter**——CrudPage 渲染（salesOrderSchema + ERP 三层 breadcrumbs）；list 归一化 pageSize→page_size + **itemsField:'orders' 解包**；create/update/delete 委托；四档错误翻译（k0-k3）。
-- 验证：两文件 9/9 passed；tsc 0；eslint 0；全量 vitest **453 文件 / 6119 通过 / 0 failed**（+1 skipped）；lefthook 29 门禁全绿；推送前 rebase 远端 3 测试提交（MonitorPage/PermissionAuditPage/WmsInventoryPage，同批并行线），HEAD `5a7943277`。
-### 状态与下批
-- erp 域：FinancialReport 区域 + Voucher 三组件 + SalesOrder/PurchaseOrder 核心业务页已补测。下批：剩余 erp 无测试页（ReceivablePayable/Budget/Accounting/Inventory/Material/Supplier/Dashboard 等），或 qms i18n 硬编码 12 处清理，或 pm 2 处。
-## 第三十三轮（2026-10-25）：erp 剩余 CrudPage 包装页补测（批次6，14 用例）+ 全量 6160 测试 0 failed / 0 errors
-- **erp 域收尾补测**（第三十二轮下批承接）：
-  - `ErpCrudPages.test.tsx`（14 用例）：3 纯包装（Supplier itemsField:'suppliers' 解包 / VehicleRequest / MeetingRoom）各 4 档（CrudPage 渲染、list 归一化+解包、三操作委托、四档错误翻译）+ 3 带统计卡（Vehicle/Material/Asset）各 2 档——headerContent 真渲染 + useQuery 部分 mock（importOriginal 保 QueryCache）→ 统计卡聚合真断言（Vehicle 4/2/1/1、Material 4/2/1/1、Asset 4/¥3800.00/2/2）。
-  - **附修**：`MonitorPage.test.tsx` i18n mock importActual → 纯工厂——i18next v26 addResourceBundle 需 init 后挂载，嵌套上下文 eval 真实模块时 ensureLanguageLoaded 副作用抛错 → 全量 4 个 unhandled rejection（exit 1）；照 PermissionAuditPage 模式修复。
-- 验证：本批 14/14 passed；tsc 0；eslint 0；全量 vitest **458 文件 / 6160 通过 / 1 skipped / 0 failed / 0 errors**；lefthook 门禁全绿。
-### 状态与下批
-- erp 域包装页全部覆盖（纯包装 + 统计卡形态齐）。下批：剩余 erp 复杂页（ReceivablePayable/Budget/Accounting/Dashboard/Dictionary/DictManagement 等），或 qms i18n 硬编码 12 处清理，或 pm 2 处。
