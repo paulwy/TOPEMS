@@ -303,7 +303,7 @@ impl HealthCheckResponse {
 }
 
 pub async fn check_http_health(url: &str) -> Result<HealthStatus, TopemsError> {
-    let client = reqwest::Client::new();
+    let client = crate::http_client::shared_http_client();
 
     match client
         .get(url)

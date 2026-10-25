@@ -62,6 +62,20 @@
 - **验证**：shared-core 71 passed / 0 failed；wms `cargo check` exit 0（48.6s）、`cargo test -p topems-wms --lib` 541 passed / 0 failed；diff 417+/342- 纯替换无其他改动。
 - 提交：见 git log 本批（F10 批次1）。
 
+## F11 · 裸 Client::new() 生产残留清零（2026-10-26）✅ 完成
+
+> F11 收尾：审计口径生产 `reqwest::Client::new()` 60 处 → 经 P2-4 收敛后剩 9 处（含 2 处纯注释），本批清掉全部代码调用，生产侧代码残留 0。
+
+- **替换 7 处代码调用 → `shared_http_client()`**（`lib/shared-core/src/http_client.rs`，30s 整体/5s 连接超时 + 进程级单例连接池，与 BaseServiceClient 对齐）：
+  - `svc/ai/src/dsh/mcp/client.rs:147`（McpTransport::Http 传输 client，connect_http 每次新建→复用）
+  - `lib/shared-ai/src/embedding.rs` ×2（OpenAIEmbedding / LocalEmbedding 构造）
+  - `lib/shared-auth/src/permission_center.rs:80`（fetch_from_iam 每次拉取新建）
+  - `lib/shared-auth/src/service_monitor.rs:296`（非 loopback 分支；loopback 分支保留 `.no_proxy()` builder——特殊豁免）
+  - `lib/shared-core/src/health.rs:306`、`lib/shared-core/src/plugin/mod.rs:388`（同 crate 经 `crate::http_client::shared_http_client`）
+- **豁免/注释**：`alerting/mod.rs:460`、`http_client.rs:3` 为注释非代码，不动。
+- **验证**：`cargo check` 4 crate exit 0；shared-core 766 / shared-auth 205 / shared-ai 71 / topems-ai mcp 174 passed，全 0 failed；生产侧残留 grep 仅 2 处注释。
+- 提交：见 git log 本批。
+
 ## 补测续：crm 客户页（CrmCustomerRedesignPage·redesign 形态 19 hooks）（2026-10-25）✅ 完成
 
 > **crm redesign 形态页补测首例**：CrmCustomerRedesignPage（19 hooks / 1049 行）——useQuery（服务端分页）+ 3 mutations（delete/create/update）+ ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环

@@ -385,7 +385,7 @@ where
         );
     }
 
-    let client = reqwest::Client::new();
+    let client = crate::http_client::shared_http_client();
     // V68.1 A2.2：插件注册端点已从 unified-core 迁移至 plugin-registry 服务（/dev/runtime/{code}/register）
     let registry_url = std::env::var("PLUGIN_REGISTRY_URL")
         .unwrap_or_else(|_| "http://localhost:8096".to_string());

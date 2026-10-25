@@ -9,6 +9,7 @@
 use crate::permission::{PermissionMetadata, PermissionMetadataCache};
 use std::sync::Arc;
 use topems_shared_core::error::TopemsError;
+use topems_shared_core::shared_http_client;
 use topems_shared_event::event::{EventType, PermissionMetadataChangedPayload, RabbitMqSubscriber};
 use topems_shared_observability::telemetry::TracedRequestExt;
 use tracing::{error, info, warn};
@@ -77,7 +78,7 @@ impl PermissionCenterClient {
         info!("Fetching permission metadata from IAM service: {}", iam_url);
 
         let url = format!("{}/permissions/metadata", iam_url);
-        let client = reqwest::Client::new();
+        let client = shared_http_client();
 
         match client.get(&url).with_trace().send().await {
             Ok(response) => {
