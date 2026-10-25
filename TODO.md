@@ -980,6 +980,12 @@
 - **门禁**：`tsc --noEmit` exit 0；四文件定点 eslint 0 error 0 warning；全量 eslint error 仅剩 5 个既有 prettier（StatTile/modules registry/FinanceVoucher/NotFound/appRoutes，非本批触碰）。
 - **no-explicit-any 产品代码收口完成 ✅**：剩余 299 处中——测试 mock any 285 处（`__tests__` 有意保留）+ `api/client.ts` 10 处（第一批判定保留：改 unknown 引发 ApiResponse 连锁不兼容）+ **产品代码仅余 14 处**，全部为前批已判定项：LazyChart 2（tooltipFormatter 返回不兼容）、AmapLayer 2（高德实例）、CrudPage 2（适配器泛型）、routes/v2 2（P=any 逆变）、eventBus 1（EventHandler 逆变）、crudPageAdapter 1（PaginationParams 逆变）、SystemSettings 2 + Tenant 2（表单模型待对齐）——**保留口径已全部登记，本规则债收无可收，转入按需处理**。
 
+### no-explicit-any 收尾 · 补测新引入测试侧 1 处清理（2026-10-25）✅
+
+- 全量复测发现补测线新引入 `ErpDashboardPage.test.tsx:126` `mockUseQuery.mockImplementation((opts: any))` 1 处 → 改 `(opts: { queryFn?: () => unknown })` + `opts.queryFn?.()`。
+- **门禁**：`tsc --noEmit` exit 0；该测试 4/4 passed；全量 `eslint .` exit 0（no-explicit-any 全仓归零，含测试侧）。
+- 至此 no-explicit-any 长尾彻底收口：产品代码 14 处有意保留（已登记）、测试 mock 有意保留口径维持、无新增违规。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成

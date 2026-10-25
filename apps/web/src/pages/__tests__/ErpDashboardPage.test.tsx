@@ -123,8 +123,8 @@ describe('DashboardPage（useQuery 统计 + 8 张统计卡）', () => {
     const response = { success: true, data: { total_assets: 100 } };
     vi.mocked(erpApi.getDashboard).mockResolvedValueOnce(response as never);
 
-    mockUseQuery.mockImplementation((opts: any) => {
-      opts.queryFn();
+    mockUseQuery.mockImplementation((opts: { queryFn?: () => unknown }) => {
+      opts.queryFn?.();
       return { data: response.data, isPending: false } as never;
     });
 
