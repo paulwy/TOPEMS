@@ -740,7 +740,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmCompanyPageProps>,
     {
       path: HRM_PATHS.attendance,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmAttendancePage'), 'HrmAttendancePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/hrm/HrmAttendanceRedesignPage'),
+        'HrmAttendanceRedesignPage'
+      ),
       module: 'hrm',
       code: 'hrm-attendance',
       title: i18n.t('hrm.nav.hrm-attendance'),
