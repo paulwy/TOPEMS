@@ -4478,3 +4478,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 验证：tsc 0、eslint 全绿、全量 vitest 443 passed/6040 passed 1 skipped、detector L1=0/L2=88/L3Dead=0（不变）。
 ### 状态与下批
 - erp 域推进开启：FinancialReport 区域已补测 + 全局测试基建修复。下批：erp 其他页面测试缺口（25 页仅 1 hook 测试）——Voucher（已有 3 components + 1 hook 测试）优先补组件测试，或 SalesOrder/PurchaseOrder 核心业务页面；也可先做 qms i18n 12 处。
+## 第三十一轮（2026-10-25）：erp 域 Voucher 三组件补测（15 用例）+ 全量 6090 测试 0 failed
+- **Voucher 域组件补测**（此前仅 1 hook 测试，components 3 个零覆盖）：
+  - `VoucherTable.test.tsx` 6 用例：表头+两行数据（draft/approved、¥ 格式化、日期截断）按状态按钮（draft 含编辑/审核/删除，approved 含过账无删除）交互回调（view→handleViewDetail、audit→handleAudit、post→handlePost、delete→handleDelete(id)）分页（count>rowsPerPage 才可翻页）空态文案、加载态。
+  - `VoucherFilters.test.tsx` 5 用例：tabs+计数 Chip、搜索输入、tab 切换、刷新 refetch、凭证类型 Select（setVoucherTypeFilter+setPage(0)）。
+  - `VoucherDetailTabs.test.tsx` 4 用例：打开渲染凭证头+分录明细+借贷合计（¥ 多出现用 getAllByText）、关闭不渲染、关闭按钮回调、无凭证态。
+- 验证：tsc 0、eslint 全绿、全量 vitest **449 文件 / 6090 通过 / 0 failed**（+50：FinancialReport 3 + Voucher 15 + 其余）+1 skipped、detector L1=0/L2=88/L3Dead=0。
+### 状态与下批
+- erp 域：FinancialReport 区域 + Voucher 三组件已补测（erp 组件层覆盖齐）。下批：erp 核心业务页面 SalesOrder/PurchaseOrder 页面测试，或 qms i18n 硬编码 12 处清理，或 pm 2 处。
