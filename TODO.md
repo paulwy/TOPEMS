@@ -1,3 +1,10 @@
+## 补测续：erp 域剩余 CrudPage 包装页（批次6，14 用例）（2026-10-25）✅ 完成
+
+> **erp 域收尾补测**：3 纯包装（Supplier/VehicleRequest/MeetingRoom）+ 3 带 headerContent 统计卡（Vehicle/Material/Asset，useQuery 部分 mock）
+> - `ErpCrudPages.test.tsx`（14 用例）：照 CrmCrudPages 冻结范本——Supplier（itemsField:'suppliers' 解包）/VehicleRequest/MeetingRoom 各 4 档（CrudPage 渲染 schema+breadcrumbs 三层、list pageSize→page_size 归一化+解包、create/update/delete 委托、四档错误翻译 k0-k3）；Vehicle/Material/Asset 各 2 档（渲染 + **headerContent 统计卡真断言**：useQuery 部分 mock（importOriginal 保 QueryCache）→ Vehicle 4 卡 total4/available2/in_use1/maintenance1、Material 4 卡 total4/active2/inactive1/obsolete1、Asset 4 卡 total4/¥3800.00/active2/retired+transferred 合并 2）
+> - **附修（全量跑暴露）**：`MonitorPage.test.tsx` i18n mock 由 importActual 部分 mock 改为**纯工厂 mock**——i18next v26 的 addResourceBundle 需 init 后才挂载到单例，importActual 嵌套上下文 eval 真实模块时 ensureLanguageLoaded 副作用抛 `default.addResourceBundle is not a function` → 全量跑 4 个 unhandled rejection（exit 1）；照同批 PermissionAuditPage 模式修复后 0 errors
+> - 验证：本批 14/14 passed；eslint 0（含 MonitorPage 修改）；tsc 0；**全量 vitest 458 files / 6160 passed / 1 skipped / 0 failed / 0 errors**；lefthook 门禁全绿
+
 ## 补测续：erp 域核心业务页 SalesOrder/PurchaseOrder 补测（2026-10-25）✅ 完成
 
 > **第三十一轮下批承接（erp 核心业务页测试缺口）**：PurchaseOrderPage（ListPageTemplate + useQuery 手写页）+ SalesOrderPage（CrudPage + createCrudPageAdapter 包装页）两形态代表页
@@ -4532,3 +4539,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 验证：两文件 9/9 passed；tsc 0；eslint 0；全量 vitest **453 文件 / 6119 通过 / 0 failed**（+1 skipped）；lefthook 29 门禁全绿；推送前 rebase 远端 3 测试提交（MonitorPage/PermissionAuditPage/WmsInventoryPage，同批并行线），HEAD `5a7943277`。
 ### 状态与下批
 - erp 域：FinancialReport 区域 + Voucher 三组件 + SalesOrder/PurchaseOrder 核心业务页已补测。下批：剩余 erp 无测试页（ReceivablePayable/Budget/Accounting/Inventory/Material/Supplier/Dashboard 等），或 qms i18n 硬编码 12 处清理，或 pm 2 处。
+## 第三十三轮（2026-10-25）：erp 剩余 CrudPage 包装页补测（批次6，14 用例）+ 全量 6160 测试 0 failed / 0 errors
+- **erp 域收尾补测**（第三十二轮下批承接）：
+  - `ErpCrudPages.test.tsx`（14 用例）：3 纯包装（Supplier itemsField:'suppliers' 解包 / VehicleRequest / MeetingRoom）各 4 档（CrudPage 渲染、list 归一化+解包、三操作委托、四档错误翻译）+ 3 带统计卡（Vehicle/Material/Asset）各 2 档——headerContent 真渲染 + useQuery 部分 mock（importOriginal 保 QueryCache）→ 统计卡聚合真断言（Vehicle 4/2/1/1、Material 4/2/1/1、Asset 4/¥3800.00/2/2）。
+  - **附修**：`MonitorPage.test.tsx` i18n mock importActual → 纯工厂——i18next v26 addResourceBundle 需 init 后挂载，嵌套上下文 eval 真实模块时 ensureLanguageLoaded 副作用抛错 → 全量 4 个 unhandled rejection（exit 1）；照 PermissionAuditPage 模式修复。
+- 验证：本批 14/14 passed；tsc 0；eslint 0；全量 vitest **458 文件 / 6160 通过 / 1 skipped / 0 failed / 0 errors**；lefthook 门禁全绿。
+### 状态与下批
+- erp 域包装页全部覆盖（纯包装 + 统计卡形态齐）。下批：剩余 erp 复杂页（ReceivablePayable/Budget/Accounting/Dashboard/Dictionary/DictManagement 等），或 qms i18n 硬编码 12 处清理，或 pm 2 处。

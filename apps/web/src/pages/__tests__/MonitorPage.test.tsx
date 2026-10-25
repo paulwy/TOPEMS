@@ -7,18 +7,30 @@ import { monitorApi } from '@/api/monitor';
 
 // MonitorPage：3 useQuery（systemMetrics/serviceHealth/alerts 按 queryKey 区分）+ 4 统计卡
 // + 2 个 ListPageTemplate（templates 路径）+ handleRefresh refetch×3 + isError → addNotification——按真实行为断言
-// 部分 mock：保留 subscribeResourceVersion/getResourceVersion（navigation hooks 依赖），仅替换 t/exists
-vi.mock('@/i18n', async (importOriginal) => {
-  const actual = await importOriginal<Record<string, unknown>>();
-  return {
-    ...actual,
-    default: {
-      ...(actual.default as Record<string, unknown>),
-      t: (key: string) => key,
-      exists: () => true,
-    },
-  };
-});
+// 纯工厂 mock（照 PermissionAuditPage 同批模式）：不 importActual 真实模块——
+// 真实模块 eval 时 ensureLanguageLoaded 副作用调用 i18n.addResourceBundle（i18next v26 需 init 后才挂载），
+// 嵌套上下文下抛 "default.addResourceBundle is not a function" → 全量跑 4 个 unhandled rejection。
+vi.mock('@/i18n', () => ({
+  default: {
+    t: (key: string) => key,
+    exists: () => true,
+    ensureNamespacesLoaded: () => Promise.resolve(),
+    ensureLanguageLoaded: () => Promise.resolve(),
+    resolveNamespacesForPath: () => [],
+  },
+  BOOTSTRAP_NAMESPACES: [],
+  SUPPORTED_LANGUAGES: [{ code: 'zh', label: '中文' }],
+  i18nReady: Promise.resolve(),
+  ensureLanguageLoaded: () => Promise.resolve(),
+  ensureNamespacesLoaded: () => Promise.resolve(),
+  preloadFullLanguagePack: () => Promise.resolve(),
+  resolveNamespacesForPath: () => [],
+  subscribeResourceVersion: () => () => {},
+  getResourceVersion: () => 0,
+  registerI18nForceUpdate: () => () => {},
+  hasPendingResourceUpdate: () => false,
+  clearPendingResourceUpdate: () => {},
+}));
 
 const storeMock = vi.hoisted(() => ({ addNotification: vi.fn() }));
 
