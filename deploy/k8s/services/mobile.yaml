@@ -33,8 +33,6 @@ spec:
         env:
         - name: MOBILE_PORT
           value: "8070"
-        - name: CONSUL_URL
-          value: "http://consul-service:8500"
         resources:
           requests:
             cpu: "100m"

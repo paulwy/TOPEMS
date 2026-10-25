@@ -33,8 +33,6 @@ spec:
         env:
         - name: ERP_PORT
           value: "8010"
-        - name: CONSUL_URL
-          value: "http://consul-service:8500"
         resources:
           requests:
             cpu: "100m"

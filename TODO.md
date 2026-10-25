@@ -32,6 +32,15 @@
 - **漂移已修 2**：`scripts/windows/README_WINDOWS.md` 目录结构漏列 `install-deps.ps1`（存在 16KB，前置依赖安装脚本）→ 补行并标注 ports.ps1 与 config 同源。
 - 验证：diff 仅 3+/2-（纯注释/文档）；server 全量 cargo check 本地耗时过长未跑完（纯注释改动无编译影响，已按 diff 判定）；shellcheck 不受影响。
 
+## k8s 部署面 consul 残留清理（2026-10-25，P2-5 清理尾巴）✅ 完成
+
+> P2-5（F7 三套服务发现物理删除，用户 2026-10-20 拍板）的 k8s 部署面收尾：consul 死配置清零，docker 面因整个目录已 DEPRECATED（2026-10-08 弃用标注）不动。
+
+- **残留确认**：后端 `DiscoveryMode` 仅剩 `Static/Env/K8s`（`svc/unified-core/src/shared/service_client.rs:1925`），consul/etcd 零代码引用；traefik 用 file provider（`traefik.yml:56`）不依赖 consul → k8s 面 consul 纯死配置。
+- **清理范围**：删 `deploy/k8s/base/consul.yaml`（Service+Deployment）；`kustomization.yaml` 删 resources `base/consul.yaml` 行 + images `consul newTag` 4 行；`base/configmap.yaml` 删 `CONSUL_ENABLED/CONSUL_URL` 2 行；21 个 `services/*.yaml` 各删 `CONSUL_URL` env 2 行（perl 批量，模式统一）。
+- **验证**：k8s 面 `CONSUL_URL/CONSUL_ENABLED` 复查 0 命中；30 个 yaml 文件解析全 OK；kustomization 引用 base/services 文件全部存在（无 MISS）；本机无 kustomize，未跑 kustomize build（引用完整性已静态验证）。
+- **docker 面不动作**：`deploy/docker/README.md` 头部 DEPRECATED（生产禁容器、docker 仅临时验证），consul/etcd-compose 属弃用资产保留备查。
+
 ## 补测续：crm 客户页（CrmCustomerRedesignPage·redesign 形态 19 hooks）（2026-10-25）✅ 完成
 
 > **crm redesign 形态页补测首例**：CrmCustomerRedesignPage（19 hooks / 1049 行）——useQuery（服务端分页）+ 3 mutations（delete/create/update）+ ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环
