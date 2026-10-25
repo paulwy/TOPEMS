@@ -1,3 +1,11 @@
+## 补测续：hrm/wms/mes 域 CrudPage 六页真断言（2026-10-25）✅ 完成
+
+> **模板 stub 架构改造受益（续批，纯包装页第二波）**：承接 tms/aps 批次，补 hrm（4）+ wms（1）+ mes（1）最纯包装页
+> - `HrmWmsMesCrudPages.test.tsx`（24 用例）：WmsAreaPage（areaSchema + 'WMS'/pages.wms_area_page.k0，**createCrudPageAdapter(wmsApi.locations) 整实体传入形态**）+ HrmTrainingPage（trainingSchema+trainingPlans）/HrmRecruitmentPage（recruitmentSchema+jobOpenings）/HrmPerformancePage（performanceSchema+performanceReviews）/HrmOrganizationPage（organizationSchema+departments）+ MesQualityPage（qualitySchema + **qualityApi.listInspections 等四方法显式传**）
+> - 每页 4 用例：渲染（schema + breadcrumbs）、list 参数归一化 pageSize→page_size + 解包、create/update/delete 委托 payload（resolves 精确值）、四档错误翻译
+> - 验证：24/24 passed；eslint 0；tsc 0；component 全量 330 files / 3377 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：tms/aps 域 CrudPage 六页真断言（2026-10-25）✅ 完成
 
 > **模板 stub 架构改造受益（续批，tms/aps 两域零覆盖清零）**：106 个真未覆盖 CrudPage 包装页盘点后选 tms/aps 最纯包装页补（无自绘 hooks，照 CrmCrudPages 冻结范本）
