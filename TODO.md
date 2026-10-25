@@ -19,6 +19,16 @@
 - **编辑同步**：ErpModule.test（删 SalesOrderPage 用例，erp/CustomerManagementPage 活页保留）、HrmWmsMesCrudPages.test（删 HrmPerformancePage 条目）、QmsModule.test（删 QmsInspection/QmsNonconformance 用例）、extended-pages-data.smoke.test（删 WmsInventoryPage 条目）
 - **验证**：tsc --noEmit exit 0 / vitest 6 文件 52 passed / eslint 0 errors
 
+## 冗余清理 MF：Module Federation 远程注册残留面（2026-10-26）✅ 完成
+
+> commit `634683e158`（已推送 HEAD==origin/main）。**microfrontend/**（插件市场 MF 运行时：registry/canary-release/version-manager/observability）为活面不在本批范围。
+
+- **core-modules.ts（668→~90 行）**：删 62 条 `topems_*` 远程路由（@vite-ignore 字符串 import）、getRemoteEntryUrl 函数（V64 CORS 块）、7 个模块 remoteEntry 字段、4 个空模块块（hrm/crm/pm/scm）；保留本地路由 /core/users、/core/roles、/finance/accounts、/mes/workstations
+- **registry/index.ts**：删 isMFMode 模式切换（远程移除后 static/MF 等价）；删 loadRemoteModule 的 MF 远程分支（Webpack container 加载，不可达）
+- **类型**：删 remote-modules.d.ts（75 声明零引用）、topems-core.d.ts（18 声明零引用）；保留 webpack-federation.d.ts（DynamicRouter 插件加载器仍用 Webpack 全局 + Window index signature 被 runtime-protection/LimsDashboard 依赖）
+- **配置**：plugins.config.ts 去 REMOTE_MODULES 的 port/url + MF_PORTS import（pluginStore 仅消费 .code）；保留 ports.ts 的 MF_PORTS/getMfPort（microfrontend/config.ts 仍用）
+- **验证**：tsc --noEmit exit 0 / vitest 4 文件 28 passed（DynamicRouter + 3 smoke）/ eslint 0
+
 ## 补测续：erp 域剩余复杂/自绘形态页（批次7，33 用例）（2026-10-28）✅ 完成
 
 > **erp 域自绘/复杂形态页收尾补测**：包装页已全覆盖（批次6），本批补 5 个复杂页 + 修 setup-mocks useMutation 陈旧闭包缺陷
