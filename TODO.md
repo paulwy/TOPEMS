@@ -1,3 +1,13 @@
+## 冻结面解冻 ④：emergencyDrill 新 API 前端接线（2026-10-26）✅ 完成
+
+> 用户拍板接入。后端 `/drills/plans`、`/drills/records` 已接真（SQL 别名映射：表列 record_no/title/started_at/participant_list/duration/actual_content → struct 旧字段 drill_no/drill_name/drill_date/participants/duration_hours/summary），前端页面原走旧 `/drills` 兼容路由 → 切新路由。
+
+- **EhsDrillPage**：drillApi 切 `ehsApi.listDrillRecords/createDrillRecord/updateDrillRecord/deleteDrillRecord`；stats useQuery 切 `listDrillRecords`。
+- **emergencyDrill.ts 类型修正**：DrillRecord/CreateDrillRecordRequest/UpdateDrillRecordRequest 此前误用表列新字段名（record_no/title/started_at/…）——与后端 API JSON 契约（drill_no/drill_name/…）不一致；改为后端真实契约，DrillRecord 对齐 `types/plan.ts`（非可选）。
+- **测试**：ehs-emergency-drill.test.ts create/update mock 数据字段改真实契约（drill_name/summary）。
+- **验证**：tsc 0 / eslint 0 / emergency-drill 13 passed；BFF 冒烟 `/api/ehs/drills/records`、`/api/ehs/drills/plans` 无 token = **401**（存在），假路由 404 对照；冒烟后 8099 已停复。
+- **遗留**：页面仍单页（records 主列表）；plans/evaluation/statistics API 前端已封装待页签接入（价值低，冻结标注）。
+
 ## 冻结面 ③⑤ 删除决策（2026-10-26）✅ 完成
 
 > 用户拍板：③⑤ 按"已声明不做前端接线"处理。⑤ 执行删除（死封装+别名路由），③ 保留后端（已接真 39 行数据+测试，删除损失>收益）仅标注。

@@ -18,10 +18,10 @@ import i18n from '@/i18n';
 const ct = designTokens.colors;
 
 const drillApi = {
-  list: ehsApi.listDrills,
-  create: ehsApi.createDrill,
-  update: ehsApi.updateDrill,
-  delete: ehsApi.deleteDrill,
+  list: ehsApi.listDrillRecords,
+  create: ehsApi.createDrillRecord,
+  update: ehsApi.updateDrillRecord,
+  delete: ehsApi.deleteDrillRecord,
 };
 
 const baseAdapter = createCrudPageAdapter<DrillRecord, CreateDrillRecordRequest>(drillApi);
@@ -80,7 +80,7 @@ function extractListData(response: unknown): DrillRecord[] {
 const EhsDrillPage: React.FC = () => {
   const { data: drillsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_DRILLS_STATS_BASE,
-    queryFn: async () => ehsApi.listDrills({ page_size: 500 }),
+    queryFn: async () => ehsApi.listDrillRecords({ page_size: 500 }),
 
     staleTime: CACHE_DURATIONS.MEDIUM,
   });

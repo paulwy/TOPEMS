@@ -93,8 +93,7 @@ describe('EHS Emergency Drill API Tests', () => {
       const { apiClient } = await import('../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = {
-        title: '火灾应急演练',
-        drill_type: 'fire',
+        drill_name: '火灾应急演练',
         location: '生产厂区',
         plan_id: 'plan-001',
       };
@@ -106,7 +105,7 @@ describe('EHS Emergency Drill API Tests', () => {
       const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
       const { apiClient } = await import('../client');
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
-      const data = { status: 'completed', actual_content: '实际演练内容' };
+      const data = { status: 'completed', summary: '实际演练内容' };
       await emergencyDrillApi.updateDrillRecord('record-001', data);
       expect(apiClient.ehs.put).toHaveBeenCalledWith('/drills/records/record-001', data);
     });
