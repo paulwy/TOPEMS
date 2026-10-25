@@ -1,3 +1,11 @@
+## 补测续：notification 域自绘 hooks 页（NotificationArchivePage）（2026-10-25）✅ 完成
+
+> **自绘 hooks 页补测（首例）**：NotificationArchivePage 手写 CrudApiAdapter（list 走 getArchivedNotifications + **客户端 search 过滤**；create/update/delete 空桩）+ useQuery 拉归档配置渲染 headerContent（useMemo JSX）
+> - `NotificationArchivePage.test.tsx`（8 用例）：经 CrudPage 渲染（schemaWithHeader = archiveNotificationSchema + headerContent 元素）；list 调 (page,pageSize) + notifications 解包；search 客户端过滤（标题/内容包含）；list 失败返 {data:[],total:0} 不抛错（照真实行为）；create/update 返 {} / delete undefined；customRowActions 查看/恢复两操作（恢复调 useNotification.success）；headerContent 配置存在非 null
+> - **可测性结论**：自绘 hooks 页需**部分 mock @tanstack/react-query**（importOriginal 展开真实模块保 QueryCache——lib/reactQuery 依赖）+ mock useNotification——同 ehs EnvironmentPage 先例
+> - 验证：8/8 passed；eslint 0；tsc 0；component 全量 326 files / 3382 passed / 0 failed（远端合并 Dashboard 重写删旧测试致总数较上批下降）
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：13 页纯包装收尾（标准 9 + 特殊 4）（2026-10-25）✅ 完成
 
 > **模板 stub 架构改造受益（续批，纯包装页 25 个全部清零）**：承接 tms/aps + hrm/wms/mes 两批，本批补完剩余 13 个 0-hooks CrudPage 包装页
