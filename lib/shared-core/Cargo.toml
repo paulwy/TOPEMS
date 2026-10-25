@@ -56,8 +56,6 @@ jsonwebtoken.workspace = true
 redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 
 # ===== 安全依赖（api_security 模块）=====
-hmac.workspace = true
-sha2.workspace = true
 hex.workspace = true
 
 [features]

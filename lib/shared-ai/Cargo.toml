@@ -18,12 +18,10 @@ uuid.workspace = true
 tracing.workspace = true
 tokio.workspace = true
 async-trait.workspace = true
-anyhow.workspace = true
 futures.workspace = true
 
 # 向量存储依赖
 redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
-sqlx.workspace = true
 
 [features]
 default = []

@@ -39,7 +39,6 @@ aes-gcm.workspace = true
 
 # 限流依赖
 parking_lot.workspace = true
-dashmap.workspace = true
 
 # 其他
 rand.workspace = true
