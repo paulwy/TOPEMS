@@ -1,3 +1,10 @@
+## 补测续：tms 域 ListPageTemplate 形态页（ShipmentManagementPage）（2026-10-25）✅ 完成
+
+> **ListPageTemplate（templates 路径）形态页补测**：ShipmentManagementPage crud.api=shipmentApi **直通（无归一化层，pageSize 原样透传）** + **3 个状态流转 useMutation**（dispatch/arrive/cancel → shipmentApi.* + invalidate 'tms-shipments'）+ rowActions show 条件
+> - `ShipmentManagementPage.test.tsx`（7 用例）：经 ListPageTemplate 渲染（title/subtitle/columns 5+/globalSearch fields/crud queryKey+entityName+pageParamName+**rowActions 在 crud 内非顶层**）；list 直通 pageSize 透传；show 条件矩阵（dispatch 仅 pending / arrive 仅 in_transit / cancel pending|in_transit）；3 个 onClick 委托 shipmentApi.* + invalidate；create/update/delete 直通委托
+> - 验证：7/7 passed；eslint 0；tsc 0；component 全量 331 files / 3427 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：asset 域自绘 hooks 页（AssetListPage）（2026-10-25）✅ 完成
 
 > **自绘 hooks 页补测（第 4 例）**：AssetListPage 模块级 **createCrudPageAdapter(assetApi.\*)**（unmock 真实适配器）+ useQuery 拉资产（extractListData 双形态解包）+ stats + **useMutation 状态流转**（customRowActions 3 项：投用 idle→in_use / 维修 in_use|active→maintenance / 退役 非 retired/disposed，**带 show 条件**）
