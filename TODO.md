@@ -1,3 +1,11 @@
+## 补测续：crm 客户页（CrmCustomerRedesignPage·redesign 形态 19 hooks）（2026-10-25）✅ 完成
+
+> **crm redesign 形态页补测首例**：CrmCustomerRedesignPage（19 hooks / 1049 行）——useQuery（服务端分页）+ 3 mutations（delete/create/update）+ ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环
+> - `CrmCustomerRedesignPage.test.tsx`（6 用例）：ListPageTemplate props（header 3 层 breadcrumbs/data 2 行/rowKey/columns）；footer 4 StatTile（total 2/active 1/aLevel 0——**useQuery 全 mock 直返原始 API 形态 level 未映射**/totalAmount）；列渲染（customer_name localizedName/level/status/actions 3 按钮）；Tabs（label 为 status_* 键 + badge）；toolbar（refresh/create）；**删除确认闭环**（actions children[2] 删除按钮 act() 包裹 → Modal（**footer 需 mock 渲染**）→ btn_confirm_delete → customerApi.delete('c-1') + invalidateQueries + toast）
+> - **可测性要点**：全 mock react-query（useMutation mutate 执行 mutationFn+onSuccess；useQueryClient 返 invalidateQueries）；redesign 13 组件 mock（**Modal 需渲染 footer**）；直接调闭包 onClick 需 act()；**mutationFn 含 300ms 延迟需 waitFor**；mapApiCustomers 未跑（全 mock useQuery）——stats 按原始字段算
+> - 验证：6/6 passed；eslint 0；tsc 0；component 全量 343 files / 3510 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：erp 域剩余 CrudPage 包装页（批次6，14 用例）（2026-10-25）✅ 完成
 
 > **erp 域收尾补测**：3 纯包装（Supplier/VehicleRequest/MeetingRoom）+ 3 带 headerContent 统计卡（Vehicle/Material/Asset，useQuery 部分 mock）
