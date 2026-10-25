@@ -527,7 +527,7 @@ pub async fn compare_assessments_handler(
     let _ = &state;
     match compare_assessments(&req.baseline_id, &req.current_id).await {
         Some(comparison) => Json(ApiResponse::success(comparison, "评估对比完成")),
-        None => Json(ApiResponse::error(404, "未找到指定的评估记录")),
+        None => Json(ApiResponse::not_found("未找到指定的评估记录")),
     }
 }
 

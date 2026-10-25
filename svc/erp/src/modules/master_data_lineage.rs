@@ -127,7 +127,7 @@ pub async fn get_data_lineage(
                 "数据血缘关系",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
+        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询数据血缘失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal(

@@ -74,7 +74,7 @@ pub async fn list_purchase_orders(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -177,7 +177,7 @@ pub async fn create_purchase_order(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -205,7 +205,7 @@ pub async fn create_purchase_order(
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<PurchaseOrder>::error(400, "供应商ID格式错误"));
+            return Json(ApiResponse::<PurchaseOrder>::bad_request("供应商ID格式错误"));
         }
     };
 
@@ -287,14 +287,14 @@ pub async fn create_purchase_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(order, "采购订单创建成功"))
         }
         Err(e) => {
             tracing::error!("创建采购订单失败: {}", e);
-            Json(ApiResponse::<PurchaseOrder>::error(500, "采购订单创建失败"))
+            Json(ApiResponse::<PurchaseOrder>::server_error("采购订单创建失败"))
         }
     }
 }
@@ -324,7 +324,7 @@ pub async fn get_purchase_order(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -355,10 +355,10 @@ pub async fn get_purchase_order(
 
     match result {
         Ok(Some(order)) => Json(ApiResponse::success(order, "获取采购订单成功")),
-        Ok(None) => Json(ApiResponse::<PurchaseOrder>::error(404, "采购订单不存在")),
+        Ok(None) => Json(ApiResponse::<PurchaseOrder>::not_found("采购订单不存在")),
         Err(e) => {
             tracing::error!("获取采购订单失败: {}", e);
-            Json(ApiResponse::<PurchaseOrder>::error(500, "获取采购订单失败"))
+            Json(ApiResponse::<PurchaseOrder>::server_error("获取采购订单失败"))
         }
     }
 }
@@ -376,7 +376,7 @@ pub async fn update_purchase_order(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -404,7 +404,7 @@ pub async fn update_purchase_order(
 
     let existing = match existing {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(ApiResponse::<PurchaseOrder>::error(404, "采购订单不存在")),
+        Ok(None) => return Json(ApiResponse::<PurchaseOrder>::not_found("采购订单不存在")),
         Err(e) => {
             return Json(ApiResponse::<PurchaseOrder>::from(TopemsError::internal(
                 "查询采购订单失败",
@@ -416,7 +416,7 @@ pub async fn update_purchase_order(
     let supplier_id = if let Some(supplier_id_str) = &req.supplier_id {
         let supplier_uuid_val = match Uuid::parse_str(supplier_id_str) {
             Ok(uuid) => uuid,
-            Err(_) => return Json(ApiResponse::<PurchaseOrder>::error(400, "供应商ID格式错误")),
+            Err(_) => return Json(ApiResponse::<PurchaseOrder>::bad_request("供应商ID格式错误")),
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
@@ -484,14 +484,14 @@ pub async fn update_purchase_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(order, "采购订单更新成功"))
         }
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
-            Json(ApiResponse::<PurchaseOrder>::error(500, "采购订单更新失败"))
+            Json(ApiResponse::<PurchaseOrder>::server_error("采购订单更新失败"))
         }
     }
 }
@@ -508,7 +508,7 @@ pub async fn delete_purchase_order(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -542,15 +542,15 @@ pub async fn delete_purchase_order(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(true, "采购订单删除成功"))
         }
-        Ok(_) => Json(ApiResponse::<bool>::error(404, "采购订单不存在")),
+        Ok(_) => Json(ApiResponse::<bool>::not_found("采购订单不存在")),
         Err(e) => {
             tracing::error!("删除采购订单失败: {}", e);
-            Json(ApiResponse::<bool>::error(500, "采购订单删除失败"))
+            Json(ApiResponse::<bool>::server_error("采购订单删除失败"))
         }
     }
 }

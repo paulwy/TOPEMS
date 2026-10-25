@@ -296,7 +296,7 @@ pub async fn get_master_data_ref(
     .await
     {
         Ok(Some(row)) => Json(ApiResponse::success(row.into(), "本地主数据引用")),
-        Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
+        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据引用失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
@@ -350,7 +350,7 @@ pub async fn get_master_data_ref_by_code(
     .await
     {
         Ok(Some(row)) => Json(ApiResponse::success(row.into(), "本地主数据引用")),
-        Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
+        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 按编码查询主数据引用失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询失败", e)))

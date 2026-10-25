@@ -189,7 +189,7 @@ pub async fn get_statistics(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -305,7 +305,7 @@ pub async fn get_detailed_statistics(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -573,7 +573,7 @@ pub async fn get_suppliers_with_stats(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None

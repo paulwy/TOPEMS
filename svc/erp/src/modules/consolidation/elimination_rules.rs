@@ -189,7 +189,7 @@ pub async fn create_elimination_rule(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(rule, "创建抵消规则成功"))
@@ -275,7 +275,7 @@ pub async fn update_elimination_rule(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(rule, "更新抵消规则成功"))
@@ -335,7 +335,7 @@ pub async fn delete_elimination_rule(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("事务提交失败: {}", e);
-                        return Json(ApiResponse::error(500, "事务提交失败"));
+                        return Json(ApiResponse::server_error("事务提交失败"));
                     }
                 }
                 Json(ApiResponse::success((), "删除抵消规则成功"))

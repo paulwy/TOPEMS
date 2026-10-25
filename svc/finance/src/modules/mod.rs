@@ -633,7 +633,7 @@ pub async fn get_aux_ledger(
         "custom1" => AuxType::Custom1,
         "custom2" => AuxType::Custom2,
         "custom3" => AuxType::Custom3,
-        _ => return Json(ApiResponse::error(400, "无效的辅助核算类型")),
+        _ => return Json(ApiResponse::bad_request("无效的辅助核算类型")),
     };
     let query = AuxLedgerQuery {
         aux_type,
@@ -667,7 +667,7 @@ pub async fn get_aux_balance(
         "custom1" => AuxType::Custom1,
         "custom2" => AuxType::Custom2,
         "custom3" => AuxType::Custom3,
-        _ => return Json(ApiResponse::error(400, "无效的辅助核算类型")),
+        _ => return Json(ApiResponse::bad_request("无效的辅助核算类型")),
     };
     let query = AuxLedgerQuery {
         aux_type,
@@ -1136,7 +1136,7 @@ pub async fn list_approval_configs_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ApprovalConfigResponse>>> {
     if !claims.has_permission("finance:admin") {
-        return Json(ApiResponse::error(403, "没有权限访问审批配置"));
+        return Json(ApiResponse::forbidden("没有权限访问审批配置"));
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
@@ -1155,7 +1155,7 @@ pub async fn create_approval_config_handler(
     Json(req): Json<CreateApprovalConfigRequest>,
 ) -> Json<ApiResponse<ApprovalConfigResponse>> {
     if !claims.has_permission("finance:admin") {
-        return Json(ApiResponse::error(403, "没有权限创建审批配置"));
+        return Json(ApiResponse::forbidden("没有权限创建审批配置"));
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
@@ -1178,7 +1178,7 @@ pub async fn get_approval_config_handler(
     Path(config_id): Path<Uuid>,
 ) -> Json<ApiResponse<ApprovalConfigResponse>> {
     if !claims.has_permission("finance:admin") {
-        return Json(ApiResponse::error(403, "没有权限访问审批配置"));
+        return Json(ApiResponse::forbidden("没有权限访问审批配置"));
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
@@ -1198,7 +1198,7 @@ pub async fn update_approval_config_handler(
     Json(req): Json<CreateApprovalConfigRequest>,
 ) -> Json<ApiResponse<ApprovalConfigResponse>> {
     if !claims.has_permission("finance:admin") {
-        return Json(ApiResponse::error(403, "没有权限更新审批配置"));
+        return Json(ApiResponse::forbidden("没有权限更新审批配置"));
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
@@ -1221,7 +1221,7 @@ pub async fn delete_approval_config_handler(
     Path(config_id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     if !claims.has_permission("finance:admin") {
-        return Json(ApiResponse::error(403, "没有权限删除审批配置"));
+        return Json(ApiResponse::forbidden("没有权限删除审批配置"));
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
@@ -1755,7 +1755,7 @@ pub async fn toggle_template_handler(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                return Json(ApiResponse::error(404, "凭证模板不存在"));
+                return Json(ApiResponse::not_found("凭证模板不存在"));
             }
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
             match service.get_voucher_template(tenant_id, template_id).await {
@@ -1800,7 +1800,7 @@ pub async fn match_template_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let source_type = match req.source_type {
         Some(s) => s,
-        None => return Json(ApiResponse::error(400, "source_type 为必填")),
+        None => return Json(ApiResponse::bad_request("source_type 为必填")),
     };
     let rule: Option<crate::services::finance::voucher_generation::VoucherGenerationRule> = match sqlx::query_as(
         only_own_schema_query!("finance", "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1"),
@@ -1940,7 +1940,7 @@ async fn add_template_entry_handler(
     .await
     .unwrap_or(0);
     if count == 0 {
-        return Json(ApiResponse::error(404, "凭证模板不存在"));
+        return Json(ApiResponse::not_found("凭证模板不存在"));
     }
     let sort_order: i32 = match req.sort_order {
         Some(s) => s,
@@ -2012,7 +2012,7 @@ async fn update_template_entry_handler(
     .await
     .unwrap_or(0);
     if owns == 0 {
-        return Json(ApiResponse::error(404, "模板分录不存在"));
+        return Json(ApiResponse::not_found("模板分录不存在"));
     }
     let existing: crate::services::finance::voucher_template::VoucherTemplateLine =
         match sqlx::query_as(only_own_schema_query!(
@@ -2075,7 +2075,7 @@ async fn delete_template_entry_handler(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                return Json(ApiResponse::error(404, "模板分录不存在"));
+                return Json(ApiResponse::not_found("模板分录不存在"));
             }
             Json(ApiResponse::success(
                 serde_json::json!({"deleted": true, "entry_id": entry_id}),
@@ -2126,7 +2126,7 @@ pub async fn reorder_template_entries_handler(
     .await
     .unwrap_or(0);
     if count == 0 {
-        return Json(ApiResponse::error(404, "凭证模板不存在"));
+        return Json(ApiResponse::not_found("凭证模板不存在"));
     }
     for (idx, entry_id) in req.entry_ids.iter().enumerate() {
         let sort_order = (idx + 1) as i32;
@@ -2241,7 +2241,7 @@ pub async fn import_template_handler(
 
     let file_data = match file_content {
         Some(data) => data,
-        None => return Json(ApiResponse::error(400, "缺少 file 字段")),
+        None => return Json(ApiResponse::bad_request("缺少 file 字段")),
     };
 
     let json_str = match String::from_utf8(file_data) {
@@ -2442,7 +2442,7 @@ pub async fn toggle_generation_rule_handler(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                return Json(ApiResponse::error(404, "生成规则不存在"));
+                return Json(ApiResponse::not_found("生成规则不存在"));
             }
             let rule: Result<
                 crate::services::finance::voucher_generation::VoucherGenerationRule,
@@ -3174,7 +3174,7 @@ pub async fn write_off_collection_handler(
                 Err(e) => Json(crate::shared::err_resp(e)),
             }
         }
-        _ => Json(ApiResponse::error(400, "无效的ID格式")),
+        _ => Json(ApiResponse::bad_request("无效的ID格式")),
     }
 }
 
@@ -3366,7 +3366,7 @@ pub async fn write_off_payment_record_handler(
             Ok(data) => Json(ApiResponse::success(data, "核销成功")),
             Err(e) => Json(crate::shared::err_resp(e)),
         },
-        _ => Json(ApiResponse::error(400, "无效的ID格式")),
+        _ => Json(ApiResponse::bad_request("无效的ID格式")),
     }
 }
 #[utoipa::path(
@@ -3695,7 +3695,7 @@ pub async fn unapprove_voucher(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                Json(ApiResponse::error(404, "凭证不存在或状态不允许反审核"))
+                Json(ApiResponse::not_found("凭证不存在或状态不允许反审核"))
             } else {
                 Json(ApiResponse::success(
                     serde_json::json!({"voucher_id": voucher_id, "status": "submitted"}),
@@ -3724,7 +3724,7 @@ pub async fn reverse_voucher(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                Json(ApiResponse::error(404, "凭证不存在"))
+                Json(ApiResponse::not_found("凭证不存在"))
             } else {
                 Json(ApiResponse::success(
                     serde_json::json!({"reversal_voucher_id": reversal_id, "original_voucher_id": voucher_id, "reason": req.reason}),
@@ -3768,7 +3768,7 @@ pub async fn generate_voucher_by_template(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let template_id = match Uuid::parse_str(&req.template_id) {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::error(400, "无效的模板ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的模板ID")),
     };
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -3813,7 +3813,7 @@ pub async fn import_vouchers_general(
         }
     }
     if file_content.is_none() {
-        return Json(ApiResponse::error(400, "缺少 file 字段"));
+        return Json(ApiResponse::bad_request("缺少 file 字段"));
     }
     Json(ApiResponse::success(
         serde_json::json!({"total": 0, "success": 0, "failed": 0, "errors": []}),
@@ -3913,7 +3913,7 @@ pub async fn open_period_v2(
     let year: i32 = parts.first().and_then(|y| y.parse().ok()).unwrap_or(0);
     let month: i32 = parts.get(1).and_then(|m| m.parse().ok()).unwrap_or(0);
     if !(1..=12).contains(&month) || !(2000..=2100).contains(&year) {
-        return Json(ApiResponse::error(400, "period 格式应为 YYYY-MM"));
+        return Json(ApiResponse::bad_request("period 格式应为 YYYY-MM"));
     }
     let period_name = format!("{:04}-{:02}", year, month);
     let start_date = format!("{:04}-{:02}-01", year, month);
@@ -3948,7 +3948,7 @@ pub async fn close_period_v2(
     let year: i32 = parts.first().and_then(|y| y.parse().ok()).unwrap_or(0);
     let month: i32 = parts.get(1).and_then(|m| m.parse().ok()).unwrap_or(0);
     if !(1..=12).contains(&month) || !(2000..=2100).contains(&year) {
-        return Json(ApiResponse::error(400, "period 格式应为 YYYY-MM"));
+        return Json(ApiResponse::bad_request("period 格式应为 YYYY-MM"));
     }
     let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_periods SET status = 'closed', updated_at = NOW() WHERE tenant_id = $1 AND year = $2 AND month = $3"))
         .bind(tenant_id)
@@ -3959,7 +3959,7 @@ pub async fn close_period_v2(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                Json(ApiResponse::error(404, "会计期间不存在"))
+                Json(ApiResponse::not_found("会计期间不存在"))
             } else {
                 Json(ApiResponse::success(
                     serde_json::json!({"period": period, "status": "closed"}),
@@ -4239,7 +4239,7 @@ pub async fn create_opening_balances(
         .and_then(|v| v.as_str())
         .and_then(|s| Uuid::parse_str(s).ok());
     let Some(company_id) = company_id else {
-        return Json(ApiResponse::error(400, "company_id 必填"));
+        return Json(ApiResponse::bad_request("company_id 必填"));
     };
     let subject_code = req
         .get("subject_code")
@@ -4247,7 +4247,7 @@ pub async fn create_opening_balances(
         .unwrap_or_default()
         .to_string();
     if subject_code.is_empty() {
-        return Json(ApiResponse::error(400, "subject_code 必填"));
+        return Json(ApiResponse::bad_request("subject_code 必填"));
     }
     let period = req
         .get("period")
@@ -4329,7 +4329,7 @@ pub async fn set_opening_balance(
     .ok()
     .flatten();
     let Some((subject_code, subject_name, org_id)) = subject else {
-        return Json(ApiResponse::error(404, "科目不存在"));
+        return Json(ApiResponse::not_found("科目不存在"));
     };
     let company_id = req
         .get("company_id")
@@ -4415,7 +4415,7 @@ pub async fn carry_forward_opening_balance(
         .unwrap_or_default()
         .replace('-', "");
     if from_period.is_empty() || to_period.is_empty() {
-        return Json(ApiResponse::error(400, "from_period / to_period 必填"));
+        return Json(ApiResponse::bad_request("from_period / to_period 必填"));
     }
     let company_id = req
         .get("company_id")

@@ -652,7 +652,7 @@ pub async fn classification_classify_entity(
     let profiles = build_entity_profiles();
     let profile = match profiles.iter().find(|p| p.id == entity_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到实体")),
+        None => return Json(ApiResponse::not_found("未找到实体")),
     };
     let categories = get_auto_classifier_store().categories.lock().await.clone();
     let rules = get_auto_classifier_store().rules.lock().await.clone();
@@ -724,7 +724,7 @@ pub async fn classification_suggest_tags(
     let profiles = build_entity_profiles();
     let profile = match profiles.iter().find(|p| p.id == entity_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到实体")),
+        None => return Json(ApiResponse::not_found("未找到实体")),
     };
     let categories = get_auto_classifier_store().categories.lock().await.clone();
     let tags = suggest_tags_internal(profile, &categories);
@@ -789,7 +789,7 @@ pub async fn classification_learn_rule(
     ensure_auto_classifier_initialized().await;
     let categories = get_auto_classifier_store().categories.lock().await;
     if !categories.iter().any(|c| c.id == req.category_id) {
-        return Json(ApiResponse::error(400, "目标类别不存在"));
+        return Json(ApiResponse::bad_request("目标类别不存在"));
     }
     drop(categories);
     let rule = ClassificationRule {

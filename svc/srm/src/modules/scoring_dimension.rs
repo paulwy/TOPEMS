@@ -64,7 +64,7 @@ pub async fn list_dimensions(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -131,7 +131,7 @@ pub async fn list_active_dimensions(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -202,7 +202,7 @@ pub async fn get_dimension(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -263,7 +263,7 @@ pub async fn create_dimension(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -356,7 +356,7 @@ pub async fn create_dimension(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(dimension, "评分维度创建成功"))
@@ -384,7 +384,7 @@ pub async fn update_dimension(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -507,7 +507,7 @@ pub async fn update_dimension(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(dimension, "评分维度更新成功"))
@@ -534,7 +534,7 @@ pub async fn delete_dimension(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -567,15 +567,15 @@ pub async fn delete_dimension(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success("".to_string(), "评分维度删除成功"))
         }
-        Ok(_) => Json(ApiResponse::<String>::error(404, "评分维度不存在")),
+        Ok(_) => Json(ApiResponse::<String>::not_found("评分维度不存在")),
         Err(e) => {
             tracing::error!("删除评分维度失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "评分维度删除失败"))
+            Json(ApiResponse::<String>::server_error("评分维度删除失败"))
         }
     }
 }

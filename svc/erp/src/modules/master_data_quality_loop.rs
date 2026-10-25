@@ -483,7 +483,7 @@ pub async fn get_quality_ticket(
 
     match tickets.iter().find(|t| t.id == id) {
         Some(ticket) => Json(ApiResponse::success(ticket.clone(), "质量工单详情")),
-        None => Json(ApiResponse::error(404, "未找到质量工单")),
+        None => Json(ApiResponse::not_found("未找到质量工单")),
     }
 }
 
@@ -506,7 +506,7 @@ pub async fn get_quality_ticket_history(
 
     match tickets.iter().find(|t| t.id == id) {
         Some(ticket) => Json(ApiResponse::success(ticket.history.clone(), "工单历史记录")),
-        None => Json(ApiResponse::error(404, "未找到质量工单")),
+        None => Json(ApiResponse::not_found("未找到质量工单")),
     }
 }
 
@@ -531,7 +531,7 @@ pub async fn assign_quality_ticket(
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到质量工单")),
+        None => return Json(ApiResponse::not_found("未找到质量工单")),
     };
 
     let now = chrono::Utc::now();
@@ -570,13 +570,13 @@ pub async fn start_quality_ticket(
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到质量工单")),
+        None => return Json(ApiResponse::not_found("未找到质量工单")),
     };
 
     if tickets[pos].status != QualityTicketStatus::Open
         && tickets[pos].status != QualityTicketStatus::Assigned
     {
-        return Json(ApiResponse::error(400, "当前状态不可开始处理"));
+        return Json(ApiResponse::bad_request("当前状态不可开始处理"));
     }
 
     let now = chrono::Utc::now();
@@ -617,11 +617,11 @@ pub async fn submit_quality_ticket(
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到质量工单")),
+        None => return Json(ApiResponse::not_found("未找到质量工单")),
     };
 
     if tickets[pos].status != QualityTicketStatus::InProgress {
-        return Json(ApiResponse::error(400, "只有处理中的工单才能提交修复"));
+        return Json(ApiResponse::bad_request("只有处理中的工单才能提交修复"));
     }
 
     let now = chrono::Utc::now();
@@ -663,13 +663,13 @@ pub async fn verify_quality_ticket(
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到质量工单")),
+        None => return Json(ApiResponse::not_found("未找到质量工单")),
     };
 
     if tickets[pos].status != QualityTicketStatus::PendingReview
         && tickets[pos].status != QualityTicketStatus::Resolved
     {
-        return Json(ApiResponse::error(400, "只有待审核或已解决的工单才能验证"));
+        return Json(ApiResponse::bad_request("只有待审核或已解决的工单才能验证"));
     }
 
     let now = chrono::Utc::now();
@@ -711,13 +711,13 @@ pub async fn close_quality_ticket(
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到质量工单")),
+        None => return Json(ApiResponse::not_found("未找到质量工单")),
     };
 
     if tickets[pos].status != QualityTicketStatus::Verified
         && tickets[pos].status != QualityTicketStatus::Resolved
     {
-        return Json(ApiResponse::error(400, "只有已验证或已解决的工单才能关闭"));
+        return Json(ApiResponse::bad_request("只有已验证或已解决的工单才能关闭"));
     }
 
     let now = chrono::Utc::now();
@@ -754,11 +754,11 @@ pub async fn reject_quality_ticket(
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到质量工单")),
+        None => return Json(ApiResponse::not_found("未找到质量工单")),
     };
 
     if tickets[pos].status != QualityTicketStatus::PendingReview {
-        return Json(ApiResponse::error(400, "只有待审核的工单才能驳回"));
+        return Json(ApiResponse::bad_request("只有待审核的工单才能驳回"));
     }
 
     let now = chrono::Utc::now();
@@ -797,7 +797,7 @@ pub async fn escalate_ticket(
         let tickets = store.tickets.lock().await;
         let ticket = match tickets.iter().find(|t| t.id == id) {
             Some(t) => t,
-            None => return Json(ApiResponse::error(404, "未找到质量工单")),
+            None => return Json(ApiResponse::not_found("未找到质量工单")),
         };
         (
             ticket.entity_type.clone(),
@@ -819,7 +819,7 @@ pub async fn escalate_ticket(
     };
 
     if escalation_path.is_empty() {
-        return Json(ApiResponse::error(400, "未配置升级路径，无法升级"));
+        return Json(ApiResponse::bad_request("未配置升级路径，无法升级"));
     }
 
     // Step 3: 确定当前在升级路径中的位置，升级到下一级
@@ -829,7 +829,7 @@ pub async fn escalate_ticket(
         .unwrap_or(0);
 
     if current_idx + 1 >= escalation_path.len() {
-        return Json(ApiResponse::error(400, "已达到最高升级级别，无法继续升级"));
+        return Json(ApiResponse::bad_request("已达到最高升级级别，无法继续升级"));
     }
 
     let next_assignee = escalation_path[current_idx + 1].clone();
@@ -838,7 +838,7 @@ pub async fn escalate_ticket(
     let mut tickets = store.tickets.lock().await;
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到质量工单")),
+        None => return Json(ApiResponse::not_found("未找到质量工单")),
     };
 
     let now = chrono::Utc::now();
@@ -885,7 +885,7 @@ pub async fn create_repair_workflow(
         let store = get_quality_loop_store();
         let tickets = store.tickets.lock().await;
         if !tickets.iter().any(|t| t.id == req.ticket_id) {
-            return Json(ApiResponse::error(404, "关联的质量工单不存在"));
+            return Json(ApiResponse::not_found("关联的质量工单不存在"));
         }
     }
 
@@ -971,15 +971,15 @@ pub async fn execute_repair_workflow(
         let workflows = store.repair_workflows.lock().await;
         let wf = match workflows.iter().find(|w| w.id == id) {
             Some(w) => w,
-            None => return Json(ApiResponse::error(404, "未找到修复工作流")),
+            None => return Json(ApiResponse::not_found("未找到修复工作流")),
         };
 
         if wf.requires_approval && wf.approved_by.is_none() {
-            return Json(ApiResponse::error(400, "该工作流需要审批后才能执行"));
+            return Json(ApiResponse::bad_request("该工作流需要审批后才能执行"));
         }
 
         if wf.status == "completed" || wf.status == "executing" {
-            return Json(ApiResponse::error(400, "工作流已执行或正在执行中"));
+            return Json(ApiResponse::bad_request("工作流已执行或正在执行中"));
         }
     }
 
@@ -997,7 +997,7 @@ pub async fn execute_repair_workflow(
             "自动修复暂不可用：质量修复工作流尚未接入真实数据表，请联系管理员手动处理",
         ))
     } else {
-        Json(ApiResponse::error(404, "未找到修复工作流"))
+        Json(ApiResponse::not_found("未找到修复工作流"))
     }
 }
 
@@ -1024,11 +1024,11 @@ pub async fn execute_repair_step(
 
     let pos = match workflows.iter().position(|w| w.id == workflow_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到修复工作流")),
+        None => return Json(ApiResponse::not_found("未找到修复工作流")),
     };
 
     if step_index >= workflows[pos].steps.len() {
-        return Json(ApiResponse::error(400, "步骤索引超出范围"));
+        return Json(ApiResponse::bad_request("步骤索引超出范围"));
     }
 
     let step = &mut workflows[pos].steps[step_index];
@@ -1064,11 +1064,11 @@ pub async fn approve_repair_workflow(
 
     let pos = match workflows.iter().position(|w| w.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到修复工作流")),
+        None => return Json(ApiResponse::not_found("未找到修复工作流")),
     };
 
     if workflows[pos].approved_by.is_some() {
-        return Json(ApiResponse::error(400, "该工作流已被审批"));
+        return Json(ApiResponse::bad_request("该工作流已被审批"));
     }
 
     let now = chrono::Utc::now();
@@ -1100,7 +1100,7 @@ pub async fn get_repair_workflow(
 
     match workflows.iter().find(|w| w.id == id) {
         Some(wf) => Json(ApiResponse::success(wf.clone(), "修复工作流详情")),
-        None => Json(ApiResponse::error(404, "未找到修复工作流")),
+        None => Json(ApiResponse::not_found("未找到修复工作流")),
     }
 }
 
@@ -1182,11 +1182,11 @@ pub async fn verify_repair(
 
     let pos = match workflows.iter().position(|w| w.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到修复工作流")),
+        None => return Json(ApiResponse::not_found("未找到修复工作流")),
     };
 
     if workflows[pos].status != "completed" {
-        return Json(ApiResponse::error(400, "只有已完成的工作流才能验证"));
+        return Json(ApiResponse::bad_request("只有已完成的工作流才能验证"));
     }
 
     // 模拟重新运行质量规则验证（占位实现）
@@ -1281,7 +1281,7 @@ pub async fn get_data_domain(
 
     match domains.iter().find(|d| d.id == id) {
         Some(domain) => Json(ApiResponse::success(domain.clone(), "数据域详情")),
-        None => Json(ApiResponse::error(404, "未找到数据域")),
+        None => Json(ApiResponse::not_found("未找到数据域")),
     }
 }
 
@@ -1306,7 +1306,7 @@ pub async fn update_data_domain(
 
     let pos = match domains.iter().position(|d| d.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到数据域")),
+        None => return Json(ApiResponse::not_found("未找到数据域")),
     };
 
     if let Some(name) = req.name {
@@ -1353,7 +1353,7 @@ pub async fn get_ownership_matrix(
 
     match matrices.get(&entity_type) {
         Some(matrix) => Json(ApiResponse::success(matrix.clone(), "责任矩阵")),
-        None => Json(ApiResponse::error(404, "未找到该实体的责任矩阵")),
+        None => Json(ApiResponse::not_found("未找到该实体的责任矩阵")),
     }
 }
 
@@ -1435,7 +1435,7 @@ pub async fn get_entity_owner(
                 "实体所有者信息",
             ))
         }
-        None => Json(ApiResponse::error(404, "未找到该实体的所有权配置")),
+        None => Json(ApiResponse::not_found("未找到该实体的所有权配置")),
     }
 }
 

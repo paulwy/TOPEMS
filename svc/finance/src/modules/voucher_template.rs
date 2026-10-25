@@ -133,7 +133,7 @@ pub async fn toggle_template(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                return Json(ApiResponse::error(404, "凭证模板不存在"));
+                return Json(ApiResponse::not_found("凭证模板不存在"));
             }
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
             match service.get_voucher_template(tenant_id, template_id).await {
@@ -171,7 +171,7 @@ pub async fn match_template(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let source_type = match req.source_type {
         Some(s) => s,
-        None => return Json(ApiResponse::error(400, "source_type 为必填")),
+        None => return Json(ApiResponse::bad_request("source_type 为必填")),
     };
     let rule: Option<VoucherGenerationRule> = match sqlx::query_as(
         only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1"),
@@ -295,7 +295,7 @@ pub async fn import_template(
 
     let file_data = match file_content {
         Some(data) => data,
-        None => return Json(ApiResponse::error(400, "缺少 file 字段")),
+        None => return Json(ApiResponse::bad_request("缺少 file 字段")),
     };
 
     let json_str = match String::from_utf8(file_data) {
@@ -360,7 +360,7 @@ pub async fn toggle_generate_rule(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                return Json(ApiResponse::error(404, "生成规则不存在"));
+                return Json(ApiResponse::not_found("生成规则不存在"));
             }
             let rule: Result<
                 VoucherGenerationRule,

@@ -2004,7 +2004,7 @@ pub async fn reconcile_batch_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::reconcile_batch(&pool, tenant_id, req).await {
         Ok(results) => Json(ApiResponse::success(results, "批量对账完成")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -2022,7 +2022,7 @@ pub async fn reconcile_single_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::reconcile_single(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "对账完成")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -2183,7 +2183,7 @@ pub async fn validate_invoice_handler(
         Ok(invoice) => Json(ApiResponse::success(invoice, "验证通过")),
         Err(sqlx::Error::Decode(msg)) => {
             // 保守：无法从 Box<dyn Error> 直接下钻时，以 400 抛出完整消息（已包含 ValidationError Display）
-            Json(ApiResponse::error(400, &msg.to_string()))
+            Json(ApiResponse::bad_request(&msg.to_string()))
         }
         Err(e) => Json(crate::shared::err_resp(e)),
     }
@@ -2200,7 +2200,7 @@ pub async fn post_invoice_handler(
     // 若识别层已批准未来日期，可在后续审批流里单独覆盖 allow_future_date=true 分支。
     match InvoiceRecognizer::post_invoice(&pool, tenant_id, id).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "过账成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -2270,7 +2270,7 @@ pub async fn initiate_payment_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match ElectronicPaymentProcessor::initiate_payment(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "支付发起成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -2302,7 +2302,7 @@ pub async fn reverse_payment_handler(
     // PaymentResult 状态纯函数校验：仅 Completed 允许冲正；否则在 handler 层以 400 返回精确语义错误。
     match ElectronicPaymentProcessor::reverse_payment(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "冲正成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -2362,7 +2362,7 @@ pub async fn schedule_payment_handler(
         .await
     {
         Ok(request) => Json(ApiResponse::success(request, "调度成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }

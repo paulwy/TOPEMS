@@ -11,6 +11,14 @@
 > - 验证：本批 33/33 passed；eslint 0（setup-mocks 被 ignore，测试文件 0 error/warning）；tsc 0；**全量 vitest 463 files / 6198 passed / 1 skipped / 0 failed / 0 errors**；lefthook pre-commit 全绿（含 frontend-typecheck/lint/api-boundary-gate/i18n 多门禁）
 > - 提交：6 commits（setup-mocks fix + 5 测试文件各自独立 commit），HEAD `a1c45e1a2`
 
+## F10 · erp,srm,hrm,finance,crm 语义化收敛（批次2，845 处）（2026-10-26）✅ 完成
+
+> ApiResponse 语义构造器机械替换（范本 wms 批次1 已完成）：svc/{erp,srm,hrm,finance,crm} 下 `ApiResponse::error(<码>, msg)` → 语义构造器（500→server_error / 400→bad_request / 404→not_found / 401→unauthorized / 403→forbidden / 409→conflict / 501→not_implemented / 503→unavailable），行为严格等价，消息文本/状态码/控制流零改动。
+
+- **替换数**：845 处（替换前 grep 计数 845 → 替换后残留 0）；perl 两轮（带空格 + 无空格变体）；泛型形态 `ApiResponse::<T>::error(...)` 同步收敛为 `ApiResponse::<T>::server_error(...)` 等；110 个 .rs 文件。
+- **验证**：残留 grep 计数 0；`SQLX_OFFLINE=true cargo check -p topems-erp -p topems-srm -p topems-hrm -p topems-finance -p topems-crm` exit 0；5 包 `cargo test --lib` 全部 0 failed（erp 870 / srm 559 / hrm 291 / finance 1086 / crm 504）；`git diff --stat` 110 files changed, +845/-845 对称。
+- **commit 哈希**：`ee6ffaa8a`
+
 ## 生产部署就绪核对（2026-10-25）✅ 完成
 
 > 外部阻塞项（生产机实跑）的本地可闭环交付前准备：部署脚本链/单元/nginx/清单四维一致性核对。

@@ -236,7 +236,7 @@ pub async fn plugin_health_check(
             "Plugin is healthy",
         ))
     } else {
-        Json(ApiResponse::error(500, "Database connection failed"))
+        Json(ApiResponse::server_error("Database connection failed"))
     }
 }
 

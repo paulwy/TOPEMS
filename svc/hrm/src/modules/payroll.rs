@@ -300,7 +300,7 @@ pub async fn create_payroll_run(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -438,7 +438,7 @@ pub async fn delete_payroll_run(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -499,7 +499,7 @@ pub async fn calculate_payroll_run(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("查询薪资周期失败: {}", e);
-            return Json(ApiResponse::<PayrollRun>::error(500, "查询薪资周期失败"));
+            return Json(ApiResponse::<PayrollRun>::server_error("查询薪资周期失败"));
         }
     };
 
@@ -580,7 +580,7 @@ pub async fn calculate_payroll_run(
 
         if let Err(e) = res {
             tracing::error!("写入薪资明细失败 employee_id={}: {}", emp.employee_id, e);
-            return Json(ApiResponse::<PayrollRun>::error(500, "写入薪资明细失败"));
+            return Json(ApiResponse::<PayrollRun>::server_error("写入薪资明细失败"));
         }
         total_gross += &amounts.gross;
         item_count += 1;
@@ -607,7 +607,7 @@ pub async fn calculate_payroll_run(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(run, "薪资计算完成"))
@@ -618,7 +618,7 @@ pub async fn calculate_payroll_run(
         )),
         Err(e) => {
             tracing::error!("计算薪资失败: {}", e);
-            Json(ApiResponse::<PayrollRun>::error(500, "计算薪资失败"))
+            Json(ApiResponse::<PayrollRun>::server_error("计算薪资失败"))
         }
     }
 }
@@ -685,7 +685,7 @@ pub async fn pay_payroll_run(
 
     if let Err(e) = items_res {
         tracing::error!("更新薪资明细发放状态失败: {}", e);
-        return Json(ApiResponse::<PayrollRun>::error(500, "发放薪资失败"));
+        return Json(ApiResponse::<PayrollRun>::server_error("发放薪资失败"));
     }
 
     let result = sqlx::query_as::<_, PayrollRun>(
@@ -706,7 +706,7 @@ pub async fn pay_payroll_run(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(run, "薪资发放完成"))
@@ -717,7 +717,7 @@ pub async fn pay_payroll_run(
         )),
         Err(e) => {
             tracing::error!("发放薪资失败: {}", e);
-            Json(ApiResponse::<PayrollRun>::error(500, "发放薪资失败"))
+            Json(ApiResponse::<PayrollRun>::server_error("发放薪资失败"))
         }
     }
 }
@@ -974,14 +974,14 @@ pub async fn create_payroll_detail(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(detail, "薪资详情添加成功"))
         }
         Err(e) => {
             tracing::error!("添加薪资详情失败: {}", e);
-            Json(ApiResponse::<PayrollDetail>::error(500, "添加薪资详情失败"))
+            Json(ApiResponse::<PayrollDetail>::server_error("添加薪资详情失败"))
         }
     }
 }

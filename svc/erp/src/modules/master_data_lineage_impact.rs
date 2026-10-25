@@ -646,7 +646,7 @@ pub async fn find_data_origin_handler(
     let _ = &state;
     match find_data_origin(&id).await {
         Some(node) => Json(ApiResponse::success(node, "数据来源查找成功")),
-        None => Json(ApiResponse::error(404, "未找到数据来源")),
+        None => Json(ApiResponse::not_found("未找到数据来源")),
     }
 }
 
@@ -882,7 +882,7 @@ pub async fn get_impact_report_handler(
 
     match reports.get(&entity_id) {
         Some(report) => Json(ApiResponse::success(report.clone(), "影响报告获取成功")),
-        None => Json(ApiResponse::error(404, "未找到影响分析报告")),
+        None => Json(ApiResponse::not_found("未找到影响分析报告")),
     }
 }
 

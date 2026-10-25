@@ -67,7 +67,7 @@ pub async fn list_biddings(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -150,10 +150,10 @@ pub async fn create_bidding(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if req.bidding_no.is_empty() || req.title.is_empty() {
-        return Json(ApiResponse::<Bidding>::error(400, "招标编号和标题不能为空"));
+        return Json(ApiResponse::<Bidding>::bad_request("招标编号和标题不能为空"));
     }
 
     let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -167,7 +167,7 @@ pub async fn create_bidding(
     .unwrap_or(0);
 
     if existing > 0 {
-        return Json(ApiResponse::<Bidding>::error(400, "招标编号已存在"));
+        return Json(ApiResponse::<Bidding>::bad_request("招标编号已存在"));
     }
 
     let id = Uuid::new_v4();
@@ -217,14 +217,14 @@ pub async fn create_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "招标创建成功"))
         }
         Err(e) => {
             tracing::error!("创建招标失败: {}", e);
-            Json(ApiResponse::<Bidding>::error(500, "招标创建失败"))
+            Json(ApiResponse::<Bidding>::server_error("招标创建失败"))
         }
     }
 }
@@ -252,7 +252,7 @@ pub async fn get_bidding(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
@@ -268,10 +268,10 @@ pub async fn get_bidding(
 
     match result {
         Ok(Some(bidding)) => Json(ApiResponse::success(bidding, "获取招标成功")),
-        Ok(None) => Json(ApiResponse::<Bidding>::error(404, "招标不存在")),
+        Ok(None) => Json(ApiResponse::<Bidding>::not_found("招标不存在")),
         Err(e) => {
             tracing::error!("获取招标失败: {}", e);
-            Json(ApiResponse::<Bidding>::error(500, "获取招标失败"))
+            Json(ApiResponse::<Bidding>::server_error("获取招标失败"))
         }
     }
 }
@@ -288,7 +288,7 @@ pub async fn update_bidding(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -352,15 +352,15 @@ pub async fn update_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "招标更新成功"))
         }
-        Ok(None) => Json(ApiResponse::<Bidding>::error(404, "招标不存在")),
+        Ok(None) => Json(ApiResponse::<Bidding>::not_found("招标不存在")),
         Err(e) => {
             tracing::error!("更新招标失败: {}", e);
-            Json(ApiResponse::<Bidding>::error(500, "更新招标失败"))
+            Json(ApiResponse::<Bidding>::server_error("更新招标失败"))
         }
     }
 }
@@ -376,7 +376,7 @@ pub async fn delete_bidding(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -402,15 +402,15 @@ pub async fn delete_bidding(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(true, "招标删除成功"))
         }
-        Ok(_) => Json(ApiResponse::<bool>::error(404, "招标不存在")),
+        Ok(_) => Json(ApiResponse::<bool>::not_found("招标不存在")),
         Err(e) => {
             tracing::error!("删除招标失败: {}", e);
-            Json(ApiResponse::<bool>::error(500, "删除招标失败"))
+            Json(ApiResponse::<bool>::server_error("删除招标失败"))
         }
     }
 }
@@ -439,7 +439,7 @@ pub async fn publish_bidding(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -472,7 +472,7 @@ pub async fn publish_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "招标发布成功"))
@@ -483,7 +483,7 @@ pub async fn publish_bidding(
         )),
         Err(e) => {
             tracing::error!("发布招标失败: {}", e);
-            Json(ApiResponse::<Bidding>::error(500, "发布招标失败"))
+            Json(ApiResponse::<Bidding>::server_error("发布招标失败"))
         }
     }
 }
@@ -512,7 +512,7 @@ pub async fn open_bidding(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -545,7 +545,7 @@ pub async fn open_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "开标成功"))
@@ -556,7 +556,7 @@ pub async fn open_bidding(
         )),
         Err(e) => {
             tracing::error!("开标失败: {}", e);
-            Json(ApiResponse::<Bidding>::error(500, "开标失败"))
+            Json(ApiResponse::<Bidding>::server_error("开标失败"))
         }
     }
 }
@@ -585,7 +585,7 @@ pub async fn evaluate_bidding(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -617,7 +617,7 @@ pub async fn evaluate_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "评标完成"))
@@ -628,7 +628,7 @@ pub async fn evaluate_bidding(
         )),
         Err(e) => {
             tracing::error!("评标失败: {}", e);
-            Json(ApiResponse::<Bidding>::error(500, "评标失败"))
+            Json(ApiResponse::<Bidding>::server_error("评标失败"))
         }
     }
 }
@@ -658,7 +658,7 @@ pub async fn award_bidding(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -672,7 +672,7 @@ pub async fn award_bidding(
 
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::<Bidding>::error(400, "供应商ID格式错误")),
+        Err(_) => return Json(ApiResponse::<Bidding>::bad_request("供应商ID格式错误")),
     };
 
     let supplier_name: Option<String> = sqlx::query_scalar(only_own_schema_query!(
@@ -708,14 +708,14 @@ pub async fn award_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "中标结果已确定"))
         }
         Err(e) => {
             tracing::error!("确定中标结果失败: {}", e);
-            Json(ApiResponse::<Bidding>::error(500, "确定中标结果失败"))
+            Json(ApiResponse::<Bidding>::server_error("确定中标结果失败"))
         }
     }
 }
@@ -743,7 +743,7 @@ pub async fn list_bidding_suppliers(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query_as::<_, (Uuid, String)>(only_own_schema_query!(
         "srm",

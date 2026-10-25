@@ -140,10 +140,10 @@ pub async fn archive_master_data_ref(
     match row {
         Ok(Some(existing)) => {
             if existing.status == "archived" {
-                return Json(ApiResponse::error(400, "主数据已处于归档状态"));
+                return Json(ApiResponse::bad_request("主数据已处于归档状态"));
             }
             if existing.status == "destroyed" {
-                return Json(ApiResponse::error(400, "已销毁的主数据无法归档"));
+                return Json(ApiResponse::bad_request("已销毁的主数据无法归档"));
             }
 
             let old_status = existing.status.clone();
@@ -196,14 +196,14 @@ pub async fn archive_master_data_ref(
                             if let Some(t) = guard.take() {
                                 if let Err(e) = t.commit().await {
                                     tracing::error!("事务提交失败: {}", e);
-                                    return Json(ApiResponse::error(500, "事务提交失败"));
+                                    return Json(ApiResponse::server_error("事务提交失败"));
                                 }
                             }
                             Json(ApiResponse::success(row.into(), "主数据归档成功"))
                         }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询归档后数据失败: {}", e);
-                            Json(ApiResponse::error(500, "归档成功但查询失败"))
+                            Json(ApiResponse::server_error("归档成功但查询失败"))
                         }
                     }
                 }
@@ -213,7 +213,7 @@ pub async fn archive_master_data_ref(
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
+        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
@@ -266,7 +266,7 @@ pub async fn restore_master_data_ref(
     match row {
         Ok(Some(existing)) => {
             if existing.status != "archived" {
-                return Json(ApiResponse::error(400, "只有已归档的主数据才能恢复"));
+                return Json(ApiResponse::bad_request("只有已归档的主数据才能恢复"));
             }
 
             let old_status = existing.status.clone();
@@ -316,14 +316,14 @@ pub async fn restore_master_data_ref(
                             if let Some(t) = guard.take() {
                                 if let Err(e) = t.commit().await {
                                     tracing::error!("事务提交失败: {}", e);
-                                    return Json(ApiResponse::error(500, "事务提交失败"));
+                                    return Json(ApiResponse::server_error("事务提交失败"));
                                 }
                             }
                             Json(ApiResponse::success(row.into(), "主数据恢复成功"))
                         }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询恢复后数据失败: {}", e);
-                            Json(ApiResponse::error(500, "恢复成功但查询失败"))
+                            Json(ApiResponse::server_error("恢复成功但查询失败"))
                         }
                     }
                 }
@@ -333,7 +333,7 @@ pub async fn restore_master_data_ref(
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
+        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
@@ -389,7 +389,7 @@ pub async fn schedule_destruction(
     match row {
         Ok(Some(existing)) => {
             if existing.status == "destroyed" {
-                return Json(ApiResponse::error(400, "已销毁的主数据无法安排销毁计划"));
+                return Json(ApiResponse::bad_request("已销毁的主数据无法安排销毁计划"));
             }
 
             let old_status = existing.status.clone();
@@ -442,14 +442,14 @@ pub async fn schedule_destruction(
                             if let Some(t) = guard.take() {
                                 if let Err(e) = t.commit().await {
                                     tracing::error!("事务提交失败: {}", e);
-                                    return Json(ApiResponse::error(500, "事务提交失败"));
+                                    return Json(ApiResponse::server_error("事务提交失败"));
                                 }
                             }
                             Json(ApiResponse::success(row.into(), "销毁计划已安排"))
                         }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询销毁计划数据失败: {}", e);
-                            Json(ApiResponse::error(500, "计划安排成功但查询失败"))
+                            Json(ApiResponse::server_error("计划安排成功但查询失败"))
                         }
                     }
                 }
@@ -459,7 +459,7 @@ pub async fn schedule_destruction(
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
+        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
@@ -564,14 +564,14 @@ pub async fn cancel_destruction(
                             if let Some(t) = guard.take() {
                                 if let Err(e) = t.commit().await {
                                     tracing::error!("事务提交失败: {}", e);
-                                    return Json(ApiResponse::error(500, "事务提交失败"));
+                                    return Json(ApiResponse::server_error("事务提交失败"));
                                 }
                             }
                             Json(ApiResponse::success(row.into(), "销毁计划已取消"))
                         }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询取消销毁后数据失败: {}", e);
-                            Json(ApiResponse::error(500, "取消成功但查询失败"))
+                            Json(ApiResponse::server_error("取消成功但查询失败"))
                         }
                     }
                 }
@@ -581,7 +581,7 @@ pub async fn cancel_destruction(
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
+        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
@@ -634,7 +634,7 @@ pub async fn destroy_master_data_ref(
     match row {
         Ok(Some(existing)) => {
             if existing.status == "destroyed" {
-                return Json(ApiResponse::error(400, "主数据已处于销毁状态"));
+                return Json(ApiResponse::bad_request("主数据已处于销毁状态"));
             }
 
             let old_status = existing.status.clone();
@@ -687,14 +687,14 @@ pub async fn destroy_master_data_ref(
                             if let Some(t) = guard.take() {
                                 if let Err(e) = t.commit().await {
                                     tracing::error!("事务提交失败: {}", e);
-                                    return Json(ApiResponse::error(500, "事务提交失败"));
+                                    return Json(ApiResponse::server_error("事务提交失败"));
                                 }
                             }
                             Json(ApiResponse::success(row.into(), "主数据已销毁（软删除）"))
                         }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询销毁后数据失败: {}", e);
-                            Json(ApiResponse::error(500, "销毁成功但查询失败"))
+                            Json(ApiResponse::server_error("销毁成功但查询失败"))
                         }
                     }
                 }
@@ -704,7 +704,7 @@ pub async fn destroy_master_data_ref(
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
+        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询失败", e)))

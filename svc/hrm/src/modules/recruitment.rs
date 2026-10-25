@@ -376,7 +376,7 @@ pub async fn create_job_opening(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -415,10 +415,10 @@ pub async fn get_job_opening(
 
     match result {
         Ok(Some(opening)) => Json(ApiResponse::success(opening, "查询成功")),
-        Ok(None) => Json(ApiResponse::<JobOpening>::error(404, "职位不存在")),
+        Ok(None) => Json(ApiResponse::<JobOpening>::not_found("职位不存在")),
         Err(e) => {
             tracing::error!("查询职位失败: {}", e);
-            Json(ApiResponse::<JobOpening>::error(500, "查询职位失败"))
+            Json(ApiResponse::<JobOpening>::server_error("查询职位失败"))
         }
     }
 }
@@ -474,15 +474,15 @@ pub async fn update_job_opening(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(opening, "职位更新成功"))
         }
-        Ok(None) => Json(ApiResponse::<JobOpening>::error(404, "职位不存在")),
+        Ok(None) => Json(ApiResponse::<JobOpening>::not_found("职位不存在")),
         Err(e) => {
             tracing::error!("更新职位失败: {}", e);
-            Json(ApiResponse::<JobOpening>::error(500, "更新职位失败"))
+            Json(ApiResponse::<JobOpening>::server_error("更新职位失败"))
         }
     }
 }
@@ -555,7 +555,7 @@ pub async fn delete_job_opening(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -605,7 +605,7 @@ pub async fn publish_job_opening(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(opening, "职位已发布"))
@@ -616,7 +616,7 @@ pub async fn publish_job_opening(
         )),
         Err(e) => {
             tracing::error!("发布职位失败: {}", e);
-            Json(ApiResponse::<JobOpening>::error(500, "发布职位失败"))
+            Json(ApiResponse::<JobOpening>::server_error("发布职位失败"))
         }
     }
 }
@@ -663,7 +663,7 @@ pub async fn close_job_opening(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(opening, "职位已关闭"))
@@ -674,7 +674,7 @@ pub async fn close_job_opening(
         )),
         Err(e) => {
             tracing::error!("关闭职位失败: {}", e);
-            Json(ApiResponse::<JobOpening>::error(500, "关闭职位失败"))
+            Json(ApiResponse::<JobOpening>::server_error("关闭职位失败"))
         }
     }
 }
@@ -856,7 +856,7 @@ pub async fn create_candidate(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -895,10 +895,10 @@ pub async fn get_candidate(
 
     match result {
         Ok(Some(candidate)) => Json(ApiResponse::success(candidate, "查询成功")),
-        Ok(None) => Json(ApiResponse::<Candidate>::error(404, "候选人不存在")),
+        Ok(None) => Json(ApiResponse::<Candidate>::not_found("候选人不存在")),
         Err(e) => {
             tracing::error!("查询候选人失败: {}", e);
-            Json(ApiResponse::<Candidate>::error(500, "查询候选人失败"))
+            Json(ApiResponse::<Candidate>::server_error("查询候选人失败"))
         }
     }
 }
@@ -950,15 +950,15 @@ pub async fn update_candidate(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(candidate, "候选人信息更新成功"))
         }
-        Ok(None) => Json(ApiResponse::<Candidate>::error(404, "候选人不存在")),
+        Ok(None) => Json(ApiResponse::<Candidate>::not_found("候选人不存在")),
         Err(e) => {
             tracing::error!("更新候选人失败: {}", e);
-            Json(ApiResponse::<Candidate>::error(500, "更新候选人失败"))
+            Json(ApiResponse::<Candidate>::server_error("更新候选人失败"))
         }
     }
 }
@@ -1032,7 +1032,7 @@ pub async fn delete_candidate(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -1165,14 +1165,14 @@ pub async fn create_interview(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(interview, "面试安排成功"))
         }
         Err(e) => {
             tracing::error!("安排面试失败: {}", e);
-            Json(ApiResponse::<Interview>::error(500, "安排面试失败"))
+            Json(ApiResponse::<Interview>::server_error("安排面试失败"))
         }
     }
 }
@@ -1208,10 +1208,10 @@ pub async fn get_interview(
 
     match result {
         Ok(Some(interview)) => Json(ApiResponse::success(interview, "查询成功")),
-        Ok(None) => Json(ApiResponse::<Interview>::error(404, "面试不存在")),
+        Ok(None) => Json(ApiResponse::<Interview>::not_found("面试不存在")),
         Err(e) => {
             tracing::error!("查询面试失败: {}", e);
-            Json(ApiResponse::<Interview>::error(500, "查询面试失败"))
+            Json(ApiResponse::<Interview>::server_error("查询面试失败"))
         }
     }
 }
@@ -1265,15 +1265,15 @@ pub async fn update_interview(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(interview, "面试信息更新成功"))
         }
-        Ok(None) => Json(ApiResponse::<Interview>::error(404, "面试不存在")),
+        Ok(None) => Json(ApiResponse::<Interview>::not_found("面试不存在")),
         Err(e) => {
             tracing::error!("更新面试失败: {}", e);
-            Json(ApiResponse::<Interview>::error(500, "更新面试失败"))
+            Json(ApiResponse::<Interview>::server_error("更新面试失败"))
         }
     }
 }
@@ -1300,14 +1300,14 @@ pub async fn delete_interview(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(id.to_string(), "面试已取消"))
         }
         Err(e) => {
             tracing::error!("取消面试失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "取消面试失败"))
+            Json(ApiResponse::<String>::server_error("取消面试失败"))
         }
     }
 }
@@ -1365,7 +1365,7 @@ pub async fn complete_interview(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(interview, "面试已完成"))
@@ -1376,7 +1376,7 @@ pub async fn complete_interview(
         )),
         Err(e) => {
             tracing::error!("完成面试失败: {}", e);
-            Json(ApiResponse::<Interview>::error(500, "完成面试失败"))
+            Json(ApiResponse::<Interview>::server_error("完成面试失败"))
         }
     }
 }

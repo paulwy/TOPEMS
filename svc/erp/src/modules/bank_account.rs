@@ -68,7 +68,7 @@ pub struct UpdateBankAccountRequest {
 fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::error(500, msg)),
+        Json(ApiResponse::server_error(msg)),
     )
 }
 
@@ -214,7 +214,7 @@ pub async fn get_bank_account(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Ok(Json(ApiResponse::error(404, "银行账户不存在")));
+            return Ok(Json(ApiResponse::not_found("银行账户不存在")));
         }
         Err(e) => {
             tracing::error!("查询银行账户失败: {}", e);
@@ -325,7 +325,7 @@ pub async fn update_bank_account(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Ok(Json(ApiResponse::error(404, "银行账户不存在")));
+            return Ok(Json(ApiResponse::not_found("银行账户不存在")));
         }
         Err(e) => {
             tracing::error!("更新银行账户失败: {}", e);
@@ -373,14 +373,14 @@ pub async fn delete_bank_account(
     match result {
         Ok(res) => {
             if res.rows_affected() == 0 {
-                return Ok(Json(ApiResponse::error(404, "银行账户不存在")));
+                return Ok(Json(ApiResponse::not_found("银行账户不存在")));
             }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
                     return Err((
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::error(500, "事务提交失败")),
+                        Json(ApiResponse::server_error("事务提交失败")),
                     ));
                 }
             }

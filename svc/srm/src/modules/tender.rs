@@ -120,7 +120,7 @@ pub async fn list_tenders(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -196,7 +196,7 @@ pub async fn create_tender(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -265,7 +265,7 @@ pub async fn create_tender(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             let data = serde_json::json!({
@@ -287,7 +287,7 @@ pub async fn create_tender(
         }
         Err(e) => {
             tracing::error!("创建招标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "创建招标失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error("创建招标失败"))
         }
     }
 }
@@ -317,7 +317,7 @@ pub async fn get_tender(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -382,7 +382,7 @@ pub async fn get_tender(
         )),
         Err(e) => {
             tracing::error!("获取招标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取招标失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error("获取招标失败"))
         }
     }
 }
@@ -400,7 +400,7 @@ pub async fn update_tender(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -479,7 +479,7 @@ pub async fn update_tender(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             let data = serde_json::json!({
@@ -505,7 +505,7 @@ pub async fn update_tender(
         )),
         Err(e) => {
             tracing::error!("更新招标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "更新招标失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error("更新招标失败"))
         }
     }
 }
@@ -522,7 +522,7 @@ pub async fn delete_tender(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -563,7 +563,7 @@ pub async fn delete_tender(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(serde_json::json!({}), "删除招标成功"))
@@ -574,7 +574,7 @@ pub async fn delete_tender(
         )),
         Err(e) => {
             tracing::error!("删除招标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "删除招标失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error("删除招标失败"))
         }
     }
 }
@@ -604,7 +604,7 @@ pub async fn get_tender_bids(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -694,7 +694,7 @@ pub async fn create_tender_bid(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -799,7 +799,7 @@ pub async fn create_tender_bid(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             let data = serde_json::json!({
@@ -823,7 +823,7 @@ pub async fn create_tender_bid(
         }
         Err(e) => {
             tracing::error!("创建投标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "创建投标失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error("创建投标失败"))
         }
     }
 }
@@ -854,7 +854,7 @@ pub async fn award_tender(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -927,7 +927,7 @@ pub async fn award_tender(
         }
         Err(e) => {
             tracing::error!("查询投标失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::error(500, "查询投标失败"));
+            return Json(ApiResponse::<serde_json::Value>::server_error("查询投标失败"));
         }
     };
 
@@ -945,7 +945,7 @@ pub async fn award_tender(
             {
                 tracing::error!("更新招标状态失败: {}", e);
                 tx.rollback().await.unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
-                return Json(ApiResponse::<serde_json::Value>::error(500, "中标处理失败"));
+                return Json(ApiResponse::<serde_json::Value>::server_error("中标处理失败"));
             }
 
             if let Err(e) = sqlx::query(
@@ -959,7 +959,7 @@ pub async fn award_tender(
             {
                 tracing::error!("更新投标状态失败: {}", e);
                 tx.rollback().await.unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
-                return Json(ApiResponse::<serde_json::Value>::error(500, "中标处理失败"));
+                return Json(ApiResponse::<serde_json::Value>::server_error("中标处理失败"));
             }
 
             let award_no = format!("AW-{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
@@ -990,12 +990,12 @@ pub async fn award_tender(
                     tx.rollback()
                         .await
                         .unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
-                    return Json(ApiResponse::<serde_json::Value>::error(500, "中标处理失败"));
+                    return Json(ApiResponse::<serde_json::Value>::server_error("中标处理失败"));
                 }
             };
 
             if tx.commit().await.is_err() {
-                return Json(ApiResponse::<serde_json::Value>::error(500, "中标处理失败"));
+                return Json(ApiResponse::<serde_json::Value>::server_error("中标处理失败"));
             }
 
             let data = serde_json::json!({
@@ -1013,7 +1013,7 @@ pub async fn award_tender(
         }
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "中标处理失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error("中标处理失败"))
         }
     }
 }
@@ -1039,7 +1039,7 @@ pub async fn list_tender_awards(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}

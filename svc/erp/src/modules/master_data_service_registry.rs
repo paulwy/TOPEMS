@@ -156,7 +156,7 @@ pub async fn mdm_service_deregister(
             serde_json::json!({ "service_id": service_id, "deregistered": true }),
             "服务注销成功",
         )),
-        None => Json(ApiResponse::error(404, "未找到该服务")),
+        None => Json(ApiResponse::not_found("未找到该服务")),
     }
 }
 
@@ -182,7 +182,7 @@ pub async fn mdm_service_heartbeat(
             service.status = "healthy".to_string();
             Json(ApiResponse::success(service.clone(), "心跳更新成功"))
         }
-        None => Json(ApiResponse::error(404, "未找到该服务")),
+        None => Json(ApiResponse::not_found("未找到该服务")),
     }
 }
 
@@ -239,7 +239,7 @@ pub async fn mdm_service_health(
 
     match registry.services.get(&service_id) {
         Some(service) => Json(ApiResponse::success(service.clone(), "服务健康状态")),
-        None => Json(ApiResponse::error(404, "未找到该服务")),
+        None => Json(ApiResponse::not_found("未找到该服务")),
     }
 }
 

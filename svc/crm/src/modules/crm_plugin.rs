@@ -131,7 +131,7 @@ pub async fn plugin_health_check(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match sqlx::query("SELECT 1").fetch_one(&mut **txn).await {
         Ok(_) => Json(ApiResponse::success((), "Healthy")),

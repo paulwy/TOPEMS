@@ -88,7 +88,7 @@ pub async fn list_evaluations(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -212,7 +212,7 @@ pub async fn create_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -414,7 +414,7 @@ pub async fn create_evaluation(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(evaluation, "供应商评估创建成功"))
@@ -454,7 +454,7 @@ pub async fn get_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -512,7 +512,7 @@ pub async fn update_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -667,7 +667,7 @@ pub async fn update_evaluation(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(evaluation, "供应商评估更新成功"))
@@ -694,7 +694,7 @@ pub async fn delete_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -727,15 +727,15 @@ pub async fn delete_evaluation(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success("".to_string(), "供应商评估删除成功"))
         }
-        Ok(_) => Json(ApiResponse::<String>::error(404, "供应商评估不存在")),
+        Ok(_) => Json(ApiResponse::<String>::not_found("供应商评估不存在")),
         Err(e) => {
             tracing::error!("删除供应商评估失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "供应商评估删除失败"))
+            Json(ApiResponse::<String>::server_error("供应商评估删除失败"))
         }
     }
 }
@@ -767,7 +767,7 @@ pub async fn get_evaluation_history(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -839,7 +839,7 @@ pub async fn get_performance_summary(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -958,7 +958,7 @@ pub async fn get_score_trend(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -1101,7 +1101,7 @@ pub async fn get_evaluation_statistics(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}

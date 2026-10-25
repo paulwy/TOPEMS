@@ -325,7 +325,7 @@ pub async fn detect_conflicts(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::error(500, "事务提交失败"));
+            return Json(ApiResponse::server_error("事务提交失败"));
         }
     }
     let conflicts_detected = conflicts.len();
@@ -511,7 +511,7 @@ pub async fn get_conflict(
     };
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的冲突 ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的冲突 ID")),
     };
 
     let row = sqlx::query(only_own_schema_query!(
@@ -562,7 +562,7 @@ pub async fn get_conflict(
             },
             "冲突详情",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "未找到冲突记录")),
+        Ok(None) => Json(ApiResponse::not_found("未找到冲突记录")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询冲突详情失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询冲突失败", e)))
@@ -596,7 +596,7 @@ pub async fn resolve_conflict(
     };
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的冲突 ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的冲突 ID")),
     };
     let now = chrono::Utc::now();
 
@@ -614,7 +614,7 @@ pub async fn resolve_conflict(
             r.try_get::<String, _>("master_data_id").unwrap_or_default(),
             r.try_get::<String, _>("field_name").unwrap_or_default(),
         ),
-        _ => return Json(ApiResponse::error(404, "未找到冲突记录")),
+        _ => return Json(ApiResponse::not_found("未找到冲突记录")),
     };
 
     // 2. 更新冲突记录状态
@@ -642,7 +642,7 @@ pub async fn resolve_conflict(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::error(500, "事务提交失败"));
+            return Json(ApiResponse::server_error("事务提交失败"));
         }
     }
     Json(ApiResponse::success(
@@ -684,7 +684,7 @@ pub async fn auto_merge_conflict(
     };
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的冲突 ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的冲突 ID")),
     };
     let strategy = req.strategy.unwrap_or_default();
     let now = chrono::Utc::now();
@@ -708,7 +708,7 @@ pub async fn auto_merge_conflict(
                 .unwrap_or_default(),
             r.try_get::<String, _>("remote_service").unwrap_or_default(),
         ),
-        _ => return Json(ApiResponse::error(404, "未找到待合并的冲突记录")),
+        _ => return Json(ApiResponse::not_found("未找到待合并的冲突记录")),
     };
 
     // 2. 根据策略选择解决值
@@ -728,7 +728,7 @@ pub async fn auto_merge_conflict(
             }
         }
         MergeStrategy::ManualReview => {
-            return Json(ApiResponse::error(400, "策略为手动审查，不自动合并"));
+            return Json(ApiResponse::bad_request("策略为手动审查，不自动合并"));
         }
     };
 
@@ -759,7 +759,7 @@ pub async fn auto_merge_conflict(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::error(500, "事务提交失败"));
+            return Json(ApiResponse::server_error("事务提交失败"));
         }
     }
     Json(ApiResponse::success(

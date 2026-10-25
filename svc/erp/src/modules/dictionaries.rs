@@ -115,7 +115,7 @@ async fn list_dictionaries(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[erp] dictionaries 计数失败: {}", e);
-            return Json(ApiResponse::error(500, "查询字典失败"));
+            return Json(ApiResponse::server_error("查询字典失败"));
         }
     };
     let fetch_sql = format!(
@@ -131,7 +131,7 @@ async fn list_dictionaries(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[erp] dictionaries 查询失败: {}", e);
-            return Json(ApiResponse::error(500, "查询字典失败"));
+            return Json(ApiResponse::server_error("查询字典失败"));
         }
     };
     let items: Vec<DictionaryResponse> = rows
@@ -185,10 +185,10 @@ async fn get_dictionary(
             }),
             "查询成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "字典不存在")),
+        Ok(None) => Json(ApiResponse::not_found("字典不存在")),
         Err(e) => {
             tracing::error!("[erp] dictionary 查询失败: {}", e);
-            Json(ApiResponse::error(500, "查询字典失败"))
+            Json(ApiResponse::server_error("查询字典失败"))
         }
     }
 }
@@ -220,13 +220,13 @@ async fn create_dictionary(
                 "字典创建成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(500, "字典创建失败")),
+        Ok(None) => Json(ApiResponse::server_error("字典创建失败")),
         Err(e) => {
             tracing::error!("[erp] dictionary 创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::error(409, "字典编码已存在"));
+                return Json(ApiResponse::conflict("字典编码已存在"));
             }
-            Json(ApiResponse::error(500, "字典创建失败"))
+            Json(ApiResponse::server_error("字典创建失败"))
         }
     }
 }
@@ -277,10 +277,10 @@ async fn update_dictionary(
             serde_json::json!({ "id": id }),
             "字典更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "字典不存在")),
+        Ok(None) => Json(ApiResponse::not_found("字典不存在")),
         Err(e) => {
             tracing::error!("[erp] dictionary 更新失败: {}", e);
-            Json(ApiResponse::error(500, "字典更新失败"))
+            Json(ApiResponse::server_error("字典更新失败"))
         }
     }
 }
@@ -313,10 +313,10 @@ async fn delete_dictionary(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "字典删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "字典不存在")),
+        Ok(_) => Json(ApiResponse::not_found("字典不存在")),
         Err(e) => {
             tracing::error!("[erp] dictionary 删除失败: {}", e);
-            Json(ApiResponse::error(500, "字典删除失败"))
+            Json(ApiResponse::server_error("字典删除失败"))
         }
     }
 }

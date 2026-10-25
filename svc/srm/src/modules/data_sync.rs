@@ -86,7 +86,7 @@ pub async fn sync_supplier_from_scm(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -148,7 +148,7 @@ pub async fn sync_supplier_from_scm(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             return Json(ApiResponse::success(
@@ -354,7 +354,7 @@ pub async fn sync_all_suppliers_from_scm(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -531,7 +531,7 @@ pub async fn sync_supplier_to_scm(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -730,7 +730,7 @@ pub async fn sync_all_suppliers_to_scm(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -868,7 +868,7 @@ pub async fn get_sync_logs(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let page = req.page.unwrap_or(1).max(1);
     let page_size = req.page_size.unwrap_or(20).min(100);

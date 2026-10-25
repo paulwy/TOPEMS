@@ -78,7 +78,7 @@ pub async fn list_contracts(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
@@ -186,7 +186,7 @@ pub async fn create_contract(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
         Ok(_) => {}
@@ -323,7 +323,7 @@ pub async fn create_contract(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(contract, "供应商合同创建成功"))
@@ -363,7 +363,7 @@ pub async fn get_contract(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
@@ -421,7 +421,7 @@ pub async fn update_contract(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
         Ok(_) => {}
@@ -556,7 +556,7 @@ pub async fn update_contract(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(contract, "供应商合同更新成功"))
@@ -583,7 +583,7 @@ pub async fn delete_contract(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
         Ok(_) => {}
@@ -616,15 +616,15 @@ pub async fn delete_contract(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success("".to_string(), "供应商合同删除成功"))
         }
-        Ok(_) => Json(ApiResponse::<String>::error(404, "供应商合同不存在")),
+        Ok(_) => Json(ApiResponse::<String>::not_found("供应商合同不存在")),
         Err(e) => {
             tracing::error!("删除供应商合同失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "供应商合同删除失败"))
+            Json(ApiResponse::<String>::server_error("供应商合同删除失败"))
         }
     }
 }
@@ -656,7 +656,7 @@ pub async fn get_contract_terms(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}

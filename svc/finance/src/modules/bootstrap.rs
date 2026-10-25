@@ -52,7 +52,7 @@ pub async fn bootstrap_defaults(
         Some(tid) => {
             let uuid = match uuid::Uuid::parse_str(&tid) {
                 Ok(u) => u,
-                Err(_) => return Json(ApiResponse::error(400, "tenant_id 格式无效")),
+                Err(_) => return Json(ApiResponse::bad_request("tenant_id 格式无效")),
             };
             match sqlx::query_scalar("SELECT finance.bootstrap_defaults($1)")
                 .bind(uuid)

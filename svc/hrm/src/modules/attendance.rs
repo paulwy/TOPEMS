@@ -369,7 +369,7 @@ pub async fn create_attendance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -518,7 +518,7 @@ pub async fn update_attendance(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(record, "考勤记录更新成功"))
@@ -616,7 +616,7 @@ pub async fn delete_attendance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }

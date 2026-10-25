@@ -507,7 +507,7 @@ pub async fn matching_find_matches(
     let profiles = build_entity_profiles();
     let source = match profiles.iter().find(|p| p.id == source_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到源实体")),
+        None => return Json(ApiResponse::not_found("未找到源实体")),
     };
     let threshold = req.threshold.unwrap_or(70.0) / 100.0;
     let limit = req.limit.unwrap_or(20);
@@ -690,14 +690,14 @@ pub async fn matching_suggest_merge(
     let groups = get_smart_matcher_store().duplicate_groups.lock().await;
     let group = match groups.iter().find(|g| g.group_id == req.group_id) {
         Some(g) => g,
-        None => return Json(ApiResponse::error(404, "未找到重复组")),
+        None => return Json(ApiResponse::not_found("未找到重复组")),
     };
     let primary = req
         .primary_entity_id
         .clone()
         .unwrap_or_else(|| group.primary_entity_id.clone());
     if !group.entities.contains(&primary) {
-        return Json(ApiResponse::error(400, "主实体不在重复组中"));
+        return Json(ApiResponse::bad_request("主实体不在重复组中"));
     }
     let others: Vec<&String> = group.entities.iter().filter(|e| **e != primary).collect();
     Json(ApiResponse::success(

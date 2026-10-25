@@ -791,7 +791,7 @@ pub async fn get_report_template_handler(
     let _ = &state;
     match get_report_template(&template_id).await {
         Some(template) => Json(ApiResponse::success(template, "报告模板获取成功")),
-        None => Json(ApiResponse::error(404, "未找到报告模板")),
+        None => Json(ApiResponse::not_found("未找到报告模板")),
     }
 }
 
@@ -811,7 +811,7 @@ pub async fn generate_report_handler(
     let _ = &state;
     match generate_report(&req).await {
         Some(report) => Json(ApiResponse::success(report, "报告生成成功")),
-        None => Json(ApiResponse::error(404, "未找到报告模板")),
+        None => Json(ApiResponse::not_found("未找到报告模板")),
     }
 }
 
@@ -852,7 +852,7 @@ pub async fn get_generated_report_handler(
     let _ = &state;
     match get_generated_report(&report_id).await {
         Some(report) => Json(ApiResponse::success(report, "已生成报告获取成功")),
-        None => Json(ApiResponse::error(404, "未找到报告")),
+        None => Json(ApiResponse::not_found("未找到报告")),
     }
 }
 
@@ -872,7 +872,7 @@ pub async fn schedule_report_handler(
     let _ = &state;
     match schedule_report(&req).await {
         Some(template) => Json(ApiResponse::success(template, "报告调度成功")),
-        None => Json(ApiResponse::error(404, "未找到报告模板")),
+        None => Json(ApiResponse::not_found("未找到报告模板")),
     }
 }
 
@@ -892,7 +892,7 @@ pub async fn get_report_schedule_handler(
     let _ = &state;
     match get_report_schedule(&template_id).await {
         Some(schedule) => Json(ApiResponse::success(schedule, "报告调度计划获取成功")),
-        None => Json(ApiResponse::error(404, "未找到报告调度计划")),
+        None => Json(ApiResponse::not_found("未找到报告调度计划")),
     }
 }
 
