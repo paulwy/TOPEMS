@@ -29,6 +29,18 @@
 - **配置**：plugins.config.ts 去 REMOTE_MODULES 的 port/url + MF_PORTS import（pluginStore 仅消费 .code）；保留 ports.ts 的 MF_PORTS/getMfPort（microfrontend/config.ts 仍用）
 - **验证**：tsc --noEmit exit 0 / vitest 4 文件 28 passed（DynamicRouter + 3 smoke）/ eslint 0
 
+## 冗余清理 R1：6 个 Cargo 未引用依赖移除（2026-10-26）✅ 完成
+
+> commit `590c36cf21`（已推送 HEAD==origin/main）。源码 0 引用逐项实测复核后删除。
+
+- **svc/search**：topems-shared-db、topems-shared-service-client
+- **svc/monitor**：topems-shared-db
+- **svc/communication**：reqwest（features json）
+- **svc/srm**：reqwest（features json）
+- **svc/gis**：reqwest（features json）
+- **验证**：cargo check --workspace（SQLX_OFFLINE）exit 0 / Cargo.lock 仅删 6 个依赖边（包本体仍被其他 crate 引用）
+- **备注**：svc/search 的 reqwest 与 svc/communication 的 topems-shared-db 不在审计清单内未动（留待复核）
+
 ## 补测续：erp 域剩余复杂/自绘形态页（批次7，33 用例）（2026-10-28）✅ 完成
 
 > **erp 域自绘/复杂形态页收尾补测**：包装页已全覆盖（批次6），本批补 5 个复杂页 + 修 setup-mocks useMutation 陈旧闭包缺陷
