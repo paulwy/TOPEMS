@@ -1,3 +1,11 @@
+## 补测续：admin 域监控页（MonitorPage）（2026-10-25）✅ 完成
+
+> **监控页补测（3 useQuery 按 queryKey 区分的部分 mock 新范式）**：MonitorPage 3 useQuery（systemMetrics/serviceHealth/alerts）+ 4 统计卡（CPU/Memory/Disk/Uptime）+ 2 个 ListPageTemplate（templates 路径）+ handleRefresh refetch×3 + isError → addNotification
+> - `MonitorPage.test.tsx`（5 用例）：4 统计卡（百分比 + uptime 拼接文本——**t() mock 返 key 时拼接为 key 序列**）；2 个 ListPageTemplate（serviceHealth 2 行/alerts 1 行 + getRowId）；serviceHealth 列渲染（status healthy/degraded → k8/k9 chip + error_rate 0.05→'0.05%'）；alerts 列渲染（severity critical → k11 + title）；handleRefresh 触发 3 refetch
+> - **可测性要点**：PageContainer 需 **MemoryRouter** 包裹（useLocation）；i18n 需**部分 mock 保 subscribeResourceVersion**（navigation hooks 依赖）；useQuery 按 **queryKey[1] 标识**区分返回（非 [0]——真实 key 是 ['ad-hoc','admin_monitor_*_base']）；useNotificationStore 为**解构式调用（无 selector）**
+> - 验证：5/5 passed；eslint 0；tsc 0；component 全量 332 files / 3433 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：tms 域 ListPageTemplate 形态页（ShipmentManagementPage）（2026-10-25）✅ 完成
 
 > **ListPageTemplate（templates 路径）形态页补测**：ShipmentManagementPage crud.api=shipmentApi **直通（无归一化层，pageSize 原样透传）** + **3 个状态流转 useMutation**（dispatch/arrive/cancel → shipmentApi.* + invalidate 'tms-shipments'）+ rowActions show 条件
