@@ -52,6 +52,50 @@ impl<T> ApiResponse<T> {
             timestamp: Utc::now().to_rfc3339(),
         }
     }
+
+    // ========== 语义化错误构造器（F10 收敛）==========
+    // 行为与 `Self::error(<对应状态码>, message)` 完全等价，
+    // 仅用语义命名替代裸数字状态码，提升可读性并防止错误码误用。
+
+    /// 404 资源未找到
+    pub fn not_found(message: &str) -> Self {
+        Self::error(404, message)
+    }
+
+    /// 400 请求参数错误
+    pub fn bad_request(message: &str) -> Self {
+        Self::error(400, message)
+    }
+
+    /// 401 未认证
+    pub fn unauthorized(message: &str) -> Self {
+        Self::error(401, message)
+    }
+
+    /// 403 禁止访问
+    pub fn forbidden(message: &str) -> Self {
+        Self::error(403, message)
+    }
+
+    /// 409 资源冲突/已存在
+    pub fn conflict(message: &str) -> Self {
+        Self::error(409, message)
+    }
+
+    /// 500 服务器内部错误（`internal` 名已由 ErrorPayload 占用，此处用 server_error）
+    pub fn server_error(message: &str) -> Self {
+        Self::error(500, message)
+    }
+
+    /// 501 未实现
+    pub fn not_implemented(message: &str) -> Self {
+        Self::error(501, message)
+    }
+
+    /// 503 服务不可用
+    pub fn unavailable(message: &str) -> Self {
+        Self::error(503, message)
+    }
 }
 
 pub fn api_error<T>(code: u16, message: &str) -> ApiResponse<T> {
@@ -437,6 +481,37 @@ mod tests {
         assert!(!resp.success);
         assert!(resp.data.is_none());
         assert_eq!(resp.message, "出错了");
+    }
+
+    #[test]
+    fn test_semantic_error_constructors_equivalent_to_error() {
+        // F10 语义构造器行为等价性：code/message 与 error() 完全一致
+        for (ctor_code, ctor_msg) in [
+            (404, "未找到"),
+            (400, "参数错误"),
+            (401, "未认证"),
+            (403, "禁止访问"),
+            (409, "已存在"),
+            (500, "服务器错误"),
+            (501, "未实现"),
+            (503, "不可用"),
+        ] {
+            let semantic: ApiResponse<()> = match ctor_code {
+                404 => ApiResponse::not_found(ctor_msg),
+                400 => ApiResponse::bad_request(ctor_msg),
+                401 => ApiResponse::unauthorized(ctor_msg),
+                403 => ApiResponse::forbidden(ctor_msg),
+                409 => ApiResponse::conflict(ctor_msg),
+                500 => ApiResponse::server_error(ctor_msg),
+                501 => ApiResponse::not_implemented(ctor_msg),
+                _ => ApiResponse::unavailable(ctor_msg),
+            };
+            let direct: ApiResponse<()> = ApiResponse::error(ctor_code, ctor_msg);
+            assert_eq!(semantic.code, direct.code, "code 404/400/401/403/409/500/501/503");
+            assert_eq!(semantic.success, direct.success);
+            assert_eq!(semantic.message, direct.message);
+            assert!(semantic.data.is_none());
+        }
     }
 
     #[test]

@@ -144,7 +144,7 @@ async fn get_inventory_turnover(
     } else {
         Some(match resolve_tenant_id(&claims) {
             Ok(id) => id,
-            Err(e) => return Json(ApiResponse::error(401, &e.classify().1)),
+            Err(e) => return Json(ApiResponse::unauthorized(&e.classify().1)),
         })
     };
 
@@ -276,7 +276,7 @@ async fn get_order_fulfillment(
 ) -> Json<ApiResponse<OrderFulfillmentResponse>> {
     let tenant_id = match resolve_tenant_id(&claims) {
         Ok(id) => id,
-        Err(e) => return Json(ApiResponse::error(401, &e.classify().1)),
+        Err(e) => return Json(ApiResponse::unauthorized(&e.classify().1)),
     };
 
     let (start, end) = parse_date_range(&params);

@@ -52,6 +52,16 @@
 - **vitest 全量**：本机运行 18.5k 行日志后被系统终止未出汇总（日志中 ERROR 均为测试用例预期输出：querySharding/API Batch Operation 等）；本轮改动仅注释/文档/k8s manifest，无 JS 逻辑改动，无回归面；代表性文件 CrmContractRedesignPage 12/12 已于前轮实跑验证；全量基线 463 files / 6198 passed 见 10-28 批次7 记录。
 - 结论：HEAD `490559cb37` 前后端核心门禁全绿，交付面无本地可修缺陷。
 
+## F10 · ApiResponse 语义构造器 + wms 试点收敛（批次1）（2026-10-26）✅ 完成
+
+> F10 长尾启动（审计建议：经语义构造器收敛手写 error(code, msg) 样板）。本批：构造器就位 + wms 全量试点，行为严格等价。
+
+- **现状基线（实测，2026-10-26）**：`ApiResponse::error(` 全量（svc+lib，含 tests）约 5000 处；生产侧约 4000+；错误码分布 500×2583（大头为静态业务文案，非泄露形态）/ 404×1025 / 400×580 / 401×109 / 501×25 / 409×23 / 403×14 / 503×5 / 502×3。泄露面（`&e.to_string()` 等）此前 V517 已闭环，本长尾为**非泄露存量样板**。
+- **语义构造器**（`lib/shared-core/src/response.rs`，纯新增 API，行为 = `Self::error(<码>, msg)` 逐字等价）：`not_found(404)` / `bad_request(400)` / `unauthorized(401)` / `forbidden(403)` / `conflict(409)` / `server_error(500)` / `not_implemented(501)` / `unavailable(503)`；新增等价性单测 `test_semantic_error_constructors_equivalent_to_error` 逐码断言 code/message/success/data。
+- **wms 试点**：`svc/wms` 全量 342 处机械替换（500→server_error ×311 / 400→bad_request ×15 / 404→not_found ×14 / 401→unauthorized ×2；泛型形态 `ApiResponse::<T>::` 同步处理），残留 0。
+- **验证**：shared-core 71 passed / 0 failed；wms `cargo check` exit 0（48.6s）、`cargo test -p topems-wms --lib` 541 passed / 0 failed；diff 417+/342- 纯替换无其他改动。
+- 提交：见 git log 本批（F10 批次1）。
+
 ## 补测续：crm 客户页（CrmCustomerRedesignPage·redesign 形态 19 hooks）（2026-10-25）✅ 完成
 
 > **crm redesign 形态页补测首例**：CrmCustomerRedesignPage（19 hooks / 1049 行）——useQuery（服务端分页）+ 3 mutations（delete/create/update）+ ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环

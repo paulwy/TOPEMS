@@ -78,7 +78,7 @@ async fn list_inventory_movements(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         return e;
@@ -206,7 +206,7 @@ async fn create_inventory_movement(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         return e;
@@ -279,7 +279,7 @@ async fn create_inventory_movement(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(record, "创建库存移动记录成功"))
@@ -315,7 +315,7 @@ async fn get_inventory_movement(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         return e;
