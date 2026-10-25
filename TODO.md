@@ -60,8 +60,19 @@
 - **reqwest（9 个 svc）**：analytics/ehs/mes/monitor/pm/qms/scm/tms/wms（hrm/lims/master-data/rd 因 tests 引用保留）
 - **rust_decimal（mes/tms）**：src 0 引用（Decimal 均走 sqlx::types）
 - **redis（erp）**：0 引用
-- **保留待甄别**：lib/shared-* 6 个宏/derive 敏感依赖（thiserror/async-trait/sqlx/anyhow/hmac/sha2/dashmap）
 - **验证**：cargo check --workspace --tests（SQLX_OFFLINE）exit 0（3m17s 含 tests 编译）；warning 均为既有 duplicate
+
+## 冗余清理 R1c：lib 层 7 个未引用依赖（2026-10-26）✅ 完成
+
+> commit `2698954584`（已推送 HEAD==origin/main）。宏/derive 敏感依赖人工甄别（src+tests+benches+examples+build.rs 全 0 引用、无 build.rs）后删除。
+
+- **lib/shared-ai**：anyhow、sqlx
+- **lib/shared-auth**：dashmap
+- **lib/shared-core**：hmac、sha2
+- **lib/shared-mcp**：thiserror、async-trait
+- **验证**：cargo check --workspace --tests（SQLX_OFFLINE）exit 0（3m21s 含 tests 编译）
+
+> **至此 Cargo 冗余清理收官**：R1（6）+ R1b（26）+ R1c（7）共 **39 个未引用依赖**移除，三次均以 cargo check --workspace --tests 全量验证。
 
 ## 补测续：erp 域剩余复杂/自绘形态页（批次7，33 用例）（2026-10-28）✅ 完成
 
