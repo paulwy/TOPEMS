@@ -97,7 +97,7 @@ pub async fn upload(
                     {
                         tracing::warn!("ai audit failed: {audit_err}");
                     }
-                    return Json(ApiResponse::<UploadDocumentResponse>::error(500, &err_msg));
+                    return Json(ApiResponse::<UploadDocumentResponse>::server_error(&err_msg));
                 }
                 if let Err(e) = std::fs::write(&path, &data) {
                     let err_msg = format!("保存文件失败: {}", e);
@@ -115,7 +115,7 @@ pub async fn upload(
                     {
                         tracing::warn!("ai audit failed: {audit_err}");
                     }
-                    return Json(ApiResponse::<UploadDocumentResponse>::error(500, &err_msg));
+                    return Json(ApiResponse::<UploadDocumentResponse>::server_error(&err_msg));
                 }
                 file_path = path.to_string_lossy().to_string();
 
@@ -346,7 +346,7 @@ pub async fn download(
     let doc = match state.document_service.get_document(id, tenant_id).await {
         Ok(Some(doc)) => doc,
         Ok(None) => {
-            return Json(ApiResponse::<serde_json::Value>::error(404, "文档不存在")).into_response()
+            return Json(ApiResponse::<serde_json::Value>::not_found("文档不存在")).into_response()
         }
         Err(e) => {
             return Json(ApiResponse::<serde_json::Value>::from(
@@ -364,7 +364,7 @@ pub async fn download(
     let bytes = match std::fs::read(&file_path) {
         Ok(b) => b,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(404, "文件不存在")).into_response()
+            return Json(ApiResponse::<serde_json::Value>::not_found("文件不存在")).into_response()
         }
     };
 
@@ -425,7 +425,7 @@ pub async fn delete(
             {
                 tracing::warn!("ai audit failed: {e}");
             }
-            Json(ApiResponse::<String>::error(404, "文档不存在"))
+            Json(ApiResponse::<String>::not_found("文档不存在"))
         }
         Err(e) => {
             let err_msg = e.to_string();
@@ -776,7 +776,7 @@ pub async fn extract_key_points(
                     "文档不存在",
                 ))
             } else {
-                Json(ApiResponse::<ExtractKeyPointsResponse>::error(500, &msg))
+                Json(ApiResponse::<ExtractKeyPointsResponse>::server_error(&msg))
             }
         }
     }
@@ -841,7 +841,7 @@ macro_rules! doc_not_found_or_ok {
         match $state.document_service.get_document($id, $tenant).await {
             Ok(Some(_)) => {}
             Ok(None) => {
-                return Json(ApiResponse::<serde_json::Value>::error(404, "文档不存在"));
+                return Json(ApiResponse::<serde_json::Value>::not_found("文档不存在"));
             }
             Err(e) => {
                 return Json(ApiResponse::<serde_json::Value>::from(

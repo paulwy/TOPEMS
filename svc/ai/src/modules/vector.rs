@@ -153,7 +153,7 @@ pub async fn get(
     match state.vector_service.get_vector(id, tenant_id).await {
         Ok(Some(vec)) => Json(ApiResponse::success(vec, "Success")),
         Ok(None) => {
-            Json(ApiResponse::<crate::services::vector::VectorEmbedding>::error(404, "向量不存在"))
+            Json(ApiResponse::<crate::services::vector::VectorEmbedding>::not_found("向量不存在"))
         }
         Err(e) => Json(
             ApiResponse::<crate::services::vector::VectorEmbedding>::from(TopemsError::internal(
@@ -212,7 +212,7 @@ pub async fn delete(
             {
                 tracing::warn!("ai audit failed: {e}");
             }
-            Json(ApiResponse::<String>::error(404, "向量不存在"))
+            Json(ApiResponse::<String>::not_found("向量不存在"))
         }
         Err(e) => {
             let err_msg = e.to_string();

@@ -743,7 +743,7 @@ pub async fn delete_history(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state.qa_service.delete_qa_history(id, tenant_id).await {
         Ok(true) => Json(ApiResponse::success("删除成功".to_string(), "Success")),
-        Ok(false) => Json(ApiResponse::<String>::error(404, "记录不存在")),
+        Ok(false) => Json(ApiResponse::<String>::not_found("记录不存在")),
         Err(e) => Json(ApiResponse::<String>::from(TopemsError::internal(
             "删除问答历史失败",
             e,

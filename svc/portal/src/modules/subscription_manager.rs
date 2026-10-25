@@ -825,12 +825,12 @@ pub async fn subscribe_handler(
         .collect();
 
     if channels.is_empty() {
-        return Json(ApiResponse::error(400, "至少需要订阅一个有效频道"));
+        return Json(ApiResponse::bad_request("至少需要订阅一个有效频道"));
     }
 
     match SubscriptionGateway::subscribe(req.client_id, channels).await {
         Ok(subscriber) => Json(ApiResponse::success(subscriber, "订阅成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -853,8 +853,8 @@ pub async fn unsubscribe_handler(
 ) -> Json<ApiResponse<bool>> {
     match SubscriptionGateway::unsubscribe(&subscriber_id).await {
         Ok(true) => Json(ApiResponse::success(true, "取消订阅成功")),
-        Ok(false) => Json(ApiResponse::error(404, "订阅者不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Ok(false) => Json(ApiResponse::not_found("订阅者不存在")),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -908,12 +908,12 @@ pub async fn publish_handler(
 ) -> Json<ApiResponse<SubscriptionMessage>> {
     let channel = match SubscriptionChannel::from_str(&req.channel) {
         Some(ch) => ch,
-        None => return Json(ApiResponse::error(400, "无效的频道名称")),
+        None => return Json(ApiResponse::bad_request("无效的频道名称")),
     };
 
     match SubscriptionGateway::publish(channel, req.payload).await {
         Ok(msg) => Json(ApiResponse::success(msg, "消息发布成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -943,7 +943,7 @@ pub async fn publish_to_queue_handler(
     .await
     {
         Ok(msg) => Json(ApiResponse::success(msg, "消息已发布到队列")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1014,7 +1014,7 @@ pub async fn purge_queue_handler(
 ) -> Json<ApiResponse<u64>> {
     match MessageQueueBridge::purge_queue(&req.queue_name).await {
         Ok(count) => Json(ApiResponse::success(count, "队列已清空")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 

@@ -206,7 +206,7 @@ pub async fn scan_barcode(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -228,7 +228,7 @@ pub async fn scan_barcode(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -268,7 +268,7 @@ pub async fn scan_qrcode(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -293,7 +293,7 @@ pub async fn scan_qrcode(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -336,7 +336,7 @@ pub async fn image_ocr(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -366,7 +366,7 @@ pub async fn image_ocr(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };

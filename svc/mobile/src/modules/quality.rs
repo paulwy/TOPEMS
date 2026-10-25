@@ -80,7 +80,7 @@ pub async fn get_quality_task(
             tracing::error!("调用QMS服务获取质检任务详情失败（兜底404）: {}", e);
             (
                 StatusCode::OK,
-                Json(ApiResponse::error(404, "质检任务不存在（待上游支持）")),
+                Json(ApiResponse::not_found("质检任务不存在（待上游支持）")),
             )
         }
     }
@@ -132,7 +132,7 @@ pub async fn report_defect(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "上报缺陷成功")),
         Err(e) => {
             tracing::error!("调用QMS服务上报缺陷失败: {}", e);
-            Json(ApiResponse::error(500, "上报缺陷失败"))
+            Json(ApiResponse::server_error("上报缺陷失败"))
         }
     }
 }
@@ -167,7 +167,7 @@ pub async fn update_quality_task_status(
         )),
         Err(e) => {
             tracing::error!("调用QMS服务更新质检任务状态失败: {}", e);
-            Json(ApiResponse::error(500, "更新质检任务状态失败"))
+            Json(ApiResponse::server_error("更新质检任务状态失败"))
         }
     }
 }

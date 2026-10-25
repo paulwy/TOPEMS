@@ -136,7 +136,7 @@ pub async fn register_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -146,7 +146,7 @@ pub async fn register_device(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -177,7 +177,7 @@ pub async fn register_device(
             tracing::error!("查询设备失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "内部服务器错误")),
+                Json(ApiResponse::server_error("内部服务器错误")),
             );
         }
     };
@@ -197,7 +197,7 @@ pub async fn register_device(
             .await
         {
             tracing::error!("更新设备信息失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "更新设备信息失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("更新设备信息失败")));
         }
         return (
             StatusCode::OK,
@@ -222,7 +222,7 @@ pub async fn register_device(
         .await
     {
         tracing::error!("创建设备失败: {}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "创建设备失败")));
+        return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("创建设备失败")));
     }
 
     (
@@ -253,7 +253,7 @@ pub async fn update_push_token(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -263,7 +263,7 @@ pub async fn update_push_token(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -294,7 +294,7 @@ pub async fn update_push_token(
             } else {
                 (
                     StatusCode::NOT_FOUND,
-                    Json(ApiResponse::error(404, "设备不存在")),
+                    Json(ApiResponse::not_found("设备不存在")),
                 )
             }
         }
@@ -302,7 +302,7 @@ pub async fn update_push_token(
             tracing::error!("更新推送Token失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "更新推送Token失败")),
+                Json(ApiResponse::server_error("更新推送Token失败")),
             )
         }
     }
@@ -319,7 +319,7 @@ pub async fn list_my_devices(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -337,7 +337,7 @@ pub async fn list_my_devices(
             tracing::error!("查询设备列表失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "查询设备列表失败")),
+                Json(ApiResponse::server_error("查询设备列表失败")),
             );
         }
     };
@@ -365,7 +365,7 @@ pub async fn get_device_by_id(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -388,19 +388,19 @@ pub async fn get_device_by_id(
                 tracing::error!("解析设备详情失败: {}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(500, "解析设备详情失败")),
+                    Json(ApiResponse::server_error("解析设备详情失败")),
                 )
             }
         },
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "设备不存在")),
+            Json(ApiResponse::not_found("设备不存在")),
         ),
         Err(e) => {
             tracing::error!("查询设备详情失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "查询设备详情失败")),
+                Json(ApiResponse::server_error("查询设备详情失败")),
             )
         }
     }
@@ -420,7 +420,7 @@ pub async fn update_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -458,13 +458,13 @@ pub async fn update_device(
         ),
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "设备不存在")),
+            Json(ApiResponse::not_found("设备不存在")),
         ),
         Err(e) => {
             tracing::error!("更新设备失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "更新设备失败")),
+                Json(ApiResponse::server_error("更新设备失败")),
             )
         }
     }
@@ -483,7 +483,7 @@ pub async fn unregister_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -511,13 +511,13 @@ pub async fn unregister_device(
         }
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "设备不存在")),
+            Json(ApiResponse::not_found("设备不存在")),
         ),
         Err(e) => {
             tracing::error!("注销设备失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "注销设备失败")),
+                Json(ApiResponse::server_error("注销设备失败")),
             )
         }
     }
@@ -536,7 +536,7 @@ pub async fn activate_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -564,13 +564,13 @@ pub async fn activate_device(
         }
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "设备不存在")),
+            Json(ApiResponse::not_found("设备不存在")),
         ),
         Err(e) => {
             tracing::error!("激活设备失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "激活设备失败")),
+                Json(ApiResponse::server_error("激活设备失败")),
             )
         }
     }
@@ -589,7 +589,7 @@ pub async fn disable_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -617,13 +617,13 @@ pub async fn disable_device(
         }
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "设备不存在")),
+            Json(ApiResponse::not_found("设备不存在")),
         ),
         Err(e) => {
             tracing::error!("停用设备失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "停用设备失败")),
+                Json(ApiResponse::server_error("停用设备失败")),
             )
         }
     }
@@ -642,7 +642,7 @@ pub async fn test_push_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -675,7 +675,7 @@ pub async fn get_device_stats(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };

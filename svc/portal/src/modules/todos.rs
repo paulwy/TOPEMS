@@ -365,7 +365,7 @@ pub async fn add_todo(
     let user_id = &claims.sub;
     match add_local_todo(&state.pool, user_id, todo).await {
         Some(new_todo) => AxumJson(ApiResponse::success(new_todo, "待办事项添加成功")),
-        None => AxumJson(ApiResponse::error(500, "待办事项添加失败")),
+        None => AxumJson(ApiResponse::server_error("待办事项添加失败")),
     }
 }
 
@@ -392,7 +392,7 @@ pub async fn complete_todo(
             "待办事项完成成功",
         ))
     } else {
-        AxumJson(ApiResponse::error(404, "待办事项不存在"))
+        AxumJson(ApiResponse::not_found("待办事项不存在"))
     }
 }
 
@@ -419,6 +419,6 @@ pub async fn delete_todo(
             "待办事项删除成功",
         ))
     } else {
-        AxumJson(ApiResponse::error(404, "待办事项不存在"))
+        AxumJson(ApiResponse::not_found("待办事项不存在"))
     }
 }

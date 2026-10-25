@@ -1542,7 +1542,7 @@ pub async fn end_trace_handler(
 ) -> Json<ApiResponse<Trace>> {
     match PerformanceTracer::end_trace(&req.trace_id).await {
         Ok(trace) => Json(ApiResponse::success(trace, "追踪已结束")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1577,7 +1577,7 @@ pub async fn add_resolver_timing_handler(
     .await
     {
         Ok(timing) => Json(ApiResponse::success(timing, "Resolver 计时已添加")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1600,7 +1600,7 @@ pub async fn get_trace_handler(
 ) -> Json<ApiResponse<Trace>> {
     match PerformanceTracer::get_trace(&id).await {
         Some(trace) => Json(ApiResponse::success(trace, "追踪详情")),
-        None => Json(ApiResponse::error(404, "追踪不存在")),
+        None => Json(ApiResponse::not_found("追踪不存在")),
     }
 }
 
@@ -1789,7 +1789,7 @@ pub async fn update_model_handler(
         .cloned()
     {
         Some(m) => m,
-        None => return Json(ApiResponse::error(404, "检测模型不存在")),
+        None => return Json(ApiResponse::not_found("检测模型不存在")),
     };
 
     let algorithm = req

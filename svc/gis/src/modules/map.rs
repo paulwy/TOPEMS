@@ -192,7 +192,7 @@ pub async fn get_map(
         .await
     {
         Ok(map) => Json(ApiResponse::success(map, "获取地图成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地图未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地图未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询地图失败", e))),
     }
 }
@@ -245,7 +245,7 @@ pub async fn update_map(
     .await
     {
         Ok(map) => Json(ApiResponse::success(map, "更新地图成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地图未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地图未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新地图失败", e))),
     }
 }
@@ -288,7 +288,7 @@ pub async fn delete_map(
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(true, "删除地图成功"))
             } else {
-                Json(ApiResponse::error(404, "地图未找到"))
+                Json(ApiResponse::not_found("地图未找到"))
             }
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除地图失败", e))),
@@ -395,7 +395,7 @@ pub async fn delete_map_layer(
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(true, "删除图层成功"))
             } else {
-                Json(ApiResponse::error(404, "图层未找到"))
+                Json(ApiResponse::not_found("图层未找到"))
             }
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除图层失败", e))),

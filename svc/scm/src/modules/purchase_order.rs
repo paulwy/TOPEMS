@@ -54,7 +54,7 @@ pub async fn list_orders(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
@@ -147,7 +147,7 @@ pub async fn create_order(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
@@ -183,7 +183,7 @@ pub async fn create_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
@@ -253,7 +253,7 @@ pub async fn get_order(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
@@ -312,7 +312,7 @@ pub async fn update_order(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
@@ -375,7 +375,7 @@ pub async fn update_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
@@ -446,7 +446,7 @@ pub async fn delete_order(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
@@ -467,7 +467,7 @@ pub async fn delete_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
@@ -554,7 +554,7 @@ pub async fn approve_order(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
         Ok(_) => {}
@@ -643,7 +643,7 @@ pub async fn approve_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             if let Some(ref publisher) = state.event_publisher {
@@ -691,7 +691,7 @@ pub async fn approve_order(
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::error(409, "采购订单当前状态不允许审批")),
+            Json(ApiResponse::conflict("采购订单当前状态不允许审批")),
             "conflict",
             Some("状态冲突：仅 pending 可审批".to_string()),
         ),
@@ -760,7 +760,7 @@ pub async fn reject_order(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
         Ok(_) => {}
@@ -837,7 +837,7 @@ pub async fn reject_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
@@ -847,7 +847,7 @@ pub async fn reject_order(
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::error(409, "采购订单当前状态不允许驳回")),
+            Json(ApiResponse::conflict("采购订单当前状态不允许驳回")),
             "conflict",
             Some("状态冲突：仅 pending 可驳回".to_string()),
         ),
@@ -905,7 +905,7 @@ async fn transition_order(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
         Ok(_) => {}

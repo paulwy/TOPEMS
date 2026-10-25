@@ -57,14 +57,14 @@ fn map_task(t: &WorkflowTask) -> serde_json::Value {
 fn unauthorized() -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
     (
         StatusCode::UNAUTHORIZED,
-        Json(ApiResponse::error(401, "未授权")),
+        Json(ApiResponse::unauthorized("未授权")),
     )
 }
 
 fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::error(500, msg)),
+        Json(ApiResponse::server_error(msg)),
     )
 }
 
@@ -201,7 +201,7 @@ pub async fn get_approval_task(
                 // 避免前端/契约探测把业务 404 误判为路由缺失
                 return (
                     StatusCode::OK,
-                    Json(ApiResponse::error(404, "审批任务不存在")),
+                    Json(ApiResponse::not_found("审批任务不存在")),
                 );
             }
             internal_error("获取审批任务详情失败")
@@ -256,7 +256,7 @@ pub async fn approve_approval_task(
         }
         Ok(resp) if resp.code == 404 => (
             StatusCode::OK,
-            Json(ApiResponse::error(404, "审批任务不存在")),
+            Json(ApiResponse::not_found("审批任务不存在")),
         ),
         Ok(_) => internal_error("审批通过操作未成功"),
         Err(e) => {
@@ -265,7 +265,7 @@ pub async fn approve_approval_task(
             if msg.contains("404") {
                 return (
                     StatusCode::OK,
-                    Json(ApiResponse::error(404, "审批任务不存在")),
+                    Json(ApiResponse::not_found("审批任务不存在")),
                 );
             }
             internal_error("审批通过失败")
@@ -320,7 +320,7 @@ pub async fn reject_approval_task(
         }
         Ok(resp) if resp.code == 404 => (
             StatusCode::OK,
-            Json(ApiResponse::error(404, "审批任务不存在")),
+            Json(ApiResponse::not_found("审批任务不存在")),
         ),
         Ok(_) => internal_error("审批驳回操作未成功"),
         Err(e) => {
@@ -329,7 +329,7 @@ pub async fn reject_approval_task(
             if msg.contains("404") {
                 return (
                     StatusCode::OK,
-                    Json(ApiResponse::error(404, "审批任务不存在")),
+                    Json(ApiResponse::not_found("审批任务不存在")),
                 );
             }
             internal_error("审批驳回失败")
@@ -367,7 +367,7 @@ pub async fn delegate_approval_task(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -397,7 +397,7 @@ pub async fn delegate_approval_task(
         }
         Ok(resp) if resp.code == 404 => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "审批任务不存在")),
+            Json(ApiResponse::not_found("审批任务不存在")),
         ),
         Ok(_) => internal_error("审批委派操作未成功"),
         Err(e) => {
@@ -406,7 +406,7 @@ pub async fn delegate_approval_task(
             if msg.contains("404") {
                 return (
                     StatusCode::NOT_FOUND,
-                    Json(ApiResponse::error(404, "审批任务不存在")),
+                    Json(ApiResponse::not_found("审批任务不存在")),
                 );
             }
             internal_error("审批委派失败")

@@ -95,7 +95,7 @@ pub async fn upload_geodata(
     }
 
     if file_data.is_empty() {
-        return Json(ApiResponse::error(400, "请上传文件"));
+        return Json(ApiResponse::bad_request("请上传文件"));
     }
 
     // Parse GeoJSON if format is geojson
@@ -242,7 +242,7 @@ pub async fn get_geodata(
     .await
     {
         Ok(data) => Json(ApiResponse::success(data, "获取地理数据成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理数据未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地理数据未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
@@ -284,7 +284,7 @@ pub async fn update_geodata(
     .await
     {
         Ok(data) => Json(ApiResponse::success(data, "更新地理数据成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理数据未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地理数据未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
@@ -313,7 +313,7 @@ pub async fn delete_geodata(
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(true, "删除地理数据成功"))
             } else {
-                Json(ApiResponse::error(404, "地理数据未找到"))
+                Json(ApiResponse::not_found("地理数据未找到"))
             }
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
@@ -352,7 +352,7 @@ pub async fn convert_geodata(
                             "转换成功",
                         ))
                     } else {
-                        Json(ApiResponse::error(400, "源数据不是GeoJSON格式"))
+                        Json(ApiResponse::bad_request("源数据不是GeoJSON格式"))
                     }
                 }
                 "csv" => {
@@ -367,13 +367,13 @@ pub async fn convert_geodata(
                             "转换成功",
                         ))
                     } else {
-                        Json(ApiResponse::error(400, "源数据不是GeoJSON格式"))
+                        Json(ApiResponse::bad_request("源数据不是GeoJSON格式"))
                     }
                 }
-                _ => Json(ApiResponse::error(400, "不支持的目标格式")),
+                _ => Json(ApiResponse::bad_request("不支持的目标格式")),
             }
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理数据未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地理数据未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }

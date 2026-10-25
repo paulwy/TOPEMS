@@ -59,7 +59,7 @@ pub async fn list_admissions(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -119,7 +119,7 @@ pub async fn create_admission(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -165,7 +165,7 @@ pub async fn create_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(item, "创建供应商准入成功"))
@@ -203,7 +203,7 @@ pub async fn get_admission(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -254,7 +254,7 @@ pub async fn update_admission(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -324,7 +324,7 @@ pub async fn update_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(item, "更新供应商准入成功"))
@@ -352,7 +352,7 @@ pub async fn delete_admission(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -382,7 +382,7 @@ pub async fn delete_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success("".to_string(), "删除供应商准入成功"))
@@ -424,7 +424,7 @@ pub async fn submit_admission(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -460,7 +460,7 @@ pub async fn submit_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(item, "提交供应商准入成功"))
@@ -502,7 +502,7 @@ pub async fn approve_admission(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -547,7 +547,7 @@ pub async fn approve_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(item, "审批通过供应商准入成功"))
@@ -589,7 +589,7 @@ pub async fn reject_admission(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -634,7 +634,7 @@ pub async fn reject_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(item, "拒绝供应商准入成功"))
@@ -676,7 +676,7 @@ pub async fn audit_admission(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -740,7 +740,7 @@ pub async fn audit_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(item, "审核供应商准入成功"))
@@ -781,7 +781,7 @@ pub async fn activate_supplier(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -811,7 +811,7 @@ pub async fn activate_supplier(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(item, "激活供应商成功"))

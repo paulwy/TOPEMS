@@ -1732,12 +1732,12 @@ pub async fn get_cache_entry_handler(
     match AutoCacheManager::get_entry(&key).await {
         Some(entry) => {
             if entry.is_expired() {
-                Json(ApiResponse::error(404, "缓存已过期"))
+                Json(ApiResponse::not_found("缓存已过期"))
             } else {
                 Json(ApiResponse::success(entry, "缓存条目"))
             }
         }
-        None => Json(ApiResponse::error(404, "缓存不存在")),
+        None => Json(ApiResponse::not_found("缓存不存在")),
     }
 }
 
@@ -1753,7 +1753,7 @@ pub async fn invalidate_cache_handler(
     .await
     {
         Ok(removed) => Json(ApiResponse::success(removed, "缓存失效完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1898,7 +1898,7 @@ pub async fn run_health_check_handler(
     let check_id = req.query_hash.unwrap_or_default();
     match SelfHealingEngine::run_health_check(&check_id).await {
         Ok(check) => Json(ApiResponse::success(check, "健康检查执行完成")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 

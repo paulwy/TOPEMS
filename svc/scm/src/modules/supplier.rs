@@ -153,7 +153,7 @@ pub async fn list_suppliers(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -294,7 +294,7 @@ pub async fn create_supplier(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -362,7 +362,7 @@ pub async fn create_supplier(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
         state.supplier_cache.clear_all().await;
@@ -482,7 +482,7 @@ pub async fn get_supplier(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -589,7 +589,7 @@ pub async fn update_supplier(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -685,7 +685,7 @@ pub async fn update_supplier(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
         // 从 claims 中获取 tenant_id，用于多租户缓存隔离
@@ -812,7 +812,7 @@ pub async fn delete_supplier(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -863,7 +863,7 @@ pub async fn delete_supplier(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
         // 从 claims 中获取 tenant_id，用于多租户缓存隔离

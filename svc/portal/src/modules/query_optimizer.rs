@@ -1095,7 +1095,7 @@ pub async fn compile_query_handler(
 ) -> Json<ApiResponse<CompiledQuery>> {
     match QueryCompiler::compile_query(req.query).await {
         Ok(compiled) => Json(ApiResponse::success(compiled, "查询编译成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1118,7 +1118,7 @@ pub async fn get_compilation_handler(
 ) -> Json<ApiResponse<CompiledQuery>> {
     match QueryCompiler::get_compilation(&id).await {
         Some(compiled) => Json(ApiResponse::success(compiled, "编译详情")),
-        None => Json(ApiResponse::error(404, "编译记录不存在")),
+        None => Json(ApiResponse::not_found("编译记录不存在")),
     }
 }
 
@@ -1152,7 +1152,7 @@ pub async fn update_rule_handler(
     let rules = QueryCompiler::list_rules().await;
     match rules.iter().find(|r| r.rule_type == rule_type) {
         Some(rule) => Json(ApiResponse::success(rule.clone(), "规则详情")),
-        None => Json(ApiResponse::error(404, "规则不存在")),
+        None => Json(ApiResponse::not_found("规则不存在")),
     }
 }
 
@@ -1181,7 +1181,7 @@ pub async fn create_plan_handler(
 ) -> Json<ApiResponse<ExecutionPlan>> {
     match QueryPlanner::create_plan(req.query_hash, req.field_paths).await {
         Ok(plan) => Json(ApiResponse::success(plan, "计划创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1204,7 +1204,7 @@ pub async fn get_plan_handler(
 ) -> Json<ApiResponse<ExecutionPlan>> {
     match QueryPlanner::get_plan(&id).await {
         Some(plan) => Json(ApiResponse::success(plan, "计划详情")),
-        None => Json(ApiResponse::error(404, "计划不存在")),
+        None => Json(ApiResponse::not_found("计划不存在")),
     }
 }
 
@@ -1305,7 +1305,7 @@ pub async fn accelerate_handler(
     match ExecutionAccelerator::accelerate(req.original_time_ms, req.field_count, strategies).await
     {
         Ok(result) => Json(ApiResponse::success(result, "加速完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 

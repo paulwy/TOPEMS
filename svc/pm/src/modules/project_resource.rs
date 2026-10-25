@@ -76,7 +76,7 @@ async fn list_resources(
         Ok(resources) => Json(ApiResponse::success(resources, "获取项目资源列表成功")),
         Err(e) => {
             tracing::error!("获取项目资源列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目资源列表失败"))
+            Json(ApiResponse::server_error("获取项目资源列表失败"))
         }
     }
 }
@@ -148,7 +148,7 @@ async fn add_resource(
         Ok(resource) => Json(ApiResponse::success(resource, "添加项目资源成功")),
         Err(e) => {
             tracing::error!("添加项目资源失败: {}", e);
-            Json(ApiResponse::error(500, "添加项目资源失败"))
+            Json(ApiResponse::server_error("添加项目资源失败"))
         }
     }
 }
@@ -183,10 +183,10 @@ async fn get_resource(
 
     match result {
         Ok(Some(resource)) => Json(ApiResponse::success(resource, "获取项目资源成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目资源不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目资源不存在")),
         Err(e) => {
             tracing::error!("获取项目资源失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目资源失败"))
+            Json(ApiResponse::server_error("获取项目资源失败"))
         }
     }
 }
@@ -255,10 +255,10 @@ async fn update_resource(
 
     match result {
         Ok(Some(resource)) => Json(ApiResponse::success(resource, "更新项目资源成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目资源不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目资源不存在")),
         Err(e) => {
             tracing::error!("更新项目资源失败: {}", e);
-            Json(ApiResponse::error(500, "更新项目资源失败"))
+            Json(ApiResponse::server_error("更新项目资源失败"))
         }
     }
 }
@@ -296,10 +296,10 @@ async fn remove_resource(
         Ok(result) if result.rows_affected() > 0 => {
             Json(ApiResponse::success(true, "删除项目资源成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "项目资源不存在")),
+        Ok(_) => Json(ApiResponse::not_found("项目资源不存在")),
         Err(e) => {
             tracing::error!("删除项目资源失败: {}", e);
-            Json(ApiResponse::error(500, "删除项目资源失败"))
+            Json(ApiResponse::server_error("删除项目资源失败"))
         }
     }
 }

@@ -55,7 +55,7 @@ pub async fn list_audit_logs(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -160,7 +160,7 @@ pub async fn get_audit_log(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(

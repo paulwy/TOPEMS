@@ -63,7 +63,7 @@ pub async fn get_workbench_data(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };

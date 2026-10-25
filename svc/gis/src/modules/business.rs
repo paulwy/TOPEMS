@@ -189,7 +189,7 @@ pub async fn get_business_location(
     .await
     {
         Ok(location) => Json(ApiResponse::success(location, "获取业务位置成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "业务位置未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("业务位置未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
@@ -243,7 +243,7 @@ pub async fn update_business_location(
     .await
     {
         Ok(location) => Json(ApiResponse::success(location, "更新业务位置成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "业务位置未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("业务位置未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
     }
 }
@@ -283,7 +283,7 @@ pub async fn delete_business_location(
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(true, "删除业务位置成功"))
             } else {
-                Json(ApiResponse::error(404, "业务位置未找到"))
+                Json(ApiResponse::not_found("业务位置未找到"))
             }
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal(

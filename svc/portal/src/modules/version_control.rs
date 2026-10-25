@@ -1177,7 +1177,7 @@ pub async fn get_version_handler(
 ) -> Json<ApiResponse<APIVersion>> {
     match APIVersionManager::get_version(&version).await {
         Some(v) => Json(ApiResponse::success(v, "版本详情")),
-        None => Json(ApiResponse::error(404, "版本不存在")),
+        None => Json(ApiResponse::not_found("版本不存在")),
     }
 }
 
@@ -1234,7 +1234,7 @@ pub async fn sunset_version_handler(
 ) -> Json<ApiResponse<APIVersion>> {
     match APIVersionManager::sunset_version(&version).await {
         Ok(v) => Json(ApiResponse::success(v, "版本已 Sunset")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1256,7 +1256,7 @@ pub async fn check_compatibility_handler(
         .await
     {
         Ok(m) => Json(ApiResponse::success(m, "兼容性检查完成")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1311,7 +1311,7 @@ pub async fn update_canary_handler(
 ) -> Json<ApiResponse<CanaryConfig>> {
     let current = match CanaryManager::get_canary_status(&id).await {
         Some(c) => c,
-        None => return Json(ApiResponse::error(404, "灰度配置不存在")),
+        None => return Json(ApiResponse::not_found("灰度配置不存在")),
     };
 
     let updated = CanaryConfig {
@@ -1326,7 +1326,7 @@ pub async fn update_canary_handler(
 
     match CanaryManager::update_canary(&id, updated).await {
         Ok(c) => Json(ApiResponse::success(c, "灰度配置更新成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1349,7 +1349,7 @@ pub async fn start_canary_handler(
 ) -> Json<ApiResponse<CanaryConfig>> {
     match CanaryManager::start_canary(&id).await {
         Ok(c) => Json(ApiResponse::success(c, "灰度已启动")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1372,7 +1372,7 @@ pub async fn stop_canary_handler(
 ) -> Json<ApiResponse<CanaryConfig>> {
     match CanaryManager::stop_canary(&id).await {
         Ok(c) => Json(ApiResponse::success(c, "灰度已停止")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1395,7 +1395,7 @@ pub async fn get_canary_status_handler(
 ) -> Json<ApiResponse<CanaryConfig>> {
     match CanaryManager::get_canary_status(&id).await {
         Some(c) => Json(ApiResponse::success(c, "灰度配置状态")),
-        None => Json(ApiResponse::error(404, "灰度配置不存在")),
+        None => Json(ApiResponse::not_found("灰度配置不存在")),
     }
 }
 
@@ -1445,7 +1445,7 @@ pub async fn promote_canary_handler(
 ) -> Json<ApiResponse<CanaryConfig>> {
     match CanaryManager::promote_canary(&id).await {
         Ok(c) => Json(ApiResponse::success(c, "灰度已推广")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1530,7 +1530,7 @@ pub async fn get_migration_path_handler(
 ) -> Json<ApiResponse<Vec<String>>> {
     match CompatibilityChecker::get_migration_path(&params.from_version, &params.to_version).await {
         Ok(path) => Json(ApiResponse::success(path, "迁移路径")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1587,7 +1587,7 @@ pub async fn get_compatibility_status_handler(
     .await
     {
         Ok(s) => Json(ApiResponse::success(s, "兼容性状态")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 

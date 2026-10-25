@@ -1042,7 +1042,7 @@ pub async fn get_query_handler(
 ) -> Json<ApiResponse<PersistedEntryV2>> {
     match PersistedQueryV2::get_query(&hash).await {
         Some(entry) => Json(ApiResponse::success(entry, "查询详情")),
-        None => Json(ApiResponse::error(404, "查询不存在")),
+        None => Json(ApiResponse::not_found("查询不存在")),
     }
 }
 
@@ -1066,7 +1066,7 @@ pub async fn execute_query_handler(
 ) -> Json<ApiResponse<PersistedEntryV2>> {
     match PersistedQueryV2::execute_query(&hash).await {
         Ok(entry) => Json(ApiResponse::success(entry, "查询执行成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1188,7 +1188,7 @@ pub async fn cache_get_handler(
 ) -> Json<ApiResponse<CacheEntryV2>> {
     match VersionedCache::get(&key).await {
         Some(entry) => Json(ApiResponse::success(entry, "缓存命中")),
-        None => Json(ApiResponse::error(404, "缓存未命中")),
+        None => Json(ApiResponse::not_found("缓存未命中")),
     }
 }
 
@@ -1208,7 +1208,7 @@ pub async fn cache_set_handler(
 ) -> Json<ApiResponse<CacheEntryV2>> {
     match VersionedCache::set(req.key, req.value, req.tags, req.ttl_seconds).await {
         Ok(entry) => Json(ApiResponse::success(entry, "缓存写入成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1231,7 +1231,7 @@ pub async fn cache_invalidate_handler(
 ) -> Json<ApiResponse<u64>> {
     match VersionedCache::invalidate_version(&version).await {
         Ok(count) => Json(ApiResponse::success(count, "版本缓存已失效")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1251,7 +1251,7 @@ pub async fn cache_create_version_handler(
 ) -> Json<ApiResponse<CacheVersion>> {
     match VersionedCache::create_version(req.description).await {
         Ok(version) => Json(ApiResponse::success(version, "缓存版本创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1326,7 +1326,7 @@ pub async fn edge_store_handler(
 
     match EdgePersistence::store_at_edge(req.key, req.value, location, req.ttl_ms).await {
         Ok(entry) => Json(ApiResponse::success(entry, "边缘存储成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1352,7 +1352,7 @@ pub async fn edge_read_handler(
 
     match EdgePersistence::read_from_edge(&key, location).await {
         Some(entry) => Json(ApiResponse::success(entry, "边缘读取成功")),
-        None => Json(ApiResponse::error(404, "边缘缓存未命中")),
+        None => Json(ApiResponse::not_found("边缘缓存未命中")),
     }
 }
 
@@ -1385,7 +1385,7 @@ pub async fn edge_sync_handler(
 
     match EdgePersistence::sync_to_regions(&req.key, target_locations).await {
         Ok(count) => Json(ApiResponse::success(count, "边缘同步完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1424,7 +1424,7 @@ pub async fn edge_invalidate_handler(
 
     match EdgePersistence::invalidate_edge(req.key, location).await {
         Ok(count) => Json(ApiResponse::success(count, "边缘缓存已失效")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1481,7 +1481,7 @@ pub async fn edge_set_policy_handler(
 
     match EdgePersistence::set_replication_policy(policy).await {
         Ok(p) => Json(ApiResponse::success(p, "复制策略已更新")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 

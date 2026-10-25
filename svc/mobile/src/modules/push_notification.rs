@@ -69,7 +69,7 @@ pub async fn register_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -79,7 +79,7 @@ pub async fn register_device(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -88,7 +88,7 @@ pub async fn register_device(
     if !valid_platforms.contains(&payload.platform.as_str()) {
         return (
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::error(400, "无效的平台类型")),
+            Json(ApiResponse::bad_request("无效的平台类型")),
         );
     }
 
@@ -110,7 +110,7 @@ pub async fn register_device(
             tracing::error!("注册设备失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "注册设备失败")),
+                Json(ApiResponse::server_error("注册设备失败")),
             );
         }
     };
@@ -141,7 +141,7 @@ pub async fn get_devices(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -151,7 +151,7 @@ pub async fn get_devices(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -162,7 +162,7 @@ pub async fn get_devices(
             tracing::error!("获取设备列表失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "获取设备列表失败")),
+                Json(ApiResponse::server_error("获取设备列表失败")),
             );
         }
     };
@@ -206,7 +206,7 @@ pub async fn send_notification(
                 tracing::error!("获取模板失败: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(500, "获取模板失败")),
+                    Json(ApiResponse::server_error("获取模板失败")),
                 );
             }
         };
@@ -246,7 +246,7 @@ pub async fn send_notification(
             tracing::error!("创建推送通知失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "创建推送通知失败")),
+                Json(ApiResponse::server_error("创建推送通知失败")),
             );
         }
     };
@@ -313,7 +313,7 @@ pub async fn send_broadcast(
             tracing::error!("获取所有设备失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "获取设备列表失败")),
+                Json(ApiResponse::server_error("获取设备列表失败")),
             );
         }
     };
@@ -330,7 +330,7 @@ pub async fn send_broadcast(
                 tracing::error!("获取模板失败: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(500, "获取模板失败")),
+                    Json(ApiResponse::server_error("获取模板失败")),
                 );
             }
         };
@@ -370,7 +370,7 @@ pub async fn send_broadcast(
             tracing::error!("创建推送通知失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "创建推送通知失败")),
+                Json(ApiResponse::server_error("创建推送通知失败")),
             );
         }
     };
@@ -422,7 +422,7 @@ pub async fn get_notification_list(
             tracing::error!("查询推送列表失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "查询推送列表失败")),
+                Json(ApiResponse::server_error("查询推送列表失败")),
             );
         }
     };
@@ -550,7 +550,7 @@ pub async fn get_templates(
             tracing::error!("获取模板列表失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "获取模板列表失败")),
+                Json(ApiResponse::server_error("获取模板列表失败")),
             );
         }
     };
@@ -594,7 +594,7 @@ pub async fn create_template(
             tracing::error!("创建模板失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "创建模板失败")),
+                Json(ApiResponse::server_error("创建模板失败")),
             );
         }
     };
@@ -636,7 +636,7 @@ pub async fn get_notification_by_id(
             tracing::error!("查询推送通知失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "查询推送通知失败")),
+                Json(ApiResponse::server_error("查询推送通知失败")),
             );
         }
     };
@@ -648,7 +648,7 @@ pub async fn get_notification_by_id(
                 tracing::error!("解析推送通知失败: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(500, "解析推送通知失败")),
+                    Json(ApiResponse::server_error("解析推送通知失败")),
                 );
             }
         };
@@ -660,7 +660,7 @@ pub async fn get_notification_by_id(
         // 数据不存在语义：HTTP 200 + 内层 code 404。
         (
             StatusCode::OK,
-            Json(ApiResponse::error(404, "推送通知不存在")),
+            Json(ApiResponse::not_found("推送通知不存在")),
         )
     }
 }

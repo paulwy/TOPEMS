@@ -557,7 +557,7 @@ async fn update_device_location(
     {
         Ok(location) => Json(ApiResponse::success(location, "更新设备位置成功")),
         Err(sqlx::Error::RowNotFound) => {
-            Json(ApiResponse::error(404, "设备位置未找到"))
+            Json(ApiResponse::not_found("设备位置未找到"))
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
     }
@@ -598,7 +598,7 @@ async fn delete_device_location(
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(true, "删除设备位置成功"))
             } else {
-                Json(ApiResponse::error(404, "设备位置未找到"))
+                Json(ApiResponse::not_found("设备位置未找到"))
             }
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal(

@@ -71,7 +71,7 @@ async fn list_phases(
         Ok(phases) => Json(ApiResponse::success(phases, "获取项目阶段列表成功")),
         Err(e) => {
             tracing::error!("获取项目阶段列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目阶段列表失败"))
+            Json(ApiResponse::server_error("获取项目阶段列表失败"))
         }
     }
 }
@@ -147,7 +147,7 @@ async fn create_phase(
         Ok(phase) => Json(ApiResponse::success(phase, "创建项目阶段成功")),
         Err(e) => {
             tracing::error!("创建项目阶段失败: {}", e);
-            Json(ApiResponse::error(500, "创建项目阶段失败"))
+            Json(ApiResponse::server_error("创建项目阶段失败"))
         }
     }
 }
@@ -182,10 +182,10 @@ async fn get_phase(
 
     match result {
         Ok(Some(phase)) => Json(ApiResponse::success(phase, "获取项目阶段成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目阶段不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目阶段不存在")),
         Err(e) => {
             tracing::error!("获取项目阶段失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目阶段失败"))
+            Json(ApiResponse::server_error("获取项目阶段失败"))
         }
     }
 }
@@ -247,10 +247,10 @@ async fn update_phase(
 
     match result {
         Ok(Some(phase)) => Json(ApiResponse::success(phase, "更新项目阶段成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目阶段不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目阶段不存在")),
         Err(e) => {
             tracing::error!("更新项目阶段失败: {}", e);
-            Json(ApiResponse::error(500, "更新项目阶段失败"))
+            Json(ApiResponse::server_error("更新项目阶段失败"))
         }
     }
 }
@@ -288,10 +288,10 @@ async fn delete_phase(
         Ok(result) if result.rows_affected() > 0 => {
             Json(ApiResponse::success(true, "删除项目阶段成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "项目阶段不存在")),
+        Ok(_) => Json(ApiResponse::not_found("项目阶段不存在")),
         Err(e) => {
             tracing::error!("删除项目阶段失败: {}", e);
-            Json(ApiResponse::error(500, "删除项目阶段失败"))
+            Json(ApiResponse::server_error("删除项目阶段失败"))
         }
     }
 }

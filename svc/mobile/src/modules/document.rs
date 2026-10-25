@@ -98,7 +98,7 @@ pub async fn list_documents(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -134,7 +134,7 @@ pub async fn list_documents(
             tracing::error!("查询文档列表失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "查询文档列表失败")),
+                Json(ApiResponse::server_error("查询文档列表失败")),
             );
         }
     };
@@ -176,7 +176,7 @@ pub async fn get_document(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -200,13 +200,13 @@ pub async fn get_document(
         Ok(None) => (
             // 数据不存在语义：HTTP 200 + 内层 code 404，避免裸 404 被前端契约探测判为路由缺失。
             StatusCode::OK,
-            Json(ApiResponse::error(404, "文档不存在")),
+            Json(ApiResponse::not_found("文档不存在")),
         ),
         Err(e) => {
             tracing::error!("查询文档详情失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "查询文档详情失败")),
+                Json(ApiResponse::server_error("查询文档详情失败")),
             )
         }
     }
@@ -224,7 +224,7 @@ pub async fn create_document(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -262,7 +262,7 @@ pub async fn create_document(
             tracing::error!("创建文档失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "创建文档失败")),
+                Json(ApiResponse::server_error("创建文档失败")),
             )
         }
     }
@@ -281,7 +281,7 @@ pub async fn update_document(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -309,12 +309,12 @@ pub async fn update_document(
             StatusCode::OK,
             Json(ApiResponse::success((), "更新文档成功")),
         ),
-        Ok(_) => (StatusCode::OK, Json(ApiResponse::error(404, "文档不存在"))),
+        Ok(_) => (StatusCode::OK, Json(ApiResponse::not_found("文档不存在"))),
         Err(e) => {
             tracing::error!("更新文档失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "更新文档失败")),
+                Json(ApiResponse::server_error("更新文档失败")),
             )
         }
     }
@@ -332,7 +332,7 @@ pub async fn delete_document(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -350,12 +350,12 @@ pub async fn delete_document(
             StatusCode::OK,
             Json(ApiResponse::success((), "删除文档成功")),
         ),
-        Ok(_) => (StatusCode::OK, Json(ApiResponse::error(404, "文档不存在"))),
+        Ok(_) => (StatusCode::OK, Json(ApiResponse::not_found("文档不存在"))),
         Err(e) => {
             tracing::error!("删除文档失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "删除文档失败")),
+                Json(ApiResponse::server_error("删除文档失败")),
             )
         }
     }

@@ -107,6 +107,6 @@ pub async fn execute_workflow(
             }),
             "Workflow executed",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }

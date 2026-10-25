@@ -36,7 +36,7 @@ pub async fn list_inventory_items(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取库存列表成功")),
         Err(e) => {
             tracing::error!("调用WMS服务获取库存列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取库存列表失败"))
+            Json(ApiResponse::server_error("获取库存列表失败"))
         }
     }
 }
@@ -60,7 +60,7 @@ pub async fn create_inventory_item(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "创建库存成功")),
         Err(e) => {
             tracing::error!("调用WMS服务创建库存失败: {}", e);
-            Json(ApiResponse::error(500, "创建库存失败"))
+            Json(ApiResponse::server_error("创建库存失败"))
         }
     }
 }
@@ -86,7 +86,7 @@ pub async fn get_inventory_item(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取库存详情成功")),
         Err(e) => {
             tracing::error!("调用WMS服务获取库存详情失败: {}", e);
-            Json(ApiResponse::error(500, "获取库存详情失败"))
+            Json(ApiResponse::server_error("获取库存详情失败"))
         }
     }
 }
@@ -101,7 +101,7 @@ pub async fn update_inventory_item(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "更新库存成功")),
         Err(e) => {
             tracing::error!("调用WMS服务更新库存失败: {}", e);
-            Json(ApiResponse::error(500, "更新库存失败"))
+            Json(ApiResponse::server_error("更新库存失败"))
         }
     }
 }
@@ -115,7 +115,7 @@ pub async fn delete_inventory_item(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "删除库存成功")),
         Err(e) => {
             tracing::error!("调用WMS服务删除库存失败: {}", e);
-            Json(ApiResponse::error(500, "删除库存失败"))
+            Json(ApiResponse::server_error("删除库存失败"))
         }
     }
 }
@@ -131,7 +131,7 @@ pub async fn list_low_stock_items(
         )),
         Err(e) => {
             tracing::error!("调用WMS服务获取低库存列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取低库存列表失败"))
+            Json(ApiResponse::server_error("获取低库存列表失败"))
         }
     }
 }
@@ -143,7 +143,7 @@ pub async fn scan_inventory(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let barcode = params.barcode.unwrap_or_default();
     if barcode.is_empty() {
-        return Json(ApiResponse::error(400, "缺少条码参数"));
+        return Json(ApiResponse::bad_request("缺少条码参数"));
     }
 
     match client.list_inventory_items(1, 100).await {
@@ -174,7 +174,7 @@ pub async fn scan_inventory(
         }
         Err(e) => {
             tracing::error!("调用WMS服务扫码查询失败: {}", e);
-            Json(ApiResponse::error(500, "扫码查询失败"))
+            Json(ApiResponse::server_error("扫码查询失败"))
         }
     }
 }
@@ -235,7 +235,7 @@ pub async fn create_stocktake_record(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "创建盘点记录成功")),
         Err(e) => {
             tracing::error!("调用WMS服务创建盘点记录失败: {}", e);
-            Json(ApiResponse::error(500, "创建盘点记录失败"))
+            Json(ApiResponse::server_error("创建盘点记录失败"))
         }
     }
 }

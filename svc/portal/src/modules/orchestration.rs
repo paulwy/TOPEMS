@@ -1064,7 +1064,7 @@ pub async fn create_plan_handler(
     match GatewayOrchestrator::create_plan(req.query_id, req.execution_steps, req.timeout_ms).await
     {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1087,7 +1087,7 @@ pub async fn execute_plan_handler(
 ) -> Json<ApiResponse<OrchestrationPlan>> {
     match GatewayOrchestrator::execute_plan(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划执行完成")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1110,7 +1110,7 @@ pub async fn get_plan_status_handler(
 ) -> Json<ApiResponse<PlanStatusInfo>> {
     match GatewayOrchestrator::get_plan_status(&id).await {
         Ok(info) => Json(ApiResponse::success(info, "计划状态")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1133,7 +1133,7 @@ pub async fn cancel_plan_handler(
 ) -> Json<ApiResponse<OrchestrationPlan>> {
     match GatewayOrchestrator::cancel_plan(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划已取消")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1162,7 +1162,7 @@ pub async fn optimize_plan_handler(
 ) -> Json<ApiResponse<OrchestrationPlan>> {
     match GatewayOrchestrator::optimize_plan(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划已优化")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1215,8 +1215,8 @@ pub async fn deregister_service_handler(
 ) -> Json<ApiResponse<bool>> {
     match ServiceDiscoveryEngine::deregister_service(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "服务注销成功")),
-        Ok(false) => Json(ApiResponse::error(404, "服务不存在")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Ok(false) => Json(ApiResponse::not_found("服务不存在")),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1258,7 +1258,7 @@ pub async fn get_service_handler(
 ) -> Json<ApiResponse<ServiceDescriptor>> {
     match ServiceDiscoveryEngine::get_service(&id).await {
         Some(descriptor) => Json(ApiResponse::success(descriptor, "服务详情")),
-        None => Json(ApiResponse::error(404, "服务不存在")),
+        None => Json(ApiResponse::not_found("服务不存在")),
     }
 }
 
@@ -1368,7 +1368,7 @@ pub async fn add_rule_handler(
     .await
     {
         Ok(rule) => Json(ApiResponse::success(rule, "路由规则创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1391,7 +1391,7 @@ pub async fn update_rule_handler(
         .find(|r| r.id == id)
     {
         Some(rule) => rule,
-        None => return Json(ApiResponse::error(404, "路由规则不存在")),
+        None => return Json(ApiResponse::not_found("路由规则不存在")),
     };
 
     let updated = RouteRule {
@@ -1429,8 +1429,8 @@ pub async fn remove_rule_handler(
 ) -> Json<ApiResponse<bool>> {
     match DynamicRouter::remove_rule(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "路由规则删除成功")),
-        Ok(false) => Json(ApiResponse::error(404, "路由规则不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Ok(false) => Json(ApiResponse::not_found("路由规则不存在")),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 

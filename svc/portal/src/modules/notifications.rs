@@ -74,7 +74,7 @@ pub async fn get_notifications(
         }
         Err(e) => {
             tracing::error!("Failed to fetch notifications: {}", e);
-            Json(ApiResponse::error(500, "获取通知列表失败"))
+            Json(ApiResponse::server_error("获取通知列表失败"))
         }
     }
 }
@@ -102,7 +102,7 @@ pub async fn mark_notification_read(
         )),
         Err(e) => {
             tracing::error!("Failed to mark notification as read: {}", e);
-            Json(ApiResponse::error(500, "标记通知已读失败"))
+            Json(ApiResponse::server_error("标记通知已读失败"))
         }
     }
 }
@@ -129,7 +129,7 @@ pub async fn mark_all_notifications_read(
         )),
         Err(e) => {
             tracing::error!("Failed to mark all notifications as read: {}", e);
-            Json(ApiResponse::error(500, "标记全部已读失败"))
+            Json(ApiResponse::server_error("标记全部已读失败"))
         }
     }
 }

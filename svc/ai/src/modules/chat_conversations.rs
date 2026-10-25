@@ -94,7 +94,7 @@ pub async fn list_conversations(
         }
         Err(e) => {
             tracing::error!("list_conversations failed: {e}");
-            Json(ApiResponse::error(500, "查询会话列表失败"))
+            Json(ApiResponse::server_error("查询会话列表失败"))
         }
     }
 }
@@ -132,7 +132,7 @@ pub async fn get_conversation(
         Ok(None) => Json(ApiResponse::success(None, "会话不存在")),
         Err(e) => {
             tracing::error!("get_conversation failed: {e}");
-            Json(ApiResponse::error(500, "查询会话失败"))
+            Json(ApiResponse::server_error("查询会话失败"))
         }
     }
 }
@@ -176,7 +176,7 @@ pub async fn create_conversation(
         }
         Err(e) => {
             tracing::error!("create_conversation failed: {e}");
-            Json(ApiResponse::error(500, "创建会话失败"))
+            Json(ApiResponse::server_error("创建会话失败"))
         }
     }
 }
@@ -209,7 +209,7 @@ pub async fn delete_conversation(
         Ok(_) => Json(ApiResponse::success(true, "会话已删除")),
         Err(e) => {
             tracing::error!("delete_conversation failed: {e}");
-            Json(ApiResponse::error(500, "删除会话失败"))
+            Json(ApiResponse::server_error("删除会话失败"))
         }
     }
 }
@@ -260,10 +260,10 @@ pub async fn list_messages(
     .await
     {
         Ok(Some(_)) => Json(ApiResponse::success(Vec::new(), "消息列表（待上游支持）")),
-        Ok(None) => Json(ApiResponse::error(404, "会话不存在")),
+        Ok(None) => Json(ApiResponse::not_found("会话不存在")),
         Err(e) => {
             tracing::error!("list_messages failed: {e}");
-            Json(ApiResponse::error(500, "查询会话消息失败"))
+            Json(ApiResponse::server_error("查询会话消息失败"))
         }
     }
 }

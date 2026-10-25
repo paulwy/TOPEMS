@@ -174,7 +174,7 @@ pub async fn get_device(
     .await
     {
         Ok(device) => Json(ApiResponse::success(device, "获取设备成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "设备未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("设备未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
@@ -219,7 +219,7 @@ pub async fn update_device(
     .await
     {
         Ok(device) => Json(ApiResponse::success(device, "更新设备成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "设备未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("设备未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
@@ -248,7 +248,7 @@ pub async fn delete_device(
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(true, "删除设备成功"))
             } else {
-                Json(ApiResponse::error(404, "设备未找到"))
+                Json(ApiResponse::not_found("设备未找到"))
             }
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
@@ -307,7 +307,7 @@ pub async fn update_device_location(
                 Err(e) => Json(ApiResponse::from(TopemsError::internal("更新位置失败", e))),
             }
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "设备未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("设备未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询设备失败", e))),
     }
 }
@@ -624,7 +624,7 @@ pub async fn report_device_location(
         {
             Ok(d) => d,
             Err(sqlx::Error::RowNotFound) => {
-                return Json(ApiResponse::error(401, "未认证：设备凭证无效"));
+                return Json(ApiResponse::unauthorized("未认证：设备凭证无效"));
             }
             Err(e) => {
                 return Json(ApiResponse::from(TopemsError::internal("查询设备失败", e)));
@@ -645,7 +645,7 @@ pub async fn report_device_location(
         };
         let claims = match verify_jwt_token(&jwt, &auth_state.jwt_secret) {
             Ok(claims) => claims,
-            Err(_) => return Json(ApiResponse::error(401, "未认证：token 无效或已过期")),
+            Err(_) => return Json(ApiResponse::unauthorized("未认证：token 无效或已过期")),
         };
 
         // 2) 查设备（deleted_at 过滤）
@@ -668,13 +668,13 @@ pub async fn report_device_location(
                         None => false,
                     };
                     if !owned {
-                        return Json(ApiResponse::error(403, "无权上报该租户的设备"));
+                        return Json(ApiResponse::forbidden("无权上报该租户的设备"));
                     }
                 }
                 d
             }
             Err(sqlx::Error::RowNotFound) => {
-                return Json(ApiResponse::error(404, "设备未找到"));
+                return Json(ApiResponse::not_found("设备未找到"));
             }
             Err(e) => {
                 return Json(ApiResponse::from(TopemsError::internal("查询设备失败", e)));
@@ -684,7 +684,7 @@ pub async fn report_device_location(
 
     // 3) 两通道共用：状态启用校验（在租户/凭证校验之后）
     if device.status != "active" {
-        return Json(ApiResponse::error(403, "设备未启用，禁止上报"));
+        return Json(ApiResponse::forbidden("设备未启用，禁止上报"));
     }
 
     // 4) 写入上报记录并广播（租户取设备归属租户）

@@ -1312,7 +1312,7 @@ pub async fn route_query_handler(
     match AIQueryRouter::route_query(req.query, entity_types, req.preferred_service, ab_test).await
     {
         Ok(decision) => Json(ApiResponse::success(decision, "查询路由决策")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1397,7 +1397,7 @@ pub async fn update_affinity_handler(
 
     match AIQueryRouter::update_affinity(&service_id, req.entity_types, req.score).await {
         Ok(affinity) => Json(ApiResponse::success(affinity, "亲和度已更新")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1435,7 +1435,7 @@ pub async fn warm_up_routing_handler(
 
     match AIQueryRouter::warm_up_routing(entity_types, target_services).await {
         Ok(result) => Json(ApiResponse::success(result, "路由预热完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1459,7 +1459,7 @@ pub async fn discover_subgraphs_handler(
 
     match AutoSchemaStitcher::discover_subgraphs(req.subgraph_urls).await {
         Ok(subgraphs) => Json(ApiResponse::success(subgraphs, "子图发现完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1482,7 +1482,7 @@ pub async fn generate_stitch_plan_handler(
     match AutoSchemaStitcher::generate_stitch_plan(req.subgraph_ids, req.resolution_strategy).await
     {
         Ok(plan) => Json(ApiResponse::success(plan, "Stitch 计划已生成")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1504,7 +1504,7 @@ pub async fn execute_stitch_handler(
 
     match AutoSchemaStitcher::execute_stitch(&req.plan_id, req.force.unwrap_or(false)).await {
         Ok(plan) => Json(ApiResponse::success(plan, "Stitch 执行完成")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1529,7 +1529,7 @@ pub async fn get_stitch_status_handler(
 
     match AutoSchemaStitcher::get_stitch_status(&plan_id).await {
         Ok(report) => Json(ApiResponse::success(report, "Stitch 状态")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1554,7 +1554,7 @@ pub async fn validate_stitch_handler(
 
     match AutoSchemaStitcher::validate_stitch(&plan_id).await {
         Ok(result) => Json(ApiResponse::success(result, "Stitch 验证结果")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1576,7 +1576,7 @@ pub async fn rollback_stitch_handler(
 
     match AutoSchemaStitcher::rollback_stitch(&req.plan_id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "Stitch 已回滚")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 

@@ -17,7 +17,7 @@ pub async fn list_customers(
         )),
         Err(e) => {
             tracing::error!("调用CRM服务获取客户列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取客户列表失败"))
+            Json(ApiResponse::server_error("获取客户列表失败"))
         }
     }
 }
@@ -31,7 +31,7 @@ pub async fn get_customer(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取客户详情成功")),
         Err(e) => {
             tracing::error!("调用CRM服务获取客户详情失败: {}", e);
-            Json(ApiResponse::error(500, "获取客户详情失败"))
+            Json(ApiResponse::server_error("获取客户详情失败"))
         }
     }
 }
@@ -45,7 +45,7 @@ pub async fn create_customer(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "创建客户成功")),
         Err(e) => {
             tracing::error!("调用CRM服务创建客户失败: {}", e);
-            Json(ApiResponse::error(500, "创建客户失败"))
+            Json(ApiResponse::server_error("创建客户失败"))
         }
     }
 }
@@ -60,7 +60,7 @@ pub async fn update_customer(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "更新客户成功")),
         Err(e) => {
             tracing::error!("调用CRM服务更新客户失败: {}", e);
-            Json(ApiResponse::error(500, "更新客户失败"))
+            Json(ApiResponse::server_error("更新客户失败"))
         }
     }
 }
@@ -74,7 +74,7 @@ pub async fn delete_customer(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "删除客户成功")),
         Err(e) => {
             tracing::error!("调用CRM服务删除客户失败: {}", e);
-            Json(ApiResponse::error(500, "删除客户失败"))
+            Json(ApiResponse::server_error("删除客户失败"))
         }
     }
 }

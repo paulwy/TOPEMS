@@ -108,7 +108,7 @@ pub async fn get_attendance_overview(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -122,7 +122,7 @@ pub async fn get_attendance_overview(
             tracing::error!("调用HRM服务获取考勤概览失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "获取考勤概览失败")),
+                Json(ApiResponse::server_error("获取考勤概览失败")),
             )
         }
     }
@@ -148,7 +148,7 @@ pub async fn get_attendance_stats(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -162,7 +162,7 @@ pub async fn get_attendance_stats(
             tracing::error!("调用HRM服务获取考勤统计失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "获取考勤统计失败")),
+                Json(ApiResponse::server_error("获取考勤统计失败")),
             )
         }
     }
@@ -190,7 +190,7 @@ pub async fn list_attendance_records(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -210,7 +210,7 @@ pub async fn list_attendance_records(
             tracing::error!("调用HRM服务获取考勤记录失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "获取考勤记录失败")),
+                Json(ApiResponse::server_error("获取考勤记录失败")),
             )
         }
     }
@@ -227,7 +227,7 @@ pub async fn get_today_attendance(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -266,7 +266,7 @@ pub async fn get_today_attendance(
             tracing::error!("调用HRM服务获取今日考勤失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "获取今日考勤失败")),
+                Json(ApiResponse::server_error("获取今日考勤失败")),
             )
         }
     }
@@ -286,7 +286,7 @@ pub async fn get_attendance_record_by_id(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -315,7 +315,7 @@ pub async fn get_attendance_record_by_id(
             tracing::error!("调用HRM服务获取考勤记录详情失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "获取考勤记录详情失败")),
+                Json(ApiResponse::server_error("获取考勤记录详情失败")),
             )
         }
     }
@@ -332,7 +332,7 @@ pub async fn create_attendance_record(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -357,7 +357,7 @@ pub async fn update_attendance_record(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -381,7 +381,7 @@ pub async fn delete_attendance_record(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -415,7 +415,7 @@ pub async fn check_in(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -436,7 +436,7 @@ pub async fn check_in(
             tracing::error!("调用HRM服务打卡失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "打卡失败")),
+                Json(ApiResponse::server_error("打卡失败")),
             )
         }
     }
@@ -463,7 +463,7 @@ pub async fn check_out(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -484,7 +484,7 @@ pub async fn check_out(
             tracing::error!("调用HRM服务下班打卡失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "下班打卡失败")),
+                Json(ApiResponse::server_error("下班打卡失败")),
             )
         }
     }
@@ -512,7 +512,7 @@ pub async fn list_leave_applications(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -532,7 +532,7 @@ pub async fn list_leave_applications(
             tracing::error!("调用HRM服务获取请假申请失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "获取请假申请失败")),
+                Json(ApiResponse::server_error("获取请假申请失败")),
             )
         }
     }
@@ -549,7 +549,7 @@ pub async fn apply_leave(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -581,7 +581,7 @@ pub async fn apply_leave(
             tracing::error!("调用HRM服务提交请假申请失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "提交请假申请失败")),
+                Json(ApiResponse::server_error("提交请假申请失败")),
             )
         }
     }

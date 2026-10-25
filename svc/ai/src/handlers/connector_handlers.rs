@@ -171,7 +171,7 @@ pub async fn create_connector(
                 {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
-                Json(ApiResponse::<DataConnector>::error(500, err_msg))
+                Json(ApiResponse::<DataConnector>::server_error(err_msg))
             }
         }
     } else {
@@ -190,7 +190,7 @@ pub async fn create_connector(
         {
             tracing::warn!("ai audit failed: {e}");
         }
-        Json(ApiResponse::<DataConnector>::error(500, err_msg))
+        Json(ApiResponse::<DataConnector>::server_error(err_msg))
     }
 }
 
@@ -304,7 +304,7 @@ pub async fn update_connector(
                 {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
-                Json(ApiResponse::<DataConnector>::error(500, err_msg))
+                Json(ApiResponse::<DataConnector>::server_error(err_msg))
             }
         }
     } else {
@@ -323,7 +323,7 @@ pub async fn update_connector(
         {
             tracing::warn!("ai audit failed: {e}");
         }
-        Json(ApiResponse::<DataConnector>::error(500, err_msg))
+        Json(ApiResponse::<DataConnector>::server_error(err_msg))
     }
 }
 
@@ -399,7 +399,7 @@ pub async fn delete_connector(
                 {
                     tracing::warn!("ai audit failed: {e}");
                 }
-                Json(ApiResponse::<String>::error(404, "Connector not found"))
+                Json(ApiResponse::<String>::not_found("Connector not found"))
             }
             Err(()) => {
                 let err_msg = "Internal server error";
@@ -417,7 +417,7 @@ pub async fn delete_connector(
                 {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
-                Json(ApiResponse::<String>::error(500, err_msg))
+                Json(ApiResponse::<String>::server_error(err_msg))
             }
         }
     } else {
@@ -436,7 +436,7 @@ pub async fn delete_connector(
         {
             tracing::warn!("ai audit failed: {e}");
         }
-        Json(ApiResponse::<String>::error(500, err_msg))
+        Json(ApiResponse::<String>::server_error(err_msg))
     }
 }
 

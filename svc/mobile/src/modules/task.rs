@@ -144,7 +144,7 @@ pub async fn get_all_tasks(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -162,7 +162,7 @@ pub async fn get_all_tasks(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询任务失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::error(500, "查询失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::server_error("查询失败")));
         }
     };
 
@@ -183,7 +183,7 @@ pub async fn get_task(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -200,11 +200,11 @@ pub async fn get_task(
     {
         Ok(Some(t)) => t,
         Ok(None) => {
-            return (StatusCode::NOT_FOUND, axum::Json(ApiResponse::error(404, "任务不存在")));
+            return (StatusCode::NOT_FOUND, axum::Json(ApiResponse::not_found("任务不存在")));
         }
         Err(e) => {
             tracing::error!("查询任务失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::error(500, "查询失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::server_error("查询失败")));
         }
     };
 
@@ -225,7 +225,7 @@ pub async fn create_task(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -256,7 +256,7 @@ pub async fn create_task(
     .await
     {
         tracing::error!("创建任务失败: {}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::error(500, "创建失败")));
+        return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::server_error("创建失败")));
     }
 
     let task = MobileTask {
@@ -294,7 +294,7 @@ pub async fn update_task(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -319,11 +319,11 @@ pub async fn update_task(
     {
         Ok(Some(t)) => t,
         Ok(None) => {
-            return (StatusCode::NOT_FOUND, axum::Json(ApiResponse::error(404, "任务不存在或无权修改")));
+            return (StatusCode::NOT_FOUND, axum::Json(ApiResponse::not_found("任务不存在或无权修改")));
         }
         Err(e) => {
             tracing::error!("查询任务失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::error(500, "查询失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::server_error("查询失败")));
         }
     };
 
@@ -366,7 +366,7 @@ pub async fn update_task(
     .await
     {
         tracing::error!("更新任务失败: {}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::error(500, "更新失败")));
+        return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::server_error("更新失败")));
     }
 
     (
@@ -388,7 +388,7 @@ pub async fn update_task_status(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -442,20 +442,20 @@ pub async fn update_task_status(
                     tracing::error!("查询任务失败: {}", e);
                     (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        axum::Json(ApiResponse::error(500, "查询任务失败")),
+                        axum::Json(ApiResponse::server_error("查询任务失败")),
                     )
                 }
             }
         }
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            axum::Json(ApiResponse::error(404, "任务不存在或无权修改")),
+            axum::Json(ApiResponse::not_found("任务不存在或无权修改")),
         ),
         Err(e) => {
             tracing::error!("更新任务状态失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(ApiResponse::error(500, "更新失败")),
+                axum::Json(ApiResponse::server_error("更新失败")),
             )
         }
     }
@@ -473,7 +473,7 @@ pub async fn delete_task(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -502,13 +502,13 @@ pub async fn delete_task(
         ),
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            axum::Json(ApiResponse::error(404, "任务不存在或无权删除")),
+            axum::Json(ApiResponse::not_found("任务不存在或无权删除")),
         ),
         Err(e) => {
             tracing::error!("删除任务失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(ApiResponse::error(500, "删除失败")),
+                axum::Json(ApiResponse::server_error("删除失败")),
             )
         }
     }
@@ -527,7 +527,7 @@ pub async fn get_my_tasks(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -547,7 +547,7 @@ pub async fn get_my_tasks(
             tracing::error!("查询我的任务失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(ApiResponse::error(500, "查询失败")),
+                axum::Json(ApiResponse::server_error("查询失败")),
             );
         }
     };
@@ -572,7 +572,7 @@ pub async fn get_pending_tasks(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -592,7 +592,7 @@ pub async fn get_pending_tasks(
             tracing::error!("查询待办任务失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(ApiResponse::error(500, "查询失败")),
+                axum::Json(ApiResponse::server_error("查询失败")),
             );
         }
     };
@@ -617,7 +617,7 @@ pub async fn get_overdue_tasks(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -637,7 +637,7 @@ pub async fn get_overdue_tasks(
             tracing::error!("查询逾期任务失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(ApiResponse::error(500, "查询失败")),
+                axum::Json(ApiResponse::server_error("查询失败")),
             );
         }
     };
@@ -664,7 +664,7 @@ pub async fn complete_task(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -693,13 +693,13 @@ pub async fn complete_task(
         ),
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            axum::Json(ApiResponse::error(404, "任务不存在或无权操作")),
+            axum::Json(ApiResponse::not_found("任务不存在或无权操作")),
         ),
         Err(e) => {
             tracing::error!("完成任务失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(ApiResponse::error(500, "操作失败")),
+                axum::Json(ApiResponse::server_error("操作失败")),
             )
         }
     }
@@ -718,7 +718,7 @@ pub async fn reopen_task(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -747,13 +747,13 @@ pub async fn reopen_task(
         ),
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            axum::Json(ApiResponse::error(404, "任务不存在或无权操作")),
+            axum::Json(ApiResponse::not_found("任务不存在或无权操作")),
         ),
         Err(e) => {
             tracing::error!("重新打开任务失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(ApiResponse::error(500, "操作失败")),
+                axum::Json(ApiResponse::server_error("操作失败")),
             )
         }
     }
@@ -771,7 +771,7 @@ pub async fn search_tasks(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -793,7 +793,7 @@ pub async fn search_tasks(
             tracing::error!("搜索任务失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(ApiResponse::error(500, "搜索失败")),
+                axum::Json(ApiResponse::server_error("搜索失败")),
             );
         }
     };
@@ -820,7 +820,7 @@ pub async fn batch_update_status(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "未授权")),
+                axum::Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
