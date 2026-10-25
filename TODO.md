@@ -1,3 +1,11 @@
+## 补测续：crm 域自绘 hooks 页（CRMBillingPage）（2026-10-25）✅ 完成
+
+> **自绘 hooks 页补测（第 2 例）**：CRMBillingPage useQuery 拉账单聚合（统计卡/状态饼/top10/账龄）+ tabs 切换（overview/invoices/aging）+ 内联 schema（billingSchema 过滤 actions 仅 detail）+ **只读 adapter（create/update/delete 恒定抛 'Billing records are read-only'）**
+> - `CRMBillingPage.test.tsx`（10 用例）：4 统计卡（count 汇总 + 金额）；状态饼（金额+百分比）；Top10（客户名+金额、无 status 中性 chip '—'）；账龄桶；**tabs 切换**（overview→invoices 经 CrudPage 渲染 schema actions=['detail'] + breadcrumbs 两层；aging 渲染明细）；list {items,total} 解包 + **数组形态解包**；list 失败抛 message；create/update/delete 恒定抛只读
+> - 统计卡为**顶层常驻**不随 tab 切换（照真实布局断言）；'—' chip 每客户一个（getAllByText）
+> - 验证：10/10 passed；eslint 0；tsc 0；component 全量 327 files / 3393 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：notification 域自绘 hooks 页（NotificationArchivePage）（2026-10-25）✅ 完成
 
 > **自绘 hooks 页补测（首例）**：NotificationArchivePage 手写 CrudApiAdapter（list 走 getArchivedNotifications + **客户端 search 过滤**；create/update/delete 空桩）+ useQuery 拉归档配置渲染 headerContent（useMemo JSX）
