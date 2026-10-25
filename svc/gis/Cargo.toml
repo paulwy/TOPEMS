@@ -22,7 +22,6 @@ axum-prometheus.workspace = true
 prometheus.workspace = true
 csv.workspace = true
 utoipa.workspace = true
-reqwest = { workspace = true, features = ["json"] }
 futures-util.workspace = true
 sha2.workspace = true
 hex.workspace = true

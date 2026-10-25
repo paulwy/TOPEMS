@@ -30,7 +30,6 @@ topems-shared-service-client = { workspace = true }
 bigdecimal = { workspace = true, features = ["serde"] }
 prometheus.workspace = true
 utoipa.workspace = true
-reqwest = { workspace = true, features = ["json"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full", "test-util"] }
