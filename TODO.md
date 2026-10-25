@@ -1,3 +1,11 @@
+## 空库域真数据流补测：qms/pdm（+gis API 冒烟）（2026-10-25）✅ 完成
+
+> **补测线最后一块（原登记：qms/pdm/gis 三域空库需先 API 造数才能闭环）**——真起 8099 模块化单体（run-e2e-stack.sh up，7min 编译）+ admin 真登录 + 造数 + 页面真数据流断言
+> - **`qms-pdm-dataflow.spec.ts`（6/6 绿，chromium + mobile-iphone 双项目）**：beforeAll 以 admin 真调 `POST /api/qms/standards`（name/category）+ `POST /api/pdm/products`（product_no/name）造唯一记录（时间戳编号）；TC-QMS-001 列表页渲染造出的标准 name/category；TC-QMS-002 详情页 `/qms/standards/{id}` 渲染 name；TC-PDM-001 列表页渲染 product_no + name 双真实键——证明空库域页面接真数据流（非空表/mock）
+> - **gis API 冒烟**：`POST /api/gis/locations/create` 200 + `GET /api/gis/locations` 信封 `{data:{locations:[...]}}` 含造出记录——位置 CRUD 真可用（前端无 locations 页面，仅 API 级验证）
+> - **环境清理**：造数记录（E2E 前缀）qms/pdm/gis 全删（含历史残留）；8099 栈已 stop
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：scm 域三页真断言 2（2026-10-25）✅ 完成
 
 > **模板 stub 架构改造受益（续批）**：补 scm 域剩余 CrudPage 包装代表页
