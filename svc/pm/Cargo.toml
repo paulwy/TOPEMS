@@ -7,7 +7,6 @@ license.workspace = true
 description = "TOPEMS-PM 统一项目管理服务"
 
 [dependencies]
-topems-shared = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-event = { workspace = true }
 topems-shared-auth = { workspace = true }
@@ -28,7 +27,6 @@ topems-shared-db = { workspace = true }
 utoipa.workspace = true
 prometheus.workspace = true
 rust_decimal.workspace = true
-reqwest.workspace = true
 
 [dev-dependencies]
 axum-test.workspace = true

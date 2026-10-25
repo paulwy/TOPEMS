@@ -7,7 +7,6 @@ license.workspace = true
 description = "TOPEMS-RD 科研研发管理系统"
 
 [dependencies]
-topems-shared = { workspace = true }
 topems-shared-event = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-auth = { workspace = true }

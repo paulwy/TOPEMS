@@ -26,7 +26,6 @@ topems-shared-bootstrap = { workspace = true }
 topems-shared-boundary = { path = "../../lib/shared-boundary" }
 utoipa.workspace = true
 anyhow.workspace = true
-reqwest.workspace = true
 
 [dev-dependencies]
 
