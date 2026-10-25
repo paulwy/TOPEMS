@@ -232,7 +232,7 @@ pub async fn acknowledge_alert(
         Ok(resp) => Json(ApiResponse::success(resp, "告警已确认")),
         Err(e) => {
             tracing::warn!("Failed to acknowledge alert via monitor service: {}", e);
-            Json(ApiResponse::error(502, "监控服务暂不可用，告警确认失败"))
+            Json(ApiResponse::bad_gateway("监控服务暂不可用，告警确认失败"))
         }
     }
 }

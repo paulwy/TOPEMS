@@ -96,6 +96,11 @@ impl<T> ApiResponse<T> {
     pub fn unavailable(message: &str) -> Self {
         Self::error(503, message)
     }
+
+    /// 502 网关错误（上游/下游服务网关无响应）
+    pub fn bad_gateway(message: &str) -> Self {
+        Self::error(502, message)
+    }
 }
 
 pub fn api_error<T>(code: u16, message: &str) -> ApiResponse<T> {
@@ -494,6 +499,7 @@ mod tests {
             (409, "已存在"),
             (500, "服务器错误"),
             (501, "未实现"),
+            (502, "网关错误"),
             (503, "不可用"),
         ] {
             let semantic: ApiResponse<()> = match ctor_code {
@@ -504,10 +510,11 @@ mod tests {
                 409 => ApiResponse::conflict(ctor_msg),
                 500 => ApiResponse::server_error(ctor_msg),
                 501 => ApiResponse::not_implemented(ctor_msg),
+                502 => ApiResponse::bad_gateway(ctor_msg),
                 _ => ApiResponse::unavailable(ctor_msg),
             };
             let direct: ApiResponse<()> = ApiResponse::error(ctor_code, ctor_msg);
-            assert_eq!(semantic.code, direct.code, "code 404/400/401/403/409/500/501/503");
+            assert_eq!(semantic.code, direct.code, "code 404/400/401/403/409/500/501/502/503");
             assert_eq!(semantic.success, direct.success);
             assert_eq!(semantic.message, direct.message);
             assert!(semantic.data.is_none());
