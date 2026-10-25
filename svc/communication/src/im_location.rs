@@ -200,8 +200,7 @@ pub async fn send_location_message(
     let (lat, lon) = match parse_coordinates(&payload.coordinates) {
         Some(coords) => coords,
         None => {
-            return Json(ApiResponse::error(
-                StatusCode::BAD_REQUEST.as_u16(),
+            return Json(ApiResponse::bad_request(
                 "坐标格式无效：需要包含 lat/lng 或 lat/lon 或 latitude/longitude 的对象",
             ));
         }

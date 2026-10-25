@@ -1373,8 +1373,7 @@ pub async fn list_bom_comparisons() -> Json<ApiResponse<serde_json::Value>> {
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_bom_comparison(Path(_id): Path<Uuid>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(
-        404,
+    Json(ApiResponse::not_found(
         "BOM 对比结果未持久化，请重新发起对比",
     ))
 }

@@ -91,8 +91,7 @@ pub async fn list_audit_logs(
 
     if let Some(ref start_date) = params.start_date {
         if !validate_date_format(start_date) {
-            return Json(ApiResponse::error(
-                400,
+            return Json(ApiResponse::bad_request(
                 "开始日期格式不正确，请使用 ISO 8601 格式",
             ));
         }
@@ -100,8 +99,7 @@ pub async fn list_audit_logs(
 
     if let Some(ref end_date) = params.end_date {
         if !validate_date_format(end_date) {
-            return Json(ApiResponse::error(
-                400,
+            return Json(ApiResponse::bad_request(
                 "结束日期格式不正确，请使用 ISO 8601 格式",
             ));
         }
@@ -270,8 +268,7 @@ pub async fn export_audit_logs(
 ) -> impl IntoResponse {
     if let Some(ref start_date) = params.start_date {
         if !validate_date_format(start_date) {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "开始日期格式不正确，请使用 ISO 8601 格式",
             ))
             .into_response();
@@ -280,8 +277,7 @@ pub async fn export_audit_logs(
 
     if let Some(ref end_date) = params.end_date {
         if !validate_date_format(end_date) {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "结束日期格式不正确，请使用 ISO 8601 格式",
             ))
             .into_response();
@@ -358,8 +354,7 @@ pub async fn export_audit_logs(
         }
         Err(e) => {
             tracing::error!("导出审计日志失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "导出审计日志失败",
             ))
             .into_response()

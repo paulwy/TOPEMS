@@ -72,8 +72,7 @@ pub async fn get_workflow(
             }),
             "Workflow detail",
         )),
-        None => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        None => Json(ApiResponse::not_found(
             &format!("Workflow not found: {}", workflow_id),
         )),
     }

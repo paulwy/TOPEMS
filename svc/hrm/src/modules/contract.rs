@@ -156,8 +156,7 @@ pub async fn list_contracts(
         }
         Err(e) => {
             tracing::error!("获取合同列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取合同列表失败",
             ))
         }
@@ -243,8 +242,7 @@ pub async fn list_expiring_contracts(
         }
         Err(e) => {
             tracing::error!("获取即将到期合同失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取即将到期合同失败",
             ))
         }
@@ -808,8 +806,7 @@ pub async fn create_renewal(
         }
         Err(e) => {
             tracing::error!("提交续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::error(
-                500,
+            Json(ApiResponse::<ContractRenewal>::server_error(
                 "提交续签申请失败",
             ))
         }
@@ -891,8 +888,7 @@ pub async fn list_renewals(
         }
         Err(e) => {
             tracing::error!("获取续签记录失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取续签记录失败",
             ))
         }
@@ -948,8 +944,7 @@ pub async fn get_renewal(
         Ok(None) => Json(ApiResponse::<ContractRenewal>::not_found("续签记录不存在")),
         Err(e) => {
             tracing::error!("获取续签记录失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::error(
-                500,
+            Json(ApiResponse::<ContractRenewal>::server_error(
                 "获取续签记录失败",
             ))
         }
@@ -1014,14 +1009,12 @@ pub async fn update_renewal(
             }
             Json(ApiResponse::success(renewal, "续签申请更新成功"))
         }
-        Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<ContractRenewal>::not_found(
             "续签申请不存在或状态不正确",
         )),
         Err(e) => {
             tracing::error!("更新续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::error(
-                500,
+            Json(ApiResponse::<ContractRenewal>::server_error(
                 "更新续签申请失败",
             ))
         }
@@ -1065,8 +1058,7 @@ pub async fn delete_renewal(
             }
             Json(ApiResponse::success("".to_string(), "续签申请已取消"))
         }
-        Ok(_) => Json(ApiResponse::<String>::error(
-            404,
+        Ok(_) => Json(ApiResponse::<String>::not_found(
             "续签申请不存在或状态不正确",
         )),
         Err(e) => {
@@ -1138,14 +1130,12 @@ pub async fn approve_renewal(
             }
             Json(ApiResponse::success(renewal, "续签申请已批准"))
         }
-        Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<ContractRenewal>::not_found(
             "续签申请不存在或状态不正确",
         )),
         Err(e) => {
             tracing::error!("批准续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::error(
-                500,
+            Json(ApiResponse::<ContractRenewal>::server_error(
                 "批准续签申请失败",
             ))
         }
@@ -1216,14 +1206,12 @@ pub async fn reject_renewal(
             }
             Json(ApiResponse::success(renewal, "续签申请已拒绝"))
         }
-        Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<ContractRenewal>::not_found(
             "续签申请不存在或状态不正确",
         )),
         Err(e) => {
             tracing::error!("拒绝续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::error(
-                500,
+            Json(ApiResponse::<ContractRenewal>::server_error(
                 "拒绝续签申请失败",
             ))
         }
@@ -1289,8 +1277,7 @@ pub async fn execute_renewal(
                     return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
-            return Json(ApiResponse::<serde_json::Value>::error(
-                404,
+            return Json(ApiResponse::<serde_json::Value>::not_found(
                 "续签记录不存在",
             ));
         }
@@ -1302,8 +1289,7 @@ pub async fn execute_renewal(
     };
 
     if renewal.status != "approved" {
-        return Json(ApiResponse::<serde_json::Value>::error(
-            400,
+        return Json(ApiResponse::<serde_json::Value>::bad_request(
             "续签申请未批准，无法执行",
         ));
     }
@@ -1353,8 +1339,7 @@ pub async fn execute_renewal(
         }
         Err(e) => {
             tracing::error!("执行合同续签失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "执行合同续签失败",
             ))
         }

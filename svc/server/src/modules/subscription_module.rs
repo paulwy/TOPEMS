@@ -125,15 +125,13 @@ pub async fn upsert_subscription(
     Json(req): Json<SubscriptionRequest>,
 ) -> Json<ApiResponse<Subscription>> {
     if Tier::from_str(&req.tier).is_none() {
-        return Json(ApiResponse::error(
-            StatusCode::BAD_REQUEST.as_u16(),
+        return Json(ApiResponse::bad_request(
             "无效 tier（应为 free/basic/advanced）",
         ));
     }
     let status = req.status.unwrap_or_else(|| "active".to_string());
     if SubscriptionStatus::from_str(&status).is_none() {
-        return Json(ApiResponse::error(
-            StatusCode::BAD_REQUEST.as_u16(),
+        return Json(ApiResponse::bad_request(
             "无效订阅状态（应为 active/trial/expired/canceled）",
         ));
     }
@@ -195,8 +193,7 @@ pub async fn cancel_subscription(
 
     match result {
         Ok(Some(s)) => Json(ApiResponse::success(s, "订阅已取消")),
-        Ok(None) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Ok(None) => Json(ApiResponse::not_found(
             "订阅不存在",
         )),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("取消订阅失败", e))),

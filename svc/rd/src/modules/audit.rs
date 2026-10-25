@@ -290,8 +290,7 @@ async fn export_audit_logs(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<serde_json::Value>::error(
-                    500,
+                Json(ApiResponse::<serde_json::Value>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -346,8 +345,7 @@ async fn export_audit_logs(
         }
         Err(e) => {
             tracing::error!("导出审计日志失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "导出审计日志失败",
             ))
             .into_response()

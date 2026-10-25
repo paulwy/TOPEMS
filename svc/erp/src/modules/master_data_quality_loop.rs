@@ -992,8 +992,7 @@ pub async fn execute_repair_workflow(
         if let Some(wf) = workflows.get_mut(pos) {
             wf.status = "failed".to_string();
         }
-        Json(ApiResponse::error(
-            501,
+        Json(ApiResponse::not_implemented(
             "自动修复暂不可用：质量修复工作流尚未接入真实数据表，请联系管理员手动处理",
         ))
     } else {
@@ -1037,8 +1036,7 @@ pub async fn execute_repair_step(
     step.error_message =
         Some("单步修复未启用：无持久化数据源，修复引擎暂不可用（501 degraded）".to_string());
 
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "单步修复暂不可用：质量修复尚未接入真实数据表，请联系管理员手动处理",
     ))
 }

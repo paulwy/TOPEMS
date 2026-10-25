@@ -157,8 +157,7 @@ pub async fn list_purchase_orders(
         }
         Err(e) => {
             tracing::error!("获取采购订单列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取采购订单列表失败",
             ))
         }
@@ -196,8 +195,7 @@ pub async fn create_purchase_order(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.po_no.is_empty() {
-        return Json(ApiResponse::<PurchaseOrder>::error(
-            400,
+        return Json(ApiResponse::<PurchaseOrder>::bad_request(
             "采购订单编号不能为空",
         ));
     }
@@ -218,8 +216,7 @@ pub async fn create_purchase_order(
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
-        return Json(ApiResponse::<PurchaseOrder>::error(
-            400,
+        return Json(ApiResponse::<PurchaseOrder>::bad_request(
             "供应商不存在或已删除",
         ));
     }
@@ -233,16 +230,14 @@ pub async fn create_purchase_order(
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<PurchaseOrder>::error(
-            400,
+        return Json(ApiResponse::<PurchaseOrder>::bad_request(
             "采购订单编号已存在",
         ));
     }
 
     if let Some(amount) = req.total_amount {
         if amount < Decimal::ZERO {
-            return Json(ApiResponse::<PurchaseOrder>::error(
-                400,
+            return Json(ApiResponse::<PurchaseOrder>::bad_request(
                 "订单金额不能为负数",
             ));
         }
@@ -428,8 +423,7 @@ pub async fn update_purchase_order(
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<PurchaseOrder>::error(
-                400,
+            return Json(ApiResponse::<PurchaseOrder>::bad_request(
                 "供应商不存在或已删除",
             ));
         }
@@ -441,8 +435,7 @@ pub async fn update_purchase_order(
 
     if let Some(amount) = req.total_amount {
         if amount < Decimal::ZERO {
-            return Json(ApiResponse::<PurchaseOrder>::error(
-                400,
+            return Json(ApiResponse::<PurchaseOrder>::bad_request(
                 "订单金额不能为负数",
             ));
         }

@@ -54,6 +54,14 @@
 - **验证**：残留 grep 计数 0（已排除 lib/shared-core/src/response.rs）；`SQLX_OFFLINE=true cargo check` 对 10 包 exit 0；10 包 `cargo test --lib` 全部 0 failed（shared-core 766 / master-data 451 / integration 194 / tms 172 / unified-core 538 / ticket 226 / monitor 140 / server 0 lib 用例 / analytics 185 / communication 210）；`git diff --stat -- lib/shared-core/src/response.rs` 为空（范本文件零改动）。
 - **commit 哈希**：`70a0d6f8f`
 
+## F10 · 跨行形态收尾（536 处）（2026-10-26）✅ 完成
+
+> ApiResponse 语义构造器跨行形态机械收尾（行级批次1-5 之后）：`ApiResponse::error(` 位于行尾换行、状态码在续行（字面量数字 或 `StatusCode::X.as_u16()`）→ 语义构造器（500→server_error / 400→bad_request / 404→not_found / 401→unauthorized / 403→forbidden / 409→conflict / 501→not_implemented / 503→unavailable），吞掉状态码行，消息行原样保留。行为严格等价，消息文本/状态码/控制流零改动。
+
+- **替换数**：536 处（替换前 awk 普查 536 = 字面量 374 + StatusCode 162；替换后同款普查 0）；perl -0777 跨行逐码替换（8 字面量 + 8 StatusCode 各一条）；泛型形态 `ApiResponse::<T>::error(\n 500, ...)` 同步收敛为 `ApiResponse::<T>::server_error(\n ...)`；81 个 .rs 文件、21 个 crate。
+- **验证**：替换后续行首 token 仅余 `410,`×4 与局部单参形态 `"性能监控未启用",`×1（按约束保留）；行级残留 grep 0；`SQLX_OFFLINE=true cargo check` 对 21 包 exit 0；21 包 `cargo test --lib` 全部 0 failed；`git diff --stat -- lib/shared-core/src/response.rs` 为空（范本文件零改动）；.rs diff 消息串多重集 +/- 均 0（消息文本零改动）。
+- **commit 哈希**：`9bdeee3828`
+
 ## 生产部署就绪核对（2026-10-25）✅ 完成
 
 > 外部阻塞项（生产机实跑）的本地可闭环交付前准备：部署脚本链/单元/nginx/清单四维一致性核对。

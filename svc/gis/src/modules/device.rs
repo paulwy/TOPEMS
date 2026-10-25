@@ -638,8 +638,7 @@ pub async fn report_device_location(
             .and_then(|h| h.strip_prefix("Bearer "))
             .map(str::to_string);
         let Some(jwt) = jwt else {
-            return Json(ApiResponse::error(
-                401,
+            return Json(ApiResponse::unauthorized(
                 "未认证：缺少 Authorization Bearer token 或 X-Device-Token",
             ));
         };

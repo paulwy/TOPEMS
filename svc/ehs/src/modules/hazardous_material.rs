@@ -924,8 +924,7 @@ pub async fn create_material_category(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::warn!("Material category create called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "危险品分类数据源尚未启用，写入操作暂不可用",
     ))
 }
@@ -1055,8 +1054,7 @@ pub async fn delete_stock_record(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("Stock record delete called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "出入库记录数据源尚未启用，删除操作暂不可用",
     ))
 }
@@ -1096,8 +1094,7 @@ pub async fn delete_msds_by_id(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("MSDS delete called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "MSDS 数据源尚未启用，删除操作暂不可用",
     ))
 }
@@ -1110,8 +1107,7 @@ pub async fn update_material_category(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::warn!("Material category update called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "危险品分类数据源尚未启用，更新操作暂不可用",
     ))
 }
@@ -1123,8 +1119,7 @@ pub async fn delete_material_category(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("Material category delete called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "危险品分类数据源尚未启用，删除操作暂不可用",
     ))
 }

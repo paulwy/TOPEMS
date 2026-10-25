@@ -187,8 +187,7 @@ async fn create_analysis(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<AiAnalysis>::error(
-                    500,
+                Json(ApiResponse::<AiAnalysis>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -276,8 +275,7 @@ async fn get_analysis(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<AiAnalysis>::error(
-                    500,
+                Json(ApiResponse::<AiAnalysis>::server_error(
                     "rls transaction unavailable",
                 )),
             )

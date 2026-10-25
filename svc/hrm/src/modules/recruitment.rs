@@ -274,8 +274,7 @@ pub async fn list_job_openings(
         }
         Err(e) => {
             tracing::error!("查询职位列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询职位列表失败",
             ))
         }
@@ -610,8 +609,7 @@ pub async fn publish_job_opening(
             }
             Json(ApiResponse::success(opening, "职位已发布"))
         }
-        Ok(None) => Json(ApiResponse::<JobOpening>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<JobOpening>::not_found(
             "职位不存在或状态不正确",
         )),
         Err(e) => {
@@ -668,8 +666,7 @@ pub async fn close_job_opening(
             }
             Json(ApiResponse::success(opening, "职位已关闭"))
         }
-        Ok(None) => Json(ApiResponse::<JobOpening>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<JobOpening>::not_found(
             "职位不存在或状态不正确",
         )),
         Err(e) => {
@@ -757,8 +754,7 @@ pub async fn list_candidates(
         }
         Err(e) => {
             tracing::error!("查询候选人列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询候选人列表失败",
             ))
         }
@@ -1113,8 +1109,7 @@ pub async fn list_interviews(
         }
         Err(e) => {
             tracing::error!("查询面试列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询面试列表失败",
             ))
         }
@@ -1370,8 +1365,7 @@ pub async fn complete_interview(
             }
             Json(ApiResponse::success(interview, "面试已完成"))
         }
-        Ok(None) => Json(ApiResponse::<Interview>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<Interview>::not_found(
             "面试不存在或状态不正确",
         )),
         Err(e) => {

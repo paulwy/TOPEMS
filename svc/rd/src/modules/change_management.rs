@@ -164,8 +164,7 @@ pub async fn create_change_request(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeRequest>::error(
-                    500,
+                Json(ApiResponse::<ChangeRequest>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -333,8 +332,7 @@ pub async fn get_change_request(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeRequest>::error(
-                    500,
+                Json(ApiResponse::<ChangeRequest>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -380,8 +378,7 @@ pub async fn update_change_request(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeRequest>::error(
-                    500,
+                Json(ApiResponse::<ChangeRequest>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -462,8 +459,7 @@ pub async fn delete_change_request(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<serde_json::Value>::error(
-                    500,
+                Json(ApiResponse::<serde_json::Value>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -494,8 +490,7 @@ pub async fn delete_change_request(
         }
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::<serde_json::Value>::error(
-                404,
+            Json(ApiResponse::<serde_json::Value>::not_found(
                 "变更请求不存在",
             )),
         ),
@@ -535,8 +530,7 @@ pub async fn transition_change_request(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeRequest>::error(
-                    500,
+                Json(ApiResponse::<ChangeRequest>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -570,8 +564,7 @@ pub async fn transition_change_request(
     if !change_request_can_transition(&current, &req.to) {
         return (
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::<ChangeRequest>::error(
-                400,
+            Json(ApiResponse::<ChangeRequest>::bad_request(
                 &format!("非法状态流转: {current} -> {}", req.to),
             )),
         );
@@ -645,8 +638,7 @@ pub async fn create_change_order(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeOrder>::error(
-                    500,
+                Json(ApiResponse::<ChangeOrder>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -680,8 +672,7 @@ pub async fn create_change_order(
     if !approved {
         return (
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::<ChangeOrder>::error(
-                400,
+            Json(ApiResponse::<ChangeOrder>::bad_request(
                 "仅已批准的变更请求可创建变更单",
             )),
         );

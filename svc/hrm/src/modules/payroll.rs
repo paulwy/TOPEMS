@@ -213,8 +213,7 @@ pub async fn list_payroll_runs(
         }
         Err(e) => {
             tracing::error!("查询薪资发放列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询薪资发放列表失败",
             ))
         }
@@ -355,14 +354,12 @@ pub async fn get_payroll_run(
                 "查询成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<serde_json::Value>::not_found(
             "薪资周期不存在",
         )),
         Err(e) => {
             tracing::error!("查询薪资周期失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询薪资周期失败",
             ))
         }
@@ -504,8 +501,7 @@ pub async fn calculate_payroll_run(
     };
 
     if existing.is_none() {
-        return Json(ApiResponse::<PayrollRun>::error(
-            404,
+        return Json(ApiResponse::<PayrollRun>::not_found(
             "薪资周期不存在或状态不正确",
         ));
     }
@@ -543,8 +539,7 @@ pub async fn calculate_payroll_run(
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("聚合在职员工薪资失败: {}", e);
-            return Json(ApiResponse::<PayrollRun>::error(
-                500,
+            return Json(ApiResponse::<PayrollRun>::server_error(
                 "聚合在职员工薪资失败",
             ));
         }
@@ -612,8 +607,7 @@ pub async fn calculate_payroll_run(
             }
             Json(ApiResponse::success(run, "薪资计算完成"))
         }
-        Ok(None) => Json(ApiResponse::<PayrollRun>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<PayrollRun>::not_found(
             "薪资周期不存在或状态不正确",
         )),
         Err(e) => {
@@ -664,8 +658,7 @@ pub async fn pay_payroll_run(
     .unwrap_or(0);
 
     if pending_count == 0 {
-        return Json(ApiResponse::<PayrollRun>::error(
-            400,
+        return Json(ApiResponse::<PayrollRun>::bad_request(
             "无可发放的薪资明细，请先执行薪资计算",
         ));
     }
@@ -711,8 +704,7 @@ pub async fn pay_payroll_run(
             }
             Json(ApiResponse::success(run, "薪资发放完成"))
         }
-        Ok(None) => Json(ApiResponse::<PayrollRun>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<PayrollRun>::not_found(
             "薪资周期不存在或状态不正确",
         )),
         Err(e) => {
@@ -799,8 +791,7 @@ pub async fn list_payroll_items(
         }
         Err(e) => {
             tracing::error!("查询薪资明细列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询薪资明细列表失败",
             ))
         }
@@ -854,14 +845,12 @@ pub async fn get_payroll_item(
                 "查询成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<serde_json::Value>::not_found(
             "薪资明细不存在",
         )),
         Err(e) => {
             tracing::error!("查询薪资明细失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询薪资明细失败",
             ))
         }
@@ -932,8 +921,7 @@ pub async fn list_payroll_details(
         }
         Err(e) => {
             tracing::error!("查询薪资详情列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询薪资详情列表失败",
             ))
         }
@@ -1023,8 +1011,7 @@ pub async fn generate_payroll_voucher(
     let payroll_run = match payroll_run {
         Some(r) => r,
         None => {
-            return Json(ApiResponse::<PayrollVoucherResponse>::error(
-                404,
+            return Json(ApiResponse::<PayrollVoucherResponse>::not_found(
                 "薪资记录不存在",
             ))
         }
@@ -1032,8 +1019,7 @@ pub async fn generate_payroll_voucher(
 
     // 检查薪资是否已发放
     if payroll_run.status != "paid" {
-        return Json(ApiResponse::<PayrollVoucherResponse>::error(
-            400,
+        return Json(ApiResponse::<PayrollVoucherResponse>::bad_request(
             "薪资未发放，无法生成凭证",
         ));
     }
@@ -1305,8 +1291,7 @@ pub async fn list_payroll_slips(
         }
         Err(e) => {
             tracing::error!("查询工资单失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询工资单失败",
             ))
         }

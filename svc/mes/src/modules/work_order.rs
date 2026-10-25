@@ -862,8 +862,7 @@ pub async fn start_work_order(
             },
             "开始工单成功",
         )),
-        Ok(None) => Json(ApiResponse::error(
-            404,
+        Ok(None) => Json(ApiResponse::not_found(
             "工单不存在或状态不允许开始（仅 pending 状态可开始）",
         )),
         Err(e) => {
@@ -955,8 +954,7 @@ pub async fn complete_work_order(
             },
             "完成工单成功",
         )),
-        Ok(None) => Json(ApiResponse::error(
-            404,
+        Ok(None) => Json(ApiResponse::not_found(
             "工单不存在或状态不允许完成（仅 in_progress 状态可完成）",
         )),
         Err(e) => {
@@ -1048,8 +1046,7 @@ pub async fn cancel_work_order(
             },
             "取消工单成功",
         )),
-        Ok(None) => Json(ApiResponse::error(
-            404,
+        Ok(None) => Json(ApiResponse::not_found(
             "工单不存在或状态不允许取消（已完成/已取消的工单不可取消）",
         )),
         Err(e) => {
@@ -1141,8 +1138,7 @@ pub async fn pause_work_order(
             },
             "暂停工单成功",
         )),
-        Ok(None) => Json(ApiResponse::error(
-            404,
+        Ok(None) => Json(ApiResponse::not_found(
             "工单不存在或状态不允许暂停（仅 in_progress 状态可暂停）",
         )),
         Err(e) => {
@@ -1234,8 +1230,7 @@ pub async fn resume_work_order(
             },
             "恢复工单成功",
         )),
-        Ok(None) => Json(ApiResponse::error(
-            404,
+        Ok(None) => Json(ApiResponse::not_found(
             "工单不存在或状态不允许恢复（仅 paused 状态可恢复）",
         )),
         Err(e) => {

@@ -216,8 +216,7 @@ pub async fn transition_lifecycle_stage(
         && target != LifecycleStage::Archived
         && target != LifecycleStage::Destroyed
     {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!(
                 "stage transition not allowed: {} -> {}",
                 entity.stage.as_str(),

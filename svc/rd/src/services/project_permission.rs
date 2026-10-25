@@ -146,15 +146,13 @@ pub async fn check_project_permission<T>(
     };
 
     if role == ProjectRole::None {
-        return Err(axum::Json(ApiResponse::error(
-            403,
+        return Err(axum::Json(ApiResponse::forbidden(
             "您不是该项目的成员，无法访问",
         )));
     }
 
     if !has_project_permission(&role, permission) {
-        return Err(axum::Json(ApiResponse::error(
-            403,
+        return Err(axum::Json(ApiResponse::forbidden(
             &format!(
                 "权限不足：您在该项目中的角色是 {}，需要 {} 权限",
                 role, permission
@@ -194,8 +192,7 @@ pub async fn check_project_owner<T>(
     };
 
     if role != ProjectRole::Owner {
-        return Err(axum::Json(ApiResponse::error(
-            403,
+        return Err(axum::Json(ApiResponse::forbidden(
             "权限不足：只有项目负责人才能执行此操作",
         )));
     }

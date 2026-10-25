@@ -1747,8 +1747,7 @@ pub async fn compute_embeddings(
     State(_state): State<AppState>,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "Embedding 服务未接入：请配置 embedding_model 后由 AI 服务提供",
     ))
 }

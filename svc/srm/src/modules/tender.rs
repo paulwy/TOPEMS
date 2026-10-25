@@ -228,8 +228,7 @@ pub async fn create_tender(
     });
 
     if title.is_empty() {
-        return Json(ApiResponse::<serde_json::Value>::error(
-            400,
+        return Json(ApiResponse::<serde_json::Value>::bad_request(
             "招标标题不能为空",
         ));
     }
@@ -327,8 +326,7 @@ pub async fn get_tender(
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "招标ID格式错误",
             ));
         }
@@ -376,8 +374,7 @@ pub async fn get_tender(
             });
             Json(ApiResponse::success(data, "获取招标成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::not_found(
             "招标不存在或已删除",
         )),
         Err(e) => {
@@ -410,8 +407,7 @@ pub async fn update_tender(
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "招标ID格式错误",
             ));
         }
@@ -499,8 +495,7 @@ pub async fn update_tender(
             });
             Json(ApiResponse::success(data, "更新招标成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::not_found(
             "招标不存在或已删除",
         )),
         Err(e) => {
@@ -532,8 +527,7 @@ pub async fn delete_tender(
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "招标ID格式错误",
             ));
         }
@@ -568,8 +562,7 @@ pub async fn delete_tender(
             }
             Json(ApiResponse::success(serde_json::json!({}), "删除招标成功"))
         }
-        Ok(_) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Ok(_) => Json(ApiResponse::<serde_json::Value>::not_found(
             "招标不存在或已删除",
         )),
         Err(e) => {
@@ -704,8 +697,7 @@ pub async fn create_tender_bid(
     let tender_uuid = match Uuid::parse_str(&tender_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "招标ID格式错误",
             ));
         }
@@ -748,8 +740,7 @@ pub async fn create_tender_bid(
         .map(|s| BigDecimal::from_f64(s).unwrap_or_default());
 
     if supplier_id.is_empty() {
-        return Json(ApiResponse::<serde_json::Value>::error(
-            400,
+        return Json(ApiResponse::<serde_json::Value>::bad_request(
             "供应商ID不能为空",
         ));
     }
@@ -757,8 +748,7 @@ pub async fn create_tender_bid(
     let supplier_uuid = match Uuid::parse_str(&supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "供应商ID格式错误",
             ));
         }
@@ -864,8 +854,7 @@ pub async fn award_tender(
     let tender_uuid = match Uuid::parse_str(&tender_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "招标ID格式错误",
             ));
         }
@@ -888,8 +877,7 @@ pub async fn award_tender(
         .unwrap_or("");
 
     if winning_bid_id.is_empty() {
-        return Json(ApiResponse::<serde_json::Value>::error(
-            400,
+        return Json(ApiResponse::<serde_json::Value>::bad_request(
             "中标投标ID不能为空",
         ));
     }
@@ -897,8 +885,7 @@ pub async fn award_tender(
     let winning_bid_uuid = match Uuid::parse_str(&winning_bid_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "中标投标ID格式错误",
             ));
         }
@@ -920,8 +907,7 @@ pub async fn award_tender(
     let bid = match bid_result {
         Ok(bid) => bid,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                404,
+            return Json(ApiResponse::<serde_json::Value>::not_found(
                 "投标不存在或不属于该招标",
             ))
         }

@@ -89,8 +89,7 @@ async fn get_project_risks(
         Ok(r) => Json(ApiResponse::success(r, "获取项目风险列表成功")),
         Err(e) => {
             tracing::error!("获取风险失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取风险失败",
             ))
         }
@@ -121,14 +120,12 @@ async fn get_risk(
 
     match risk {
         Ok(r) => Json(ApiResponse::success(r, "获取风险详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "风险不存在",
         )),
         Err(e) => {
             tracing::error!("获取风险失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取风险失败",
             ))
         }
@@ -210,8 +207,7 @@ async fn create_risk(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建风险失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建风险失败",
             ))
         }
@@ -297,8 +293,7 @@ async fn update_risk(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::error(
-                StatusCode::NOT_FOUND.as_u16(),
+            Json(ApiResponse::not_found(
                 "风险不存在",
             ))
         }
@@ -317,8 +312,7 @@ async fn update_risk(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新风险失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "更新风险失败",
             ))
         }
@@ -353,8 +347,7 @@ async fn get_risk_events(
         Ok(e) => Json(ApiResponse::success(e, "获取风险事件列表成功")),
         Err(e) => {
             tracing::error!("获取风险事件失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取风险事件失败",
             ))
         }
@@ -389,8 +382,7 @@ async fn create_risk_event(
         Ok(e) => Json(ApiResponse::success(e, "创建风险事件成功")),
         Err(e) => {
             tracing::error!("创建风险事件失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建风险事件失败",
             ))
         }

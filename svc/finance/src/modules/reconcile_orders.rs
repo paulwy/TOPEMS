@@ -341,8 +341,7 @@ pub async fn create_reconcile_order(
     if counterparty_ids.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::error(
-                400,
+            Json(ApiResponse::bad_request(
                 "缺少 counterparty_id 或 counterparty_ids",
             )),
         ));

@@ -275,8 +275,7 @@ pub async fn regenerate_message(
     Path((_id, _message_id)): Path<(uuid::Uuid, uuid::Uuid)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     // 待上游支持：消息重算管线未接入，返回内层 404（消息不存在/未实现）
-    Json(ApiResponse::<serde_json::Value>::error(
-        404,
+    Json(ApiResponse::<serde_json::Value>::not_found(
         "消息重新生成待上游支持",
     ))
 }

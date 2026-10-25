@@ -943,8 +943,7 @@ pub async fn reports_center_export(
 ) -> Json<ApiResponse<serde_json::Value>> {
     // 无真实导出引擎：不存在文件生成/落盘与下载通道。此前返回写死的 row_count
     // (156/87/621) 与 placeholder download_url 属假导出，已下线，诚实返回 501。
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         &format!(
             "报表中心导出（{}）尚未实现真实文件生成与落盘下载，已停止返回伪造的 row_count 与 placeholder download_url；待导出引擎接入后再启用。",
             report_type

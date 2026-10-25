@@ -537,8 +537,7 @@ pub async fn allocate_capacity(
     };
 
     if !can_transition(&existing.status, "allocated") {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!("当前状态 {} 不允许分配产能", existing.status),
         ));
     }
@@ -548,8 +547,7 @@ pub async fn allocate_capacity(
     let new_used = current_used + req.hours.unwrap_or(0.0);
 
     if new_used > available {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!(
                 "分配工时 {} 超过可用工时 {}（当前已用 {}）",
                 new_used, available, current_used
@@ -622,8 +620,7 @@ pub async fn release_capacity(
     };
 
     if !can_transition(&existing.status, "released") {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!("当前状态 {} 不允许释放产能", existing.status),
         ));
     }
@@ -701,8 +698,7 @@ pub async fn maintenance_capacity(
     };
 
     if !can_transition(&existing.status, target_status) {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!(
                 "当前状态 {} 不允许切换到 {}",
                 existing.status, target_status
@@ -819,8 +815,7 @@ pub async fn submit_capacity(
     };
 
     if !can_transition(&existing.status, "allocated") {
-        return Json(ApiResponse::error(
-            409,
+        return Json(ApiResponse::conflict(
             &format!("当前状态 {} 不允许提交产能", existing.status),
         ));
     }

@@ -1002,8 +1002,7 @@ pub async fn export_projects(
         None => {
             return (
                 [(header::CONTENT_TYPE, "application/json")],
-                Json(ApiResponse::<&str>::error(
-                    500,
+                Json(ApiResponse::<&str>::server_error(
                     "rls transaction unavailable",
                 )),
             )

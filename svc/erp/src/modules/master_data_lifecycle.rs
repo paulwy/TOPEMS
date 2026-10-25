@@ -511,8 +511,7 @@ pub async fn cancel_destruction(
     match row {
         Ok(Some(existing)) => {
             if existing.status != "pending_destruction" {
-                return Json(ApiResponse::error(
-                    400,
+                return Json(ApiResponse::bad_request(
                     "只有待销毁状态的主数据才能取消销毁计划",
                 ));
             }

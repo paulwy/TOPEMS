@@ -1309,8 +1309,7 @@ pub async fn create_approval_handler(
     let service = MasterDataService::new(state.pool.clone());
 
     if !requires_approval(&req.domain) {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!("域 {} 不需要审批", req.domain),
         ));
     }

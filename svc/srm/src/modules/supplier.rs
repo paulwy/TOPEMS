@@ -282,8 +282,7 @@ pub async fn list_suppliers(
         }
         Err(e) => {
             tracing::error!("获取供应商列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取供应商列表失败",
             ))
         }
@@ -331,8 +330,7 @@ pub async fn create_supplier(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.supplier_no.is_empty() || req.name.is_empty() {
-        return Json(ApiResponse::<Supplier>::error(
-            400,
+        return Json(ApiResponse::<Supplier>::bad_request(
             "供应商编号和名称不能为空",
         ));
     }
@@ -1151,14 +1149,12 @@ pub async fn get_supplier_performance(
     let supplier = match supplier_result {
         Ok(Some(s)) => s,
         Ok(None) => {
-            return Json(ApiResponse::<SupplierPerformance>::error(
-                404,
+            return Json(ApiResponse::<SupplierPerformance>::not_found(
                 "供应商不存在",
             ))
         }
         Err(_) => {
-            return Json(ApiResponse::<SupplierPerformance>::error(
-                500,
+            return Json(ApiResponse::<SupplierPerformance>::server_error(
                 "查询供应商失败",
             ))
         }

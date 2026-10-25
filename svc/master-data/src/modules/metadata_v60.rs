@@ -1276,8 +1276,7 @@ pub async fn get_current_stage(
             ))
         }
         Ok(None) => Json(ApiResponse::not_found("未找到实体的生命周期信息")),
-        Err(e) => Json(ApiResponse::error(
-            500,
+        Err(e) => Json(ApiResponse::server_error(
             &format!("查询生命周期阶段失败: {e}"),
         )),
     }
@@ -1314,8 +1313,7 @@ pub async fn transition_stage(
         Ok(Some(r)) => parse_lifecycle_stage(&r.get::<String, _>("stage")),
         Ok(None) => None,
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
+            return Json(ApiResponse::server_error(
                 &format!("查询生命周期阶段失败: {e}"),
             ))
         }
@@ -1341,8 +1339,7 @@ pub async fn transition_stage(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(
-            500,
+        return Json(ApiResponse::server_error(
             &format!("更新生命周期阶段失败: {e}"),
         ));
     }
@@ -1362,8 +1359,7 @@ pub async fn transition_stage(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(
-            500,
+        return Json(ApiResponse::server_error(
             &format!("写入生命周期历史失败: {e}"),
         ));
     }
@@ -1398,8 +1394,7 @@ pub async fn get_lifecycle_history(
     let history: Vec<LifecycleHistory> = match rows {
         Ok(r) => r.iter().map(lifecycle_history_from_row).collect(),
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
+            return Json(ApiResponse::server_error(
                 &format!("查询生命周期历史失败: {e}"),
             ))
         }
@@ -1450,8 +1445,7 @@ pub async fn create_policy(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(
-            500,
+        return Json(ApiResponse::server_error(
             &format!("创建生命周期策略失败: {e}"),
         ));
     }
@@ -1483,8 +1477,7 @@ pub async fn get_policies(
     let policies: Vec<LifecyclePolicy> = match rows {
         Ok(r) => r.iter().map(lifecycle_policy_from_row).collect(),
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
+            return Json(ApiResponse::server_error(
                 &format!("查询生命周期策略失败: {e}"),
             ))
         }
@@ -1514,8 +1507,7 @@ pub async fn auto_transition(
     let policies: Vec<LifecyclePolicy> = match policy_rows {
         Ok(r) => r.iter().map(lifecycle_policy_from_row).collect(),
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
+            return Json(ApiResponse::server_error(
                 &format!("查询生命周期策略失败: {e}"),
             ))
         }
@@ -1538,8 +1530,7 @@ pub async fn auto_transition(
             })
             .collect(),
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
+            return Json(ApiResponse::server_error(
                 &format!("查询生命周期阶段失败: {e}"),
             ))
         }
@@ -1585,8 +1576,7 @@ pub async fn auto_transition(
                             .execute(&state.db)
                             .await
                             {
-                                return Json(ApiResponse::error(
-                                    500,
+                                return Json(ApiResponse::server_error(
                                     &format!("更新生命周期阶段失败: {e}"),
                                 ));
                             }
@@ -1606,8 +1596,7 @@ pub async fn auto_transition(
                             .execute(&state.db)
                             .await
                             {
-                                return Json(ApiResponse::error(
-                                    500,
+                                return Json(ApiResponse::server_error(
                                     &format!("写入生命周期历史失败: {e}"),
                                 ));
                             }
@@ -1661,8 +1650,7 @@ pub async fn get_lifecycle_dashboard(
             })
             .collect(),
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
+            return Json(ApiResponse::server_error(
                 &format!("查询生命周期阶段失败: {e}"),
             ))
         }
@@ -1681,8 +1669,7 @@ pub async fn get_lifecycle_dashboard(
     let history: Vec<LifecycleHistory> = match hist_rows {
         Ok(r) => r.iter().map(lifecycle_history_from_row).collect(),
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
+            return Json(ApiResponse::server_error(
                 &format!("查询生命周期历史失败: {e}"),
             ))
         }
@@ -1746,8 +1733,7 @@ pub async fn bulk_transition(
             Ok(Some(r)) => parse_lifecycle_stage(&r.get::<String, _>("stage")),
             Ok(None) => None,
             Err(e) => {
-                return Json(ApiResponse::error(
-                    500,
+                return Json(ApiResponse::server_error(
                     &format!("查询生命周期阶段失败: {e}"),
                 ))
             }
@@ -1773,8 +1759,7 @@ pub async fn bulk_transition(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::error(
-                500,
+            return Json(ApiResponse::server_error(
                 &format!("更新生命周期阶段失败: {e}"),
             ));
         }
@@ -1794,8 +1779,7 @@ pub async fn bulk_transition(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::error(
-                500,
+            return Json(ApiResponse::server_error(
                 &format!("写入生命周期历史失败: {e}"),
             ));
         }

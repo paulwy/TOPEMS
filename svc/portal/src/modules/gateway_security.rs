@@ -1380,8 +1380,7 @@ pub async fn validate_token_handler(
             if result.valid {
                 Json(ApiResponse::success(result, "Token 验证通过"))
             } else {
-                Json(ApiResponse::error(
-                    401,
+                Json(ApiResponse::unauthorized(
                     result.reason.as_deref().unwrap_or("Token 验证失败"),
                 ))
             }

@@ -193,8 +193,7 @@ pub async fn create_bid_request(
     });
 
     if title.is_empty() {
-        return Json(ApiResponse::<serde_json::Value>::error(
-            400,
+        return Json(ApiResponse::<serde_json::Value>::bad_request(
             "询价标题不能为空",
         ));
     }
@@ -251,8 +250,7 @@ pub async fn create_bid_request(
         }
         Err(e) => {
             tracing::error!("创建询价请求失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "创建询价请求失败",
             ))
         }
@@ -294,8 +292,7 @@ pub async fn get_bid_request(
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "询价请求ID格式错误",
             ));
         }
@@ -340,14 +337,12 @@ pub async fn get_bid_request(
             });
             Json(ApiResponse::success(data, "获取询价请求成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::not_found(
             "询价请求不存在或已删除",
         )),
         Err(e) => {
             tracing::error!("获取询价请求失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取询价请求失败",
             ))
         }
@@ -377,8 +372,7 @@ pub async fn update_bid_request(
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "询价请求ID格式错误",
             ));
         }
@@ -446,14 +440,12 @@ pub async fn update_bid_request(
             });
             Json(ApiResponse::success(data, "更新询价请求成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::not_found(
             "询价请求不存在或已删除",
         )),
         Err(e) => {
             tracing::error!("更新询价请求失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "更新询价请求失败",
             ))
         }
@@ -482,8 +474,7 @@ pub async fn delete_bid_request(
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "询价请求ID格式错误",
             ));
         }
@@ -521,14 +512,12 @@ pub async fn delete_bid_request(
                 "删除询价请求成功",
             ))
         }
-        Ok(_) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Ok(_) => Json(ApiResponse::<serde_json::Value>::not_found(
             "询价请求不存在或已删除",
         )),
         Err(e) => {
             tracing::error!("删除询价请求失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "删除询价请求失败",
             ))
         }
@@ -658,8 +647,7 @@ pub async fn create_bid(
     let request_uuid = match Uuid::parse_str(&request_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "询价请求ID格式错误",
             ));
         }
@@ -694,8 +682,7 @@ pub async fn create_bid(
         .unwrap_or("CNY");
 
     if supplier_id.is_empty() {
-        return Json(ApiResponse::<serde_json::Value>::error(
-            400,
+        return Json(ApiResponse::<serde_json::Value>::bad_request(
             "供应商ID不能为空",
         ));
     }
@@ -703,8 +690,7 @@ pub async fn create_bid(
     let supplier_uuid = match Uuid::parse_str(&supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "供应商ID格式错误",
             ));
         }
@@ -795,8 +781,7 @@ pub async fn get_bid(
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "报价ID格式错误",
             ));
         }
@@ -844,8 +829,7 @@ pub async fn get_bid(
             });
             Json(ApiResponse::success(data, "获取报价成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::not_found(
             "报价不存在或已删除",
         )),
         Err(e) => {
@@ -878,8 +862,7 @@ pub async fn update_bid(
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "报价ID格式错误",
             ));
         }
@@ -949,8 +932,7 @@ pub async fn update_bid(
             });
             Json(ApiResponse::success(data, "更新报价成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::not_found(
             "报价不存在或已删除",
         )),
         Err(e) => {
@@ -982,8 +964,7 @@ pub async fn delete_bid(
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "报价ID格式错误",
             ));
         }
@@ -1019,8 +1000,7 @@ pub async fn delete_bid(
 
             Json(ApiResponse::success(serde_json::json!({}), "删除报价成功"))
         }
-        Ok(_) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Ok(_) => Json(ApiResponse::<serde_json::Value>::not_found(
             "报价不存在或已删除",
         )),
         Err(e) => {
@@ -1066,8 +1046,7 @@ pub async fn get_bid_comparison(
     let request_uuid = match Uuid::parse_str(&request_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "询价请求ID格式错误",
             ));
         }
@@ -1148,8 +1127,7 @@ pub async fn get_bid_comparison(
         }
         Err(e) => {
             tracing::error!("获取报价对比失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取报价对比失败",
             ))
         }

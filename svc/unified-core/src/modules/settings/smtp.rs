@@ -230,16 +230,14 @@ pub async fn test_smtp_config(
                         cfg
                     }
                     Err(_) => {
-                        return Json(ApiResponse::error(
-                            404,
+                        return Json(ApiResponse::not_found(
                             "未找到已保存的 SMTP 配置，请先保存或提供内联配置",
                         ));
                     }
                 }
             }
             _ => {
-                return Json(ApiResponse::error(
-                    404,
+                return Json(ApiResponse::not_found(
                     "未找到已保存的 SMTP 配置，请先保存或提供内联配置",
                 ));
             }

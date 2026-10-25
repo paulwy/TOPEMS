@@ -156,8 +156,7 @@ pub async fn create_document_relation(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<DocumentRelation>::error(
-                    500,
+                Json(ApiResponse::<DocumentRelation>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -236,8 +235,7 @@ pub async fn get_document_relation(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<DocumentRelation>::error(
-                    500,
+                Json(ApiResponse::<DocumentRelation>::server_error(
                     "rls transaction unavailable",
                 )),
             )

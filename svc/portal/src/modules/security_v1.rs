@@ -1105,8 +1105,7 @@ pub async fn validate_query_handler(
             if result.valid {
                 Json(ApiResponse::success(result, "查询验证通过"))
             } else {
-                Json(ApiResponse::error(
-                    400,
+                Json(ApiResponse::bad_request(
                     result.reason.as_deref().unwrap_or("查询验证失败"),
                 ))
             }

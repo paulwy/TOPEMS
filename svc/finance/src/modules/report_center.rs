@@ -856,8 +856,7 @@ pub async fn get_enhanced_cash_flow_handler(
     Extension(_claims): Extension<Claims>,
     Path(_period): Path<String>,
 ) -> ApiResponse<CashFlowStatementEnhanced> {
-    ApiResponse::error(
-        501,
+    ApiResponse::not_implemented(
         "现金流量表增强版（经营/投资/筹资活动分类、间接法调整项与现金流比率）暂无真实账务分类数据源，已停止返回模拟报表；待现金流分类凭证数据落库后再启用。",
     )
 }
@@ -927,8 +926,7 @@ pub async fn get_comparative_report_handler(
     Extension(_claims): Extension<Claims>,
     Path(_period): Path<String>,
 ) -> ApiResponse<ComparativeReport> {
-    ApiResponse::error(
-        501,
+    ApiResponse::not_implemented(
         "多期对比报表需要多期真实账务汇总（含现金流分类），当前无该数据源，已停止返回按固定比例缩放的模拟对比。",
     )
 }
@@ -939,8 +937,7 @@ pub async fn export_report_handler(
     Extension(_claims): Extension<Claims>,
     Json(_req): Json<ExportReportRequest>,
 ) -> ApiResponse<ExportReportResponse> {
-    ApiResponse::error(
-        501,
+    ApiResponse::not_implemented(
         "报表导出尚未实现真实文件生成与存储，已下线模拟导出（不再返回伪造的文件大小与下载地址）。",
     )
 }

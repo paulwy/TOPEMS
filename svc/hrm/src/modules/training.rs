@@ -122,8 +122,7 @@ pub async fn list_plans(
         }
         Err(e) => {
             tracing::error!("获取培训计划列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取培训计划列表失败",
             ))
         }
@@ -249,14 +248,12 @@ pub async fn get_plan(
                 "获取培训计划成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::<serde_json::Value>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<serde_json::Value>::not_found(
             "培训计划不存在",
         )),
         Err(e) => {
             tracing::error!("获取培训计划失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取培训计划失败",
             ))
         }
@@ -440,8 +437,7 @@ pub async fn list_courses(
         }
         Err(e) => {
             tracing::error!("获取课程列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取课程列表失败",
             ))
         }
@@ -752,8 +748,7 @@ pub async fn list_records(
         }
         Err(e) => {
             tracing::error!("获取培训记录列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取培训记录列表失败",
             ))
         }
@@ -812,8 +807,7 @@ pub async fn create_record(
         }
         Err(e) => {
             tracing::error!("创建培训记录失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::error(
-                500,
+            Json(ApiResponse::<TrainingRecord>::server_error(
                 "培训记录创建失败",
             ))
         }
@@ -936,8 +930,7 @@ pub async fn get_record(
         Ok(None) => Json(ApiResponse::<TrainingRecord>::not_found("培训记录不存在")),
         Err(e) => {
             tracing::error!("获取培训记录失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::error(
-                500,
+            Json(ApiResponse::<TrainingRecord>::server_error(
                 "获取培训记录失败",
             ))
         }
@@ -997,8 +990,7 @@ pub async fn update_record(
         Ok(None) => Json(ApiResponse::<TrainingRecord>::not_found("培训记录不存在")),
         Err(e) => {
             tracing::error!("更新培训记录失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::error(
-                500,
+            Json(ApiResponse::<TrainingRecord>::server_error(
                 "培训记录更新失败",
             ))
         }
@@ -1107,8 +1099,7 @@ pub async fn get_course_records(
         }
         Err(e) => {
             tracing::error!("获取课程培训记录失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取课程培训记录失败",
             ))
         }
@@ -1182,8 +1173,7 @@ pub async fn get_employee_records(
         }
         Err(e) => {
             tracing::error!("获取员工培训记录失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取员工培训记录失败",
             ))
         }
@@ -1234,8 +1224,7 @@ async fn set_plan_status(
         Ok(None) => Json(ApiResponse::<TrainingPlan>::not_found("培训计划不存在")),
         Err(e) => {
             tracing::error!("更新培训计划状态失败: {}", e);
-            Json(ApiResponse::<TrainingPlan>::error(
-                500,
+            Json(ApiResponse::<TrainingPlan>::server_error(
                 "更新培训计划状态失败",
             ))
         }
@@ -1307,8 +1296,7 @@ pub async fn complete_record(
         Ok(None) => Json(ApiResponse::<TrainingRecord>::not_found("培训记录不存在")),
         Err(e) => {
             tracing::error!("更新培训记录状态失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::error(
-                500,
+            Json(ApiResponse::<TrainingRecord>::server_error(
                 "更新培训记录状态失败",
             ))
         }

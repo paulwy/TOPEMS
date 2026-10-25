@@ -339,8 +339,7 @@ pub async fn get_report_trend(
     let start = match params.period_from.as_deref().and_then(parse_period) {
         Some(p) => p,
         None => {
-            return Json(ApiResponse::error(
-                400,
+            return Json(ApiResponse::bad_request(
                 "period_from 格式无效，应为 YYYY-MM",
             ))
         }

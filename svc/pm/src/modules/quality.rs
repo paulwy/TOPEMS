@@ -88,8 +88,7 @@ async fn get_project_quality_checks(
         Ok(c) => Json(ApiResponse::success(c, "获取质量检查列表成功")),
         Err(e) => {
             tracing::error!("获取质量检查失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取质量检查失败",
             ))
         }
@@ -121,14 +120,12 @@ async fn get_quality_check(
 
     match check {
         Ok(c) => Json(ApiResponse::success(c, "获取质量检查详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "质量检查不存在",
         )),
         Err(e) => {
             tracing::error!("获取质量检查失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取质量检查失败",
             ))
         }
@@ -172,8 +169,7 @@ async fn create_quality_check(
         Ok(c) => Json(ApiResponse::success(c, "创建质量检查成功")),
         Err(e) => {
             tracing::error!("创建质量检查失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建质量检查失败",
             ))
         }
@@ -221,14 +217,12 @@ async fn update_quality_check(
 
     match check {
         Ok(c) => Json(ApiResponse::success(c, "更新质量检查成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "质量检查不存在",
         )),
         Err(e) => {
             tracing::error!("更新质量检查失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "更新质量检查失败",
             ))
         }
@@ -263,8 +257,7 @@ async fn get_project_defects(
         Ok(d) => Json(ApiResponse::success(d, "获取缺陷列表成功")),
         Err(e) => {
             tracing::error!("获取缺陷失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取缺陷失败",
             ))
         }
@@ -294,14 +287,12 @@ async fn get_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<Ap
 
     match defect {
         Ok(d) => Json(ApiResponse::success(d, "获取缺陷详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "缺陷不存在",
         )),
         Err(e) => {
             tracing::error!("获取缺陷详情失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取缺陷失败",
             ))
         }
@@ -343,8 +334,7 @@ async fn create_defect(
         Ok(d) => Json(ApiResponse::success(d, "创建缺陷成功")),
         Err(e) => {
             tracing::error!("创建缺陷失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建缺陷失败",
             ))
         }
@@ -385,14 +375,12 @@ async fn update_defect(
 
     match defect {
         Ok(d) => Json(ApiResponse::success(d, "更新缺陷成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "缺陷不存在",
         )),
         Err(e) => {
             tracing::error!("更新缺陷失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "更新缺陷失败",
             ))
         }
@@ -410,14 +398,12 @@ async fn delete_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除缺陷成功")),
-        Ok(_) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Ok(_) => Json(ApiResponse::not_found(
             "缺陷不存在",
         )),
         Err(e) => {
             tracing::error!("删除缺陷失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "删除缺陷失败",
             ))
         }

@@ -590,8 +590,7 @@ pub async fn trigger_compensation(
     if jobs[job_pos].status != SyncStatus::Failed
         && jobs[job_pos].status != SyncStatus::PartiallyFailed
     {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             "只有失败或部分失败的任务才能触发补偿",
         ));
     }

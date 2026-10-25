@@ -52,14 +52,12 @@ pub async fn upload(
             // 外层 timeout Result<_, Elapsed>；内层 multipart Result<Option<Field>, MultipartError>
             Ok(Ok(Some(field))) => Some(field),
             Ok(Ok(None)) | Ok(Err(_)) => {
-                return Json(ApiResponse::<UploadDocumentResponse>::error(
-                    400,
+                return Json(ApiResponse::<UploadDocumentResponse>::bad_request(
                     "malformed multipart body: no form field",
                 ));
             }
             Err(_) => {
-                return Json(ApiResponse::<UploadDocumentResponse>::error(
-                    400,
+                return Json(ApiResponse::<UploadDocumentResponse>::bad_request(
                     "multipart handshake timeout: no field within 5s",
                 ));
             }
@@ -157,8 +155,7 @@ pub async fn upload(
         {
             tracing::warn!("ai audit failed: {e}");
         }
-        return Json(ApiResponse::<UploadDocumentResponse>::error(
-            400,
+        return Json(ApiResponse::<UploadDocumentResponse>::bad_request(
             "未提供文件",
         ));
     }
@@ -302,8 +299,7 @@ pub async fn process(
                 "文档处理完成",
             ))
         }
-        Ok(None) => Json(ApiResponse::<ProcessDocumentResponse>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<ProcessDocumentResponse>::not_found(
             "文档不存在",
         )),
         Err(e) => Json(ApiResponse::<ProcessDocumentResponse>::from(
@@ -321,8 +317,7 @@ pub async fn get(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state.document_service.get_document(id, tenant_id).await {
         Ok(Some(doc)) => Json(ApiResponse::success(doc, "Success")),
-        Ok(None) => Json(ApiResponse::<crate::services::vector::Document>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<crate::services::vector::Document>::not_found(
             "文档不存在",
         )),
         Err(e) => Json(ApiResponse::<crate::services::vector::Document>::from(
@@ -526,8 +521,7 @@ pub async fn extract(
             };
 
             if chunks.is_empty() {
-                return Json(ApiResponse::<ExtractDocumentResponse>::error(
-                    400,
+                return Json(ApiResponse::<ExtractDocumentResponse>::bad_request(
                     "文档内容为空",
                 ));
             }
@@ -541,8 +535,7 @@ pub async fn extract(
             let config = match state.document_service.get_qa_config() {
                 Some(c) => c,
                 None => {
-                    return Json(ApiResponse::<ExtractDocumentResponse>::error(
-                        500,
+                    return Json(ApiResponse::<ExtractDocumentResponse>::server_error(
                         "文档问答配置未初始化",
                     ));
                 }
@@ -658,8 +651,7 @@ pub async fn extract(
                 "Success",
             ))
         }
-        Ok(None) => Json(ApiResponse::<ExtractDocumentResponse>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<ExtractDocumentResponse>::not_found(
             "文档不存在",
         )),
         Err(e) => Json(ApiResponse::<ExtractDocumentResponse>::from(
@@ -771,8 +763,7 @@ pub async fn extract_key_points(
             // 文档不存在 / 无内容（RowNotFound 语义）→ 内层 404，而非 500（web 契约收口）
             let msg = e.to_string();
             if msg.contains("文档内容为空") || msg.contains("文档不存在") {
-                Json(ApiResponse::<ExtractKeyPointsResponse>::error(
-                    404,
+                Json(ApiResponse::<ExtractKeyPointsResponse>::not_found(
                     "文档不存在",
                 ))
             } else {

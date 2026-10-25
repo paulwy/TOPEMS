@@ -61,8 +61,7 @@ async fn get_project_notifications(
         Ok(n) => Json(ApiResponse::success(n, "获取通知列表成功")),
         Err(e) => {
             tracing::error!("获取通知失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取通知失败",
             ))
         }
@@ -102,8 +101,7 @@ async fn create_notification(
         Ok(n) => Json(ApiResponse::success(n, "创建通知成功")),
         Err(e) => {
             tracing::error!("创建通知失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建通知失败",
             ))
         }
@@ -138,8 +136,7 @@ async fn get_project_settings(
         Ok(s) => Json(ApiResponse::success(s, "获取通知设置成功")),
         Err(e) => {
             tracing::error!("获取通知设置失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取通知设置失败",
             ))
         }
@@ -176,8 +173,7 @@ async fn create_setting(
         Ok(s) => Json(ApiResponse::success(s, "创建通知设置成功")),
         Err(e) => {
             tracing::error!("创建通知设置失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建通知设置失败",
             ))
         }
@@ -221,14 +217,12 @@ async fn update_setting(
 
     match setting {
         Ok(s) => Json(ApiResponse::success(s, "更新通知设置成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "通知设置不存在",
         )),
         Err(e) => {
             tracing::error!("更新通知设置失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "更新通知设置失败",
             ))
         }

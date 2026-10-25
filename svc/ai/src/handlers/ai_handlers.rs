@@ -29,8 +29,7 @@ pub async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AI
     let config = match CONFIG.get() {
         Some(c) => c,
         None => {
-            return Json(ApiResponse::<AIGenerateResponse>::error(
-                500,
+            return Json(ApiResponse::<AIGenerateResponse>::server_error(
                 "AI service not initialized",
             ))
         }
@@ -38,8 +37,7 @@ pub async fn generate(Json(req): Json<AIGenerateRequest>) -> Json<ApiResponse<AI
     let client = match CLIENT.get() {
         Some(c) => c,
         None => {
-            return Json(ApiResponse::<AIGenerateResponse>::error(
-                500,
+            return Json(ApiResponse::<AIGenerateResponse>::server_error(
                 "AI client not initialized",
             ))
         }
@@ -111,8 +109,7 @@ pub async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<Vali
     let config = match CONFIG.get() {
         Some(c) => c,
         None => {
-            return Json(ApiResponse::<ValidateResponse>::error(
-                500,
+            return Json(ApiResponse::<ValidateResponse>::server_error(
                 "AI service not initialized",
             ))
         }
@@ -120,8 +117,7 @@ pub async fn validate(Json(req): Json<ValidateRequest>) -> Json<ApiResponse<Vali
     let client = match CLIENT.get() {
         Some(c) => c,
         None => {
-            return Json(ApiResponse::<ValidateResponse>::error(
-                500,
+            return Json(ApiResponse::<ValidateResponse>::server_error(
                 "AI client not initialized",
             ))
         }
@@ -279,8 +275,7 @@ pub async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<Comp
     let config = match CONFIG.get() {
         Some(c) => c,
         None => {
-            return Json(ApiResponse::<CompleteResponse>::error(
-                500,
+            return Json(ApiResponse::<CompleteResponse>::server_error(
                 "AI service not initialized",
             ))
         }
@@ -288,8 +283,7 @@ pub async fn complete(Json(req): Json<CompleteRequest>) -> Json<ApiResponse<Comp
     let client = match CLIENT.get() {
         Some(c) => c,
         None => {
-            return Json(ApiResponse::<CompleteResponse>::error(
-                500,
+            return Json(ApiResponse::<CompleteResponse>::server_error(
                 "AI client not initialized",
             ))
         }
@@ -412,8 +406,7 @@ pub async fn summarize(Json(req): Json<SummarizeRequest>) -> Json<ApiResponse<Su
     let config = match CONFIG.get() {
         Some(c) => c,
         None => {
-            return Json(ApiResponse::<SummarizeResponse>::error(
-                500,
+            return Json(ApiResponse::<SummarizeResponse>::server_error(
                 "AI service not initialized",
             ))
         }
@@ -421,8 +414,7 @@ pub async fn summarize(Json(req): Json<SummarizeRequest>) -> Json<ApiResponse<Su
     let client = match CLIENT.get() {
         Some(c) => c,
         None => {
-            return Json(ApiResponse::<SummarizeResponse>::error(
-                500,
+            return Json(ApiResponse::<SummarizeResponse>::server_error(
                 "AI client not initialized",
             ))
         }
@@ -560,8 +552,7 @@ pub async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse
     let config = match CONFIG.get() {
         Some(c) => c,
         None => {
-            return Json(ApiResponse::<ChatResponse>::error(
-                500,
+            return Json(ApiResponse::<ChatResponse>::server_error(
                 "AI service not initialized",
             ))
         }
@@ -569,8 +560,7 @@ pub async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse
     let client = match CLIENT.get() {
         Some(c) => c,
         None => {
-            return Json(ApiResponse::<ChatResponse>::error(
-                500,
+            return Json(ApiResponse::<ChatResponse>::server_error(
                 "AI client not initialized",
             ))
         }
@@ -675,8 +665,7 @@ pub async fn ai_search(Json(req): Json<AiSearchRequest>) -> Json<ApiResponse<AiS
             Ok(d) => d,
             Err(e) => {
                 tracing::error!("Failed to lock documents: {}", e);
-                return Json(ApiResponse::<AiSearchResponse>::error(
-                    500,
+                return Json(ApiResponse::<AiSearchResponse>::server_error(
                     "Internal server error",
                 ));
             }

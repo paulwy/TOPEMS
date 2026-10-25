@@ -159,8 +159,7 @@ pub async fn list_leaves(
             Ok(eid) => eid,
             Err(msg) => {
                 tracing::error!("解析员工信息失败: {}", msg);
-                return Json(ApiResponse::<serde_json::Value>::error(
-                    500,
+                return Json(ApiResponse::<serde_json::Value>::server_error(
                     "解析员工信息失败",
                 ));
             }
@@ -214,8 +213,7 @@ pub async fn list_leaves(
         }
         Err(e) => {
             tracing::error!("查询请假列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询请假列表失败",
             ))
         }
@@ -453,8 +451,7 @@ pub async fn update_leave(
             }
             Json(ApiResponse::success(leave, "请假申请更新成功"))
         }
-        Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<LeaveRequest>::not_found(
             "请假申请不存在或已处理",
         )),
         Err(e) => {
@@ -608,8 +605,7 @@ pub async fn approve_leave(
             }
             Json(ApiResponse::success(leave, "请假已批准"))
         }
-        Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<LeaveRequest>::not_found(
             "请假申请不存在或已处理",
         )),
         Err(e) => {
@@ -674,8 +670,7 @@ pub async fn reject_leave(
             }
             Json(ApiResponse::success(leave, "请假已拒绝"))
         }
-        Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<LeaveRequest>::not_found(
             "请假申请不存在或已处理",
         )),
         Err(e) => {

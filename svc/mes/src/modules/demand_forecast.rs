@@ -469,8 +469,7 @@ pub async fn calculate_forecast(
     };
 
     if !can_transition(&existing.status, "calculated") {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!("当前状态 {} 不允许计算预测", existing.status),
         ));
     }
@@ -541,8 +540,7 @@ pub async fn validate_forecast(
     };
 
     if !can_transition(&existing.status, "validated") {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!("当前状态 {} 不允许验证预测", existing.status),
         ));
     }
@@ -611,8 +609,7 @@ pub async fn adopt_forecast(
     };
 
     if !can_transition(&existing.status, "adopted") {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!("当前状态 {} 不允许采纳预测", existing.status),
         ));
     }

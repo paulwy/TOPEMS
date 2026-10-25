@@ -441,8 +441,7 @@ pub async fn submit_result(
             // 等于总量为允许边界（全数合格/全数不合格）。
             let total_qty: BigDecimal = row.get("quantity");
             if &req.qualified_quantity + &req.unqualified_quantity > total_qty {
-                return Json(ApiResponse::error(
-                    400,
+                return Json(ApiResponse::bad_request(
                     "合格数与不合格数之和不能大于检验总量",
                 ));
             }

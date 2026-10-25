@@ -185,8 +185,7 @@ pub async fn get_today_production_output(
     let operator = match query.operator {
         Some(op) => op,
         None => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                400,
+            return Json(ApiResponse::<serde_json::Value>::bad_request(
                 "operator 参数是必需的",
             ));
         }

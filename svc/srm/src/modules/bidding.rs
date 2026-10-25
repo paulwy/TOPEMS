@@ -131,8 +131,7 @@ pub async fn list_biddings(
         }
         Err(e) => {
             tracing::error!("获取招标列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取招标列表失败",
             ))
         }
@@ -477,8 +476,7 @@ pub async fn publish_bidding(
             }
             Json(ApiResponse::success(bidding, "招标发布成功"))
         }
-        Ok(None) => Json(ApiResponse::<Bidding>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<Bidding>::not_found(
             "招标不存在或当前状态不允许发布",
         )),
         Err(e) => {
@@ -550,8 +548,7 @@ pub async fn open_bidding(
             }
             Json(ApiResponse::success(bidding, "开标成功"))
         }
-        Ok(None) => Json(ApiResponse::<Bidding>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<Bidding>::not_found(
             "招标不存在或当前状态不允许开标",
         )),
         Err(e) => {
@@ -622,8 +619,7 @@ pub async fn evaluate_bidding(
             }
             Json(ApiResponse::success(bidding, "评标完成"))
         }
-        Ok(None) => Json(ApiResponse::<Bidding>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<Bidding>::not_found(
             "招标不存在或当前状态不允许评标",
         )),
         Err(e) => {
@@ -776,8 +772,7 @@ pub async fn list_bidding_suppliers(
         }
         Err(e) => {
             tracing::error!("获取参与供应商失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取参与供应商失败",
             ))
         }

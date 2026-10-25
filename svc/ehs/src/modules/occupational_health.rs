@@ -451,8 +451,7 @@ pub async fn create_exam_plan(
 ) -> Json<ApiResponse<HealthExamPlan>> {
     // 真表 ehs.qa_ehs_health_exam_plans 当前空表，写接口假装成功会制造假数据。
     tracing::warn!("Exam plan create called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检计划数据源尚未启用，写入操作暂不可用",
     ))
 }
@@ -548,8 +547,7 @@ pub async fn update_exam_plan(
     Json(_req): Json<UpdateExamPlanRequest>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
     tracing::warn!("Exam plan update called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检计划数据源尚未启用，更新操作暂不可用",
     ))
 }
@@ -572,8 +570,7 @@ pub async fn delete_exam_plan(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("Exam plan delete called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检计划数据源尚未启用，删除操作暂不可用",
     ))
 }
@@ -675,8 +672,7 @@ pub async fn create_exam_record(
     Json(_req): Json<CreateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
     tracing::warn!("Exam record create called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检记录数据源尚未启用，写入操作暂不可用",
     ))
 }
@@ -790,8 +786,7 @@ pub async fn update_exam_record(
     Json(_req): Json<UpdateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
     tracing::warn!("Exam record update called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检记录数据源尚未启用，更新操作暂不可用",
     ))
 }
@@ -814,8 +809,7 @@ pub async fn delete_exam_record(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("Exam record delete called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检记录数据源尚未启用，删除操作暂不可用",
     ))
 }
@@ -901,8 +895,7 @@ pub async fn create_contraindication(
 ) -> Json<ApiResponse<Contraindication>> {
     // ehs.qa_ehs_contraindications 为空表，写接口假装成功会制造假数据；诚实返回 501。
     tracing::warn!("Contraindication create called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "职业禁忌症数据源尚未启用，写入操作暂不可用",
     ))
 }
@@ -995,8 +988,7 @@ pub async fn update_contraindication(
     Json(_req): Json<CreateContraindicationRequest>,
 ) -> Json<ApiResponse<Contraindication>> {
     tracing::warn!("Contraindication update called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "职业禁忌症数据源尚未启用，更新操作暂不可用",
     ))
 }
@@ -1016,8 +1008,7 @@ pub async fn delete_contraindication(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("Contraindication delete called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "职业禁忌症数据源尚未启用，删除操作暂不可用",
     ))
 }

@@ -141,8 +141,7 @@ pub async fn detect_conflicts(
                 .unwrap_or_else(|_| chrono::Utc::now()),
         ),
         _ => {
-            return Json(ApiResponse::error(
-                404,
+            return Json(ApiResponse::not_found(
                 "未找到本地主数据引用，无法检测冲突",
             ));
         }
