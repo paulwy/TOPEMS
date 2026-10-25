@@ -5,7 +5,7 @@
 # 用途：生产/演练环境部署后，验证核心功能链路：
 #   层1（自动断言，全部要求 200/成功）：
 #     A. IAM 登录 → JWT → 受保护 API 抽样（/api/v1/users）
-#     B. 各域服务健康（/api/<域>/health，经 nginx map 路由）
+#     B. 各域服务健康（/api/<域>/health，经 BFF 统一入口 :8099，P0-3 双轨合一已无 nginx map 路由）
 #     C. BI 真实 SQL 执行（/api/bi/datasets/test-sql + /datasets/query）
 #     D. 插件注册/运行时（/api/plugins/health 带 token）
 #   层2（专项指引，依赖生产数据与事件编排，打印执行步骤与期望，

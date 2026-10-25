@@ -11,6 +11,18 @@
 > - 验证：本批 33/33 passed；eslint 0（setup-mocks 被 ignore，测试文件 0 error/warning）；tsc 0；**全量 vitest 463 files / 6198 passed / 1 skipped / 0 failed / 0 errors**；lefthook pre-commit 全绿（含 frontend-typecheck/lint/api-boundary-gate/i18n 多门禁）
 > - 提交：6 commits（setup-mocks fix + 5 测试文件各自独立 commit），HEAD `a1c45e1a2`
 
+## 生产部署就绪核对（2026-10-25）✅ 完成
+
+> 外部阻塞项（生产机实跑）的本地可闭环交付前准备：部署脚本链/单元/nginx/清单四维一致性核对。
+
+- **shellcheck 全链 0/0**：`scripts/deploy/{install,update,rollback,start-production,production-deploy,production-verify,smoke-prod,uninstall,setup-db,service-monitor,domain-start}.sh` + `scripts/dev/health-check.sh` + `scripts/verify-nginx-prod.sh` 13 个脚本 0 error/warning。
+- **systemd 单元 ↔ install.sh 服务清单一一覆盖**：`deploy/systemd/` 29 个 `topems-*.service` ↔ install.sh `SERVICES` 29 项（含 communication/server/search/ticket/tms/monitor/plugin-registry/master-data 补齐组），无缺口。
+- **nginx 端口口径**：`deploy/nginx/topems.conf` upstream `server_service = localhost:8099`，`listen 80/443`，/api/* 直代 BFF :8099（P0-3 双轨合一，原 per-service upstream 与 URI 前缀 map 已移除），与 E3 单上游口径一致。
+- **上机清单引用完整性**：`docs/deploy/production-execution-checklist.md` 引用的脚本/SQL 全部存在（install/update/rollback/smoke-prod/health-check/verify-nginx-prod、`database/scripts/verify_rls_coverage_production.sql`、`scripts/audit/audit-force-rls-no-policy.sql`、`scripts/db/rls-policy-unify.sql`、`scripts/audit/traffic-observe.sh` 等）。
+- **smoke-prod 口径**：凭证强制（--user/--password 或 SMOKE_ADMIN/SMOKE_PASS，无内置默认弱口令）；层1B 走 BFF 聚合面 15 域 `/api/<域>/health`（core erp hrm finance mes qms lims ehs bi pm portal wms scm srm rd）。
+- **唯一漂移已修**：smoke-prod.sh 头注释"经 nginx map 路由"过时（P0-3 已移除 map），改"经 BFF 统一入口 :8099"；bash -n 语法 OK、shellcheck 复跑 0。
+- 结论：生产部署三件套（verify-nginx/health-check/smoke-prod）与 install/update/rollback 链就绪待目标机实跑，无本地可修缺陷。
+
 ## 补测续：crm 客户页（CrmCustomerRedesignPage·redesign 形态 19 hooks）（2026-10-25）✅ 完成
 
 > **crm redesign 形态页补测首例**：CrmCustomerRedesignPage（19 hooks / 1049 行）——useQuery（服务端分页）+ 3 mutations（delete/create/update）+ ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环
