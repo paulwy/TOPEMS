@@ -1266,6 +1266,9 @@ const __statsPageTemplate = ({
   title,
   tables,
   customToolbar,
+  tabs,
+  tabValue,
+  onTabChange,
 }: any) => {
   if (loading) {
     return React.createElement('div', { role: 'progressbar' }, 'Loading...');
@@ -1273,6 +1276,20 @@ const __statsPageTemplate = ({
   const nodes: React.ReactNode[] = [];
   if (title != null) nodes.push(React.createElement('div', { key: '__t' }, title));
   if (customToolbar) nodes.push(React.createElement('div', { key: '__toolbar' }, customToolbar));
+  (tabs ?? []).forEach((t: any, i: number) => {
+    nodes.push(
+      React.createElement(
+        'button',
+        {
+          key: `__tab${i}`,
+          'data-testid': `stat-tab-${t.value}`,
+          'aria-selected': t.value === tabValue,
+          onClick: () => onTabChange?.(t.value),
+        },
+        t.label
+      )
+    );
+  });
   (statCards ?? []).forEach((c: any, i: number) => {
     nodes.push(
       React.createElement(
@@ -1288,7 +1305,7 @@ const __statsPageTemplate = ({
     (tb?.data ?? []).forEach((row: any, ri: number) => {
       (tb?.columns ?? []).forEach((col: any, ci: number) => {
         const cell = col?.render
-          ? col.render(row[col?.field ?? col?.id])
+          ? col.render(row[col?.field ?? col?.id], row)
           : row[col?.field ?? col?.id ?? ''];
         nodes.push(
           React.createElement(

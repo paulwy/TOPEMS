@@ -4454,3 +4454,13 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **PeriodOption 连锁 L1**：远端 a4269700a 删 FinancialReport 死测试后，其唯一引用（测试）消失 → useFinancialReport.ts:1 定义删（保留 TabConfig，detector 未报勿动）。
 - 验证：tsc 0、eslint 全绿（--fix）、erp 相关测试 3/3；重扫 **L1=0、L2=91→88（values 85 + types 3 全保留核销：VoucherItem/ExpandedRowRenderProps/DefectForm）、L3Dead=0**。
 - **unused 主线最终收官**：L1=0、L2 88 全保留登记（34 NavConfig + 34 ModuleConfig + 7 无定义转发 + 6 setup-mocks + 2 内部活引用 + 3 消费核销 type + 其余 values 活数据）、L3 4867 活代码不动。
+## 第三十轮（2026-10-25）：erp 域推进第一波——FinancialReport 区域补测 + 全局 setup-mocks 修复（全量 vitest 0 failed 里程碑）
+- **删 useFinancialReport.ts 死文件**：PeriodOption 删除后 TabConfig 亦 0 消费（grep 全仓无引用，detector 盲区未报，人工核证）→ git rm 整文件。
+- **FinancialReportPage 区域补测**（死测试删除后）：新增 `pages/erp/__tests__/FinancialReportPage.test.tsx` 3 用例——默认资产负债 3 统计卡（¥ 值断言）/切利润表 tab（收入 820,000=800k+20k 汇总、成本 600k、净利 220k）/切现金流量 tab（流入 900k、流出 700k）；mock react-query + financeReportApi + i18n（key 直通）。
+- **全局 setup-mocks.ts 修复 2 处（里程碑级）**：
+  1. `__statsPageTemplate` col.render 调用 `col.render(row[field])` 单参 → 补第二参 row（真实模板签名 render(value, row)）——所有用 render 列回调的页面测试 `row` 为 undefined 崩溃。
+  2. `__statsPageTemplate` 补 tabs/tabValue/onTabChange 渲染（tab 按钮 data-testid `stat-tab-${value}`）——此前 mock 完全忽略 tabs，tab 切换交互无从测试。
+  - **效果**：预存在 vitest 基线 12 failed **全数转绿**（route-nav-alignment/wms-tms-erp-integration 7/ScmWmsSrmComponents FilterHint/AiModelSettings/ErpOperational/FinancialReport i18n 渲染——根因即 mock 单参 bug 与 tabs 缺失）→ **全量 443 文件 / 6040 测试 0 failed**（历史首次全绿）。
+- 验证：tsc 0、eslint 全绿、全量 vitest 443 passed/6040 passed 1 skipped、detector L1=0/L2=88/L3Dead=0（不变）。
+### 状态与下批
+- erp 域推进开启：FinancialReport 区域已补测 + 全局测试基建修复。下批：erp 其他页面测试缺口（25 页仅 1 hook 测试）——Voucher（已有 3 components + 1 hook 测试）优先补组件测试，或 SalesOrder/PurchaseOrder 核心业务页面；也可先做 qms i18n 12 处。
