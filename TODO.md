@@ -1,3 +1,12 @@
+## F10 · 502 语义化补漏 + 演练实例停复（2026-10-26）✅ 完成
+
+> F10 语义构造器最后一块：补齐 502 `bad_gateway`，并停掉演练实例恢复端口。
+
+- **502 语义化补漏（commit `b2180df440`）**：`lib/shared-core/src/response.rs` 新增 `ApiResponse::bad_gateway(502)`（至此 500/400/404/401/403/409/501/**502**/503 构造器全集），单测矩阵补 (502, 网关错误)；`svc/portal/src/modules/monitoring.rs` 1 处 + `bff_finance_integration.rs` 2 处 502 直写 → `bad_gateway`。验证：response 单测 22/22、bff_finance 24/24 passed、cargo check --workspace --tests exit 0。
+- **演练实例停复**：演练 nginx（80/443）kill + BFF topems-server（8099）kill -9 → 三端口全部空闲，环境恢复原状。
+- **R1c 确认**：lib 层 7 依赖（anyhow/sqlx/dashmap/hmac/sha2/thiserror/async-trait）已在 main（`2698954584` + TODO `d9fdfa89cd`），无需重复提交。
+- 工作区状态：**干净**（HEAD==origin/main==`b2180df440`）；并行线 F10 批次（4 shard 4013 + 范本 342 + 跨行 536）与 F11（`9c1d8a9fbf`）全部闭合。
+
 ## 生产 nginx reload · 本机演练闭环（2026-10-26）✅ 完成（演练侧）
 
 > 目标：P-5/P-6 在本机做"校验→reload"一次到位闭环。仓库 conf 为 Linux 生产主 conf（use epoll//run//etc/nginx/www-data/443 证书），本机 macOS 无法原样加载 → 走 runbook §1 演练路径（gen-nginx-drill-conf.sh 生成等价演练 conf，upstream 统一 8099）。
