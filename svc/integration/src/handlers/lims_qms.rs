@@ -137,7 +137,7 @@ pub async fn get_lims_qms_sync(
     .await
     {
         Ok(sync) => Json(ApiResponse::success(sync, "LIMS↔QMS sync found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
             Json(ApiResponse::from(TopemsError::internal(
@@ -180,7 +180,7 @@ pub async fn sync_lims_qms(
     .await
     {
         Ok(s) => s,
-        Err(sqlx::Error::RowNotFound) => return Json(ApiResponse::error(404, "Sync not found")),
+        Err(sqlx::Error::RowNotFound) => return Json(ApiResponse::not_found("Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
             return Json(ApiResponse::from(TopemsError::internal(

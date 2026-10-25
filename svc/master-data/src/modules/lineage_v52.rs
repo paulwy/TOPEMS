@@ -1261,7 +1261,7 @@ pub async fn register_lineage(
             }),
             "血缘关系已注册",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 #[utoipa::path(
@@ -1308,7 +1308,7 @@ pub async fn get_upstream(
 
     let target = match target {
         Some(t) => t,
-        None => return Json(ApiResponse::error(404, "未找到实体")),
+        None => return Json(ApiResponse::not_found("未找到实体")),
     };
 
     let upstream = LineageTracker::get_upstream(&state.db, &target.id, params.depth).await;
@@ -1346,7 +1346,7 @@ pub async fn get_downstream(
 
     let target = match target {
         Some(t) => t,
-        None => return Json(ApiResponse::error(404, "未找到实体")),
+        None => return Json(ApiResponse::not_found("未找到实体")),
     };
 
     let downstream = LineageTracker::get_downstream(&state.db, &target.id, params.depth).await;
@@ -1380,7 +1380,7 @@ pub async fn export_lineage(
                 "血缘图谱导出成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1400,7 +1400,7 @@ pub async fn delete_lineage(
 ) -> Json<ApiResponse<()>> {
     match LineageTracker::delete_node(&state.db, &req.node_id).await {
         Ok(()) => Json(ApiResponse::success_no_data("血缘节点已删除")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1430,7 +1430,7 @@ pub async fn analyze_impact(
 
     match ImpactAnalyzer::analyze(&state.db, &analysis_req).await {
         Ok(result) => Json(ApiResponse::success(result, "影响分析完成")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1474,7 +1474,7 @@ pub async fn simulate_change(
     let change_type = change_type_from_str(&req.change_type);
     match ImpactAnalyzer::simulate(&state.db, req.entity_type, req.entity_id, change_type).await {
         Ok(simulation) => Json(ApiResponse::success(simulation, "变更模拟完成")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1495,7 +1495,7 @@ pub async fn get_affected_scope(
     match ImpactAnalyzer::get_affected_scope(&state.db, params.entity_type, params.entity_id).await
     {
         Ok(scope) => Json(ApiResponse::success(scope, "受影响范围")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1534,7 +1534,7 @@ pub async fn propagate_change(
             }),
             "变更传播完成",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1580,7 +1580,7 @@ pub async fn add_propagation_rule(
     .await
     {
         Ok(rule) => Json(ApiResponse::success(rule, "传播规则已添加")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1644,7 +1644,7 @@ pub async fn rollback_propagation(
 ) -> Json<ApiResponse<PropagationLog>> {
     match ChangePropagator::rollback(&state.db, &req.propagation_id).await {
         Ok(log) => Json(ApiResponse::success(log, "传播已回滚")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 

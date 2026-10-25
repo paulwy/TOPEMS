@@ -420,7 +420,7 @@ pub async fn get_ticket_transitions(
     let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::error(404, "工单不存在"));
+            return Json(ApiResponse::not_found("工单不存在"));
         }
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
@@ -468,7 +468,7 @@ pub async fn apply_transition(
     .await
     {
         Ok(Some(s)) => s,
-        Ok(None) => return Json(ApiResponse::error(404, "工单不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("工单不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
@@ -595,7 +595,7 @@ pub async fn get_ticket_tags(
     .await
     {
         Ok(Some(t)) => t,
-        Ok(None) => return Json(ApiResponse::error(404, "工单不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("工单不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     Json(ApiResponse::success(
@@ -613,7 +613,7 @@ async fn add_ticket_tag(
     let tenant_id = tenant_of(&claims);
     let tag = req.tag.trim().to_string();
     if tag.is_empty() {
-        return Json(ApiResponse::error(400, "标签不能为空"));
+        return Json(ApiResponse::bad_request("标签不能为空"));
     }
     let current: Option<Vec<String>> = match sqlx::query_scalar(
         "SELECT tags FROM ticket.core_tickets WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
@@ -624,7 +624,7 @@ async fn add_ticket_tag(
     .await
     {
         Ok(Some(t)) => t,
-        Ok(None) => return Json(ApiResponse::error(404, "工单不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("工单不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     let mut tags = current.unwrap_or_default();
@@ -674,7 +674,7 @@ pub async fn remove_ticket_tag(
     .await
     {
         Ok(Some(t)) => t,
-        Ok(None) => return Json(ApiResponse::error(404, "工单不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("工单不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     let tags: Vec<String> = current
@@ -843,7 +843,7 @@ pub async fn batch_update_tickets(
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
     if ids.is_empty() {
-        return Json(ApiResponse::error(400, "ids 不能为空"));
+        return Json(ApiResponse::bad_request("ids 不能为空"));
     }
     let mut set = "updated_at = now()".to_string();
     if req.status.is_some() {
@@ -891,7 +891,7 @@ pub async fn batch_assign_tickets(
     let ids = ids_param(&req);
     let assignee = match req.assignee_id {
         Some(a) => a,
-        None => return Json(ApiResponse::error(400, "assignee_id 必填")),
+        None => return Json(ApiResponse::bad_request("assignee_id 必填")),
     };
     let affected = match sqlx::query(
         "UPDATE ticket.core_tickets SET assignee_id = $1, updated_at = now() \
@@ -1111,7 +1111,7 @@ async fn upload_attachment(
     let tenant_id = tenant_of(&claims);
     let user_id = user_of(&claims);
     if req.file_name.trim().is_empty() {
-        return Json(ApiResponse::error(400, "file_name 必填"));
+        return Json(ApiResponse::bad_request("file_name 必填"));
     }
     let data = req
         .file_data
@@ -1180,7 +1180,7 @@ pub async fn get_attachment(
     .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "附件不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("附件不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
     Json(ApiResponse::success(
@@ -1229,7 +1229,7 @@ async fn update_attachment(
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     };
     if affected == 0 {
-        return Json(ApiResponse::error(404, "附件不存在"));
+        return Json(ApiResponse::not_found("附件不存在"));
     }
     Json(ApiResponse::success(
         json!({"id": attachment_id}),
@@ -1257,7 +1257,7 @@ async fn delete_attachment(
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     };
     if affected == 0 {
-        return Json(ApiResponse::error(404, "附件不存在"));
+        return Json(ApiResponse::not_found("附件不存在"));
     }
     Json(ApiResponse::success(
         json!({"id": attachment_id}),
@@ -1348,7 +1348,7 @@ pub async fn batch_delete_attachments(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = tenant_of(&claims);
     if req.ids.is_empty() {
-        return Json(ApiResponse::error(400, "ids 不能为空"));
+        return Json(ApiResponse::bad_request("ids 不能为空"));
     }
     let affected = match sqlx::query(
         "UPDATE ticket.ticket_attachments SET deleted_at = now(), updated_at = now() \

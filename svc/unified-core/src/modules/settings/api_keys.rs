@@ -128,10 +128,10 @@ pub async fn create_api_key(
     Json(payload): Json<CreateApiKeyRequest>,
 ) -> Json<ApiResponse<ApiKeyEntry>> {
     if payload.name.trim().is_empty() {
-        return Json(ApiResponse::error(400, "API Key 名称不能为空"));
+        return Json(ApiResponse::bad_request("API Key 名称不能为空"));
     }
     if payload.secret.is_empty() {
-        return Json(ApiResponse::error(400, "API Key 密钥不能为空"));
+        return Json(ApiResponse::bad_request("API Key 密钥不能为空"));
     }
     if !is_allowed_type(&payload.key_type) {
         return Json(ApiResponse::error(
@@ -216,7 +216,7 @@ pub async fn delete_api_key(
             serde_json::json!({ "id": id }),
             "删除 API Key 成功",
         )),
-        Ok(_) => Json(ApiResponse::error(404, "API Key 不存在")),
+        Ok(_) => Json(ApiResponse::not_found("API Key 不存在")),
         Err(e) => {
             tracing::error!("Failed to delete API key: {}", e);
             Json(ApiResponse::from(TopemsError::internal(
@@ -267,7 +267,7 @@ pub async fn get_api_key(
             entry.created_at = updated_at.and_utc().to_rfc3339();
             Json(ApiResponse::success(entry, "获取 API Key 详情成功"))
         }
-        Err(sqlx::error::Error::RowNotFound) => Json(ApiResponse::error(404, "API Key 不存在")),
+        Err(sqlx::error::Error::RowNotFound) => Json(ApiResponse::not_found("API Key 不存在")),
         Err(e) => {
             tracing::error!("Failed to get API key: {}", e);
             Json(ApiResponse::from(TopemsError::internal(
@@ -306,7 +306,7 @@ pub async fn update_api_key(
     let row = match existing {
         Ok(row) => row,
         Err(sqlx::error::Error::RowNotFound) => {
-            return Json(ApiResponse::error(404, "API Key 不存在"));
+            return Json(ApiResponse::not_found("API Key 不存在"));
         }
         Err(e) => {
             tracing::error!("Failed to load API key for update: {}", e);
@@ -333,7 +333,7 @@ pub async fn update_api_key(
 
     if let Some(name) = payload.name {
         if name.trim().is_empty() {
-            return Json(ApiResponse::error(400, "API Key 名称不能为空"));
+            return Json(ApiResponse::bad_request("API Key 名称不能为空"));
         }
         entry.name = name;
     }
@@ -348,7 +348,7 @@ pub async fn update_api_key(
     }
     if let Some(secret) = payload.secret {
         if secret.is_empty() {
-            return Json(ApiResponse::error(400, "API Key 密钥不能为空"));
+            return Json(ApiResponse::bad_request("API Key 密钥不能为空"));
         }
         entry.secret = encrypt_secret(&state, &secret);
     }
@@ -383,7 +383,7 @@ pub async fn update_api_key(
             response.created_at = updated_at.and_utc().to_rfc3339();
             Json(ApiResponse::success(response, "更新 API Key 成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "API Key 不存在")),
+        Ok(_) => Json(ApiResponse::not_found("API Key 不存在")),
         Err(e) => {
             tracing::error!("Failed to update API key: {}", e);
             Json(ApiResponse::from(TopemsError::internal(

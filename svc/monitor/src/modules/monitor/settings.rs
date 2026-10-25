@@ -202,7 +202,7 @@ pub async fn get_setting(
                 "获取设置成功",
             ))
         }
-        Ok(None) => Json(ApiResponse::<SettingItem>::error(404, "设置不存在")),
+        Ok(None) => Json(ApiResponse::<SettingItem>::not_found("设置不存在")),
         Err(e) => Json(ApiResponse::<SettingItem>::from(TopemsError::internal(
             "操作失败",
             e,
@@ -290,7 +290,7 @@ pub async fn delete_setting(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success(serde_json::json!({ "key": key }), "设置删除成功"))
         }
-        Ok(_) => Json(ApiResponse::<serde_json::Value>::error(404, "设置不存在")),
+        Ok(_) => Json(ApiResponse::<serde_json::Value>::not_found("设置不存在")),
         Err(e) => Json(ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e))),
     }
 }

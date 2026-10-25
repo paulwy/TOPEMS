@@ -1027,7 +1027,7 @@ pub async fn list_document_versions(
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
         Err(e) => {
             tracing::error!("查询文档版本失败: {}", e);
-            Json(ApiResponse::error(500, "查询文档版本失败"))
+            Json(ApiResponse::server_error("查询文档版本失败"))
         }
     }
 }
@@ -1065,10 +1065,10 @@ pub async fn get_document_version(
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::error(404, "文档版本不存在"));
+                return Json(ApiResponse::not_found("文档版本不存在"));
             }
             tracing::error!("查询文档版本失败: {}", e);
-            Json(ApiResponse::error(500, "查询文档版本失败"))
+            Json(ApiResponse::server_error("查询文档版本失败"))
         }
     }
 }
@@ -1102,10 +1102,10 @@ pub async fn restore_document_version(
 
     let content = match content {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::error(404, "文档版本不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("文档版本不存在")),
         Err(e) => {
             tracing::error!("读取文档版本失败: {}", e);
-            return Json(ApiResponse::error(500, "恢复文档版本失败"));
+            return Json(ApiResponse::server_error("恢复文档版本失败"));
         }
     };
 
@@ -1124,10 +1124,10 @@ pub async fn restore_document_version(
         Ok(d) => Json(ApiResponse::success(d, "恢复成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::error(404, "文档不存在"));
+                return Json(ApiResponse::not_found("文档不存在"));
             }
             tracing::error!("恢复文档版本失败: {}", e);
-            Json(ApiResponse::error(500, "恢复文档版本失败"))
+            Json(ApiResponse::server_error("恢复文档版本失败"))
         }
     }
 }
@@ -1162,7 +1162,7 @@ pub async fn add_collaborators_stub() -> Json<ApiResponse<Vec<serde_json::Value>
 
 /// 待上游支持：更新协作者权限
 pub async fn update_collaborator_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "协作者不存在或待上游支持"))
+    Json(ApiResponse::not_found("协作者不存在或待上游支持"))
 }
 
 /// 待上游支持：移除协作者
@@ -1179,12 +1179,12 @@ pub async fn list_comments_stub() -> Json<ApiResponse<PaginatedResponse<serde_js
 
 /// 待上游支持：创建评论
 pub async fn create_comment_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "文档不存在或待上游支持"))
+    Json(ApiResponse::not_found("文档不存在或待上游支持"))
 }
 
 /// 待上游支持：更新评论
 pub async fn update_comment_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "评论不存在或待上游支持"))
+    Json(ApiResponse::not_found("评论不存在或待上游支持"))
 }
 
 /// 待上游支持：删除评论
@@ -1203,7 +1203,7 @@ pub async fn list_activities_stub() -> Json<ApiResponse<PaginatedResponse<serde_
 
 /// 待上游支持：创建分享链接
 pub async fn create_share_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "文档不存在或待上游支持"))
+    Json(ApiResponse::not_found("文档不存在或待上游支持"))
 }
 
 /// 待上游支持：分享链接列表
@@ -1220,17 +1220,17 @@ pub async fn delete_share_stub() -> Json<ApiResponse<()>> {
 
 /// 待上游支持：发布版本
 pub async fn publish_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "版本不存在或待上游支持"))
+    Json(ApiResponse::not_found("版本不存在或待上游支持"))
 }
 
 /// 待上游支持：取消发布
 pub async fn unpublish_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "版本不存在或待上游支持"))
+    Json(ApiResponse::not_found("版本不存在或待上游支持"))
 }
 
 /// 待上游支持：版本对比
 pub async fn diff_versions_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "版本不存在或待上游支持"))
+    Json(ApiResponse::not_found("版本不存在或待上游支持"))
 }
 
 /// 待上游支持：获取文档锁
@@ -1240,7 +1240,7 @@ pub async fn get_lock_stub() -> Json<ApiResponse<Option<serde_json::Value>>> {
 
 /// 待上游支持：加锁
 pub async fn acquire_lock_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "文档不存在或待上游支持"))
+    Json(ApiResponse::not_found("文档不存在或待上游支持"))
 }
 
 /// 待上游支持：解锁
@@ -1257,17 +1257,17 @@ pub async fn list_workspaces_stub() -> Json<ApiResponse<Vec<serde_json::Value>>>
 
 /// 待上游支持：工作区详情
 pub async fn get_workspace_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "工作区不存在或待上游支持"))
+    Json(ApiResponse::not_found("工作区不存在或待上游支持"))
 }
 
 /// 待上游支持：创建工作区
 pub async fn create_workspace_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "待上游支持"))
+    Json(ApiResponse::not_found("待上游支持"))
 }
 
 /// 待上游支持：更新工作区
 pub async fn update_workspace_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "工作区不存在或待上游支持"))
+    Json(ApiResponse::not_found("工作区不存在或待上游支持"))
 }
 
 /// 待上游支持：删除工作区
@@ -1308,7 +1308,7 @@ pub async fn list_trash_stub() -> Json<ApiResponse<PaginatedResponse<serde_json:
 
 /// 待上游支持：从回收站恢复
 pub async fn restore_from_trash_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "项目不存在或待上游支持"))
+    Json(ApiResponse::not_found("项目不存在或待上游支持"))
 }
 
 /// 待上游支持：彻底删除回收站项目
@@ -1355,32 +1355,32 @@ pub async fn list_template_approvals_stub(
 
 /// 待上游支持：创建审批
 pub async fn create_approval_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "模板不存在或待上游支持"))
+    Json(ApiResponse::not_found("模板不存在或待上游支持"))
 }
 
 /// 待上游支持：提交模板审批
 pub async fn submit_template_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "模板不存在或待上游支持"))
+    Json(ApiResponse::not_found("模板不存在或待上游支持"))
 }
 
 /// 待上游支持：审批详情
 pub async fn get_approval_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "审批不存在或待上游支持"))
+    Json(ApiResponse::not_found("审批不存在或待上游支持"))
 }
 
 /// 待上游支持：审批通过
 pub async fn approve_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "审批不存在或待上游支持"))
+    Json(ApiResponse::not_found("审批不存在或待上游支持"))
 }
 
 /// 待上游支持：审批拒绝
 pub async fn reject_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "审批不存在或待上游支持"))
+    Json(ApiResponse::not_found("审批不存在或待上游支持"))
 }
 
 /// 待上游支持：取消审批
 pub async fn cancel_approval_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "审批不存在或待上游支持"))
+    Json(ApiResponse::not_found("审批不存在或待上游支持"))
 }
 
 /// 待上游支持：待审批列表
@@ -1413,7 +1413,7 @@ pub async fn list_assignments_stub() -> Json<ApiResponse<PaginatedResponse<serde
 
 /// 待上游支持：创建分配
 pub async fn create_assignment_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "模板不存在或待上游支持"))
+    Json(ApiResponse::not_found("模板不存在或待上游支持"))
 }
 
 /// 待上游支持：删除分配
@@ -1423,7 +1423,7 @@ pub async fn delete_assignment_stub() -> Json<ApiResponse<()>> {
 
 /// 待上游支持：模板使用统计
 pub async fn get_template_usage_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "模板不存在或待上游支持"))
+    Json(ApiResponse::not_found("模板不存在或待上游支持"))
 }
 
 /// 待上游支持：全局使用统计
@@ -1446,12 +1446,12 @@ pub async fn get_top_templates_stub() -> Json<ApiResponse<Vec<serde_json::Value>
 
 /// 待上游支持：克隆模板
 pub async fn clone_template_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "模板不存在或待上游支持"))
+    Json(ApiResponse::not_found("模板不存在或待上游支持"))
 }
 
 /// 待上游支持：导出模板
 pub async fn export_template_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "模板不存在或待上游支持"))
+    Json(ApiResponse::not_found("模板不存在或待上游支持"))
 }
 
 /// 待上游支持：依赖列表
@@ -1461,7 +1461,7 @@ pub async fn list_dependencies_stub() -> Json<ApiResponse<Vec<serde_json::Value>
 
 /// 待上游支持：添加依赖
 pub async fn add_dependency_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "模板不存在或待上游支持"))
+    Json(ApiResponse::not_found("模板不存在或待上游支持"))
 }
 
 /// 待上游支持：移除依赖
@@ -1473,17 +1473,17 @@ pub async fn remove_dependency_stub() -> Json<ApiResponse<()>> {
 
 /// 待上游支持：渲染模板
 pub async fn render_template_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "模板不存在或待上游支持"))
+    Json(ApiResponse::not_found("模板不存在或待上游支持"))
 }
 
 /// 待上游支持：复制模板
 pub async fn duplicate_template_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "模板不存在或待上游支持"))
+    Json(ApiResponse::not_found("模板不存在或待上游支持"))
 }
 
 /// 待上游支持：切换模板状态
 pub async fn toggle_template_status_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "模板不存在或待上游支持"))
+    Json(ApiResponse::not_found("模板不存在或待上游支持"))
 }
 
 // ---------- 模板版本 ----------
@@ -1496,17 +1496,17 @@ pub async fn list_template_versions_stub() -> Json<ApiResponse<PaginatedResponse
 
 /// 待上游支持：模板版本详情
 pub async fn get_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "版本不存在或待上游支持"))
+    Json(ApiResponse::not_found("版本不存在或待上游支持"))
 }
 
 /// 待上游支持：创建模板版本
 pub async fn create_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "模板不存在或待上游支持"))
+    Json(ApiResponse::not_found("模板不存在或待上游支持"))
 }
 
 /// 待上游支持：更新模板版本
 pub async fn update_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "版本不存在或待上游支持"))
+    Json(ApiResponse::not_found("版本不存在或待上游支持"))
 }
 
 /// 待上游支持：删除模板版本
@@ -1516,27 +1516,27 @@ pub async fn delete_template_version_stub() -> Json<ApiResponse<()>> {
 
 /// 待上游支持：激活模板版本
 pub async fn activate_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "版本不存在或待上游支持"))
+    Json(ApiResponse::not_found("版本不存在或待上游支持"))
 }
 
 /// 待上游支持：回滚模板版本
 pub async fn rollback_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "版本不存在或待上游支持"))
+    Json(ApiResponse::not_found("版本不存在或待上游支持"))
 }
 
 /// 待上游支持：分叉模板版本
 pub async fn fork_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "版本不存在或待上游支持"))
+    Json(ApiResponse::not_found("版本不存在或待上游支持"))
 }
 
 /// 待上游支持：版本差异
 pub async fn get_version_diff_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "版本不存在或待上游支持"))
+    Json(ApiResponse::not_found("版本不存在或待上游支持"))
 }
 
 /// 待上游支持：版本对比
 pub async fn compare_versions_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::error(404, "版本不存在或待上游支持"))
+    Json(ApiResponse::not_found("版本不存在或待上游支持"))
 }
 
 /// 待上游支持：版本历史

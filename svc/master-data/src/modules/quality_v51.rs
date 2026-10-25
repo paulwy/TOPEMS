@@ -513,7 +513,7 @@ pub async fn run_quality_check(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::error(500, &format!("写入质量检查失败: {e}")));
+            return Json(ApiResponse::server_error(&format!("写入质量检查失败: {e}")));
         }
     }
 
@@ -660,7 +660,7 @@ pub async fn list_quality_rules(
         )),
         Err(e) => {
             tracing::error!("查询质量规则失败: {e}");
-            Json(ApiResponse::error(500, "查询质量规则失败"))
+            Json(ApiResponse::server_error("查询质量规则失败"))
         }
     }
 }
@@ -705,7 +705,7 @@ pub async fn create_quality_rule(
         )),
         Err(e) => {
             tracing::error!("创建质量规则失败: {e}");
-            Json(ApiResponse::error(500, "创建质量规则失败"))
+            Json(ApiResponse::server_error("创建质量规则失败"))
         }
     }
 }
@@ -725,7 +725,7 @@ pub async fn get_quality_rule(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<QualityRule>> {
     let Ok(id) = uuid::Uuid::parse_str(&id) else {
-        return Json(ApiResponse::error(404, "未找到质量规则"));
+        return Json(ApiResponse::not_found("未找到质量规则"));
     };
     match sqlx::query(
         r#"SELECT id, name, entity_type, rule_type, description, severity,
@@ -737,10 +737,10 @@ pub async fn get_quality_rule(
     .await
     {
         Ok(Some(row)) => Json(ApiResponse::success(rule_row_to_api(&row), "质量规则详情")),
-        Ok(None) => Json(ApiResponse::error(404, "未找到质量规则")),
+        Ok(None) => Json(ApiResponse::not_found("未找到质量规则")),
         Err(e) => {
             tracing::error!("查询质量规则详情失败: {e}");
-            Json(ApiResponse::error(500, "查询质量规则详情失败"))
+            Json(ApiResponse::server_error("查询质量规则详情失败"))
         }
     }
 }
@@ -761,7 +761,7 @@ pub async fn update_quality_rule(
     Json(req): Json<UpdateQualityRuleRequest>,
 ) -> Json<ApiResponse<QualityRule>> {
     let Ok(id) = uuid::Uuid::parse_str(&id) else {
-        return Json(ApiResponse::error(404, "未找到质量规则"));
+        return Json(ApiResponse::not_found("未找到质量规则"));
     };
     match sqlx::query(
         r#"UPDATE master_data.mdm_quality_rules SET
@@ -788,10 +788,10 @@ pub async fn update_quality_rule(
             rule_row_to_api(&row),
             "质量规则已更新",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "未找到质量规则")),
+        Ok(None) => Json(ApiResponse::not_found("未找到质量规则")),
         Err(e) => {
             tracing::error!("更新质量规则失败: {e}");
-            Json(ApiResponse::error(500, "更新质量规则失败"))
+            Json(ApiResponse::server_error("更新质量规则失败"))
         }
     }
 }
@@ -814,7 +814,7 @@ pub async fn delete_quality_rule(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<()>> {
     let Ok(id) = uuid::Uuid::parse_str(&id) else {
-        return Json(ApiResponse::error(404, "未找到质量规则"));
+        return Json(ApiResponse::not_found("未找到质量规则"));
     };
     match sqlx::query("DELETE FROM master_data.mdm_quality_rules WHERE id = $1")
         .bind(id)
@@ -822,10 +822,10 @@ pub async fn delete_quality_rule(
         .await
     {
         Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success_no_data("质量规则已删除")),
-        Ok(_) => Json(ApiResponse::error(404, "未找到质量规则")),
+        Ok(_) => Json(ApiResponse::not_found("未找到质量规则")),
         Err(e) => {
             tracing::error!("删除质量规则失败: {e}");
-            Json(ApiResponse::error(500, "删除质量规则失败"))
+            Json(ApiResponse::server_error("删除质量规则失败"))
         }
     }
 }
@@ -1038,7 +1038,7 @@ pub async fn apply_auto_fix(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("自动修复失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("自动修复失败: {e}")));
     }
 
     Json(ApiResponse::success(action, "自动修复已应用"))
@@ -1133,11 +1133,11 @@ pub async fn revert_fix_action(
             .unwrap_or(None);
 
     let Some(status) = current else {
-        return Json(ApiResponse::error(404, "未找到修复操作"));
+        return Json(ApiResponse::not_found("未找到修复操作"));
     };
 
     if !matches!(status.as_str(), "applied" | "verified") {
-        return Json(ApiResponse::error(400, "当前状态不可回滚"));
+        return Json(ApiResponse::bad_request("当前状态不可回滚"));
     }
 
     let row = sqlx::query(&format!(
@@ -1152,7 +1152,7 @@ pub async fn revert_fix_action(
     .unwrap_or(None);
 
     let Some(row) = row else {
-        return Json(ApiResponse::error(404, "未找到修复操作"));
+        return Json(ApiResponse::not_found("未找到修复操作"));
     };
     let action = auto_fix_from_row(&row);
 
@@ -1262,7 +1262,7 @@ pub async fn run_fix_workflow(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::error(500, &format!("执行修复工作流失败: {e}")));
+            return Json(ApiResponse::server_error(&format!("执行修复工作流失败: {e}")));
         }
     }
 
@@ -1338,7 +1338,7 @@ pub async fn generate_suggestions(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::error(500, &format!("生成治理建议失败: {e}")));
+            return Json(ApiResponse::server_error(&format!("生成治理建议失败: {e}")));
         }
     }
 
@@ -1439,10 +1439,10 @@ pub async fn approve_suggestion(
     .unwrap_or(None);
 
     let Some(status) = current else {
-        return Json(ApiResponse::error(404, "未找到治理建议"));
+        return Json(ApiResponse::not_found("未找到治理建议"));
     };
     if status != "pending" {
-        return Json(ApiResponse::error(400, "建议已处理"));
+        return Json(ApiResponse::bad_request("建议已处理"));
     }
 
     let row = sqlx::query(&format!(
@@ -1457,7 +1457,7 @@ pub async fn approve_suggestion(
     .unwrap_or(None);
 
     let Some(row) = row else {
-        return Json(ApiResponse::error(404, "未找到治理建议"));
+        return Json(ApiResponse::not_found("未找到治理建议"));
     };
     let suggestion = suggestion_from_row(&row);
 
@@ -1491,10 +1491,10 @@ pub async fn reject_suggestion(
     .unwrap_or(None);
 
     let Some(status) = current else {
-        return Json(ApiResponse::error(404, "未找到治理建议"));
+        return Json(ApiResponse::not_found("未找到治理建议"));
     };
     if status != "pending" {
-        return Json(ApiResponse::error(400, "建议已处理"));
+        return Json(ApiResponse::bad_request("建议已处理"));
     }
 
     let row = sqlx::query(&format!(
@@ -1509,7 +1509,7 @@ pub async fn reject_suggestion(
     .unwrap_or(None);
 
     let Some(row) = row else {
-        return Json(ApiResponse::error(404, "未找到治理建议"));
+        return Json(ApiResponse::not_found("未找到治理建议"));
     };
     let suggestion = suggestion_from_row(&row);
 

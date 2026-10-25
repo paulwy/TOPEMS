@@ -1406,7 +1406,7 @@ pub async fn add_kg_node(
 
     match KnowledgeGraphEngine::add_node(&state.db, req.label, node_type, props).await {
         Ok(node) => Json(ApiResponse::success(node, "知识图谱节点已添加")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1436,7 +1436,7 @@ pub async fn add_kg_edge(
     .await
     {
         Ok(edge) => Json(ApiResponse::success(edge, "知识图谱边已添加")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 #[utoipa::path(
@@ -1457,7 +1457,7 @@ pub async fn get_subgraph(
 ) -> Json<ApiResponse<KnowledgeGraph>> {
     match KnowledgeGraphEngine::get_subgraph(&state.db, &node_id, params.depth).await {
         Ok(graph) => Json(ApiResponse::success(graph, "子图谱")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1477,7 +1477,7 @@ pub async fn find_path(
 ) -> Json<ApiResponse<Vec<KGEdge>>> {
     match KnowledgeGraphEngine::find_path(&state.db, &params.start_id, &params.end_id).await {
         Ok(path) => Json(ApiResponse::success(path, "路径查找成功")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1501,7 +1501,7 @@ pub async fn get_similar(
 ) -> Json<ApiResponse<Vec<KGNode>>> {
     match KnowledgeGraphEngine::get_similar(&state.db, &node_id, params.limit).await {
         Ok(nodes) => Json(ApiResponse::success(nodes, "相似节点")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1535,7 +1535,7 @@ pub async fn export_kg(
                 "知识图谱导出成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1568,7 +1568,7 @@ pub async fn get_recommendations(
     .await
     {
         Ok(recs) => Json(ApiResponse::success(recs, "推荐结果")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1596,7 +1596,7 @@ pub async fn record_interaction(
     .await
     {
         Ok(record) => Json(ApiResponse::success(record, "交互记录已保存")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1620,7 +1620,7 @@ pub async fn get_similar_items(
 ) -> Json<ApiResponse<Vec<DataAsset>>> {
     match RecommendationEngine::get_similar_items(&state.db, &item_id, params.limit).await {
         Ok(items) => Json(ApiResponse::success(items, "相似资产")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 
@@ -1673,7 +1673,7 @@ pub async fn register_asset(
     .await
     {
         Ok(asset) => Json(ApiResponse::success(asset, "数据资产已注册")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1776,7 +1776,7 @@ pub async fn update_asset(
     .await
     {
         Ok(asset) => Json(ApiResponse::success(asset, "资产已更新")),
-        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
+        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
     }
 }
 

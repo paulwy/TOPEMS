@@ -35,6 +35,14 @@
 - **验证**：残留 grep 计数 0；`SQLX_OFFLINE=true cargo check -p topems-mobile -p topems-portal -p topems-scm -p topems-pm -p topems-ai -p topems-gis` exit 0；6 包 `cargo test --lib` 全部 0 failed（mobile 250 / portal 582 / scm 337 / pm 497 / ai 988 / gis 156）；`git diff --stat` 94 files changed, +815/-815 对称。
 - **commit 哈希**：`ad3218d885`
 
+## F10 · master-data,integration,tms,unified-core,ticket,monitor,server,shared-core 语义化收敛（批次5，348 处）（2026-10-26）✅ 完成
+
+> ApiResponse 语义构造器机械替换（范本 wms 批次1 已完成）：svc/{master-data,integration,tms,unified-core,ticket,monitor,server} + lib/shared-core（仅调用点，src/response.rs 为范本定稿不动）下 `ApiResponse::error(<码>, msg)` → 语义构造器（500→server_error / 400→bad_request / 404→not_found / 401→unauthorized / 403→forbidden / 409→conflict / 501→not_implemented / 503→unavailable），行为严格等价，消息文本/状态码/控制流零改动。并入收尾：svc/analytics 1 处、svc/communication 3 处真实调用点一并收敛。
+
+- **替换数**：348 处（替换前 grep 计数 348 → 替换后残留 0）；perl 单轮带空格形态即全覆盖（无空格变体无需补跑）；泛型形态 `ApiResponse::<T>::error(...)` 同步收敛为 `ApiResponse::<T>::server_error(...)` 等；暂存 diff 38 files changed（37 .rs + TODO.md），+356/-348（.rs 部分严格 +348/-348 对称）。
+- **验证**：残留 grep 计数 0（已排除 lib/shared-core/src/response.rs）；`SQLX_OFFLINE=true cargo check` 对 10 包 exit 0；10 包 `cargo test --lib` 全部 0 failed（shared-core 766 / master-data 451 / integration 194 / tms 172 / unified-core 538 / ticket 226 / monitor 140 / server 0 lib 用例 / analytics 185 / communication 210）；`git diff --stat -- lib/shared-core/src/response.rs` 为空（范本文件零改动）。
+- **commit 哈希**：`70a0d6f8f`
+
 ## 生产部署就绪核对（2026-10-25）✅ 完成
 
 > 外部阻塞项（生产机实跑）的本地可闭环交付前准备：部署脚本链/单元/nginx/清单四维一致性核对。

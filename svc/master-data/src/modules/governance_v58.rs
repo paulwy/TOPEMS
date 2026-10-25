@@ -1255,7 +1255,7 @@ pub async fn assess_maturity(
 ) -> Json<ApiResponse<MaturityAssessment>> {
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
-        None => return Json(ApiResponse::error(400, "无效的维度类型")),
+        None => return Json(ApiResponse::bad_request("无效的维度类型")),
     };
     let target = req
         .target_level
@@ -1284,7 +1284,7 @@ pub async fn get_assessment(
     if let Some(id) = params.id {
         match db_exec!(GovernanceMaturity::get_assessment(&state.db, &id).await) {
             Some(a) => Json(ApiResponse::success(serde_json::json!(a), "成熟度评估详情")),
-            None => Json(ApiResponse::error(404, "未找到评估记录")),
+            None => Json(ApiResponse::not_found("未找到评估记录")),
         }
     } else {
         let scores = db_exec!(GovernanceMaturity::get_dimension_scores(&state.db).await);
@@ -1328,11 +1328,11 @@ pub async fn create_improvement_plan(
 ) -> Json<ApiResponse<ImprovementPlan>> {
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
-        None => return Json(ApiResponse::error(400, "无效的维度类型")),
+        None => return Json(ApiResponse::bad_request("无效的维度类型")),
     };
     let target = match parse_maturity_level(&req.target_level) {
         Some(l) => l,
-        None => return Json(ApiResponse::error(400, "无效的目标等级")),
+        None => return Json(ApiResponse::bad_request("无效的目标等级")),
     };
 
     let plan = db_exec!(
@@ -1412,7 +1412,7 @@ pub async fn create_workflow(
 ) -> Json<ApiResponse<WorkflowV58>> {
     let workflow_type = match parse_workflow_type(&req.workflow_type) {
         Some(t) => t,
-        None => return Json(ApiResponse::error(400, "无效的工作流类型")),
+        None => return Json(ApiResponse::bad_request("无效的工作流类型")),
     };
 
     let steps: Vec<WorkflowStepV58> = req
@@ -1462,7 +1462,7 @@ pub async fn start_workflow(
 ) -> Json<ApiResponse<WorkflowV58>> {
     match db_exec!(MDMWorkflowEngine::start_workflow(&state.db, &id).await) {
         Some(w) => Json(ApiResponse::success(w, "工作流已启动")),
-        None => Json(ApiResponse::error(400, "工作流无法启动")),
+        None => Json(ApiResponse::bad_request("工作流无法启动")),
     }
 }
 
@@ -1486,7 +1486,7 @@ pub async fn advance_step(
 ) -> Json<ApiResponse<WorkflowV58>> {
     match db_exec!(MDMWorkflowEngine::advance_step(&state.db, &id).await) {
         Some(w) => Json(ApiResponse::success(w, "步骤已推进")),
-        None => Json(ApiResponse::error(400, "无法推进工作流")),
+        None => Json(ApiResponse::bad_request("无法推进工作流")),
     }
 }
 
@@ -1509,7 +1509,7 @@ pub async fn get_workflow_status(
 ) -> Json<ApiResponse<WorkflowV58>> {
     match db_exec!(MDMWorkflowEngine::get_workflow_status(&state.db, &id).await) {
         Some(w) => Json(ApiResponse::success(w, "工作流状态")),
-        None => Json(ApiResponse::error(404, "未找到工作流")),
+        None => Json(ApiResponse::not_found("未找到工作流")),
     }
 }
 
@@ -1580,7 +1580,7 @@ pub async fn approve_step(
             w,
             &req.comment.unwrap_or_else(|| "步骤已批准".to_string()),
         )),
-        None => Json(ApiResponse::error(400, "无法批准该步骤")),
+        None => Json(ApiResponse::bad_request("无法批准该步骤")),
     }
 }
 
@@ -1609,7 +1609,7 @@ pub async fn reject_step(
             w,
             &req.reason.unwrap_or_else(|| "步骤已拒绝".to_string()),
         )),
-        None => Json(ApiResponse::error(400, "无法拒绝该步骤")),
+        None => Json(ApiResponse::bad_request("无法拒绝该步骤")),
     }
 }
 
@@ -1676,7 +1676,7 @@ pub async fn get_data_product(
 ) -> Json<ApiResponse<DataProduct>> {
     match db_exec!(DataProductManager::get_data_product(&state.db, &id).await) {
         Some(p) => Json(ApiResponse::success(p, "数据产品详情")),
-        None => Json(ApiResponse::error(404, "未找到数据产品")),
+        None => Json(ApiResponse::not_found("未找到数据产品")),
     }
 }
 
@@ -1751,7 +1751,7 @@ pub async fn update_contract(
         .await
     ) {
         Some(c) => Json(ApiResponse::success(c, "数据契约已更新")),
-        None => Json(ApiResponse::error(404, "未找到数据产品")),
+        None => Json(ApiResponse::not_found("未找到数据产品")),
     }
 }
 
@@ -1774,7 +1774,7 @@ pub async fn get_contract_status(
 ) -> Json<ApiResponse<ContractStatus>> {
     match db_exec!(DataProductManager::get_contract_status(&state.db, &id).await) {
         Some(s) => Json(ApiResponse::success(s, "契约状态")),
-        None => Json(ApiResponse::error(404, "未找到数据产品")),
+        None => Json(ApiResponse::not_found("未找到数据产品")),
     }
 }
 
@@ -1801,7 +1801,7 @@ pub async fn expose_as_api(
 
     match db_exec!(DataProductManager::expose_as_api(&state.db, &id, auth, rate).await) {
         Some(e) => Json(ApiResponse::success(e, "API 已暴露")),
-        None => Json(ApiResponse::error(404, "未找到数据产品")),
+        None => Json(ApiResponse::not_found("未找到数据产品")),
     }
 }
 

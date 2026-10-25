@@ -215,7 +215,7 @@ pub async fn create_route(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(route, "路线创建成功"))
@@ -356,7 +356,7 @@ pub async fn update_route(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(route, "路线更新成功"))
@@ -415,7 +415,7 @@ pub async fn delete_route(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success("".to_string(), "路线删除成功"))

@@ -66,7 +66,7 @@ pub async fn get_conversion_rule_api(
     .await
     {
         Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to fetch conversion rule: {}", e);
             Json(ApiResponse::from(TopemsError::internal("Failed to fetch conversion rule", e)))
@@ -199,7 +199,7 @@ pub async fn update_conversion_rule_api(
             },
             "Conversion rule updated successfully",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to update conversion rule: {}", e);
             Json(ApiResponse::from(TopemsError::internal(
@@ -237,7 +237,7 @@ pub async fn delete_conversion_rule_api(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::error(404, "Conversion rule not found"))
+                Json(ApiResponse::not_found("Conversion rule not found"))
             } else {
                 Json(ApiResponse::success(
                     (),
@@ -315,7 +315,7 @@ pub async fn execute_conversion_rule_api(
     {
         Ok(r) => r,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::error(404, "Conversion rule not found"))
+            return Json(ApiResponse::not_found("Conversion rule not found"))
         }
         Err(e) => {
             tracing::error!("Failed to fetch rule: {}", e);
@@ -324,7 +324,7 @@ pub async fn execute_conversion_rule_api(
     };
 
     if !rule.is_enabled {
-        return Json(ApiResponse::error(400, "Conversion rule is not enabled"));
+        return Json(ApiResponse::bad_request("Conversion rule is not enabled"));
     }
 
     let execution_id = Uuid::new_v4();
@@ -398,7 +398,7 @@ pub async fn enable_conversion_rule_api(
     .await
     {
         Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule enabled successfully")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to enable conversion rule: {}", e);
             Json(ApiResponse::from(TopemsError::internal("Failed to enable conversion rule", e)))
@@ -432,7 +432,7 @@ pub async fn disable_conversion_rule_api(
     .await
     {
         Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule disabled successfully")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to disable conversion rule: {}", e);
             Json(ApiResponse::from(TopemsError::internal("Failed to disable conversion rule", e)))

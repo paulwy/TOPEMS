@@ -1260,7 +1260,7 @@ pub async fn get_community(
             serde_json::json!(community),
             "社区信息",
         )),
-        None => Json(ApiResponse::error(404, "未找到社区信息")),
+        None => Json(ApiResponse::not_found("未找到社区信息")),
     }
 }
 
@@ -1284,7 +1284,7 @@ pub async fn find_shortest_path_handler(
     );
 
     if path.is_empty() {
-        return Json(ApiResponse::error(404, "未找到可达路径"));
+        return Json(ApiResponse::not_found("未找到可达路径"));
     }
 
     Json(ApiResponse::success(
@@ -1318,7 +1318,7 @@ pub async fn get_subgraph(
         .collect();
 
     if node_ids.is_empty() {
-        return Json(ApiResponse::error(400, "请提供 node_ids 参数"));
+        return Json(ApiResponse::bad_request("请提供 node_ids 参数"));
     }
 
     let (nodes, edges) = db_exec!(EnhancedKnowledgeGraph::get_subgraph(&state.db, &node_ids).await);
@@ -1525,7 +1525,7 @@ pub async fn remove_from_index(
             "索引已删除",
         ))
     } else {
-        Json(ApiResponse::error(404, "未找到索引"))
+        Json(ApiResponse::not_found("未找到索引"))
     }
 }
 
@@ -1685,7 +1685,7 @@ pub async fn remove_tag_handler(
             "标签已移除",
         ))
     } else {
-        Json(ApiResponse::error(404, "未找到标签关系"))
+        Json(ApiResponse::not_found("未找到标签关系"))
     }
 }
 

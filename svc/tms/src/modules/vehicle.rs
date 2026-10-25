@@ -262,7 +262,7 @@ pub async fn create_vehicle(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
 
@@ -421,7 +421,7 @@ pub async fn update_vehicle(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             } // 失效列表缓存（更新后列表数据可能变化）
             state.dict_cache.clear_l1();
@@ -499,7 +499,7 @@ pub async fn delete_vehicle(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             } // 失效列表缓存（删除后列表数据可能变化）
             state.dict_cache.clear_l1();
@@ -612,7 +612,7 @@ pub async fn submit_inspection(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     tracing::info!(
@@ -727,7 +727,7 @@ pub async fn approve_vehicle(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     tracing::info!(
@@ -831,7 +831,7 @@ pub async fn reject_vehicle(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     tracing::info!(

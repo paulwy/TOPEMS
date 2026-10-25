@@ -1040,7 +1040,7 @@ pub async fn get_ref_handler(
 
     match service.get_ref(tenant_id, &master_data_id).await {
         Ok(Some(r)) => Json(ApiResponse::success(r, "查询成功")),
-        Ok(None) => Json(ApiResponse::error(404, "主数据引用不存在")),
+        Ok(None) => Json(ApiResponse::not_found("主数据引用不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "get_ref_handler",
             e,
@@ -1059,7 +1059,7 @@ pub async fn get_ref_by_code_handler(
 
     match service.get_ref_by_code(tenant_id, &domain, &code).await {
         Ok(Some(r)) => Json(ApiResponse::success(r, "查询成功")),
-        Ok(None) => Json(ApiResponse::error(404, "主数据引用不存在")),
+        Ok(None) => Json(ApiResponse::not_found("主数据引用不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "get_ref_by_code_handler",
             e,
@@ -1269,7 +1269,7 @@ pub async fn resolve_reconciliation_issue_handler(
         .await
     {
         Ok(true) => Json(ApiResponse::success(true, "对账问题已标记为解决")),
-        Ok(false) => Json(ApiResponse::error(404, "对账问题不存在或已解决")),
+        Ok(false) => Json(ApiResponse::not_found("对账问题不存在或已解决")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "resolve_reconciliation_issue_handler",
             e,
@@ -1347,7 +1347,7 @@ pub async fn review_approval_handler(
             };
             Json(ApiResponse::success(approval, msg))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "审批请求不存在或已处理")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("审批请求不存在或已处理")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "review_approval_handler",
             e,

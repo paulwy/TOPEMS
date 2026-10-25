@@ -159,7 +159,7 @@ pub async fn create_feedback(
         Ok(ticket) => Json(ApiResponse::success(ticket.into(), "创建反馈成功")),
         Err(e) => {
             tracing::error!("Failed to create feedback via ticket: {}", e);
-            Json(ApiResponse::error(500, "创建反馈失败"))
+            Json(ApiResponse::server_error("创建反馈失败"))
         }
     }
 }
@@ -192,10 +192,10 @@ pub async fn get_feedback(
 
     match result {
         Ok(Some(ticket)) => Json(ApiResponse::success(ticket.into(), "获取反馈成功")),
-        Ok(None) => Json(ApiResponse::error(404, "反馈不存在")),
+        Ok(None) => Json(ApiResponse::not_found("反馈不存在")),
         Err(e) => {
             tracing::error!("Failed to get feedback: {}", e);
-            Json(ApiResponse::error(500, "获取反馈失败"))
+            Json(ApiResponse::server_error("获取反馈失败"))
         }
     }
 }
@@ -278,7 +278,7 @@ pub async fn list_feedbacks(
         }
         Err(e) => {
             tracing::error!("Failed to list feedbacks: {}", e);
-            Json(ApiResponse::error(500, "获取反馈列表失败"))
+            Json(ApiResponse::server_error("获取反馈列表失败"))
         }
     }
 }
@@ -291,7 +291,7 @@ pub async fn response_feedback(
     Json(payload): Json<ResponseFeedbackRequest>,
 ) -> Json<ApiResponse<bool>> {
     if !claims.is_superuser {
-        return Json(ApiResponse::error(403, "无权限回复反馈"));
+        return Json(ApiResponse::forbidden("无权限回复反馈"));
     }
 
     let result = sqlx::query(
@@ -315,7 +315,7 @@ pub async fn response_feedback(
         Ok(_) => Json(ApiResponse::success(true, "回复反馈成功")),
         Err(e) => {
             tracing::error!("Failed to response feedback: {}", e);
-            Json(ApiResponse::error(500, "回复反馈失败"))
+            Json(ApiResponse::server_error("回复反馈失败"))
         }
     }
 }
@@ -338,7 +338,7 @@ pub async fn delete_feedback(
         Ok(Some(t)) => {
             let reporter_str = t.reporter_id.map(|u| u.to_string()).unwrap_or_default();
             if reporter_str != claims.sub && !claims.is_superuser {
-                return Json(ApiResponse::error(403, "无权限删除反馈"));
+                return Json(ApiResponse::forbidden("无权限删除反馈"));
             }
 
             let result = sqlx::query(
@@ -353,14 +353,14 @@ pub async fn delete_feedback(
                 Ok(_) => Json(ApiResponse::success(true, "删除反馈成功")),
                 Err(e) => {
                     tracing::error!("Failed to delete feedback: {}", e);
-                    Json(ApiResponse::error(500, "删除反馈失败"))
+                    Json(ApiResponse::server_error("删除反馈失败"))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::error(404, "反馈不存在")),
+        Ok(None) => Json(ApiResponse::not_found("反馈不存在")),
         Err(e) => {
             tracing::error!("Failed to delete feedback: {}", e);
-            Json(ApiResponse::error(500, "删除反馈失败"))
+            Json(ApiResponse::server_error("删除反馈失败"))
         }
     }
 }

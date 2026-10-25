@@ -423,7 +423,7 @@ impl TopemsError {
     ///
     /// ```ignore
     /// // ❌ 迁移前：sqlx 原始错误（含表名/列名/SQL 片段）直接回给客户端
-    /// Err(e) => Json(ApiResponse::error(500, &format!("查询设备失败: {}", e))),
+    /// Err(e) => Json(ApiResponse::server_error(&format!("查询设备失败: {}", e))),
     ///
     /// // ✅ 迁移后：上下文进日志，客户端只收到通用文案
     /// Err(e) => Json(ApiResponse::from(TopemsError::internal("查询设备失败", e))),
@@ -748,7 +748,7 @@ pub type HandlerResult<T> = StdResult<axum::Json<crate::response::ApiResponse<T>
 /// `TopemsError` → `ApiResponse` 桥接。
 ///
 /// 用于**不改函数签名**的最小改动路径：把
-/// `ApiResponse::error(500, &format!("查询失败: {}", e))`（会泄露 SQL 细节）
+/// `ApiResponse::server_error(&format!("查询失败: {}", e))`（会泄露 SQL 细节）
 /// 换成 `ApiResponse::from(TopemsError::from(e))`。
 ///
 /// 注意：`ApiResponse` 没有 `errorCode` 字段，走本路径会丢失机器可读错误码。
@@ -1322,7 +1322,7 @@ mod tests {
 
     /// 关键安全约束：内部类错误的客户端消息**不得**回显内部细节。
     ///
-    /// 背景：svc 层历史上有 700 处 `ApiResponse::error(500, &format!("... {}", e))`
+    /// 背景：svc 层历史上有 700 处 `ApiResponse::server_error(&format!("... {}", e))`
     /// 直接把 sqlx/IO 原始错误回给客户端（含表名、列名、SQL 片段）。
     /// 迁移到 TopemsError 后必须保持"细节只进日志"的行为，此测试为回归防线。
     /// 每个变体的**源错误本身都携带 SECRET**，因此能真实检验是否被回显。

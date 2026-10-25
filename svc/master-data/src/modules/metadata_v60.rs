@@ -438,7 +438,7 @@ pub async fn create_metadata(
 ) -> Json<ApiResponse<MetadataObject>> {
     let object_type = match parse_metadata_type(&req.object_type) {
         Some(t) => t,
-        None => return Json(ApiResponse::error(400, "无效的元数据对象类型")),
+        None => return Json(ApiResponse::bad_request("无效的元数据对象类型")),
     };
 
     let now = chrono::Utc::now().to_rfc3339();
@@ -472,7 +472,7 @@ pub async fn create_metadata(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("写入元数据对象失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("写入元数据对象失败: {e}")));
     }
 
     Json(ApiResponse::success(obj, "元数据对象已创建"))
@@ -506,7 +506,7 @@ pub async fn get_metadata(
 
     match row {
         Some(r) => Json(ApiResponse::success(metadata_from_row(&r), "元数据对象")),
-        None => Json(ApiResponse::error(404, "未找到元数据对象")),
+        None => Json(ApiResponse::not_found("未找到元数据对象")),
     }
 }
 
@@ -564,7 +564,7 @@ pub async fn search_metadata(
     .await;
     let results: Vec<MetadataObject> = match rows {
         Ok(r) => r.iter().map(metadata_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("搜索元数据失败: {e}"))),
+        Err(e) => return Json(ApiResponse::server_error(&format!("搜索元数据失败: {e}"))),
     };
 
     Json(ApiResponse::success(results, "元数据搜索结果"))
@@ -615,8 +615,8 @@ pub async fn update_metadata(
 
     match res {
         Ok(r) if r.rows_affected() > 0 => {}
-        Ok(_) => return Json(ApiResponse::error(404, "未找到元数据对象")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("更新元数据对象失败: {e}"))),
+        Ok(_) => return Json(ApiResponse::not_found("未找到元数据对象")),
+        Err(e) => return Json(ApiResponse::server_error(&format!("更新元数据对象失败: {e}"))),
     }
 
     let row = sqlx::query(&format!(
@@ -632,7 +632,7 @@ pub async fn update_metadata(
             metadata_from_row(&r),
             "元数据对象已更新",
         )),
-        None => Json(ApiResponse::error(404, "未找到元数据对象")),
+        None => Json(ApiResponse::not_found("未找到元数据对象")),
     }
 }
 
@@ -661,8 +661,8 @@ pub async fn delete_metadata(
 
     match res {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "元数据对象已删除")),
-        Ok(_) => Json(ApiResponse::error(404, "未找到元数据对象")),
-        Err(e) => Json(ApiResponse::error(500, &format!("删除元数据对象失败: {e}"))),
+        Ok(_) => Json(ApiResponse::not_found("未找到元数据对象")),
+        Err(e) => Json(ApiResponse::server_error(&format!("删除元数据对象失败: {e}"))),
     }
 }
 
@@ -708,7 +708,7 @@ pub async fn add_attribute(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("添加属性失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("添加属性失败: {e}")));
     }
 
     Json(ApiResponse::success(attr, "属性已添加"))
@@ -756,7 +756,7 @@ pub async fn add_tag(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("添加标签失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("添加标签失败: {e}")));
     }
 
     Json(ApiResponse::success(tag, "标签已添加"))
@@ -787,7 +787,7 @@ pub async fn get_metadata_stats(State(state): State<AppState>) -> Json<ApiRespon
     .await;
     let objects: Vec<MetadataObject> = match obj_rows {
         Ok(r) => r.iter().map(metadata_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询元数据失败: {e}"))),
+        Err(e) => return Json(ApiResponse::server_error(&format!("查询元数据失败: {e}"))),
     };
 
     let attr_count =
@@ -904,7 +904,7 @@ pub async fn build_lineage_graph(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::error(500, &format!("写入血缘节点失败: {e}")));
+            return Json(ApiResponse::server_error(&format!("写入血缘节点失败: {e}")));
         }
     }
     for edge in edges.iter() {
@@ -922,7 +922,7 @@ pub async fn build_lineage_graph(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::error(500, &format!("写入血缘边失败: {e}")));
+            return Json(ApiResponse::server_error(&format!("写入血缘边失败: {e}")));
         }
     }
 
@@ -939,7 +939,7 @@ pub async fn build_lineage_graph(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("写入血缘图谱失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("写入血缘图谱失败: {e}")));
     }
 
     Json(ApiResponse::success(graph, "血缘图谱已构建"))
@@ -968,8 +968,8 @@ pub async fn get_lineage_graph(
     .await;
     match row {
         Ok(Some(r)) => Json(ApiResponse::success(lineage_graph_from_row(&r), "血缘图谱")),
-        Ok(None) => Json(ApiResponse::error(404, "未找到血缘图谱")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询血缘图谱失败: {e}"))),
+        Ok(None) => Json(ApiResponse::not_found("未找到血缘图谱")),
+        Err(e) => Json(ApiResponse::server_error(&format!("查询血缘图谱失败: {e}"))),
     }
 }
 #[utoipa::path(
@@ -991,7 +991,7 @@ pub async fn get_upstream(
     let result = upstream_downstream(&state, &id, true).await;
     match result {
         Ok(nodes) => Json(ApiResponse::success(nodes, "上游血缘节点")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询上游血缘失败: {e}"))),
+        Err(e) => Json(ApiResponse::server_error(&format!("查询上游血缘失败: {e}"))),
     }
 }
 #[utoipa::path(
@@ -1013,7 +1013,7 @@ pub async fn get_downstream(
     let result = upstream_downstream(&state, &id, false).await;
     match result {
         Ok(nodes) => Json(ApiResponse::success(nodes, "下游血缘节点")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询下游血缘失败: {e}"))),
+        Err(e) => Json(ApiResponse::server_error(&format!("查询下游血缘失败: {e}"))),
     }
 }
 #[utoipa::path(
@@ -1038,7 +1038,7 @@ pub async fn get_path(
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
         Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘边失败: {e}"))),
+        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘边失败: {e}"))),
     };
 
     let mut adjacency: HashMap<String, Vec<LineageEdgeV60>> = HashMap::new();
@@ -1070,7 +1070,7 @@ pub async fn get_path(
         }
     }
 
-    Json(ApiResponse::error(404, "未找到血缘路径"))
+    Json(ApiResponse::not_found("未找到血缘路径"))
 }
 #[utoipa::path(
     get,
@@ -1093,11 +1093,11 @@ pub async fn get_lineage_impact(
     // K1：真表 + 复用 upstream/downstream 逻辑。
     let downstream = match upstream_downstream(&state, &id, false).await {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询下游血缘失败: {e}"))),
+        Err(e) => return Json(ApiResponse::server_error(&format!("查询下游血缘失败: {e}"))),
     };
     let upstream = match upstream_downstream(&state, &id, true).await {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询上游血缘失败: {e}"))),
+        Err(e) => return Json(ApiResponse::server_error(&format!("查询上游血缘失败: {e}"))),
     };
 
     let affected_downstream = downstream.len();
@@ -1139,7 +1139,7 @@ pub async fn get_lineage_dashboard(
     .await;
     let graphs: Vec<LineageGraph> = match graph_rows {
         Ok(r) => r.iter().map(lineage_graph_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘图谱失败: {e}"))),
+        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘图谱失败: {e}"))),
     };
 
     let node_rows = sqlx::query(&format!(
@@ -1149,7 +1149,7 @@ pub async fn get_lineage_dashboard(
     .await;
     let nodes: Vec<LineageNodeV60> = match node_rows {
         Ok(r) => r.iter().map(lineage_node_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘节点失败: {e}"))),
+        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘节点失败: {e}"))),
     };
 
     let edge_rows = sqlx::query(&format!(
@@ -1159,7 +1159,7 @@ pub async fn get_lineage_dashboard(
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
         Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘边失败: {e}"))),
+        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘边失败: {e}"))),
     };
 
     let entity_types: Vec<String> = nodes
@@ -1209,7 +1209,7 @@ pub async fn export_lineage(
     .await;
     let graphs: Vec<LineageGraph> = match graph_rows {
         Ok(r) => r.iter().map(lineage_graph_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘图谱失败: {e}"))),
+        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘图谱失败: {e}"))),
     };
 
     let node_rows = sqlx::query(&format!(
@@ -1219,7 +1219,7 @@ pub async fn export_lineage(
     .await;
     let nodes: Vec<LineageNodeV60> = match node_rows {
         Ok(r) => r.iter().map(lineage_node_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘节点失败: {e}"))),
+        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘节点失败: {e}"))),
     };
 
     let edge_rows = sqlx::query(&format!(
@@ -1229,7 +1229,7 @@ pub async fn export_lineage(
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
         Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘边失败: {e}"))),
+        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘边失败: {e}"))),
     };
 
     Json(ApiResponse::success(
@@ -1275,7 +1275,7 @@ pub async fn get_current_stage(
                 "当前生命周期阶段",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(404, "未找到实体的生命周期信息")),
+        Ok(None) => Json(ApiResponse::not_found("未找到实体的生命周期信息")),
         Err(e) => Json(ApiResponse::error(
             500,
             &format!("查询生命周期阶段失败: {e}"),

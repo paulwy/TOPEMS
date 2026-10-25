@@ -633,7 +633,7 @@ pub async fn create_snapshot(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("写入版本快照失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("写入版本快照失败: {e}")));
     }
 
     // 审计事件写真表（权威存储）。
@@ -655,7 +655,7 @@ pub async fn create_snapshot(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("写入审计事件失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("写入审计事件失败: {e}")));
     }
 
     Json(ApiResponse::success(snapshot, "版本快照已创建"))
@@ -708,7 +708,7 @@ pub async fn get_version(
 
     match row {
         Some(r) => Json(ApiResponse::success(snapshot_from_row(&r), "版本快照详情")),
-        None => Json(ApiResponse::error(404, "未找到版本快照")),
+        None => Json(ApiResponse::not_found("未找到版本快照")),
     }
 }
 
@@ -756,7 +756,7 @@ pub async fn diff_versions(
             diff.to_version = params.to_version.clone();
             Json(ApiResponse::success(diff, "版本差异"))
         }
-        _ => Json(ApiResponse::error(404, "未找到指定版本")),
+        _ => Json(ApiResponse::not_found("未找到指定版本")),
     }
 }
 
@@ -787,7 +787,7 @@ pub async fn restore_version(
     .unwrap_or(None);
 
     let Some(target) = target_row.map(|r| snapshot_from_row(&r)) else {
-        return Json(ApiResponse::error(404, "未找到指定版本"));
+        return Json(ApiResponse::not_found("未找到指定版本"));
     };
 
     // 新版本号基于真表现有快照推导。
@@ -834,7 +834,7 @@ pub async fn restore_version(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("写回版本快照失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("写回版本快照失败: {e}")));
     }
 
     // 审计事件写真表（权威存储）。
@@ -856,7 +856,7 @@ pub async fn restore_version(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("写入审计事件失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("写入审计事件失败: {e}")));
     }
 
     Json(ApiResponse::success(restored, "版本已恢复"))
@@ -976,7 +976,7 @@ pub async fn create_branch(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("创建分支失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("创建分支失败: {e}")));
     }
 
     Json(ApiResponse::success(branch, "分支已创建"))
@@ -1003,7 +1003,7 @@ pub async fn merge_branch(
             .await
             .unwrap_or(0);
     if source_exists == 0 {
-        return Json(ApiResponse::error(404, "源分支不存在"));
+        return Json(ApiResponse::not_found("源分支不存在"));
     }
 
     let now = chrono::Utc::now().to_rfc3339();
@@ -1021,7 +1021,7 @@ pub async fn merge_branch(
     .unwrap_or(None);
 
     let Some(row) = row else {
-        return Json(ApiResponse::error(404, "目标分支不存在"));
+        return Json(ApiResponse::not_found("目标分支不存在"));
     };
     let merged = version_branch_from_row(&row);
 
@@ -1279,7 +1279,7 @@ pub async fn export_audit_log(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("写入导出日志失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("写入导出日志失败: {e}")));
     }
 
     Json(ApiResponse::success(
@@ -1401,7 +1401,7 @@ pub async fn grant_permission(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("授予权限失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("授予权限失败: {e}")));
     }
 
     Json(ApiResponse::success(perm, "权限已授予"))
@@ -1431,7 +1431,7 @@ pub async fn revoke_permission(
         .unwrap_or_default();
 
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "未找到权限"));
+        return Json(ApiResponse::not_found("未找到权限"));
     }
 
     Json(ApiResponse::success_no_data("权限已撤销"))
@@ -1671,7 +1671,7 @@ pub async fn create_role(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("创建角色失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("创建角色失败: {e}")));
     }
 
     Json(ApiResponse::success(role, "角色已创建"))
@@ -1711,7 +1711,7 @@ pub async fn assign_role(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("分配角色失败: {e}")));
+        return Json(ApiResponse::server_error(&format!("分配角色失败: {e}")));
     }
 
     Json(ApiResponse::success(assignment, "角色已分配"))
@@ -1741,7 +1741,7 @@ pub async fn revoke_role(
     .unwrap_or_default();
 
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "未找到角色分配记录"));
+        return Json(ApiResponse::not_found("未找到角色分配记录"));
     }
 
     Json(ApiResponse::success_no_data("角色已撤销"))

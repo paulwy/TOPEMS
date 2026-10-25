@@ -204,7 +204,7 @@ pub async fn test_smtp_config(
     Json(payload): Json<TestEmailRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if payload.to.is_empty() {
-        return Json(ApiResponse::error(400, "收件人邮箱不能为空"));
+        return Json(ApiResponse::bad_request("收件人邮箱不能为空"));
     }
 
     // Use inline config if provided, otherwise fall back to the saved config.
@@ -247,7 +247,7 @@ pub async fn test_smtp_config(
     };
 
     if config.host.is_empty() || config.from_email.is_empty() {
-        return Json(ApiResponse::error(400, "SMTP 主机和发件人邮箱不能为空"));
+        return Json(ApiResponse::bad_request("SMTP 主机和发件人邮箱不能为空"));
     }
 
     let to = payload.to.clone();
