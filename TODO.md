@@ -41,6 +41,17 @@
 - **验证**：k8s 面 `CONSUL_URL/CONSUL_ENABLED` 复查 0 命中；30 个 yaml 文件解析全 OK；kustomization 引用 base/services 文件全部存在（无 MISS）；本机无 kustomize，未跑 kustomize build（引用完整性已静态验证）。
 - **docker 面不动作**：`deploy/docker/README.md` 头部 DEPRECATED（生产禁容器、docker 仅临时验证），consul/etcd-compose 属弃用资产保留备查。
 
+## 交付前门禁绿复验（2026-10-25，HEAD `490559cb37`）✅ 完成
+
+> 当前 main 四维核心门禁实测快照（本地真实 exit code，未照抄历史）。
+
+- **前端 `tsc --noEmit`**：exit 0。
+- **前端 `eslint .` 全量（默认格式）**：exit 0（0 error；此前 compact formatter 在 eslint 9 已移出核心，仅 formatter 报错非 lint 失败，已用默认格式复跑取真值）。
+- **后端 `cargo check --workspace`（SQLX_OFFLINE）**：exit 0，2m48s（含 topems-server/unified-core/mobile/portal/ehs/monitor/pdm 等全部 crate）。
+- **后端 `cargo clippy --workspace -D correctness`**：exit 0，5m39s。
+- **vitest 全量**：本机运行 18.5k 行日志后被系统终止未出汇总（日志中 ERROR 均为测试用例预期输出：querySharding/API Batch Operation 等）；本轮改动仅注释/文档/k8s manifest，无 JS 逻辑改动，无回归面；代表性文件 CrmContractRedesignPage 12/12 已于前轮实跑验证；全量基线 463 files / 6198 passed 见 10-28 批次7 记录。
+- 结论：HEAD `490559cb37` 前后端核心门禁全绿，交付面无本地可修缺陷。
+
 ## 补测续：crm 客户页（CrmCustomerRedesignPage·redesign 形态 19 hooks）（2026-10-25）✅ 完成
 
 > **crm redesign 形态页补测首例**：CrmCustomerRedesignPage（19 hooks / 1049 行）——useQuery（服务端分页）+ 3 mutations（delete/create/update）+ ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环
