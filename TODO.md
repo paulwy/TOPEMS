@@ -39,7 +39,18 @@
 - **svc/srm**：reqwest（features json）
 - **svc/gis**：reqwest（features json）
 - **验证**：cargo check --workspace（SQLX_OFFLINE）exit 0 / Cargo.lock 仅删 6 个依赖边（包本体仍被其他 crate 引用）
-- **备注**：svc/search 的 reqwest 与 svc/communication 的 topems-shared-db 不在审计清单内未动（留待复核）
+- **备注**：svc/search 的 reqwest 与 svc/communication 的 topems-shared-db 已实测有真实引用（projection.rs / schema_defense.rs），**确认保留**（审计清单准确）
+
+## 冗余清理 R1b：26 个 [dependencies] 段未引用依赖（2026-10-26）✅ 完成
+
+> commit `f19cb7568c`（已推送 HEAD==origin/main）。全仓 48 crate 依赖引用快扫（修正解析正则）→ src+tests 均 0 引用且非宏敏感 → 实测甄别删除。
+
+- **topems-shared（聚合 common，14 个 svc）**：analytics/finance/hrm/master-data/mes/monitor/plugin-registry/pm/portal/qms/rd/scm/search/srm
+- **reqwest（9 个 svc）**：analytics/ehs/mes/monitor/pm/qms/scm/tms/wms（hrm/lims/master-data/rd 因 tests 引用保留）
+- **rust_decimal（mes/tms）**：src 0 引用（Decimal 均走 sqlx::types）
+- **redis（erp）**：0 引用
+- **保留待甄别**：lib/shared-* 6 个宏/derive 敏感依赖（thiserror/async-trait/sqlx/anyhow/hmac/sha2/dashmap）
+- **验证**：cargo check --workspace --tests（SQLX_OFFLINE）exit 0（3m17s 含 tests 编译）；warning 均为既有 duplicate
 
 ## 补测续：erp 域剩余复杂/自绘形态页（批次7，33 用例）（2026-10-28）✅ 完成
 
