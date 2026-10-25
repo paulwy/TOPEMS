@@ -1,3 +1,11 @@
+## 补测续：finance 域自绘 hooks 页（FinanceAssetPage）（2026-10-25）✅ 完成
+
+> **自绘 hooks 页补测（第 3 例）**：FinanceAssetPage 手写 CrudApiAdapter（accountApi.list + category:'asset' 固定入参 + keyword/status 筛选）+ **折旧/停用动作**（customRowActions 弹窗 → 确认后 financeApi.voucher.create 借 1602/贷资产 / accountApi.update status:disabled）+ headerContent(rows) 统计 6 卡
+> - `FinanceAssetPage.test.tsx`（11 用例）：经 CrudPage 渲染（schema + customRowActions 2 + headerContent 函数）；list 参数（category/page/page_size/keyword/status）+ 失败返空不抛错；create 补 category:'asset' + addNotification；update/delete 委托；create 失败抛 k0；折旧 Dialog 打开（target 信息/¥1,000.00）→ 确认后 voucher.create（entries 借 1602/贷资产）+ addNotification；停用 ConfirmDialog → 确认后 update(status:disabled)
+> - **可测性要点**：交互用例直接调闭包 onClick 需 **act() 包裹**；异步动作断言用 **waitFor**（mock 的 addNotification 不渲染 DOM）；mock '@/utils/logger' 需**部分 mock 保 createLogger**（utils/errors.ts 依赖）
+> - 验证：11/11 passed；eslint 0；tsc 0；component 全量 328 files / 3405 passed / 0 failed
+> - 提交：已推送 main（见 git log 本批提交）
+
 ## 补测续：crm 域自绘 hooks 页（CRMBillingPage）（2026-10-25）✅ 完成
 
 > **自绘 hooks 页补测（第 2 例）**：CRMBillingPage useQuery 拉账单聚合（统计卡/状态饼/top10/账龄）+ tabs 切换（overview/invoices/aging）+ 内联 schema（billingSchema 过滤 actions 仅 detail）+ **只读 adapter（create/update/delete 恒定抛 'Billing records are read-only'）**
