@@ -30,6 +30,7 @@ const MASTER_PATHS = {
   aiGovernance: '/master/ai-governance',
   commercial: '/master/commercial',
   publicMasterData: '/master/public-master-data',
+  versioning: '/master/versioning',
 } as const;
 
 // ---- 路由配置 ----
@@ -121,6 +122,21 @@ const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
   requiredPermissions: ['master:data-asset:read'],
   action: 'read',
 };
+const versioningRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.versioning,
+  element: lazyWithRetry(
+    () => import('@/pages/master/MasterVersioningPage'),
+    'MasterVersioningPage'
+  ),
+  module: 'master',
+  code: 'master-versioning',
+  title: i18n.t('master.versioning'),
+  titleKey: 'master.versioning',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:versioning:read'],
+  action: 'read',
+};
 
 export const masterModuleConfig: RouteModuleConfig = {
   code: 'master',
@@ -141,6 +157,7 @@ export const masterModuleConfig: RouteModuleConfig = {
     aiGovernanceRoute,
     commercialRoute,
     publicMasterDataRoute,
+    versioningRoute,
   ],
 };
 
@@ -226,6 +243,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.public_master_data.desc'),
+    },
+    {
+      code: 'master-versioning',
+      label: i18n.t('master.versioning'),
+      labelKey: 'master.versioning',
+      icon: 'History',
+      path: MASTER_PATHS.versioning,
+      permission: 'master_data:versioning:read',
+      order: 6,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.versioning.desc'),
     },
   ],
 };
