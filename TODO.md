@@ -5099,3 +5099,6 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **修复**：svc/wms/src/modules/warehouse.rs INSERT/UPDATE 同步写 name 列（此前仅 warehouse_name 落库、读回 AS name，表 name 列空）。复用同一 bind 参数（$3/$2），无序号变更。
 - **验证**：create code=200（id eb33e48b），表 name=warehouse_name=e2e_wms_verify_001 双列一致；旧数据（e2e_wms_b1_001）name 列历史为空保留。
 - **至此 E2E 缺陷全部闭环**：P1×4（lims/hrm/pm/portal）+ P2×1（finance）+ P3×2（search 投影检索、wms name 列）。
+## 第三十七轮（2026-10-27）：最终回归验证（全部缺陷修复后）
+- **16 模块接口回归抽查全部 code=200**：iam、master-data、crm、erp、finance、wms、mes、qms、lims、hrm、gis、pm、portal、rd、mobile（list 读回）+ search（keyword=客户 total=1 投影命中）。确认 P1×4+P2×1+P3×2 修复无回归。
+- **状态**：系统运行中（PID 89293）；本地与 origin/main 一致（全部提交已推送）。
