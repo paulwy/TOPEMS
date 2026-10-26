@@ -233,7 +233,16 @@ async fn handle_tools_call(pool: &PgPool, id: Value, params: Option<Value>) -> J
                     .map(String::from)
                     .collect()
             });
-            let results = search_all(pool, query, &modules, limit).await;
+            let mut conn = match pool.acquire().await {
+                Ok(c) => c,
+                Err(e) => {
+                    return JsonRpcResponse::error(
+                        id,
+                        JsonRpcError::internal_error(format!("acquire connection failed: {e}"), None),
+                    );
+                }
+            };
+            let results = search_all(&mut *conn, query, &modules, limit).await;
             let items: Vec<Value> = results
                 .into_iter()
                 .map(|r| {
@@ -276,7 +285,16 @@ async fn handle_tools_call(pool: &PgPool, id: Value, params: Option<Value>) -> J
                 );
             };
             let limit = extract_limit(&args);
-            let results = search_documents(pool, query, limit).await;
+            let mut conn = match pool.acquire().await {
+                Ok(c) => c,
+                Err(e) => {
+                    return JsonRpcResponse::error(
+                        id,
+                        JsonRpcError::internal_error(format!("acquire connection failed: {e}"), None),
+                    );
+                }
+            };
+            let results = search_documents(&mut *conn, query, limit).await;
             let items: Vec<Value> = results
                 .into_iter()
                 .map(|r| {

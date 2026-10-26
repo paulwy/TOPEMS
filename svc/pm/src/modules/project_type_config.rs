@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query},
     routing::get,
     Json, Router,
 };
@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
+
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 // ==================== P2-11 剩余项：PM 项目类型模板接真 ====================
 
@@ -78,9 +80,15 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "project_type_config"
 )]
 async fn list_types(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Query(query): Query<ListTypesQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -103,7 +111,7 @@ async fn list_types(
     .bind(query.is_active)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -118,7 +126,7 @@ async fn list_types(
             )
             .bind(&search_pattern)
             .bind(query.is_active)
-            .fetch_one(&pool)
+            .fetch_one(&mut **txn)
             .await;
             let total = count_result.unwrap_or(0);
             Json(ApiResponse::success(
@@ -134,9 +142,15 @@ async fn list_types(
 }
 
 async fn create_type(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Json(req): Json<CreateTypeRequest>,
 ) -> Json<ApiResponse<ProjectTypeConfig>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     if req.type_code.trim().is_empty() || req.type_name.trim().is_empty() {
         return Json(ApiResponse::bad_request("类型编码与名称不能为空"));
     }
@@ -162,7 +176,7 @@ async fn create_type(
         .bind(&req.default_phases)
         .bind(&req.default_milestones)
         .bind(req.default_workflow)
-        .fetch_one(&pool)
+        .fetch_one(&mut **txn)
         .await;
 
     match result {
@@ -188,9 +202,15 @@ async fn create_type(
     tag = "project_type_config"
 )]
 async fn get_type(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectTypeConfig>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     let result = sqlx::query_as::<_, ProjectTypeConfig>(
         r#"
         SELECT id, type_code, type_name, name_en, description,
@@ -201,7 +221,7 @@ async fn get_type(
         "#,
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -215,10 +235,16 @@ async fn get_type(
 }
 
 async fn update_type(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTypeRequest>,
 ) -> Json<ApiResponse<ProjectTypeConfig>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     let result = sqlx::query_as::<_, ProjectTypeConfig>(
         r#"
         UPDATE pm.project_type_configs SET
@@ -244,7 +270,7 @@ async fn update_type(
     .bind(&req.default_milestones)
     .bind(req.default_workflow)
     .bind(req.is_active)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -258,9 +284,15 @@ async fn update_type(
 }
 
 async fn delete_type(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE pm.project_type_configs SET deleted_at = now(), updated_at = now()
@@ -268,7 +300,7 @@ async fn delete_type(
         "#,
     )
     .bind(id)
-    .execute(&pool)
+    .execute(&mut **txn)
     .await;
 
     match result {

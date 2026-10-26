@@ -495,7 +495,7 @@ pub async fn delete_company(
         Ok(Some(company)) => {
             let result = sqlx::query(only_own_schema_query!(
                 "hrm",
-                "UPDATE hrm.companies SET deleted_at = NOW() WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+                "UPDATE hrm.companies SET deleted_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
             ))
             .bind(id)
             .execute(&mut **txn)

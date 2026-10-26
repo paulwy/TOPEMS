@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path},
     routing::get,
     Json, Router,
 };
@@ -38,6 +38,8 @@ pub fn milestone_status(planned_date: i64, actual_date: Option<i64>, now: i64) -
     "upcoming"
 }
 
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
@@ -68,14 +70,19 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
 )]
 async fn list_milestones(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectMilestone>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, ProjectMilestone>(
         only_own_schema_query!("pm", "SELECT id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -103,12 +110,17 @@ async fn list_milestones(
     ),
 )]
 async fn create_milestone(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMilestoneRequest>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -134,7 +146,7 @@ async fn create_milestone(
     .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -163,15 +175,20 @@ async fn create_milestone(
     ),
 )]
 async fn get_milestone(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, ProjectMilestone>(
         only_own_schema_query!("pm", "SELECT id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -202,10 +219,15 @@ async fn get_milestone(
     ),
 )]
 async fn update_milestone(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateMilestoneRequest>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ProjectMilestone>(only_own_schema_query!(
@@ -219,7 +241,7 @@ async fn update_milestone(
             phase_id = COALESCE($5, phase_id),
             acceptance_criteria = COALESCE($6, acceptance_criteria),
             updated_at = $7
-        WHERE project_id = $8 AND id = $9 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE project_id = $8 AND id = $9 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))
@@ -232,7 +254,7 @@ async fn update_milestone(
     .bind(now)
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -262,16 +284,21 @@ async fn update_milestone(
     ),
 )]
 async fn delete_milestone(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.project_milestones WHERE project_id = $1 AND id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM pm.project_milestones WHERE project_id = $1 AND id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(project_id)
     .bind(id)
-    .execute(&pool)
+    .execute(&mut **txn)
     .await;
 
     match result {

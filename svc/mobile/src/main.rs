@@ -212,7 +212,7 @@ async fn health_check() -> ServiceHealth {
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn list_mobile_tasks(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let records = match db_get_mobile_tasks(&state.pool).await {
+    let records = match db_get_mobile_tasks(&state.pool, None).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("获取移动任务失败: {}", e);

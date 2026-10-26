@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path},
     routing::get,
     Json, Router,
 };
@@ -28,6 +28,8 @@ pub fn resource_utilization(allocated_hours: f64, actual_hours: f64) -> f64 {
     }
     (actual_hours / allocated_hours) * 100.0
 }
+
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -62,14 +64,19 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
 )]
 async fn list_resources(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectResource>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, ProjectResource>(
         only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, resource_id, role, actual_hours, actual_cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -97,12 +104,17 @@ async fn list_resources(
     ),
 )]
 async fn add_resource(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateResourceRequest>,
 ) -> Json<ApiResponse<ProjectResource>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = effective_tenant_id(&ctx, &claims);
@@ -141,7 +153,7 @@ async fn add_resource(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -170,15 +182,20 @@ async fn add_resource(
     ),
 )]
 async fn get_resource(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectResource>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, ProjectResource>(
         only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, resource_id, role, actual_hours, actual_cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -209,10 +226,15 @@ async fn get_resource(
     ),
 )]
 async fn update_resource(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateResourceRequest>,
 ) -> Json<ApiResponse<ProjectResource>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let now = Utc::now();
 
     // role->resource_type, actual_hours->quantity, actual_cost->cost。
@@ -232,7 +254,7 @@ async fn update_resource(
             actual_hours = COALESCE($10, actual_hours),
             actual_cost = COALESCE($11, actual_cost),
             updated_at = $12
-        WHERE project_id = $13 AND id = $14 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE project_id = $13 AND id = $14 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))
@@ -250,7 +272,7 @@ async fn update_resource(
     .bind(now)
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -280,16 +302,21 @@ async fn update_resource(
     ),
 )]
 async fn remove_resource(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "UPDATE pm.project_resources SET deleted_at = NOW() WHERE project_id = $1 AND id = $2"
     ))
     .bind(project_id)
     .bind(id)
-    .execute(&pool)
+    .execute(&mut **txn)
     .await;
 
     match result {

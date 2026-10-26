@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path},
     http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
@@ -20,11 +20,13 @@ use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 use rust_decimal::Decimal;
 
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+
 /// 超支硬拦截（业务拍板 A，2026-10-25）：
 /// 登记/更新预算项前校验「预算项合计 ≤ 预算总额」，超支即 422 拒绝并回显口径。
 /// 预算不存在（含跨租户不可见）→ 404。incoming 为 None（部分更新未涉及金额）时放行。
 async fn assert_budget_not_exceeded(
-    pool: &PgPool,
+    conn: &mut sqlx::PgConnection,
     budget_id: Uuid,
     exclude_item_id: Option<Uuid>,
     incoming: Option<Decimal>,
@@ -37,7 +39,7 @@ async fn assert_budget_not_exceeded(
         "SELECT total_amount FROM pm.budgets WHERE id = $1"
     ))
     .bind(budget_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *conn)
     .await
     .map_err(|e| {
         tracing::error!("超支校验读取预算失败: {}", e);
@@ -54,7 +56,7 @@ async fn assert_budget_not_exceeded(
     )
     .bind(budget_id)
     .bind(exclude_item_id)
-    .fetch_one(pool)
+    .fetch_one(&mut *conn)
     .await
     .map_err(|e| {
         tracing::error!("超支校验读取预算项失败: {}", e);
@@ -153,14 +155,19 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "budget"
 )]
 async fn get_project_budgets(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Budget>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let budgets = sqlx::query_as::<_, Budget>(
         only_own_schema_query!("pm", "SELECT id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM pm.budgets WHERE project_id = $1 ORDER BY version DESC"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match budgets {
@@ -185,10 +192,18 @@ async fn get_project_budgets(
     ),
     tag = "budget"
 )]
-async fn get_budget(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Budget>> {
+async fn get_budget(
+    Extension(txn_arc): Extension<RlsTxnArc>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Budget>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!("pm", "SELECT id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM pm.budgets WHERE id = $1"))
         .bind(id)
-        .fetch_one(&pool)
+        .fetch_one(&mut **txn)
         .await;
 
     match budget {
@@ -202,13 +217,18 @@ async fn get_budget(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<Ap
 }
 
 async fn create_budget(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBudgetRequest>,
 ) -> Json<ApiResponse<Budget>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
@@ -230,7 +250,7 @@ async fn create_budget(
     .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match budget {
@@ -271,12 +291,17 @@ async fn create_budget(
 }
 
 async fn update_budget(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
     Json(req): Json<UpdateBudgetRequest>,
 ) -> Json<ApiResponse<Budget>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status, "total_amount": req.total_amount}));
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!(
@@ -287,7 +312,7 @@ async fn update_budget(
             total_amount = COALESCE($3, total_amount),
             status = COALESCE($4, status),
             updated_at = $5
-        WHERE id = $6 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $6 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.budget_name)
     .bind(req.budget_type)
@@ -295,7 +320,7 @@ async fn update_budget(
     .bind(req.status)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match budget {
@@ -365,11 +390,16 @@ async fn update_budget(
     tag = "budget"
 )]
 async fn submit_budget(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Budget>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!(
         "pm",
@@ -377,7 +407,7 @@ async fn submit_budget(
     ))
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match budget {
@@ -440,11 +470,16 @@ async fn submit_budget(
     tag = "budget"
 )]
 async fn approve_budget(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Budget>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!(
         "pm",
@@ -452,7 +487,7 @@ async fn approve_budget(
     ))
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match budget {
@@ -515,14 +550,19 @@ async fn approve_budget(
     tag = "budget"
 )]
 async fn get_budget_items(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<BudgetItem>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let items = sqlx::query_as::<_, BudgetItem>(
         only_own_schema_query!("pm", "SELECT id, budget_id, item_code, item_name, category, subcategory, budget_amount, allocated_amount, spent_amount, description, created_at, updated_at FROM pm.budget_items WHERE budget_id = $1"),
     )
     .bind(id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match items {
@@ -535,15 +575,20 @@ async fn get_budget_items(
 }
 
 async fn create_budget_item(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBudgetItemRequest>,
 ) -> Json<ApiResponse<BudgetItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     // 超支硬拦截（拍板 A）：登记支出项前校验预算项合计 ≤ 预算总额
     if let Err((code, msg)) =
-        assert_budget_not_exceeded(&pool, id, None, Some(req.budget_amount)).await
+        assert_budget_not_exceeded(&mut **txn, id, None, Some(req.budget_amount)).await
     {
         return Json(ApiResponse::error(code, msg.as_str()));
     }
@@ -564,7 +609,7 @@ async fn create_budget_item(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match item {
@@ -591,13 +636,18 @@ async fn create_budget_item(
     tag = "budget"
 )]
 async fn update_budget_item(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateBudgetItemRequest>,
 ) -> Json<ApiResponse<BudgetItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     // 超支硬拦截（拍板 A）：更新金额时校验（排除自身）预算项合计 ≤ 预算总额
     if let Err((code, msg)) =
-        assert_budget_not_exceeded(&pool, id, Some(item_id), req.budget_amount).await
+        assert_budget_not_exceeded(&mut **txn, id, Some(item_id), req.budget_amount).await
     {
         return Json(ApiResponse::error(code, msg.as_str()));
     }
@@ -610,7 +660,7 @@ async fn update_budget_item(
             budget_amount = COALESCE($4, budget_amount),
             description = COALESCE($5, description),
             updated_at = $6
-        WHERE id = $7 AND budget_id = $8 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $7 AND budget_id = $8 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.item_name)
     .bind(req.category)
@@ -620,7 +670,7 @@ async fn update_budget_item(
     .bind(Utc::now())
     .bind(item_id)
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match item {
@@ -634,16 +684,21 @@ async fn update_budget_item(
 }
 
 async fn delete_budget_item(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.budget_items WHERE id = $1 AND budget_id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM pm.budget_items WHERE id = $1 AND budget_id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(item_id)
     .bind(id)
-    .execute(&pool)
+    .execute(&mut **txn)
     .await;
 
     match result {

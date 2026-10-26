@@ -484,7 +484,7 @@ pub async fn calculate_payroll_run(
         SELECT id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         FROM hrm.payroll_runs
         WHERE id = $1 AND status = 'draft' AND deleted_at IS NULL
-          AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL
+          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL
                OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#
     ))
@@ -528,7 +528,7 @@ pub async fn calculate_payroll_run(
         ) c ON TRUE
         WHERE e.status = 'active'
           AND e.deleted_at IS NULL
-          AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL
+          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL
                OR e.tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#
     ))
@@ -586,7 +586,7 @@ pub async fn calculate_payroll_run(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.payroll_runs
         SET status = 'calculated', total_amount = $2, employee_count = $3, updated_at = $4
-        WHERE id = $1 AND status = 'draft' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND status = 'draft' AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         "#)
     )
@@ -648,7 +648,7 @@ pub async fn pay_payroll_run(
         r#"
         SELECT COUNT(*) FROM hrm.payroll_items
         WHERE payroll_run_id = $1 AND status = 'pending'
-          AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL
+          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL
                OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#
     ))
@@ -668,7 +668,7 @@ pub async fn pay_payroll_run(
         r#"
         UPDATE hrm.payroll_items
         SET status = 'paid', paid_at = $2
-        WHERE payroll_run_id = $1 AND status = 'pending' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE payroll_run_id = $1 AND status = 'pending' AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#
     ))
     .bind(id)
@@ -685,7 +685,7 @@ pub async fn pay_payroll_run(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.payroll_runs
         SET status = 'paid', paid_at = $2, updated_at = $2
-        WHERE id = $1 AND status = 'calculated' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND status = 'calculated' AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         "#)
     )

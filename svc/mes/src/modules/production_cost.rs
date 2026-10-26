@@ -231,6 +231,14 @@ pub struct PeriodQuery {
 
 // ==================== Helper Functions ====================
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 #[allow(dead_code)]
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     dt.unwrap_or_else(Utc::now)
@@ -243,6 +251,7 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 async fn calculate_work_order_cost_detail_db(
     pool: &sqlx::PgPool,
     work_order_id: Uuid,
+    tenant_id: Uuid,
 ) -> Result<(WorkOrderCostResult, Vec<CostBreakdownItem>), TopemsError> {
     let work_order = sqlx::query(
         r#"
@@ -251,9 +260,15 @@ async fn calculate_work_order_cost_detail_db(
                wo.work_station_id, wo.team_id, wo.operator
         FROM mes.work_orders wo
         WHERE wo.id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+               OR EXISTS (
+                   SELECT 1 FROM mes.production_orders po
+                   WHERE po.id = wo.order_id AND po.tenant_id = $2::uuid
+               ))
         "#,
     )
     .bind(work_order_id)
+    .bind(tenant_id)
     .fetch_optional(pool)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("查询工单失败: {}", e)))?;
@@ -421,7 +436,7 @@ pub async fn calculate_work_order_cost(
         return e;
     }
 
-    match calculate_work_order_cost_detail_db(&state.pool, id).await {
+    match calculate_work_order_cost_detail_db(&state.pool, id, get_tenant_id(&claims)).await {
         Ok((result, _)) => Json(ApiResponse::success(result, "工单成本计算成功")),
         Err(err) => {
             tracing::error!("计算工单成本失败: {}", err);
@@ -461,7 +476,7 @@ pub async fn get_work_order_cost_detail(
         return e;
     }
 
-    match calculate_work_order_cost_detail_db(&state.pool, id).await {
+    match calculate_work_order_cost_detail_db(&state.pool, id, get_tenant_id(&claims)).await {
         Ok((result, _)) => Json(ApiResponse::success(result, "获取工单成本详情成功")),
         Err(err) => {
             tracing::error!("获取工单成本详情失败: {}", err);
@@ -500,14 +515,18 @@ pub async fn calculate_production_order_cost(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     let order = sqlx::query(
         r#"
         SELECT id, order_number AS order_no, product_code, product_name, quantity, status
         FROM mes.production_orders
         WHERE id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -550,7 +569,9 @@ pub async fn calculate_production_order_cost(
     if let Ok(rows) = work_order_ids {
         for row in rows {
             let wo_id: Uuid = row.try_get("id").unwrap_or_default();
-            if let Ok((cost, _)) = calculate_work_order_cost_detail_db(&state.pool, wo_id).await {
+            if let Ok((cost, _)) =
+                calculate_work_order_cost_detail_db(&state.pool, wo_id, tenant_id).await
+            {
                 work_order_costs.push(cost.clone());
                 total_material += cost.material_cost;
                 total_labor += cost.labor_cost;
@@ -632,6 +653,7 @@ pub async fn get_period_cost_report(
         .map(|d| d.with_timezone(&Utc))
         .unwrap_or_else(|| end_date - Duration::days(30));
 
+    let tenant_id = get_tenant_id(&claims);
     let mut total_material = 0.0;
     let mut total_labor = 0.0;
     let mut total_overhead = 0.0;
@@ -643,10 +665,16 @@ pub async fn get_period_cost_report(
         FROM mes.work_orders wo
         WHERE wo.actual_start_date IS NOT NULL
         AND wo.actual_start_date >= $1 AND wo.actual_start_date <= $2
+        AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+             OR EXISTS (
+                 SELECT 1 FROM mes.production_orders po
+                 WHERE po.id = wo.order_id AND po.tenant_id = $3::uuid
+             ))
         "#,
     )
     .bind(start_date)
     .bind(end_date)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -665,7 +693,9 @@ pub async fn get_period_cost_report(
             );
             let ws_id: Option<Uuid> = row.try_get("work_station_id").ok().flatten();
 
-            if let Ok((cost, _)) = calculate_work_order_cost_detail_db(&state.pool, wo_id).await {
+            if let Ok((cost, _)) =
+                calculate_work_order_cost_detail_db(&state.pool, wo_id, tenant_id).await
+            {
                 total_material += cost.material_cost;
                 total_labor += cost.labor_cost;
                 total_overhead += cost.overhead_cost;
@@ -769,6 +799,7 @@ pub async fn get_cost_trend(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
     let end_date = Utc::now();
     let _start_date = end_date - Duration::days(90);
 
@@ -786,12 +817,18 @@ pub async fn get_cost_trend(
 
         let week_cost = sqlx::query(
             r#"
-            SELECT COUNT(*) as cnt FROM mes.work_orders
-            WHERE actual_start_date >= $1 AND actual_start_date <= $2
+            SELECT COUNT(*) as cnt FROM mes.work_orders wo
+            WHERE wo.actual_start_date >= $1 AND wo.actual_start_date <= $2
+              AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+                   OR EXISTS (
+                       SELECT 1 FROM mes.production_orders po
+                       WHERE po.id = wo.order_id AND po.tenant_id = $3::uuid
+                   ))
             "#,
         )
         .bind(period_start)
         .bind(period_end)
+        .bind(tenant_id)
         .fetch_one(&state.pool)
         .await;
 

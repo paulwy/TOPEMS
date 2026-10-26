@@ -23,6 +23,14 @@ use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
+fn get_tenant_id(claims: &Claims) -> uuid::Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| uuid::Uuid::parse_str(s).ok())
+        .unwrap_or(uuid::Uuid::nil())
+}
+
 // ==================== Data Types ====================
 
 #[derive(Debug, Clone, Serialize)]
@@ -145,15 +153,16 @@ pub fn create_routes() -> Router<AppState> {
 )]
 pub async fn list_anomaly_alerts(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<AnomalyQueryParams>,
 ) -> Json<ApiResponse<Vec<AnomalyAlert>>> {
     let mut alerts = Vec::new();
+    let tenant_id = get_tenant_id(&claims);
 
     // 并行检测各类异常
-    let equipment_alerts = detect_equipment_anomalies(&state.pool).await;
-    let quality_alerts = detect_quality_anomalies(&state.pool).await;
-    let production_alerts = detect_production_anomalies(&state.pool).await;
+    let equipment_alerts = detect_equipment_anomalies(&state.pool, tenant_id).await;
+    let quality_alerts = detect_quality_anomalies(&state.pool, tenant_id).await;
+    let production_alerts = detect_production_anomalies(&state.pool, tenant_id).await;
 
     alerts.extend(equipment_alerts);
     alerts.extend(quality_alerts);
@@ -213,9 +222,10 @@ pub async fn list_anomaly_alerts(
 )]
 pub async fn get_anomaly_summary(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<AnomalySummary>> {
-    let all_alerts = collect_all_alerts(&state.pool).await;
+    let tenant_id = get_tenant_id(&claims);
+    let all_alerts = collect_all_alerts(&state.pool, tenant_id).await;
 
     let mut by_type: HashMap<String, usize> = HashMap::new();
     let mut equipment_map: HashMap<String, (String, usize, String)> = HashMap::new();
@@ -249,7 +259,7 @@ pub async fn get_anomaly_summary(
         })
         .collect();
 
-    let recent_trend = get_recent_anomaly_trend(&state.pool).await;
+    let recent_trend = get_recent_anomaly_trend(&state.pool, tenant_id).await;
 
     let summary = AnomalySummary {
         critical_count: all_alerts
@@ -286,10 +296,10 @@ pub async fn get_anomaly_summary(
 )]
 pub async fn get_equipment_anomalies(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(equipment_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<AnomalyAlert>>> {
-    let all_alerts = collect_all_alerts(&state.pool).await;
+    let all_alerts = collect_all_alerts(&state.pool, get_tenant_id(&claims)).await;
     let filtered: Vec<AnomalyAlert> = all_alerts
         .into_iter()
         .filter(|a| a.source_id == equipment_id)
@@ -389,11 +399,12 @@ pub async fn update_anomaly_rule(
 )]
 pub async fn trigger_anomaly_scan(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let equipment_alerts = detect_equipment_anomalies(&state.pool).await;
-    let quality_alerts = detect_quality_anomalies(&state.pool).await;
-    let production_alerts = detect_production_anomalies(&state.pool).await;
+    let tenant_id = get_tenant_id(&claims);
+    let equipment_alerts = detect_equipment_anomalies(&state.pool, tenant_id).await;
+    let quality_alerts = detect_quality_anomalies(&state.pool, tenant_id).await;
+    let production_alerts = detect_production_anomalies(&state.pool, tenant_id).await;
 
     let total = equipment_alerts.len() + quality_alerts.len() + production_alerts.len();
 
@@ -428,7 +439,7 @@ pub async fn trigger_anomaly_scan(
 )]
 pub async fn get_anomaly_trend(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<AnomalyQueryParams>,
 ) -> Json<ApiResponse<Vec<DailyAnomalyCount>>> {
     let days = if let Some(ref start) = params.start_date {
@@ -448,24 +459,28 @@ pub async fn get_anomaly_trend(
         30
     };
 
-    let trend = get_recent_anomaly_trend_days(&state.pool, days.min(90)).await;
+    let trend =
+        get_recent_anomaly_trend_days(&state.pool, get_tenant_id(&claims), days.min(90)).await;
     Json(ApiResponse::success(trend, "异常趋势获取成功"))
 }
 
 // ==================== Detection Logic ====================
 
-async fn collect_all_alerts(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
+async fn collect_all_alerts(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) -> Vec<AnomalyAlert> {
     let mut alerts = Vec::new();
-    alerts.extend(detect_equipment_anomalies(pool).await);
-    alerts.extend(detect_quality_anomalies(pool).await);
-    alerts.extend(detect_production_anomalies(pool).await);
+    alerts.extend(detect_equipment_anomalies(pool, tenant_id).await);
+    alerts.extend(detect_quality_anomalies(pool, tenant_id).await);
+    alerts.extend(detect_production_anomalies(pool, tenant_id).await);
     alerts
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 设备异常检测
 #[allow(clippy::indexing_slicing, clippy::unwrap_used)]
-async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
+async fn detect_equipment_anomalies(
+    pool: &sqlx::PgPool,
+    tenant_id: uuid::Uuid,
+) -> Vec<AnomalyAlert> {
     let mut alerts = Vec::new();
 
     // 1. 基于设备巡检数据检测温度/振动/噪音异常
@@ -477,10 +492,12 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         FROM mes.equipment_inspections ei
         JOIN mes.equipment e ON e.id = ei.equipment_id
         WHERE ei.inspection_date::date >= CURRENT_DATE - INTERVAL '7 days'
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $1::uuid)
         ORDER BY ei.inspection_date DESC
         LIMIT 100
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(pool)
     .await
     {
@@ -664,10 +681,12 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         FROM mes.equipment_oee eo
         JOIN mes.equipment e ON e.id = eo.equipment_id
         WHERE eo.record_date >= CURRENT_DATE - INTERVAL '30 days'
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR eo.tenant_id = $1::uuid)
         GROUP BY e.id, e.equipment_code, e.equipment_name
         HAVING AVG(eo.oee) < 0.60
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(pool)
     .await
     {
@@ -717,10 +736,12 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
                last_maintenance_date, next_maintenance_date
         FROM mes.equipment
         WHERE status != 'scrapped'
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
           AND (next_maintenance_date IS NOT NULL AND next_maintenance_date < CURRENT_DATE
                OR (last_maintenance_date IS NULL AND purchase_date < CURRENT_DATE - INTERVAL '90 days'))
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(pool)
     .await
     {
@@ -762,7 +783,10 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
 }
 
 /// 质量异常检测
-async fn detect_quality_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
+async fn detect_quality_anomalies(
+    pool: &sqlx::PgPool,
+    tenant_id: uuid::Uuid,
+) -> Vec<AnomalyAlert> {
     let mut alerts = Vec::new();
 
     // 1. 基于质量记录检测缺陷率异常
@@ -772,12 +796,18 @@ async fn detect_quality_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
                SUM(quantity) as total_qty,
                SUM(defective_quantity) as total_defective,
                COUNT(*) as record_count
-        FROM mes.quality_records
-        WHERE created_at >= NOW() - INTERVAL '7 days'
+        FROM mes.quality_records qr
+        WHERE qr.created_at >= NOW() - INTERVAL '7 days'
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+               OR EXISTS (
+                   SELECT 1 FROM mes.production_orders po
+                   WHERE po.id = qr.order_id AND po.tenant_id = $1::uuid
+               ))
         GROUP BY order_no, product_name
         HAVING SUM(quantity) > 0 AND SUM(defective_quantity)::float / SUM(quantity) > 0.05
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(pool)
     .await
     {
@@ -845,11 +875,17 @@ async fn detect_quality_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         SELECT order_no, product_name, batch_no,
                quantity, qualified_quantity, defective_quantity,
                quality_status, defect_reason
-        FROM mes.quality_records
-        WHERE quality_status = 'rejected'
-          AND created_at >= NOW() - INTERVAL '24 hours'
+        FROM mes.quality_records qr
+        WHERE qr.quality_status = 'rejected'
+          AND qr.created_at >= NOW() - INTERVAL '24 hours'
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+               OR EXISTS (
+                   SELECT 1 FROM mes.production_orders po
+                   WHERE po.id = qr.order_id AND po.tenant_id = $1::uuid
+               ))
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(pool)
     .await
     {
@@ -898,7 +934,10 @@ async fn detect_quality_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 生产异常检测
-async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
+async fn detect_production_anomalies(
+    pool: &sqlx::PgPool,
+    tenant_id: uuid::Uuid,
+) -> Vec<AnomalyAlert> {
     let mut alerts = Vec::new();
 
     // 1. 基于生产订单延期检测
@@ -911,8 +950,10 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         WHERE status NOT IN ('completed', 'cancelled')
           AND planned_end_date IS NOT NULL
           AND planned_end_date < NOW()
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(pool)
     .await
     {
@@ -984,8 +1025,14 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         WHERE w.status = 'in_progress'
           AND w.start_time IS NOT NULL
           AND w.start_time < NOW() - INTERVAL '48 hours'
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+               OR EXISTS (
+                   SELECT 1 FROM mes.production_orders po
+                   WHERE po.id = w.order_id AND po.tenant_id = $1::uuid
+               ))
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(pool)
     .await
     {
@@ -1059,8 +1106,11 @@ fn is_increasing_trend(data: &[f64]) -> bool {
 }
 
 /// 获取最近 7 天的异常趋势
-async fn get_recent_anomaly_trend(pool: &sqlx::PgPool) -> Vec<DailyAnomalyCount> {
-    get_recent_anomaly_trend_days(pool, 7).await
+async fn get_recent_anomaly_trend(
+    pool: &sqlx::PgPool,
+    tenant_id: uuid::Uuid,
+) -> Vec<DailyAnomalyCount> {
+    get_recent_anomaly_trend_days(pool, tenant_id, 7).await
 }
 
 #[allow(
@@ -1070,7 +1120,11 @@ async fn get_recent_anomaly_trend(pool: &sqlx::PgPool) -> Vec<DailyAnomalyCount>
     clippy::cast_sign_loss
 )]
 /// 获取最近 N 天的异常趋势（基于质量记录和设备巡检异常）
-async fn get_recent_anomaly_trend_days(pool: &sqlx::PgPool, days: usize) -> Vec<DailyAnomalyCount> {
+async fn get_recent_anomaly_trend_days(
+    pool: &sqlx::PgPool,
+    tenant_id: uuid::Uuid,
+    days: usize,
+) -> Vec<DailyAnomalyCount> {
     let mut result = Vec::new();
 
     // 基于质量记录中的不良品统计趋势
@@ -1079,14 +1133,20 @@ async fn get_recent_anomaly_trend_days(pool: &sqlx::PgPool, days: usize) -> Vec<
         SELECT DATE(created_at) as date,
                COUNT(*) as count,
                COUNT(*) FILTER (WHERE quality_status = 'rejected') as critical
-        FROM mes.quality_records
-        WHERE created_at >= NOW() - INTERVAL '90 days'
+        FROM mes.quality_records qr
+        WHERE qr.created_at >= NOW() - INTERVAL '90 days'
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+               OR EXISTS (
+                   SELECT 1 FROM mes.production_orders po
+                   WHERE po.id = qr.order_id AND po.tenant_id = $2::uuid
+               ))
         GROUP BY DATE(created_at)
         ORDER BY DATE(created_at) DESC
         LIMIT $1
         "#,
     )
     .bind(days as i64)
+    .bind(tenant_id)
     .fetch_all(pool)
     .await
     {

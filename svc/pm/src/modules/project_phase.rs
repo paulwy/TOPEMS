@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path},
     routing::get,
     Json, Router,
 };
@@ -29,6 +29,8 @@ pub fn calculate_phase_progress(completed_tasks: usize, total_tasks: usize) -> f
     pct.clamp(0.0, 100.0)
 }
 
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
@@ -57,14 +59,19 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
 )]
 async fn list_phases(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, ProjectPhase>(
         only_own_schema_query!("pm", "SELECT id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -93,12 +100,17 @@ async fn list_phases(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 async fn create_phase(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -107,7 +119,7 @@ async fn create_phase(
         "SELECT COUNT(*) FROM pm.project_phases WHERE project_id = $1"
     ))
     .bind(project_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     let sequence_number = match count_result {
@@ -140,7 +152,7 @@ async fn create_phase(
     .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
@@ -169,15 +181,20 @@ async fn create_phase(
     ),
 )]
 async fn get_phase(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectPhase>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, ProjectPhase>(
         only_own_schema_query!("pm", "SELECT id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -208,10 +225,15 @@ async fn get_phase(
     ),
 )]
 async fn update_phase(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ProjectPhase>(only_own_schema_query!(
@@ -227,7 +249,7 @@ async fn update_phase(
             status = COALESCE($7, status),
             predecessor_ids = COALESCE($8, predecessor_ids),
             updated_at = $9
-        WHERE project_id = $10 AND id = $11 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE project_id = $10 AND id = $11 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))
@@ -242,7 +264,7 @@ async fn update_phase(
     .bind(now)
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -272,16 +294,21 @@ async fn update_phase(
     ),
 )]
 async fn delete_phase(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.project_phases WHERE project_id = $1 AND id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM pm.project_phases WHERE project_id = $1 AND id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(project_id)
     .bind(id)
-    .execute(&pool)
+    .execute(&mut **txn)
     .await;
 
     match result {

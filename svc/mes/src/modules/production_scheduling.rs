@@ -471,9 +471,9 @@ pub async fn create_production_schedule(
             schedule_no, order_id, order_no, product_id, product_name, product_code,
             quantity, work_station_id, equipment_id, process_id,
             planned_start_time, planned_end_time, status, priority, sequence, notes,
-            created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13, $14, $15, $16, $16)
-        RETURNING 
+            created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13, $14, $15, $16, $16, $17)
+        RETURNING
             id, schedule_no, order_id, order_no,
             product_id, product_name, product_code,
             quantity, work_station_id, equipment_id,
@@ -497,6 +497,7 @@ req.planned_end_time,
         req.sequence.unwrap_or(0),
         req.notes,
 Utc::now(),
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;
@@ -567,9 +568,11 @@ pub async fn get_production_schedule(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     let result = sqlx::query!(
         r#"
-        SELECT 
+        SELECT
             ps.id, ps.schedule_no, ps.order_id, ps.order_no,
             ps.product_id, ps.product_name, ps.product_code,
             ps.quantity, ps.work_station_id, ps.equipment_id,
@@ -582,11 +585,16 @@ pub async fn get_production_schedule(
             COALESCE(pp.process_name, NULL) as process_name
         FROM mes.production_schedules ps
         LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id
+            AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $2::uuid)
         LEFT JOIN mes.equipment e ON ps.equipment_id = e.id
+            AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $2::uuid)
         LEFT JOIN mes.production_processes pp ON ps.process_id = pp.id
+            AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR pp.tenant_id = $2::uuid)
         WHERE ps.id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ps.tenant_id = $2::uuid)
         "#,
         id,
+        tenant_id,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -878,9 +886,11 @@ pub async fn get_gantt_data(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     let schedules = sqlx::query!(
         r#"
-        SELECT 
+        SELECT
             ps.id, ps.schedule_no, ps.order_no, ps.product_name,
             ps.planned_start_time, ps.planned_end_time,
             ps.actual_start_time, ps.actual_end_time,
@@ -888,10 +898,13 @@ pub async fn get_gantt_data(
             COALESCE(ws.station_name, NULL) as work_station_name
         FROM mes.production_schedules ps
         LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id
+            AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $1::uuid)
         WHERE ps.planned_start_time IS NOT NULL
           AND ps.planned_end_time IS NOT NULL
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ps.tenant_id = $1::uuid)
         ORDER BY ps.planned_start_time ASC
-        "#
+        "#,
+        tenant_id,
     )
     .fetch_all(&state.pool)
     .await;

@@ -165,7 +165,7 @@ impl ProjectRepository {
                 status = $5, progress = $6, updated_at = $7,
                 project_config = $8, benefit_target = $9, risk_level = $10,
                 priority = $11, tags = $12, parent_id = $13, workspace_id = $14
-            WHERE id = $15 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE id = $15 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             RETURNING id, tenant_id, name, code, description, project_type, status, leader,
                       team_members, start_date, end_date, budget, progress,
                       created_by, created_at, updated_at, project_config,
@@ -196,7 +196,7 @@ impl ProjectRepository {
     pub async fn delete(&self, id: Uuid) -> Result<bool> {
         let result = sqlx::query(
             r#"
-            UPDATE rs.projects SET deleted_at = NOW() WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            UPDATE rs.projects SET deleted_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             "#,
         )
         .bind(id)
@@ -257,7 +257,7 @@ impl ProjectRepository {
 
         let result = sqlx::query(
             r#"
-            UPDATE rs.projects SET deleted_at = NOW() WHERE id = ANY($1) AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            UPDATE rs.projects SET deleted_at = NOW() WHERE id = ANY($1) AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             "#,
         )
         .bind(ids)

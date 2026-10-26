@@ -24,7 +24,8 @@ pub struct PatrolRecord {
     pub address: Option<String>,
     pub patrol_type: String,
     pub status: String,
-    pub checked_by: String,
+    /// DB 列是 uuid，wire 字段保持字符串（serde 将 Uuid 序列化为字符串）
+    pub checked_by: Option<Uuid>,
     pub checked_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
 }
@@ -113,12 +114,12 @@ pub async fn get_all_patrol_records(
     };
 
     let records: Vec<PatrolRecord> = match sqlx::query_as::<_, PatrolRecord>(
-        only_own_schema_query!("mobile", "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
+        only_own_schema_query!("mobile", "SELECT id, title, description, location_lat::float8 AS location_lat, location_lng::float8 AS location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
          FROM mobile.patrol_records 
          WHERE deleted_at IS NULL AND checked_by = $1 
          ORDER BY created_at DESC")
     )
-    .bind(&user_id)
+    .bind(Uuid::parse_str(&user_id).ok())
     .fetch_all(&pool)
     .await
     {
@@ -167,12 +168,12 @@ pub async fn get_patrol_record(
     };
 
     let record = match sqlx::query_as::<_, PatrolRecord>(
-        only_own_schema_query!("mobile", "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
+        only_own_schema_query!("mobile", "SELECT id, title, description, location_lat::float8 AS location_lat, location_lng::float8 AS location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
          FROM mobile.patrol_records 
          WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL")
     )
     .bind(id)
-    .bind(&user_id)
+    .bind(Uuid::parse_str(&user_id).ok())
     .fetch_optional(&pool)
     .await
     {
@@ -235,7 +236,7 @@ pub async fn create_patrol_record(
     .bind(&payload.address)
     .bind(&payload.patrol_type)
     .bind(&status)
-    .bind(&user_id)
+    .bind(Uuid::parse_str(&user_id).ok())
     .bind(Utc::now())
     .bind(Uuid::nil())
     .execute(&pool)
@@ -254,7 +255,7 @@ pub async fn create_patrol_record(
         address: payload.address,
         patrol_type: payload.patrol_type,
         status,
-        checked_by: user_id,
+        checked_by: Uuid::parse_str(&user_id).ok(),
         checked_at: None,
         created_at: Utc::now(),
     };
@@ -283,11 +284,11 @@ pub async fn update_patrol_record(
     };
 
     let current_record = match sqlx::query_as::<_, PatrolRecord>(
-        only_own_schema_query!("mobile", "SELECT id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
+        only_own_schema_query!("mobile", "SELECT id, title, description, location_lat::float8 AS location_lat, location_lng::float8 AS location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
          FROM mobile.patrol_records WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL")
     )
     .bind(id)
-    .bind(&user_id)
+    .bind(Uuid::parse_str(&user_id).ok())
     .fetch_optional(&pool)
     .await
     {
@@ -321,7 +322,7 @@ pub async fn update_patrol_record(
     .bind(&status)
     .bind(Utc::now())
     .bind(id)
-    .bind(&user_id)
+    .bind(Uuid::parse_str(&user_id).ok())
     .execute(&pool)
     .await
     {
@@ -355,7 +356,7 @@ pub async fn delete_patrol_record(
         only_own_schema_query!("mobile", "UPDATE mobile.patrol_records SET deleted_at = NOW() WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL"),
     )
     .bind(id)
-    .bind(&user_id)
+    .bind(Uuid::parse_str(&user_id).ok())
     .execute(&pool)
     .await;
 

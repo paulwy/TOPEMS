@@ -97,9 +97,9 @@ async fn list_audit_logs(
           AND ($4::text IS NULL OR status = $4)
           AND ($5::text IS NULL OR created_at >= $5::timestamptz)
           AND ($6::text IS NULL OR created_at <= $6::timestamptz)
-          AND ($9::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $9::uuid)
+          AND ($7::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $7::uuid)
         ORDER BY created_at DESC
-        LIMIT $7 OFFSET $8
+        LIMIT $8 OFFSET $9
         "#,
     )
     .bind(&params.action)
@@ -187,10 +187,13 @@ async fn get_audit_log(
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM mes.audit_logs WHERE id = $1
+        FROM mes.audit_logs
+        WHERE id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
     )
     .bind(id)
+    .bind(get_tenant_id(&claims))
     .fetch_optional(&state.pool)
     .await;
 

@@ -136,7 +136,7 @@ pub async fn get_safety_stock(
                specification, safety_stock, reorder_point, max_stock,
                safety_factor, lead_time_days, consumption_days,
                created_at, updated_at
-        FROM wms.safety_stock_settings WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        FROM wms.safety_stock_settings WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
     )
     .bind(id)
@@ -217,7 +217,7 @@ pub async fn update_safety_stock(
             lead_time_days = COALESCE($6, lead_time_days),
             consumption_days = COALESCE($7, consumption_days),
             updated_at = $8
-        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, warehouse_id, warehouse_name, material_code, material_name,
                   specification, safety_stock, reorder_point, max_stock,
                   safety_factor, lead_time_days, consumption_days, updated_at
@@ -334,7 +334,7 @@ pub async fn batch_update_safety_stock(
                             lead_time_days = COALESCE($6, lead_time_days),
                             consumption_days = COALESCE($7, consumption_days),
                             updated_at = $8
-                        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+                        WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                         "#,
                     )
                     .bind(id)

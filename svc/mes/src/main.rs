@@ -105,22 +105,26 @@ async fn main() -> anyhow::Result<()> {
             tracing::info!("[mes] 开始缓存预热...");
 
             // 预热工艺路线列表（第一页，默认参数）
+            // 启动期无请求身份，按服务身份（nil tenant，放行全部）执行，与 super admin 口径一致
             match sqlx::query_scalar::<_, serde_json::Value>(
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM mes.process_routes WHERE deleted_at IS NULL),
+                    'total', (SELECT COUNT(*) FROM mes.process_routes WHERE deleted_at IS NULL
+                              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)),
                     'page', 1,
                     'page_size', 10
                 ) as data
                 FROM (
                     SELECT pr.* FROM mes.process_routes pr
                     WHERE pr.deleted_at IS NULL
+                      AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR pr.tenant_id = $1::uuid)
                     ORDER BY pr.created_at DESC
                     LIMIT 10 OFFSET 0
                 ) t
                 "#,
             )
+            .bind(uuid::Uuid::nil())
             .fetch_optional(&pool)
             .await
             {
@@ -143,17 +147,20 @@ async fn main() -> anyhow::Result<()> {
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM capacities),
+                    'total', (SELECT COUNT(*) FROM capacities
+                              WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)),
                     'page', 1,
                     'page_size', 10
                 ) as data
                 FROM (
                     SELECT c.* FROM capacities c
+                    WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR c.tenant_id = $1::uuid)
                     ORDER BY c.capacity_date DESC
                     LIMIT 10 OFFSET 0
                 ) t
                 "#,
             )
+            .bind(uuid::Uuid::nil())
             .fetch_optional(&pool)
             .await
             {

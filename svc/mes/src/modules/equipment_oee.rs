@@ -532,9 +532,9 @@ pub async fn create_oee_record(
             planned_production_time, actual_run_time, downtime,
             ideal_cycle_time, actual_output, good_output, defective_output,
             availability, performance, quality_rate, oee,
-            shift, operator, notes, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $17)
-        RETURNING 
+            shift, operator, notes, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $17, $18)
+        RETURNING
             id, equipment_id, record_date,
             planned_production_time, actual_run_time, downtime,
             ideal_cycle_time, actual_output, good_output, defective_output,
@@ -558,6 +558,7 @@ pub async fn create_oee_record(
         req.operator,
         req.notes,
         now,
+        get_tenant_id(&claims),
     )
     .fetch_one(&state.pool)
     .await;
@@ -571,8 +572,9 @@ pub async fn create_oee_record(
     };
 
     let equipment = sqlx::query!(
-        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1"#,
-        req.equipment_id
+        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
+        req.equipment_id,
+        get_tenant_id(&claims),
     )
     .fetch_optional(&state.pool)
     .await
@@ -599,8 +601,8 @@ pub async fn create_oee_record(
         shift: result.shift,
         operator: result.operator,
         notes: result.notes,
-        created_at: naive_to_utc(result.created_at),
-        updated_at: naive_to_utc(result.updated_at),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     Json(ApiResponse::success(record, "OEE记录创建成功"))
@@ -632,7 +634,7 @@ pub async fn get_oee_record(
 
     let result = sqlx::query!(
         r#"
-        SELECT 
+        SELECT
             oee.id, oee.equipment_id, oee.record_date,
             oee.planned_production_time, oee.actual_run_time, oee.downtime,
             oee.ideal_cycle_time, oee.actual_output, oee.good_output, oee.defective_output,
@@ -641,9 +643,12 @@ pub async fn get_oee_record(
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
         FROM mes.equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
+            AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $2::uuid)
         WHERE oee.id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = $2::uuid)
         "#,
         id,
+        get_tenant_id(&claims),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -678,8 +683,8 @@ pub async fn get_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "获取OEE记录成功"))
         }
@@ -717,9 +722,12 @@ pub async fn update_oee_record(
         r#"
         SELECT planned_production_time, actual_run_time, downtime,
                ideal_cycle_time, actual_output, good_output, defective_output
-        FROM mes.equipment_oee WHERE id = $1
+        FROM mes.equipment_oee
+        WHERE id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
         id,
+        get_tenant_id(&claims),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -835,8 +843,8 @@ pub async fn update_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "OEE记录更新成功"))
         }
@@ -926,9 +934,10 @@ pub async fn get_oee_statistics(
         .and_then(|s| s.parse::<chrono::NaiveDate>().ok());
 
     // 总体统计
+    let tenant_id = get_tenant_id(&claims);
     let overall_result = sqlx::query!(
         r#"
-        SELECT 
+        SELECT
             COUNT(oee.id) as total_records,
             COALESCE(AVG(oee.availability), 0) as avg_availability,
             COALESCE(AVG(oee.performance), 0) as avg_performance,
@@ -936,13 +945,16 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.oee), 0) as avg_oee
         FROM mes.equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
+          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $4::uuid)
         WHERE ($1::uuid IS NULL OR e.id = $1)
           AND ($2::date IS NULL OR oee.record_date >= $2)
           AND ($3::date IS NULL OR oee.record_date <= $3)
+          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = $4::uuid)
         "#,
         req.equipment_id,
         start_date,
         end_date,
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;
@@ -965,7 +977,7 @@ pub async fn get_oee_statistics(
     // 趋势数据（近14天）
     let trend_result = sqlx::query(
         r#"
-        SELECT 
+        SELECT
             DATE(oee.record_date) as date,
             COALESCE(AVG(oee.availability), 0) as availability,
             COALESCE(AVG(oee.performance), 0) as performance,
@@ -973,14 +985,17 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.oee), 0) as oee
         FROM mes.equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $2::uuid)
         WHERE oee.record_date >= CURRENT_DATE - INTERVAL '14 days'
           AND ($1::uuid IS NULL OR e.id = $1)
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = $2::uuid)
         GROUP BY DATE(oee.record_date)
         ORDER BY date DESC
         LIMIT 14
         "#,
     )
     .bind(req.equipment_id)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -1032,7 +1047,7 @@ pub async fn get_oee_statistics(
     // 按设备统计
     let by_equip_result = sqlx::query!(
         r#"
-        SELECT 
+        SELECT
             e.id as equipment_id,
             e.equipment_name as equipment_name,
             e.equipment_code as equipment_code,
@@ -1044,13 +1059,16 @@ pub async fn get_oee_statistics(
         LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
           AND ($2::date IS NULL OR oee.record_date >= $2)
           AND ($3::date IS NULL OR oee.record_date <= $3)
+          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = $4::uuid)
         WHERE ($1::uuid IS NULL OR e.id = $1)
+          AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $4::uuid)
         GROUP BY e.id, e.equipment_name, e.equipment_code
         ORDER BY oee DESC
         "#,
         req.equipment_id,
         start_date,
         end_date,
+        tenant_id,
     )
     .fetch_all(&state.pool)
     .await;
@@ -1126,7 +1144,7 @@ pub async fn get_equipment_efficiency_analysis(
 
     let result = sqlx::query!(
         r#"
-        SELECT 
+        SELECT
             e.id as equipment_id, e.equipment_name as equipment_name, e.equipment_code as equipment_no,
             COALESCE(AVG(oee.oee), 0) as oee,
             COALESCE(AVG(oee.availability), 0) as availability,
@@ -1136,11 +1154,14 @@ pub async fn get_equipment_efficiency_analysis(
         FROM equipment e
         LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
           AND oee.record_date >= CURRENT_DATE - INTERVAL '30 days'
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = $2::uuid)
         WHERE e.id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $2::uuid)
         GROUP BY e.id, e.equipment_name, e.equipment_code, e.status
         ORDER BY oee DESC
         "#,
         equipment_uuid,
+        get_tenant_id(&claims),
     )
     .fetch_all(&state.pool)
     .await;

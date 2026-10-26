@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path},
     routing::get,
     Json, Router,
 };
@@ -13,6 +13,8 @@ use uuid::Uuid;
 
 use crate::models::project_benefit::{CreateBenefitRequest, ProjectBenefit};
 use crate::modules::effective_tenant_id;
+
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 // ==================== Pure functions ====================
 
@@ -71,14 +73,20 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
 )]
 async fn get_benefits(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectBenefit>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     let result = sqlx::query_as::<_, ProjectBenefit>(
         only_own_schema_query!("pm", "SELECT id, project_id, period_type, period_date, planned_cost, actual_cost, planned_progress, actual_progress, planned_value, earned_value, actual_cost_eva, cpi, spi, cv, sv, eac, etc, roi, notes, created_by, created_at, updated_at FROM pm.project_benefits WHERE project_id = $1 ORDER BY period_type ASC, period_date ASC")
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match result {
@@ -105,14 +113,20 @@ async fn get_benefits(
     ),
 )]
 async fn get_analysis(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     let benefits_result = sqlx::query_as::<_, ProjectBenefit>(
         only_own_schema_query!("pm", "SELECT id, project_id, period_type, period_date, planned_cost, actual_cost, planned_progress, actual_progress, planned_value, earned_value, actual_cost_eva, cpi, spi, cv, sv, eac, etc, roi, notes, created_by, created_at, updated_at FROM pm.project_benefits WHERE project_id = $1"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     let benefits = match benefits_result {
@@ -209,12 +223,18 @@ async fn get_analysis(
     ),
 )]
 async fn calculate_benefits(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBenefitRequest>,
 ) -> Json<ApiResponse<ProjectBenefit>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -300,7 +320,7 @@ async fn calculate_benefits(
     .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {

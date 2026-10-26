@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Multipart, Path, State},
+    extract::{Extension, Multipart, Path, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Json,
@@ -11,7 +11,7 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -48,6 +48,7 @@ pub struct MediaStats {
 )]
 pub async fn get_photos(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -60,14 +61,23 @@ pub async fn get_photos(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let photos: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
-        only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
-         FROM mobile.media_files 
-         WHERE deleted_at IS NULL AND file_type = 'photo' AND uploaded_by = $1 
+        only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at
+         FROM mobile.media_files
+         WHERE deleted_at IS NULL AND file_type = 'photo' AND uploaded_by = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
          ORDER BY created_at DESC")
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_all(&pool)
     .await
     {
@@ -96,6 +106,7 @@ pub async fn get_photos(
 )]
 pub async fn get_audio(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -108,14 +119,23 @@ pub async fn get_audio(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let audio_files: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
-        only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
-         FROM mobile.media_files 
-         WHERE deleted_at IS NULL AND file_type = 'audio' AND uploaded_by = $1 
+        only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at
+         FROM mobile.media_files
+         WHERE deleted_at IS NULL AND file_type = 'audio' AND uploaded_by = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
          ORDER BY created_at DESC")
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_all(&pool)
     .await
     {
@@ -144,6 +164,7 @@ pub async fn get_audio(
 )]
 pub async fn get_video(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -156,14 +177,23 @@ pub async fn get_video(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let videos: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
-        only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at 
-         FROM mobile.media_files 
-         WHERE deleted_at IS NULL AND file_type = 'video' AND uploaded_by = $1 
+        only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at
+         FROM mobile.media_files
+         WHERE deleted_at IS NULL AND file_type = 'video' AND uploaded_by = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
          ORDER BY created_at DESC")
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_all(&pool)
     .await
     {
@@ -196,6 +226,7 @@ pub async fn get_video(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn upload_media(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(file_type): Path<String>,
@@ -209,6 +240,14 @@ pub async fn upload_media(
                 Json(ApiResponse::unauthorized("未授权")),
             );
         }
+    };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let valid_types = ["photo", "audio", "video"];
@@ -287,7 +326,7 @@ pub async fn upload_media(
     .bind(&user_id)
     .bind(&description)
     .bind(Utc::now())
-    .bind(Uuid::nil())
+    .bind(tenant_filter.unwrap_or(Uuid::nil()))
     .execute(&pool)
     .await
     {

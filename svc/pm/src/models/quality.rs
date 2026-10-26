@@ -72,7 +72,7 @@ pub struct Defect {
     pub due_date: Option<DateTime<Utc>>,
     pub resolution: Option<String>,
     pub resolved_at: Option<DateTime<Utc>>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -87,7 +87,7 @@ pub struct CreateDefectRequest {
     pub check_id: Option<Uuid>,
     pub assignee: Option<String>,
     pub due_date: Option<String>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -293,7 +293,7 @@ mod tests {
             due_date: Some(now()),
             resolution: Some("fixed".to_string()),
             resolved_at: Some(now()),
-            created_by: Some("tester".to_string()),
+            created_by: Some(uid()),
             created_at: now(),
             updated_at: now(),
         }
@@ -366,7 +366,7 @@ mod tests {
             check_id: Some(uid()),
             assignee: Some("a".to_string()),
             due_date: Some("2024-12-31T00:00:00Z".to_string()),
-            created_by: Some("u".to_string()),
+            created_by: Some(uid()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateDefectRequest = serde_json::from_str(&s).unwrap();

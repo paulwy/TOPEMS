@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "effective_date",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 9,
@@ -73,7 +73,7 @@
         "Varchar",
         "Varchar",
         "Int4",
-        "Varchar",
+        "Text",
         "Text",
         "Uuid"
       ]

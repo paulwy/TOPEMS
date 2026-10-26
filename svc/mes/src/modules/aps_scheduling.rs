@@ -29,6 +29,14 @@ use topems_shared_db::decimal::big_decimal_to_f64;
 
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/aps/schedule", post(execute_aps_schedule))
@@ -1340,22 +1348,30 @@ pub async fn get_optimization_report(
     }
 
     // 统计订单状态
-    let total_orders: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
+    let tenant_id = get_tenant_id(&claims);
+    let total_orders: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mes.production_orders WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
-    let scheduled_orders: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE status = 'scheduled'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let scheduled_orders: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'scheduled' AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
-    let completed_orders: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE status = 'completed'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let completed_orders: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'completed' AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     // 计算平均交付周期
     let avg_lead_time: Option<f64> = sqlx::query_scalar(
@@ -1363,8 +1379,10 @@ pub async fn get_optimization_report(
         SELECT AVG(EXTRACT(EPOCH FROM (COALESCE(actual_end_date, NOW()) - created_at)) / 3600)
         FROM mes.production_orders
         WHERE status IN ('completed', 'in_progress')
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         "#,
     )
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await
     .ok()
@@ -1387,12 +1405,15 @@ pub async fn get_optimization_report(
         FROM mes.work_stations ws
         LEFT JOIN mes.production_schedules ps ON ps.work_station_id = ws.id
             AND ps.status IN ('scheduled', 'in_progress')
+            AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ps.tenant_id = $1::uuid)
         WHERE ws.status = 'active'
+            AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $1::uuid)
         GROUP BY ws.id, ws.station_name
         ORDER BY task_count DESC
         LIMIT 10
         "#
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -1500,37 +1521,48 @@ pub async fn get_bottleneck_analysis(
         .unwrap_or_else(|| "7d".to_string());
 
     // 吞吐量分析
-    let total_orders: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
-
-    let completed: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE status = 'completed'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
-
-    let in_progress: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'in_progress'",
+    let tenant_id = get_tenant_id(&claims);
+    let total_orders: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mes.production_orders WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)",
     )
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let pending: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE status = 'pending'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let completed: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'completed' AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let in_progress: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'in_progress' AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let pending: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'pending' AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let avg_cycle: Option<f64> = sqlx::query_scalar(
         r#"
         SELECT AVG(EXTRACT(EPOCH FROM (COALESCE(actual_end_date, NOW()) - actual_start_date)) / 3600)
         FROM mes.production_orders
         WHERE status = 'completed' AND actual_start_date IS NOT NULL
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         "#
     )
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await
     .ok()
@@ -1542,8 +1574,10 @@ pub async fn get_bottleneck_analysis(
         SELECT COUNT(*) * 8.0 * 5.0 as capacity_hours
         FROM mes.work_stations
         WHERE status = 'active'
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         "#,
     )
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0.0);
@@ -1553,8 +1587,10 @@ pub async fn get_bottleneck_analysis(
         SELECT COALESCE(SUM(quantity * 0.1), 0) as demand_hours
         FROM mes.production_orders
         WHERE status IN ('pending', 'released')
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         "#,
     )
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0.0);
@@ -1575,12 +1611,15 @@ pub async fn get_bottleneck_analysis(
         FROM mes.work_stations ws
         LEFT JOIN mes.production_schedules ps ON ps.work_station_id = ws.id
             AND ps.status IN ('scheduled', 'in_progress')
+            AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ps.tenant_id = $1::uuid)
         WHERE ws.status = 'active'
+            AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $1::uuid)
         GROUP BY ws.id, ws.station_name
         ORDER BY scheduled_tasks DESC
         LIMIT 10
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 

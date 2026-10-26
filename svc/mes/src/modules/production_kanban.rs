@@ -14,7 +14,15 @@ use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
-use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_opt};
+use topems_shared_db::decimal::big_decimal_to_f64;
+
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -117,8 +125,10 @@ pub async fn get_dashboard(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     // 1. Summary: 订单统计 + 今日产量 + 合格率 + OEE
-    let order_stats = sqlx::query!(
+    let order_stats = sqlx::query(
         r#"
         SELECT
             COUNT(*) as total_orders,
@@ -126,8 +136,10 @@ pub async fn get_dashboard(
             COUNT(*) FILTER (WHERE status = 'completed') as completed_orders,
             COALESCE(SUM(completed_quantity), 0) as total_output
         FROM mes.production_orders
-        "#
+        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+        "#,
     )
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -140,19 +152,23 @@ pub async fn get_dashboard(
     };
 
     // 今日产量
-    let today_output = sqlx::query!(
+    let today_output = sqlx::query(
         r#"
         SELECT COALESCE(SUM(completed_quantity), 0) as today_output
         FROM mes.production_records
         WHERE start_time::date = CURRENT_DATE
-        "#
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
+        "#,
     )
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     let today_output_val = match today_output {
         Ok(r) => r
-            .today_output
+            .try_get::<Option<BigDecimal>, _>("today_output")
+            .ok()
+            .flatten()
             .unwrap_or_default()
             .to_string()
             .parse::<f64>()
@@ -164,15 +180,21 @@ pub async fn get_dashboard(
     };
 
     // 质量合格率
-    let quality_stats = sqlx::query!(
+    let quality_stats = sqlx::query(
         r#"
         SELECT
             COALESCE(SUM(quantity), 0) as total_quantity,
             COALESCE(SUM(qualified_quantity), 0) as good_quantity
-        FROM mes.quality_records
-        WHERE quality_status IN ('qualified', 'rejected')
-        "#
+        FROM mes.quality_records qr
+        WHERE qr.quality_status IN ('qualified', 'rejected')
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+               OR EXISTS (
+                   SELECT 1 FROM mes.production_orders po
+                   WHERE po.id = qr.order_id AND po.tenant_id = $1::uuid
+               ))
+        "#,
     )
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -184,8 +206,18 @@ pub async fn get_dashboard(
         }
     };
 
-    let total_qty = big_decimal_to_f64(quality_stats.total_quantity);
-    let good_qty = big_decimal_to_f64(quality_stats.good_quantity);
+    let total_qty = big_decimal_to_f64(
+        quality_stats
+            .try_get::<Option<BigDecimal>, _>("total_quantity")
+            .ok()
+            .flatten(),
+    );
+    let good_qty = big_decimal_to_f64(
+        quality_stats
+            .try_get::<Option<BigDecimal>, _>("good_quantity")
+            .ok()
+            .flatten(),
+    );
     let pass_rate = if total_qty > 0.0 {
         (good_qty / total_qty) * 100.0
     } else {
@@ -193,21 +225,29 @@ pub async fn get_dashboard(
     };
 
     // 设备 OEE 平均值
-    let oee_stats = sqlx::query!(
+    let oee_stats = sqlx::query(
         r#"
         SELECT COALESCE(AVG(oee), 0) as avg_oee
         FROM (
             SELECT DISTINCT ON (equipment_id) oee
             FROM mes.equipment_oee
+            WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
             ORDER BY equipment_id, record_date DESC
         ) latest
-        "#
+        "#,
     )
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     let oee_avg = match oee_stats {
-        Ok(r) => big_decimal_to_f64_opt(r.avg_oee).unwrap_or(0.0) * 100.0,
+        Ok(r) => {
+            r.try_get::<Option<f64>, _>("avg_oee")
+                .ok()
+                .flatten()
+                .unwrap_or(0.0)
+                * 100.0
+        }
         Err(e) => {
             tracing::error!("Failed to fetch equipment OEE: {}", e);
             0.0
@@ -215,24 +255,38 @@ pub async fn get_dashboard(
     };
 
     let summary = KanbanSummary {
-        total_orders: order_stats.total_orders.unwrap_or(0),
-        in_progress_orders: order_stats.in_progress_orders.unwrap_or(0),
-        completed_orders: order_stats.completed_orders.unwrap_or(0),
+        total_orders: order_stats
+            .try_get::<Option<i64>, _>("total_orders")
+            .ok()
+            .flatten()
+            .unwrap_or(0),
+        in_progress_orders: order_stats
+            .try_get::<Option<i64>, _>("in_progress_orders")
+            .ok()
+            .flatten()
+            .unwrap_or(0),
+        completed_orders: order_stats
+            .try_get::<Option<i64>, _>("completed_orders")
+            .ok()
+            .flatten()
+            .unwrap_or(0),
         today_output: today_output_val,
         pass_rate,
         oee: oee_avg,
     };
 
     // 2. 订单进度
-    let orders = sqlx::query!(
+    let orders = sqlx::query(
         r#"
         SELECT
             id, order_number AS order_no, product_name, quantity, completed_quantity, status
         FROM mes.production_orders
+        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
         LIMIT 10
-        "#
+        "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -240,24 +294,33 @@ pub async fn get_dashboard(
         Ok(rows) => rows
             .into_iter()
             .map(|r| {
-                let planned = r.quantity.to_string().parse::<f64>().unwrap_or_default();
+                let planned = r
+                    .try_get::<Option<i64>, _>("quantity")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_default() as f64;
                 let completed = r
-                    .completed_quantity
-                    .and_then(|v| v.to_string().parse::<f64>().ok())
-                    .unwrap_or_default();
+                    .try_get::<Option<i64>, _>("completed_quantity")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_default() as f64;
                 let progress = if planned > 0.0 {
                     (completed / planned) * 100.0
                 } else {
                     0.0
                 };
                 OrderProgressResponse {
-                    order_id: r.id.to_string(),
-                    order_number: r.order_no,
-                    product_name: r.product_name,
+                    order_id: r.try_get::<Uuid, _>("id").unwrap_or_default().to_string(),
+                    order_number: r.try_get::<String, _>("order_no").unwrap_or_default(),
+                    product_name: r.try_get::<String, _>("product_name").unwrap_or_default(),
                     planned_quantity: planned,
                     completed_quantity: completed,
                     progress,
-                    status: r.status,
+                    status: r
+                        .try_get::<Option<String>, _>("status")
+                        .ok()
+                        .flatten()
+                        .unwrap_or_default(),
                 }
             })
             .collect(),
@@ -283,19 +346,24 @@ pub async fn get_dashboard(
             SELECT order_id, operator_id
             FROM mes.production_records
             WHERE work_station_id = ws.id AND status = 'in_progress'
+              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
             ORDER BY start_time DESC
             LIMIT 1
         ) pr ON true
         LEFT JOIN mes.production_orders po ON pr.order_id = po.id
+            AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR po.tenant_id = $1::uuid)
         LEFT JOIN LATERAL (
             SELECT COALESCE(SUM(completed_quantity), 0) AS output_today
             FROM mes.production_records
             WHERE work_station_id = ws.id
               AND start_time::date = CURRENT_DATE
+              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         ) today_stats ON true
+        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $1::uuid)
         ORDER BY ws.station_name
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -348,13 +416,19 @@ pub async fn get_dashboard(
             DATE(created_at) AS date,
             COALESCE(SUM(quantity), 0) AS total_quantity,
             COALESCE(SUM(qualified_quantity), 0) AS good_quantity
-        FROM mes.quality_records
-        WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
-        GROUP BY DATE(created_at)
+        FROM mes.quality_records qr
+        WHERE qr.created_at >= CURRENT_DATE - INTERVAL '7 days'
+          AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+               OR EXISTS (
+                   SELECT 1 FROM mes.production_orders po
+                   WHERE po.id = qr.order_id AND po.tenant_id = $1::uuid
+               ))
+        GROUP BY DATE(qr.created_at)
         ORDER BY date DESC
         LIMIT 7
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -411,12 +485,15 @@ pub async fn get_dashboard(
             SELECT oee
             FROM mes.equipment_oee
             WHERE equipment_id = e.id
+              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
             ORDER BY record_date DESC
             LIMIT 1
         ) latest_oee ON true
+        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $1::uuid)
         ORDER BY e.equipment_name
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -435,9 +512,12 @@ pub async fn get_dashboard(
                     .ok()
                     .flatten()
                     .unwrap_or_else(|| "normal".to_string()),
-                oee: Some(big_decimal_to_f64(
-                    r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten(),
-                )),
+                oee: Some(
+                    r.try_get::<Option<f64>, _>("oee")
+                        .ok()
+                        .flatten()
+                        .unwrap_or(0.0),
+                ),
             })
             .collect(),
         Err(e) => {
@@ -480,14 +560,18 @@ pub async fn get_order_progress(
         return e;
     }
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query(
         r#"
         SELECT
             id, order_number AS order_no, product_name, quantity, completed_quantity, status
         FROM mes.production_orders
+        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         ORDER BY created_at DESC
-        "#
+        "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -502,24 +586,33 @@ pub async fn get_order_progress(
     let list: Vec<OrderProgressResponse> = orders
         .into_iter()
         .map(|r| {
-            let planned = r.quantity.to_string().parse::<f64>().unwrap_or_default();
+            let planned = r
+                .try_get::<Option<i64>, _>("quantity")
+                .ok()
+                .flatten()
+                .unwrap_or_default() as f64;
             let completed = r
-                .completed_quantity
-                .and_then(|v| v.to_string().parse::<f64>().ok())
-                .unwrap_or_default();
+                .try_get::<Option<i64>, _>("completed_quantity")
+                .ok()
+                .flatten()
+                .unwrap_or_default() as f64;
             let progress = if planned > 0.0 {
                 (completed / planned) * 100.0
             } else {
                 0.0
             };
             OrderProgressResponse {
-                order_id: r.id.to_string(),
-                order_number: r.order_no,
-                product_name: r.product_name,
+                order_id: r.try_get::<Uuid, _>("id").unwrap_or_default().to_string(),
+                order_number: r.try_get::<String, _>("order_no").unwrap_or_default(),
+                product_name: r.try_get::<String, _>("product_name").unwrap_or_default(),
                 planned_quantity: planned,
                 completed_quantity: completed,
                 progress,
-                status: r.status,
+                status: r
+                    .try_get::<Option<String>, _>("status")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_default(),
             }
         })
         .collect();
@@ -549,6 +642,8 @@ pub async fn get_workstation_status(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     let result = sqlx::query(
         r#"
         SELECT
@@ -564,19 +659,24 @@ pub async fn get_workstation_status(
             SELECT order_id, operator_id
             FROM mes.production_records
             WHERE work_station_id = ws.id AND status = 'in_progress'
+              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
             ORDER BY start_time DESC
             LIMIT 1
         ) pr ON true
         LEFT JOIN mes.production_orders po ON pr.order_id = po.id
+            AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR po.tenant_id = $1::uuid)
         LEFT JOIN LATERAL (
             SELECT COALESCE(SUM(completed_quantity), 0) AS output_today
             FROM mes.production_records
             WHERE work_station_id = ws.id
               AND start_time::date = CURRENT_DATE
+              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         ) today_stats ON true
+        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = $1::uuid)
         ORDER BY ws.station_name
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -649,18 +749,26 @@ pub async fn get_quality_trend(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     let result = sqlx::query(
         r#"
         SELECT
-            DATE(created_at) AS date,
-            COALESCE(SUM(quantity), 0) AS total_quantity,
-            COALESCE(SUM(qualified_quantity), 0) AS good_quantity
-        FROM mes.quality_records
-        GROUP BY DATE(created_at)
+            DATE(qr.created_at) AS date,
+            COALESCE(SUM(qr.quantity), 0) AS total_quantity,
+            COALESCE(SUM(qr.qualified_quantity), 0) AS good_quantity
+        FROM mes.quality_records qr
+        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+               OR EXISTS (
+                   SELECT 1 FROM mes.production_orders po
+                   WHERE po.id = qr.order_id AND po.tenant_id = $1::uuid
+               ))
+        GROUP BY DATE(qr.created_at)
         ORDER BY date DESC
         LIMIT 30
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -730,6 +838,8 @@ pub async fn get_equipment_status(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     let result = sqlx::query(
         r#"
         SELECT
@@ -743,12 +853,15 @@ pub async fn get_equipment_status(
             SELECT oee
             FROM mes.equipment_oee
             WHERE equipment_id = e.id
+              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
             ORDER BY record_date DESC
             LIMIT 1
         ) latest_oee ON true
+        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR e.tenant_id = $1::uuid)
         ORDER BY e.equipment_name
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -774,9 +887,12 @@ pub async fn get_equipment_status(
                 .ok()
                 .flatten()
                 .unwrap_or_else(|| "normal".to_string()),
-            oee: Some(big_decimal_to_f64(
-                r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten(),
-            )),
+            oee: Some(
+                r.try_get::<Option<f64>, _>("oee")
+                    .ok()
+                    .flatten()
+                    .unwrap_or(0.0),
+            ),
         })
         .collect();
 

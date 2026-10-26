@@ -124,7 +124,7 @@ pub async fn list_segments(
                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, criteria, customer_count, created_at, updated_at
         FROM crm.customer_segments
-        WHERE AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
         "#,
@@ -138,7 +138,7 @@ pub async fn list_segments(
     match result {
         Ok(segments) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM crm.customer_segments WHERE deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+                "SELECT COUNT(*) FROM crm.customer_segments WHERE deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
             )
             .fetch_one(&mut **txn)
             .await;
@@ -201,7 +201,7 @@ pub async fn get_segment(
         SELECT id,
                CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, criteria, customer_count, created_at, updated_at
-        FROM crm.customer_segments WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        FROM crm.customer_segments WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
     )
     .bind(id)
@@ -395,7 +395,7 @@ pub async fn get_segment_customers(
     let offset = (page - 1) * page_size;
 
     let segment_result = sqlx::query(
-        "SELECT name, criteria FROM crm.customer_segments WHERE deleted_at IS NULL AND id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "SELECT name, criteria FROM crm.customer_segments WHERE deleted_at IS NULL AND id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(id)
     .fetch_optional(&mut **txn)

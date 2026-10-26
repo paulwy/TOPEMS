@@ -915,7 +915,7 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
 async fn list_patrol_records(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let records = match db_get_patrol_records(&state.pool).await {
+    let records = match db_get_patrol_records(&state.pool, None).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("获取巡逻记录失败: {}", e);
@@ -931,7 +931,7 @@ async fn list_patrol_records(
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn list_scan_records(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let records = match db_get_scan_records(&state.pool).await {
+    let records = match db_get_scan_records(&state.pool, None).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("获取扫码记录失败: {}", e);
@@ -965,7 +965,7 @@ async fn create_scan_record(
 async fn list_photo_evidences(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let records = match db_get_photo_evidence(&state.pool).await {
+    let records = match db_get_photo_evidence(&state.pool, None).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("获取照片记录失败: {}", e);

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path},
     routing::{get, put},
     Json, Router,
 };
@@ -16,6 +16,8 @@ use crate::models::notification::{
     NotificationType,
 };
 use crate::modules::effective_tenant_id;
+
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -46,14 +48,19 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "notification"
 )]
 async fn get_project_notifications(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Notification>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let notifications = sqlx::query_as::<_, Notification>(
         only_own_schema_query!("pm", "SELECT id, project_id, recipient AS user_id, notification_type, title, content AS message, status, priority, metadata, due_date, sent_at AS delivered_at, NULL::timestamptz AS read_at, created_at, updated_at FROM pm.notifications WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match notifications {
@@ -66,11 +73,16 @@ async fn get_project_notifications(
 }
 
 async fn create_notification(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateNotificationRequest>,
 ) -> Json<ApiResponse<Notification>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -91,7 +103,7 @@ async fn create_notification(
     .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match notification {
@@ -117,14 +129,19 @@ async fn create_notification(
     tag = "notification"
 )]
 async fn get_project_settings(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<NotificationSetting>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let settings = sqlx::query_as::<_, NotificationSetting>(
         only_own_schema_query!("pm", "SELECT id, project_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at FROM pm.notification_settings WHERE project_id = $1"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match settings {
@@ -137,12 +154,17 @@ async fn get_project_settings(
 }
 
 async fn create_setting(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateNotificationSettingRequest>,
 ) -> Json<ApiResponse<NotificationSetting>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -159,7 +181,7 @@ async fn create_setting(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match setting {
@@ -185,10 +207,15 @@ async fn create_setting(
     tag = "notification"
 )]
 async fn update_setting(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateNotificationSettingRequest>,
 ) -> Json<ApiResponse<NotificationSetting>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let setting = sqlx::query_as::<_, NotificationSetting>(only_own_schema_query!(
         "pm",
         "UPDATE pm.notification_settings SET
@@ -196,14 +223,14 @@ async fn update_setting(
             notify_before_days = COALESCE($2, notify_before_days),
             preferred_channel = COALESCE($3, preferred_channel),
             updated_at = $4
-        WHERE id = $5 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $5 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.enabled)
     .bind(req.notify_before_days)
     .bind(req.preferred_channel)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match setting {
@@ -226,9 +253,7 @@ async fn update_setting(
     ),
     tag = "notification"
 )]
-async fn list_notification_types(
-    State(_pool): State<PgPool>,
-) -> Json<ApiResponse<Vec<NotificationType>>> {
+async fn list_notification_types() -> Json<ApiResponse<Vec<NotificationType>>> {
     let types = vec![
         NotificationType {
             code: "milestone_reminder".to_string(),

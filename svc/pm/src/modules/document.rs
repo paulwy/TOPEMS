@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path},
     routing::get,
     Json, Router,
 };
@@ -16,6 +16,8 @@ use crate::models::document::{
     DocumentVersion, ProjectDocument, UpdateDocumentRequest,
 };
 use crate::modules::effective_tenant_id;
+
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -58,14 +60,19 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "document"
 )]
 async fn get_project_documents(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectDocument>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let documents = sqlx::query_as::<_, ProjectDocument>(
         only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match documents {
@@ -91,13 +98,18 @@ async fn get_project_documents(
     tag = "document"
 )]
 async fn get_document(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDocument>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let document =
         sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE id = $1"))
             .bind(id)
-            .fetch_one(&pool)
+            .fetch_one(&mut **txn)
             .await;
 
     match document {
@@ -111,12 +123,17 @@ async fn get_document(
 }
 
 async fn create_document(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDocumentRequest>,
 ) -> Json<ApiResponse<ProjectDocument>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -138,7 +155,7 @@ async fn create_document(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match document {
@@ -151,10 +168,15 @@ async fn create_document(
 }
 
 async fn update_document(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDocumentRequest>,
 ) -> Json<ApiResponse<ProjectDocument>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let document = sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!(
         "pm",
         "UPDATE pm.project_documents SET
@@ -164,7 +186,7 @@ async fn update_document(
             description = COALESCE($4, description),
             tags = COALESCE($5, tags),
             updated_at = $6
-        WHERE id = $7 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $7 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.document_name)
     .bind(req.document_type)
@@ -173,7 +195,7 @@ async fn update_document(
     .bind(req.tags.clone())
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match document {
@@ -187,15 +209,20 @@ async fn update_document(
 }
 
 async fn delete_document(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.project_documents WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM pm.project_documents WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
-    .execute(&pool)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -222,14 +249,19 @@ async fn delete_document(
     tag = "document"
 )]
 async fn get_document_versions(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<DocumentVersion>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let versions = sqlx::query_as::<_, DocumentVersion>(
         only_own_schema_query!("pm", "SELECT id, document_id, version, file_path, file_hash, change_note, created_by, created_at FROM pm.document_versions WHERE document_id = $1 ORDER BY version DESC"),
     )
     .bind(id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match versions {
@@ -242,16 +274,21 @@ async fn get_document_versions(
 }
 
 async fn create_document_version(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDocumentVersionRequest>,
 ) -> Json<ApiResponse<DocumentVersion>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let doc_result =
         sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE id = $1"))
             .bind(id)
-            .fetch_one(&pool)
+            .fetch_one(&mut **txn)
             .await;
 
     let document = match doc_result {
@@ -283,17 +320,17 @@ async fn create_document_version(
     .bind(req.created_by)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     if version.is_ok() {
-        let _ = sqlx::query(only_own_schema_query!("pm", "UPDATE pm.project_documents SET version = $1, file_path = $2, file_hash = $3, updated_at = $4 WHERE id = $5 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"))
+        let _ = sqlx::query(only_own_schema_query!("pm", "UPDATE pm.project_documents SET version = $1, file_path = $2, file_hash = $3, updated_at = $4 WHERE id = $5 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"))
             .bind(new_version)
             .bind(&req.file_path)
             .bind(file_hash)
             .bind(now)
             .bind(id)
-            .execute(&pool)
+            .execute(&mut **txn)
             .await;
     }
 
@@ -320,14 +357,19 @@ async fn create_document_version(
     tag = "document"
 )]
 async fn get_project_folders(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<DocumentFolder>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let folders = sqlx::query_as::<_, DocumentFolder>(
         only_own_schema_query!("pm", "SELECT id, project_id, folder_name, parent_id, description, created_by, created_at, updated_at FROM pm.document_folders WHERE project_id = $1 ORDER BY folder_name"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match folders {
@@ -353,14 +395,19 @@ async fn get_project_folders(
     tag = "document"
 )]
 async fn get_folder(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DocumentFolder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let folder = sqlx::query_as::<_, DocumentFolder>(
         only_own_schema_query!("pm", "SELECT id, project_id, folder_name, parent_id, description, created_by, created_at, updated_at FROM pm.document_folders WHERE id = $1"),
     )
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match folder {
@@ -374,12 +421,17 @@ async fn get_folder(
 }
 
 async fn create_folder(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateFolderRequest>,
 ) -> Json<ApiResponse<DocumentFolder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -396,7 +448,7 @@ async fn create_folder(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match folder {
@@ -409,23 +461,28 @@ async fn create_folder(
 }
 
 async fn update_folder(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateFolderRequest>,
 ) -> Json<ApiResponse<DocumentFolder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let folder = sqlx::query_as::<_, DocumentFolder>(only_own_schema_query!(
         "pm",
         "UPDATE pm.document_folders SET
             folder_name = COALESCE($1, folder_name),
             description = COALESCE($2, description),
             updated_at = $3
-        WHERE id = $4 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $4 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.folder_name)
     .bind(req.description)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match folder {
@@ -438,13 +495,21 @@ async fn update_folder(
     }
 }
 
-async fn delete_folder(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<()>> {
+async fn delete_folder(
+    Extension(txn_arc): Extension<RlsTxnArc>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.document_folders WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM pm.document_folders WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
-    .execute(&pool)
+    .execute(&mut **txn)
     .await;
 
     match result {

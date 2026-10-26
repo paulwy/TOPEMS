@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path},
     routing::get,
     Json, Router,
 };
@@ -16,6 +16,8 @@ use crate::models::quality::{
     UpdateQualityCheckRequest,
 };
 use crate::modules::effective_tenant_id;
+
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 // ==================== Pure functions ====================
 
@@ -73,14 +75,19 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "quality"
 )]
 async fn get_project_quality_checks(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<QualityCheck>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let checks = sqlx::query_as::<_, QualityCheck>(
         only_own_schema_query!("pm", "SELECT id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match checks {
@@ -106,13 +113,18 @@ async fn get_project_quality_checks(
     tag = "quality"
 )]
 async fn get_quality_check(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<QualityCheck>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let check =
         sqlx::query_as::<_, QualityCheck>(only_own_schema_query!("pm", "SELECT id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE id = $1"))
             .bind(id)
-            .fetch_one(&pool)
+            .fetch_one(&mut **txn)
             .await;
 
     match check {
@@ -126,12 +138,17 @@ async fn get_quality_check(
 }
 
 async fn create_quality_check(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateQualityCheckRequest>,
 ) -> Json<ApiResponse<QualityCheck>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = effective_tenant_id(&ctx, &claims);
@@ -155,7 +172,7 @@ async fn create_quality_check(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match check {
@@ -168,10 +185,15 @@ async fn create_quality_check(
 }
 
 async fn update_quality_check(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateQualityCheckRequest>,
 ) -> Json<ApiResponse<QualityCheck>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     // check_criteria->issues, checked_by->checker。
     let check = sqlx::query_as::<_, QualityCheck>(only_own_schema_query!(
         "pm",
@@ -188,7 +210,7 @@ async fn update_quality_check(
             corrective_actions = COALESCE($10, corrective_actions),
             follow_up_date = COALESCE($11, follow_up_date),
             updated_at = $12
-        WHERE id = $13 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $13 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.check_name)
     .bind(req.check_type)
@@ -203,7 +225,7 @@ async fn update_quality_check(
     .bind(parse_date_opt(&req.follow_up_date))
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match check {
@@ -230,14 +252,19 @@ async fn update_quality_check(
     tag = "quality"
 )]
 async fn get_project_defects(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Defect>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let defects = sqlx::query_as::<_, Defect>(
         only_own_schema_query!("pm", "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM pm.defects WHERE deleted_at IS NULL AND project_id = $1 ORDER BY severity DESC, priority DESC"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match defects {
@@ -262,12 +289,20 @@ async fn get_project_defects(
     ),
     tag = "quality"
 )]
-async fn get_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Defect>> {
+async fn get_defect(
+    Extension(txn_arc): Extension<RlsTxnArc>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Defect>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let defect = sqlx::query_as::<_, Defect>(
         only_own_schema_query!("pm", "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM pm.defects WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match defect {
@@ -281,12 +316,17 @@ async fn get_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<Ap
 }
 
 async fn create_defect(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDefectRequest>,
 ) -> Json<ApiResponse<Defect>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -308,7 +348,7 @@ async fn create_defect(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match defect {
@@ -321,10 +361,15 @@ async fn create_defect(
 }
 
 async fn update_defect(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDefectRequest>,
 ) -> Json<ApiResponse<Defect>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let defect = sqlx::query_as::<_, Defect>(
         only_own_schema_query!("pm", "UPDATE pm.defects SET
             defect_name = COALESCE($1, defect_name),
@@ -337,7 +382,7 @@ async fn update_defect(
             resolution = COALESCE($8, resolution),
             resolved_at = CASE WHEN COALESCE($5, status) = 'resolved' THEN CURRENT_TIMESTAMP ELSE resolved_at END,
             updated_at = $9
-        WHERE id = $10 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *")
+        WHERE id = $10 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *")
     )
     .bind(req.defect_name)
     .bind(req.defect_description)
@@ -349,7 +394,7 @@ async fn update_defect(
     .bind(req.resolution)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match defect {
@@ -362,13 +407,21 @@ async fn update_defect(
     }
 }
 
-async fn delete_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<()>> {
+async fn delete_defect(
+    Extension(txn_arc): Extension<RlsTxnArc>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "UPDATE pm.defects SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&pool)
+    .execute(&mut **txn)
     .await;
 
     match result {

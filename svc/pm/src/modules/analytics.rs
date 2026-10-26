@@ -3,7 +3,7 @@
 //! 路径前缀: /pm/analytics
 
 use axum::{
-    extract::{Extension, State},
+    extract::Extension,
     routing::get,
     Json, Router,
 };
@@ -20,6 +20,8 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
         .unwrap_or(Uuid::nil())
 }
 use topems_shared_core::response::ApiResponse;
+
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 // ===== 数据类型 =====
 
@@ -50,9 +52,15 @@ pub struct ProjectStatusItem {
     tag = "analytics"
 )]
 pub async fn get_project_trend(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ProjectTrendItem>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     tracing::info!("获取PM项目创建趋势数据");
 
     let rows: Vec<(Option<String>, Option<i64>)> = sqlx::query_as(
@@ -70,7 +78,7 @@ pub async fn get_project_trend(
          ) p ON dates.date = p.date
          ORDER BY dates.date"
     )
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
@@ -98,9 +106,15 @@ pub async fn get_project_trend(
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_project_status(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ProjectStatusItem>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     tracing::info!("获取PM项目状态分布");
 
     let tenant_uuid = get_tenant_id(&claims);
@@ -108,7 +122,7 @@ pub async fn get_project_status(
         "SELECT COUNT(*) FROM pm.projects WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)",
     )
     .bind(tenant_uuid)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
@@ -120,7 +134,7 @@ pub async fn get_project_status(
          ORDER BY count DESC",
     )
     .bind(tenant_uuid)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 

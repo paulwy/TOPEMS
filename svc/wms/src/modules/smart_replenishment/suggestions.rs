@@ -511,7 +511,7 @@ pub async fn confirm_suggestion(
                 ELSE $4
             END,
             updated_at = $5
-        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
                   warehouse_id, warehouse_name, location_id, current_stock, available_stock,
                   safety_stock, reorder_point, max_stock, consumption_rate, lead_time_days,

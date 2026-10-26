@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Query, State},
+    extract::{Extension, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Json,
@@ -11,8 +11,19 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_core::response::ApiResponse;
+
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ActivityParams {
@@ -110,6 +121,7 @@ pub async fn get_dashboard_stats(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
@@ -120,38 +132,43 @@ pub async fn get_dashboard_stats(
             );
         }
     };
+    let tenant_filter = tenant_filter(&claims);
 
     let today_patrols = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let today_scans = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.scan_records WHERE operator = $1 AND scanned_at >= CURRENT_DATE"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.scan_records WHERE operator = $1 AND scanned_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let pending_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let completed_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
@@ -184,6 +201,7 @@ pub async fn get_patrol_stats(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
@@ -194,48 +212,54 @@ pub async fn get_patrol_stats(
             );
         }
     };
+    let tenant_filter = tenant_filter(&claims);
 
     let total_patrols = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1"
+        "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let completed_patrols = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND status = 'completed'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND status = 'completed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let in_progress_patrols = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND status = 'in_progress'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND status = 'in_progress' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let today_count = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let weekly_count = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE - INTERVAL '7 days'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE - INTERVAL '7 days' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
@@ -269,6 +293,7 @@ pub async fn get_task_stats(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
@@ -279,39 +304,44 @@ pub async fn get_task_stats(
             );
         }
     };
+    let tenant_filter = tenant_filter(&claims);
 
     let total_tasks = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE assignee = $1 OR assignee IS NULL"
+        "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let pending_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'pending' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let completed_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status = 'completed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let overdue_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status != 'completed' AND due_date < CURRENT_DATE"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE (assignee = $1 OR assignee IS NULL) AND status != 'completed' AND due_date < CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
@@ -335,6 +365,7 @@ pub async fn get_recent_activities(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ActivityParams>,
 ) -> impl IntoResponse {
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
@@ -346,14 +377,16 @@ pub async fn get_recent_activities(
             );
         }
     };
+    let tenant_filter = tenant_filter(&claims);
 
     let limit = params.limit.unwrap_or(10).clamp(1, 50);
 
     let activities: Vec<serde_json::Value> = match sqlx::query(
-        only_own_schema_query!("mobile", "SELECT id, title, status, updated_at FROM mobile.mobile_tasks WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) ORDER BY updated_at DESC LIMIT $2"),
+        only_own_schema_query!("mobile", "SELECT id, title, status, updated_at FROM mobile.mobile_tasks WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) AND ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY updated_at DESC LIMIT $2"),
     )
     .bind(&user_id)
     .bind(limit)
+    .bind(tenant_filter)
     .fetch_all(&pool)
     .await
     {
@@ -412,6 +445,7 @@ pub async fn get_dashboard_kpis(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Query(_params): Query<KpiParams>,
 ) -> impl IntoResponse {
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
@@ -423,29 +457,33 @@ pub async fn get_dashboard_kpis(
             );
         }
     };
+    let tenant_filter = tenant_filter(&claims);
 
     let today_tasks = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE assignee = $1 AND created_at >= CURRENT_DATE"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE assignee = $1 AND created_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let today_scans = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.scan_records WHERE operator = $1 AND scanned_at >= CURRENT_DATE"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.scan_records WHERE operator = $1 AND scanned_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
     let today_patrols = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(&user_id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
@@ -471,14 +509,17 @@ pub struct ChartParams {
 /// 图表数据（前端 GET /dashboard/charts → 近 7 天任务趋势）
 pub async fn get_dashboard_charts(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Query(_params): Query<ChartParams>,
 ) -> impl IntoResponse {
+    let tenant_filter = tenant_filter(&claims);
     let rows = sqlx::query(
         only_own_schema_query!(
             "mobile",
-            "SELECT created_at::date as d, COUNT(*) as count FROM mobile.mobile_tasks WHERE created_at >= CURRENT_DATE - INTERVAL '6 days' GROUP BY d ORDER BY d"
+            "SELECT created_at::date as d, COUNT(*) as count FROM mobile.mobile_tasks WHERE created_at >= CURRENT_DATE - INTERVAL '6 days' AND ($1::uuid IS NULL OR tenant_id = $1::uuid) GROUP BY d ORDER BY d"
         ),
     )
+    .bind(tenant_filter)
     .fetch_all(&pool)
     .await;
 

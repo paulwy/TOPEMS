@@ -23,6 +23,10 @@ use crate::scoring::{
 
 use std::collections::HashSet;
 
+/// 请求级 RLS 事务句柄（由 `tenant_middleware` 注入请求扩展）
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+
 #[derive(Debug, Clone, FromRow)]
 struct UserSearchRow {
     id: Uuid,
@@ -56,7 +60,7 @@ struct ProjectionRow {
 
 /// 按实体类型检索本地投影（tenant 隔离 + ILIKE）。失败降级为空结果。
 async fn query_projection(
-    pool: &PgPool,
+    conn: &mut sqlx::PgConnection,
     entity_type: &str,
     keyword: &str,
     limit: i64,
@@ -66,9 +70,7 @@ async fn query_projection(
         r#"SELECT entity_id, name, contact_person, contact_phone, email, address, status, remark
            FROM public.search_entity_projections
            WHERE entity_type = $1
-             AND tenant_id = COALESCE(
-                 NULLIF(current_setting('app.tenant_id', true), '')::uuid,
-                 '00000000-0000-0000-0000-000000000000')
+             AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID))
              AND (
                 name ILIKE $2 OR contact_person ILIKE $2 OR contact_phone ILIKE $2
                 OR email ILIKE $2 OR address ILIKE $2 OR status ILIKE $2 OR remark ILIKE $2
@@ -79,7 +81,7 @@ async fn query_projection(
     .bind(entity_type)
     .bind(kw)
     .bind(limit)
-    .fetch_all(pool)
+    .fetch_all(&mut *conn)
     .await
     {
         Ok(v) => v,
@@ -90,7 +92,7 @@ async fn query_projection(
     }
 }
 
-async fn search_users(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
+async fn search_users(conn: &mut sqlx::PgConnection, keyword: &str, limit: i64) -> Vec<SearchResult> {
     let keyword_like = format!("%{}%", keyword);
 
     // 表归属（DB 分片侦察）：unqualified `core_users` 命中 public.core_users，
@@ -105,7 +107,7 @@ async fn search_users(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRes
     )
     .bind(keyword_like)
     .bind(limit)
-    .fetch_all(pool)
+    .fetch_all(&mut *conn)
     .await
     {
         Ok(v) => v,
@@ -129,9 +131,9 @@ async fn search_users(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRes
         .collect()
 }
 
-async fn search_customers(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
+async fn search_customers(conn: &mut sqlx::PgConnection, keyword: &str, limit: i64) -> Vec<SearchResult> {
     // B1/F-37 终态：只读本地实体投影（erp 事件维护），不再 query-time 调 erp HTTP API
-    let rows = query_projection(pool, "customer", keyword, limit).await;
+    let rows = query_projection(&mut *conn, "customer", keyword, limit).await;
 
     rows.into_iter()
         .map(|r| {
@@ -163,11 +165,11 @@ async fn search_customers(pool: &PgPool, keyword: &str, limit: i64) -> Vec<Searc
         .collect()
 }
 
-async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
+async fn search_orders(conn: &mut sqlx::PgConnection, keyword: &str, limit: i64) -> Vec<SearchResult> {
     // B1/F-37 终态：销售/采购订单均读本地投影
     let mut results: Vec<SearchResult> = Vec::new();
 
-    let sales_hits = query_projection(pool, "sales_order", keyword, limit / 2).await;
+    let sales_hits = query_projection(&mut *conn, "sales_order", keyword, limit / 2).await;
     results.extend(sales_hits.into_iter().map(|r| SearchResult {
         id: r.entity_id.to_string(),
         title: r.name.unwrap_or_default(),
@@ -179,7 +181,7 @@ async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRe
         snippet: None,
     }));
 
-    let purchase_hits = query_projection(pool, "purchase_order", keyword, limit / 2).await;
+    let purchase_hits = query_projection(&mut *conn, "purchase_order", keyword, limit / 2).await;
     results.extend(purchase_hits.into_iter().map(|r| SearchResult {
         id: r.entity_id.to_string(),
         title: r.name.unwrap_or_default(),
@@ -195,7 +197,7 @@ async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRe
 }
 
 pub(crate) async fn search_documents(
-    pool: &PgPool,
+    conn: &mut sqlx::PgConnection,
     keyword: &str,
     limit: i64,
 ) -> Vec<SearchResult> {
@@ -208,15 +210,13 @@ pub(crate) async fn search_documents(
         r#"SELECT id, name, path, mime_type
            FROM core_files
            WHERE (name ILIKE $1 OR path ILIKE $1)
-             AND tenant_id = COALESCE(
-                 NULLIF(current_setting('app.tenant_id', true), '')::uuid,
-                 '00000000-0000-0000-0000-000000000000')
+             AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID))
            ORDER BY created_at DESC
            LIMIT $2"#,
     )
     .bind(keyword_like)
     .bind(limit)
-    .fetch_all(pool)
+    .fetch_all(&mut *conn)
     .await
     {
         Ok(v) => v,
@@ -246,7 +246,7 @@ pub(crate) async fn search_documents(
     clippy::cast_sign_loss
 )]
 pub(crate) async fn search_all(
-    pool: &PgPool,
+    conn: &mut sqlx::PgConnection,
     keyword: &str,
     modules: &Option<Vec<String>>,
     limit: i64,
@@ -261,19 +261,19 @@ pub(crate) async fn search_all(
     };
 
     if should_search("user") {
-        results.extend(search_users(pool, keyword, per_module_limit).await);
+        results.extend(search_users(&mut *conn, keyword, per_module_limit).await);
     }
 
     if should_search("customer") {
-        results.extend(search_customers(pool, keyword, per_module_limit).await);
+        results.extend(search_customers(&mut *conn, keyword, per_module_limit).await);
     }
 
     if should_search("order") {
-        results.extend(search_orders(pool, keyword, per_module_limit).await);
+        results.extend(search_orders(&mut *conn, keyword, per_module_limit).await);
     }
 
     if should_search("document") {
-        results.extend(search_documents(pool, keyword, per_module_limit).await);
+        results.extend(search_documents(&mut *conn, keyword, per_module_limit).await);
     }
 
     results.sort_by(|a, b| b.title.cmp(&a.title));
@@ -299,9 +299,16 @@ pub(crate) async fn search_all(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn search_handler(
     State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Query(req): Query<SearchRequest>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<SearchResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     let keyword = normalize_query(&req.keyword);
     if keyword.is_empty() {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
@@ -316,7 +323,7 @@ pub async fn search_handler(
 
     let query_terms = tokenize(&keyword);
 
-    let mut results = search_all(&pool, &keyword, &req.modules, page_size).await;
+    let mut results = search_all(&mut **txn, &keyword, &req.modules, page_size).await;
 
     for r in &mut results {
         let doc_fields = vec![

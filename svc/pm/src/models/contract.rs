@@ -119,7 +119,7 @@ pub struct ContractTemplate {
     pub description: Option<String>,
     pub content: serde_json::Value,
     pub is_active: bool,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -130,7 +130,7 @@ pub struct CreateContractTemplateRequest {
     pub contract_type: String,
     pub description: Option<String>,
     pub content: serde_json::Value,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
 }
 
 #[cfg(test)]
@@ -492,7 +492,7 @@ mod tests {
             description: Some("d".to_string()),
             content: serde_json::json!({"clause": "test"}),
             is_active: true,
-            created_by: Some("u".to_string()),
+            created_by: Some(uid()),
             created_at: now(),
             updated_at: now(),
         };
@@ -532,7 +532,7 @@ mod tests {
             contract_type: "service".to_string(),
             description: Some("d".to_string()),
             content: serde_json::json!({"k": "v"}),
-            created_by: Some("u".to_string()),
+            created_by: Some(uid()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateContractTemplateRequest = serde_json::from_str(&s).unwrap();

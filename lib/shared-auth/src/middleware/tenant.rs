@@ -5,10 +5,48 @@ use axum::{
     extract::Request,
     http::{header, HeaderMap, StatusCode},
     middleware::Next,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
 };
 use sqlx::PgPool;
 use uuid::Uuid;
+
+/// 请求级 RLS 事务句柄：由 `tenant_middleware` 创建并挂到请求扩展上，
+/// handler 通过 `Extension(txn_arc)` 取出，在**同一条连接**上执行带 `app.tenant_id`
+/// GUC 的查询。
+pub type RlsTxnCell =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+
+/// 请求收尾统一提交。
+///
+/// `sqlx::Transaction` 未显式 commit 时 drop 即 ROLLBACK（写丢失）。handler 可能
+/// 自行 `commit()`（此时 Option 已被 take 成 None，本函数为空操作）；未自行提交的
+/// 写入在此统一落地，避免"每个 handler 都要记得 commit"的散点风险。
+async fn commit_request_txn(cell: RlsTxnCell) -> Result<(), sqlx::Error> {
+    let mut guard = cell.lock().await;
+    match guard.take() {
+        Some(txn) => txn.commit().await,
+        None => Ok(()),
+    }
+}
+
+/// 提交成功透传原响应；提交失败且原响应是 2xx 时改为 500，避免向调用方谎报成功。
+async fn finish_response(resp: Response, cell: RlsTxnCell) -> Response {
+    match commit_request_txn(cell).await {
+        Ok(()) => resp,
+        Err(e) => {
+            tracing::error!("RLS 事务提交失败: {}", e);
+            if !resp.status().is_success() {
+                return resp;
+            }
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"事务提交失败","code":500}"#,
+            )
+                .into_response()
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct TenantContext {
@@ -143,13 +181,15 @@ pub fn tenant_middleware() -> impl Fn(
                     tracing::error!("Failed to set nil RLS context: {}", e);
                 }
                 let mut req = req;
-                req.extensions_mut()
-                    .insert(std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn))));
+                let txn_cell: RlsTxnCell =
+                    std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
+                req.extensions_mut().insert(txn_cell.clone());
                 req.extensions_mut().insert(TenantContext {
                     tenant_id: Uuid::nil(),
                     user_id: Uuid::nil(),
                 });
-                return next.run(req).await;
+                let resp = next.run(req).await;
+                return finish_response(resp, txn_cell).await;
             }
 
             let tenant_id_str = match claims.tenant_id.as_ref() {
@@ -216,12 +256,13 @@ pub fn tenant_middleware() -> impl Fn(
             };
 
             let mut req = req;
-            req.extensions_mut()
-                .insert(std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn))));
+            let txn_cell: RlsTxnCell = std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
+            req.extensions_mut().insert(txn_cell.clone());
             req.extensions_mut()
                 .insert(TenantContext { tenant_id, user_id });
 
-            next.run(req).await
+            let resp = next.run(req).await;
+            finish_response(resp, txn_cell).await
         })
     }
 }

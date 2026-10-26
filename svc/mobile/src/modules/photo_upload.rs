@@ -195,7 +195,7 @@ pub async fn upload_photo(
     let thumbnail_url = Some(format!("/photos/{}/thumbnail", upload.id));
 
     if let Err(e) =
-        db_update_photo_upload_status(&pool, upload.id, "completed", 100, thumbnail_url.as_deref())
+        db_update_photo_upload_status(&pool, upload.id, "completed", 100, thumbnail_url.as_deref(), None)
             .await
     {
         tracing::error!("更新上传状态失败: {}", e);
@@ -279,6 +279,7 @@ pub async fn batch_upload_photos(
                     "completed",
                     100,
                     thumbnail_url.as_deref(),
+                    None,
                 )
                 .await;
 

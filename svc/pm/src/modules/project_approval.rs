@@ -21,6 +21,8 @@ use uuid::Uuid;
 use crate::models::project_approval::{ApprovalRequest, ProjectApproval};
 use crate::modules::effective_tenant_id;
 
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+
 /// 项目审批状态：组合数据库连接池与 Flow 工作流客户端
 #[derive(Clone)]
 pub struct ApprovalState {
@@ -67,14 +69,19 @@ fn get_approval_workflow_id() -> Option<Uuid> {
     ),
 )]
 async fn get_approval(
-    State(state): State<ApprovalState>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectApproval>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query_as::<_, ProjectApproval>(
         only_own_schema_query!("pm", "SELECT id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1"),
     )
     .bind(project_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
@@ -104,6 +111,7 @@ async fn get_approval(
 )]
 async fn submit_approval(
     State(state): State<ApprovalState>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -160,14 +168,21 @@ async fn submit_approval(
         "workflow_instance_id": workflow_instance_id,
     });
 
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     let result = sqlx::query_as::<_, ProjectApproval>(only_own_schema_query!(
         "pm",
         r#"
         INSERT INTO pm.project_approvals (
             id, project_id, status, current_step, total_steps,
-            approvals, comments, created_by, created_at, updated_at, tenant_id
+            approvals, comments, created_by, applicant, approval_type, title,
+            created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING *
         "#
     ))
@@ -178,17 +193,20 @@ async fn submit_approval(
     .bind(3)
     .bind(approval_steps)
     .bind(req.comment)
+    .bind(Uuid::parse_str(&req.approver_id).ok())
     .bind(&req.approver_id)
-    .bind(effective_tenant_id(&ctx, &claims))
+    .bind("project")
+    .bind(format!("项目审批: {project_id}"))
+    .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
         Ok(approval) => {
             // 业务逻辑：更新项目状态为待审批
-            let _ = update_project_status(&state.pool, project_id, "pending_approval").await;
+            let _ = update_project_status(&mut **txn, project_id, "pending_approval").await;
             // 审计日志：记录审批发起（V282 集成 shared-db approval）
             let approver_uuid = Uuid::parse_str(&req.approver_id).unwrap_or_else(|_| Uuid::nil());
             let _ = create_approval_and_log(
@@ -229,6 +247,7 @@ async fn submit_approval(
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn handle_approval_action(
     State(state): State<ApprovalState>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<ProjectApproval>> {
@@ -237,11 +256,17 @@ async fn handle_approval_action(
         return Json(ApiResponse::bad_request("无效的审批操作"));
     }
 
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     let result = sqlx::query_as::<_, ProjectApproval>(
         only_own_schema_query!("pm", "SELECT id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 1 FOR UPDATE")
     )
     .bind(project_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     let approval = match result {
@@ -328,7 +353,7 @@ async fn handle_approval_action(
             r#"
             UPDATE pm.project_approvals
             SET status = $1, approvals = $2, comments = $3, updated_at = $4
-            WHERE id = $5 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE id = $5 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             RETURNING *
             "#
         ))
@@ -341,7 +366,7 @@ async fn handle_approval_action(
         .bind(req.comment.as_deref())
         .bind(now)
         .bind(approval.id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut **txn)
         .await;
 
         match update_result {
@@ -352,7 +377,7 @@ async fn handle_approval_action(
                 } else {
                     "draft"
                 };
-                let _ = update_project_status(&state.pool, project_id, status).await;
+                let _ = update_project_status(&mut **txn, project_id, status).await;
                 // 审计日志：记录审批驳回/取消（V282 集成 shared-db approval）
                 let _ = reject_and_log(
                     &state.pool,
@@ -425,7 +450,7 @@ async fn handle_approval_action(
             r#"
             UPDATE pm.project_approvals
             SET status = $1, current_step = $2, approvals = $3, comments = $4, updated_at = $5
-            WHERE id = $6 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE id = $6 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             RETURNING *
             "#
         ))
@@ -435,14 +460,14 @@ async fn handle_approval_action(
         .bind(req.comment)
         .bind(now)
         .bind(approval.id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut **txn)
         .await;
 
         match update_result {
             Ok(updated) => {
                 if is_final_step {
                     // 业务逻辑：审批通过，更新项目状态
-                    let _ = update_project_status(&state.pool, project_id, "approved").await;
+                    let _ = update_project_status(&mut **txn, project_id, "approved").await;
                     // 审计日志：记录审批通过（V282 集成 shared-db approval）
                     let _ = execute_transition_and_log(
                         &state.pool,
@@ -468,7 +493,7 @@ async fn handle_approval_action(
 }
 
 async fn update_project_status(
-    pool: &PgPool,
+    conn: &mut sqlx::PgConnection,
     project_id: Uuid,
     status: &str,
 ) -> Result<(), sqlx::Error> {
@@ -479,7 +504,7 @@ async fn update_project_status(
     .bind(status)
     .bind(Utc::now())
     .bind(project_id)
-    .execute(pool)
+    .execute(&mut *conn)
     .await?;
     Ok(())
 }

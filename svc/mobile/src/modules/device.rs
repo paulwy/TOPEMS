@@ -165,10 +165,11 @@ pub async fn register_device(
 
     let existing_device = match sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT id FROM mobile.devices WHERE user_id::text = $1 AND device_id = $2"
+        "SELECT id FROM mobile.devices WHERE user_id::text = $1 AND device_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"
     ))
     .bind(user_id.to_string())
     .bind(&payload.device_id)
+    .bind(tenant_id)
     .fetch_optional(&pool)
     .await
     {
@@ -311,6 +312,7 @@ pub async fn update_push_token(
 /// 我的设备列表（前端 GET /device → mobile.devices）
 pub async fn list_my_devices(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -323,9 +325,18 @@ pub async fn list_my_devices(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
-    let devices: Vec<Device> = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE user_id::text = $1 ORDER BY created_at DESC"))
+    let devices: Vec<Device> = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE user_id::text = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY created_at DESC"))
         .bind(user_id.to_string())
+        .bind(tenant_filter)
         .fetch_all(&pool)
         .await
     {
@@ -356,6 +367,7 @@ pub async fn list_my_devices(
 /// 设备详情（前端 GET /device/{id} → mobile.devices 按 id 查询）
 pub async fn get_device_by_id(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -369,12 +381,21 @@ pub async fn get_device_by_id(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let device = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE id = $1"
+        "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .fetch_optional(&pool)
     .await;
 
@@ -632,6 +653,7 @@ pub async fn disable_device(
 /// 推送测试（前端 POST /device/{id}/test-push → 占位兜底，真实推送需推送网关）
 pub async fn test_push_device(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -646,12 +668,21 @@ pub async fn test_push_device(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let _exists = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT 1 FROM mobile.devices WHERE id = $1"
+        "SELECT 1 FROM mobile.devices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .fetch_optional(&pool)
     .await;
 
@@ -667,6 +698,7 @@ pub async fn test_push_device(
 /// 设备统计（前端 GET /device/stats → mobile.devices 聚合）
 pub async fn get_device_stats(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -679,12 +711,21 @@ pub async fn get_device_stats(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let total = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1"
+        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(user_id.to_string())
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
@@ -692,9 +733,10 @@ pub async fn get_device_stats(
 
     let active = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1 AND is_active = true"
+        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1 AND is_active = true AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(user_id.to_string())
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))

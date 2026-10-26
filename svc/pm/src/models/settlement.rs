@@ -97,7 +97,7 @@ pub struct SettlementAdjustment {
     pub amount: Decimal,
     pub reason: Option<String>,
     pub supporting_documents: Option<serde_json::Value>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -109,7 +109,7 @@ pub struct CreateSettlementAdjustmentRequest {
     pub amount: Decimal,
     pub reason: Option<String>,
     pub supporting_documents: Option<serde_json::Value>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
 }
 
 #[cfg(test)]
@@ -412,7 +412,7 @@ mod tests {
             amount: Decimal::from_str("5000.0").unwrap(),
             reason: Some("材料涨价".to_string()),
             supporting_documents: Some(serde_json::json!(["doc1.pdf", "doc2.pdf"])),
-            created_by: Some("admin".to_string()),
+            created_by: Some(uid()),
             created_at: now(),
         };
         let s = serde_json::to_string(&a).unwrap();
@@ -454,7 +454,7 @@ mod tests {
             amount: Decimal::from_str("-3000.0").unwrap(),
             reason: Some("节约成本".to_string()),
             supporting_documents: None,
-            created_by: Some("u".to_string()),
+            created_by: Some(uid()),
             created_at: now(),
         };
         let s = serde_json::to_string(&a).unwrap();
@@ -473,7 +473,7 @@ mod tests {
             amount: Decimal::from_str("10000.0").unwrap(),
             reason: Some("新增需求".to_string()),
             supporting_documents: Some(serde_json::json!(["doc.pdf"])),
-            created_by: Some("u".to_string()),
+            created_by: Some(uid()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateSettlementAdjustmentRequest = serde_json::from_str(&s).unwrap();

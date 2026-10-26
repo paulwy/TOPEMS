@@ -158,7 +158,7 @@ pub async fn sync_data(
         let tenant_id = Uuid::new_v4();
         match db_create_offline_operation(&pool, tenant_id, user_id, op.clone()).await {
             Ok(operation) => {
-                match db_update_offline_operation_status(&pool, operation.id, "syncing", None).await
+                match db_update_offline_operation_status(&pool, operation.id, "syncing", None, None).await
                 {
                     Ok(_) => match apply_operation(&pool, &operation).await {
                         Ok(_) => {
@@ -166,6 +166,7 @@ pub async fn sync_data(
                                 &pool,
                                 operation.id,
                                 "synced",
+                                None,
                                 None,
                             )
                             .await;
@@ -177,6 +178,7 @@ pub async fn sync_data(
                                 operation.id,
                                 "failed",
                                 Some(&e.to_string()),
+                                None,
                             )
                             .await;
                             failed_count += 1;
@@ -713,11 +715,11 @@ pub async fn retry_failed_sync(
             continue;
         }
 
-        let _ = db_update_offline_operation_status(&pool, op.id, "syncing", None).await;
+        let _ = db_update_offline_operation_status(&pool, op.id, "syncing", None, None).await;
 
         match apply_operation(&pool, &op).await {
             Ok(_) => {
-                let _ = db_update_offline_operation_status(&pool, op.id, "synced", None).await;
+                let _ = db_update_offline_operation_status(&pool, op.id, "synced", None, None).await;
                 retried_count += 1;
             }
             Err(e) => {
@@ -726,6 +728,7 @@ pub async fn retry_failed_sync(
                     op.id,
                     "failed",
                     Some(&e.to_string()),
+                    None,
                 )
                 .await;
                 still_failed_count += 1;

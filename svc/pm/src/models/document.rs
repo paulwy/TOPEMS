@@ -19,7 +19,7 @@ pub struct ProjectDocument {
     // 库内 tags 为 jsonb；必须用 serde_json::Value 绑定/解码，裸 Vec<String> 会被
     // sqlx 按 PG 数组(text[])编码，与 jsonb 列 COALESCE 类型不匹配导致 500。
     pub tags: Option<serde_json::Value>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -34,7 +34,7 @@ pub struct CreateDocumentRequest {
     pub file_hash: Option<String>,
     pub description: Option<String>,
     pub tags: Option<serde_json::Value>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -54,7 +54,7 @@ pub struct DocumentVersion {
     pub file_path: String,
     pub file_hash: Option<String>,
     pub change_note: Option<String>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -63,7 +63,7 @@ pub struct CreateDocumentVersionRequest {
     pub file_path: String,
     pub file_hash: Option<String>,
     pub change_note: Option<String>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -73,7 +73,7 @@ pub struct DocumentFolder {
     pub parent_id: Option<Uuid>,
     pub folder_name: String,
     pub description: Option<String>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -83,7 +83,7 @@ pub struct CreateFolderRequest {
     pub parent_id: Option<Uuid>,
     pub folder_name: String,
     pub description: Option<String>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
 }
 
 #[cfg(test)]
@@ -114,7 +114,7 @@ mod tests {
             status: "active".to_string(),
             description: Some("d".to_string()),
             tags: Some(serde_json::json!(["需求", "v1"])),
-            created_by: Some("admin".to_string()),
+            created_by: Some(uid()),
             created_at: now(),
             updated_at: now(),
         }
@@ -189,7 +189,7 @@ mod tests {
             file_hash: Some("h".to_string()),
             description: Some("d".to_string()),
             tags: Some(serde_json::json!(["t1"])),
-            created_by: Some("u".to_string()),
+            created_by: Some(uid()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateDocumentRequest = serde_json::from_str(&s).unwrap();
@@ -260,7 +260,7 @@ mod tests {
             file_path: "/v3.pdf".to_string(),
             file_hash: Some("hash3".to_string()),
             change_note: Some("更新内容".to_string()),
-            created_by: Some("u".to_string()),
+            created_by: Some(uid()),
             created_at: now(),
         };
         let s = serde_json::to_string(&v).unwrap();
@@ -296,7 +296,7 @@ mod tests {
             file_path: "/new.pdf".to_string(),
             file_hash: Some("h".to_string()),
             change_note: Some("note".to_string()),
-            created_by: Some("u".to_string()),
+            created_by: Some(uid()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateDocumentVersionRequest = serde_json::from_str(&s).unwrap();
@@ -327,7 +327,7 @@ mod tests {
             parent_id: Some(uid()),
             folder_name: "根目录".to_string(),
             description: Some("d".to_string()),
-            created_by: Some("admin".to_string()),
+            created_by: Some(uid()),
             created_at: now(),
             updated_at: now(),
         };
@@ -364,7 +364,7 @@ mod tests {
             parent_id: Some(uid()),
             folder_name: "子目录".to_string(),
             description: Some("d".to_string()),
-            created_by: Some("u".to_string()),
+            created_by: Some(uid()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateFolderRequest = serde_json::from_str(&s).unwrap();

@@ -1,5 +1,5 @@
 use axum::{
-    extract::State,
+    extract::{Extension, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Json,
@@ -7,8 +7,9 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use topems_shared_core::response::ApiResponse;
+use uuid::Uuid;
 
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_service_client::service_client::{
     api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
@@ -16,6 +17,17 @@ use topems_shared_service_client::service_client::{
 };
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
+
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MobileWorkbenchData {
@@ -57,6 +69,7 @@ pub async fn get_workbench_data(
     State(mes_client): State<TypedServiceClient<MesApi>>,
     State(qms_client): State<TypedServiceClient<QmsApi>>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
@@ -67,6 +80,7 @@ pub async fn get_workbench_data(
             );
         }
     };
+    let tenant_filter = tenant_filter(&claims);
 
     let bearer_token = extract_bearer_token(&headers);
 
@@ -110,7 +124,7 @@ pub async fn get_workbench_data(
 
     let today_quality_pass_rate = get_today_quality_pass_rate(&qms_client, &bearer_token).await;
 
-    let shortcuts = get_shortcuts(&pool, &user_id).await;
+    let shortcuts = get_shortcuts(&pool, &user_id, tenant_filter).await;
 
     let workbench_data = MobileWorkbenchData {
         pending_tasks,
@@ -190,11 +204,12 @@ async fn get_today_quality_pass_rate(
     }
 }
 
-async fn get_shortcuts(pool: &PgPool, user_id: &str) -> Vec<Shortcut> {
+async fn get_shortcuts(pool: &PgPool, user_id: &str, tenant_filter: Option<Uuid>) -> Vec<Shortcut> {
     let rows = sqlx::query(
-        only_own_schema_query!("mobile", "SELECT id, name, icon, COALESCE(action_type, '') as path, '#1890ff' as color FROM mobile.shortcuts WHERE user_id = $1 OR user_id IS NULL ORDER BY sort_order"),
+        only_own_schema_query!("mobile", "SELECT id, name, icon, COALESCE(action_type, '') as path, '#1890ff' as color FROM mobile.shortcuts WHERE (user_id = $1 OR user_id IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY sort_order"),
     )
     .bind(user_id)
+    .bind(tenant_filter)
     .fetch_all(pool)
     .await;
 

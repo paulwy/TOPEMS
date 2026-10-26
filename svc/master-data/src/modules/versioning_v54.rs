@@ -1010,7 +1010,7 @@ pub async fn merge_branch(
     let row = sqlx::query(&format!(
         "UPDATE master_data.mdm_version_branches
          SET merged_at = $1, merged_by = $2, status = 'merged'
-         WHERE name = $3 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+         WHERE name = $3 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
          RETURNING {BRANCH_COLS}"
     ))
     .bind(&now)
@@ -1424,7 +1424,7 @@ pub async fn revoke_permission(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("DELETE FROM master_data.mdm_data_permissions WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
+    let result = sqlx::query("DELETE FROM master_data.mdm_data_permissions WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
         .bind(&id)
         .execute(&state.db)
         .await
@@ -1732,7 +1732,7 @@ pub async fn revoke_role(
     Json(req): Json<RevokeRoleRequest>,
 ) -> Json<ApiResponse<()>> {
     let result = sqlx::query(
-        "DELETE FROM master_data.mdm_user_role_assignments WHERE user_id = $1 AND role_id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "DELETE FROM master_data.mdm_user_role_assignments WHERE user_id = $1 AND role_id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&req.user_id)
     .bind(&req.role_id)

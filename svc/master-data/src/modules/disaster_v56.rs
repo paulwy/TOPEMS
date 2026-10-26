@@ -1025,7 +1025,7 @@ pub async fn execute_plan(
     let rpo_minutes = plan.rpo_minutes;
 
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_recovery_plans SET status = $2, steps = $3 WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_recovery_plans SET status = $2, steps = $3 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&plan_id)
     .bind(recovery_plan_status_to_str(&plan.status))
@@ -1355,7 +1355,7 @@ pub async fn update_plan(
     if let Err(e) = sqlx::query(
         r#"UPDATE master_data.mdm_continuity_plans SET
            name = $2, scope = $3, recovery_strategy = $4, test_frequency = $5, status = $6
-           WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&id)
     .bind(&plan.name)
@@ -1406,7 +1406,7 @@ pub async fn test_plan(
 
     let now = chrono::Utc::now();
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_continuity_plans SET last_tested = $2, status = $3 WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_continuity_plans SET last_tested = $2, status = $3 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&id)
     .bind(now.to_rfc3339())
@@ -1727,7 +1727,7 @@ pub async fn start_replication(
     };
 
     if let Err(e) = sqlx::query(
-        "UPDATE master_data.mdm_replication_configs SET status = 'running' WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE master_data.mdm_replication_configs SET status = 'running' WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&config.id)
     .execute(&state.db)
@@ -1944,7 +1944,7 @@ pub async fn complete_failover(
 
     let completed_at = chrono::Utc::now().to_rfc3339();
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_failover_records SET status = 'completed', completed_at = $2 WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_failover_records SET status = 'completed', completed_at = $2 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&record.id)
     .bind(&completed_at)
@@ -1953,14 +1953,14 @@ pub async fn complete_failover(
     .map_err(|e| TopemsError::internal("更新故障转移记录失败", e)) { return Json(ApiResponse::from(e)); }
 
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET status = 'offline', primary_flag = false WHERE region_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_region_configs SET status = 'offline', primary_flag = false WHERE region_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&record.from_region)
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("更新源地域失败", e)) { return Json(ApiResponse::from(e)); }
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET status = 'online', primary_flag = true WHERE region_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_region_configs SET status = 'online', primary_flag = true WHERE region_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&record.to_region)
     .execute(&state.db)
@@ -2031,7 +2031,7 @@ pub async fn switch_regions(
     };
 
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET primary_flag = false WHERE region_id <> $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_region_configs SET primary_flag = false WHERE region_id <> $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&req.primary_region)
     .execute(&state.db)
@@ -2041,7 +2041,7 @@ pub async fn switch_regions(
         return Json(ApiResponse::from(e));
     }
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = 'online' WHERE region_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = 'online' WHERE region_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&req.primary_region)
     .execute(&state.db)

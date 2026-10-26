@@ -590,7 +590,7 @@ pub async fn publish_job_opening(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.job_openings
         SET status = 'published', publish_date = $2, updated_at = $2
-        WHERE deleted_at IS NULL AND id = $1 AND status = 'draft' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE deleted_at IS NULL AND id = $1 AND status = 'draft' AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         "#)
     )
@@ -647,7 +647,7 @@ pub async fn close_job_opening(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.job_openings
         SET status = 'closed', close_date = $2, updated_at = $2
-        WHERE deleted_at IS NULL AND id = $1 AND status = 'published' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE deleted_at IS NULL AND id = $1 AND status = 'published' AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, title, code, department_id, position_id, employment_type, location, description, requirements, salary_min, salary_max, status, publish_date, close_date, created_at, updated_at
         "#)
     )
@@ -924,7 +924,7 @@ pub async fn update_candidate(
             source = COALESCE($7, source),
             status = COALESCE($8, status),
             updated_at = $9
-        WHERE deleted_at IS NULL AND id = $10 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE deleted_at IS NULL AND id = $10 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
         "#)
     )
@@ -1342,7 +1342,7 @@ pub async fn complete_interview(
             notes = COALESCE($3, notes),
             score = COALESCE($4, score),
             updated_at = $5
-        WHERE deleted_at IS NULL AND id = $6 AND status = 'scheduled' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE deleted_at IS NULL AND id = $6 AND status = 'scheduled' AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         "#)
     )

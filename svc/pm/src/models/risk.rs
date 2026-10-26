@@ -22,7 +22,6 @@ pub struct ProjectRisk {
     pub warning_threshold: i32,
     pub owner: Option<String>,
     pub response_due_date: Option<DateTime<Utc>>,
-    pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -43,7 +42,6 @@ pub struct CreateRiskRequest {
     pub warning_threshold: Option<i32>,
     pub owner: Option<String>,
     pub response_due_date: Option<String>,
-    pub created_by: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -115,7 +113,6 @@ mod tests {
             warning_threshold: 80,
             owner: Some("manager".to_string()),
             response_due_date: Some(now()),
-            created_by: Some("admin".to_string()),
             created_at: now(),
             updated_at: now(),
         }
@@ -162,7 +159,6 @@ mod tests {
             warning_threshold: 0,
             owner: None,
             response_due_date: None,
-            created_by: None,
             created_at: now(),
             updated_at: now(),
         };
@@ -209,7 +205,6 @@ mod tests {
             warning_threshold: Some(50),
             owner: Some("o".to_string()),
             response_due_date: Some("2024-12-31T00:00:00Z".to_string()),
-            created_by: Some("u".to_string()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateRiskRequest = serde_json::from_str(&s).unwrap();
@@ -235,7 +230,6 @@ mod tests {
             warning_threshold: None,
             owner: None,
             response_due_date: None,
-            created_by: None,
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateRiskRequest = serde_json::from_str(&s).unwrap();

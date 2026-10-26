@@ -76,7 +76,7 @@
       {
         "ordinal": 14,
         "name": "inspection_time",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 15,
@@ -119,7 +119,7 @@
         "Numeric",
         "Numeric",
         "Varchar",
-        "Varchar",
+        "Text",
         "Varchar",
         "Varchar",
         "Text",

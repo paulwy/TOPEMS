@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Json, Path, Query, State},
+    extract::{Extension, Json, Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -12,7 +12,7 @@ use uuid::Uuid;
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
 use crate::db::repository::*;
 use crate::models::{BarcodeScan, CreateBarcodeScan};
-use topems_shared_auth::auth::{verify_jwt_token, AuthState};
+use topems_shared_auth::auth::{verify_jwt_token, AuthState, Claims};
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -321,6 +321,7 @@ fn match_barcode(
 )]
 pub async fn get_scan_history(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Query(params): Query<ScanHistoryQuery>,
@@ -348,7 +349,16 @@ pub async fn get_scan_history(
     let page = params.page.unwrap_or(1);
     let size = params.size.unwrap_or(20);
 
-    let scans = match db_get_barcode_scans(&pool, user_id, params.barcode_type.as_deref()).await {
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
+    let scans = match db_get_barcode_scans(&pool, user_id, params.barcode_type.as_deref(), tenant_filter).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("获取扫描历史失败: {}", e);
@@ -394,14 +404,24 @@ pub struct ScanHistoryQuery {
 )]
 pub async fn get_scan_by_id(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
-    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, barcode, barcode_type, decoded_data, scanned_at FROM mobile.barcode_scans WHERE id = $1"))
+    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, barcode, barcode_type, decoded_data, scanned_at FROM mobile.barcode_scans WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"))
         .bind(id)
+        .bind(tenant_filter)
         .fetch_optional(&pool)
         .await
     {

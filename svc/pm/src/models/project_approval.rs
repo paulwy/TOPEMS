@@ -13,7 +13,7 @@ pub struct ProjectApproval {
     pub total_steps: i32,
     pub approvals: serde_json::Value,
     pub comments: Option<String>,
-    pub created_by: String,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -68,7 +68,7 @@ mod tests {
             total_steps: 3,
             approvals: serde_json::json!([{"step": 1, "approved": true}]),
             comments: Some("待审批".to_string()),
-            created_by: "user-1".to_string(),
+            created_by: Some(uid()),
             created_at: now(),
             updated_at: now(),
         }
@@ -105,7 +105,7 @@ mod tests {
             total_steps: 3,
             approvals: serde_json::json!([]),
             comments: None,
-            created_by: "u".to_string(),
+            created_by: Some(uid()),
             created_at: now(),
             updated_at: now(),
         };

@@ -5,13 +5,14 @@
 //! - `task_progress_for_status`：状态派生进度（done→100 / todo→0）
 
 use axum::{
-    extract::{Extension, Path, Query, State},
+    extract::{Extension, Path, Query},
     http::HeaderMap,
     routing::get,
     Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use tracing;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::locale::Locale;
@@ -60,6 +61,8 @@ pub fn task_progress_for_status(status: &str, progress: i32) -> i32 {
 
 // ==================== Handlers ====================
 
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+
 /// 构造 `pm.pm_tasks` 的 SELECT / RETURNING 列清单。
 ///
 /// 多语言：`title` 按 `locale_placeholder`（SQL 占位符，如 `"$7"`）切换英文备用列
@@ -86,10 +89,17 @@ fn task_return_columns(locale_placeholder: &str) -> String {
     tag = "task"
 )]
 pub async fn list_tasks(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(_ctx): Extension<TenantContext>,
     Query(query): Query<TaskQuery>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<TaskListResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
 
@@ -99,7 +109,7 @@ pub async fn list_tasks(
     let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(&format!(
         "SELECT {return_cols} FROM pm.pm_tasks
          WHERE deleted_at IS NULL
-           AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+           AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
            AND ($1::uuid IS NULL OR project_id = $1)
            AND ($2::text IS NULL OR status = $2)
            AND ($3::text IS NULL OR priority = $3)
@@ -113,25 +123,33 @@ pub async fn list_tasks(
     .bind(page_size)
     .bind((page - 1) * page_size)
     .bind(locale)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     let total: Result<i64, sqlx::Error> = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pm.pm_tasks WHERE deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "SELECT COUNT(*) FROM pm.pm_tasks WHERE deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
     )
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match (result, total) {
-        (Ok(items), Ok(total)) => Json(ApiResponse::success(
-            TaskListResponse {
-                items,
-                total,
-                page,
-                page_size,
-            },
-            "任务列表获取成功",
-        )),
+        (Ok(items), Ok(total)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::server_error("事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                TaskListResponse {
+                    items,
+                    total,
+                    page,
+                    page_size,
+                },
+                "任务列表获取成功",
+            ))
+        }
         (Err(e), _) | (_, Err(e)) => Json(ApiResponse::from(TopemsError::internal(
             "获取任务列表失败",
             e,
@@ -153,11 +171,17 @@ pub async fn list_tasks(
     tag = "task"
 )]
 pub async fn list_tasks_by_project(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(_ctx): Extension<TenantContext>,
     Path(project_id): Path<Uuid>,
     Query(query): Query<TaskQuery>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<TaskListResponse>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
 
@@ -167,7 +191,7 @@ pub async fn list_tasks_by_project(
     let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(&format!(
         "SELECT {return_cols} FROM pm.pm_tasks
          WHERE project_id = $1 AND deleted_at IS NULL
-           AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+           AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
            AND ($2::text IS NULL OR status = $2)
          ORDER BY created_at DESC LIMIT $3 OFFSET $4"
     ))
@@ -176,26 +200,34 @@ pub async fn list_tasks_by_project(
     .bind(page_size)
     .bind((page - 1) * page_size)
     .bind(locale)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     let total: Result<i64, sqlx::Error> = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pm.pm_tasks WHERE project_id = $1 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "SELECT COUNT(*) FROM pm.pm_tasks WHERE project_id = $1 AND deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
     )
     .bind(project_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match (result, total) {
-        (Ok(items), Ok(total)) => Json(ApiResponse::success(
-            TaskListResponse {
-                items,
-                total,
-                page,
-                page_size,
-            },
-            "项目任务列表获取成功",
-        )),
+        (Ok(items), Ok(total)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::server_error("事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                TaskListResponse {
+                    items,
+                    total,
+                    page,
+                    page_size,
+                },
+                "项目任务列表获取成功",
+            ))
+        }
         (Err(e), _) | (_, Err(e)) => Json(ApiResponse::from(TopemsError::internal(
             "获取项目任务列表失败",
             e,
@@ -204,12 +236,17 @@ pub async fn list_tasks_by_project(
 }
 
 pub async fn create_task(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     headers: HeaderMap,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTaskRequest>,
 ) -> Json<ApiResponse<Task>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let tenant_id = effective_tenant_id(&ctx, &claims);
     let now = Utc::now();
@@ -250,11 +287,19 @@ pub async fn create_task(
     .bind(now)
     .bind(&req.title_en)
     .bind(locale)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match result {
-        Ok(task) => Json(ApiResponse::success(task, "任务创建成功")),
+        Ok(task) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::server_error("事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(task, "任务创建成功"))
+        }
         Err(e) => Json(ApiResponse::from(TopemsError::internal("创建任务失败", e))),
     }
 }
@@ -273,42 +318,62 @@ pub async fn create_task(
     tag = "task"
 )]
 pub async fn get_task(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Task>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     // 多语言：locale 追加为 $2，title 的 CASE 表达式引用它
     let locale = Locale::from_headers(&headers).as_sql();
     let return_cols = task_return_columns("$2");
     let result: Result<Option<Task>, sqlx::Error> = sqlx::query_as(&format!(
-        "SELECT {return_cols} FROM pm.pm_tasks WHERE id = $1 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "SELECT {return_cols} FROM pm.pm_tasks WHERE id = $1 AND deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)"
     ))
     .bind(id)
     .bind(locale)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(Some(task)) => Json(ApiResponse::success(task, "任务获取成功")),
+        Ok(Some(task)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::server_error("事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(task, "任务获取成功"))
+        }
         Ok(None) => Json(ApiResponse::not_found("任务不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("获取任务失败", e))),
     }
 }
 
 pub async fn update_task(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateTaskRequest>,
 ) -> Json<ApiResponse<Task>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let now = Utc::now();
     // 若仅更新状态，校验状态机（todo/in_progress/review/done/blocked）
     if let Some(to) = &req.status {
         let from: Result<Option<String>, sqlx::Error> = sqlx::query_scalar(
-            "SELECT status FROM pm.pm_tasks WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+            "SELECT status FROM pm.pm_tasks WHERE id = $1 AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
         )
         .bind(id)
-        .fetch_optional(&pool)
+        .fetch_optional(&mut **txn)
         .await;
         if let Ok(Some(from)) = from {
             if !task_status_transition_valid(&from, to) {
@@ -339,7 +404,7 @@ pub async fn update_task(
                            ELSE COALESCE($9, progress) END,
            updated_at = $10,
            title_en = COALESCE($11, title_en)
-           WHERE id = $1 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+           WHERE id = $1 AND deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
            RETURNING {return_cols}"#
     ))
     .bind(id)
@@ -354,31 +419,53 @@ pub async fn update_task(
     .bind(now)
     .bind(&req.title_en)
     .bind(locale)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(Some(task)) => Json(ApiResponse::success(task, "任务更新成功")),
+        Ok(Some(task)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::server_error("事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(task, "任务更新成功"))
+        }
         Ok(None) => Json(ApiResponse::not_found("任务不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新任务失败", e))),
     }
 }
 
 pub async fn delete_task(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
+    Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query(
         "UPDATE pm.pm_tasks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
-    .execute(&pool)
+    .execute(&mut **txn)
     .await;
     match result {
-        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"deleted": true}),
-            "任务已删除",
-        )),
+        Ok(res) if res.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::server_error("事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({"deleted": true}),
+                "任务已删除",
+            ))
+        }
         Ok(_) => Json(ApiResponse::not_found("任务不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除任务失败", e))),
     }

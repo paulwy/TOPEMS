@@ -48,7 +48,7 @@ pub async fn list_inspection_tasks(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
     let rows = match sqlx::query(
-        r#"SELECT id, title, description, patrol_type, status, checked_by, checked_at, created_at
+        r#"SELECT id, title, description, patrol_type, status, checked_by::text AS checked_by, checked_at, created_at
            FROM mobile.patrol_records
            WHERE deleted_at IS NULL
            ORDER BY created_at DESC"#,

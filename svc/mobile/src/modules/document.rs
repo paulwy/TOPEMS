@@ -2,7 +2,7 @@
 //! 无外部文档服务，落地 mobile 本地表（mobile.documents）
 
 use axum::{
-    extract::{Json, Path, Query, State},
+    extract::{Extension, Json, Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -13,8 +13,19 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_core::response::ApiResponse;
+
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct MobileDocument {
@@ -89,6 +100,7 @@ pub struct CreateDocumentRequest {
 /// 文档列表（前端 GET /documents）
 pub async fn list_documents(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Query(params): Query<DocumentListParams>,
@@ -108,6 +120,7 @@ pub async fn list_documents(
     let offset = (page - 1) * page_size;
     let search = params.search.unwrap_or_default();
     let category = params.category.unwrap_or_default();
+    let tenant_filter = tenant_filter(&claims);
 
     let documents: Vec<MobileDocument> = match sqlx::query_as::<_, MobileDocument>(
         only_own_schema_query!(
@@ -117,6 +130,7 @@ pub async fn list_documents(
              WHERE deleted_at IS NULL AND (author_id::text = $1 OR author_id IS NULL)
                AND ($2::text = '' OR title ILIKE '%' || $2 || '%')
                AND ($3::text = '' OR category = $3)
+               AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
              ORDER BY created_at DESC
              LIMIT $4 OFFSET $5"
         ),
@@ -126,6 +140,7 @@ pub async fn list_documents(
     .bind(&category)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_filter)
     .fetch_all(&pool)
     .await
     {
@@ -167,6 +182,7 @@ pub async fn get_document_categories() -> impl IntoResponse {
 /// 文档详情（前端 GET /documents/{id}）
 pub async fn get_document(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -180,15 +196,17 @@ pub async fn get_document(
             );
         }
     };
+    let tenant_filter = tenant_filter(&claims);
 
     let document = sqlx::query_as::<_, MobileDocument>(
         only_own_schema_query!(
             "mobile",
             "SELECT id, title, description, category, file_name, file_size, file_type, url, status, author_id, created_at, updated_at
-             FROM mobile.documents WHERE id = $1 AND deleted_at IS NULL"
+             FROM mobile.documents WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
         ),
     )
     .bind(id)
+    .bind(tenant_filter)
     .fetch_optional(&pool)
     .await;
 
@@ -215,6 +233,7 @@ pub async fn get_document(
 /// 新建文档（前端 POST /documents）
 pub async fn create_document(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Json(req): Json<CreateDocumentRequest>,
@@ -230,11 +249,12 @@ pub async fn create_document(
     };
 
     let id = Uuid::new_v4();
+    let tenant_id = tenant_filter(&claims).unwrap_or(Uuid::nil());
     let result = sqlx::query(
         only_own_schema_query!(
             "mobile",
-            "INSERT INTO mobile.documents (id, title, description, category, file_name, file_size, file_type, url, status, author_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CAST($10 AS uuid))"
+            "INSERT INTO mobile.documents (id, title, description, category, file_name, file_size, file_type, url, status, author_id, tenant_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CAST($10 AS uuid), $11)"
         ),
     )
     .bind(id)
@@ -247,6 +267,7 @@ pub async fn create_document(
     .bind(req.url.as_deref().unwrap_or(""))
     .bind(req.status.as_deref().unwrap_or("draft"))
     .bind(&user_id)
+    .bind(tenant_id)
     .execute(&pool)
     .await;
 
@@ -271,6 +292,7 @@ pub async fn create_document(
 /// 更新文档（前端 PUT /documents/{id}）
 pub async fn update_document(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -289,18 +311,20 @@ pub async fn update_document(
     let title = req.get("title").and_then(|v| v.as_str());
     let category = req.get("category").and_then(|v| v.as_str());
     let status = req.get("status").and_then(|v| v.as_str());
+    let tenant_filter = tenant_filter(&claims);
 
     let result = sqlx::query(
         only_own_schema_query!(
             "mobile",
             "UPDATE mobile.documents SET title = COALESCE($2, title), category = COALESCE($3, category), status = COALESCE($4, status), updated_at = NOW()
-             WHERE id = $1 AND deleted_at IS NULL"
+             WHERE id = $1 AND deleted_at IS NULL AND ($5::uuid IS NULL OR tenant_id = $5::uuid)"
         ),
     )
     .bind(id)
     .bind(title)
     .bind(category)
     .bind(status)
+    .bind(tenant_filter)
     .execute(&pool)
     .await;
 
@@ -323,6 +347,7 @@ pub async fn update_document(
 /// 删除文档（前端 DELETE /documents/{id}）
 pub async fn delete_document(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -336,12 +361,14 @@ pub async fn delete_document(
             );
         }
     };
+    let tenant_filter = tenant_filter(&claims);
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
+        "UPDATE mobile.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&pool)
     .await;
 

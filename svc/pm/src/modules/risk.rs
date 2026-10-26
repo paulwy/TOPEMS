@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path},
     http::HeaderMap,
     routing::get,
     Json, Router,
@@ -17,6 +17,8 @@ use crate::models::risk::{
 };
 use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
+
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 // ==================== Pure functions ====================
 
@@ -75,14 +77,19 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "risk"
 )]
 async fn get_project_risks(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectRisk>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let risks = sqlx::query_as::<_, ProjectRisk>(
-        only_own_schema_query!("pm", "SELECT id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_at, updated_at FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match risks {
@@ -108,12 +115,17 @@ async fn get_project_risks(
     tag = "risk"
 )]
 async fn get_risk(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectRisk>> {
-    let risk = sqlx::query_as::<_, ProjectRisk>(only_own_schema_query!("pm", "SELECT id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, owner, created_at, updated_at FROM pm.project_risks WHERE id = $1"))
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
+    let risk = sqlx::query_as::<_, ProjectRisk>(only_own_schema_query!("pm", "SELECT id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_at, updated_at FROM pm.project_risks WHERE id = $1"))
         .bind(id)
-        .fetch_one(&pool)
+        .fetch_one(&mut **txn)
         .await;
 
     match risk {
@@ -127,7 +139,7 @@ async fn get_risk(
 }
 
 async fn create_risk(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -135,6 +147,11 @@ async fn create_risk(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRiskRequest>,
 ) -> Json<ApiResponse<ProjectRisk>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
@@ -143,8 +160,8 @@ async fn create_risk(
     );
 
     let risk = sqlx::query_as::<_, ProjectRisk>(
-        only_own_schema_query!("pm", "INSERT INTO pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_by, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'identified', $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'identified', $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -162,11 +179,10 @@ async fn create_risk(
     .bind(req.warning_threshold.unwrap_or(80))
     .bind(req.owner)
     .bind(parse_date_opt(&req.response_due_date))
-    .bind(req.created_by)
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match risk {
@@ -207,12 +223,17 @@ async fn create_risk(
 }
 
 async fn update_risk(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
     Json(req): Json<UpdateRiskRequest>,
 ) -> Json<ApiResponse<ProjectRisk>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status, "risk_score": req.risk_score}));
     let risk = sqlx::query_as::<_, ProjectRisk>(only_own_schema_query!(
@@ -233,7 +254,7 @@ async fn update_risk(
             owner = COALESCE($13, owner),
             response_due_date = COALESCE($14, response_due_date),
             updated_at = $15
-        WHERE id = $16 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $16 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.risk_name)
     .bind(req.risk_description)
@@ -251,7 +272,7 @@ async fn update_risk(
     .bind(parse_date_opt(&req.response_due_date))
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match risk {
@@ -321,14 +342,19 @@ async fn update_risk(
     tag = "risk"
 )]
 async fn get_risk_events(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<RiskEvent>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let events = sqlx::query_as::<_, RiskEvent>(
         only_own_schema_query!("pm", "SELECT id, risk_id, event_type, event_description, occurred_at, reported_by, created_at FROM pm.risk_events WHERE risk_id = $1 ORDER BY occurred_at DESC"),
     )
     .bind(id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match events {
@@ -341,12 +367,17 @@ async fn get_risk_events(
 }
 
 async fn create_risk_event(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRiskEventRequest>,
 ) -> Json<ApiResponse<RiskEvent>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let event_id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -361,7 +392,7 @@ async fn create_risk_event(
     .bind(now)
     .bind(req.reported_by)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match event {

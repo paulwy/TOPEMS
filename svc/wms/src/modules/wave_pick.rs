@@ -1135,7 +1135,7 @@ pub async fn pick_line(
                 status = 'picked',
                 remarks = COALESCE($4, remarks),
                 updated_at = $5
-            WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             RETURNING id, wave_pick_id, outbound_order_id, outbound_order_number,
                       material_code, material_name, location_id, location_code,
                       planned_quantity, picked_quantity, status, remarks
@@ -1219,7 +1219,7 @@ pub async fn short_pick_line(
                 status = 'short_picked',
                 remarks = COALESCE($4, remarks),
                 updated_at = $5
-            WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             RETURNING id, wave_pick_id, outbound_order_id, outbound_order_number,
                       material_code, material_name, location_id, location_code,
                       planned_quantity, picked_quantity, status, remarks

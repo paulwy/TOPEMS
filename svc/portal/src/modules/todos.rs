@@ -138,7 +138,7 @@ async fn complete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
         r#"
         UPDATE portal.portal_todos
         SET completed = TRUE, completed_at = NOW(), updated_at = NOW()
-        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
     )
     .bind(uuid)
@@ -165,7 +165,7 @@ async fn delete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
         r#"
         UPDATE portal.portal_todos
         SET deleted_at = NOW(), updated_at = NOW()
-        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
     )
     .bind(uuid)

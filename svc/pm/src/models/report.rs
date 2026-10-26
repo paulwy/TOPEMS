@@ -15,7 +15,9 @@ pub struct ProjectReport {
     pub generated_at: Option<DateTime<Utc>>,
     pub data: Option<serde_json::Value>,
     pub summary: Option<String>,
-    pub generated_by: Option<String>,
+    /// DB 列名为 created_by（wire 字段保持 generated_by）
+    #[serde(rename = "generated_by")]
+    pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -37,7 +39,7 @@ pub struct ReportTemplate {
     pub report_type: String,
     pub content: serde_json::Value,
     pub is_active: bool,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -48,7 +50,7 @@ pub struct CreateReportTemplateRequest {
     pub template_name: String,
     pub report_type: String,
     pub content: serde_json::Value,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -108,7 +110,7 @@ mod tests {
             generated_at: Some(now()),
             data: Some(serde_json::json!({"progress": 50})),
             summary: Some("项目进展顺利".to_string()),
-            generated_by: Some("admin".to_string()),
+            created_by: Some("admin".to_string()),
             created_at: now(),
             updated_at: now(),
         }
@@ -140,7 +142,7 @@ mod tests {
             generated_at: None,
             data: None,
             summary: None,
-            generated_by: None,
+            created_by: None,
             created_at: now(),
             updated_at: now(),
         };
@@ -216,7 +218,7 @@ mod tests {
             report_type: "monthly".to_string(),
             content: serde_json::json!({"sections": ["overview", "budget"]}),
             is_active: true,
-            created_by: Some("admin".to_string()),
+            created_by: Some(uid()),
             created_at: now(),
             updated_at: now(),
         };
@@ -256,7 +258,7 @@ mod tests {
             template_name: "新模板".to_string(),
             report_type: "monthly".to_string(),
             content: serde_json::json!({"key": "value"}),
-            created_by: Some("u".to_string()),
+            created_by: Some(uid()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateReportTemplateRequest = serde_json::from_str(&s).unwrap();

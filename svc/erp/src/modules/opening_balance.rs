@@ -380,7 +380,7 @@ pub async fn update_opening_balance(
     let result = sqlx::query_as::<_, OpeningBalance>(
         only_own_schema_query!("erp", r#"
         UPDATE erp.opening_balances SET debit_balance = $2, credit_balance = $3, updated_at = $4
-        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at
         "#),
     )

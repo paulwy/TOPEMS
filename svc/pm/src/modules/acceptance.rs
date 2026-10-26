@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path},
     http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
@@ -19,6 +19,8 @@ use crate::models::acceptance::{
 };
 use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
+
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -61,14 +63,19 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "acceptance"
 )]
 async fn get_project_plans(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptancePlan>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let plans = sqlx::query_as::<_, AcceptancePlan>(
         only_own_schema_query!("pm", "SELECT id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_at, updated_at FROM pm.acceptance_plans WHERE project_id = $1 ORDER BY expected_date"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match plans {
@@ -94,14 +101,19 @@ async fn get_project_plans(
     tag = "acceptance"
 )]
 async fn get_plan(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AcceptancePlan>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let plan = sqlx::query_as::<_, AcceptancePlan>(
         only_own_schema_query!("pm", "SELECT id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_at, updated_at FROM pm.acceptance_plans WHERE id = $1"),
     )
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match plan {
@@ -115,7 +127,7 @@ async fn get_plan(
 }
 
 async fn create_plan(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -123,6 +135,11 @@ async fn create_plan(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAcceptancePlanRequest>,
 ) -> Json<ApiResponse<AcceptancePlan>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
@@ -149,7 +166,7 @@ async fn create_plan(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match plan {
@@ -190,12 +207,17 @@ async fn create_plan(
 }
 
 async fn update_plan(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
     Json(req): Json<UpdateAcceptancePlanRequest>,
 ) -> Json<ApiResponse<AcceptancePlan>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status}));
     let plan = sqlx::query_as::<_, AcceptancePlan>(only_own_schema_query!(
@@ -209,7 +231,7 @@ async fn update_plan(
             participants = COALESCE($6, participants),
             documents_required = COALESCE($7, documents_required),
             updated_at = $8
-        WHERE id = $9 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $9 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.plan_name)
     .bind(req.acceptance_type)
@@ -220,7 +242,7 @@ async fn update_plan(
     .bind(req.documents_required)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match plan {
@@ -290,14 +312,19 @@ async fn update_plan(
     tag = "acceptance"
 )]
 async fn get_plan_items(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(plan_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptanceItem>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let items = sqlx::query_as::<_, AcceptanceItem>(
         only_own_schema_query!("pm", "SELECT id, plan_id, item_code, item_name, item_description, required_standard, actual_result, is_passed, created_at FROM pm.acceptance_items WHERE plan_id = $1 ORDER BY created_at"),
     )
     .bind(plan_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match items {
@@ -310,12 +337,17 @@ async fn get_plan_items(
 }
 
 async fn create_plan_item(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(plan_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAcceptanceItemRequest>,
 ) -> Json<ApiResponse<AcceptanceItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -332,7 +364,7 @@ async fn create_plan_item(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match item {
@@ -358,10 +390,15 @@ async fn create_plan_item(
     tag = "acceptance"
 )]
 async fn update_plan_item(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAcceptanceItemRequest>,
 ) -> Json<ApiResponse<AcceptanceItem>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let item = sqlx::query_as::<_, AcceptanceItem>(only_own_schema_query!(
         "pm",
         "UPDATE pm.acceptance_items SET
@@ -369,14 +406,14 @@ async fn update_plan_item(
             is_passed = COALESCE($2, is_passed),
             comments = COALESCE($3, comments),
             updated_at = $4
-        WHERE id = $5 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $5 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.actual_result)
     .bind(req.is_passed)
     .bind(req.comments)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match item {
@@ -390,15 +427,20 @@ async fn update_plan_item(
 }
 
 async fn delete_plan_item(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.acceptance_items WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM pm.acceptance_items WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
-    .execute(&pool)
+    .execute(&mut **txn)
     .await;
 
     match result {
@@ -425,14 +467,19 @@ async fn delete_plan_item(
     tag = "acceptance"
 )]
 async fn get_project_records(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptanceRecord>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let records = sqlx::query_as::<_, AcceptanceRecord>(
         only_own_schema_query!("pm", "SELECT id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at FROM pm.acceptance_records WHERE project_id = $1 ORDER BY acceptance_date DESC"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match records {
@@ -458,14 +505,19 @@ async fn get_project_records(
     tag = "acceptance"
 )]
 async fn get_record(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let record = sqlx::query_as::<_, AcceptanceRecord>(
         only_own_schema_query!("pm", "SELECT id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at FROM pm.acceptance_records WHERE id = $1"),
     )
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match record {
@@ -492,17 +544,22 @@ async fn get_record(
     tag = "acceptance"
 )]
 async fn create_record(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(plan_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAcceptanceRecordRequest>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let plan = sqlx::query_as::<_, AcceptancePlan>(
         only_own_schema_query!("pm", "SELECT id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_at, updated_at FROM pm.acceptance_plans WHERE id = $1"),
     )
     .bind(plan_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     let plan = match plan {
@@ -539,7 +596,7 @@ async fn create_record(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match record {
@@ -552,10 +609,15 @@ async fn create_record(
 }
 
 async fn update_record(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAcceptanceRecordRequest>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let record = sqlx::query_as::<_, AcceptanceRecord>(only_own_schema_query!(
         "pm",
         "UPDATE pm.acceptance_records SET
@@ -566,7 +628,7 @@ async fn update_record(
             findings = COALESCE($5::jsonb, findings),
             recommendations = COALESCE($6::jsonb, recommendations),
             updated_at = $7
-        WHERE id = $8 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $8 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.status)
     .bind(req.conclusion)
@@ -576,7 +638,7 @@ async fn update_record(
     .bind(req.recommendations)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match record {

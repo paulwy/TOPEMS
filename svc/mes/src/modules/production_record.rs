@@ -392,15 +392,17 @@ pub async fn get_record(
 
     let result = sqlx::query!(
         r#"
-        SELECT 
+        SELECT
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,
             completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,
             created_at, updated_at
         FROM mes.production_records
         WHERE id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
         id,
+        get_tenant_id(&claims),
     )
     .fetch_optional(&state.pool)
     .await;

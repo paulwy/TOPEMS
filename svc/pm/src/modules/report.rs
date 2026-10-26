@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Extension, Path},
     routing::{get, post},
     Json, Router,
 };
@@ -23,6 +23,8 @@ use crate::models::report::{
     CreateReportRequest, CreateReportTemplateRequest, ProjectReport, ReportTemplate,
 };
 use crate::modules::effective_tenant_id;
+
+type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -62,14 +64,19 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "report"
 )]
 async fn get_project_reports(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectReport>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let reports = sqlx::query_as::<_, ProjectReport>(
-        only_own_schema_query!("pm", "SELECT id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at, updated_at FROM pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC"),
     )
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match reports {
@@ -95,13 +102,18 @@ async fn get_project_reports(
     tag = "report"
 )]
 async fn get_report(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectReport>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let report =
-        sqlx::query_as::<_, ProjectReport>(only_own_schema_query!("pm", "SELECT id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at FROM pm.project_reports WHERE id = $1"))
+        sqlx::query_as::<_, ProjectReport>(only_own_schema_query!("pm", "SELECT id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at, updated_at FROM pm.project_reports WHERE id = $1"))
             .bind(id)
-            .fetch_one(&pool)
+            .fetch_one(&mut **txn)
             .await;
 
     match report {
@@ -115,17 +127,22 @@ async fn get_report(
 }
 
 async fn create_report(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportRequest>,
 ) -> Json<ApiResponse<ProjectReport>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let report = sqlx::query_as::<_, ProjectReport>(
-        only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_by, created_at, updated_at, tenant_id)
+        only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, created_by, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10) RETURNING *")
     )
     .bind(id)
@@ -138,7 +155,7 @@ async fn create_report(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match report {
@@ -164,19 +181,24 @@ async fn create_report(
     tag = "report"
 )]
 async fn generate_report(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportRequest>,
 ) -> Json<ApiResponse<ProjectReport>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let project_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, code, project_type, status, progress, budget, start_date, end_date FROM pm.projects WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"))
         .bind(project_id)
         .bind(get_tenant_id(&claims))
-        .fetch_one(&pool)
+        .fetch_one(&mut **txn)
         .await;
 
     let project_info = match project_data {
@@ -196,7 +218,7 @@ async fn generate_report(
     let phases_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, sequence_number, progress, status FROM pm.project_phases WHERE project_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid) ORDER BY sequence_number"))
         .bind(project_id)
         .bind(get_tenant_id(&claims))
-        .fetch_all(&pool)
+        .fetch_all(&mut **txn)
         .await;
 
     let phases_info = match phases_data {
@@ -219,7 +241,7 @@ async fn generate_report(
         "SELECT name, date, status FROM pm.project_milestones WHERE project_id = $1 ORDER BY date"
     ))
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     let milestones_info = match milestones_data {
@@ -241,7 +263,7 @@ async fn generate_report(
         "SELECT total_amount, spent_amount, remaining_amount FROM pm.budgets WHERE project_id = $1"
     ))
     .bind(project_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     let budget_info = match budget_data {
@@ -268,7 +290,7 @@ async fn generate_report(
     let summary = generate_summary(&report_data);
 
     let report = sqlx::query_as::<_, ProjectReport>(
-        only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, generated_by, created_at, updated_at, tenant_id)
+        only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, 'generated', $7, $8, $9, $10, $11, $12, $13) RETURNING *")
     )
     .bind(id)
@@ -284,7 +306,7 @@ async fn generate_report(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match report {
@@ -325,11 +347,18 @@ fn generate_summary(data: &serde_json::Value) -> Option<String> {
     ),
     tag = "report"
 )]
-async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<ReportTemplate>>> {
+async fn list_templates(
+    Extension(txn_arc): Extension<RlsTxnArc>,
+) -> Json<ApiResponse<Vec<ReportTemplate>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let templates = sqlx::query_as::<_, ReportTemplate>(
         only_own_schema_query!("pm", "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM pm.report_templates WHERE is_active = true ORDER BY template_name"),
     )
-    .fetch_all(&pool)
+    .fetch_all(&mut **txn)
     .await;
 
     match templates {
@@ -355,14 +384,19 @@ async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Repo
     tag = "report"
 )]
 async fn get_template(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ReportTemplate>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let template = sqlx::query_as::<_, ReportTemplate>(
         only_own_schema_query!("pm", "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM pm.report_templates WHERE id = $1"),
     )
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match template {
@@ -376,11 +410,16 @@ async fn get_template(
 }
 
 async fn create_template(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportTemplateRequest>,
 ) -> Json<ApiResponse<ReportTemplate>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -397,7 +436,7 @@ async fn create_template(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match template {
@@ -410,23 +449,28 @@ async fn create_template(
 }
 
 async fn update_template(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateReportTemplateRequest>,
 ) -> Json<ApiResponse<ReportTemplate>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let template = sqlx::query_as::<_, ReportTemplate>(only_own_schema_query!(
         "pm",
         "UPDATE pm.report_templates SET
             template_name = COALESCE($1, template_name),
             content = COALESCE($2, content),
             updated_at = $3
-        WHERE id = $4 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
+        WHERE id = $4 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.template_name)
     .bind(req.content)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut **txn)
     .await;
 
     match template {
@@ -440,15 +484,20 @@ async fn update_template(
 }
 
 async fn delete_template(
-    State(pool): State<PgPool>,
+    Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "UPDATE pm.report_templates SET is_active = false WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "UPDATE pm.report_templates SET is_active = false WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
-    .execute(&pool)
+    .execute(&mut **txn)
     .await;
 
     match result {

@@ -702,7 +702,7 @@ pub async fn cancel_subscription(
     // K1：写真表 master_data.mdm_subscriptions（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(&format!(
         r#"UPDATE master_data.mdm_subscriptions SET status = 'cancelled'
-           WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))
+           WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))
            RETURNING {SUBSCRIPTION_COLS}"#,
     ))
     .bind(&id)
@@ -757,7 +757,7 @@ pub async fn upgrade_tier(
         .unwrap_or(current.tier);
 
     if let Err(e) = sqlx::query(
-        "UPDATE master_data.mdm_subscriptions SET tier = $1, status = 'active' WHERE id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE master_data.mdm_subscriptions SET tier = $1, status = 'active' WHERE id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(product_tier_to_string(&new_tier))
     .bind(&id)
@@ -1162,7 +1162,7 @@ pub async fn mark_bill_paid(
     // K1：写真表（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(&format!(
         r#"UPDATE master_data.mdm_billing_records SET status = 'paid'
-           WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))
+           WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))
            RETURNING {BILLING_COLS}"#,
     ))
     .bind(&id)

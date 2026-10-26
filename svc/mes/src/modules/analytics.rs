@@ -3,14 +3,24 @@
 //! 提供产能利用率、能源成本、设备MTBF、交付分析、OEE仪表盘、质量帕累托等聚合分析接口。
 
 use axum::{
-    extract::{Query, State},
+    extract::{Extension, Query, State},
     routing::get,
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use sqlx::types::Uuid;
+use topems_shared_auth::auth::Claims;
 use tracing::{error, info};
 
 use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
 
 // ==================== 数据结构 ====================
 
@@ -197,10 +207,12 @@ pub fn create_routes() -> Router<AppState> {
 )]
 pub async fn get_capacity_utilization(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<CapacityUtilizationResponse> {
     info!("获取产能利用率数据");
     let days = query.days.unwrap_or(7);
+    let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query_as::<_, (String, String, String, Option<f64>)>(
         r#"
@@ -211,11 +223,13 @@ pub async fn get_capacity_utilization(
             c.utilization_rate as utilization
         FROM mes.capacities c
         WHERE c.capacity_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR c.tenant_id = $2::uuid)
         ORDER BY c.capacity_date, c.work_center_name
         LIMIT 500
         "#,
     )
     .bind(days)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -275,10 +289,12 @@ pub async fn get_capacity_utilization(
 )]
 pub async fn get_energy_cost(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<EnergyCostResponse> {
     info!("获取能源成本数据");
     let days = query.days.unwrap_or(30);
+    let tenant_id = get_tenant_id(&claims);
 
     // 从生产成本表聚合能源相关成本
     let cost_result = sqlx::query_as::<_, (String, Option<f64>)>(
@@ -289,11 +305,13 @@ pub async fn get_energy_cost(
         FROM mes.production_costs
         WHERE cost_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
           AND cost_category IN ('能源', '电力', '燃气', '水', '压缩空气')
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         GROUP BY cost_category
         ORDER BY total DESC
         "#,
     )
     .bind(days)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -332,12 +350,14 @@ pub async fn get_energy_cost(
         FROM mes.production_costs
         WHERE cost_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
           AND cost_category IN ('能源', '电力', '燃气')
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         GROUP BY cost_date
         ORDER BY cost_date
         LIMIT 30
         "#,
     )
     .bind(days)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -363,12 +383,14 @@ pub async fn get_energy_cost(
             SUM(total_cost) as cost
         FROM mes.production_costs
         WHERE cost_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         GROUP BY workshop
         ORDER BY cost DESC
         LIMIT 10
         "#,
     )
     .bind(days)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -408,10 +430,12 @@ pub async fn get_energy_cost(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_equipment_mtbf(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<EquipmentMtbfResponse> {
     info!("获取设备MTBF数据");
     let days = query.days.unwrap_or(90);
+    let tenant_id = get_tenant_id(&claims);
 
     // 按设备类型统计 MTBF/MTTR
     let mtbf_result = sqlx::query_as::<_, (String, Option<f64>, Option<f64>)>(
@@ -424,11 +448,13 @@ pub async fn get_equipment_mtbf(
         LEFT JOIN mes.equipment e ON m.equipment_id = e.id
         WHERE m.started_at >= CURRENT_TIMESTAMP - $1 * INTERVAL '1 day'
           AND m.maintenance_type = '故障维修'
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR m.tenant_id = $2::uuid)
         GROUP BY e.equipment_type
         ORDER BY fault_count DESC
         "#,
     )
     .bind(days)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -456,12 +482,14 @@ pub async fn get_equipment_mtbf(
         FROM mes.equipment_maintenance_records
         WHERE started_at >= CURRENT_TIMESTAMP - $1 * INTERVAL '1 day'
           AND maintenance_type = '故障维修'
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         GROUP BY fault_reason
         ORDER BY frequency DESC
         LIMIT 10
         "#,
     )
     .bind(days)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -489,11 +517,13 @@ pub async fn get_equipment_mtbf(
         FROM mes.equipment_oee o
         LEFT JOIN mes.equipment e ON o.equipment_id = e.id
         WHERE o.record_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR o.tenant_id = $2::uuid)
         GROUP BY e.equipment_name
         LIMIT 20
         "#,
     )
     .bind(days)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -540,10 +570,12 @@ pub async fn get_equipment_mtbf(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_delivery_analytics(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<DeliveryAnalyticsResponse> {
     info!("获取交付分析数据");
     let days = query.days.unwrap_or(30);
+    let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query_as::<_, (String, Option<i64>, Option<i64>, Option<f64>, Option<i64>)>(
         r#"
@@ -559,12 +591,14 @@ pub async fn get_delivery_analytics(
             COUNT(*) FILTER (WHERE status IN ('completed', 'delivered') AND actual_end_date <= planned_end_date) as on_time_count
         FROM mes.production_orders
         WHERE planned_end_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         GROUP BY planned_end_date
         ORDER BY planned_end_date
         LIMIT 30
         "#,
     )
     .bind(days)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -624,10 +658,12 @@ pub async fn get_delivery_analytics(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_oee_dashboard(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<OeeDashboardResponse> {
     info!("获取OEE仪表盘数据");
     let days = query.days.unwrap_or(7);
+    let tenant_id = get_tenant_id(&claims);
 
     // 按设备统计 OEE
     let equipment_result =
@@ -642,12 +678,14 @@ pub async fn get_oee_dashboard(
         FROM mes.equipment_oee o
         LEFT JOIN mes.equipment e ON o.equipment_id = e.id
         WHERE o.record_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR o.tenant_id = $2::uuid)
         GROUP BY e.equipment_name
         ORDER BY oee DESC
         LIMIT 20
         "#,
         )
         .bind(days)
+        .bind(tenant_id)
         .fetch_all(&state.pool)
         .await;
 
@@ -680,12 +718,14 @@ pub async fn get_oee_dashboard(
             AVG(quality_rate)::float8 * 100 as quality_rate
         FROM mes.equipment_oee
         WHERE record_date >= CURRENT_DATE - $1 * INTERVAL '1 day'
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         GROUP BY record_date
         ORDER BY record_date
         LIMIT 30
         "#,
         )
         .bind(days)
+        .bind(tenant_id)
         .fetch_all(&state.pool)
         .await;
 
@@ -751,10 +791,12 @@ pub async fn get_oee_dashboard(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_quality_pareto(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyticsQuery>,
 ) -> Json<QualityParetoResponse> {
     info!("获取质量帕累托数据");
     let days = query.days.unwrap_or(30);
+    let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query_as::<_, (String, Option<i64>)>(
         r#"
@@ -764,12 +806,14 @@ pub async fn get_quality_pareto(
         FROM mes.quality_inspections
         WHERE inspection_time::timestamp >= CURRENT_DATE - $1 * INTERVAL '1 day'
           AND result = '不合格'
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         GROUP BY memo
         ORDER BY count DESC
         LIMIT 20
         "#,
     )
     .bind(days)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -809,9 +853,11 @@ pub async fn get_quality_pareto(
                     COUNT(*) as total
                 FROM mes.quality_inspections
                 WHERE inspection_time::timestamp >= CURRENT_DATE - $1 * INTERVAL '1 day'
+                  AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
                 "#,
             )
             .bind(days)
+            .bind(tenant_id)
             .fetch_one(&state.pool)
             .await;
 

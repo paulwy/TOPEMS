@@ -18,7 +18,7 @@ pub struct AcceptancePlan {
     pub status: String,
     pub participants: Option<serde_json::Value>,
     pub documents_required: Option<serde_json::Value>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -34,7 +34,7 @@ pub struct CreateAcceptancePlanRequest {
     pub expected_date: Option<String>,
     pub participants: Option<serde_json::Value>,
     pub documents_required: Option<serde_json::Value>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -61,7 +61,7 @@ pub struct AcceptanceRecord {
     pub attendees: Option<serde_json::Value>,
     pub findings: Option<serde_json::Value>,
     pub recommendations: Option<serde_json::Value>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -77,7 +77,7 @@ pub struct CreateAcceptanceRecordRequest {
     pub attendees: Option<serde_json::Value>,
     pub findings: Option<serde_json::Value>,
     pub recommendations: Option<serde_json::Value>,
-    pub created_by: Option<String>,
+    pub created_by: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -148,7 +148,7 @@ mod tests {
             status: "pending".to_string(),
             participants: Some(serde_json::json!(["user1", "user2"])),
             documents_required: Some(serde_json::json!(["doc1", "doc2"])),
-            created_by: Some("admin".to_string()),
+            created_by: Some(uid()),
             created_at: now(),
             updated_at: now(),
         }
@@ -228,7 +228,7 @@ mod tests {
             expected_date: Some("2026-12-31".to_string()),
             participants: Some(serde_json::json!(["u1"])),
             documents_required: None,
-            created_by: Some("u".to_string()),
+            created_by: Some(uid()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateAcceptancePlanRequest = serde_json::from_str(&s).unwrap();
@@ -308,7 +308,7 @@ mod tests {
             attendees: Some(serde_json::json!(["u1", "u2"])),
             findings: Some(serde_json::json!({"issues": []})),
             recommendations: Some(serde_json::json!({"suggestions": ["优化流程"]})),
-            created_by: Some("admin".to_string()),
+            created_by: Some(uid()),
             created_at: now(),
             updated_at: now(),
         }
@@ -375,7 +375,7 @@ mod tests {
             attendees: Some(serde_json::json!(["u1"])),
             findings: None,
             recommendations: None,
-            created_by: Some("admin".to_string()),
+            created_by: Some(uid()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateAcceptanceRecordRequest = serde_json::from_str(&s).unwrap();

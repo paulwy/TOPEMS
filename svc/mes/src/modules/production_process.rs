@@ -377,9 +377,11 @@ pub async fn get_process(
             created_at, updated_at
         FROM mes.production_processes
         WHERE id = $1 AND deleted_at IS NULL
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
