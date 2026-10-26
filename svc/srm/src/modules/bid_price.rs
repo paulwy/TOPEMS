@@ -741,7 +741,9 @@ pub async fn create_bid(
         }
         Err(e) => {
             tracing::error!("创建报价失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error("创建报价失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error(
+                "创建报价失败",
+            ))
         }
     }
 }
@@ -834,7 +836,9 @@ pub async fn get_bid(
         )),
         Err(e) => {
             tracing::error!("获取报价失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error("获取报价失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error(
+                "获取报价失败",
+            ))
         }
     }
 }
@@ -937,7 +941,9 @@ pub async fn update_bid(
         )),
         Err(e) => {
             tracing::error!("更新报价失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error("更新报价失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error(
+                "更新报价失败",
+            ))
         }
     }
 }
@@ -1005,7 +1011,9 @@ pub async fn delete_bid(
         )),
         Err(e) => {
             tracing::error!("删除报价失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error("删除报价失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error(
+                "删除报价失败",
+            ))
         }
     }
 }

@@ -203,7 +203,9 @@ pub async fn create_purchase_order(
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<PurchaseOrder>::bad_request("供应商ID格式错误"));
+            return Json(ApiResponse::<PurchaseOrder>::bad_request(
+                "供应商ID格式错误",
+            ));
         }
     };
 
@@ -289,7 +291,9 @@ pub async fn create_purchase_order(
         }
         Err(e) => {
             tracing::error!("创建采购订单失败: {}", e);
-            Json(ApiResponse::<PurchaseOrder>::server_error("采购订单创建失败"))
+            Json(ApiResponse::<PurchaseOrder>::server_error(
+                "采购订单创建失败",
+            ))
         }
     }
 }
@@ -353,7 +357,9 @@ pub async fn get_purchase_order(
         Ok(None) => Json(ApiResponse::<PurchaseOrder>::not_found("采购订单不存在")),
         Err(e) => {
             tracing::error!("获取采购订单失败: {}", e);
-            Json(ApiResponse::<PurchaseOrder>::server_error("获取采购订单失败"))
+            Json(ApiResponse::<PurchaseOrder>::server_error(
+                "获取采购订单失败",
+            ))
         }
     }
 }
@@ -411,7 +417,11 @@ pub async fn update_purchase_order(
     let supplier_id = if let Some(supplier_id_str) = &req.supplier_id {
         let supplier_uuid_val = match Uuid::parse_str(supplier_id_str) {
             Ok(uuid) => uuid,
-            Err(_) => return Json(ApiResponse::<PurchaseOrder>::bad_request("供应商ID格式错误")),
+            Err(_) => {
+                return Json(ApiResponse::<PurchaseOrder>::bad_request(
+                    "供应商ID格式错误",
+                ))
+            }
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
@@ -484,7 +494,9 @@ pub async fn update_purchase_order(
         }
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
-            Json(ApiResponse::<PurchaseOrder>::server_error("采购订单更新失败"))
+            Json(ApiResponse::<PurchaseOrder>::server_error(
+                "采购订单更新失败",
+            ))
         }
     }
 }

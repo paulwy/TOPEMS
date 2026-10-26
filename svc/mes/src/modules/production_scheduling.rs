@@ -1081,9 +1081,10 @@ async fn transition_schedule(
     };
 
     if let Err(_e) = schedule_can_transition(&current_status, to_status) {
-        return Json(ApiResponse::conflict(
-            &format!("当前状态 {} 不允许切换到 {}", current_status, to_status),
-        ));
+        return Json(ApiResponse::conflict(&format!(
+            "当前状态 {} 不允许切换到 {}",
+            current_status, to_status
+        )));
     }
 
     let now = Utc::now();

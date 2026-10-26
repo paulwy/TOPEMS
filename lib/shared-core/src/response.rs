@@ -514,7 +514,10 @@ mod tests {
                 _ => ApiResponse::unavailable(ctor_msg),
             };
             let direct: ApiResponse<()> = ApiResponse::error(ctor_code, ctor_msg);
-            assert_eq!(semantic.code, direct.code, "code 404/400/401/403/409/500/501/502/503");
+            assert_eq!(
+                semantic.code, direct.code,
+                "code 404/400/401/403/409/500/501/502/503"
+            );
             assert_eq!(semantic.success, direct.success);
             assert_eq!(semantic.message, direct.message);
             assert!(semantic.data.is_none());

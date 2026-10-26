@@ -95,7 +95,9 @@ pub async fn upload(
                     {
                         tracing::warn!("ai audit failed: {audit_err}");
                     }
-                    return Json(ApiResponse::<UploadDocumentResponse>::server_error(&err_msg));
+                    return Json(ApiResponse::<UploadDocumentResponse>::server_error(
+                        &err_msg,
+                    ));
                 }
                 if let Err(e) = std::fs::write(&path, &data) {
                     let err_msg = format!("保存文件失败: {}", e);
@@ -113,7 +115,9 @@ pub async fn upload(
                     {
                         tracing::warn!("ai audit failed: {audit_err}");
                     }
-                    return Json(ApiResponse::<UploadDocumentResponse>::server_error(&err_msg));
+                    return Json(ApiResponse::<UploadDocumentResponse>::server_error(
+                        &err_msg,
+                    ));
                 }
                 file_path = path.to_string_lossy().to_string();
 

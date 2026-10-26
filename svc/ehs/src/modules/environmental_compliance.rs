@@ -84,7 +84,6 @@ pub fn create_routes() -> Router<AppState> {
             "/environmental-compliance/statistics",
             get(get_compliance_statistics),
         )
-
 }
 
 #[derive(Debug, Deserialize)]

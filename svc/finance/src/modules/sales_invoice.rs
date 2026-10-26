@@ -452,7 +452,9 @@ pub async fn create_sales_invoice(
             let id: Uuid = row.get("id");
             match fetch_invoice(&state.pool, Some(tenant_id), id).await {
                 Ok(Some(inv)) => Json(ApiResponse::success(inv, "Created")),
-                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error("创建后读取失败")),
+                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error(
+                    "创建后读取失败",
+                )),
             }
         }
         Err(e) => Json(crate::shared::err_resp(e)),
@@ -493,7 +495,9 @@ pub async fn update_sales_invoice(
             let id: Uuid = row.get("id");
             match fetch_invoice(&state.pool, Some(tenant_id), id).await {
                 Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
-                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error("更新后读取失败")),
+                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error(
+                    "更新后读取失败",
+                )),
             }
         }
         Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::conflict(
@@ -519,9 +523,7 @@ pub async fn delete_sales_invoice(
     .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(id.to_string(), "Success")),
-        Ok(_) => Json(ApiResponse::<String>::conflict(
-            "仅草稿可删除或发票不存在",
-        )),
+        Ok(_) => Json(ApiResponse::<String>::conflict("仅草稿可删除或发票不存在")),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -560,7 +562,9 @@ pub async fn issue_sales_invoice(
             let id: Uuid = row.get("id");
             match fetch_invoice(&state.pool, Some(tenant_id), id).await {
                 Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
-                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error("开具后读取失败")),
+                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error(
+                    "开具后读取失败",
+                )),
             }
         }
         Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::conflict("仅草稿可开具")),
@@ -605,7 +609,9 @@ pub async fn cancel_sales_invoice(
             let id: Uuid = row.get("id");
             match fetch_invoice(&state.pool, Some(tenant_id), id).await {
                 Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
-                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error("取消后读取失败")),
+                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error(
+                    "取消后读取失败",
+                )),
             }
         }
         Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::conflict("该状态不可取消")),
@@ -689,7 +695,9 @@ pub async fn red_flush_sales_invoice(
             let red_id: Uuid = row.get("id");
             match fetch_invoice(&state.pool, Some(tenant_id), red_id).await {
                 Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
-                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error("红冲后读取失败")),
+                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error(
+                    "红冲后读取失败",
+                )),
             }
         }
         Err(e) => Json(crate::shared::err_resp(e)),
@@ -1041,9 +1049,10 @@ pub async fn confirm_collection(
         let paid: Decimal = inv.get("paid_amount");
         let balance = total - paid;
         if amount > balance {
-            return Json(ApiResponse::<CollectionOut>::bad_request(
-                &format!("确认金额 {} 超过应收余额 {}，拒绝超收", amount, balance),
-            ));
+            return Json(ApiResponse::<CollectionOut>::bad_request(&format!(
+                "确认金额 {} 超过应收余额 {}，拒绝超收",
+                amount, balance
+            )));
         }
         if let Err(e) = sqlx::query(
             "UPDATE finance.sales_invoices

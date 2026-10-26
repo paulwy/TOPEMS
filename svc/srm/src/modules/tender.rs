@@ -286,7 +286,9 @@ pub async fn create_tender(
         }
         Err(e) => {
             tracing::error!("创建招标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error("创建招标失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error(
+                "创建招标失败",
+            ))
         }
     }
 }
@@ -379,7 +381,9 @@ pub async fn get_tender(
         )),
         Err(e) => {
             tracing::error!("获取招标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error("获取招标失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error(
+                "获取招标失败",
+            ))
         }
     }
 }
@@ -500,7 +504,9 @@ pub async fn update_tender(
         )),
         Err(e) => {
             tracing::error!("更新招标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error("更新招标失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error(
+                "更新招标失败",
+            ))
         }
     }
 }
@@ -567,7 +573,9 @@ pub async fn delete_tender(
         )),
         Err(e) => {
             tracing::error!("删除招标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error("删除招标失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error(
+                "删除招标失败",
+            ))
         }
     }
 }
@@ -813,7 +821,9 @@ pub async fn create_tender_bid(
         }
         Err(e) => {
             tracing::error!("创建投标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error("创建投标失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error(
+                "创建投标失败",
+            ))
         }
     }
 }
@@ -913,7 +923,9 @@ pub async fn award_tender(
         }
         Err(e) => {
             tracing::error!("查询投标失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::server_error("查询投标失败"));
+            return Json(ApiResponse::<serde_json::Value>::server_error(
+                "查询投标失败",
+            ));
         }
     };
 
@@ -976,12 +988,16 @@ pub async fn award_tender(
                     tx.rollback()
                         .await
                         .unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
-                    return Json(ApiResponse::<serde_json::Value>::server_error("中标处理失败"));
+                    return Json(ApiResponse::<serde_json::Value>::server_error(
+                        "中标处理失败",
+                    ));
                 }
             };
 
             if tx.commit().await.is_err() {
-                return Json(ApiResponse::<serde_json::Value>::server_error("中标处理失败"));
+                return Json(ApiResponse::<serde_json::Value>::server_error(
+                    "中标处理失败",
+                ));
             }
 
             let data = serde_json::json!({
@@ -999,7 +1015,9 @@ pub async fn award_tender(
         }
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error("中标处理失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error(
+                "中标处理失败",
+            ))
         }
     }
 }

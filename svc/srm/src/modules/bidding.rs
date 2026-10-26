@@ -152,7 +152,9 @@ pub async fn create_bidding(
         None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if req.bidding_no.is_empty() || req.title.is_empty() {
-        return Json(ApiResponse::<Bidding>::bad_request("招标编号和标题不能为空"));
+        return Json(ApiResponse::<Bidding>::bad_request(
+            "招标编号和标题不能为空",
+        ));
     }
 
     let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(

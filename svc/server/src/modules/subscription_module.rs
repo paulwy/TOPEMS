@@ -193,9 +193,7 @@ pub async fn cancel_subscription(
 
     match result {
         Ok(Some(s)) => Json(ApiResponse::success(s, "订阅已取消")),
-        Ok(None) => Json(ApiResponse::not_found(
-            "订阅不存在",
-        )),
+        Ok(None) => Json(ApiResponse::not_found("订阅不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("取消订阅失败", e))),
     }
 }

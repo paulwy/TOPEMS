@@ -443,9 +443,10 @@ pub async fn submit_plan(
     };
 
     if !can_transition(&existing.status, "pending_approval") {
-        return Json(ApiResponse::bad_request(
-            &format!("当前状态 {} 不允许提交审批", existing.status),
-        ));
+        return Json(ApiResponse::bad_request(&format!(
+            "当前状态 {} 不允许提交审批",
+            existing.status
+        )));
     }
 
     let now = Utc::now();
@@ -501,9 +502,10 @@ pub async fn approve_plan(
     };
 
     if !can_transition(&existing.status, "approved") {
-        return Json(ApiResponse::bad_request(
-            &format!("当前状态 {} 不允许审批通过", existing.status),
-        ));
+        return Json(ApiResponse::bad_request(&format!(
+            "当前状态 {} 不允许审批通过",
+            existing.status
+        )));
     }
 
     let now = Utc::now();
@@ -559,9 +561,10 @@ pub async fn reject_plan(
     };
 
     if !can_transition(&existing.status, "draft") {
-        return Json(ApiResponse::bad_request(
-            &format!("当前状态 {} 不允许驳回", existing.status),
-        ));
+        return Json(ApiResponse::bad_request(&format!(
+            "当前状态 {} 不允许驳回",
+            existing.status
+        )));
     }
 
     let now = Utc::now();

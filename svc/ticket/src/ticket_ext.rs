@@ -473,9 +473,10 @@ pub async fn apply_transition(
     };
 
     if !is_valid_ticket_transition(&current, &req.to_status) {
-        return Json(ApiResponse::bad_request(
-            &format!("非法流转: {} -> {}", current, req.to_status),
-        ));
+        return Json(ApiResponse::bad_request(&format!(
+            "非法流转: {} -> {}",
+            current, req.to_status
+        )));
     }
 
     let now = chrono::Utc::now();

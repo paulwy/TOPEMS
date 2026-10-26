@@ -186,7 +186,9 @@ pub async fn create_plan(
         }
         Err(e) => {
             tracing::error!("创建培训计划失败: {}", e);
-            Json(ApiResponse::<TrainingPlan>::server_error("培训计划创建失败"))
+            Json(ApiResponse::<TrainingPlan>::server_error(
+                "培训计划创建失败",
+            ))
         }
     }
 }
@@ -312,7 +314,9 @@ pub async fn update_plan(
         Ok(None) => Json(ApiResponse::<TrainingPlan>::not_found("培训计划不存在")),
         Err(e) => {
             tracing::error!("更新培训计划失败: {}", e);
-            Json(ApiResponse::<TrainingPlan>::server_error("培训计划更新失败"))
+            Json(ApiResponse::<TrainingPlan>::server_error(
+                "培训计划更新失败",
+            ))
         }
     }
 }

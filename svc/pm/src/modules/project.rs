@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Path, State},
-    http::{HeaderMap, StatusCode},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -205,9 +205,7 @@ async fn list_projects(
         Ok(p) => p,
         Err(e) => {
             tracing::error!("获取项目列表失败: {}", e);
-            return Json(ApiResponse::server_error(
-                "获取项目列表失败",
-            ));
+            return Json(ApiResponse::server_error("获取项目列表失败"));
         }
     };
 
@@ -1221,9 +1219,7 @@ async fn get_kanban_board(State(state): State<AppState>) -> Json<ApiResponse<Kan
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("获取看板任务失败: {}", e);
-            return Json(ApiResponse::server_error(
-                "获取看板任务失败",
-            ));
+            return Json(ApiResponse::server_error("获取看板任务失败"));
         }
     };
 
@@ -1317,9 +1313,7 @@ async fn get_milestones_timeline(
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("获取里程碑时间线失败: {}", e);
-            return Json(ApiResponse::server_error(
-                "获取里程碑时间线失败",
-            ));
+            return Json(ApiResponse::server_error("获取里程碑时间线失败"));
         }
     };
 

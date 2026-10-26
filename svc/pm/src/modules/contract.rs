@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Path, State},
-    http::{HeaderMap, StatusCode},
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -85,9 +85,7 @@ async fn list_contracts(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Cont
         Ok(c) => Json(ApiResponse::success(c, "获取合同列表成功")),
         Err(e) => {
             tracing::error!("获取合同列表失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取合同列表失败",
-            ))
+            Json(ApiResponse::server_error("获取合同列表失败"))
         }
     }
 }
@@ -116,14 +114,10 @@ async fn get_contract(
 
     match contract {
         Ok(c) => Json(ApiResponse::success(c, "获取合同详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "合同不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("合同不存在")),
         Err(e) => {
             tracing::error!("获取合同失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取合同失败",
-            ))
+            Json(ApiResponse::server_error("获取合同失败"))
         }
     }
 }
@@ -203,9 +197,7 @@ async fn create_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建合同失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建合同失败",
-            ))
+            Json(ApiResponse::server_error("创建合同失败"))
         }
     }
 }
@@ -282,9 +274,7 @@ async fn update_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found(
-                "合同不存在",
-            ))
+            Json(ApiResponse::not_found("合同不存在"))
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -301,9 +291,7 @@ async fn update_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新合同失败: {}", e);
-            Json(ApiResponse::server_error(
-                "更新合同失败",
-            ))
+            Json(ApiResponse::server_error("更新合同失败"))
         }
     }
 }
@@ -347,9 +335,7 @@ async fn delete_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found(
-                "合同不存在",
-            ))
+            Json(ApiResponse::not_found("合同不存在"))
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -366,9 +352,7 @@ async fn delete_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("删除合同失败: {}", e);
-            Json(ApiResponse::server_error(
-                "删除合同失败",
-            ))
+            Json(ApiResponse::server_error("删除合同失败"))
         }
     }
 }
@@ -433,9 +417,7 @@ async fn submit_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found(
-                "合同不存在",
-            ))
+            Json(ApiResponse::not_found("合同不存在"))
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -452,9 +434,7 @@ async fn submit_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("提交审批失败: {}", e);
-            Json(ApiResponse::server_error(
-                "提交审批失败",
-            ))
+            Json(ApiResponse::server_error("提交审批失败"))
         }
     }
 }
@@ -519,9 +499,7 @@ async fn approve_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found(
-                "合同不存在",
-            ))
+            Json(ApiResponse::not_found("合同不存在"))
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -538,9 +516,7 @@ async fn approve_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("批准合同失败: {}", e);
-            Json(ApiResponse::server_error(
-                "批准合同失败",
-            ))
+            Json(ApiResponse::server_error("批准合同失败"))
         }
     }
 }
@@ -605,9 +581,7 @@ async fn reject_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found(
-                "合同不存在",
-            ))
+            Json(ApiResponse::not_found("合同不存在"))
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -624,9 +598,7 @@ async fn reject_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("拒绝合同失败: {}", e);
-            Json(ApiResponse::server_error(
-                "拒绝合同失败",
-            ))
+            Json(ApiResponse::server_error("拒绝合同失败"))
         }
     }
 }
@@ -659,9 +631,7 @@ async fn list_contract_milestones(
         Ok(m) => Json(ApiResponse::success(m, "获取里程碑列表成功")),
         Err(e) => {
             tracing::error!("获取里程碑失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取里程碑失败",
-            ))
+            Json(ApiResponse::server_error("获取里程碑失败"))
         }
     }
 }
@@ -701,9 +671,7 @@ async fn create_contract_milestone(
         Ok(m) => Json(ApiResponse::success(m, "创建里程碑成功")),
         Err(e) => {
             tracing::error!("创建里程碑失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建里程碑失败",
-            ))
+            Json(ApiResponse::server_error("创建里程碑失败"))
         }
     }
 }
@@ -751,14 +719,10 @@ async fn update_contract_milestone(
 
     match milestone {
         Ok(m) => Json(ApiResponse::success(m, "更新里程碑成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "里程碑不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("里程碑不存在")),
         Err(e) => {
             tracing::error!("更新里程碑失败: {}", e);
-            Json(ApiResponse::server_error(
-                "更新里程碑失败",
-            ))
+            Json(ApiResponse::server_error("更新里程碑失败"))
         }
     }
 }
@@ -778,14 +742,10 @@ async fn delete_contract_milestone(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除里程碑成功")),
-        Ok(_) => Json(ApiResponse::not_found(
-            "里程碑不存在",
-        )),
+        Ok(_) => Json(ApiResponse::not_found("里程碑不存在")),
         Err(e) => {
             tracing::error!("删除里程碑失败: {}", e);
-            Json(ApiResponse::server_error(
-                "删除里程碑失败",
-            ))
+            Json(ApiResponse::server_error("删除里程碑失败"))
         }
     }
 }
@@ -818,9 +778,7 @@ async fn list_payment_schedule(
         Ok(p) => Json(ApiResponse::success(p, "获取付款计划成功")),
         Err(e) => {
             tracing::error!("获取付款计划失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取付款计划失败",
-            ))
+            Json(ApiResponse::server_error("获取付款计划失败"))
         }
     }
 }
@@ -859,9 +817,7 @@ async fn create_payment_schedule(
         Ok(p) => Json(ApiResponse::success(p, "创建付款计划成功")),
         Err(e) => {
             tracing::error!("创建付款计划失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建付款计划失败",
-            ))
+            Json(ApiResponse::server_error("创建付款计划失败"))
         }
     }
 }
@@ -907,14 +863,10 @@ async fn update_payment_schedule(
 
     match payment {
         Ok(p) => Json(ApiResponse::success(p, "更新付款计划成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "付款计划不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("付款计划不存在")),
         Err(e) => {
             tracing::error!("更新付款计划失败: {}", e);
-            Json(ApiResponse::server_error(
-                "更新付款计划失败",
-            ))
+            Json(ApiResponse::server_error("更新付款计划失败"))
         }
     }
 }
@@ -932,14 +884,10 @@ async fn delete_payment_schedule(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除付款计划成功")),
-        Ok(_) => Json(ApiResponse::not_found(
-            "付款计划不存在",
-        )),
+        Ok(_) => Json(ApiResponse::not_found("付款计划不存在")),
         Err(e) => {
             tracing::error!("删除付款计划失败: {}", e);
-            Json(ApiResponse::server_error(
-                "删除付款计划失败",
-            ))
+            Json(ApiResponse::server_error("删除付款计划失败"))
         }
     }
 }
@@ -955,9 +903,7 @@ async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Cont
         Ok(t) => Json(ApiResponse::success(t, "获取模板列表成功")),
         Err(e) => {
             tracing::error!("获取模板失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取模板失败",
-            ))
+            Json(ApiResponse::server_error("获取模板失败"))
         }
     }
 }
@@ -974,14 +920,10 @@ async fn get_template(
 
     match template {
         Ok(t) => Json(ApiResponse::success(t, "获取模板详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "模板不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("模板不存在")),
         Err(e) => {
             tracing::error!("获取模板失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取模板失败",
-            ))
+            Json(ApiResponse::server_error("获取模板失败"))
         }
     }
 }
@@ -1015,9 +957,7 @@ async fn create_template(
         Ok(t) => Json(ApiResponse::success(t, "创建模板成功")),
         Err(e) => {
             tracing::error!("创建模板失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建模板失败",
-            ))
+            Json(ApiResponse::server_error("创建模板失败"))
         }
     }
 }
@@ -1048,14 +988,10 @@ async fn update_template(
 
     match template {
         Ok(t) => Json(ApiResponse::success(t, "更新模板成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "模板不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("模板不存在")),
         Err(e) => {
             tracing::error!("更新模板失败: {}", e);
-            Json(ApiResponse::server_error(
-                "更新模板失败",
-            ))
+            Json(ApiResponse::server_error("更新模板失败"))
         }
     }
 }
@@ -1074,14 +1010,10 @@ async fn delete_template(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除模板成功")),
-        Ok(_) => Json(ApiResponse::not_found(
-            "模板不存在",
-        )),
+        Ok(_) => Json(ApiResponse::not_found("模板不存在")),
         Err(e) => {
             tracing::error!("删除模板失败: {}", e);
-            Json(ApiResponse::server_error(
-                "删除模板失败",
-            ))
+            Json(ApiResponse::server_error("删除模板失败"))
         }
     }
 }
@@ -1114,9 +1046,7 @@ async fn get_project_contracts(
         Ok(c) => Json(ApiResponse::success(c, "获取项目合同列表成功")),
         Err(e) => {
             tracing::error!("获取项目合同失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取项目合同失败",
-            ))
+            Json(ApiResponse::server_error("获取项目合同失败"))
         }
     }
 }
@@ -1163,9 +1093,7 @@ async fn create_project_contract(
         Ok(c) => Json(ApiResponse::success(c, "创建合同成功")),
         Err(e) => {
             tracing::error!("创建合同失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建合同失败",
-            ))
+            Json(ApiResponse::server_error("创建合同失败"))
         }
     }
 }

@@ -469,9 +469,10 @@ pub async fn calculate_forecast(
     };
 
     if !can_transition(&existing.status, "calculated") {
-        return Json(ApiResponse::bad_request(
-            &format!("当前状态 {} 不允许计算预测", existing.status),
-        ));
+        return Json(ApiResponse::bad_request(&format!(
+            "当前状态 {} 不允许计算预测",
+            existing.status
+        )));
     }
 
     // 简单计算：如果没有预测数量，基于历史数据生成（此处简化为保持原值）
@@ -540,9 +541,10 @@ pub async fn validate_forecast(
     };
 
     if !can_transition(&existing.status, "validated") {
-        return Json(ApiResponse::bad_request(
-            &format!("当前状态 {} 不允许验证预测", existing.status),
-        ));
+        return Json(ApiResponse::bad_request(&format!(
+            "当前状态 {} 不允许验证预测",
+            existing.status
+        )));
     }
 
     // 验证：检查预测数量是否合理（>0）
@@ -609,9 +611,10 @@ pub async fn adopt_forecast(
     };
 
     if !can_transition(&existing.status, "adopted") {
-        return Json(ApiResponse::bad_request(
-            &format!("当前状态 {} 不允许采纳预测", existing.status),
-        ));
+        return Json(ApiResponse::bad_request(&format!(
+            "当前状态 {} 不允许采纳预测",
+            existing.status
+        )));
     }
 
     let now = Utc::now();

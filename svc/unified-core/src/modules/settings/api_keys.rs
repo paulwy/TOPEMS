@@ -134,9 +134,10 @@ pub async fn create_api_key(
         return Json(ApiResponse::bad_request("API Key 密钥不能为空"));
     }
     if !is_allowed_type(&payload.key_type) {
-        return Json(ApiResponse::bad_request(
-            &format!("API Key 类型无效，允许: {}", ALLOWED_TYPES.join(", ")),
-        ));
+        return Json(ApiResponse::bad_request(&format!(
+            "API Key 类型无效，允许: {}",
+            ALLOWED_TYPES.join(", ")
+        )));
     }
 
     let tenant_id = tenant_uuid(&claims);
@@ -338,9 +339,10 @@ pub async fn update_api_key(
     }
     if let Some(key_type) = payload.key_type {
         if !is_allowed_type(&key_type) {
-            return Json(ApiResponse::bad_request(
-                &format!("API Key 类型无效，允许: {}", ALLOWED_TYPES.join(", ")),
-            ));
+            return Json(ApiResponse::bad_request(&format!(
+                "API Key 类型无效，允许: {}",
+                ALLOWED_TYPES.join(", ")
+            )));
         }
         entry.key_type = key_type;
     }

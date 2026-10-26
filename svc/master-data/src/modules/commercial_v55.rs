@@ -1246,7 +1246,11 @@ pub async fn measure_sla(
     let config = match config_row {
         Ok(Some(r)) => sla_config_from_row(&r),
         Ok(None) => return Json(ApiResponse::not_found("未找到 SLA 配置")),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询 SLA 配置失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::server_error(&format!(
+                "查询 SLA 配置失败: {e}"
+            )))
+        }
     };
 
     let target = config.target_value;
@@ -1316,7 +1320,11 @@ pub async fn get_sla_status(
     .await;
     let configs: Vec<SLAConfig> = match config_rows {
         Ok(r) => r.iter().map(sla_config_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询 SLA 配置失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::server_error(&format!(
+                "查询 SLA 配置失败: {e}"
+            )))
+        }
     };
 
     let meas_rows = sqlx::query(&format!(
@@ -1328,7 +1336,11 @@ pub async fn get_sla_status(
     .await;
     let measurements: Vec<SLAMeasurement> = match meas_rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询 SLA 度量失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::server_error(&format!(
+                "查询 SLA 度量失败: {e}"
+            )))
+        }
     };
 
     let mut statuses: Vec<serde_json::Value> = Vec::new();
@@ -1395,7 +1407,11 @@ pub async fn get_sla_history(
     .await;
     let filtered: Vec<SLAMeasurement> = match rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询 SLA 历史失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::server_error(&format!(
+                "查询 SLA 历史失败: {e}"
+            )))
+        }
     };
 
     Json(ApiResponse::success(filtered, "SLA 历史记录"))
@@ -1429,7 +1445,11 @@ pub async fn calculate_penalty(
     let config = match config_row {
         Ok(Some(r)) => sla_config_from_row(&r),
         Ok(None) => return Json(ApiResponse::not_found("未找到 SLA 配置")),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询 SLA 配置失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::server_error(&format!(
+                "查询 SLA 配置失败: {e}"
+            )))
+        }
     };
 
     let meas_rows = sqlx::query(&format!(
@@ -1442,7 +1462,11 @@ pub async fn calculate_penalty(
     .await;
     let breached: Vec<SLAMeasurement> = match meas_rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询 SLA 度量失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::server_error(&format!(
+                "查询 SLA 度量失败: {e}"
+            )))
+        }
     };
 
     let breach_count = breached.len() as i64;
@@ -1557,7 +1581,11 @@ pub async fn get_incidents(
     .await;
     let filtered: Vec<SLAIncident> = match rows {
         Ok(r) => r.iter().map(sla_incident_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询 SLA 事故失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::server_error(&format!(
+                "查询 SLA 事故失败: {e}"
+            )))
+        }
     };
 
     Json(ApiResponse::success(filtered, "SLA 事故列表"))
@@ -1589,7 +1617,11 @@ pub async fn generate_sla_report(
     .await;
     let configs: Vec<SLAConfig> = match config_rows {
         Ok(r) => r.iter().map(sla_config_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询 SLA 配置失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::server_error(&format!(
+                "查询 SLA 配置失败: {e}"
+            )))
+        }
     };
 
     let meas_rows = sqlx::query(&format!(
@@ -1599,7 +1631,11 @@ pub async fn generate_sla_report(
     .await;
     let measurements: Vec<SLAMeasurement> = match meas_rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询 SLA 度量失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::server_error(&format!(
+                "查询 SLA 度量失败: {e}"
+            )))
+        }
     };
 
     let incident_rows = sqlx::query(&format!(
@@ -1609,7 +1645,11 @@ pub async fn generate_sla_report(
     .await;
     let incidents: Vec<SLAIncident> = match incident_rows {
         Ok(r) => r.iter().map(sla_incident_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询 SLA 事故失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::server_error(&format!(
+                "查询 SLA 事故失败: {e}"
+            )))
+        }
     };
 
     let tenant_filter = params.tenant_id.as_deref();

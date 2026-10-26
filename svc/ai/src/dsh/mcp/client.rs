@@ -15,9 +15,9 @@ use serde_json::{json, Value};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter};
 use tokio::process::{Child, ChildStdin, ChildStdout};
 
+use topems_shared_core::http_client::shared_http_client;
 use topems_shared_mcp::jsonrpc::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 use topems_shared_mcp::protocol::{McpContent, McpTool, McpToolResult};
-use topems_shared_core::http_client::shared_http_client;
 
 use super::tools::ToolExecutionError;
 
@@ -145,7 +145,7 @@ impl McpClient {
     pub async fn connect_http(url: &str, token: Option<&str>) -> Result<Self, ClientError> {
         let mut client = Self {
             transport: McpTransport::Http {
- http: shared_http_client(),
+                http: shared_http_client(),
                 url: url.to_string(),
                 token: token.map(String::from),
             },

@@ -237,9 +237,7 @@ pub async fn get_dimension(
 
     match result {
         Ok(Some(dimension)) => Json(ApiResponse::success(dimension, "获取评分维度成功")),
-        Ok(None) => Json(ApiResponse::<ScoringDimension>::not_found(
-            "评分维度不存在",
-        )),
+        Ok(None) => Json(ApiResponse::<ScoringDimension>::not_found("评分维度不存在")),
         Err(e) => {
             tracing::error!("获取评分维度失败: {}", e);
             Json(ApiResponse::<ScoringDimension>::server_error(
@@ -404,11 +402,7 @@ pub async fn update_dimension(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => {
-            return Json(ApiResponse::<ScoringDimension>::not_found(
-                "评分维度不存在",
-            ))
-        }
+        Ok(None) => return Json(ApiResponse::<ScoringDimension>::not_found("评分维度不存在")),
         Err(e) => {
             return Json(ApiResponse::<ScoringDimension>::from(
                 TopemsError::internal("查询评分维度失败", e),

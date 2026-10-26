@@ -411,9 +411,7 @@ pub async fn get_attendance(
 
     match result {
         Ok(Some(record)) => Json(ApiResponse::success(record, "获取考勤记录成功")),
-        Ok(None) => Json(ApiResponse::<AttendanceRecord>::not_found(
-            "考勤记录不存在",
-        )),
+        Ok(None) => Json(ApiResponse::<AttendanceRecord>::not_found("考勤记录不存在")),
         Err(e) => {
             tracing::error!("获取考勤记录失败: {}", e);
             Json(ApiResponse::<AttendanceRecord>::server_error(
@@ -464,11 +462,7 @@ pub async fn update_attendance(
 
     let existing = match existing {
         Ok(Some(r)) => r,
-        Ok(None) => {
-            return Json(ApiResponse::<AttendanceRecord>::not_found(
-                "考勤记录不存在",
-            ))
-        }
+        Ok(None) => return Json(ApiResponse::<AttendanceRecord>::not_found("考勤记录不存在")),
         Err(_e) => {
             return Json(ApiResponse::<AttendanceRecord>::server_error(
                 "查询考勤记录失败",

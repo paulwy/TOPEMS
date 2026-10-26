@@ -152,12 +152,10 @@ pub async fn check_project_permission<T>(
     }
 
     if !has_project_permission(&role, permission) {
-        return Err(axum::Json(ApiResponse::forbidden(
-            &format!(
-                "权限不足：您在该项目中的角色是 {}，需要 {} 权限",
-                role, permission
-            ),
-        )));
+        return Err(axum::Json(ApiResponse::forbidden(&format!(
+            "权限不足：您在该项目中的角色是 {}，需要 {} 权限",
+            role, permission
+        ))));
     }
 
     Ok(())

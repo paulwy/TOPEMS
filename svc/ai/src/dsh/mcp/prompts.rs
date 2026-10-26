@@ -148,6 +148,8 @@ pub fn get_prompt(name: &str, arguments: &Map<String, Value>) -> Option<Value> {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
+
     use super::*;
 
     #[test]
@@ -176,7 +178,7 @@ mod tests {
 
     #[test]
     fn test_get_prompt_renders_without_optional_args() {
-        let mut args = Map::new();
+        let args = Map::new();
         let result = get_prompt("crm.pipeline_review", &args).expect("known prompt");
         let text = result["messages"][0]["content"]["text"]
             .as_str()

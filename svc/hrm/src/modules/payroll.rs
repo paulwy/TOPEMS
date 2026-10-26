@@ -969,7 +969,9 @@ pub async fn create_payroll_detail(
         }
         Err(e) => {
             tracing::error!("添加薪资详情失败: {}", e);
-            Json(ApiResponse::<PayrollDetail>::server_error("添加薪资详情失败"))
+            Json(ApiResponse::<PayrollDetail>::server_error(
+                "添加薪资详情失败",
+            ))
         }
     }
 }

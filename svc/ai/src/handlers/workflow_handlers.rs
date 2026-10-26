@@ -71,9 +71,10 @@ pub async fn get_workflow(
             }),
             "Workflow detail",
         )),
-        None => Json(ApiResponse::not_found(
-            &format!("Workflow not found: {}", workflow_id),
-        )),
+        None => Json(ApiResponse::not_found(&format!(
+            "Workflow not found: {}",
+            workflow_id
+        ))),
     }
 }
 

@@ -292,7 +292,9 @@ pub async fn delete_document_relation(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<()>::server_error("rls transaction unavailable")),
+                Json(ApiResponse::<()>::server_error(
+                    "rls transaction unavailable",
+                )),
             )
         }
     };

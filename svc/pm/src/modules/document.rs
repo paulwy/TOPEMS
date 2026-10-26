@@ -1,6 +1,5 @@
 use axum::{
     extract::{Extension, Path, State},
-    http::StatusCode,
     routing::get,
     Json, Router,
 };
@@ -73,9 +72,7 @@ async fn get_project_documents(
         Ok(d) => Json(ApiResponse::success(d, "获取文档列表成功")),
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取文档失败",
-            ))
+            Json(ApiResponse::server_error("获取文档失败"))
         }
     }
 }
@@ -105,14 +102,10 @@ async fn get_document(
 
     match document {
         Ok(d) => Json(ApiResponse::success(d, "获取文档详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "文档不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("文档不存在")),
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取文档失败",
-            ))
+            Json(ApiResponse::server_error("获取文档失败"))
         }
     }
 }
@@ -152,9 +145,7 @@ async fn create_document(
         Ok(d) => Json(ApiResponse::success(d, "创建文档成功")),
         Err(e) => {
             tracing::error!("创建文档失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建文档失败",
-            ))
+            Json(ApiResponse::server_error("创建文档失败"))
         }
     }
 }
@@ -187,14 +178,10 @@ async fn update_document(
 
     match document {
         Ok(d) => Json(ApiResponse::success(d, "更新文档成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "文档不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("文档不存在")),
         Err(e) => {
             tracing::error!("更新文档失败: {}", e);
-            Json(ApiResponse::server_error(
-                "更新文档失败",
-            ))
+            Json(ApiResponse::server_error("更新文档失败"))
         }
     }
 }
@@ -213,14 +200,10 @@ async fn delete_document(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除文档成功")),
-        Ok(_) => Json(ApiResponse::not_found(
-            "文档不存在",
-        )),
+        Ok(_) => Json(ApiResponse::not_found("文档不存在")),
         Err(e) => {
             tracing::error!("删除文档失败: {}", e);
-            Json(ApiResponse::server_error(
-                "删除文档失败",
-            ))
+            Json(ApiResponse::server_error("删除文档失败"))
         }
     }
 }
@@ -253,9 +236,7 @@ async fn get_document_versions(
         Ok(v) => Json(ApiResponse::success(v, "获取版本列表成功")),
         Err(e) => {
             tracing::error!("获取版本失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取版本失败",
-            ))
+            Json(ApiResponse::server_error("获取版本失败"))
         }
     }
 }
@@ -276,15 +257,11 @@ async fn create_document_version(
     let document = match doc_result {
         Ok(d) => d,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::not_found(
-                "文档不存在",
-            ));
+            return Json(ApiResponse::not_found("文档不存在"));
         }
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            return Json(ApiResponse::server_error(
-                "获取文档失败",
-            ));
+            return Json(ApiResponse::server_error("获取文档失败"));
         }
     };
 
@@ -324,9 +301,7 @@ async fn create_document_version(
         Ok(v) => Json(ApiResponse::success(v, "创建版本成功")),
         Err(e) => {
             tracing::error!("创建版本失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建版本失败",
-            ))
+            Json(ApiResponse::server_error("创建版本失败"))
         }
     }
 }
@@ -359,9 +334,7 @@ async fn get_project_folders(
         Ok(f) => Json(ApiResponse::success(f, "获取文件夹列表成功")),
         Err(e) => {
             tracing::error!("获取文件夹失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取文件夹失败",
-            ))
+            Json(ApiResponse::server_error("获取文件夹失败"))
         }
     }
 }
@@ -392,14 +365,10 @@ async fn get_folder(
 
     match folder {
         Ok(f) => Json(ApiResponse::success(f, "获取文件夹详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "文件夹不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("文件夹不存在")),
         Err(e) => {
             tracing::error!("获取文件夹失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取文件夹失败",
-            ))
+            Json(ApiResponse::server_error("获取文件夹失败"))
         }
     }
 }
@@ -434,9 +403,7 @@ async fn create_folder(
         Ok(f) => Json(ApiResponse::success(f, "创建文件夹成功")),
         Err(e) => {
             tracing::error!("创建文件夹失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建文件夹失败",
-            ))
+            Json(ApiResponse::server_error("创建文件夹失败"))
         }
     }
 }
@@ -463,14 +430,10 @@ async fn update_folder(
 
     match folder {
         Ok(f) => Json(ApiResponse::success(f, "更新文件夹成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "文件夹不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("文件夹不存在")),
         Err(e) => {
             tracing::error!("更新文件夹失败: {}", e);
-            Json(ApiResponse::server_error(
-                "更新文件夹失败",
-            ))
+            Json(ApiResponse::server_error("更新文件夹失败"))
         }
     }
 }
@@ -486,14 +449,10 @@ async fn delete_folder(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除文件夹成功")),
-        Ok(_) => Json(ApiResponse::not_found(
-            "文件夹不存在",
-        )),
+        Ok(_) => Json(ApiResponse::not_found("文件夹不存在")),
         Err(e) => {
             tracing::error!("删除文件夹失败: {}", e);
-            Json(ApiResponse::server_error(
-                "删除文件夹失败",
-            ))
+            Json(ApiResponse::server_error("删除文件夹失败"))
         }
     }
 }

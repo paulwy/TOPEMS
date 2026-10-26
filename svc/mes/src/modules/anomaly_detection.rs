@@ -340,9 +340,10 @@ pub async fn get_anomaly_rule(
     if let Some(rule) = rules.into_iter().find(|r| r.id == rule_id) {
         Json(ApiResponse::success(rule, "预警规则获取成功"))
     } else {
-        Json(ApiResponse::not_found(
-            &format!("预警规则 {} 不存在", rule_id),
-        ))
+        Json(ApiResponse::not_found(&format!(
+            "预警规则 {} 不存在",
+            rule_id
+        )))
     }
 }
 

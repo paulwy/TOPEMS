@@ -472,7 +472,9 @@ pub async fn get_contract(
         Ok(None) => Json(ApiResponse::<serde_json::Value>::not_found("合同不存在")),
         Err(e) => {
             tracing::error!("获取合同失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error("获取合同失败"))
+            Json(ApiResponse::<serde_json::Value>::server_error(
+                "获取合同失败",
+            ))
         }
     }
 }

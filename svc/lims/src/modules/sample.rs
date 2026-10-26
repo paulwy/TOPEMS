@@ -990,13 +990,11 @@ pub async fn transition_sample_stage(
         .any(|(stage, _)| *stage == current_stage)
     {
         if !SAMPLE_STAGE_EDGES.contains(&(&current_stage.as_str(), to_stage.as_str())) {
-            return Json(ApiResponse::conflict(
-                &format!(
-                    "样品阶段非法转移：不能从[{}]转到[{}]",
-                    get_stage_name(&current_stage),
-                    get_stage_name(&to_stage)
-                ),
-            ));
+            return Json(ApiResponse::conflict(&format!(
+                "样品阶段非法转移：不能从[{}]转到[{}]",
+                get_stage_name(&current_stage),
+                get_stage_name(&to_stage)
+            )));
         }
     } else {
         tracing::warn!(

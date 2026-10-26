@@ -384,7 +384,9 @@ pub async fn get_leave(
         Ok(None) => Json(ApiResponse::<LeaveRequest>::not_found("请假申请不存在")),
         Err(e) => {
             tracing::error!("查询请假申请失败: {}", e);
-            Json(ApiResponse::<LeaveRequest>::server_error("查询请假申请失败"))
+            Json(ApiResponse::<LeaveRequest>::server_error(
+                "查询请假申请失败",
+            ))
         }
     }
 }
@@ -456,7 +458,9 @@ pub async fn update_leave(
         )),
         Err(e) => {
             tracing::error!("更新请假申请失败: {}", e);
-            Json(ApiResponse::<LeaveRequest>::server_error("更新请假申请失败"))
+            Json(ApiResponse::<LeaveRequest>::server_error(
+                "更新请假申请失败",
+            ))
         }
     }
 }

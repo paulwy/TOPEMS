@@ -564,9 +564,10 @@ pub async fn transition_change_request(
     if !change_request_can_transition(&current, &req.to) {
         return (
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::<ChangeRequest>::bad_request(
-                &format!("非法状态流转: {current} -> {}", req.to),
-            )),
+            Json(ApiResponse::<ChangeRequest>::bad_request(&format!(
+                "非法状态流转: {current} -> {}",
+                req.to
+            ))),
         );
     }
 

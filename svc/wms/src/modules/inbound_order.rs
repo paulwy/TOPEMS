@@ -1025,17 +1025,16 @@ pub async fn update_inbound_order_item(
         }
         Some(expected) => {
             if req.received_quantity < 0.0 {
-                return Json(ApiResponse::bad_request(
-                    &format!("收货数量不能为负: {}", req.received_quantity),
-                ));
+                return Json(ApiResponse::bad_request(&format!(
+                    "收货数量不能为负: {}",
+                    req.received_quantity
+                )));
             }
             if req.received_quantity > expected + f64::EPSILON {
-                return Json(ApiResponse::bad_request(
-                    &format!(
-                        "收货数量超出应收: 应收 {} 实收 {}",
-                        expected, req.received_quantity
-                    ),
-                ));
+                return Json(ApiResponse::bad_request(&format!(
+                    "收货数量超出应收: 应收 {} 实收 {}",
+                    expected, req.received_quantity
+                )));
             }
         }
     }
@@ -1420,27 +1419,24 @@ pub async fn receive_inbound_order(
 
         for item in &items {
             if item.received_quantity < 0.0 {
-                return Json(ApiResponse::bad_request(
-                    &format!(
-                        "收货数量不能为负: 明细 {} 收到 {}",
-                        item.item_id, item.received_quantity
-                    ),
-                ));
+                return Json(ApiResponse::bad_request(&format!(
+                    "收货数量不能为负: 明细 {} 收到 {}",
+                    item.item_id, item.received_quantity
+                )));
             }
             match expected_by_id.get(&item.item_id) {
                 None => {
-                    return Json(ApiResponse::bad_request(
-                        &format!("收货明细不属于该入库单或不存在: {}", item.item_id),
-                    ));
+                    return Json(ApiResponse::bad_request(&format!(
+                        "收货明细不属于该入库单或不存在: {}",
+                        item.item_id
+                    )));
                 }
                 Some(&expected) => {
                     if item.received_quantity > expected + f64::EPSILON {
-                        return Json(ApiResponse::bad_request(
-                            &format!(
-                                "收货数量超出应收: 明细 {} 应收 {} 实收 {}",
-                                item.item_id, expected, item.received_quantity
-                            ),
-                        ));
+                        return Json(ApiResponse::bad_request(&format!(
+                            "收货数量超出应收: 明细 {} 应收 {} 实收 {}",
+                            item.item_id, expected, item.received_quantity
+                        )));
                     }
                 }
             }

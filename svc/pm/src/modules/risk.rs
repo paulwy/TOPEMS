@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Path, State},
-    http::{HeaderMap, StatusCode},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -89,9 +89,7 @@ async fn get_project_risks(
         Ok(r) => Json(ApiResponse::success(r, "获取项目风险列表成功")),
         Err(e) => {
             tracing::error!("获取风险失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取风险失败",
-            ))
+            Json(ApiResponse::server_error("获取风险失败"))
         }
     }
 }
@@ -120,14 +118,10 @@ async fn get_risk(
 
     match risk {
         Ok(r) => Json(ApiResponse::success(r, "获取风险详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "风险不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("风险不存在")),
         Err(e) => {
             tracing::error!("获取风险失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取风险失败",
-            ))
+            Json(ApiResponse::server_error("获取风险失败"))
         }
     }
 }
@@ -207,9 +201,7 @@ async fn create_risk(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建风险失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建风险失败",
-            ))
+            Json(ApiResponse::server_error("创建风险失败"))
         }
     }
 }
@@ -293,9 +285,7 @@ async fn update_risk(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found(
-                "风险不存在",
-            ))
+            Json(ApiResponse::not_found("风险不存在"))
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -312,9 +302,7 @@ async fn update_risk(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新风险失败: {}", e);
-            Json(ApiResponse::server_error(
-                "更新风险失败",
-            ))
+            Json(ApiResponse::server_error("更新风险失败"))
         }
     }
 }
@@ -347,9 +335,7 @@ async fn get_risk_events(
         Ok(e) => Json(ApiResponse::success(e, "获取风险事件列表成功")),
         Err(e) => {
             tracing::error!("获取风险事件失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取风险事件失败",
-            ))
+            Json(ApiResponse::server_error("获取风险事件失败"))
         }
     }
 }
@@ -382,9 +368,7 @@ async fn create_risk_event(
         Ok(e) => Json(ApiResponse::success(e, "创建风险事件成功")),
         Err(e) => {
             tracing::error!("创建风险事件失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建风险事件失败",
-            ))
+            Json(ApiResponse::server_error("创建风险事件失败"))
         }
     }
 }

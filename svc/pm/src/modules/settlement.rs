@@ -1,6 +1,5 @@
 use axum::{
     extract::{Extension, Path, State},
-    http::StatusCode,
     routing::{get, post, put},
     Json, Router,
 };
@@ -91,9 +90,7 @@ async fn get_project_settlements(
         Ok(s) => Json(ApiResponse::success(s, "获取决算列表成功")),
         Err(e) => {
             tracing::error!("获取决算失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取决算失败",
-            ))
+            Json(ApiResponse::server_error("获取决算失败"))
         }
     }
 }
@@ -123,14 +120,10 @@ async fn get_settlement(
 
     match settlement {
         Ok(s) => Json(ApiResponse::success(s, "获取决算详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "决算不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("决算不存在")),
         Err(e) => {
             tracing::error!("获取决算失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取决算失败",
-            ))
+            Json(ApiResponse::server_error("获取决算失败"))
         }
     }
 }
@@ -200,9 +193,7 @@ async fn create_settlement(
         }
         Err(e) => {
             tracing::error!("创建决算失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建决算失败",
-            ))
+            Json(ApiResponse::server_error("创建决算失败"))
         }
     }
 }
@@ -234,14 +225,10 @@ async fn update_settlement(
 
     match settlement {
         Ok(s) => Json(ApiResponse::success(s, "更新决算成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "决算不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("决算不存在")),
         Err(e) => {
             tracing::error!("更新决算失败: {}", e);
-            Json(ApiResponse::server_error(
-                "更新决算失败",
-            ))
+            Json(ApiResponse::server_error("更新决算失败"))
         }
     }
 }
@@ -302,14 +289,10 @@ async fn approve_settlement(
             }
             Json(ApiResponse::success(s, "决算审批通过"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "决算不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("决算不存在")),
         Err(e) => {
             tracing::error!("审批决算失败: {}", e);
-            Json(ApiResponse::server_error(
-                "审批决算失败",
-            ))
+            Json(ApiResponse::server_error("审批决算失败"))
         }
     }
 }
@@ -342,9 +325,7 @@ async fn get_settlement_items(
         Ok(i) => Json(ApiResponse::success(i, "获取决算项列表成功")),
         Err(e) => {
             tracing::error!("获取决算项失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取决算项失败",
-            ))
+            Json(ApiResponse::server_error("获取决算项失败"))
         }
     }
 }
@@ -391,9 +372,7 @@ async fn create_settlement_item(
         Ok(i) => Json(ApiResponse::success(i, "创建决算项成功")),
         Err(e) => {
             tracing::error!("创建决算项失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建决算项失败",
-            ))
+            Json(ApiResponse::server_error("创建决算项失败"))
         }
     }
 }
@@ -438,14 +417,10 @@ async fn update_settlement_item(
 
     match item {
         Ok(i) => Json(ApiResponse::success(i, "更新决算项成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
-            "决算项不存在",
-        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("决算项不存在")),
         Err(e) => {
             tracing::error!("更新决算项失败: {}", e);
-            Json(ApiResponse::server_error(
-                "更新决算项失败",
-            ))
+            Json(ApiResponse::server_error("更新决算项失败"))
         }
     }
 }
@@ -464,14 +439,10 @@ async fn delete_settlement_item(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除决算项成功")),
-        Ok(_) => Json(ApiResponse::not_found(
-            "决算项不存在",
-        )),
+        Ok(_) => Json(ApiResponse::not_found("决算项不存在")),
         Err(e) => {
             tracing::error!("删除决算项失败: {}", e);
-            Json(ApiResponse::server_error(
-                "删除决算项失败",
-            ))
+            Json(ApiResponse::server_error("删除决算项失败"))
         }
     }
 }
@@ -504,9 +475,7 @@ async fn get_settlement_adjustments(
         Ok(a) => Json(ApiResponse::success(a, "获取调整项列表成功")),
         Err(e) => {
             tracing::error!("获取调整项失败: {}", e);
-            Json(ApiResponse::server_error(
-                "获取调整项失败",
-            ))
+            Json(ApiResponse::server_error("获取调整项失败"))
         }
     }
 }
@@ -543,9 +512,7 @@ async fn create_settlement_adjustment(
         Ok(a) => Json(ApiResponse::success(a, "创建调整项成功")),
         Err(e) => {
             tracing::error!("创建调整项失败: {}", e);
-            Json(ApiResponse::server_error(
-                "创建调整项失败",
-            ))
+            Json(ApiResponse::server_error("创建调整项失败"))
         }
     }
 }

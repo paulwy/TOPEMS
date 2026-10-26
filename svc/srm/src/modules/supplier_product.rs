@@ -235,12 +235,16 @@ pub async fn create_product(
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<SupplierProduct>::bad_request("产品编号已存在"));
+        return Json(ApiResponse::<SupplierProduct>::bad_request(
+            "产品编号已存在",
+        ));
     }
 
     if let Some(price) = req.unit_price {
         if price < 0.0 {
-            return Json(ApiResponse::<SupplierProduct>::bad_request("单价不能为负数"));
+            return Json(ApiResponse::<SupplierProduct>::bad_request(
+                "单价不能为负数",
+            ));
         }
     }
 
@@ -463,7 +467,9 @@ pub async fn update_product(
 
     if let Some(price) = req.unit_price {
         if price < 0.0 {
-            return Json(ApiResponse::<SupplierProduct>::bad_request("单价不能为负数"));
+            return Json(ApiResponse::<SupplierProduct>::bad_request(
+                "单价不能为负数",
+            ));
         }
     }
 
