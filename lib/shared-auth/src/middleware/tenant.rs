@@ -181,8 +181,7 @@ pub fn tenant_middleware() -> impl Fn(
                     tracing::error!("Failed to set nil RLS context: {}", e);
                 }
                 let mut req = req;
-                let txn_cell: RlsTxnCell =
-                    std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
+                let txn_cell: RlsTxnCell = std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
                 req.extensions_mut().insert(txn_cell.clone());
                 req.extensions_mut().insert(TenantContext {
                     tenant_id: Uuid::nil(),

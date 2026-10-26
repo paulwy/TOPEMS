@@ -38,7 +38,8 @@ pub fn milestone_status(planned_date: i64, actual_date: Option<i64>, now: i64) -
     "upcoming"
 }
 
-type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()

@@ -5067,3 +5067,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 验证：tsc 0、eslint 全绿、全量 vitest **449 文件 / 6090 通过 / 0 failed**（+50：FinancialReport 3 + Voucher 15 + 其余）+1 skipped、detector L1=0/L2=88/L3Dead=0。
 ### 状态与下批
 - erp 域：FinancialReport 区域 + Voucher 三组件已补测（erp 组件层覆盖齐）。下批：erp 核心业务页面 SalesOrder/PurchaseOrder 页面测试，或 qms i18n 硬编码 12 处清理，或 pm 2 处。
+## 第三十二轮（2026-10-26）：语句级审计验证回执 + mes 编译/DB 回退修复闭环
+- **用户回传验证结果（前轮里程碑）**：构建 5m54s、health=200、CRUD 全链路通过（numeric 写入→列表/详情解码+checked_by uuid 字符串→更新落库 lat 30.0→软删 404）、测试行硬删 leftover=0、冒烟 3 失败项清零。
+- **mes DB schema 回退修复（ALTER 对齐 11 张表，5432 topems_test）**：equipment_oee（record_date→date、数值列→numeric）、work_reports（report_no/reporter_name/report_date/created_at/updated_at NOT NULL）、material_returns（时间列→timestamptz）、process_flow_steps（flow_id/process_id/sequence SET NOT NULL、standard_time→float8）、production_processes（process_code DROP NOT NULL）、quality_standard_values（standard_id/item_name SET NOT NULL）、quality_inspections（quantity/qualified_quantity/unqualified_quantity SET NOT NULL）、quality_standards（code/inspection_type SET NOT NULL）、teams（leader_id varchar→uuid、member_count/status/created_at/updated_at DROP NOT NULL）、quality_patrol_items（patrol_id SET NOT NULL）。回退机制：migration 用 CREATE TABLE IF NOT EXISTS，表已存在时新定义被跳过但 migration 仍标记成功。
+- **编译修复**：equipment_oee.rs 6 处 naive_to_utc 移除、production_order.rs 8 处 product_code.unwrap_or_default 去除 + quantity 改 as i64、mobile 8 处调用方补 None 参数（offline_sync 6 + photo_upload 2）。
+- **sqlx 缓存刷新**：mes prepare OK（153 queries），根 .sqlx 351→362；此前 svc/mes/.sqlx 153 旧缓存（float8 契约）为编译错误根因之一。
+- **验证**：全 workspace cargo check 0 errors（4m05s）；commit `0a31a27e3`（161 files，+3743/-1200）pre-commit 门禁全绿（perm-matrix/axum-layer/sensitive-info/sqlx-cache-freshness/boundary-gate-py）；push pre-push 门禁运行中。
+- **下一步**：build topems-server → run_monolith.sh --daemon（:8099）→ health 200 → test_admin/admin123 登录 → 模拟一整套数据、从登录开始逐模块测试（iam/master-data/crm/erp/finance/wms/mes/qms/lims/hrm/gis/pm/portal/rd/search/mobile）。

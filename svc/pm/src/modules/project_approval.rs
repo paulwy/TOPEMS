@@ -21,7 +21,8 @@ use uuid::Uuid;
 use crate::models::project_approval::{ApprovalRequest, ProjectApproval};
 use crate::modules::effective_tenant_id;
 
-type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 /// 项目审批状态：组合数据库连接池与 Flow 工作流客户端
 #[derive(Clone)]

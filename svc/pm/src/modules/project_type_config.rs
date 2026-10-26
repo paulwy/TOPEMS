@@ -8,7 +8,8 @@ use sqlx::PgPool;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
-type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 // ==================== P2-11 剩余项：PM 项目类型模板接真 ====================
 

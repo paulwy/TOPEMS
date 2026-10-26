@@ -158,7 +158,8 @@ pub async fn sync_data(
         let tenant_id = Uuid::new_v4();
         match db_create_offline_operation(&pool, tenant_id, user_id, op.clone()).await {
             Ok(operation) => {
-                match db_update_offline_operation_status(&pool, operation.id, "syncing", None, None).await
+                match db_update_offline_operation_status(&pool, operation.id, "syncing", None, None)
+                    .await
                 {
                     Ok(_) => match apply_operation(&pool, &operation).await {
                         Ok(_) => {
@@ -719,7 +720,8 @@ pub async fn retry_failed_sync(
 
         match apply_operation(&pool, &op).await {
             Ok(_) => {
-                let _ = db_update_offline_operation_status(&pool, op.id, "synced", None, None).await;
+                let _ =
+                    db_update_offline_operation_status(&pool, op.id, "synced", None, None).await;
                 retried_count += 1;
             }
             Err(e) => {

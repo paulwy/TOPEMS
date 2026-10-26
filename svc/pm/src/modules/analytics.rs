@@ -2,11 +2,7 @@
 //! 提供项目创建趋势等聚合查询
 //! 路径前缀: /pm/analytics
 
-use axum::{
-    extract::Extension,
-    routing::get,
-    Json, Router,
-};
+use axum::{extract::Extension, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use sqlx::PgPool;
@@ -21,7 +17,8 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
 }
 use topems_shared_core::response::ApiResponse;
 
-type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 // ===== 数据类型 =====
 

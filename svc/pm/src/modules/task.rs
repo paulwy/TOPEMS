@@ -12,11 +12,11 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
-use tracing;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use tracing;
 use uuid::Uuid;
 
 use crate::models::task::{
@@ -61,7 +61,8 @@ pub fn task_progress_for_status(status: &str, progress: i32) -> i32 {
 
 // ==================== Handlers ====================
 
-type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 /// 构造 `pm.pm_tasks` 的 SELECT / RETURNING 列清单。
 ///

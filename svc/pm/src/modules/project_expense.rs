@@ -26,7 +26,8 @@ pub fn should_approve_expense(amount: f64, threshold: f64, budget_remaining: f64
     amount > 0.0 && amount <= threshold && amount <= budget_remaining
 }
 
-type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()

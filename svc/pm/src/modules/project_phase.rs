@@ -29,7 +29,8 @@ pub fn calculate_phase_progress(completed_tasks: usize, total_tasks: usize) -> f
     pct.clamp(0.0, 100.0)
 }
 
-type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()

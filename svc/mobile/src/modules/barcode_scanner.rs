@@ -358,7 +358,14 @@ pub async fn get_scan_history(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
 
-    let scans = match db_get_barcode_scans(&pool, user_id, params.barcode_type.as_deref(), tenant_filter).await {
+    let scans = match db_get_barcode_scans(
+        &pool,
+        user_id,
+        params.barcode_type.as_deref(),
+        tenant_filter,
+    )
+    .await
+    {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("获取扫描历史失败: {}", e);

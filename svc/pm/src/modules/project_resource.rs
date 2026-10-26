@@ -29,7 +29,8 @@ pub fn resource_utilization(allocated_hours: f64, actual_hours: f64) -> f64 {
     (actual_hours / allocated_hours) * 100.0
 }
 
-type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()

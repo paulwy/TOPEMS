@@ -20,7 +20,8 @@ use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 use rust_decimal::Decimal;
 
-type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 /// 超支硬拦截（业务拍板 A，2026-10-25）：
 /// 登记/更新预算项前校验「预算项合计 ≤ 预算总额」，超支即 422 拒绝并回显口径。

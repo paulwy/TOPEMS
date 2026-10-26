@@ -92,7 +92,11 @@ async fn query_projection(
     }
 }
 
-async fn search_users(conn: &mut sqlx::PgConnection, keyword: &str, limit: i64) -> Vec<SearchResult> {
+async fn search_users(
+    conn: &mut sqlx::PgConnection,
+    keyword: &str,
+    limit: i64,
+) -> Vec<SearchResult> {
     let keyword_like = format!("%{}%", keyword);
 
     // 表归属（DB 分片侦察）：unqualified `core_users` 命中 public.core_users，
@@ -131,7 +135,11 @@ async fn search_users(conn: &mut sqlx::PgConnection, keyword: &str, limit: i64) 
         .collect()
 }
 
-async fn search_customers(conn: &mut sqlx::PgConnection, keyword: &str, limit: i64) -> Vec<SearchResult> {
+async fn search_customers(
+    conn: &mut sqlx::PgConnection,
+    keyword: &str,
+    limit: i64,
+) -> Vec<SearchResult> {
     // B1/F-37 终态：只读本地实体投影（erp 事件维护），不再 query-time 调 erp HTTP API
     let rows = query_projection(&mut *conn, "customer", keyword, limit).await;
 
@@ -165,7 +173,11 @@ async fn search_customers(conn: &mut sqlx::PgConnection, keyword: &str, limit: i
         .collect()
 }
 
-async fn search_orders(conn: &mut sqlx::PgConnection, keyword: &str, limit: i64) -> Vec<SearchResult> {
+async fn search_orders(
+    conn: &mut sqlx::PgConnection,
+    keyword: &str,
+    limit: i64,
+) -> Vec<SearchResult> {
     // B1/F-37 终态：销售/采购订单均读本地投影
     let mut results: Vec<SearchResult> = Vec::new();
 

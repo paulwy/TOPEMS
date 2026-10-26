@@ -378,10 +378,7 @@ pub async fn list_work_orders(
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         fetch_query = fetch_query.bind(p.as_str().unwrap_or(""));
     }
-    fetch_query = fetch_query
-        .bind(tenant_id)
-        .bind(page_size)
-        .bind(offset);
+    fetch_query = fetch_query.bind(tenant_id).bind(page_size).bind(offset);
 
     let rows = match fetch_query.fetch_all(&state.pool).await {
         Ok(r) => r,

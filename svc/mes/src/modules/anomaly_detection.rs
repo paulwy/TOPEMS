@@ -783,10 +783,7 @@ async fn detect_equipment_anomalies(
 }
 
 /// 质量异常检测
-async fn detect_quality_anomalies(
-    pool: &sqlx::PgPool,
-    tenant_id: uuid::Uuid,
-) -> Vec<AnomalyAlert> {
+async fn detect_quality_anomalies(pool: &sqlx::PgPool, tenant_id: uuid::Uuid) -> Vec<AnomalyAlert> {
     let mut alerts = Vec::new();
 
     // 1. 基于质量记录检测缺陷率异常

@@ -14,7 +14,8 @@ use uuid::Uuid;
 use crate::models::project_benefit::{CreateBenefitRequest, ProjectBenefit};
 use crate::modules::effective_tenant_id;
 
-type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 // ==================== Pure functions ====================
 

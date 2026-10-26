@@ -238,7 +238,10 @@ async fn handle_tools_call(pool: &PgPool, id: Value, params: Option<Value>) -> J
                 Err(e) => {
                     return JsonRpcResponse::error(
                         id,
-                        JsonRpcError::internal_error(format!("acquire connection failed: {e}"), None),
+                        JsonRpcError::internal_error(
+                            format!("acquire connection failed: {e}"),
+                            None,
+                        ),
                     );
                 }
             };
@@ -290,7 +293,10 @@ async fn handle_tools_call(pool: &PgPool, id: Value, params: Option<Value>) -> J
                 Err(e) => {
                     return JsonRpcResponse::error(
                         id,
-                        JsonRpcError::internal_error(format!("acquire connection failed: {e}"), None),
+                        JsonRpcError::internal_error(
+                            format!("acquire connection failed: {e}"),
+                            None,
+                        ),
                     );
                 }
             };

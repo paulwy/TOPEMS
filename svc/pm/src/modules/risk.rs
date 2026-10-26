@@ -18,7 +18,8 @@ use crate::models::risk::{
 use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 
-type RlsTxnArc = std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+type RlsTxnArc =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 // ==================== Pure functions ====================
 
