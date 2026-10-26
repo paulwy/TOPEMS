@@ -5095,3 +5095,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - **未闭环**：HTTP /api/search?keyword=客户|e2e 仍 total=0（用户类检索 test/admin 正常，可排除 search 整体故障）；psql 全模拟通过但 HTTP 空，疑为 monolith 运行时 tenant_middleware 注入的 RLS txn 上下文细节（需 RUST_LOG=debug 重启定位，列为后续项）。
 - **系统**：重启后 PID 84086（health=200）。
   - **闭环补记（2026-10-27 同轮）**：RUST_LOG=debug 重启实证——query_projection 与 search_documents 的 SQL `::UUID))` 括号不匹配（1 开 2 闭）→ syntax error → 投影/文档检索降级空；用户检索无该过滤故正常。修复：handlers.rs 2 处删多余右括号。复测 keyword=客户|张三|e2e 全部命中（customer 投影行）。
+## 第三十六轮（2026-10-27）：P3 wms name 列对齐闭环
+- **修复**：svc/wms/src/modules/warehouse.rs INSERT/UPDATE 同步写 name 列（此前仅 warehouse_name 落库、读回 AS name，表 name 列空）。复用同一 bind 参数（$3/$2），无序号变更。
+- **验证**：create code=200（id eb33e48b），表 name=warehouse_name=e2e_wms_verify_001 双列一致；旧数据（e2e_wms_b1_001）name 列历史为空保留。
+- **至此 E2E 缺陷全部闭环**：P1×4（lims/hrm/pm/portal）+ P2×1（finance）+ P3×2（search 投影检索、wms name 列）。
