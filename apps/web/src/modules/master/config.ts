@@ -33,6 +33,7 @@ const MASTER_PATHS = {
   versioning: '/master/versioning',
   governance: '/master/governance',
   quality: '/master/quality',
+  knowledgeGraph: '/master/knowledge-graph',
 } as const;
 
 // ---- 路由配置 ----
@@ -124,6 +125,18 @@ const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
   requiredPermissions: ['master:data-asset:read'],
   action: 'read',
 };
+const knowledgeGraphRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.knowledgeGraph,
+  element: lazyWithRetry(() => import('@/pages/master/MasterKnowledgeGraphPage'), 'MasterKnowledgeGraphPage'),
+  module: 'master',
+  code: 'master-knowledge-graph',
+  title: i18n.t('master.knowledgeGraph'),
+  titleKey: 'master.knowledgeGraph',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:knowledge:read'],
+  action: 'read',
+};
 const qualityRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.quality,
   element: lazyWithRetry(() => import('@/pages/master/MasterQualityPage'), 'MasterQualityPage'),
@@ -189,6 +202,7 @@ export const masterModuleConfig: RouteModuleConfig = {
     versioningRoute,
     governanceRoute,
     qualityRoute,
+    knowledgeGraphRoute,
   ],
 };
 
@@ -310,6 +324,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.quality.desc'),
+    },
+    {
+      code: 'master-knowledge-graph',
+      label: i18n.t('master.knowledgeGraph'),
+      labelKey: 'master.knowledgeGraph',
+      icon: 'Network',
+      path: MASTER_PATHS.knowledgeGraph,
+      permission: 'master_data:knowledge:read',
+      order: 9,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.knowledgeGraph.desc'),
     },
   ],
 };

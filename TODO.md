@@ -15,8 +15,11 @@
 - 挂载 /master/governance + 侧栏第 8 项（master_data:governance:read）。i18n zh/en 各 40 key。smoke 2 测试。
 - 验证：tsc 0 / eslint 0 errors / vitest 2 passed。
 
-### 待建 4 页（每页同版式：tab 控制台 + 挂载 + i18n + smoke）
-- quality_v51（21/21）
+### 第三批：quality 数据质量 ✅ 完成（commit 9f1b3f64c6，已推送）
+- **MasterQualityPage 4 tab**：总览（getDashboard+getScore 指标卡）/检查记录（listChecks+runCheck）/规则管理（listRules+createRule+deleteRule）/建议与修复（getSuggestions+approve/reject+getFixHistory）。
+- 挂载 /master/quality + 侧栏第 9 项。i18n zh/en 各 40 key。smoke 2 测试。验证：tsc 0 / eslint 0 / vitest 2 passed。
+
+### 待建 3 页
 - knowledgeGraph_v53（16/16）
 - semanticSearch_v57（23/22）
 - disasterRecovery_v56（25/24）
