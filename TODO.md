@@ -1,3 +1,16 @@
+## 全库同类问题扫描：23 张 status 模板 CHECK 炸弹已修 + 111 张快照漂移待分批（2026-10-26）✅ 修复完成
+
+> 承接「20261026090000 迁移缺陷」与「DDL 双轨根治 A/B」之后的同类问题全库扫描结论与处置。
+
+- **扫描方法**：①全库 622 张含 status CHECK 的表，提取 DEFAULT+CHECK 定义自动判定「DEFAULT 字面值不在 CHECK 允许列表内」→ **23 张潜在炸弹**；②init∩dev 共同表 289 张做列集合对比 → **111 张快照漂移**。
+- **23 张炸弹已全部修复（`20261026130000_remove_misapplied_status_standard_checks.sql`，已应用+推送）**：
+  - 根因：通用模板三态 CHECK `ck_*_status_standard`（`status IS NULL OR status IN ('active','inactive','archived')`）被批量贴到业务表，业务 status DEFAULT 是领域态（draft/pending/open/unmatched/posted/trial/submitted/applied/planned）——**不带 status 的 INSERT 必违反**（与 ehs 'enrolled' 同款 ×23）。
+  - 代码实证：erp 业务枚举 7 态（draft/approved/rejected/pending/active/inactive/archived），CHECK 只认 3 态——约束拦的是合法业务值，属模板误用。
+  - 处置：删除 23 表上的 `*_status_standard` CHECK（业务状态机由代码层保证），DEFAULT 业务态保留；数据面 22 张 0 行 + crm.contracts 1 行（active 合法），零数据风险。其他非 status_standard CHECK 不动。
+  - 复现验证：erp.vouchers / crm.contracts 不带 status INSERT 成功（DEFAULT 'draft' 生效）；残留 0。
+  - 涉及表：communication.core_notification_deliveries、core.knowledge_documents、crm.contracts、erp.vouchers、finance.reconcile_items/reconcile_orders/vouchers、flow.core_mdm_approvals、lims.lims_safety_tasks、master_data.mdm_billing_records/mdm_sla_incidents、mes.material_plans、public.core_mdm_approvals/subscriptions、qms.qa_ehs_hazards、rd.bugs、rs.change_orders/change_requests/patents/research_costs、scm.incoming_inspections/incoming_notices、tms.tms_shipments。
+- **111 张快照漂移（无运行风险，登记待分批）**：init 快照与迁移链终态列不一致（dev 独有列 324 个=init 落后；init 独有列 68 个=init 超前/迁移链已删列）。运行只走迁移链、init 不被消费 → 纯文档级漂移；按 ehs 两表 B 项做法分批对齐快照（量大，优先级低）。代表面：ehs.*（dev+大量列）、iam.refresh_tokens/sessions（init+9）、srm.supplier_performance（init+8）、qms.qa_*（dev+1~2）、srm.suppliers（dev+4）等。
+
 ## DDL 双轨根治：上游建议 A/B 项落地（2026-10-26）✅ 已完成
 
 > 用户转述上游两条精确修复建议，评估后全采纳实施：A = CHECK 前 status 列守卫；B = init 快照对齐迁移链（根治 DDL 双轨）。
