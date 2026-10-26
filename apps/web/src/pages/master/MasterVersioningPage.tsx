@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { GitBranch, History, ShieldCheck, ClipboardList, KeyRound } from 'lucide-react';
 import {
@@ -42,7 +42,6 @@ const emptyEntity = { entity_type: 'mdm_material', entity_id: 'MAT-001' };
 
 const MasterVersioningPage: React.FC = () => {
   const { t } = useTranslation();
-  const qc = useQueryClient();
   const addNotification = useNotificationStore((s) => s.addNotification);
 
   const [tab, setTab] = useState(0);
@@ -51,7 +50,6 @@ const MasterVersioningPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [auditPage, setAuditPage] = useState(0);
-  const [permPage, setPermPage] = useState(0);
 
   // 快照 Dialog
   const [snapshotOpen, setSnapshotOpen] = useState(false);

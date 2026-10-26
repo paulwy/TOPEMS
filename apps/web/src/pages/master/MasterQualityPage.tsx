@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Gauge, ShieldCheck, ListChecks, Sparkles } from 'lucide-react';
 import {
-  Box,
   Button,
   Card,
   Chip,

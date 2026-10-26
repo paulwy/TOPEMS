@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Network, Search, GitBranch, ThumbsUp } from 'lucide-react';
 import {
-  Box,
   Button,
   Card,
   Chip,
@@ -32,7 +31,6 @@ const ct = designTokens.colors;
 
 const MasterKnowledgeGraphPage: React.FC = () => {
   const { t } = useTranslation();
-  const qc = useQueryClient();
   const addNotification = useNotificationStore((s) => s.addNotification);
 
   const [tab, setTab] = useState(0);

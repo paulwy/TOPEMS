@@ -33,7 +33,6 @@ const DshRagPage: React.FC = () => {
   const [tab, setTab] = useState(0);
   const [query, setQuery] = useState('');
   const [topK, setTopK] = useState(5);
-  const [retrieveText, setRetrieveText] = useState('');
   const [task, setTask] = useState('');
   const [toolName, setToolName] = useState('');
 
@@ -193,7 +192,7 @@ const DshRagPage: React.FC = () => {
               </TableHead>
               <TableBody>
                 {documents.length === 0 && emptyRow(5)}
-                {documents.map((doc, i) => (
+                {documents.map((doc) => (
                   <TableRow key={String(doc.doc_id)}>
                     <TableCell sx={cellStyle}>{String(doc.doc_id)}</TableCell>
                     <TableCell>{String(doc.title)}</TableCell>
