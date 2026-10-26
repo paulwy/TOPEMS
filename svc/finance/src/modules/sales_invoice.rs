@@ -420,6 +420,11 @@ pub async fn create_sales_invoice(
     Json(payload): Json<InvoiceCreatePayload>,
 ) -> Json<ApiResponse<SalesInvoiceOut>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let inv_type = if payload.invoice_type.is_empty() {
+        "tax".to_string()
+    } else {
+        payload.invoice_type.clone()
+    };
     let total = if payload.total_amount > Decimal::ZERO {
         payload.total_amount
     } else {
@@ -444,7 +449,7 @@ pub async fn create_sales_invoice(
     .bind(payload.amount)
     .bind(payload.tax_amount)
     .bind(total)
-    .bind(&payload.invoice_type)
+    .bind(&inv_type)
     .fetch_one(&state.pool)
     .await
     {
