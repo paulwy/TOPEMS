@@ -116,6 +116,7 @@ pub struct EquipmentStatusResponse {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::cast_precision_loss, clippy::as_conversions)]
 pub async fn get_dashboard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -551,6 +552,7 @@ pub async fn get_dashboard(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::cast_precision_loss, clippy::as_conversions)]
 pub async fn get_order_progress(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

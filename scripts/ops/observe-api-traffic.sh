@@ -20,8 +20,6 @@ OUT="$HOME/topems/backups/be08-observe-$(date +%Y%m%d).md"
 echo "观测 log: ${LOG}（近 ${DAYS} 天）" | tee -a "$OUT"
 
 # 起始时间线（nginx combined 无时间过滤 → 用 tail 天数截断，前提是日志轮转天/周级）
-TAIL_LINES=$(( $(wc -l < "$LOG") / 1 ))   # 全量读；轮转日志可在此调整
-CUTOFF=$(date -v-${DAYS}d +%Y-%m-%d 2>/dev/null || date -d "-${DAYS} days" +%Y-%m-%d)
 
 # 候选前缀提取：优先读同目录入库 txt（xingzhai git pull 可用）→ 读 artifacts md → 内嵌兜底
 LIST_TXT="$(dirname "$0")/be08-candidates-148.txt"
@@ -52,10 +50,12 @@ for pref in $PREFIXES; do
   fi
 done
 
-echo "" >> "$OUT"
-echo "## 汇总" >> "$OUT"
-echo "- 候选总数：${total}；有命中：${hits}；**零命中（可下线坐实）**：${zero}" >> "$OUT"
-echo "- 双证说明：零命中 + 业务勾选「可下线」= 可进入下线批；有命中 = 保留（业务复核使用场景）" >> "$OUT"
+{
+  echo ""
+  echo "## 汇总"
+  echo "- 候选总数：${total}；有命中：${hits}；**零命中（可下线坐实）**：${zero}"
+  echo "- 双证说明：零命中 + 业务勾选「可下线」= 可进入下线批；有命中 = 保留（业务复核使用场景）"
+} >> "$OUT"
 echo ""
 echo "=== 观测完成 ==="
 echo "候选: $total  有命中: $hits  零命中: $zero"

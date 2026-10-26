@@ -5074,3 +5074,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **sqlx 缓存刷新**：mes prepare OK（153 queries），根 .sqlx 351→362；此前 svc/mes/.sqlx 153 旧缓存（float8 契约）为编译错误根因之一。
 - **验证**：全 workspace cargo check 0 errors（4m05s）；commit `0a31a27e3`（161 files，+3743/-1200）pre-commit 门禁全绿（perm-matrix/axum-layer/sensitive-info/sqlx-cache-freshness/boundary-gate-py）；push pre-push 门禁运行中。
 - **下一步**：build topems-server → run_monolith.sh --daemon（:8099）→ health 200 → test_admin/admin123 登录 → 模拟一整套数据、从登录开始逐模块测试（iam/master-data/crm/erp/finance/wms/mes/qms/lims/hrm/gis/pm/portal/rd/search/mobile）。
+## 第三十三轮（2026-10-27）：全模块端到端数据测试（16 模块）
+- **执行方式**：模块化单体 :8099（最新 debug 构建）→ test_admin/admin123 登录（超管 JWT）→ 16 业务模块逐一「创建(写) → 读回验证(读)」，测试数据统一 `e2e_<module>_<批次>_NNN` 前缀隔离、全部保留。
+- **结果**：16/16 模块执行真实 HTTP 全链路；**11 通过**（iam/master-data/crm/erp/finance/wms/mes/qms/gis/rd/mobile）、**2 部分通过**（lims、search）、**3 创建确定性 500**（hrm/pm/portal，读接口正常）。
+- **缺陷清单（均定位根因）**：P1×4——lims numeric(12,2) 按 Option<f64> 解码致 handler panic（create 假失败真落库、list 恒 500，sample.rs:342/241）；hrm INSERT 引用不存在列 organization_id（表为 org_id/company_id，employee_service.rs:232）；pm tags 代码插 jsonb 表为 text[]（确定性 500）；portal_todos 仅 id/deleted_at/tenant_id 三列壳表（业务列迁移未执行）。P2×1——finance invoice_type 缺省空串违反 DB CHECK（显式传 "tax" 可绕过）。P3×2——search 投影表 public.search_entity_projections 整体为空（用户类直查可用）；wms name 实际落 warehouse_name 列（API 读回一致仅记录）。另修正 3 处参考文档勘误（rd project_type 枚举、search keyword 参数、mobile sync 请求体）。
+- **交付物**：e2e_reports/TOPEMS_全模块端到端测试总报告.md + e2e_reports/modules/ 16 份分模块报告。
+- **下一步建议**：4 个 P1 均为代码↔DB schema 漂移（lims/hrm/pm/portal），作下一批修复任务优先处理；随后补 push 门禁收尾。
