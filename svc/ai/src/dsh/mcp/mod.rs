@@ -24,6 +24,7 @@ pub mod client;
 pub mod external;
 pub mod governance;
 pub mod handler;
+pub mod prompts;
 pub mod resources;
 pub mod security;
 pub mod server;
