@@ -103,7 +103,7 @@ pub async fn record_version(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(
@@ -275,7 +275,7 @@ pub async fn get_version(
             },
             "版本详情",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "未找到版本")),
+        Ok(None) => Json(ApiResponse::not_found("未找到版本")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询版本详情失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询版本失败", e)))
@@ -378,7 +378,7 @@ pub async fn rollback_to_version(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(
@@ -394,7 +394,7 @@ pub async fn rollback_to_version(
                 &format!("成功回滚到版本 v{}", target_version),
             ))
         }
-        Ok(None) => Json(ApiResponse::error(404, "未找到要回滚的版本")),
+        Ok(None) => Json(ApiResponse::not_found("未找到要回滚的版本")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 回滚查询失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal("回滚查询失败", e)))

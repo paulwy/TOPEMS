@@ -146,7 +146,7 @@ pub async fn get_dashboard(
         Ok(value) => Json(ApiResponse::success(value, "获取 PDM 仪表盘成功")),
         Err(e) => {
             tracing::error!("序列化 PDM 仪表盘失败: {}", e);
-            Json(ApiResponse::error(500, "获取 PDM 仪表盘失败"))
+            Json(ApiResponse::server_error("获取 PDM 仪表盘失败"))
         }
     }
 }

@@ -1248,7 +1248,7 @@ pub async fn get_graph_node(
     let nodes = store.graph_nodes.read().await;
     match nodes.iter().find(|n| n.id == node_id) {
         Some(node) => Json(ApiResponse::success(node.clone(), "图节点详情")),
-        None => Json(ApiResponse::error(404, "未找到图节点")),
+        None => Json(ApiResponse::not_found("未找到图节点")),
     }
 }
 
@@ -1330,7 +1330,7 @@ pub async fn get_shortest_path(
 
     match shortest_path_bfs(&edges, &params.source, &params.target) {
         Some(path) => Json(ApiResponse::success(path, "最短路径")),
-        None => Json(ApiResponse::error(404, "未找到路径")),
+        None => Json(ApiResponse::not_found("未找到路径")),
     }
 }
 
@@ -1423,7 +1423,7 @@ pub async fn get_concept(
     let concepts = store.concepts.read().await;
     match concepts.iter().find(|c| c.id == concept_id) {
         Some(concept) => Json(ApiResponse::success(concept.clone(), "概念详情")),
-        None => Json(ApiResponse::error(404, "未找到概念")),
+        None => Json(ApiResponse::not_found("未找到概念")),
     }
 }
 

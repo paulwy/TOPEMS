@@ -26,8 +26,6 @@ data:
   # Logging
   RUST_LOG: "info"
   # V13.0 Plugin Architecture
-  CONSUL_ENABLED: "true"
-  CONSUL_URL: "http://consul-service:8500"
   PLUGIN_AUTO_REGISTER: "true"
   PLUGIN_REGISTER_URL: "http://topems-unified-core:8000/api/core/plugin/dev/plugins"
   SERVICE_HEARTBEAT_INTERVAL: "30"

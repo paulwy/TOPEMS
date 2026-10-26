@@ -61,7 +61,7 @@ pub async fn list_evaluations(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -143,7 +143,7 @@ pub async fn create_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -216,7 +216,7 @@ pub async fn create_evaluation(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("rls commit failed: {}", e);
-                return Json(ApiResponse::error(500, "提交事务失败"));
+                return Json(ApiResponse::server_error("提交事务失败"));
             }
         }
     }
@@ -264,7 +264,7 @@ pub async fn get_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -315,7 +315,7 @@ pub async fn update_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -414,7 +414,7 @@ pub async fn update_evaluation(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("rls commit failed: {}", e);
-                return Json(ApiResponse::error(500, "提交事务失败"));
+                return Json(ApiResponse::server_error("提交事务失败"));
             }
         }
     }
@@ -450,7 +450,7 @@ pub async fn delete_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -507,7 +507,7 @@ pub async fn delete_evaluation(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("rls commit failed: {}", e);
-                return Json(ApiResponse::error(500, "提交事务失败"));
+                return Json(ApiResponse::server_error("提交事务失败"));
             }
         }
     }

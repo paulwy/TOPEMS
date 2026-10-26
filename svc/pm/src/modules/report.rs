@@ -77,8 +77,7 @@ async fn get_project_reports(
         Ok(r) => Json(ApiResponse::success(r, "获取报告列表成功")),
         Err(e) => {
             tracing::error!("获取报告失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取报告失败",
             ))
         }
@@ -110,14 +109,12 @@ async fn get_report(
 
     match report {
         Ok(r) => Json(ApiResponse::success(r, "获取报告详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "报告不存在",
         )),
         Err(e) => {
             tracing::error!("获取报告失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取报告失败",
             ))
         }
@@ -155,8 +152,7 @@ async fn create_report(
         Ok(r) => Json(ApiResponse::success(r, "创建报告成功")),
         Err(e) => {
             tracing::error!("创建报告失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建报告失败",
             ))
         }
@@ -304,8 +300,7 @@ async fn generate_report(
         Ok(r) => Json(ApiResponse::success(r, "生成报告成功")),
         Err(e) => {
             tracing::error!("生成报告失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "生成报告失败",
             ))
         }
@@ -352,8 +347,7 @@ async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Repo
         Ok(t) => Json(ApiResponse::success(t, "获取报告模板列表成功")),
         Err(e) => {
             tracing::error!("获取报告模板失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取报告模板失败",
             ))
         }
@@ -386,14 +380,12 @@ async fn get_template(
 
     match template {
         Ok(t) => Json(ApiResponse::success(t, "获取报告模板详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "报告模板不存在",
         )),
         Err(e) => {
             tracing::error!("获取报告模板失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取报告模板失败",
             ))
         }
@@ -429,8 +421,7 @@ async fn create_template(
         Ok(t) => Json(ApiResponse::success(t, "创建报告模板成功")),
         Err(e) => {
             tracing::error!("创建报告模板失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建报告模板失败",
             ))
         }
@@ -459,14 +450,12 @@ async fn update_template(
 
     match template {
         Ok(t) => Json(ApiResponse::success(t, "更新报告模板成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "报告模板不存在",
         )),
         Err(e) => {
             tracing::error!("更新报告模板失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "更新报告模板失败",
             ))
         }
@@ -487,14 +476,12 @@ async fn delete_template(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除报告模板成功")),
-        Ok(_) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Ok(_) => Json(ApiResponse::not_found(
             "报告模板不存在",
         )),
         Err(e) => {
             tracing::error!("删除报告模板失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "删除报告模板失败",
             ))
         }

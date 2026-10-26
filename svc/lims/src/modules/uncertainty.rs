@@ -329,7 +329,7 @@ pub async fn list_projects(
         Ok(data) => Json(ApiResponse::success(data, "获取不确定度评定项目列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch uncertainty projects: {}", e);
-            Json(ApiResponse::error(500, "获取不确定度评定项目列表失败"))
+            Json(ApiResponse::server_error("获取不确定度评定项目列表失败"))
         }
     }
 }
@@ -398,7 +398,7 @@ pub async fn create_project(
         )),
         Err(e) => {
             tracing::error!("Failed to create uncertainty project: {}", e);
-            Json(ApiResponse::error(500, "不确定度评定项目创建失败"))
+            Json(ApiResponse::server_error("不确定度评定项目创建失败"))
         }
     }
 }
@@ -422,7 +422,7 @@ pub async fn get_project(
 ) -> Json<ApiResponse<UncertaintyProject>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let row = sqlx::query(
@@ -458,11 +458,11 @@ pub async fn get_project(
             },
             "获取不确定度评定项目成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch uncertainty project: {}", e);
-            Json(ApiResponse::error(500, "获取不确定度评定项目失败"))
+            Json(ApiResponse::server_error("获取不确定度评定项目失败"))
         }
     }
 }
@@ -474,7 +474,7 @@ pub async fn update_project(
 ) -> Json<ApiResponse<UncertaintyProject>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let row = sqlx::query(
@@ -544,11 +544,11 @@ pub async fn update_project(
             },
             "不确定度评定项目更新成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to update uncertainty project: {}", e);
-            Json(ApiResponse::error(500, "不确定度评定项目更新失败"))
+            Json(ApiResponse::server_error("不确定度评定项目更新失败"))
         }
     }
 }
@@ -559,7 +559,7 @@ pub async fn delete_project(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let result =
@@ -572,7 +572,7 @@ pub async fn delete_project(
         Ok(_) => Json(ApiResponse::success(true, "不确定度评定项目删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete uncertainty project: {}", e);
-            Json(ApiResponse::error(500, "不确定度评定项目删除失败"))
+            Json(ApiResponse::server_error("不确定度评定项目删除失败"))
         }
     }
 }
@@ -596,7 +596,7 @@ pub async fn list_sources(
 ) -> Json<ApiResponse<Vec<UncertaintySource>>> {
     let id = match Uuid::parse_str(&project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let rows = sqlx::query(
@@ -635,7 +635,7 @@ pub async fn list_sources(
         }
         Err(e) => {
             tracing::error!("Failed to fetch uncertainty sources: {}", e);
-            Json(ApiResponse::error(500, "获取不确定度来源列表失败"))
+            Json(ApiResponse::server_error("获取不确定度来源列表失败"))
         }
     }
 }
@@ -657,7 +657,7 @@ pub async fn create_source(
 ) -> Json<ApiResponse<UncertaintySource>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let sort_order = req.sort_order.unwrap_or(0);
@@ -703,7 +703,7 @@ pub async fn create_source(
         )),
         Err(e) => {
             tracing::error!("Failed to create uncertainty source: {}", e);
-            Json(ApiResponse::error(500, "不确定度来源创建失败"))
+            Json(ApiResponse::server_error("不确定度来源创建失败"))
         }
     }
 }
@@ -728,7 +728,7 @@ pub async fn update_source(
 ) -> Json<ApiResponse<UncertaintySource>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的来源ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的来源ID")),
     };
 
     let row = sqlx::query(
@@ -774,11 +774,11 @@ pub async fn update_source(
             },
             "不确定度来源更新成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to update uncertainty source: {}", e);
-            Json(ApiResponse::error(500, "不确定度来源更新失败"))
+            Json(ApiResponse::server_error("不确定度来源更新失败"))
         }
     }
 }
@@ -789,7 +789,7 @@ pub async fn delete_source(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的来源ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的来源ID")),
     };
 
     let result =
@@ -802,7 +802,7 @@ pub async fn delete_source(
         Ok(_) => Json(ApiResponse::success(true, "不确定度来源删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete uncertainty source: {}", e);
-            Json(ApiResponse::error(500, "不确定度来源删除失败"))
+            Json(ApiResponse::server_error("不确定度来源删除失败"))
         }
     }
 }
@@ -826,7 +826,7 @@ pub async fn list_components(
 ) -> Json<ApiResponse<Vec<UncertaintyComponent>>> {
     let id = match Uuid::parse_str(&project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let rows = sqlx::query(
@@ -872,7 +872,7 @@ pub async fn list_components(
         }
         Err(e) => {
             tracing::error!("Failed to fetch uncertainty components: {}", e);
-            Json(ApiResponse::error(500, "获取不确定度分量列表失败"))
+            Json(ApiResponse::server_error("获取不确定度分量列表失败"))
         }
     }
 }
@@ -894,12 +894,12 @@ pub async fn create_component(
 ) -> Json<ApiResponse<UncertaintyComponent>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let source_id = match Uuid::parse_str(&req.source_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的来源ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的来源ID")),
     };
 
     let source_row = sqlx::query(
@@ -968,7 +968,7 @@ pub async fn create_component(
         )),
         Err(e) => {
             tracing::error!("Failed to create uncertainty component: {}", e);
-            Json(ApiResponse::error(500, "不确定度分量创建失败"))
+            Json(ApiResponse::server_error("不确定度分量创建失败"))
         }
     }
 }
@@ -993,7 +993,7 @@ pub async fn update_component(
 ) -> Json<ApiResponse<UncertaintyComponent>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的分量ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的分量ID")),
     };
 
     let row = sqlx::query(
@@ -1049,11 +1049,11 @@ pub async fn update_component(
             },
             "不确定度分量更新成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to update uncertainty component: {}", e);
-            Json(ApiResponse::error(500, "不确定度分量更新失败"))
+            Json(ApiResponse::server_error("不确定度分量更新失败"))
         }
     }
 }
@@ -1064,7 +1064,7 @@ pub async fn delete_component(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的分量ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的分量ID")),
     };
 
     let result =
@@ -1077,7 +1077,7 @@ pub async fn delete_component(
         Ok(_) => Json(ApiResponse::success(true, "不确定度分量删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete uncertainty component: {}", e);
-            Json(ApiResponse::error(500, "不确定度分量删除失败"))
+            Json(ApiResponse::server_error("不确定度分量删除失败"))
         }
     }
 }
@@ -1100,16 +1100,16 @@ pub async fn calculate_type_a(
 ) -> Json<ApiResponse<UncertaintyComponent>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let source_id = match Uuid::parse_str(&req.source_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的来源ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的来源ID")),
     };
 
     if req.measurements.is_empty() {
-        return Json(ApiResponse::error(400, "测量数据不能为空"));
+        return Json(ApiResponse::bad_request("测量数据不能为空"));
     }
 
     let n = req.measurements.len() as f64;
@@ -1185,7 +1185,7 @@ pub async fn calculate_type_a(
         )),
         Err(e) => {
             tracing::error!("Failed to calculate Type A uncertainty: {}", e);
-            Json(ApiResponse::error(500, "A类不确定度计算失败"))
+            Json(ApiResponse::server_error("A类不确定度计算失败"))
         }
     }
 }
@@ -1207,12 +1207,12 @@ pub async fn calculate_type_b(
 ) -> Json<ApiResponse<UncertaintyComponent>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let source_id = match Uuid::parse_str(&req.source_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的来源ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的来源ID")),
     };
 
     let divisor = match req.distribution_type.as_str() {
@@ -1282,7 +1282,7 @@ pub async fn calculate_type_b(
         )),
         Err(e) => {
             tracing::error!("Failed to calculate Type B uncertainty: {}", e);
-            Json(ApiResponse::error(500, "B类不确定度计算失败"))
+            Json(ApiResponse::server_error("B类不确定度计算失败"))
         }
     }
 }
@@ -1306,7 +1306,7 @@ pub async fn calculate_combined(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let rows = sqlx::query(
@@ -1322,7 +1322,7 @@ pub async fn calculate_combined(
     };
 
     if components.is_empty() {
-        return Json(ApiResponse::error(400, "没有可计算的不确定度分量"));
+        return Json(ApiResponse::bad_request("没有可计算的不确定度分量"));
     }
 
     let mut combined_var = 0.0;
@@ -1413,7 +1413,7 @@ pub async fn generate_report(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
     };
 
     let project_row = sqlx::query(
@@ -1446,7 +1446,7 @@ pub async fn generate_report(
                 "created_at": row.get::<Option<String>, _>("created_at"),
             })
         }
-        Ok(None) => return Json(ApiResponse::error(404, "不确定度评定项目不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("不确定度评定项目不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询项目失败", e))),
     };
 

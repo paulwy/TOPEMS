@@ -108,7 +108,7 @@ pub async fn list_reports(
         }
         Err(e) => {
             tracing::error!("Failed to fetch reports: {}", e);
-            Json(ApiResponse::error(500, "获取检测报告列表失败"))
+            Json(ApiResponse::server_error("获取检测报告列表失败"))
         }
     }
 }
@@ -119,7 +119,7 @@ pub async fn get_report(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的报告ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的报告ID")),
     };
 
     let row = sqlx::query(
@@ -152,10 +152,10 @@ pub async fn get_report(
             });
             Json(ApiResponse::success(report, "获取检测报告成功"))
         }
-        Ok(None) => Json(ApiResponse::error(404, "报告不存在")),
+        Ok(None) => Json(ApiResponse::not_found("报告不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch report: {}", e);
-            Json(ApiResponse::error(500, "获取检测报告失败"))
+            Json(ApiResponse::server_error("获取检测报告失败"))
         }
     }
 }
@@ -180,7 +180,7 @@ pub async fn generate_report(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let sample_id = match Uuid::parse_str(&req.sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
     };
 
     // Get sample info
@@ -201,7 +201,7 @@ pub async fn generate_report(
             row.get::<Option<String>, _>("sample_type"),
             row.get::<Option<String>, _>("source"),
         ),
-        Ok(None) => return Json(ApiResponse::error(404, "样品不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("样品不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
     };
 
@@ -289,7 +289,7 @@ pub async fn generate_report(
         }
         Err(e) => {
             tracing::error!("Failed to generate report: {}", e);
-            Json(ApiResponse::error(500, "生成检测报告失败"))
+            Json(ApiResponse::server_error("生成检测报告失败"))
         }
     }
 }
@@ -349,7 +349,7 @@ pub async fn approve_report(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的报告ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的报告ID")),
     };
 
     let row = sqlx::query(
@@ -384,10 +384,10 @@ pub async fn approve_report(
             });
             Json(ApiResponse::success(report, "报告审核通过"))
         }
-        Ok(None) => Json(ApiResponse::error(404, "报告不存在或状态不允许审核")),
+        Ok(None) => Json(ApiResponse::not_found("报告不存在或状态不允许审核")),
         Err(e) => {
             tracing::error!("Failed to approve report: {}", e);
-            Json(ApiResponse::error(500, "审核报告失败"))
+            Json(ApiResponse::server_error("审核报告失败"))
         }
     }
 }
@@ -398,7 +398,7 @@ pub async fn export_report_pdf(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的报告ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的报告ID")),
     };
 
     let row = sqlx::query(
@@ -441,10 +441,10 @@ pub async fn export_report_pdf(
                 "PDF 预览（JSON 占位，degraded）",
             ))
         }
-        Ok(None) => Json(ApiResponse::error(404, "报告不存在")),
+        Ok(None) => Json(ApiResponse::not_found("报告不存在")),
         Err(e) => {
             tracing::error!("Failed to export report: {}", e);
-            Json(ApiResponse::error(500, "导出报告失败"))
+            Json(ApiResponse::server_error("导出报告失败"))
         }
     }
 }

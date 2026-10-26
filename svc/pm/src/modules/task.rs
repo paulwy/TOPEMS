@@ -290,8 +290,7 @@ pub async fn get_task(
 
     match result {
         Ok(Some(task)) => Json(ApiResponse::success(task, "任务获取成功")),
-        Ok(None) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Ok(None) => Json(ApiResponse::not_found(
             "任务不存在",
         )),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("获取任务失败", e))),
@@ -315,8 +314,7 @@ pub async fn update_task(
         .await;
         if let Ok(Some(from)) = from {
             if !task_status_transition_valid(&from, to) {
-                return Json(ApiResponse::error(
-                    StatusCode::BAD_REQUEST.as_u16(),
+                return Json(ApiResponse::bad_request(
                     &format!("非法任务状态流转: {} -> {}", from, to),
                 ));
             }
@@ -362,8 +360,7 @@ pub async fn update_task(
 
     match result {
         Ok(Some(task)) => Json(ApiResponse::success(task, "任务更新成功")),
-        Ok(None) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Ok(None) => Json(ApiResponse::not_found(
             "任务不存在",
         )),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新任务失败", e))),
@@ -385,8 +382,7 @@ pub async fn delete_task(
             serde_json::json!({"deleted": true}),
             "任务已删除",
         )),
-        Ok(_) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Ok(_) => Json(ApiResponse::not_found(
             "任务不存在",
         )),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除任务失败", e))),

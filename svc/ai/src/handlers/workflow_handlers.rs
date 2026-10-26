@@ -6,7 +6,6 @@
 use crate::services::agent::{WorkflowExecutionRequest, WorkflowOrchestrator};
 use crate::shared::AppState;
 use axum::extract::State;
-use axum::http::StatusCode;
 use axum::Json;
 use std::sync::Arc;
 use topems_shared_core::response::ApiResponse;
@@ -72,8 +71,7 @@ pub async fn get_workflow(
             }),
             "Workflow detail",
         )),
-        None => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        None => Json(ApiResponse::not_found(
             &format!("Workflow not found: {}", workflow_id),
         )),
     }
@@ -107,6 +105,6 @@ pub async fn execute_workflow(
             }),
             "Workflow executed",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }

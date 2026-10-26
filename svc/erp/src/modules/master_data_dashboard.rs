@@ -602,7 +602,7 @@ pub async fn get_dashboard_handler(
     let _ = &state;
     match get_dashboard(&dashboard_id).await {
         Some(dashboard) => Json(ApiResponse::success(dashboard, "仪表盘获取成功")),
-        None => Json(ApiResponse::error(404, "未找到仪表盘")),
+        None => Json(ApiResponse::not_found("未找到仪表盘")),
     }
 }
 
@@ -641,7 +641,7 @@ pub async fn update_dashboard_handler(
     let _ = &state;
     match update_dashboard(&dashboard_id, &req).await {
         Some(dashboard) => Json(ApiResponse::success(dashboard, "仪表盘更新成功")),
-        None => Json(ApiResponse::error(404, "未找到仪表盘")),
+        None => Json(ApiResponse::not_found("未找到仪表盘")),
     }
 }
 
@@ -665,7 +665,7 @@ pub async fn delete_dashboard_handler(
             "仪表盘删除成功",
         ))
     } else {
-        Json(ApiResponse::error(404, "未找到仪表盘"))
+        Json(ApiResponse::not_found("未找到仪表盘"))
     }
 }
 
@@ -685,7 +685,7 @@ pub async fn get_dashboard_data_handler(
     let _ = &state;
     match get_dashboard_data(&dashboard_id).await {
         Some(data) => Json(ApiResponse::success(data, "仪表盘数据获取成功")),
-        None => Json(ApiResponse::error(404, "未找到仪表盘")),
+        None => Json(ApiResponse::not_found("未找到仪表盘")),
     }
 }
 
@@ -722,7 +722,7 @@ pub async fn refresh_dashboard_handler(
     let _ = &state;
     match refresh_dashboard(&dashboard_id).await {
         Some(data) => Json(ApiResponse::success(data, "仪表盘刷新成功")),
-        None => Json(ApiResponse::error(404, "未找到仪表盘")),
+        None => Json(ApiResponse::not_found("未找到仪表盘")),
     }
 }
 

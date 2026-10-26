@@ -196,7 +196,7 @@ pub async fn get_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<SagaInsta
     let pipeline = get_event_pipeline();
     match pipeline.get_saga_coordinator().get_saga(&saga_id).await {
         Some(instance) => Json(ApiResponse::success(instance, "查询成功")),
-        None => Json(ApiResponse::error(404, &format!("Saga {} 未找到", saga_id))),
+        None => Json(ApiResponse::not_found(&format!("Saga {} 未找到", saga_id))),
     }
 }
 

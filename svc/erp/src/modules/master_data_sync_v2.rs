@@ -396,7 +396,7 @@ pub async fn get_sync_job_v2(
 
     match store.jobs.get(&id) {
         Some(job) => Json(ApiResponse::success(job.clone(), "同步任务详情（V2）")),
-        None => Json(ApiResponse::error(404, "未找到同步任务")),
+        None => Json(ApiResponse::not_found("未找到同步任务")),
     }
 }
 
@@ -417,7 +417,7 @@ pub async fn retry_dead_letter_v2(
 
     let dead_letter = match store.dead_letters.remove(&id) {
         Some(dl) => dl,
-        None => return Json(ApiResponse::error(404, "未找到死信记录")),
+        None => return Json(ApiResponse::not_found("未找到死信记录")),
     };
 
     let now = chrono::Utc::now();
@@ -435,7 +435,7 @@ pub async fn retry_dead_letter_v2(
             (job.clone(), job.clone())
         }
         None => {
-            return Json(ApiResponse::error(404, "关联的同步任务不存在"));
+            return Json(ApiResponse::not_found("关联的同步任务不存在"));
         }
     };
 

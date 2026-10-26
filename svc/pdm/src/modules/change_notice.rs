@@ -175,7 +175,7 @@ pub async fn list_change_notices(
         }
         Err(e) => {
             tracing::error!("获取变更通知列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取变更通知列表失败"))
+            Json(ApiResponse::server_error("获取变更通知列表失败"))
         }
     }
 }
@@ -207,7 +207,7 @@ pub async fn create_change_notice(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.title.is_empty() {
-        return Json(ApiResponse::error(400, "变更通知标题不能为空"));
+        return Json(ApiResponse::bad_request("变更通知标题不能为空"));
     }
 
     let id = Uuid::new_v4();
@@ -222,7 +222,7 @@ pub async fn create_change_notice(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("序列化受影响项失败: {}", e);
-            return Json(ApiResponse::error(500, "受影响项数据格式错误"));
+            return Json(ApiResponse::server_error("受影响项数据格式错误"));
         }
     };
 
@@ -258,7 +258,7 @@ pub async fn create_change_notice(
         Ok(notice) => Json(ApiResponse::success(notice, "变更通知创建成功")),
         Err(e) => {
             tracing::error!("创建变更通知失败: {}", e);
-            Json(ApiResponse::error(500, "创建变更通知失败"))
+            Json(ApiResponse::server_error("创建变更通知失败"))
         }
     }
 }
@@ -307,10 +307,10 @@ pub async fn get_change_notice(
 
     match result {
         Ok(Some(notice)) => Json(ApiResponse::success(notice, "获取变更通知成功")),
-        Ok(None) => Json(ApiResponse::error(404, "变更通知不存在")),
+        Ok(None) => Json(ApiResponse::not_found("变更通知不存在")),
         Err(e) => {
             tracing::error!("获取变更通知失败: {}", e);
-            Json(ApiResponse::error(500, "获取变更通知失败"))
+            Json(ApiResponse::server_error("获取变更通知失败"))
         }
     }
 }
@@ -360,10 +360,10 @@ pub async fn update_change_notice(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::error(404, "变更通知不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("变更通知不存在")),
         Err(e) => {
             tracing::error!("查询变更通知失败: {}", e);
-            return Json(ApiResponse::error(500, "查询变更通知失败"));
+            return Json(ApiResponse::server_error("查询变更通知失败"));
         }
     };
 
@@ -418,7 +418,7 @@ pub async fn update_change_notice(
         Ok(notice) => Json(ApiResponse::success(notice, "变更通知更新成功")),
         Err(e) => {
             tracing::error!("更新变更通知失败: {}", e);
-            Json(ApiResponse::error(500, "更新变更通知失败"))
+            Json(ApiResponse::server_error("更新变更通知失败"))
         }
     }
 }
@@ -462,10 +462,10 @@ pub async fn delete_change_notice(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "变更通知删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "变更通知不存在")),
+        Ok(_) => Json(ApiResponse::not_found("变更通知不存在")),
         Err(e) => {
             tracing::error!("删除变更通知失败: {}", e);
-            Json(ApiResponse::error(500, "删除变更通知失败"))
+            Json(ApiResponse::server_error("删除变更通知失败"))
         }
     }
 }
@@ -518,10 +518,10 @@ pub async fn submit_change_notice(
 
     match result {
         Ok(Some(notice)) => Json(ApiResponse::success(notice, "变更通知已提交审批")),
-        Ok(None) => Json(ApiResponse::error(400, "变更通知状态不正确，无法提交")),
+        Ok(None) => Json(ApiResponse::bad_request("变更通知状态不正确，无法提交")),
         Err(e) => {
             tracing::error!("提交变更通知失败: {}", e);
-            Json(ApiResponse::error(500, "提交变更通知失败"))
+            Json(ApiResponse::server_error("提交变更通知失败"))
         }
     }
 }
@@ -582,10 +582,10 @@ pub async fn approve_change_notice(
 
     match result {
         Ok(Some(notice)) => Json(ApiResponse::success(notice, "变更通知审批通过")),
-        Ok(None) => Json(ApiResponse::error(400, "变更通知状态不正确，无法审批")),
+        Ok(None) => Json(ApiResponse::bad_request("变更通知状态不正确，无法审批")),
         Err(e) => {
             tracing::error!("审批变更通知失败: {}", e);
-            Json(ApiResponse::error(500, "审批变更通知失败"))
+            Json(ApiResponse::server_error("审批变更通知失败"))
         }
     }
 }
@@ -651,10 +651,10 @@ pub async fn reject_change_notice(
 
     match result {
         Ok(Some(notice)) => Json(ApiResponse::success(notice, "变更通知已驳回")),
-        Ok(None) => Json(ApiResponse::error(400, "变更通知状态不正确，无法驳回")),
+        Ok(None) => Json(ApiResponse::bad_request("变更通知状态不正确，无法驳回")),
         Err(e) => {
             tracing::error!("驳回变更通知失败: {}", e);
-            Json(ApiResponse::error(500, "驳回变更通知失败"))
+            Json(ApiResponse::server_error("驳回变更通知失败"))
         }
     }
 }

@@ -187,8 +187,7 @@ async fn create_analysis(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<AiAnalysis>::error(
-                    500,
+                Json(ApiResponse::<AiAnalysis>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -234,7 +233,7 @@ async fn create_analysis(
                     tracing::error!("rls commit failed: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::error(500, "提交事务失败")),
+                        Json(ApiResponse::server_error("提交事务失败")),
                     );
                 }
             }
@@ -276,8 +275,7 @@ async fn get_analysis(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<AiAnalysis>::error(
-                    500,
+                Json(ApiResponse::<AiAnalysis>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -298,7 +296,7 @@ async fn get_analysis(
             (StatusCode::OK, Json(response))
         }
         Ok(None) => {
-            let response = ApiResponse::<AiAnalysis>::error(404, "AI分析不存在");
+            let response = ApiResponse::<AiAnalysis>::not_found("AI分析不存在");
             (StatusCode::NOT_FOUND, Json(response))
         }
         Err(e) => {

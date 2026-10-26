@@ -136,7 +136,7 @@ pub async fn list_statistics(
         }
         Err(e) => {
             tracing::error!("获取生产批次统计列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取生产批次统计列表失败"))
+            Json(ApiResponse::server_error("获取生产批次统计列表失败"))
         }
     }
 }
@@ -231,13 +231,13 @@ pub async fn get_statistics_summary(
                 Ok(value) => Json(ApiResponse::success(value, "获取 PDM 统计汇总成功")),
                 Err(e) => {
                     tracing::error!("序列化 PDM 统计汇总失败: {}", e);
-                    Json(ApiResponse::error(500, "获取 PDM 统计汇总失败"))
+                    Json(ApiResponse::server_error("获取 PDM 统计汇总失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("获取 PDM 统计汇总失败: {}", e);
-            Json(ApiResponse::error(500, "获取 PDM 统计汇总失败"))
+            Json(ApiResponse::server_error("获取 PDM 统计汇总失败"))
         }
     }
 }
@@ -322,14 +322,14 @@ pub async fn get_statistics(
                 Ok(value) => Json(ApiResponse::success(value, "获取生产批次统计详情成功")),
                 Err(e) => {
                     tracing::error!("序列化统计详情失败: {}", e);
-                    Json(ApiResponse::error(500, "获取生产批次统计详情失败"))
+                    Json(ApiResponse::server_error("获取生产批次统计详情失败"))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::error(404, "该产品无生产批次统计信息")),
+        Ok(None) => Json(ApiResponse::not_found("该产品无生产批次统计信息")),
         Err(e) => {
             tracing::error!("获取生产批次统计详情失败: {}", e);
-            Json(ApiResponse::error(500, "获取生产批次统计详情失败"))
+            Json(ApiResponse::server_error("获取生产批次统计详情失败"))
         }
     }
 }

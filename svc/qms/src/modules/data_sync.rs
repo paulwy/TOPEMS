@@ -137,7 +137,7 @@ pub async fn list_sync_records(
         Ok(data) => Json(ApiResponse::success(data, "获取同步记录列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch sync records: {}", e);
-            Json(ApiResponse::error(500, "获取同步记录列表失败"))
+            Json(ApiResponse::server_error("获取同步记录列表失败"))
         }
     }
 }
@@ -163,7 +163,7 @@ pub async fn get_sync_record(
 ) -> Json<ApiResponse<SyncRecord>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的同步记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的同步记录ID")),
     };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -202,11 +202,11 @@ pub async fn get_sync_record(
             },
             "获取同步记录成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch sync record: {}", e);
-            Json(ApiResponse::error(500, "获取同步记录失败"))
+            Json(ApiResponse::server_error("获取同步记录失败"))
         }
     }
 }
@@ -282,7 +282,7 @@ pub async fn retry_sync(
 ) -> Json<ApiResponse<SyncRecord>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的同步记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的同步记录ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -313,10 +313,10 @@ pub async fn retry_sync(
             },
             "同步记录已重置为待处理",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
         Err(e) => {
             tracing::error!("Failed to retry sync: {}", e);
-            Json(ApiResponse::error(500, "同步重试失败"))
+            Json(ApiResponse::server_error("同步重试失败"))
         }
     }
 }
@@ -342,7 +342,7 @@ pub async fn delete_sync_record(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的同步记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的同步记录ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -359,7 +359,7 @@ pub async fn delete_sync_record(
         Ok(_) => Json(ApiResponse::success(true, "同步记录删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete sync record: {}", e);
-            Json(ApiResponse::error(500, "同步记录删除失败"))
+            Json(ApiResponse::server_error("同步记录删除失败"))
         }
     }
 }

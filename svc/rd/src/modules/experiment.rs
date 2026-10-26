@@ -108,7 +108,7 @@ pub async fn list_experiments(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -182,7 +182,7 @@ pub async fn list_experiments(
         }
         Err(e) => {
             tracing::error!("获取试验列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取试验列表失败"))
+            Json(ApiResponse::server_error("获取试验列表失败"))
         }
     }
 }
@@ -199,7 +199,7 @@ pub async fn create_experiment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -212,11 +212,11 @@ pub async fn create_experiment(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     if req.name.is_empty() {
-        return Json(ApiResponse::error(400, "试验名称不能为空"));
+        return Json(ApiResponse::bad_request("试验名称不能为空"));
     }
 
     if req.code.is_empty() {
-        return Json(ApiResponse::error(400, "试验编码不能为空"));
+        return Json(ApiResponse::bad_request("试验编码不能为空"));
     }
 
     let id = Uuid::new_v4();
@@ -267,7 +267,7 @@ pub async fn create_experiment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
@@ -279,7 +279,7 @@ pub async fn create_experiment(
         Err(e) => {
             tracing::error!("创建试验失败: {}", e);
             (
-                Json(ApiResponse::error(500, "试验创建失败")),
+                Json(ApiResponse::server_error("试验创建失败")),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -336,7 +336,7 @@ pub async fn get_experiment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -362,10 +362,10 @@ pub async fn get_experiment(
 
     match result {
         Ok(Some(experiment)) => Json(ApiResponse::success(experiment, "获取试验成功")),
-        Ok(None) => Json(ApiResponse::error(404, "试验不存在")),
+        Ok(None) => Json(ApiResponse::not_found("试验不存在")),
         Err(e) => {
             tracing::error!("获取试验失败: {}", e);
-            Json(ApiResponse::error(500, "获取试验失败"))
+            Json(ApiResponse::server_error("获取试验失败"))
         }
     }
 }
@@ -383,7 +383,7 @@ pub async fn update_experiment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -407,10 +407,10 @@ pub async fn update_experiment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
-            return Json(ApiResponse::error(404, "试验不存在"));
+            return Json(ApiResponse::not_found("试验不存在"));
         }
 
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询试验失败", e))),
@@ -462,7 +462,7 @@ pub async fn update_experiment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
@@ -474,7 +474,7 @@ pub async fn update_experiment(
         Err(e) => {
             tracing::error!("更新试验失败: {}", e);
             (
-                Json(ApiResponse::error(500, "试验更新失败")),
+                Json(ApiResponse::server_error("试验更新失败")),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -518,7 +518,7 @@ pub async fn delete_experiment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -546,11 +546,11 @@ pub async fn delete_experiment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
-                Json(ApiResponse::error(404, "试验不存在")),
+                Json(ApiResponse::not_found("试验不存在")),
                 "error".to_string(),
                 Some("试验不存在".to_string()),
             )
@@ -558,7 +558,7 @@ pub async fn delete_experiment(
         Err(e) => {
             tracing::error!("删除试验失败: {}", e);
             (
-                Json(ApiResponse::error(500, "试验删除失败")),
+                Json(ApiResponse::server_error("试验删除失败")),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -614,7 +614,7 @@ pub async fn get_experiment_records(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -658,7 +658,7 @@ pub async fn get_experiment_records(
         }
         Err(e) => {
             tracing::error!("获取试验记录失败: {}", e);
-            Json(ApiResponse::error(500, "获取试验记录失败"))
+            Json(ApiResponse::server_error("获取试验记录失败"))
         }
     }
 }
@@ -676,7 +676,7 @@ pub async fn list_experiments_by_project(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -707,7 +707,7 @@ pub async fn list_experiments_by_project(
         Ok(experiments) => Json(ApiResponse::success(experiments, "按项目获取试验成功")),
         Err(e) => {
             tracing::error!("按项目获取试验失败: {}", e);
-            Json(ApiResponse::error(500, "按项目获取试验失败"))
+            Json(ApiResponse::server_error("按项目获取试验失败"))
         }
     }
 }
@@ -723,7 +723,7 @@ pub async fn create_experiment_record(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let record_id = Uuid::new_v4();
     let now = Utc::now();
@@ -750,7 +750,7 @@ pub async fn create_experiment_record(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(
@@ -763,7 +763,7 @@ pub async fn create_experiment_record(
         }
         Err(e) => {
             tracing::error!("创建试验记录失败: {}", e);
-            Json(ApiResponse::error(500, "创建试验记录失败"))
+            Json(ApiResponse::server_error("创建试验记录失败"))
         }
     }
 }
@@ -789,7 +789,7 @@ pub async fn list_lab_experiments(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -857,7 +857,7 @@ pub async fn list_lab_experiments(
         }
         Err(e) => {
             tracing::error!("获取小试试验列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取小试试验列表失败"))
+            Json(ApiResponse::server_error("获取小试试验列表失败"))
         }
     }
 }
@@ -883,7 +883,7 @@ pub async fn list_pilot_experiments(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -951,7 +951,7 @@ pub async fn list_pilot_experiments(
         }
         Err(e) => {
             tracing::error!("获取中试试验列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取中试试验列表失败"))
+            Json(ApiResponse::server_error("获取中试试验列表失败"))
         }
     }
 }
@@ -977,7 +977,7 @@ pub async fn list_scaleup_experiments(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -1045,7 +1045,7 @@ pub async fn list_scaleup_experiments(
         }
         Err(e) => {
             tracing::error!("获取放大试验列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取放大试验列表失败"))
+            Json(ApiResponse::server_error("获取放大试验列表失败"))
         }
     }
 }
@@ -1075,7 +1075,7 @@ pub async fn advance_phase(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -1095,7 +1095,7 @@ pub async fn advance_phase(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::error(404, "试验不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("试验不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询试验失败", e))),
     };
 
@@ -1103,7 +1103,7 @@ pub async fn advance_phase(
         "lab" => "pilot",
         "pilot" => "scaleup",
         "scaleup" => "production",
-        _ => return Json(ApiResponse::error(400, "无法推进当前试验阶段")),
+        _ => return Json(ApiResponse::bad_request("无法推进当前试验阶段")),
     };
 
     let result = sqlx::query_as::<_, Experiment>(
@@ -1130,14 +1130,14 @@ pub async fn advance_phase(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(experiment, "试验阶段推进成功"))
         }
         Err(e) => {
             tracing::error!("推进试验阶段失败: {}", e);
-            Json(ApiResponse::error(500, "推进试验阶段失败"))
+            Json(ApiResponse::server_error("推进试验阶段失败"))
         }
     }
 }
@@ -1166,7 +1166,7 @@ pub async fn trace_batch(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -1212,7 +1212,7 @@ pub async fn trace_batch(
         }
         Err(e) => {
             tracing::error!("批次追溯失败: {}", e);
-            Json(ApiResponse::error(500, "批次追溯失败"))
+            Json(ApiResponse::server_error("批次追溯失败"))
         }
     }
 }

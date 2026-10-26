@@ -345,7 +345,7 @@ pub async fn setup_company_info(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(
@@ -548,7 +548,7 @@ pub async fn setup_departments(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed (departments): {}", e);
-            return Json(ApiResponse::error(500, "提交事务失败"));
+            return Json(ApiResponse::server_error("提交事务失败"));
         }
     }
 
@@ -773,7 +773,7 @@ pub async fn setup_positions(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed (positions): {}", e);
-            return Json(ApiResponse::error(500, "提交事务失败"));
+            return Json(ApiResponse::server_error("提交事务失败"));
         }
     }
 
@@ -1020,7 +1020,7 @@ pub async fn setup_admin_user(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed (admin): {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
 
@@ -1221,7 +1221,7 @@ pub async fn complete_initialization(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed (complete): {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
 

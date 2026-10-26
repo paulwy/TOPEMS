@@ -359,7 +359,7 @@ pub async fn list_appointments(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -463,7 +463,7 @@ pub async fn create_appointment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -572,7 +572,7 @@ pub async fn create_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::error(500, "提交事务失败"));
+            return Json(ApiResponse::server_error("提交事务失败"));
         }
     }
 
@@ -603,7 +603,7 @@ pub async fn get_appointment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -652,7 +652,7 @@ pub async fn update_appointment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -793,7 +793,7 @@ pub async fn update_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::error(500, "提交事务失败"));
+            return Json(ApiResponse::server_error("提交事务失败"));
         }
     }
 
@@ -812,7 +812,7 @@ pub async fn delete_appointment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -888,7 +888,7 @@ pub async fn delete_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::error(500, "提交事务失败"));
+            return Json(ApiResponse::server_error("提交事务失败"));
         }
     }
 
@@ -927,7 +927,7 @@ pub async fn approve_appointment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -1009,7 +1009,7 @@ pub async fn approve_appointment(
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::error(409, "送货预约当前状态不允许审批")),
+            Json(ApiResponse::conflict("送货预约当前状态不允许审批")),
             "conflict",
             Some("状态冲突：仅 pending 可审批".to_string()),
         ),
@@ -1051,7 +1051,7 @@ pub async fn approve_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::error(500, "提交事务失败"));
+            return Json(ApiResponse::server_error("提交事务失败"));
         }
     }
 
@@ -1084,7 +1084,7 @@ pub async fn reject_appointment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -1169,7 +1169,7 @@ pub async fn reject_appointment(
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::error(409, "送货预约当前状态不允许驳回")),
+            Json(ApiResponse::conflict("送货预约当前状态不允许驳回")),
             "conflict",
             Some("状态冲突：仅 pending 可驳回".to_string()),
         ),
@@ -1211,7 +1211,7 @@ pub async fn reject_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::error(500, "提交事务失败"));
+            return Json(ApiResponse::server_error("提交事务失败"));
         }
     }
 
@@ -1244,7 +1244,7 @@ pub async fn confirm_arrival(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -1358,7 +1358,7 @@ pub async fn confirm_arrival(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::error(500, "提交事务失败"));
+            return Json(ApiResponse::server_error("提交事务失败"));
         }
     }
 
@@ -1391,7 +1391,7 @@ pub async fn complete_appointment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -1502,7 +1502,7 @@ pub async fn complete_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::error(500, "提交事务失败"));
+            return Json(ApiResponse::server_error("提交事务失败"));
         }
     }
 
@@ -1535,7 +1535,7 @@ pub async fn cancel_appointment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,
@@ -1646,7 +1646,7 @@ pub async fn cancel_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::error(500, "提交事务失败"));
+            return Json(ApiResponse::server_error("提交事务失败"));
         }
     }
 
@@ -1674,7 +1674,7 @@ pub async fn appointment_stats(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(
         &state.db,

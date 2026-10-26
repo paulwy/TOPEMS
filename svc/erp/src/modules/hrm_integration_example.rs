@@ -66,7 +66,7 @@ pub async fn get_employee_from_hrm(
                 e,
             ))),
         },
-        Err(_) => Json(ApiResponse::error(400, "无效的员工ID格式")),
+        Err(_) => Json(ApiResponse::bad_request("无效的员工ID格式")),
     }
 }
 

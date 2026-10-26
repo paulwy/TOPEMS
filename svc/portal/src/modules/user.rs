@@ -34,7 +34,7 @@ pub async fn get_user_info(
     let user_id = match claims.user_id() {
         Ok(uid) => uid,
         Err(_) => {
-            return Json(ApiResponse::error(401, "无效的用户身份"));
+            return Json(ApiResponse::unauthorized("无效的用户身份"));
         }
     };
 

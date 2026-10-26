@@ -135,7 +135,7 @@ pub async fn get_dashboard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch order stats: {}", e);
-            return Json(ApiResponse::error(500, "获取看板总览失败"));
+            return Json(ApiResponse::server_error("获取看板总览失败"));
         }
     };
 
@@ -180,7 +180,7 @@ pub async fn get_dashboard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality stats: {}", e);
-            return Json(ApiResponse::error(500, "获取看板总览失败"));
+            return Json(ApiResponse::server_error("获取看板总览失败"));
         }
     };
 
@@ -495,7 +495,7 @@ pub async fn get_order_progress(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch order progress: {}", e);
-            return Json(ApiResponse::error(500, "获取订单进度失败"));
+            return Json(ApiResponse::server_error("获取订单进度失败"));
         }
     };
 
@@ -584,7 +584,7 @@ pub async fn get_workstation_status(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch workstation status: {}", e);
-            return Json(ApiResponse::error(500, "获取工位状态失败"));
+            return Json(ApiResponse::server_error("获取工位状态失败"));
         }
     };
 
@@ -668,7 +668,7 @@ pub async fn get_quality_trend(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality trend: {}", e);
-            return Json(ApiResponse::error(500, "获取质量趋势失败"));
+            return Json(ApiResponse::server_error("获取质量趋势失败"));
         }
     };
 
@@ -756,7 +756,7 @@ pub async fn get_equipment_status(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch equipment status: {}", e);
-            return Json(ApiResponse::error(500, "获取设备状态失败"));
+            return Json(ApiResponse::server_error("获取设备状态失败"));
         }
     };
 

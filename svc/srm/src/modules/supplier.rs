@@ -149,7 +149,7 @@ pub async fn list_suppliers(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -282,8 +282,7 @@ pub async fn list_suppliers(
         }
         Err(e) => {
             tracing::error!("获取供应商列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取供应商列表失败",
             ))
         }
@@ -312,7 +311,7 @@ pub async fn create_supplier(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -331,8 +330,7 @@ pub async fn create_supplier(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.supplier_no.is_empty() || req.name.is_empty() {
-        return Json(ApiResponse::<Supplier>::error(
-            400,
+        return Json(ApiResponse::<Supplier>::bad_request(
             "供应商编号和名称不能为空",
         ));
     }
@@ -348,7 +346,7 @@ pub async fn create_supplier(
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<Supplier>::error(400, "供应商编号已存在"));
+        return Json(ApiResponse::<Supplier>::bad_request("供应商编号已存在"));
     }
 
     let id = Uuid::new_v4();
@@ -388,7 +386,7 @@ pub async fn create_supplier(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             state.supplier_cache.clear_l1();
@@ -494,7 +492,7 @@ pub async fn create_supplier(
         }
         Err(e) => {
             tracing::error!("创建供应商失败: {}", e);
-            Json(ApiResponse::<Supplier>::error(500, "供应商创建失败"))
+            Json(ApiResponse::<Supplier>::server_error("供应商创建失败"))
         }
     }
 }
@@ -524,7 +522,7 @@ pub async fn get_supplier(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -575,10 +573,10 @@ pub async fn get_supplier(
             }
             Json(ApiResponse::success(supplier, "获取供应商成功"))
         }
-        Ok(None) => Json(ApiResponse::<Supplier>::error(404, "供应商不存在")),
+        Ok(None) => Json(ApiResponse::<Supplier>::not_found("供应商不存在")),
         Err(e) => {
             tracing::error!("获取供应商失败: {}", e);
-            Json(ApiResponse::<Supplier>::error(500, "获取供应商失败"))
+            Json(ApiResponse::<Supplier>::server_error("获取供应商失败"))
         }
     }
 }
@@ -610,7 +608,7 @@ pub async fn update_supplier(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -640,7 +638,7 @@ pub async fn update_supplier(
 
     let existing = match existing {
         Ok(Some(s)) => s,
-        Ok(None) => return Json(ApiResponse::<Supplier>::error(404, "供应商不存在")),
+        Ok(None) => return Json(ApiResponse::<Supplier>::not_found("供应商不存在")),
         Err(e) => {
             return Json(ApiResponse::<Supplier>::from(TopemsError::internal(
                 "查询供应商失败",
@@ -700,7 +698,7 @@ pub async fn update_supplier(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             let cache_key = supplier_cache_key(tenant_id, id, &locale);
@@ -782,7 +780,7 @@ pub async fn update_supplier(
         }
         Err(e) => {
             tracing::error!("更新供应商失败: {}", e);
-            Json(ApiResponse::<Supplier>::error(500, "供应商更新失败"))
+            Json(ApiResponse::<Supplier>::server_error("供应商更新失败"))
         }
     }
 }
@@ -812,7 +810,7 @@ pub async fn delete_supplier(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -860,7 +858,7 @@ pub async fn delete_supplier(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             let cache_key = supplier_cache_key(tenant_id, id, &locale);
@@ -899,10 +897,10 @@ pub async fn delete_supplier(
 
             Json(ApiResponse::success("".to_string(), "供应商删除成功"))
         }
-        Ok(_) => Json(ApiResponse::<String>::error(404, "供应商不存在")),
+        Ok(_) => Json(ApiResponse::<String>::not_found("供应商不存在")),
         Err(e) => {
             tracing::error!("删除供应商失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "供应商删除失败"))
+            Json(ApiResponse::<String>::server_error("供应商删除失败"))
         }
     }
 }
@@ -934,7 +932,7 @@ pub async fn get_supplier_products(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -1004,7 +1002,7 @@ pub async fn get_supplier_contracts(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
@@ -1074,7 +1072,7 @@ pub async fn get_supplier_performance(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -1151,14 +1149,12 @@ pub async fn get_supplier_performance(
     let supplier = match supplier_result {
         Ok(Some(s)) => s,
         Ok(None) => {
-            return Json(ApiResponse::<SupplierPerformance>::error(
-                404,
+            return Json(ApiResponse::<SupplierPerformance>::not_found(
                 "供应商不存在",
             ))
         }
         Err(_) => {
-            return Json(ApiResponse::<SupplierPerformance>::error(
-                500,
+            return Json(ApiResponse::<SupplierPerformance>::server_error(
                 "查询供应商失败",
             ))
         }
@@ -1293,7 +1289,7 @@ pub async fn start_supplier_approval(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -1322,7 +1318,7 @@ pub async fn start_supplier_approval(
 
     let supplier_ref = match supplier.as_ref() {
         Ok(s) => s,
-        Err(_) => return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在")),
+        Err(_) => return Json(ApiResponse::<serde_json::Value>::not_found("供应商不存在")),
     };
     let old_status = supplier_ref.status.clone();
     let supplier_no = supplier_ref.supplier_no.clone();
@@ -1422,7 +1418,7 @@ pub async fn start_supplier_approval(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::error(500, "事务提交失败"));
+            return Json(ApiResponse::server_error("事务提交失败"));
         }
     }
     Json(ApiResponse::success(
@@ -1461,7 +1457,7 @@ pub async fn approve_supplier(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -1490,7 +1486,7 @@ pub async fn approve_supplier(
 
     let supplier_ref = match supplier.as_ref() {
         Ok(s) => s,
-        Err(_) => return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在")),
+        Err(_) => return Json(ApiResponse::<serde_json::Value>::not_found("供应商不存在")),
     };
     let old_status = supplier_ref.status.clone();
     let supplier_no = supplier_ref.supplier_no.clone();
@@ -1563,7 +1559,7 @@ pub async fn approve_supplier(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::error(500, "事务提交失败"));
+            return Json(ApiResponse::server_error("事务提交失败"));
         }
     }
     Json(ApiResponse::success(
@@ -1601,7 +1597,7 @@ pub async fn reject_supplier(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -1630,7 +1626,7 @@ pub async fn reject_supplier(
 
     let supplier_ref = match supplier.as_ref() {
         Ok(s) => s,
-        Err(_) => return Json(ApiResponse::<serde_json::Value>::error(404, "供应商不存在")),
+        Err(_) => return Json(ApiResponse::<serde_json::Value>::not_found("供应商不存在")),
     };
     let old_status = supplier_ref.status.clone();
     let supplier_no = supplier_ref.supplier_no.clone();
@@ -1703,7 +1699,7 @@ pub async fn reject_supplier(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::error(500, "事务提交失败"));
+            return Json(ApiResponse::server_error("事务提交失败"));
         }
     }
     Json(ApiResponse::success(

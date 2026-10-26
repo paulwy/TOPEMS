@@ -186,8 +186,7 @@ pub async fn list_messages(
 ) -> ApiOk<DifyMessageHistoryResponse> {
     let conv = q.conversation_id.unwrap_or_default();
     if conv.is_empty() {
-        return Json(CoreApiResponse::error(
-            StatusCode::BAD_REQUEST.as_u16(),
+        return Json(CoreApiResponse::bad_request(
             "缺少 conversation_id 参数",
         ));
     }

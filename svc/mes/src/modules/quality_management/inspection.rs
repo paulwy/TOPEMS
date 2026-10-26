@@ -155,7 +155,7 @@ pub async fn list_inspections(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality inspections: {}", e);
-            return Json(ApiResponse::error(500, "获取检验记录列表失败"));
+            return Json(ApiResponse::server_error("获取检验记录列表失败"));
         }
     };
 
@@ -188,7 +188,7 @@ pub async fn list_inspections(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality inspections: {}", e);
-            return Json(ApiResponse::error(500, "获取检验记录列表失败"));
+            return Json(ApiResponse::server_error("获取检验记录列表失败"));
         }
     };
 
@@ -307,7 +307,7 @@ pub async fn get_inspection(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的检验记录ID"));
+            return Json(ApiResponse::bad_request("无效的检验记录ID"));
         }
     };
 
@@ -354,10 +354,10 @@ pub async fn get_inspection(
             },
             "获取检验记录成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "检验记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("检验记录不存在")),
         Err(e) => {
             tracing::error!("Failed to get quality inspection: {}", e);
-            Json(ApiResponse::error(500, "获取检验记录失败"))
+            Json(ApiResponse::server_error("获取检验记录失败"))
         }
     }
 }
@@ -476,7 +476,7 @@ pub async fn create_inspection(
         )),
         Err(e) => {
             tracing::error!("Failed to create quality inspection: {}", e);
-            Json(ApiResponse::error(500, "创建检验记录失败"))
+            Json(ApiResponse::server_error("创建检验记录失败"))
         }
     }
 }
@@ -496,7 +496,7 @@ pub async fn update_inspection(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的检验记录ID"));
+            return Json(ApiResponse::bad_request("无效的检验记录ID"));
         }
     };
 
@@ -569,10 +569,10 @@ pub async fn update_inspection(
             },
             "更新检验记录成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "检验记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("检验记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update quality inspection: {}", e);
-            Json(ApiResponse::error(500, "更新检验记录失败"))
+            Json(ApiResponse::server_error("更新检验记录失败"))
         }
     }
 }
@@ -591,7 +591,7 @@ pub async fn delete_inspection(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的检验记录ID"));
+            return Json(ApiResponse::bad_request("无效的检验记录ID"));
         }
     };
 
@@ -608,7 +608,7 @@ pub async fn delete_inspection(
         Ok(_) => Json(ApiResponse::success(id, "删除检验记录成功")),
         Err(e) => {
             tracing::error!("Failed to delete quality inspection: {}", e);
-            Json(ApiResponse::error(500, "删除检验记录失败"))
+            Json(ApiResponse::server_error("删除检验记录失败"))
         }
     }
 }
@@ -663,7 +663,7 @@ pub async fn start_concession_approval(
     // 校验当前 status=failed，创建 approval 记录并写入 audit log
     let approver_id = match claims.user_id() {
         Ok(uid) => uid,
-        Err(_) => return Json(ApiResponse::error(401, "无效的用户身份")),
+        Err(_) => return Json(ApiResponse::unauthorized("无效的用户身份")),
     };
     let record_id = Uuid::parse_str(&id).unwrap_or_default();
     let approval_id = match create_approval_and_log(
@@ -679,7 +679,7 @@ pub async fn start_concession_approval(
         Ok(aid) => aid,
         Err(e) => {
             tracing::error!("发起让步审批失败: {}", e);
-            return Json(ApiResponse::error(500, "发起审批失败"));
+            return Json(ApiResponse::server_error("发起审批失败"));
         }
     };
     Json(ApiResponse::success(
@@ -732,7 +732,7 @@ pub async fn approve_concession(
     .await
     {
         tracing::error!("让步审批通过失败: {}", e);
-        return Json(ApiResponse::error(500, "审批通过失败"));
+        return Json(ApiResponse::server_error("审批通过失败"));
     }
     Json(ApiResponse::success(
         build_approve_response(req.approval_id),
@@ -782,7 +782,7 @@ pub async fn reject_concession(
     .await
     {
         tracing::error!("让步审批驳回失败: {}", e);
-        return Json(ApiResponse::error(500, "审批驳回失败"));
+        return Json(ApiResponse::server_error("审批驳回失败"));
     }
     Json(ApiResponse::success(
         build_reject_response(req.approval_id),

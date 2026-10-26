@@ -131,7 +131,7 @@ pub async fn list_labor_efficiency(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
@@ -167,7 +167,7 @@ pub async fn user_labor_efficiency(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
@@ -224,7 +224,7 @@ pub async fn labor_productivity(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
@@ -326,7 +326,7 @@ pub async fn labor_workload(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
@@ -418,7 +418,7 @@ pub async fn labor_performance_dashboard(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
@@ -553,7 +553,7 @@ pub async fn list_labor_shifts(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
         return e;
@@ -621,7 +621,7 @@ pub async fn create_labor_shift(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickWrite).await {
         return e;

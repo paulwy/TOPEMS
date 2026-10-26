@@ -265,7 +265,7 @@ pub async fn list_accidents(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list accidents: {}", e);
-            return Json(ApiResponse::error(500, "获取事故列表失败"));
+            return Json(ApiResponse::server_error("获取事故列表失败"));
         }
     };
 
@@ -372,7 +372,7 @@ pub async fn report_accident(
     .bind(tenant_opt);
     if let Err(e) = insert.execute(&state.pool).await {
         tracing::error!("Failed to insert accident: {}", e);
-        return Json(ApiResponse::error(500, "事故上报失败"));
+        return Json(ApiResponse::server_error("事故上报失败"));
     }
 
     // 发布端补全：EhsAccidentReported（→ integration → LIMS 建样/任务联动）
@@ -451,10 +451,10 @@ pub async fn get_accident(
 
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "事故不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("事故不存在")),
         Err(e) => {
             tracing::error!("Failed to get accident: {}", e);
-            return Json(ApiResponse::error(500, "获取事故详情失败"));
+            return Json(ApiResponse::server_error("获取事故详情失败"));
         }
     };
     let accident = accident_from_row(&row);
@@ -523,10 +523,10 @@ pub async fn update_accident(
     .bind(&id);
     let row = match result.fetch_optional(&state.pool).await {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "事故不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("事故不存在")),
         Err(e) => {
             tracing::error!("Failed to update accident: {}", e);
-            return Json(ApiResponse::error(500, "事故更新失败"));
+            return Json(ApiResponse::server_error("事故更新失败"));
         }
     };
     Json(ApiResponse::success(
@@ -563,7 +563,7 @@ pub async fn delete_accident(
         Ok(_) => Json(ApiResponse::success(serde_json::json!({}), "事故删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete accident: {}", e);
-            Json(ApiResponse::error(500, "事故删除失败"))
+            Json(ApiResponse::server_error("事故删除失败"))
         }
     }
 }
@@ -605,7 +605,7 @@ pub async fn start_investigation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to start investigation: {}", e);
-            return Json(ApiResponse::error(500, "调查启动失败"));
+            return Json(ApiResponse::server_error("调查启动失败"));
         }
     };
     Json(ApiResponse::success(
@@ -681,10 +681,10 @@ pub async fn update_investigation(
     .await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "调查记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("调查记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update investigation: {}", e);
-            return Json(ApiResponse::error(500, "调查更新失败"));
+            return Json(ApiResponse::server_error("调查更新失败"));
         }
     };
     Json(ApiResponse::success(
@@ -727,7 +727,7 @@ pub async fn create_treatment(
     .await
     {
         tracing::error!("Failed to insert treatment: {}", e);
-        return Json(ApiResponse::error(500, "处理方案创建失败"));
+        return Json(ApiResponse::server_error("处理方案创建失败"));
     }
 
     // INSERT treatment_actions（多行）
@@ -818,10 +818,10 @@ pub async fn update_treatment_action(
     .await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "处置行动不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("处置行动不存在")),
         Err(e) => {
             tracing::error!("Failed to update treatment action: {}", e);
-            return Json(ApiResponse::error(500, "处置行动更新失败"));
+            return Json(ApiResponse::server_error("处置行动更新失败"));
         }
     };
     Json(ApiResponse::success(
@@ -874,10 +874,10 @@ pub async fn close_accident(
     .await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "事故不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("事故不存在")),
         Err(e) => {
             tracing::error!("Failed to close accident: {}", e);
-            return Json(ApiResponse::error(500, "事故关闭失败"));
+            return Json(ApiResponse::server_error("事故关闭失败"));
         }
     };
     Json(ApiResponse::success(accident_from_row(&row), "事故已关闭"))
@@ -918,10 +918,10 @@ pub async fn complete_investigation(
     .await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "调查记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("调查记录不存在")),
         Err(e) => {
             tracing::error!("Failed to complete investigation: {}", e);
-            return Json(ApiResponse::error(500, "调查完成失败"));
+            return Json(ApiResponse::server_error("调查完成失败"));
         }
     };
     Json(ApiResponse::success(
@@ -964,10 +964,10 @@ pub async fn complete_treatment(
     .await;
     let row = match result {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "处理方案不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("处理方案不存在")),
         Err(e) => {
             tracing::error!("Failed to complete treatment: {}", e);
-            return Json(ApiResponse::error(500, "处理完成失败"));
+            return Json(ApiResponse::server_error("处理完成失败"));
         }
     };
     let _ = sqlx::query(
@@ -1038,7 +1038,7 @@ pub async fn create_review(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create review: {}", e);
-            return Json(ApiResponse::error(500, "复盘创建失败"));
+            return Json(ApiResponse::server_error("复盘创建失败"));
         }
     };
     Json(ApiResponse::success(
@@ -1102,7 +1102,7 @@ pub async fn list_incident_actions(
         }
         Err(e) => {
             tracing::error!("Failed to list incident actions: {}", e);
-            Json(ApiResponse::error(500, "获取事故行动列表失败"))
+            Json(ApiResponse::server_error("获取事故行动列表失败"))
         }
     }
 }
@@ -1132,7 +1132,7 @@ pub async fn create_incident_action(
     .await
     {
         tracing::error!("Failed to insert incident action: {}", e);
-        return Json(ApiResponse::error(500, "事故行动创建失败"));
+        return Json(ApiResponse::server_error("事故行动创建失败"));
     }
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1180,7 +1180,7 @@ pub async fn update_incident_action(
         )),
         Err(e) => {
             tracing::error!("Failed to update incident action: {}", e);
-            Json(ApiResponse::error(500, "事故行动更新失败"))
+            Json(ApiResponse::server_error("事故行动更新失败"))
         }
     }
 }

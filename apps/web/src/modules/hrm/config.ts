@@ -602,7 +602,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmDashboardPageProps>,
     {
       path: HRM_PATHS.employees,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmEmployeePage'), 'HrmEmployeePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/hrm/HrmEmployeeRedesignPage'),
+        'HrmEmployeeRedesignPage'
+      ),
       module: 'hrm',
       code: 'hrm-employees',
       title: i18n.t('hrm.nav.hrm-employees'),
@@ -737,7 +740,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmCompanyPageProps>,
     {
       path: HRM_PATHS.attendance,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmAttendancePage'), 'HrmAttendancePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/hrm/HrmAttendanceRedesignPage'),
+        'HrmAttendanceRedesignPage'
+      ),
       module: 'hrm',
       code: 'hrm-attendance',
       title: i18n.t('hrm.nav.hrm-attendance'),
@@ -812,7 +818,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<HrmTrainingPageProps>,
     {
       path: HRM_PATHS.performance,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmPerformancePage'), 'HrmPerformancePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/hrm/HrmPerformanceRedesignPage'),
+        'HrmPerformanceRedesignPage'
+      ),
       module: 'hrm',
       code: 'hrm-performance',
       title: i18n.t('hrm.nav.hrm-performance'),

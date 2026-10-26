@@ -35,7 +35,7 @@ where
             .extensions
             .get::<TenantContext>()
             .cloned()
-            .ok_or_else(|| ApiResponse::error(401, "缺少租户上下文信息"))?;
+            .ok_or_else(|| ApiResponse::unauthorized("缺少租户上下文信息"))?;
 
         Ok(TenantRequest { ctx: tenant_ctx })
     }

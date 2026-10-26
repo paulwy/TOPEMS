@@ -141,7 +141,7 @@ pub async fn get_map_marker(
         .await
     {
         Ok(marker) => Json(ApiResponse::success(marker, "获取地图标记成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地图标记未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地图标记未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
@@ -195,7 +195,7 @@ pub async fn update_map_marker(
     .await
     {
         Ok(marker) => Json(ApiResponse::success(marker, "更新地图标记成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地图标记未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地图标记未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
     }
 }
@@ -236,7 +236,7 @@ pub async fn delete_map_marker(
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(true, "删除地图标记成功"))
             } else {
-                Json(ApiResponse::error(404, "地图标记未找到"))
+                Json(ApiResponse::not_found("地图标记未找到"))
             }
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal(

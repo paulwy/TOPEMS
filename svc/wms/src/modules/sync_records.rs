@@ -149,7 +149,7 @@ pub async fn list_sync_records(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
         return e;
@@ -238,7 +238,7 @@ pub async fn get_sync_record(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
         return e;
@@ -286,7 +286,7 @@ pub async fn create_sync_record(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e;
@@ -366,7 +366,7 @@ pub async fn list_sync_items(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
         return e;
@@ -438,7 +438,7 @@ pub async fn retry_sync_record(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e;
@@ -512,7 +512,7 @@ pub async fn retry_failed_items(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e;
@@ -574,7 +574,7 @@ pub async fn get_sync_statistics(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
         return e;
@@ -674,7 +674,7 @@ async fn trigger_sync(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
         return e;

@@ -64,7 +64,7 @@ async fn list_audit_logs(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
 
     let page = params.page.unwrap_or(1).max(1);
@@ -139,7 +139,7 @@ async fn list_audit_logs(
         }
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::error(500, "获取审计日志失败"))
+            Json(ApiResponse::server_error("获取审计日志失败"))
         }
     }
 }
@@ -168,7 +168,7 @@ async fn get_audit_log(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
 
     let result = sqlx::query_as::<_, AuditLog>(
@@ -191,10 +191,10 @@ async fn get_audit_log(
 
     match result {
         Ok(Some(log)) => Json(ApiResponse::success(log, "获取审计日志成功")),
-        Ok(None) => Json(ApiResponse::error(404, "审计日志不存在")),
+        Ok(None) => Json(ApiResponse::not_found("审计日志不存在")),
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::error(500, "获取审计日志失败"))
+            Json(ApiResponse::server_error("获取审计日志失败"))
         }
     }
 }
@@ -290,8 +290,7 @@ async fn export_audit_logs(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<serde_json::Value>::error(
-                    500,
+                Json(ApiResponse::<serde_json::Value>::server_error(
                     "rls transaction unavailable",
                 )),
             )
@@ -346,8 +345,7 @@ async fn export_audit_logs(
         }
         Err(e) => {
             tracing::error!("导出审计日志失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "导出审计日志失败",
             ))
             .into_response()

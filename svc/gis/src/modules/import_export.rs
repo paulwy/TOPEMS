@@ -90,7 +90,7 @@ pub async fn import_data(
             }
         }
         _ => {
-            return Json(ApiResponse::error(400, "不支持的数据类型"));
+            return Json(ApiResponse::bad_request("不支持的数据类型"));
         }
     }
 

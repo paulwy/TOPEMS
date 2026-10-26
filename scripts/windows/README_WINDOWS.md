@@ -6,8 +6,9 @@
 scripts/windows/
 ├── topems-standalone.ps1   # 主部署脚本 (PowerShell)
 ├── topems.bat             # Windows 启动器
-├── ports.ps1              # 端口配置
+├── ports.ps1              # 端口配置（与 config/ports.env、config/services.yaml 同源）
 ├── check-env.ps1          # 环境检查脚本
+├── install-deps.ps1       # 依赖安装脚本（psql/redis-cli/Rust/Node 等前置）
 └── README_WINDOWS.md      # 本文档
 ```
 

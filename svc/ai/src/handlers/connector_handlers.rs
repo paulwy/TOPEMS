@@ -60,8 +60,7 @@ pub async fn get_connector(
             Ok(c) => c,
             Err(e) => {
                 tracing::error!("Failed to lock connectors: {}", e);
-                return Json(ApiResponse::<DataConnector>::error(
-                    500,
+                return Json(ApiResponse::<DataConnector>::server_error(
                     "Internal server error",
                 ));
             }
@@ -69,14 +68,12 @@ pub async fn get_connector(
         if let Some(connector) = connectors.iter().find(|c| c.id == params.id) {
             Json(ApiResponse::success(connector.clone(), "Success"))
         } else {
-            Json(ApiResponse::<DataConnector>::error(
-                404,
+            Json(ApiResponse::<DataConnector>::not_found(
                 "Connector not found",
             ))
         }
     } else {
-        Json(ApiResponse::<DataConnector>::error(
-            500,
+        Json(ApiResponse::<DataConnector>::server_error(
             "Connectors not initialized",
         ))
     }
@@ -171,7 +168,7 @@ pub async fn create_connector(
                 {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
-                Json(ApiResponse::<DataConnector>::error(500, err_msg))
+                Json(ApiResponse::<DataConnector>::server_error(err_msg))
             }
         }
     } else {
@@ -190,7 +187,7 @@ pub async fn create_connector(
         {
             tracing::warn!("ai audit failed: {e}");
         }
-        Json(ApiResponse::<DataConnector>::error(500, err_msg))
+        Json(ApiResponse::<DataConnector>::server_error(err_msg))
     }
 }
 
@@ -283,8 +280,7 @@ pub async fn update_connector(
                 {
                     tracing::warn!("ai audit failed: {e}");
                 }
-                Json(ApiResponse::<DataConnector>::error(
-                    404,
+                Json(ApiResponse::<DataConnector>::not_found(
                     "Connector not found",
                 ))
             }
@@ -304,7 +300,7 @@ pub async fn update_connector(
                 {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
-                Json(ApiResponse::<DataConnector>::error(500, err_msg))
+                Json(ApiResponse::<DataConnector>::server_error(err_msg))
             }
         }
     } else {
@@ -323,7 +319,7 @@ pub async fn update_connector(
         {
             tracing::warn!("ai audit failed: {e}");
         }
-        Json(ApiResponse::<DataConnector>::error(500, err_msg))
+        Json(ApiResponse::<DataConnector>::server_error(err_msg))
     }
 }
 
@@ -399,7 +395,7 @@ pub async fn delete_connector(
                 {
                     tracing::warn!("ai audit failed: {e}");
                 }
-                Json(ApiResponse::<String>::error(404, "Connector not found"))
+                Json(ApiResponse::<String>::not_found("Connector not found"))
             }
             Err(()) => {
                 let err_msg = "Internal server error";
@@ -417,7 +413,7 @@ pub async fn delete_connector(
                 {
                     tracing::warn!("ai audit failed: {audit_err}");
                 }
-                Json(ApiResponse::<String>::error(500, err_msg))
+                Json(ApiResponse::<String>::server_error(err_msg))
             }
         }
     } else {
@@ -436,7 +432,7 @@ pub async fn delete_connector(
         {
             tracing::warn!("ai audit failed: {e}");
         }
-        Json(ApiResponse::<String>::error(500, err_msg))
+        Json(ApiResponse::<String>::server_error(err_msg))
     }
 }
 
@@ -457,8 +453,7 @@ pub async fn test_connector(
             Ok(c) => c,
             Err(e) => {
                 tracing::error!("Failed to lock connectors: {}", e);
-                return Json(ApiResponse::<ConnectorStatus>::error(
-                    500,
+                return Json(ApiResponse::<ConnectorStatus>::server_error(
                     "Internal server error",
                 ));
             }
@@ -481,14 +476,12 @@ pub async fn test_connector(
                 "Connection test completed",
             ))
         } else {
-            Json(ApiResponse::<ConnectorStatus>::error(
-                404,
+            Json(ApiResponse::<ConnectorStatus>::not_found(
                 "Connector not found",
             ))
         }
     } else {
-        Json(ApiResponse::<ConnectorStatus>::error(
-            500,
+        Json(ApiResponse::<ConnectorStatus>::server_error(
             "Connectors not initialized",
         ))
     }
@@ -510,8 +503,7 @@ pub async fn query_data(Json(req): Json<DataQueryRequest>) -> Json<ApiResponse<D
             Ok(c) => c,
             Err(e) => {
                 tracing::error!("Failed to lock connectors: {}", e);
-                return Json(ApiResponse::<DataQueryResponse>::error(
-                    500,
+                return Json(ApiResponse::<DataQueryResponse>::server_error(
                     "Internal server error",
                 ));
             }
@@ -526,14 +518,12 @@ pub async fn query_data(Json(req): Json<DataQueryRequest>) -> Json<ApiResponse<D
                 "Query executed successfully",
             ))
         } else {
-            Json(ApiResponse::<DataQueryResponse>::error(
-                404,
+            Json(ApiResponse::<DataQueryResponse>::not_found(
                 "Connector not found",
             ))
         }
     } else {
-        Json(ApiResponse::<DataQueryResponse>::error(
-            500,
+        Json(ApiResponse::<DataQueryResponse>::server_error(
             "Connectors not initialized",
         ))
     }

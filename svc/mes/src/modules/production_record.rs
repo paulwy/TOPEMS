@@ -194,7 +194,7 @@ pub async fn list_records(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count records: {}", e);
-            return Json(ApiResponse::error(500, "获取生产记录列表失败"));
+            return Json(ApiResponse::server_error("获取生产记录列表失败"));
         }
     };
 
@@ -228,7 +228,7 @@ pub async fn list_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch records: {}", e);
-            return Json(ApiResponse::error(500, "获取生产记录列表失败"));
+            return Json(ApiResponse::server_error("获取生产记录列表失败"));
         }
     };
 
@@ -339,7 +339,7 @@ pub async fn create_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create record: {}", e);
-            return Json(ApiResponse::error(500, "创建生产记录失败"));
+            return Json(ApiResponse::server_error("创建生产记录失败"));
         }
     };
 
@@ -409,7 +409,7 @@ pub async fn get_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch record: {}", e);
-            return Json(ApiResponse::error(500, "获取生产记录失败"));
+            return Json(ApiResponse::server_error("获取生产记录失败"));
         }
     };
 
@@ -434,7 +434,7 @@ pub async fn get_record(
             };
             Json(ApiResponse::success(record, "获取生产记录成功"))
         }
-        None => Json(ApiResponse::error(404, "生产记录不存在")),
+        None => Json(ApiResponse::not_found("生产记录不存在")),
     }
 }
 
@@ -491,7 +491,7 @@ pub async fn update_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update record: {}", e);
-            return Json(ApiResponse::error(500, "更新生产记录失败"));
+            return Json(ApiResponse::server_error("更新生产记录失败"));
         }
     };
 
@@ -516,7 +516,7 @@ pub async fn update_record(
             };
             Json(ApiResponse::success(record, "生产记录更新成功"))
         }
-        None => Json(ApiResponse::error(404, "生产记录不存在")),
+        None => Json(ApiResponse::not_found("生产记录不存在")),
     }
 }
 
@@ -543,14 +543,14 @@ pub async fn delete_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete record: {}", e);
-            return Json(ApiResponse::error(500, "删除生产记录失败"));
+            return Json(ApiResponse::server_error("删除生产记录失败"));
         }
     };
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success("".to_string(), "生产记录删除成功"))
     } else {
-        Json(ApiResponse::error(404, "生产记录不存在"))
+        Json(ApiResponse::not_found("生产记录不存在"))
     }
 }
 
@@ -602,7 +602,7 @@ pub async fn complete_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to complete record: {}", e);
-            return Json(ApiResponse::error(500, "完成生产记录失败"));
+            return Json(ApiResponse::server_error("完成生产记录失败"));
         }
     };
 
@@ -627,7 +627,7 @@ pub async fn complete_record(
             };
             Json(ApiResponse::success(record, "生产记录完成成功"))
         }
-        None => Json(ApiResponse::error(404, "生产记录不存在或状态不允许完成")),
+        None => Json(ApiResponse::not_found("生产记录不存在或状态不允许完成")),
     }
 }
 

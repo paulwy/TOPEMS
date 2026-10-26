@@ -7,7 +7,6 @@ license.workspace = true
 description = "TOPEMS-QMS 质量管理系统"
 
 [dependencies]
-topems-shared = { workspace = true }
 topems-shared-service-client = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-db = { workspace = true }
@@ -26,7 +25,6 @@ sqlx.workspace = true
 topems-shared-bootstrap = { workspace = true }
 utoipa.workspace = true
 anyhow.workspace = true
-reqwest.workspace = true
 bigdecimal = { workspace = true, features = ["serde"] }
 
 [lib]

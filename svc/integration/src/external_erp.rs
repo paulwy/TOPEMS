@@ -634,7 +634,7 @@ async fn get_connection(
     .await
     {
         Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "获取成功")),
-        Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
+        Ok(None) => Json(ApiResponse::not_found("连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
@@ -696,7 +696,7 @@ pub async fn update_connection(
     .await
     {
         Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
+        Ok(None) => Json(ApiResponse::not_found("连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
@@ -730,7 +730,7 @@ pub async fn delete_connection(
     .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "连接不存在")),
+        Ok(_) => Json(ApiResponse::not_found("连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }
@@ -1184,7 +1184,7 @@ pub async fn sync_entity(
                 Some("缺少 connection_id"),
             )
             .await;
-            return Json(ApiResponse::error(400, "缺少 connection_id"));
+            return Json(ApiResponse::bad_request("缺少 connection_id"));
         }
     };
 
@@ -1202,13 +1202,13 @@ pub async fn sync_entity(
                 Some("连接不存在或已删除"),
             )
             .await;
-            return Json(ApiResponse::error(404, "ERP 连接不存在"));
+            return Json(ApiResponse::not_found("ERP 连接不存在"));
         }
     };
 
     if !connection.isactive {
         update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some("连接已禁用")).await;
-        return Json(ApiResponse::error(400, "ERP 连接已禁用"));
+        return Json(ApiResponse::bad_request("ERP 连接已禁用"));
     }
 
     // 执行真实同步
@@ -1545,7 +1545,7 @@ pub async fn toggle_connection(
     .await
     {
         Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "切换成功")),
-        Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
+        Ok(None) => Json(ApiResponse::not_found("连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("切换失败", e))),
     }
 }
@@ -1564,7 +1564,7 @@ pub async fn sync_connection_status(
             serde_json::json!({"status": c.status, "isactive": c.isactive, "last_sync_at": c.last_sync_at}),
             "连接状态已刷新",
         )),
-        None => Json(ApiResponse::error(404, "连接不存在")),
+        None => Json(ApiResponse::not_found("连接不存在")),
     }
 }
 
@@ -1687,7 +1687,7 @@ pub async fn update_company_mapping(
     .await
     {
         Ok(Some(m)) => Json(ApiResponse::success(m, "更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "映射不存在")),
+        Ok(None) => Json(ApiResponse::not_found("映射不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
@@ -1708,7 +1708,7 @@ pub async fn delete_company_mapping(
     .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "映射不存在")),
+        Ok(_) => Json(ApiResponse::not_found("映射不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }
@@ -1750,7 +1750,7 @@ pub async fn update_entity_mapping(
     .await
     {
         Ok(Some(m)) => Json(ApiResponse::success(m, "更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "映射不存在")),
+        Ok(None) => Json(ApiResponse::not_found("映射不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
@@ -1772,7 +1772,7 @@ pub async fn delete_entity_mapping(
     .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "映射不存在")),
+        Ok(_) => Json(ApiResponse::not_found("映射不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }
@@ -1806,7 +1806,7 @@ pub async fn cancel_sync(
             serde_json::json!({"status": "cancelled"}),
             "同步已取消",
         )),
-        None => Json(ApiResponse::error(404, "同步日志不存在")),
+        None => Json(ApiResponse::not_found("同步日志不存在")),
     }
 }
 
@@ -1829,7 +1829,7 @@ pub async fn get_sync_log(
     .await
     {
         Ok(Some(log)) => Json(ApiResponse::success(log, "获取成功")),
-        Ok(None) => Json(ApiResponse::error(404, "同步日志不存在")),
+        Ok(None) => Json(ApiResponse::not_found("同步日志不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }

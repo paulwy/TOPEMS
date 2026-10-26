@@ -142,7 +142,7 @@ pub async fn list_costs(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -206,7 +206,7 @@ pub async fn list_costs(
         }
         Err(e) => {
             tracing::error!("获取研发费用列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取研发费用列表失败"))
+            Json(ApiResponse::server_error("获取研发费用列表失败"))
         }
     }
 }
@@ -260,10 +260,10 @@ pub async fn create_cost(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if req.amount <= 0.0 {
-        return Json(ApiResponse::error(400, "费用金额必须大于0"));
+        return Json(ApiResponse::bad_request("费用金额必须大于0"));
     }
 
     let id = Uuid::new_v4();
@@ -312,14 +312,14 @@ pub async fn create_cost(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(cost, "研发费用创建成功"))
         }
         Err(e) => {
             tracing::error!("创建研发费用失败: {}", e);
-            Json(ApiResponse::error(500, "创建研发费用失败"))
+            Json(ApiResponse::server_error("创建研发费用失败"))
         }
     }
 }
@@ -347,7 +347,7 @@ pub async fn get_cost(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query_as::<_, ResearchCost>(
         r#"
@@ -363,10 +363,10 @@ pub async fn get_cost(
 
     match result {
         Ok(Some(cost)) => Json(ApiResponse::success(cost, "获取研发费用成功")),
-        Ok(None) => Json(ApiResponse::error(404, "研发费用不存在")),
+        Ok(None) => Json(ApiResponse::not_found("研发费用不存在")),
         Err(e) => {
             tracing::error!("获取研发费用失败: {}", e);
-            Json(ApiResponse::error(500, "获取研发费用失败"))
+            Json(ApiResponse::server_error("获取研发费用失败"))
         }
     }
 }
@@ -382,7 +382,7 @@ pub async fn update_cost(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let existing = sqlx::query_as::<_, ResearchCost>(
         r#"
@@ -398,10 +398,10 @@ pub async fn update_cost(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::error(404, "研发费用不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("研发费用不存在")),
         Err(e) => {
             tracing::error!("查询研发费用失败: {}", e);
-            return Json(ApiResponse::error(500, "查询研发费用失败"));
+            return Json(ApiResponse::server_error("查询研发费用失败"));
         }
     };
 
@@ -456,14 +456,14 @@ pub async fn update_cost(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(cost, "研发费用更新成功"))
         }
         Err(e) => {
             tracing::error!("更新研发费用失败: {}", e);
-            Json(ApiResponse::error(500, "更新研发费用失败"))
+            Json(ApiResponse::server_error("更新研发费用失败"))
         }
     }
 }
@@ -478,7 +478,7 @@ pub async fn delete_cost(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query("UPDATE rs.research_costs SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
@@ -493,15 +493,15 @@ pub async fn delete_cost(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
-            Json(ApiResponse::error(404, "研发费用不存在"))
+            Json(ApiResponse::not_found("研发费用不存在"))
         }
 
         Err(e) => {
             tracing::error!("删除研发费用失败: {}", e);
-            Json(ApiResponse::error(500, "删除研发费用失败"))
+            Json(ApiResponse::server_error("删除研发费用失败"))
         }
     }
 }
@@ -529,7 +529,7 @@ pub async fn list_costs_by_project(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query_as::<_, ResearchCost>(
         r#"
@@ -549,7 +549,7 @@ pub async fn list_costs_by_project(
         Ok(costs) => Json(ApiResponse::success(costs, "获取项目研发费用列表成功")),
         Err(e) => {
             tracing::error!("获取项目研发费用列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目研发费用列表失败"))
+            Json(ApiResponse::server_error("获取项目研发费用列表失败"))
         }
     }
 }
@@ -579,7 +579,7 @@ pub async fn get_cost_statistics(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let mut query = String::from(
         r#"
@@ -647,7 +647,7 @@ pub async fn get_cost_statistics(
         }
         Err(e) => {
             tracing::error!("获取研发费用统计失败: {}", e);
-            Json(ApiResponse::error(500, "获取研发费用统计失败"))
+            Json(ApiResponse::server_error("获取研发费用统计失败"))
         }
     }
 }

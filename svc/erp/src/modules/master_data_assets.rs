@@ -351,7 +351,7 @@ pub async fn get_data_asset_detail(
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询数据资产详情失败: {}", e);
-            Json(ApiResponse::error(404, "未找到数据资产"))
+            Json(ApiResponse::not_found("未找到数据资产"))
         }
     }
 }

@@ -95,7 +95,7 @@ pub async fn get_entry(
     .unwrap_or(None);
     match line {
         Some(l) => Json(ApiResponse::success(l, "查询成功")),
-        None => Json(ApiResponse::error(404, "模板分录不存在")),
+        None => Json(ApiResponse::not_found("模板分录不存在")),
     }
 }
 
@@ -116,7 +116,7 @@ pub async fn create_entry(
     .await
     .unwrap_or(0);
     if count == 0 {
-        return Json(ApiResponse::error(404, "凭证模板不存在"));
+        return Json(ApiResponse::not_found("凭证模板不存在"));
     }
     let sort_order: i32 = match req.sort_order {
         Some(s) => s,
@@ -173,7 +173,7 @@ pub async fn update_entry(
     .await
     .unwrap_or(0);
     if owns == 0 {
-        return Json(ApiResponse::error(404, "模板分录不存在"));
+        return Json(ApiResponse::not_found("模板分录不存在"));
     }
     let existing: VoucherTemplateLine =
         match sqlx::query_as(only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE id = $1"))
@@ -227,7 +227,7 @@ pub async fn delete_entry(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                return Json(ApiResponse::error(404, "模板分录不存在"));
+                return Json(ApiResponse::not_found("模板分录不存在"));
             }
             Json(ApiResponse::success(
                 serde_json::json!({"deleted": true, "entry_id": entry_id}),
@@ -260,7 +260,7 @@ pub async fn reorder_entries(
     .await
     .unwrap_or(0);
     if count == 0 {
-        return Json(ApiResponse::error(404, "凭证模板不存在"));
+        return Json(ApiResponse::not_found("凭证模板不存在"));
     }
     for (idx, entry_id) in req.entry_ids.iter().enumerate() {
         let sort_order = (idx + 1) as i32;

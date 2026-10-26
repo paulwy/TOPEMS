@@ -48,7 +48,7 @@ pub async fn create_milestone(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -75,7 +75,7 @@ pub async fn create_milestone(
             request_id = %request_id,
             "创建项目里程碑失败: 里程碑名称不能为空"
         );
-        return Json(ApiResponse::error(400, "里程碑名称不能为空"));
+        return Json(ApiResponse::bad_request("里程碑名称不能为空"));
     }
 
     let id = Uuid::new_v4();
@@ -115,7 +115,7 @@ pub async fn create_milestone(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(milestone, "项目里程碑创建成功"))
@@ -128,9 +128,9 @@ pub async fn create_milestone(
                 "创建项目里程碑数据库错误"
             );
             if db_err.code().map(|c| c == "23503").unwrap_or(false) {
-                Json(ApiResponse::error(400, "关联的项目或阶段不存在"))
+                Json(ApiResponse::bad_request("关联的项目或阶段不存在"))
             } else {
-                Json(ApiResponse::error(500, "数据库操作失败"))
+                Json(ApiResponse::server_error("数据库操作失败"))
             }
         }
         Err(e) => {
@@ -140,7 +140,7 @@ pub async fn create_milestone(
                 duration_ms = duration.num_milliseconds(),
                 "创建项目里程碑失败"
             );
-            Json(ApiResponse::error(500, "创建项目里程碑失败"))
+            Json(ApiResponse::server_error("创建项目里程碑失败"))
         }
     }
 }
@@ -169,7 +169,7 @@ pub async fn get_project_milestones(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -235,7 +235,7 @@ pub async fn get_project_milestones(
                 duration_ms = duration.num_milliseconds(),
                 "获取项目里程碑列表失败"
             );
-            Json(ApiResponse::error(500, "获取项目里程碑列表失败"))
+            Json(ApiResponse::server_error("获取项目里程碑列表失败"))
         }
     }
 }
@@ -265,7 +265,7 @@ pub async fn update_milestone(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -291,7 +291,7 @@ pub async fn update_milestone(
                 milestone_id = %id,
                 "更新项目里程碑失败: 里程碑名称不能为空"
             );
-            return Json(ApiResponse::error(400, "里程碑名称不能为空"));
+            return Json(ApiResponse::bad_request("里程碑名称不能为空"));
         }
     }
 
@@ -345,7 +345,7 @@ pub async fn update_milestone(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(milestone, "项目里程碑更新成功"))
@@ -357,7 +357,7 @@ pub async fn update_milestone(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目里程碑失败: 里程碑不存在"
             );
-            Json(ApiResponse::error(404, "里程碑不存在"))
+            Json(ApiResponse::not_found("里程碑不存在"))
         }
         Err(SqlxError::Database(db_err)) => {
             tracing::error!(
@@ -367,7 +367,7 @@ pub async fn update_milestone(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目里程碑数据库错误"
             );
-            Json(ApiResponse::error(500, "数据库操作失败"))
+            Json(ApiResponse::server_error("数据库操作失败"))
         }
         Err(e) => {
             tracing::error!(
@@ -377,7 +377,7 @@ pub async fn update_milestone(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目里程碑失败"
             );
-            Json(ApiResponse::error(500, "更新项目里程碑失败"))
+            Json(ApiResponse::server_error("更新项目里程碑失败"))
         }
     }
 }
@@ -406,7 +406,7 @@ pub async fn delete_milestone(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -451,7 +451,7 @@ pub async fn delete_milestone(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             if let Ok(Some(project_id)) = project_id_result {
@@ -473,7 +473,7 @@ pub async fn delete_milestone(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目里程碑失败: 里程碑不存在"
             );
-            Json(ApiResponse::error(404, "里程碑不存在"))
+            Json(ApiResponse::not_found("里程碑不存在"))
         }
         Err(e) => {
             tracing::error!(
@@ -483,7 +483,7 @@ pub async fn delete_milestone(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目里程碑失败"
             );
-            Json(ApiResponse::error(500, "删除项目里程碑失败"))
+            Json(ApiResponse::server_error("删除项目里程碑失败"))
         }
     }
 }

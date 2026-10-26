@@ -33,8 +33,6 @@ spec:
         env:
         - name: FINANCE_PORT
           value: "8011"
-        - name: CONSUL_URL
-          value: "http://consul-service:8500"
         resources:
           requests:
             cpu: "100m"

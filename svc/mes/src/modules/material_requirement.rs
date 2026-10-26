@@ -173,7 +173,7 @@ pub async fn list_material_requirements(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count material requirements: {}", e);
-            return Json(ApiResponse::error(500, "获取物料需求列表失败"));
+            return Json(ApiResponse::server_error("获取物料需求列表失败"));
         }
     };
 
@@ -205,7 +205,7 @@ pub async fn list_material_requirements(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch material requirements: {}", e);
-            return Json(ApiResponse::error(500, "获取物料需求列表失败"));
+            return Json(ApiResponse::server_error("获取物料需求列表失败"));
         }
     };
 
@@ -306,7 +306,7 @@ pub async fn get_material_requirement(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的物料需求ID"));
+            return Json(ApiResponse::bad_request("无效的物料需求ID"));
         }
     };
 
@@ -355,10 +355,10 @@ pub async fn get_material_requirement(
             },
             "获取物料需求成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "物料需求不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("物料需求不存在")),
         Err(e) => {
             tracing::error!("Failed to get material requirement: {}", e);
-            Json(ApiResponse::error(500, "获取物料需求失败"))
+            Json(ApiResponse::server_error("获取物料需求失败"))
         }
     }
 }
@@ -457,7 +457,7 @@ pub async fn create_material_requirement(
         )),
         Err(e) => {
             tracing::error!("Failed to create material requirement: {}", e);
-            Json(ApiResponse::error(500, "创建物料需求失败"))
+            Json(ApiResponse::server_error("创建物料需求失败"))
         }
     }
 }
@@ -477,7 +477,7 @@ pub async fn update_material_requirement(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的物料需求ID"));
+            return Json(ApiResponse::bad_request("无效的物料需求ID"));
         }
     };
 
@@ -544,10 +544,10 @@ pub async fn update_material_requirement(
             },
             "更新物料需求成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "物料需求不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("物料需求不存在")),
         Err(e) => {
             tracing::error!("Failed to update material requirement: {}", e);
-            Json(ApiResponse::error(500, "更新物料需求失败"))
+            Json(ApiResponse::server_error("更新物料需求失败"))
         }
     }
 }
@@ -566,7 +566,7 @@ pub async fn delete_material_requirement(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的物料需求ID"));
+            return Json(ApiResponse::bad_request("无效的物料需求ID"));
         }
     };
 
@@ -583,7 +583,7 @@ pub async fn delete_material_requirement(
         Ok(_) => Json(ApiResponse::success(id, "删除物料需求成功")),
         Err(e) => {
             tracing::error!("Failed to delete material requirement: {}", e);
-            Json(ApiResponse::error(500, "删除物料需求失败"))
+            Json(ApiResponse::server_error("删除物料需求失败"))
         }
     }
 }
@@ -617,7 +617,7 @@ pub async fn calculate_requirements(
     let order_uuid = match Uuid::parse_str(&body.order_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的订单ID"));
+            return Json(ApiResponse::bad_request("无效的订单ID"));
         }
     };
 
@@ -635,11 +635,11 @@ pub async fn calculate_requirements(
     let order = match order_result {
         Ok(o) => o,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::error(404, "生产订单不存在"));
+            return Json(ApiResponse::not_found("生产订单不存在"));
         }
         Err(e) => {
             tracing::error!("Failed to get production order: {}", e);
-            return Json(ApiResponse::error(500, "获取生产订单失败"));
+            return Json(ApiResponse::server_error("获取生产订单失败"));
         }
     };
 
@@ -753,7 +753,7 @@ pub async fn confirm_requirement(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的物料需求ID"));
+            return Json(ApiResponse::bad_request("无效的物料需求ID"));
         }
     };
 
@@ -799,10 +799,10 @@ pub async fn confirm_requirement(
             },
             "确认物料需求成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "物料需求不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("物料需求不存在")),
         Err(e) => {
             tracing::error!("Failed to confirm material requirement: {}", e);
-            Json(ApiResponse::error(500, "确认物料需求失败"))
+            Json(ApiResponse::server_error("确认物料需求失败"))
         }
     }
 }
@@ -834,7 +834,7 @@ pub async fn release_requirement(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的物料需求ID"));
+            return Json(ApiResponse::bad_request("无效的物料需求ID"));
         }
     };
 
@@ -880,10 +880,10 @@ pub async fn release_requirement(
             },
             "下发物料需求成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "物料需求不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("物料需求不存在")),
         Err(e) => {
             tracing::error!("Failed to release material requirement: {}", e);
-            Json(ApiResponse::error(500, "下发物料需求失败"))
+            Json(ApiResponse::server_error("下发物料需求失败"))
         }
     }
 }

@@ -818,7 +818,7 @@ pub async fn restore_from_point(
     .map(|r| recovery_point_from_row(&r));
 
     let Some(point) = point else {
-        return Json(ApiResponse::error(404, "未找到恢复点"));
+        return Json(ApiResponse::not_found("未找到恢复点"));
     };
 
     let now = chrono::Utc::now();
@@ -1010,7 +1010,7 @@ pub async fn execute_plan(
     .map(|r| recovery_plan_from_row(&r));
 
     let Some(mut plan) = plan else {
-        return Json(ApiResponse::error(404, "未找到恢复计划"));
+        return Json(ApiResponse::not_found("未找到恢复计划"));
     };
 
     plan.status = RecoveryPlanStatus::Completed;
@@ -1084,7 +1084,7 @@ pub async fn get_plan_progress(
     .map(|r| recovery_plan_from_row(&r));
 
     let Some(plan) = plan else {
-        return Json(ApiResponse::error(404, "未找到恢复计划"));
+        return Json(ApiResponse::not_found("未找到恢复计划"));
     };
 
     let total_steps = plan.steps.len() as i64;
@@ -1296,7 +1296,7 @@ pub async fn get_plan(
     .map(|r| continuity_plan_from_row(&r));
     match plan {
         Some(p) => Json(ApiResponse::success(p, "连续性计划详情")),
-        None => Json(ApiResponse::error(404, "未找到连续性计划")),
+        None => Json(ApiResponse::not_found("未找到连续性计划")),
     }
 }
 
@@ -1328,7 +1328,7 @@ pub async fn update_plan(
     .map(|r| continuity_plan_from_row(&r));
 
     let Some(mut plan) = plan else {
-        return Json(ApiResponse::error(404, "未找到连续性计划"));
+        return Json(ApiResponse::not_found("未找到连续性计划"));
     };
 
     if let Some(name) = req.name {
@@ -1401,7 +1401,7 @@ pub async fn test_plan(
     .map(|r| continuity_plan_from_row(&r));
 
     let Some(_plan) = plan else {
-        return Json(ApiResponse::error(404, "未找到连续性计划"));
+        return Json(ApiResponse::not_found("未找到连续性计划"));
     };
 
     let now = chrono::Utc::now();
@@ -1723,7 +1723,7 @@ pub async fn start_replication(
     .map(|r| replication_config_from_row(&r));
 
     let Some(config) = config else {
-        return Json(ApiResponse::error(404, "未找到复制配置"));
+        return Json(ApiResponse::not_found("未找到复制配置"));
     };
 
     if let Err(e) = sqlx::query(
@@ -1773,7 +1773,7 @@ pub async fn stop_replication(
     .map(|r| replication_config_from_row(&r));
 
     let Some(config) = config else {
-        return Json(ApiResponse::error(404, "未找到复制配置"));
+        return Json(ApiResponse::not_found("未找到复制配置"));
     };
 
     if let Err(e) = sqlx::query(
@@ -1939,7 +1939,7 @@ pub async fn complete_failover(
     .map(|r| failover_record_from_row(&r));
 
     let Some(record) = record else {
-        return Json(ApiResponse::error(404, "未找到故障转移记录"));
+        return Json(ApiResponse::not_found("未找到故障转移记录"));
     };
 
     let completed_at = chrono::Utc::now().to_rfc3339();
@@ -2027,7 +2027,7 @@ pub async fn switch_regions(
     .map(|r| region_config_from_row(&r));
 
     let Some(_target) = target else {
-        return Json(ApiResponse::error(404, "未找到目标地域"));
+        return Json(ApiResponse::not_found("未找到目标地域"));
     };
 
     if let Err(e) = sqlx::query(

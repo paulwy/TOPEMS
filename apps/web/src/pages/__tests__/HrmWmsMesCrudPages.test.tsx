@@ -4,7 +4,6 @@ import { render, screen } from '@testing-library/react';
 import WmsAreaPage from '../wms/WmsAreaPage';
 import HrmTrainingPage from '../hrm/HrmTrainingPage';
 import HrmRecruitmentPage from '../hrm/HrmRecruitmentPage';
-import HrmPerformancePage from '../hrm/HrmPerformancePage';
 import HrmOrganizationPage from '../hrm/HrmOrganizationPage';
 import MesQualityPage from '../mes/MesQualityPage';
 import { wmsApi } from '@/api/wms';
@@ -130,13 +129,6 @@ const pages = [
     schema: { name: 'recruitmentSchema' },
     breadcrumbs: [{ label: 'HRM' }, { label: 'hrm.hrm_recruitment_page.k0' }],
     api: hrmApi.jobOpenings,
-  },
-  {
-    name: 'HrmPerformancePage',
-    Page: HrmPerformancePage,
-    schema: { name: 'performanceSchema' },
-    breadcrumbs: [{ label: 'HRM' }, { label: 'hrm.hrm_performance_page.k0' }],
-    api: hrmApi.performanceReviews,
   },
   {
     name: 'HrmOrganizationPage',

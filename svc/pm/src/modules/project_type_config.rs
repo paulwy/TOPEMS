@@ -128,7 +128,7 @@ async fn list_types(
         }
         Err(e) => {
             tracing::error!("获取项目类型列表失败: {e}");
-            Json(ApiResponse::error(500, "获取项目类型列表失败"))
+            Json(ApiResponse::server_error("获取项目类型列表失败"))
         }
     }
 }
@@ -138,7 +138,7 @@ async fn create_type(
     Json(req): Json<CreateTypeRequest>,
 ) -> Json<ApiResponse<ProjectTypeConfig>> {
     if req.type_code.trim().is_empty() || req.type_name.trim().is_empty() {
-        return Json(ApiResponse::error(400, "类型编码与名称不能为空"));
+        return Json(ApiResponse::bad_request("类型编码与名称不能为空"));
     }
 
     let sql = format!(
@@ -169,7 +169,7 @@ async fn create_type(
         Ok(row) => Json(ApiResponse::success(row, "创建项目类型成功")),
         Err(e) => {
             tracing::error!("创建项目类型失败: {e}");
-            Json(ApiResponse::error(500, "创建项目类型失败"))
+            Json(ApiResponse::server_error("创建项目类型失败"))
         }
     }
 }
@@ -206,10 +206,10 @@ async fn get_type(
 
     match result {
         Ok(Some(row)) => Json(ApiResponse::success(row, "获取项目类型成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目类型不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目类型不存在")),
         Err(e) => {
             tracing::error!("获取项目类型失败: {e}");
-            Json(ApiResponse::error(500, "获取项目类型失败"))
+            Json(ApiResponse::server_error("获取项目类型失败"))
         }
     }
 }
@@ -249,10 +249,10 @@ async fn update_type(
 
     match result {
         Ok(Some(row)) => Json(ApiResponse::success(row, "更新项目类型成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目类型不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目类型不存在")),
         Err(e) => {
             tracing::error!("更新项目类型失败: {e}");
-            Json(ApiResponse::error(500, "更新项目类型失败"))
+            Json(ApiResponse::server_error("更新项目类型失败"))
         }
     }
 }
@@ -276,10 +276,10 @@ async fn delete_type(
             serde_json::Value::Null,
             "删除项目类型成功",
         )),
-        Ok(_) => Json(ApiResponse::error(404, "项目类型不存在")),
+        Ok(_) => Json(ApiResponse::not_found("项目类型不存在")),
         Err(e) => {
             tracing::error!("删除项目类型失败: {e}");
-            Json(ApiResponse::error(500, "删除项目类型失败"))
+            Json(ApiResponse::server_error("删除项目类型失败"))
         }
     }
 }

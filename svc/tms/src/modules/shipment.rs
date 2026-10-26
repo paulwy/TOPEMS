@@ -252,7 +252,7 @@ pub async fn create_shipment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(shipment, "运单创建成功"))
@@ -402,7 +402,7 @@ pub async fn update_shipment(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(shipment, "运单更新成功"))
@@ -461,7 +461,7 @@ pub async fn delete_shipment(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success("".to_string(), "运单删除成功"))
@@ -549,7 +549,7 @@ pub async fn dispatch_shipment(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     Json(ApiResponse::success(shipment, "运单已发车"))
@@ -648,7 +648,7 @@ pub async fn arrive_shipment(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     Json(ApiResponse::success(shipment, "运单已到达"))
@@ -745,7 +745,7 @@ pub async fn cancel_shipment(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     Json(ApiResponse::success(shipment, "运单已取消"))
@@ -850,7 +850,7 @@ pub async fn submit_approval(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     tracing::info!(
@@ -954,7 +954,7 @@ pub async fn approve_shipment(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     tracing::info!(
@@ -1055,7 +1055,7 @@ pub async fn reject_shipment(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     tracing::info!(

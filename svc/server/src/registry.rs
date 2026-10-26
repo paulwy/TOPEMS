@@ -212,7 +212,7 @@ impl Default for ModuleRegistry {
 async fn not_found_handler(_req: Request) -> impl IntoResponse {
     (
         StatusCode::NOT_FOUND,
-        Json(ApiResponse::<()>::error(404, "接口不存在，请检查路径")),
+        Json(ApiResponse::<()>::not_found("接口不存在，请检查路径")),
     )
 }
 
@@ -220,7 +220,7 @@ async fn not_found_handler(_req: Request) -> impl IntoResponse {
 fn handle_panic(_payload: Box<dyn Any + Send + 'static>) -> Response {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::<()>::error(500, "服务器内部错误，请稍后重试")),
+        Json(ApiResponse::<()>::server_error("服务器内部错误，请稍后重试")),
     )
         .into_response()
 }

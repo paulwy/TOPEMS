@@ -64,7 +64,7 @@ pub async fn list_dimensions(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -131,7 +131,7 @@ pub async fn list_active_dimensions(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -202,7 +202,7 @@ pub async fn get_dimension(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -237,14 +237,12 @@ pub async fn get_dimension(
 
     match result {
         Ok(Some(dimension)) => Json(ApiResponse::success(dimension, "获取评分维度成功")),
-        Ok(None) => Json(ApiResponse::<ScoringDimension>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<ScoringDimension>::not_found(
             "评分维度不存在",
         )),
         Err(e) => {
             tracing::error!("获取评分维度失败: {}", e);
-            Json(ApiResponse::<ScoringDimension>::error(
-                500,
+            Json(ApiResponse::<ScoringDimension>::server_error(
                 "获取评分维度失败",
             ))
         }
@@ -263,7 +261,7 @@ pub async fn create_dimension(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -271,29 +269,25 @@ pub async fn create_dimension(
     }
 
     if req.name.is_empty() {
-        return Json(ApiResponse::<ScoringDimension>::error(
-            400,
+        return Json(ApiResponse::<ScoringDimension>::bad_request(
             "维度名称不能为空",
         ));
     }
 
     if req.code.is_empty() {
-        return Json(ApiResponse::<ScoringDimension>::error(
-            400,
+        return Json(ApiResponse::<ScoringDimension>::bad_request(
             "维度代码不能为空",
         ));
     }
 
     if req.weight <= 0.0 || req.weight > 1.0 {
-        return Json(ApiResponse::<ScoringDimension>::error(
-            400,
+        return Json(ApiResponse::<ScoringDimension>::bad_request(
             "权重必须在0-1之间",
         ));
     }
 
     if req.min_score >= req.max_score {
-        return Json(ApiResponse::<ScoringDimension>::error(
-            400,
+        return Json(ApiResponse::<ScoringDimension>::bad_request(
             "最小分数必须小于最大分数",
         ));
     }
@@ -318,8 +312,7 @@ pub async fn create_dimension(
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<ScoringDimension>::error(
-            400,
+        return Json(ApiResponse::<ScoringDimension>::bad_request(
             "维度代码已存在",
         ));
     }
@@ -356,15 +349,14 @@ pub async fn create_dimension(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(dimension, "评分维度创建成功"))
         }
         Err(e) => {
             tracing::error!("创建评分维度失败: {}", e);
-            Json(ApiResponse::<ScoringDimension>::error(
-                500,
+            Json(ApiResponse::<ScoringDimension>::server_error(
                 "评分维度创建失败",
             ))
         }
@@ -384,7 +376,7 @@ pub async fn update_dimension(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -413,8 +405,7 @@ pub async fn update_dimension(
     let existing = match existing {
         Ok(Some(e)) => e,
         Ok(None) => {
-            return Json(ApiResponse::<ScoringDimension>::error(
-                404,
+            return Json(ApiResponse::<ScoringDimension>::not_found(
                 "评分维度不存在",
             ))
         }
@@ -427,8 +418,7 @@ pub async fn update_dimension(
 
     if let Some(code) = &req.code {
         if code.is_empty() {
-            return Json(ApiResponse::<ScoringDimension>::error(
-                400,
+            return Json(ApiResponse::<ScoringDimension>::bad_request(
                 "维度代码不能为空",
             ));
         }
@@ -444,8 +434,7 @@ pub async fn update_dimension(
             .await;
 
             if exists.unwrap_or(0) > 0 {
-                return Json(ApiResponse::<ScoringDimension>::error(
-                    400,
+                return Json(ApiResponse::<ScoringDimension>::bad_request(
                     "维度代码已存在",
                 ));
             }
@@ -454,8 +443,7 @@ pub async fn update_dimension(
 
     if let Some(weight) = req.weight {
         if weight <= 0.0 || weight > 1.0 {
-            return Json(ApiResponse::<ScoringDimension>::error(
-                400,
+            return Json(ApiResponse::<ScoringDimension>::bad_request(
                 "权重必须在0-1之间",
             ));
         }
@@ -463,8 +451,7 @@ pub async fn update_dimension(
 
     if let (Some(min_score), Some(max_score)) = (req.min_score, req.max_score) {
         if min_score >= max_score {
-            return Json(ApiResponse::<ScoringDimension>::error(
-                400,
+            return Json(ApiResponse::<ScoringDimension>::bad_request(
                 "最小分数必须小于最大分数",
             ));
         }
@@ -507,15 +494,14 @@ pub async fn update_dimension(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(dimension, "评分维度更新成功"))
         }
         Err(e) => {
             tracing::error!("更新评分维度失败: {}", e);
-            Json(ApiResponse::<ScoringDimension>::error(
-                500,
+            Json(ApiResponse::<ScoringDimension>::server_error(
                 "评分维度更新失败",
             ))
         }
@@ -534,7 +520,7 @@ pub async fn delete_dimension(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -567,15 +553,15 @@ pub async fn delete_dimension(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success("".to_string(), "评分维度删除成功"))
         }
-        Ok(_) => Json(ApiResponse::<String>::error(404, "评分维度不存在")),
+        Ok(_) => Json(ApiResponse::<String>::not_found("评分维度不存在")),
         Err(e) => {
             tracing::error!("删除评分维度失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "评分维度删除失败"))
+            Json(ApiResponse::<String>::server_error("评分维度删除失败"))
         }
     }
 }

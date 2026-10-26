@@ -1091,7 +1091,13 @@ export default defineConfig(({ mode }) => {
     apply: 'build',
     async closeBundle() {
       const dir = path.resolve(__dirname, 'dist/assets');
-      const files = (await fsp.readdir(dir)).filter((f) => f.endsWith('.js'));
+      // 非标准 build（storybook preview / 测试构建等）无 dist 产物时直接跳过
+      let files: string[];
+      try {
+        files = (await fsp.readdir(dir)).filter((f) => f.endsWith('.js'));
+      } catch {
+        return;
+      }
       const marker = /\b([A-Za-z_\$][\w\$]*)=\{exports:\{\}\}[,;]\(function\(/g;
       for (const file of files) {
         const p2 = path.join(dir, file);

@@ -25,25 +25,21 @@ interface DrillPlan {
 
 export interface DrillRecord {
   id: string;
-  record_no: string;
-  plan_id?: string;
-  title: string;
-  drill_type: string;
-  location: string;
-  started_at?: string;
-  ended_at?: string;
-  duration?: number;
-  participants?: number;
-  participant_list?: string[];
-  content?: string;
-  actual_content?: string;
-  organizer?: string;
-  recorder?: string;
+  drill_no: string;
+  plan_id: string | null;
+  drill_name: string;
+  drill_date: string | null;
+  participants: string[];
+  duration_hours: number;
+  location: string | null;
+  summary: string | null;
+  issues_found: string | null;
+  improvements: string | null;
+  attachments: string[] | null;
   status: string;
-  attachments?: string[];
-  created_at?: string;
-  updated_at?: string;
-  tenant_id?: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface DrillEvaluation {
@@ -136,30 +132,28 @@ interface CreateDrillPlanRequest {
 }
 
 export interface CreateDrillRecordRequest {
-  plan_id?: string;
-  title: string;
-  drill_type: string;
-  location: string;
-  started_at?: string;
-  ended_at?: string;
-  participants?: number;
-  participant_list?: string[];
-  actual_content?: string;
-  organizer?: string;
-  recorder?: string;
+  plan_id?: string | null;
+  drill_name: string;
+  drill_date?: string | null;
+  participants?: string[] | null;
+  duration_hours?: number | null;
+  location?: string | null;
+  summary?: string | null;
+  issues_found?: string | null;
+  improvements?: string | null;
+  attachments?: string[] | null;
 }
 
 interface UpdateDrillRecordRequest {
-  title?: string;
-  drill_type?: string;
-  location?: string;
-  started_at?: string;
-  ended_at?: string;
-  participants?: number;
-  participant_list?: string[];
-  actual_content?: string;
-  organizer?: string;
-  recorder?: string;
+  drill_name?: string;
+  drill_date?: string | null;
+  participants?: string[] | null;
+  duration_hours?: number | null;
+  location?: string | null;
+  summary?: string | null;
+  issues_found?: string | null;
+  improvements?: string | null;
+  attachments?: string[] | null;
   status?: string;
 }
 

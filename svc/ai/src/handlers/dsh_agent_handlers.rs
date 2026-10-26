@@ -82,7 +82,7 @@ pub async fn execute_agent(
     let orchestrator = match &state.dsh_agent_orchestrator {
         Some(o) => o,
         None => {
-            return Json(ApiResponse::error(503, "DSH Agent 编排器未初始化"));
+            return Json(ApiResponse::unavailable("DSH Agent 编排器未初始化"));
         }
     };
 
@@ -189,7 +189,7 @@ pub async fn get_session(
     let orchestrator = match &state.dsh_agent_orchestrator {
         Some(o) => o,
         None => {
-            return Json(ApiResponse::error(503, "DSH Agent 编排器未初始化"));
+            return Json(ApiResponse::unavailable("DSH Agent 编排器未初始化"));
         }
     };
 
@@ -223,7 +223,7 @@ pub async fn clear_session(
     let orchestrator = match &state.dsh_agent_orchestrator {
         Some(o) => o,
         None => {
-            return Json(ApiResponse::error(503, "DSH Agent 编排器未初始化"));
+            return Json(ApiResponse::unavailable("DSH Agent 编排器未初始化"));
         }
     };
 
@@ -247,7 +247,7 @@ pub async fn list_tools(
     let orchestrator = match &state.dsh_agent_orchestrator {
         Some(o) => o,
         None => {
-            return Json(ApiResponse::error(503, "DSH Agent 编排器未初始化"));
+            return Json(ApiResponse::unavailable("DSH Agent 编排器未初始化"));
         }
     };
 
@@ -282,7 +282,7 @@ pub async fn active_sessions(State(state): State<AppState>) -> Json<ApiResponse<
     let orchestrator = match &state.dsh_agent_orchestrator {
         Some(o) => o,
         None => {
-            return Json(ApiResponse::error(503, "DSH Agent 编排器未初始化"));
+            return Json(ApiResponse::unavailable("DSH Agent 编排器未初始化"));
         }
     };
 

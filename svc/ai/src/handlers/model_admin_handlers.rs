@@ -424,7 +424,7 @@ pub async fn get_model_config(
             },
             "Success",
         )),
-        Ok(None) => Json(ApiResponse::<ModelConfig>::error(404, "模型不存在")),
+        Ok(None) => Json(ApiResponse::<ModelConfig>::not_found("模型不存在")),
         Err(e) => Json(ApiResponse::<ModelConfig>::from(TopemsError::internal("获取模型配置失败", e))),
     }
 }
@@ -464,7 +464,7 @@ pub async fn update_model_config(
             serde_json::json!({ "success": true }),
             "Success",
         )),
-        Ok(_) => Json(ApiResponse::<serde_json::Value>::error(404, "模型不存在")),
+        Ok(_) => Json(ApiResponse::<serde_json::Value>::not_found("模型不存在")),
         Err(e) => Json(ApiResponse::<serde_json::Value>::from(
             TopemsError::internal("更新模型配置失败", e),
         )),

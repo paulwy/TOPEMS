@@ -798,7 +798,7 @@ pub async fn quality_ai_score_entity(
     let profiles = build_entity_profiles();
     let profile = match profiles.iter().find(|p| p.id == entity_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到实体")),
+        None => return Json(ApiResponse::not_found("未找到实体")),
     };
     let score = score_entity_internal(profile);
     let store = get_quality_ai_store();
@@ -962,7 +962,7 @@ pub async fn quality_ai_predict_quality(
     let profiles = build_entity_profiles();
     let profile = match profiles.iter().find(|p| p.id == entity_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到实体")),
+        None => return Json(ApiResponse::not_found("未找到实体")),
     };
     let history_store = get_quality_ai_store().quality_history.lock().await;
     let history = history_store.get(&entity_id).cloned().unwrap_or_default();

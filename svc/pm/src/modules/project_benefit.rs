@@ -85,7 +85,7 @@ async fn get_benefits(
         Ok(benefits) => Json(ApiResponse::success(benefits, "获取项目效益分析列表成功")),
         Err(e) => {
             tracing::error!("获取项目效益分析列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目效益分析列表失败"))
+            Json(ApiResponse::server_error("获取项目效益分析列表失败"))
         }
     }
 }
@@ -119,7 +119,7 @@ async fn get_analysis(
         Ok(b) => b,
         Err(e) => {
             tracing::error!("获取效益数据失败: {}", e);
-            return Json(ApiResponse::error(500, "获取效益数据失败"));
+            return Json(ApiResponse::server_error("获取效益数据失败"));
         }
     };
 
@@ -307,7 +307,7 @@ async fn calculate_benefits(
         Ok(benefit) => Json(ApiResponse::success(benefit, "计算项目效益分析成功")),
         Err(e) => {
             tracing::error!("计算项目效益分析失败: {}", e);
-            Json(ApiResponse::error(500, "计算项目效益分析失败"))
+            Json(ApiResponse::server_error("计算项目效益分析失败"))
         }
     }
 }

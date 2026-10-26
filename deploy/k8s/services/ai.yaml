@@ -33,8 +33,6 @@ spec:
         env:
         - name: AI_PORT
           value: "8013"
-        - name: CONSUL_URL
-          value: "http://consul-service:8500"
         - name: OLLAMA_BASE_URL
           value: "http://ollama-service:11434/v1"
         resources:

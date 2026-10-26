@@ -88,7 +88,7 @@ pub async fn list_evaluations(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -191,8 +191,7 @@ pub async fn list_evaluations(
         }
         Err(e) => {
             tracing::error!("获取供应商评估列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取供应商评估列表失败",
             ))
         }
@@ -212,7 +211,7 @@ pub async fn create_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -231,8 +230,7 @@ pub async fn create_evaluation(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.evaluation_no.is_empty() {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             "评估编号不能为空",
         ));
     }
@@ -240,8 +238,7 @@ pub async fn create_evaluation(
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<SupplierEvaluation>::error(
-                400,
+            return Json(ApiResponse::<SupplierEvaluation>::bad_request(
                 "供应商ID格式错误",
             ));
         }
@@ -256,8 +253,7 @@ pub async fn create_evaluation(
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             "供应商不存在或已删除",
         ));
     }
@@ -271,8 +267,7 @@ pub async fn create_evaluation(
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             "评估编号已存在",
         ));
     }
@@ -290,26 +285,22 @@ pub async fn create_evaluation(
     };
 
     if let Err(msg) = validate_score(req.quality_score, "质量") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             &msg.to_string(),
         ));
     }
     if let Err(msg) = validate_score(req.delivery_score, "交付") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             &msg.to_string(),
         ));
     }
     if let Err(msg) = validate_score(req.service_score, "服务") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             &msg.to_string(),
         ));
     }
     if let Err(msg) = validate_score(req.price_score, "价格") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             &msg.to_string(),
         ));
     }
@@ -372,8 +363,7 @@ pub async fn create_evaluation(
 
     if let Some(os) = overall_score {
         if !(0.0..=100.0).contains(&os) {
-            return Json(ApiResponse::<SupplierEvaluation>::error(
-                400,
+            return Json(ApiResponse::<SupplierEvaluation>::bad_request(
                 "综合评分必须在0-100之间",
             ));
         }
@@ -414,15 +404,14 @@ pub async fn create_evaluation(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(evaluation, "供应商评估创建成功"))
         }
         Err(e) => {
             tracing::error!("创建供应商评估失败: {}", e);
-            Json(ApiResponse::<SupplierEvaluation>::error(
-                500,
+            Json(ApiResponse::<SupplierEvaluation>::server_error(
                 "供应商评估创建失败",
             ))
         }
@@ -454,7 +443,7 @@ pub async fn get_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -485,14 +474,12 @@ pub async fn get_evaluation(
 
     match result {
         Ok(Some(evaluation)) => Json(ApiResponse::success(evaluation, "获取供应商评估成功")),
-        Ok(None) => Json(ApiResponse::<SupplierEvaluation>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<SupplierEvaluation>::not_found(
             "供应商评估不存在",
         )),
         Err(e) => {
             tracing::error!("获取供应商评估失败: {}", e);
-            Json(ApiResponse::<SupplierEvaluation>::error(
-                500,
+            Json(ApiResponse::<SupplierEvaluation>::server_error(
                 "获取供应商评估失败",
             ))
         }
@@ -512,7 +499,7 @@ pub async fn update_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -541,8 +528,7 @@ pub async fn update_evaluation(
     let existing = match existing {
         Ok(Some(e)) => e,
         Ok(None) => {
-            return Json(ApiResponse::<SupplierEvaluation>::error(
-                404,
+            return Json(ApiResponse::<SupplierEvaluation>::not_found(
                 "供应商评估不存在",
             ))
         }
@@ -557,8 +543,7 @@ pub async fn update_evaluation(
         let supplier_uuid_val = match Uuid::parse_str(supplier_id_str) {
             Ok(uuid) => uuid,
             Err(_) => {
-                return Json(ApiResponse::<SupplierEvaluation>::error(
-                    400,
+                return Json(ApiResponse::<SupplierEvaluation>::bad_request(
                     "供应商ID格式错误",
                 ));
             }
@@ -573,8 +558,7 @@ pub async fn update_evaluation(
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<SupplierEvaluation>::error(
-                400,
+            return Json(ApiResponse::<SupplierEvaluation>::bad_request(
                 "供应商不存在或已删除",
             ));
         }
@@ -597,32 +581,27 @@ pub async fn update_evaluation(
     };
 
     if let Err(msg) = validate_score(req.overall_score, "综合") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             &msg.to_string(),
         ));
     }
     if let Err(msg) = validate_score(req.quality_score, "质量") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             &msg.to_string(),
         ));
     }
     if let Err(msg) = validate_score(req.delivery_score, "交付") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             &msg.to_string(),
         ));
     }
     if let Err(msg) = validate_score(req.service_score, "服务") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             &msg.to_string(),
         ));
     }
     if let Err(msg) = validate_score(req.price_score, "价格") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(
-            400,
+        return Json(ApiResponse::<SupplierEvaluation>::bad_request(
             &msg.to_string(),
         ));
     }
@@ -667,15 +646,14 @@ pub async fn update_evaluation(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(evaluation, "供应商评估更新成功"))
         }
         Err(e) => {
             tracing::error!("更新供应商评估失败: {}", e);
-            Json(ApiResponse::<SupplierEvaluation>::error(
-                500,
+            Json(ApiResponse::<SupplierEvaluation>::server_error(
                 "供应商评估更新失败",
             ))
         }
@@ -694,7 +672,7 @@ pub async fn delete_evaluation(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
@@ -727,15 +705,15 @@ pub async fn delete_evaluation(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success("".to_string(), "供应商评估删除成功"))
         }
-        Ok(_) => Json(ApiResponse::<String>::error(404, "供应商评估不存在")),
+        Ok(_) => Json(ApiResponse::<String>::not_found("供应商评估不存在")),
         Err(e) => {
             tracing::error!("删除供应商评估失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "供应商评估删除失败"))
+            Json(ApiResponse::<String>::server_error("供应商评估删除失败"))
         }
     }
 }
@@ -767,7 +745,7 @@ pub async fn get_evaluation_history(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -839,7 +817,7 @@ pub async fn get_performance_summary(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -924,8 +902,7 @@ pub async fn get_performance_summary(
         )),
         Err(e) => {
             tracing::error!("获取供应商绩效汇总失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取供应商绩效汇总失败",
             ))
         }
@@ -958,7 +935,7 @@ pub async fn get_score_trend(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -1071,8 +1048,7 @@ pub async fn get_score_trend(
         }
         Err(e) => {
             tracing::error!("获取供应商评分趋势失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取供应商评分趋势失败",
             ))
         }
@@ -1101,7 +1077,7 @@ pub async fn get_evaluation_statistics(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}

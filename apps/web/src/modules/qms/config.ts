@@ -605,7 +605,10 @@ export const qmsModuleConfig: RouteModuleConfig = {
     } as RouteConfigV2<QmsDashboardPageProps>,
     {
       path: QMS_PATHS.inspection,
-      element: lazyWithRetry(() => import('@/pages/qms/QmsInspectionPage'), 'QmsInspectionPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/qms/QmsInspectionRedesignPage'),
+        'QmsInspectionRedesignPage'
+      ),
       module: 'qms',
       code: 'qms-inspection',
       title: i18n.t('qms.nav.qms-inspection'),
@@ -633,8 +636,8 @@ export const qmsModuleConfig: RouteModuleConfig = {
     {
       path: QMS_PATHS.nonconformance,
       element: lazyWithRetry(
-        () => import('@/pages/qms/QmsNonconformancePage'),
-        'QmsNonconformancePage'
+        () => import('@/pages/qms/QmsNonconformanceRedesignPage'),
+        'QmsNonconformanceRedesignPage'
       ),
       module: 'qms',
       code: 'qms-nonconformance',

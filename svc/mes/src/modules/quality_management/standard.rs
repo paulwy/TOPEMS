@@ -171,7 +171,7 @@ pub async fn list_standards(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality standards: {}", e);
-            return Json(ApiResponse::error(500, "获取质量标准列表失败"));
+            return Json(ApiResponse::server_error("获取质量标准列表失败"));
         }
     };
 
@@ -202,7 +202,7 @@ pub async fn list_standards(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality standards: {}", e);
-            return Json(ApiResponse::error(500, "获取质量标准列表失败"));
+            return Json(ApiResponse::server_error("获取质量标准列表失败"));
         }
     };
 
@@ -331,7 +331,7 @@ pub async fn get_standard(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的质量标准ID"));
+            return Json(ApiResponse::bad_request("无效的质量标准ID"));
         }
     };
 
@@ -353,11 +353,11 @@ pub async fn get_standard(
     let standard = match standard_result {
         Ok(r) => r,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::error(404, "质量标准不存在"));
+            return Json(ApiResponse::not_found("质量标准不存在"));
         }
         Err(e) => {
             tracing::error!("Failed to get quality standard: {}", e);
-            return Json(ApiResponse::error(500, "获取质量标准失败"));
+            return Json(ApiResponse::server_error("获取质量标准失败"));
         }
     };
 
@@ -429,7 +429,7 @@ pub async fn create_standard(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::error(500, "创建质量标准失败"));
+            return Json(ApiResponse::server_error("创建质量标准失败"));
         }
     };
 
@@ -480,7 +480,7 @@ pub async fn create_standard(
         Err(e) => {
             tracing::error!("Failed to create quality standard: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::error(500, "创建质量标准失败"));
+            return Json(ApiResponse::server_error("创建质量标准失败"));
         }
     };
 
@@ -533,7 +533,7 @@ pub async fn create_standard(
                 Err(e) => {
                     tracing::error!("Failed to insert standard value: {}", e);
                     let _ = tx.rollback().await;
-                    return Json(ApiResponse::error(500, "创建质量标准值失败"));
+                    return Json(ApiResponse::server_error("创建质量标准值失败"));
                 }
             }
         }
@@ -541,7 +541,7 @@ pub async fn create_standard(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::error(500, "创建质量标准失败"));
+        return Json(ApiResponse::server_error("创建质量标准失败"));
     }
 
     Json(ApiResponse::success(
@@ -579,7 +579,7 @@ pub async fn update_standard(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的质量标准ID"));
+            return Json(ApiResponse::bad_request("无效的质量标准ID"));
         }
     };
     let tenant_id = get_tenant_id(&claims);
@@ -588,7 +588,7 @@ pub async fn update_standard(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::error(500, "更新质量标准失败"));
+            return Json(ApiResponse::server_error("更新质量标准失败"));
         }
     };
 
@@ -631,12 +631,12 @@ pub async fn update_standard(
         Ok(r) => r,
         Err(sqlx::Error::RowNotFound) => {
             let _ = tx.rollback().await;
-            return Json(ApiResponse::error(404, "质量标准不存在"));
+            return Json(ApiResponse::not_found("质量标准不存在"));
         }
         Err(e) => {
             tracing::error!("Failed to update quality standard: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::error(500, "更新质量标准失败"));
+            return Json(ApiResponse::server_error("更新质量标准失败"));
         }
     };
 
@@ -655,7 +655,7 @@ pub async fn update_standard(
         if let Err(e) = delete_result {
             tracing::error!("Failed to clear standard values: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::error(500, "更新质量标准值失败"));
+            return Json(ApiResponse::server_error("更新质量标准值失败"));
         }
 
         for v in standard_values {
@@ -704,7 +704,7 @@ pub async fn update_standard(
                 Err(e) => {
                     tracing::error!("Failed to insert standard value: {}", e);
                     let _ = tx.rollback().await;
-                    return Json(ApiResponse::error(500, "更新质量标准值失败"));
+                    return Json(ApiResponse::server_error("更新质量标准值失败"));
                 }
             }
         }
@@ -740,7 +740,7 @@ pub async fn update_standard(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::error(500, "更新质量标准失败"));
+        return Json(ApiResponse::server_error("更新质量标准失败"));
     }
 
     Json(ApiResponse::success(
@@ -777,7 +777,7 @@ pub async fn delete_standard(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的质量标准ID"));
+            return Json(ApiResponse::bad_request("无效的质量标准ID"));
         }
     };
 
@@ -794,7 +794,7 @@ pub async fn delete_standard(
         Ok(_) => Json(ApiResponse::success(id, "删除质量标准成功")),
         Err(e) => {
             tracing::error!("Failed to delete quality standard: {}", e);
-            Json(ApiResponse::error(500, "删除质量标准失败"))
+            Json(ApiResponse::server_error("删除质量标准失败"))
         }
     }
 }

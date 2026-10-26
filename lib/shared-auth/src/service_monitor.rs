@@ -26,6 +26,7 @@ use prometheus::{register_int_counter_vec, IntCounterVec};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
+use topems_shared_core::shared_http_client;
 
 /// 内置默认服务白名单（覆盖当前 TopEMS 各服务签发的 service token username）。
 const DEFAULT_KNOWN_SERVICES: &[&str] = &[
@@ -293,7 +294,7 @@ fn notify_feishu(webhook_url: String, message: String) {
                 .build()
                 .expect("reqwest client 构建失败")
         } else {
-            reqwest::Client::new()
+            shared_http_client()
         };
         let result = client.post(&webhook_url).json(&payload).send().await;
         if let Err(e) = result {

@@ -153,7 +153,7 @@ pub async fn list_batches(
         }
         Err(e) => {
             tracing::error!("获取批次列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取批次列表失败"))
+            Json(ApiResponse::server_error("获取批次列表失败"))
         }
     }
 }
@@ -184,7 +184,7 @@ pub async fn create_batch(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.batch_no.is_empty() {
-        return Json(ApiResponse::error(400, "批次编号不能为空"));
+        return Json(ApiResponse::bad_request("批次编号不能为空"));
     }
 
     let status = req.status.unwrap_or_else(|| "pending".to_string());
@@ -216,7 +216,7 @@ pub async fn create_batch(
         Ok(batch) => Json(ApiResponse::success(batch, "批次创建成功")),
         Err(e) => {
             tracing::error!("创建批次失败: {}", e);
-            Json(ApiResponse::error(500, "创建批次失败"))
+            Json(ApiResponse::server_error("创建批次失败"))
         }
     }
 }
@@ -264,10 +264,10 @@ pub async fn get_batch(
 
     match result {
         Ok(Some(batch)) => Json(ApiResponse::success(batch, "获取批次成功")),
-        Ok(None) => Json(ApiResponse::error(404, "批次不存在")),
+        Ok(None) => Json(ApiResponse::not_found("批次不存在")),
         Err(e) => {
             tracing::error!("获取批次失败: {}", e);
-            Json(ApiResponse::error(500, "获取批次失败"))
+            Json(ApiResponse::server_error("获取批次失败"))
         }
     }
 }
@@ -338,10 +338,10 @@ pub async fn update_batch(
 
     match result {
         Ok(Some(batch)) => Json(ApiResponse::success(batch, "批次更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "批次不存在")),
+        Ok(None) => Json(ApiResponse::not_found("批次不存在")),
         Err(e) => {
             tracing::error!("更新批次失败: {}", e);
-            Json(ApiResponse::error(500, "更新批次失败"))
+            Json(ApiResponse::server_error("更新批次失败"))
         }
     }
 }
@@ -384,10 +384,10 @@ pub async fn delete_batch(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "批次删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "批次不存在")),
+        Ok(_) => Json(ApiResponse::not_found("批次不存在")),
         Err(e) => {
             tracing::error!("删除批次失败: {}", e);
-            Json(ApiResponse::error(500, "删除批次失败"))
+            Json(ApiResponse::server_error("删除批次失败"))
         }
     }
 }

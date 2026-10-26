@@ -236,7 +236,7 @@ pub async fn plugin_health_check(
             "Plugin is healthy",
         ))
     } else {
-        Json(ApiResponse::error(500, "Database connection failed"))
+        Json(ApiResponse::server_error("Database connection failed"))
     }
 }
 
@@ -292,8 +292,7 @@ pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiRespons
                     "[ERP Plugin] Failed to register to core: {}",
                     response.status()
                 );
-                Json(ApiResponse::error(
-                    500,
+                Json(ApiResponse::server_error(
                     &format!("Failed to register: {}", response.status()),
                 ))
             }

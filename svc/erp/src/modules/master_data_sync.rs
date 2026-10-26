@@ -401,7 +401,7 @@ pub async fn get_sync_job(
 
     match jobs.iter().find(|j| j.id == id) {
         Some(job) => Json(ApiResponse::success(job.clone(), "同步任务详情")),
-        None => Json(ApiResponse::error(404, "未找到同步任务")),
+        None => Json(ApiResponse::not_found("未找到同步任务")),
     }
 }
 
@@ -493,11 +493,11 @@ pub async fn retry_sync_job(
 
     let job_pos = match jobs.iter().position(|j| j.id == id) {
         Some(pos) => pos,
-        None => return Json(ApiResponse::error(404, "未找到同步任务")),
+        None => return Json(ApiResponse::not_found("未找到同步任务")),
     };
 
     if jobs[job_pos].retry_count >= jobs[job_pos].max_retries {
-        return Json(ApiResponse::error(400, "已达到最大重试次数"));
+        return Json(ApiResponse::bad_request("已达到最大重试次数"));
     }
 
     jobs[job_pos].retry_count += 1;
@@ -545,14 +545,14 @@ pub async fn cancel_sync_job(
 
     let job_pos = match jobs.iter().position(|j| j.id == id) {
         Some(pos) => pos,
-        None => return Json(ApiResponse::error(404, "未找到同步任务")),
+        None => return Json(ApiResponse::not_found("未找到同步任务")),
     };
 
     if jobs[job_pos].status == SyncStatus::Completed
         || jobs[job_pos].status == SyncStatus::Failed
         || jobs[job_pos].status == SyncStatus::Compensated
     {
-        return Json(ApiResponse::error(400, "当前状态不可取消"));
+        return Json(ApiResponse::bad_request("当前状态不可取消"));
     }
 
     jobs[job_pos].status = SyncStatus::Failed;
@@ -584,14 +584,13 @@ pub async fn trigger_compensation(
 
     let job_pos = match jobs.iter().position(|j| j.id == id) {
         Some(pos) => pos,
-        None => return Json(ApiResponse::error(404, "未找到同步任务")),
+        None => return Json(ApiResponse::not_found("未找到同步任务")),
     };
 
     if jobs[job_pos].status != SyncStatus::Failed
         && jobs[job_pos].status != SyncStatus::PartiallyFailed
     {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             "只有失败或部分失败的任务才能触发补偿",
         ));
     }
@@ -823,7 +822,7 @@ pub async fn replay_dead_letter(
 
     let pos = match dead_letters.iter().position(|d| d.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "未找到死信记录")),
+        None => return Json(ApiResponse::not_found("未找到死信记录")),
     };
 
     let job_id = dead_letters[pos].job_id.clone();

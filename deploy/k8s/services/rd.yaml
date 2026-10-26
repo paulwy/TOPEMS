@@ -34,8 +34,6 @@ spec:
         env:
         - name: RD_PORT
           value: "8053"
-        - name: CONSUL_URL
-          value: "http://consul-service:8500"
         - name: PM_URL
           value: "http://pm-service:8023"
         - name: MES_URL

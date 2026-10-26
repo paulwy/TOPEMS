@@ -95,7 +95,7 @@ pub async fn get_location_photo(
         .await
     {
         Ok(photo) => Json(ApiResponse::success(photo, "获取位置照片成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "位置照片未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("位置照片未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
@@ -201,7 +201,7 @@ pub async fn delete_location_photo(
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(true, "删除位置照片成功"))
             } else {
-                Json(ApiResponse::error(404, "位置照片未找到"))
+                Json(ApiResponse::not_found("位置照片未找到"))
             }
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal(

@@ -72,7 +72,7 @@ pub async fn list_products(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -160,8 +160,7 @@ pub async fn list_products(
         }
         Err(e) => {
             tracing::error!("获取供应商产品列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取供应商产品列表失败",
             ))
         }
@@ -180,7 +179,7 @@ pub async fn create_product(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -199,8 +198,7 @@ pub async fn create_product(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.product_no.is_empty() || req.name.is_empty() {
-        return Json(ApiResponse::<SupplierProduct>::error(
-            400,
+        return Json(ApiResponse::<SupplierProduct>::bad_request(
             "产品编号和名称不能为空",
         ));
     }
@@ -208,8 +206,7 @@ pub async fn create_product(
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<SupplierProduct>::error(
-                400,
+            return Json(ApiResponse::<SupplierProduct>::bad_request(
                 "供应商ID格式错误",
             ));
         }
@@ -224,8 +221,7 @@ pub async fn create_product(
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
-        return Json(ApiResponse::<SupplierProduct>::error(
-            400,
+        return Json(ApiResponse::<SupplierProduct>::bad_request(
             "供应商不存在或已删除",
         ));
     }
@@ -239,19 +235,18 @@ pub async fn create_product(
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<SupplierProduct>::error(400, "产品编号已存在"));
+        return Json(ApiResponse::<SupplierProduct>::bad_request("产品编号已存在"));
     }
 
     if let Some(price) = req.unit_price {
         if price < 0.0 {
-            return Json(ApiResponse::<SupplierProduct>::error(400, "单价不能为负数"));
+            return Json(ApiResponse::<SupplierProduct>::bad_request("单价不能为负数"));
         }
     }
 
     if let Some(min_qty) = req.min_order_qty {
         if min_qty < 0 {
-            return Json(ApiResponse::<SupplierProduct>::error(
-                400,
+            return Json(ApiResponse::<SupplierProduct>::bad_request(
                 "最小订购量不能为负数",
             ));
         }
@@ -259,8 +254,7 @@ pub async fn create_product(
 
     if let Some(lead_time) = req.lead_time_days {
         if lead_time < 0 {
-            return Json(ApiResponse::<SupplierProduct>::error(
-                400,
+            return Json(ApiResponse::<SupplierProduct>::bad_request(
                 "交货周期不能为负数",
             ));
         }
@@ -302,15 +296,14 @@ pub async fn create_product(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(product, "供应商产品创建成功"))
         }
         Err(e) => {
             tracing::error!("创建供应商产品失败: {}", e);
-            Json(ApiResponse::<SupplierProduct>::error(
-                500,
+            Json(ApiResponse::<SupplierProduct>::server_error(
                 "供应商产品创建失败",
             ))
         }
@@ -342,7 +335,7 @@ pub async fn get_product(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
@@ -373,14 +366,12 @@ pub async fn get_product(
 
     match result {
         Ok(Some(product)) => Json(ApiResponse::success(product, "获取供应商产品成功")),
-        Ok(None) => Json(ApiResponse::<SupplierProduct>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<SupplierProduct>::not_found(
             "供应商产品不存在",
         )),
         Err(e) => {
             tracing::error!("获取供应商产品失败: {}", e);
-            Json(ApiResponse::<SupplierProduct>::error(
-                500,
+            Json(ApiResponse::<SupplierProduct>::server_error(
                 "获取供应商产品失败",
             ))
         }
@@ -400,7 +391,7 @@ pub async fn update_product(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -429,8 +420,7 @@ pub async fn update_product(
     let existing = match existing {
         Ok(Some(p)) => p,
         Ok(None) => {
-            return Json(ApiResponse::<SupplierProduct>::error(
-                404,
+            return Json(ApiResponse::<SupplierProduct>::not_found(
                 "供应商产品不存在",
             ))
         }
@@ -446,8 +436,7 @@ pub async fn update_product(
         let supplier_uuid_val = match Uuid::parse_str(supplier_id_str) {
             Ok(uuid) => uuid,
             Err(_) => {
-                return Json(ApiResponse::<SupplierProduct>::error(
-                    400,
+                return Json(ApiResponse::<SupplierProduct>::bad_request(
                     "供应商ID格式错误",
                 ));
             }
@@ -462,8 +451,7 @@ pub async fn update_product(
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<SupplierProduct>::error(
-                400,
+            return Json(ApiResponse::<SupplierProduct>::bad_request(
                 "供应商不存在或已删除",
             ));
         }
@@ -475,14 +463,13 @@ pub async fn update_product(
 
     if let Some(price) = req.unit_price {
         if price < 0.0 {
-            return Json(ApiResponse::<SupplierProduct>::error(400, "单价不能为负数"));
+            return Json(ApiResponse::<SupplierProduct>::bad_request("单价不能为负数"));
         }
     }
 
     if let Some(min_qty) = req.min_order_qty {
         if min_qty < 0 {
-            return Json(ApiResponse::<SupplierProduct>::error(
-                400,
+            return Json(ApiResponse::<SupplierProduct>::bad_request(
                 "最小订购量不能为负数",
             ));
         }
@@ -490,8 +477,7 @@ pub async fn update_product(
 
     if let Some(lead_time) = req.lead_time_days {
         if lead_time < 0 {
-            return Json(ApiResponse::<SupplierProduct>::error(
-                400,
+            return Json(ApiResponse::<SupplierProduct>::bad_request(
                 "交货周期不能为负数",
             ));
         }
@@ -541,15 +527,14 @@ pub async fn update_product(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(product, "供应商产品更新成功"))
         }
         Err(e) => {
             tracing::error!("更新供应商产品失败: {}", e);
-            Json(ApiResponse::<SupplierProduct>::error(
-                500,
+            Json(ApiResponse::<SupplierProduct>::server_error(
                 "供应商产品更新失败",
             ))
         }
@@ -568,7 +553,7 @@ pub async fn delete_product(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
@@ -601,15 +586,15 @@ pub async fn delete_product(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success("".to_string(), "供应商产品删除成功"))
         }
-        Ok(_) => Json(ApiResponse::<String>::error(404, "供应商产品不存在")),
+        Ok(_) => Json(ApiResponse::<String>::not_found("供应商产品不存在")),
         Err(e) => {
             tracing::error!("删除供应商产品失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "供应商产品删除失败"))
+            Json(ApiResponse::<String>::server_error("供应商产品删除失败"))
         }
     }
 }

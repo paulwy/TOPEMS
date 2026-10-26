@@ -1700,7 +1700,7 @@ pub async fn calculate_tax_handler(
                 Err(e) => Json(crate::shared::err_resp(e)),
             }
         }
-        _ => Json(ApiResponse::error(400, "不支持的税种类型")),
+        _ => Json(ApiResponse::bad_request("不支持的税种类型")),
     }
 }
 
@@ -1850,7 +1850,7 @@ pub async fn get_suggestions_handler(
     };
     let plan_id = match params.plan_id {
         Some(id) => id,
-        None => return Json(ApiResponse::error(400, "plan_id 参数必填")),
+        None => return Json(ApiResponse::bad_request("plan_id 参数必填")),
     };
     match TaxPlanner::get_suggestions(&pool, tenant_id, plan_id).await {
         Ok(suggestions) => Json(ApiResponse::success(suggestions, "查询成功")),

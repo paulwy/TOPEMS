@@ -219,7 +219,7 @@ pub async fn list_teams(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count teams: {}", e);
-            return Json(ApiResponse::error(500, "获取班组列表失败"));
+            return Json(ApiResponse::server_error("获取班组列表失败"));
         }
     };
 
@@ -253,7 +253,7 @@ pub async fn list_teams(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to fetch teams: {}", e);
-            return Json(ApiResponse::error(500, "获取班组列表失败"));
+            return Json(ApiResponse::server_error("获取班组列表失败"));
         }
     };
 
@@ -363,7 +363,7 @@ pub async fn get_team(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch team: {}", e);
-            return Json(ApiResponse::error(500, "获取班组失败"));
+            return Json(ApiResponse::server_error("获取班组失败"));
         }
     };
 
@@ -386,7 +386,7 @@ pub async fn get_team(
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
-        None => Json(ApiResponse::error(404, "班组不存在")),
+        None => Json(ApiResponse::not_found("班组不存在")),
     }
 }
 
@@ -437,7 +437,7 @@ pub async fn create_team(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create team: {}", e);
-            return Json(ApiResponse::error(500, "创建班组失败"));
+            return Json(ApiResponse::server_error("创建班组失败"));
         }
     };
 
@@ -547,7 +547,7 @@ pub async fn update_team(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update team: {}", e);
-            return Json(ApiResponse::error(500, "更新班组失败"));
+            return Json(ApiResponse::server_error("更新班组失败"));
         }
     };
 
@@ -570,7 +570,7 @@ pub async fn update_team(
             };
             Json(ApiResponse::success(team, "班组更新成功"))
         }
-        None => Json(ApiResponse::error(404, "班组不存在")),
+        None => Json(ApiResponse::not_found("班组不存在")),
     }
 }
 
@@ -599,14 +599,14 @@ pub async fn delete_team(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete team: {}", e);
-            return Json(ApiResponse::error(500, "删除班组失败"));
+            return Json(ApiResponse::server_error("删除班组失败"));
         }
     };
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success("".to_string(), "班组删除成功"))
     } else {
-        Json(ApiResponse::error(404, "班组不存在"))
+        Json(ApiResponse::not_found("班组不存在"))
     }
 }
 
@@ -651,7 +651,7 @@ pub async fn get_team_members(
         Ok(m) => m,
         Err(e) => {
             tracing::error!("Failed to fetch team members: {}", e);
-            return Json(ApiResponse::error(500, "获取班组成员失败"));
+            return Json(ApiResponse::server_error("获取班组成员失败"));
         }
     };
 
@@ -715,7 +715,7 @@ pub async fn add_team_member(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to add team member: {}", e);
-            return Json(ApiResponse::error(500, "添加班组成员失败"));
+            return Json(ApiResponse::server_error("添加班组成员失败"));
         }
     };
 
@@ -785,7 +785,7 @@ pub async fn remove_team_member(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to remove team member: {}", e);
-            return Json(ApiResponse::error(500, "移除班组成员失败"));
+            return Json(ApiResponse::server_error("移除班组成员失败"));
         }
     };
 
@@ -804,7 +804,7 @@ pub async fn remove_team_member(
 
         Json(ApiResponse::success("".to_string(), "班组成员移除成功"))
     } else {
-        Json(ApiResponse::error(404, "班组成员不存在"))
+        Json(ApiResponse::not_found("班组成员不存在"))
     }
 }
 

@@ -47,8 +47,6 @@ spec:
         env:
         - name: CORE_PORT
           value: "8000"
-        - name: CONSUL_URL
-          value: "http://consul-service:8500"
         # P0-3: 模块级故障隔离配置
         - name: MODULE_IAM_ENABLED
           value: "true"

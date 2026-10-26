@@ -63,8 +63,7 @@ pub async fn get_today_status(
     let employee_id = params.employee_id;
 
     if user_id.is_none() && employee_id.is_none() {
-        return Json(ApiResponse::<serde_json::Value>::error(
-            400,
+        return Json(ApiResponse::<serde_json::Value>::bad_request(
             "user_id 或 employee_id 至少提供一个",
         ));
     }
@@ -85,8 +84,7 @@ pub async fn get_today_status(
             }
             Err(e) => {
                 tracing::error!("解析 user_id 为 employee_id 失败: {}", e);
-                return Json(ApiResponse::<serde_json::Value>::error(
-                    500,
+                return Json(ApiResponse::<serde_json::Value>::server_error(
                     "解析用户信息失败",
                 ));
             }
@@ -139,8 +137,7 @@ pub async fn get_today_status(
         Ok(None) => "not_checked_in",
         Err(e) => {
             tracing::error!("获取今日考勤状态失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            return Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取今日考勤状态失败",
             ));
         }
@@ -251,8 +248,7 @@ pub async fn list_attendance(
         }
         Err(e) => {
             tracing::error!("获取考勤记录列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取考勤记录列表失败",
             ))
         }
@@ -369,7 +365,7 @@ pub async fn create_attendance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -415,14 +411,12 @@ pub async fn get_attendance(
 
     match result {
         Ok(Some(record)) => Json(ApiResponse::success(record, "获取考勤记录成功")),
-        Ok(None) => Json(ApiResponse::<AttendanceRecord>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<AttendanceRecord>::not_found(
             "考勤记录不存在",
         )),
         Err(e) => {
             tracing::error!("获取考勤记录失败: {}", e);
-            Json(ApiResponse::<AttendanceRecord>::error(
-                500,
+            Json(ApiResponse::<AttendanceRecord>::server_error(
                 "获取考勤记录失败",
             ))
         }
@@ -471,14 +465,12 @@ pub async fn update_attendance(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::<AttendanceRecord>::error(
-                404,
+            return Json(ApiResponse::<AttendanceRecord>::not_found(
                 "考勤记录不存在",
             ))
         }
         Err(_e) => {
-            return Json(ApiResponse::<AttendanceRecord>::error(
-                500,
+            return Json(ApiResponse::<AttendanceRecord>::server_error(
                 "查询考勤记录失败",
             ))
         }
@@ -518,15 +510,14 @@ pub async fn update_attendance(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(record, "考勤记录更新成功"))
         }
         Err(e) => {
             tracing::error!("更新考勤记录失败: {}", e);
-            Json(ApiResponse::<AttendanceRecord>::error(
-                500,
+            Json(ApiResponse::<AttendanceRecord>::server_error(
                 "考勤记录更新失败",
             ))
         }
@@ -616,7 +607,7 @@ pub async fn delete_attendance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -742,8 +733,7 @@ pub async fn list_attendance_records(
         Ok(None) => None,
         Err(msg) => {
             tracing::error!("解析员工信息失败: {}", msg);
-            return Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            return Json(ApiResponse::<serde_json::Value>::server_error(
                 "解析员工信息失败",
             ));
         }
@@ -799,8 +789,7 @@ pub async fn list_attendance_records(
         }
         Err(e) => {
             tracing::error!("查询考勤记录失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询考勤记录失败",
             ))
         }
@@ -1056,8 +1045,7 @@ pub async fn get_attendance_stats(
             }
             Err(e) => {
                 tracing::error!("解析 user_id 为 employee_id 失败: {}", e);
-                return Json(ApiResponse::<serde_json::Value>::error(
-                    500,
+                return Json(ApiResponse::<serde_json::Value>::server_error(
                     "解析用户信息失败",
                 ));
             }
@@ -1108,8 +1096,7 @@ pub async fn get_attendance_stats(
         ),
         Err(e) => {
             tracing::error!("获取考勤统计失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            return Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取考勤统计失败",
             ));
         }
@@ -1149,8 +1136,7 @@ pub async fn get_attendance_stats(
         Ok(None) => ("not_checked_in", None, None),
         Err(e) => {
             tracing::error!("获取今日考勤状态失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            return Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取今日考勤状态失败",
             ));
         }

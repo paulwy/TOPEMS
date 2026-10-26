@@ -277,7 +277,7 @@ pub async fn list_equipment(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count equipment: {}", e);
-            return Json(ApiResponse::error(500, "获取设备列表失败"));
+            return Json(ApiResponse::server_error("获取设备列表失败"));
         }
     };
 
@@ -310,7 +310,7 @@ pub async fn list_equipment(
         Ok(e) => e,
         Err(e) => {
             tracing::error!("Failed to fetch equipment: {}", e);
-            return Json(ApiResponse::error(500, "获取设备列表失败"));
+            return Json(ApiResponse::server_error("获取设备列表失败"));
         }
     };
 
@@ -400,7 +400,7 @@ pub async fn create_equipment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create equipment: {}", e);
-            return Json(ApiResponse::error(500, "创建设备失败"));
+            return Json(ApiResponse::server_error("创建设备失败"));
         }
     };
 
@@ -451,7 +451,7 @@ pub async fn get_equipment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch equipment: {}", e);
-            return Json(ApiResponse::error(500, "获取设备失败"));
+            return Json(ApiResponse::server_error("获取设备失败"));
         }
     };
 
@@ -460,7 +460,7 @@ pub async fn get_equipment(
             row_to_equipment_response(&row),
             "获取设备成功",
         )),
-        None => Json(ApiResponse::error(404, "设备不存在")),
+        None => Json(ApiResponse::not_found("设备不存在")),
     }
 }
 
@@ -532,7 +532,7 @@ pub async fn update_equipment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update equipment: {}", e);
-            return Json(ApiResponse::error(500, "更新设备失败"));
+            return Json(ApiResponse::server_error("更新设备失败"));
         }
     };
 
@@ -541,7 +541,7 @@ pub async fn update_equipment(
             row_to_equipment_response(&row),
             "设备更新成功",
         )),
-        None => Json(ApiResponse::error(404, "设备不存在")),
+        None => Json(ApiResponse::not_found("设备不存在")),
     }
 }
 
@@ -582,14 +582,14 @@ pub async fn delete_equipment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete equipment: {}", e);
-            return Json(ApiResponse::error(500, "删除设备失败"));
+            return Json(ApiResponse::server_error("删除设备失败"));
         }
     };
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success("".to_string(), "设备删除成功"))
     } else {
-        Json(ApiResponse::error(404, "设备不存在"))
+        Json(ApiResponse::not_found("设备不存在"))
     }
 }
 
@@ -647,7 +647,7 @@ pub async fn maintenance_equipment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to maintain equipment: {}", e);
-            return Json(ApiResponse::error(500, "设备维护失败"));
+            return Json(ApiResponse::server_error("设备维护失败"));
         }
     };
 
@@ -656,7 +656,7 @@ pub async fn maintenance_equipment(
             row_to_equipment_response(&row),
             "设备维护成功",
         )),
-        None => Json(ApiResponse::error(404, "设备不存在")),
+        None => Json(ApiResponse::not_found("设备不存在")),
     }
 }
 
@@ -696,7 +696,7 @@ pub async fn get_equipment_statistics(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to get equipment statistics: {}", e);
-            return Json(ApiResponse::error(500, "获取设备统计失败"));
+            return Json(ApiResponse::server_error("获取设备统计失败"));
         }
     };
 
@@ -814,7 +814,7 @@ pub async fn list_maintenances(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch maintenances: {}", e);
-            return Json(ApiResponse::error(500, "获取维护记录列表失败"));
+            return Json(ApiResponse::server_error("获取维护记录列表失败"));
         }
     };
 
@@ -925,7 +925,7 @@ pub async fn create_maintenance(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create maintenance: {}", e);
-            return Json(ApiResponse::error(500, "创建维护记录失败"));
+            return Json(ApiResponse::server_error("创建维护记录失败"));
         }
     };
 
@@ -1031,10 +1031,10 @@ pub async fn update_maintenance_status(
 
     let result = match result {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "维护记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("维护记录不存在")),
         Err(e) => {
             tracing::warn!("Failed to update maintenance status: {}", e);
-            return Json(ApiResponse::error(500, "更新维护状态失败"));
+            return Json(ApiResponse::server_error("更新维护状态失败"));
         }
     };
 
@@ -1187,7 +1187,7 @@ pub async fn list_inspections(
         Ok(c) => c.unwrap_or(0),
         Err(e) => {
             tracing::error!("Failed to count inspections: {}", e);
-            return Json(ApiResponse::error(500, "获取点检记录列表失败"));
+            return Json(ApiResponse::server_error("获取点检记录列表失败"));
         }
     };
 
@@ -1260,7 +1260,7 @@ pub async fn list_inspections(
         }
         Err(e) => {
             tracing::error!("Failed to fetch inspections: {}", e);
-            Json(ApiResponse::error(500, "获取点检记录列表失败"))
+            Json(ApiResponse::server_error("获取点检记录列表失败"))
         }
     }
 }
@@ -1291,7 +1291,7 @@ pub async fn create_inspection(
     let equipment_uuid = match Uuid::parse_str(&body.equipment_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的设备ID"));
+            return Json(ApiResponse::bad_request("无效的设备ID"));
         }
     };
 
@@ -1383,7 +1383,7 @@ pub async fn create_inspection(
         )),
         Err(e) => {
             tracing::error!("Failed to create inspection: {}", e);
-            Json(ApiResponse::error(500, "创建点检记录失败"))
+            Json(ApiResponse::server_error("创建点检记录失败"))
         }
     }
 }

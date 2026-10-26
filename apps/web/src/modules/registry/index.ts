@@ -16,29 +16,11 @@ export type { ModuleConfig, ModuleRoute };
 
 /**
  * 核心模块路由注册：
- * - MF 部署模式：注册 core-modules 全量路由（本地 + topems_core remote 字符串导入路由）。
- * - static/本地打包模式（前端回归模块化单体）：仅注册本地组件可用的路由
- *   （/core/users、/core/roles）。其余路由（permissions/org/workflow/documents/reports）
- *   依赖 topems_core remote（端口 3001）未部署，若注册会因动态 import 失败导致页面崩溃。
- *   判断依据：component 源码字符串含 `topems_core/pages` 即远程导入。
+ * 历史上存在 MF 部署模式（topems_* 远程路由）与 static/本地打包模式的切换；
+ * MF 远程路由已于冗余清理批次移除（core-modules.ts 仅保留本地 import 路由），
+ * 两模式等价，直接注册全量本地路由。
  */
-const isMFMode = () => {
-  const mode = (
-    typeof import.meta !== 'undefined' ? import.meta.env?.VITE_DEPLOYMENT_MODE : undefined
-  ) as string | undefined;
-  if (mode) return mode !== 'static';
-  return false;
-};
-
-export const CORE_MODULES: ModuleConfig[] = isMFMode()
-  ? CORE_MODULES_CONFIG
-  : CORE_MODULES_CONFIG.map((module) => ({
-      ...module,
-      routes: module.routes.filter((route) => {
-        const src = route.component?.toString() || '';
-        return !src.includes('topems_core/pages');
-      }),
-    })).filter((module) => module.routes.length > 0);
+export const CORE_MODULES: ModuleConfig[] = CORE_MODULES_CONFIG;
 
 // ============================================================================
 // Business Modules (sold as packages)
@@ -149,14 +131,16 @@ class ModuleRegistry {
   }
 
   /**
-   * Get all remote (Module Federation) modules
+   * Get all remote (Module Federation) modules.
+   * 冗余清理后 CORE_MODULES 已无 remoteEntry 字段，恒返回空数组；
+   * 保留方法以兼容 DynamicRouter.preloadRemoteModules 调用（循环自然为 0 次）。
    */
   getRemoteModules(): ModuleConfig[] {
     return this.getAllModules().filter((m) => !!m.remoteEntry);
   }
 
   /**
-   * Load a remote module dynamically
+   * Load a module dynamically（MF 远程加载分支已随 MF 面移除）
    */
   async loadRemoteModule(moduleId: string): Promise<unknown> {
     const module = this.modules.get(moduleId);
@@ -167,18 +151,6 @@ class ModuleRegistry {
     if (module.category === 'core' || module.category === 'business') {
       // Static module - use lazy import
       return import(/* @vite-ignore */ module.entry);
-    }
-
-    if (module.remoteEntry && module.entry) {
-      // Dynamic remote module
-      await WebpackInitSharing('default');
-      const container = (window as Record<string, WebpackContainer | undefined>)[module.id];
-      if (!container) {
-        throw new Error(`Remote container "${module.id}" not found on window`);
-      }
-      await container.init(WebpackShareScopes.default);
-      const factory = await container.get(module.entry);
-      return factory();
     }
 
     throw new Error(`Cannot load module ${moduleId}: no entry point`);

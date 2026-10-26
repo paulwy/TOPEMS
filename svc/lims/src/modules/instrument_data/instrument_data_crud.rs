@@ -99,7 +99,7 @@ pub async fn list_instrument_data(
         Ok(data) => Json(ApiResponse::success(data, "获取仪器数据列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch instrument data: {}", e);
-            Json(ApiResponse::error(500, "获取仪器数据列表失败"))
+            Json(ApiResponse::server_error("获取仪器数据列表失败"))
         }
     }
 }
@@ -124,7 +124,7 @@ pub async fn get_instrument_data(
 ) -> Json<ApiResponse<InstrumentData>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的数据ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的数据ID")),
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -169,10 +169,10 @@ pub async fn get_instrument_data(
             },
             "获取仪器数据成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "仪器数据不存在")),
+        Ok(None) => Json(ApiResponse::not_found("仪器数据不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch instrument data: {}", e);
-            Json(ApiResponse::error(500, "获取仪器数据失败"))
+            Json(ApiResponse::server_error("获取仪器数据失败"))
         }
     }
 }
@@ -194,7 +194,7 @@ pub async fn create_instrument_data(
     let instrument_uuid = match &req.instrument_id {
         Some(id) => match Uuid::parse_str(id) {
             Ok(u) => Some(u),
-            Err(_) => return Json(ApiResponse::error(400, "无效的仪器ID")),
+            Err(_) => return Json(ApiResponse::bad_request("无效的仪器ID")),
         },
         None => None,
     };
@@ -246,7 +246,7 @@ pub async fn create_instrument_data(
         )),
         Err(e) => {
             tracing::error!("Failed to create instrument data: {}", e);
-            Json(ApiResponse::error(500, "创建仪器数据失败"))
+            Json(ApiResponse::server_error("创建仪器数据失败"))
         }
     }
 }
@@ -258,7 +258,7 @@ pub async fn update_instrument_data(
 ) -> Json<ApiResponse<InstrumentData>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的数据ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的数据ID")),
     };
 
     let row = sqlx::query(
@@ -306,10 +306,10 @@ pub async fn update_instrument_data(
             },
             "仪器数据更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "仪器数据不存在")),
+        Ok(None) => Json(ApiResponse::not_found("仪器数据不存在")),
         Err(e) => {
             tracing::error!("Failed to update instrument data: {}", e);
-            Json(ApiResponse::error(500, "更新仪器数据失败"))
+            Json(ApiResponse::server_error("更新仪器数据失败"))
         }
     }
 }
@@ -320,7 +320,7 @@ pub async fn delete_instrument_data(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的数据ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的数据ID")),
     };
 
     let result = sqlx::query("UPDATE qa_lims_instrument_data SET deleted_at = NOW() WHERE id = $1")
@@ -332,7 +332,7 @@ pub async fn delete_instrument_data(
         Ok(_) => Json(ApiResponse::success(true, "仪器数据删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete instrument data: {}", e);
-            Json(ApiResponse::error(500, "删除仪器数据失败"))
+            Json(ApiResponse::server_error("删除仪器数据失败"))
         }
     }
 }

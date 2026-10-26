@@ -385,7 +385,7 @@ pub async fn get_contact_detail(
                             "获取联系人详情成功",
                         ))
                     } else {
-                        Json(ApiResponse::error(404, "部门不存在"))
+                        Json(ApiResponse::not_found("部门不存在"))
                     }
                 }
                 Err(e) => Json(ApiResponse::from(TopemsError::internal(
@@ -417,7 +417,7 @@ pub async fn get_contact_detail(
                             "获取联系人详情成功",
                         ))
                     } else {
-                        Json(ApiResponse::error(404, "公司不存在"))
+                        Json(ApiResponse::not_found("公司不存在"))
                     }
                 }
                 Err(e) => Json(ApiResponse::from(TopemsError::internal(
@@ -425,9 +425,9 @@ pub async fn get_contact_detail(
                     e,
                 ))),
             },
-            _ => Json(ApiResponse::error(400, "无效的联系人类型")),
+            _ => Json(ApiResponse::bad_request("无效的联系人类型")),
         },
-        Err(_) => Json(ApiResponse::error(400, "无效的联系人ID格式")),
+        Err(_) => Json(ApiResponse::bad_request("无效的联系人ID格式")),
     }
 }
 

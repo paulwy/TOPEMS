@@ -146,7 +146,7 @@ pub async fn list_datasets(
         }
         Err(e) => {
             warn!("获取数据集列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取数据集列表失败"))
+            Json(ApiResponse::server_error("获取数据集列表失败"))
         }
     }
 }

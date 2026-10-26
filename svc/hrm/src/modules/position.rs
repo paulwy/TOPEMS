@@ -273,7 +273,7 @@ pub async fn create_position(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
@@ -364,10 +364,10 @@ pub async fn get_position(
 
     match result {
         Ok(Some(position)) => Json(ApiResponse::success(position, "查询成功")),
-        Ok(None) => Json(ApiResponse::<Position>::error(404, "岗位不存在")),
+        Ok(None) => Json(ApiResponse::<Position>::not_found("岗位不存在")),
         Err(e) => {
             tracing::error!("查询岗位失败: {}", e);
-            Json(ApiResponse::<Position>::error(500, "查询岗位失败"))
+            Json(ApiResponse::<Position>::server_error("查询岗位失败"))
         }
     }
 }
@@ -450,15 +450,15 @@ pub async fn update_position(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(position, "岗位更新成功"))
         }
-        Ok(None) => Json(ApiResponse::<Position>::error(404, "岗位不存在")),
+        Ok(None) => Json(ApiResponse::<Position>::not_found("岗位不存在")),
         Err(e) => {
             tracing::error!("更新岗位失败: {}", e);
-            Json(ApiResponse::<Position>::error(500, "更新岗位失败"))
+            Json(ApiResponse::<Position>::server_error("更新岗位失败"))
         }
     }
 }
@@ -505,7 +505,7 @@ pub async fn delete_position(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (

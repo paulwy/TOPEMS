@@ -131,7 +131,7 @@ pub async fn list_patrols(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality patrols: {}", e);
-            return Json(ApiResponse::error(500, "获取巡检记录列表失败"));
+            return Json(ApiResponse::server_error("获取巡检记录列表失败"));
         }
     };
 
@@ -162,7 +162,7 @@ pub async fn list_patrols(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality patrols: {}", e);
-            return Json(ApiResponse::error(500, "获取巡检记录列表失败"));
+            return Json(ApiResponse::server_error("获取巡检记录列表失败"));
         }
     };
 
@@ -248,7 +248,7 @@ pub async fn get_patrol(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的巡检记录ID"));
+            return Json(ApiResponse::bad_request("无效的巡检记录ID"));
         }
     };
 
@@ -286,10 +286,10 @@ pub async fn get_patrol(
             },
             "获取巡检记录成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "巡检记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("巡检记录不存在")),
         Err(e) => {
             tracing::error!("Failed to get quality patrol: {}", e);
-            Json(ApiResponse::error(500, "获取巡检记录失败"))
+            Json(ApiResponse::server_error("获取巡检记录失败"))
         }
     }
 }
@@ -379,7 +379,7 @@ pub async fn create_patrol(
         )),
         Err(e) => {
             tracing::error!("Failed to create quality patrol: {}", e);
-            Json(ApiResponse::error(500, "创建巡检记录失败"))
+            Json(ApiResponse::server_error("创建巡检记录失败"))
         }
     }
 }
@@ -399,7 +399,7 @@ pub async fn update_patrol(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的巡检记录ID"));
+            return Json(ApiResponse::bad_request("无效的巡检记录ID"));
         }
     };
 
@@ -461,10 +461,10 @@ pub async fn update_patrol(
             },
             "更新巡检记录成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "巡检记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("巡检记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update quality patrol: {}", e);
-            Json(ApiResponse::error(500, "更新巡检记录失败"))
+            Json(ApiResponse::server_error("更新巡检记录失败"))
         }
     }
 }
@@ -483,7 +483,7 @@ pub async fn delete_patrol(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的巡检记录ID"));
+            return Json(ApiResponse::bad_request("无效的巡检记录ID"));
         }
     };
 
@@ -500,7 +500,7 @@ pub async fn delete_patrol(
         Ok(_) => Json(ApiResponse::success(id, "删除巡检记录成功")),
         Err(e) => {
             tracing::error!("Failed to delete quality patrol: {}", e);
-            Json(ApiResponse::error(500, "删除巡检记录失败"))
+            Json(ApiResponse::server_error("删除巡检记录失败"))
         }
     }
 }
@@ -551,7 +551,7 @@ pub async fn list_patrol_items(
     let patrol_uuid = match Uuid::parse_str(&patrol_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的巡检记录ID"));
+            return Json(ApiResponse::bad_request("无效的巡检记录ID"));
         }
     };
 
@@ -591,7 +591,7 @@ pub async fn list_patrol_items(
         }
         Err(e) => {
             tracing::error!("Failed to list patrol items: {}", e);
-            Json(ApiResponse::error(500, "获取巡检项目列表失败"))
+            Json(ApiResponse::server_error("获取巡检项目列表失败"))
         }
     }
 }
@@ -611,7 +611,7 @@ pub async fn add_patrol_item(
     let patrol_uuid = match Uuid::parse_str(&patrol_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的巡检记录ID"));
+            return Json(ApiResponse::bad_request("无效的巡检记录ID"));
         }
     };
     let tenant_id = get_tenant_id(&claims);
@@ -650,7 +650,7 @@ pub async fn add_patrol_item(
         )),
         Err(e) => {
             tracing::error!("Failed to add patrol item: {}", e);
-            Json(ApiResponse::error(500, "添加巡检项目失败"))
+            Json(ApiResponse::server_error("添加巡检项目失败"))
         }
     }
 }
@@ -692,7 +692,7 @@ pub async fn update_patrol_item(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的巡检项目ID"));
+            return Json(ApiResponse::bad_request("无效的巡检项目ID"));
         }
     };
 
@@ -731,10 +731,10 @@ pub async fn update_patrol_item(
             },
             "更新巡检项目成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "巡检项目不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("巡检项目不存在")),
         Err(e) => {
             tracing::error!("Failed to update patrol item: {}", e);
-            Json(ApiResponse::error(500, "更新巡检项目失败"))
+            Json(ApiResponse::server_error("更新巡检项目失败"))
         }
     }
 }
@@ -753,7 +753,7 @@ pub async fn delete_patrol_item(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的巡检项目ID"));
+            return Json(ApiResponse::bad_request("无效的巡检项目ID"));
         }
     };
 
@@ -770,7 +770,7 @@ pub async fn delete_patrol_item(
         Ok(_) => Json(ApiResponse::success(id, "删除巡检项目成功")),
         Err(e) => {
             tracing::error!("Failed to delete patrol item: {}", e);
-            Json(ApiResponse::error(500, "删除巡检项目失败"))
+            Json(ApiResponse::server_error("删除巡检项目失败"))
         }
     }
 }

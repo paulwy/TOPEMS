@@ -285,7 +285,7 @@ pub async fn get_projection_progress(
             Ok(progress) => Json(ApiResponse::success(progress, "查询成功")),
             Err(e) => Json(crate::shared::err_resp(e)),
         },
-        None => Json(ApiResponse::error(500, "PgCqrsContext 未初始化")),
+        None => Json(ApiResponse::server_error("PgCqrsContext 未初始化")),
     }
 }
 
@@ -315,7 +315,7 @@ pub async fn list_events_paginated(
             }
             Err(e) => Json(crate::shared::err_resp(e)),
         },
-        None => Json(ApiResponse::error(500, "PgCqrsContext 未初始化")),
+        None => Json(ApiResponse::server_error("PgCqrsContext 未初始化")),
     }
 }
 
@@ -325,7 +325,7 @@ pub async fn replay_view(Path(view_name): Path<String>) -> Json<ApiResponse<()>>
             Ok(()) => Json(ApiResponse::success((), "重放成功")),
             Err(e) => Json(crate::shared::err_resp(e)),
         },
-        None => Json(ApiResponse::error(500, "PgCqrsContext 未初始化")),
+        None => Json(ApiResponse::server_error("PgCqrsContext 未初始化")),
     }
 }
 

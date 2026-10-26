@@ -162,7 +162,7 @@ pub async fn get_pipeline(
     .await
     {
         Ok(pipeline) => Json(ApiResponse::success(pipeline, "获取管道成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "管道未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("管道未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
     }
 }
@@ -218,7 +218,7 @@ pub async fn update_pipeline(
     .await
     {
         Ok(pipeline) => Json(ApiResponse::success(pipeline, "更新管道成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "管道未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("管道未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
     }
 }
@@ -259,7 +259,7 @@ pub async fn delete_pipeline(
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(true, "删除管道成功"))
             } else {
-                Json(ApiResponse::error(404, "管道未找到"))
+                Json(ApiResponse::not_found("管道未找到"))
             }
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal(

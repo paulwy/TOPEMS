@@ -10,5 +10,8 @@ export { useEhsDashboardSchema } from './dashboardSchema';
 export { regulationSchema, assessmentSchema, permitSchema } from './compliance';
 export { emergencyDrillSchema } from './emergency';
 export { healthManagementSchema } from './healthManagement';
+export { healthCheckPlanSchema } from './healthCheckPlan';
+export { healthCheckRecordSchema } from './healthCheckRecord';
+export { contraindicationSchema } from './contraindication';
 export { environmentMonitorSchema } from './environment';
 export { inspectionPlanSchema, inspectionRecordSchema } from './check';

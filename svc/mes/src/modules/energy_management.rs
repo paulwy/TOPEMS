@@ -30,8 +30,7 @@ use topems_shared_core::response::ApiResponse;
 ///
 /// `endpoint` 用于在错误消息里指明是哪个接口未接入数据源。
 fn energy_source_unavailable<T>(endpoint: &str) -> Json<ApiResponse<T>> {
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         &format!(
             "能耗数据源未接入（degraded）：{} 暂无真实采集表/采集系统，返回合成值已被禁用。请等待能耗采集表落地后重试。",
             endpoint

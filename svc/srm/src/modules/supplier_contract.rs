@@ -78,7 +78,7 @@ pub async fn list_contracts(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
@@ -166,8 +166,7 @@ pub async fn list_contracts(
         }
         Err(e) => {
             tracing::error!("获取供应商合同列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取供应商合同列表失败",
             ))
         }
@@ -186,7 +185,7 @@ pub async fn create_contract(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
         Ok(_) => {}
@@ -205,8 +204,7 @@ pub async fn create_contract(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.contract_no.is_empty() || req.title.is_empty() {
-        return Json(ApiResponse::<SupplierContract>::error(
-            400,
+        return Json(ApiResponse::<SupplierContract>::bad_request(
             "合同编号和标题不能为空",
         ));
     }
@@ -214,8 +212,7 @@ pub async fn create_contract(
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<SupplierContract>::error(
-                400,
+            return Json(ApiResponse::<SupplierContract>::bad_request(
                 "供应商ID格式错误",
             ));
         }
@@ -230,8 +227,7 @@ pub async fn create_contract(
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
-        return Json(ApiResponse::<SupplierContract>::error(
-            400,
+        return Json(ApiResponse::<SupplierContract>::bad_request(
             "供应商不存在或已删除",
         ));
     }
@@ -245,16 +241,14 @@ pub async fn create_contract(
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<SupplierContract>::error(
-            400,
+        return Json(ApiResponse::<SupplierContract>::bad_request(
             "合同编号已存在",
         ));
     }
 
     if let Some(amount) = req.total_amount {
         if amount < Decimal::ZERO {
-            return Json(ApiResponse::<SupplierContract>::error(
-                400,
+            return Json(ApiResponse::<SupplierContract>::bad_request(
                 "合同金额不能为负数",
             ));
         }
@@ -280,8 +274,7 @@ pub async fn create_contract(
 
     if let (Some(start), Some(end)) = (start_date, end_date) {
         if start > end {
-            return Json(ApiResponse::<SupplierContract>::error(
-                400,
+            return Json(ApiResponse::<SupplierContract>::bad_request(
                 "合同开始日期不能晚于结束日期",
             ));
         }
@@ -323,15 +316,14 @@ pub async fn create_contract(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(contract, "供应商合同创建成功"))
         }
         Err(e) => {
             tracing::error!("创建供应商合同失败: {}", e);
-            Json(ApiResponse::<SupplierContract>::error(
-                500,
+            Json(ApiResponse::<SupplierContract>::server_error(
                 "供应商合同创建失败",
             ))
         }
@@ -363,7 +355,7 @@ pub async fn get_contract(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
@@ -394,14 +386,12 @@ pub async fn get_contract(
 
     match result {
         Ok(Some(contract)) => Json(ApiResponse::success(contract, "获取供应商合同成功")),
-        Ok(None) => Json(ApiResponse::<SupplierContract>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<SupplierContract>::not_found(
             "供应商合同不存在",
         )),
         Err(e) => {
             tracing::error!("获取供应商合同失败: {}", e);
-            Json(ApiResponse::<SupplierContract>::error(
-                500,
+            Json(ApiResponse::<SupplierContract>::server_error(
                 "获取供应商合同失败",
             ))
         }
@@ -421,7 +411,7 @@ pub async fn update_contract(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
         Ok(_) => {}
@@ -450,8 +440,7 @@ pub async fn update_contract(
     let existing = match existing {
         Ok(Some(c)) => c,
         Ok(None) => {
-            return Json(ApiResponse::<SupplierContract>::error(
-                404,
+            return Json(ApiResponse::<SupplierContract>::not_found(
                 "供应商合同不存在",
             ))
         }
@@ -466,8 +455,7 @@ pub async fn update_contract(
         let supplier_uuid_val = match Uuid::parse_str(supplier_id_str) {
             Ok(uuid) => uuid,
             Err(_) => {
-                return Json(ApiResponse::<SupplierContract>::error(
-                    400,
+                return Json(ApiResponse::<SupplierContract>::bad_request(
                     "供应商ID格式错误",
                 ));
             }
@@ -482,8 +470,7 @@ pub async fn update_contract(
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<SupplierContract>::error(
-                400,
+            return Json(ApiResponse::<SupplierContract>::bad_request(
                 "供应商不存在或已删除",
             ));
         }
@@ -495,8 +482,7 @@ pub async fn update_contract(
 
     if let Some(amount) = req.total_amount {
         if amount < Decimal::ZERO {
-            return Json(ApiResponse::<SupplierContract>::error(
-                400,
+            return Json(ApiResponse::<SupplierContract>::bad_request(
                 "合同金额不能为负数",
             ));
         }
@@ -508,8 +494,7 @@ pub async fn update_contract(
 
     if let (Some(start), Some(end)) = (start_date, end_date) {
         if start > end {
-            return Json(ApiResponse::<SupplierContract>::error(
-                400,
+            return Json(ApiResponse::<SupplierContract>::bad_request(
                 "合同开始日期不能晚于结束日期",
             ));
         }
@@ -556,15 +541,14 @@ pub async fn update_contract(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             Json(ApiResponse::success(contract, "供应商合同更新成功"))
         }
         Err(e) => {
             tracing::error!("更新供应商合同失败: {}", e);
-            Json(ApiResponse::<SupplierContract>::error(
-                500,
+            Json(ApiResponse::<SupplierContract>::server_error(
                 "供应商合同更新失败",
             ))
         }
@@ -583,7 +567,7 @@ pub async fn delete_contract(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
         Ok(_) => {}
@@ -616,15 +600,15 @@ pub async fn delete_contract(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success("".to_string(), "供应商合同删除成功"))
         }
-        Ok(_) => Json(ApiResponse::<String>::error(404, "供应商合同不存在")),
+        Ok(_) => Json(ApiResponse::<String>::not_found("供应商合同不存在")),
         Err(e) => {
             tracing::error!("删除供应商合同失败: {}", e);
-            Json(ApiResponse::<String>::error(500, "供应商合同删除失败"))
+            Json(ApiResponse::<String>::server_error("供应商合同删除失败"))
         }
     }
 }
@@ -656,7 +640,7 @@ pub async fn get_contract_terms(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}

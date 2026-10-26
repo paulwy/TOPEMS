@@ -34,7 +34,7 @@ async fn list_empty() -> Json<ApiResponse<Value>> {
 async fn detail_missing() -> (StatusCode, Json<ApiResponse<Value>>) {
     (
         StatusCode::OK,
-        Json(ApiResponse::error(404, "资源不存在（待上游支持）")),
+        Json(ApiResponse::not_found("资源不存在（待上游支持）")),
     )
 }
 

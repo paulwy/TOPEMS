@@ -129,7 +129,7 @@ pub async fn check_project_permission<T>(
     let user_id = match claims.user_id() {
         Ok(id) => id,
         Err(_) => {
-            return Err(axum::Json(ApiResponse::error(401, "无效的用户ID")));
+            return Err(axum::Json(ApiResponse::unauthorized("无效的用户ID")));
         }
     };
 
@@ -141,20 +141,18 @@ pub async fn check_project_permission<T>(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("查询项目角色失败: {}", e);
-            return Err(axum::Json(ApiResponse::error(500, "权限检查失败")));
+            return Err(axum::Json(ApiResponse::server_error("权限检查失败")));
         }
     };
 
     if role == ProjectRole::None {
-        return Err(axum::Json(ApiResponse::error(
-            403,
+        return Err(axum::Json(ApiResponse::forbidden(
             "您不是该项目的成员，无法访问",
         )));
     }
 
     if !has_project_permission(&role, permission) {
-        return Err(axum::Json(ApiResponse::error(
-            403,
+        return Err(axum::Json(ApiResponse::forbidden(
             &format!(
                 "权限不足：您在该项目中的角色是 {}，需要 {} 权限",
                 role, permission
@@ -177,7 +175,7 @@ pub async fn check_project_owner<T>(
     let user_id = match claims.user_id() {
         Ok(id) => id,
         Err(_) => {
-            return Err(axum::Json(ApiResponse::error(401, "无效的用户ID")));
+            return Err(axum::Json(ApiResponse::unauthorized("无效的用户ID")));
         }
     };
 
@@ -189,13 +187,12 @@ pub async fn check_project_owner<T>(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("查询项目角色失败: {}", e);
-            return Err(axum::Json(ApiResponse::error(500, "权限检查失败")));
+            return Err(axum::Json(ApiResponse::server_error("权限检查失败")));
         }
     };
 
     if role != ProjectRole::Owner {
-        return Err(axum::Json(ApiResponse::error(
-            403,
+        return Err(axum::Json(ApiResponse::forbidden(
             "权限不足：只有项目负责人才能执行此操作",
         )));
     }

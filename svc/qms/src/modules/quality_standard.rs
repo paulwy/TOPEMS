@@ -107,7 +107,7 @@ pub async fn list_standards(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count standards: {}", e);
-            return Json(ApiResponse::error(500, "获取质量标准列表失败"));
+            return Json(ApiResponse::server_error("获取质量标准列表失败"));
         }
     };
 
@@ -154,7 +154,7 @@ pub async fn list_standards(
         }
         Err(e) => {
             tracing::error!("Failed to fetch standards: {}", e);
-            Json(ApiResponse::error(500, "获取质量标准列表失败"))
+            Json(ApiResponse::server_error("获取质量标准列表失败"))
         }
     }
 }
@@ -219,7 +219,7 @@ pub async fn create_standard(
         }
         Err(e) => {
             tracing::error!("Failed to create standard: {}", e);
-            Json(ApiResponse::error(500, "质量标准创建失败"))
+            Json(ApiResponse::server_error("质量标准创建失败"))
         }
     }
 }
@@ -254,7 +254,7 @@ pub async fn get_standard(
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的标准ID")),
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
 
@@ -264,11 +264,11 @@ pub async fn get_standard(
 
     match standard {
         Ok(data) => Json(ApiResponse::success(data, "获取质量标准成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch standard: {}", e);
-            Json(ApiResponse::error(500, "获取质量标准失败"))
+            Json(ApiResponse::server_error("获取质量标准失败"))
         }
     }
 }
@@ -305,7 +305,7 @@ pub async fn update_standard(
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的标准ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -349,10 +349,10 @@ pub async fn update_standard(
 
             Json(ApiResponse::success(data, "质量标准更新成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update standard: {}", e);
-            Json(ApiResponse::error(500, "质量标准更新失败"))
+            Json(ApiResponse::server_error("质量标准更新失败"))
         }
     }
 }
@@ -379,7 +379,7 @@ pub async fn delete_standard(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的标准ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -418,7 +418,7 @@ pub async fn delete_standard(
         }
         Err(e) => {
             tracing::error!("Failed to delete standard: {}", e);
-            Json(ApiResponse::error(500, "质量标准删除失败"))
+            Json(ApiResponse::server_error("质量标准删除失败"))
         }
     }
 }
@@ -452,7 +452,7 @@ pub async fn list_revisions(
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的标准ID")),
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
 
@@ -464,7 +464,7 @@ pub async fn list_revisions(
         Ok(data) => Json(ApiResponse::success(data, "获取质量标准修订记录成功")),
         Err(e) => {
             tracing::error!("Failed to fetch revisions: {}", e);
-            Json(ApiResponse::error(500, "获取质量标准修订记录失败"))
+            Json(ApiResponse::server_error("获取质量标准修订记录失败"))
         }
     }
 }
@@ -499,7 +499,7 @@ pub async fn create_revision(
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的标准ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -546,13 +546,13 @@ pub async fn create_revision(
                 Ok(data) => Json(ApiResponse::success(data, "质量标准版本创建成功")),
                 Err(e) => {
                     tracing::error!("Failed to create revision: {}", e);
-                    Json(ApiResponse::error(500, "质量标准版本创建失败"))
+                    Json(ApiResponse::server_error("质量标准版本创建失败"))
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find standard: {}", e);
-            Json(ApiResponse::error(404, "质量标准不存在"))
+            Json(ApiResponse::not_found("质量标准不存在"))
         }
     }
 }

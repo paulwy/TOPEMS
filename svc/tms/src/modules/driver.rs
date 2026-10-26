@@ -265,7 +265,7 @@ pub async fn create_driver(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
 
@@ -424,7 +424,7 @@ pub async fn update_driver(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(driver, "司机更新成功"))
@@ -483,7 +483,7 @@ pub async fn delete_driver(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success("".to_string(), "司机删除成功"))
@@ -577,7 +577,7 @@ pub async fn submit_verification(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     tracing::info!(
@@ -677,7 +677,7 @@ pub async fn approve_driver(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     tracing::info!(
@@ -778,7 +778,7 @@ pub async fn reject_driver(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::error(500, "事务提交失败"));
+                            return Json(ApiResponse::server_error("事务提交失败"));
                         }
                     }
                     tracing::info!(

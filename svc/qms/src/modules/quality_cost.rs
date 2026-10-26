@@ -91,7 +91,7 @@ pub async fn list_quality_costs(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality costs: {}", e);
-            return Json(ApiResponse::error(500, "获取质量成本列表失败"));
+            return Json(ApiResponse::server_error("获取质量成本列表失败"));
         }
     };
 
@@ -120,7 +120,7 @@ pub async fn list_quality_costs(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch quality costs: {}", e);
-            Json(ApiResponse::error(500, "获取质量成本列表失败"))
+            Json(ApiResponse::server_error("获取质量成本列表失败"))
         }
     }
 }
@@ -164,7 +164,7 @@ pub async fn create_quality_cost(
         Ok(data) => Json(ApiResponse::success(data, "质量成本记录创建成功")),
         Err(e) => {
             tracing::error!("Failed to create quality cost: {}", e);
-            Json(ApiResponse::error(500, "质量成本记录创建失败"))
+            Json(ApiResponse::server_error("质量成本记录创建失败"))
         }
     }
 }
@@ -200,7 +200,7 @@ pub async fn get_quality_cost(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的成本记录ID")),
     };
 
     let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date, created_by, created_at, updated_at FROM qms.qa_quality_costs WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
@@ -209,11 +209,11 @@ pub async fn get_quality_cost(
 
     match cost {
         Ok(data) => Json(ApiResponse::success(data, "获取质量成本记录成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch quality cost: {}", e);
-            Json(ApiResponse::error(500, "获取质量成本记录失败"))
+            Json(ApiResponse::server_error("获取质量成本记录失败"))
         }
     }
 }
@@ -243,7 +243,7 @@ pub async fn update_quality_cost(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的成本记录ID")),
     };
 
     let related_issue_id = req
@@ -260,10 +260,10 @@ pub async fn update_quality_cost(
 
     match cost {
         Ok(data) => Json(ApiResponse::success(data, "质量成本记录更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update quality cost: {}", e);
-            Json(ApiResponse::error(500, "质量成本记录更新失败"))
+            Json(ApiResponse::server_error("质量成本记录更新失败"))
         }
     }
 }
@@ -291,7 +291,7 @@ pub async fn delete_quality_cost(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的成本记录ID")),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -307,7 +307,7 @@ pub async fn delete_quality_cost(
         Ok(_) => Json(ApiResponse::success(true, "质量成本记录删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete quality cost: {}", e);
-            Json(ApiResponse::error(500, "质量成本记录删除失败"))
+            Json(ApiResponse::server_error("质量成本记录删除失败"))
         }
     }
 }
@@ -571,7 +571,7 @@ pub async fn get_cost_trend(
         }
         Err(e) => {
             tracing::error!("Failed to fetch cost trend: {}", e);
-            Json(ApiResponse::error(500, "获取质量成本趋势失败"))
+            Json(ApiResponse::server_error("获取质量成本趋势失败"))
         }
     }
 }

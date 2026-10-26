@@ -207,7 +207,7 @@ pub async fn list_materials(
         }
         Err(e) => {
             tracing::error!("获取物料列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取物料列表失败"))
+            Json(ApiResponse::server_error("获取物料列表失败"))
         }
     }
 }
@@ -235,10 +235,10 @@ pub async fn create_material(
     let tenant_id = tenant_opt.unwrap_or(uuid::Uuid::nil());
 
     if req.material_no.is_empty() {
-        return Json(ApiResponse::error(400, "物料编号不能为空"));
+        return Json(ApiResponse::bad_request("物料编号不能为空"));
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::error(400, "物料名称不能为空"));
+        return Json(ApiResponse::bad_request("物料名称不能为空"));
     }
 
     let status = req.status.unwrap_or_else(|| "active".to_string());
@@ -348,7 +348,7 @@ pub async fn create_material(
         }
         Err(e) => {
             tracing::error!("创建物料失败: {}", e);
-            Json(ApiResponse::error(500, "创建物料失败"))
+            Json(ApiResponse::server_error("创建物料失败"))
         }
     }
 }
@@ -399,10 +399,10 @@ pub async fn get_material(
 
     match result {
         Ok(Some(material)) => Json(ApiResponse::success(material, "获取物料成功")),
-        Ok(None) => Json(ApiResponse::error(404, "物料不存在")),
+        Ok(None) => Json(ApiResponse::not_found("物料不存在")),
         Err(e) => {
             tracing::error!("获取物料失败: {}", e);
-            Json(ApiResponse::error(500, "获取物料失败"))
+            Json(ApiResponse::server_error("获取物料失败"))
         }
     }
 }
@@ -450,10 +450,10 @@ pub async fn update_material(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::error(404, "物料不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("物料不存在")),
         Err(e) => {
             tracing::error!("查询物料失败: {}", e);
-            return Json(ApiResponse::error(500, "查询物料失败"));
+            return Json(ApiResponse::server_error("查询物料失败"));
         }
     };
 
@@ -535,7 +535,7 @@ pub async fn update_material(
         }
         Err(e) => {
             tracing::error!("更新物料失败: {}", e);
-            Json(ApiResponse::error(500, "更新物料失败"))
+            Json(ApiResponse::server_error("更新物料失败"))
         }
     }
 }
@@ -619,10 +619,10 @@ pub async fn delete_material(
 
             Json(ApiResponse::success(true, "物料删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "物料不存在")),
+        Ok(_) => Json(ApiResponse::not_found("物料不存在")),
         Err(e) => {
             tracing::error!("删除物料失败: {}", e);
-            Json(ApiResponse::error(500, "删除物料失败"))
+            Json(ApiResponse::server_error("删除物料失败"))
         }
     }
 }

@@ -258,7 +258,7 @@ pub async fn list_work_stations(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count work stations: {}", e);
-            return Json(ApiResponse::error(500, "获取工位列表失败"));
+            return Json(ApiResponse::server_error("获取工位列表失败"));
         }
     };
 
@@ -295,7 +295,7 @@ pub async fn list_work_stations(
         Ok(w) => w,
         Err(e) => {
             tracing::error!("Failed to fetch work stations: {}", e);
-            return Json(ApiResponse::error(500, "获取工位列表失败"));
+            return Json(ApiResponse::server_error("获取工位列表失败"));
         }
     };
 
@@ -379,7 +379,7 @@ pub async fn create_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create work station: {}", e);
-            return Json(ApiResponse::error(500, "创建工位失败"));
+            return Json(ApiResponse::server_error("创建工位失败"));
         }
     };
 
@@ -435,7 +435,7 @@ pub async fn get_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch work station: {}", e);
-            return Json(ApiResponse::error(500, "获取工位失败"));
+            return Json(ApiResponse::server_error("获取工位失败"));
         }
     };
 
@@ -444,7 +444,7 @@ pub async fn get_work_station(
             row_to_workstation_response(&row),
             "获取工位成功",
         )),
-        None => Json(ApiResponse::error(404, "工位不存在")),
+        None => Json(ApiResponse::not_found("工位不存在")),
     }
 }
 
@@ -509,7 +509,7 @@ pub async fn update_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update work station: {}", e);
-            return Json(ApiResponse::error(500, "更新工位失败"));
+            return Json(ApiResponse::server_error("更新工位失败"));
         }
     };
 
@@ -518,7 +518,7 @@ pub async fn update_work_station(
             row_to_workstation_response(&row),
             "工位更新成功",
         )),
-        None => Json(ApiResponse::error(404, "工位不存在")),
+        None => Json(ApiResponse::not_found("工位不存在")),
     }
 }
 
@@ -547,14 +547,14 @@ pub async fn delete_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete work station: {}", e);
-            return Json(ApiResponse::error(500, "删除工位失败"));
+            return Json(ApiResponse::server_error("删除工位失败"));
         }
     };
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success("".to_string(), "工位删除成功"))
     } else {
-        Json(ApiResponse::error(404, "工位不存在"))
+        Json(ApiResponse::not_found("工位不存在"))
     }
 }
 
@@ -603,7 +603,7 @@ pub async fn activate_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to activate work station: {}", e);
-            return Json(ApiResponse::error(500, "激活工位失败"));
+            return Json(ApiResponse::server_error("激活工位失败"));
         }
     };
 
@@ -612,7 +612,7 @@ pub async fn activate_work_station(
             row_to_workstation_response(&row),
             "工位激活成功",
         )),
-        None => Json(ApiResponse::error(404, "工位不存在")),
+        None => Json(ApiResponse::not_found("工位不存在")),
     }
 }
 
@@ -661,7 +661,7 @@ pub async fn deactivate_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to deactivate work station: {}", e);
-            return Json(ApiResponse::error(500, "停用工位失败"));
+            return Json(ApiResponse::server_error("停用工位失败"));
         }
     };
 
@@ -670,7 +670,7 @@ pub async fn deactivate_work_station(
             row_to_workstation_response(&row),
             "工位停用成功",
         )),
-        None => Json(ApiResponse::error(404, "工位不存在或状态不允许停用")),
+        None => Json(ApiResponse::not_found("工位不存在或状态不允许停用")),
     }
 }
 

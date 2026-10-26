@@ -111,7 +111,7 @@ pub async fn check_request_permission(
         _ => {
             return Err((
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "缺少认证信息")),
+                axum::Json(ApiResponse::unauthorized("缺少认证信息")),
             ));
         }
     };
@@ -119,7 +119,7 @@ pub async fn check_request_permission(
     let secret = std::env::var("JWT_SECRET").map_err(|_| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            axum::Json(ApiResponse::error(500, "服务未配置 JWT_SECRET 环境变量")),
+            axum::Json(ApiResponse::server_error("服务未配置 JWT_SECRET 环境变量")),
         )
     })?;
     let claims = match verify_jwt_token(token, &secret) {
@@ -127,7 +127,7 @@ pub async fn check_request_permission(
         Err(_) => {
             return Err((
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::error(401, "无效的认证信息")),
+                axum::Json(ApiResponse::unauthorized("无效的认证信息")),
             ));
         }
     };

@@ -16,14 +16,12 @@ chrono.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
 sqlx.workspace = true
-topems-shared = { workspace = true }
 topems-shared-auth = { workspace = true }
 topems-shared-bootstrap = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-db = { workspace = true }
 utoipa.workspace = true
 anyhow.workspace = true
-reqwest.workspace = true
 rand.workspace = true
 dashmap = { workspace = true }
 csv = { workspace = true }

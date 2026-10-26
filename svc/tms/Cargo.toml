@@ -23,12 +23,10 @@ topems-shared-core = { workspace = true }
 topems-shared-auth = { workspace = true }
 topems-shared-db = { workspace = true }
 utoipa.workspace = true
-reqwest.workspace = true
 bigdecimal.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["full", "test-util"] }
-rust_decimal.workspace = true
 
 [[bin]]
 name = "topems-tms"

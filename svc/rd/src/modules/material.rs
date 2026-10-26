@@ -132,7 +132,7 @@ pub async fn list_material_tests(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -188,7 +188,7 @@ pub async fn list_material_tests(
         }
         Err(e) => {
             tracing::error!("获取原料试验记录失败: {}", e);
-            Json(ApiResponse::error(500, "获取原料试验记录失败"))
+            Json(ApiResponse::server_error("获取原料试验记录失败"))
         }
     }
 }
@@ -216,7 +216,7 @@ pub async fn list_by_project(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
@@ -235,7 +235,7 @@ pub async fn list_by_project(
         Ok(records) => Json(ApiResponse::success(records, "获取项目原料试验记录成功")),
         Err(e) => {
             tracing::error!("获取项目原料试验记录失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目原料试验记录失败"))
+            Json(ApiResponse::server_error("获取项目原料试验记录失败"))
         }
     }
 }
@@ -263,7 +263,7 @@ pub async fn list_by_experiment(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
@@ -282,7 +282,7 @@ pub async fn list_by_experiment(
         Ok(records) => Json(ApiResponse::success(records, "获取试验原料试验记录成功")),
         Err(e) => {
             tracing::error!("获取试验原料试验记录失败: {}", e);
-            Json(ApiResponse::error(500, "获取试验原料试验记录失败"))
+            Json(ApiResponse::server_error("获取试验原料试验记录失败"))
         }
     }
 }
@@ -298,14 +298,14 @@ pub async fn create_material_test(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     if req.material_name.is_empty() {
-        return Json(ApiResponse::error(400, "原料名称不能为空"));
+        return Json(ApiResponse::bad_request("原料名称不能为空"));
     }
 
     if req.tested_by.is_empty() {
-        return Json(ApiResponse::error(400, "测试人员不能为空"));
+        return Json(ApiResponse::bad_request("测试人员不能为空"));
     }
 
     let id = Uuid::new_v4();
@@ -345,7 +345,7 @@ pub async fn create_material_test(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             let response_data = serde_json::to_value(&record).ok();
@@ -383,7 +383,7 @@ pub async fn create_material_test(
                 &headers,
             )
             .await;
-            Json(ApiResponse::error(500, "原料试验记录创建失败"))
+            Json(ApiResponse::server_error("原料试验记录创建失败"))
         }
     }
 }
@@ -411,7 +411,7 @@ pub async fn get_material_test(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
@@ -426,10 +426,10 @@ pub async fn get_material_test(
 
     match result {
         Ok(Some(record)) => Json(ApiResponse::success(record, "获取原料试验记录成功")),
-        Ok(None) => Json(ApiResponse::error(404, "原料试验记录不存在")),
+        Ok(None) => Json(ApiResponse::not_found("原料试验记录不存在")),
         Err(e) => {
             tracing::error!("获取原料试验记录失败: {}", e);
-            Json(ApiResponse::error(500, "获取原料试验记录失败"))
+            Json(ApiResponse::server_error("获取原料试验记录失败"))
         }
     }
 }
@@ -446,7 +446,7 @@ pub async fn update_material_test(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let existing = sqlx::query_as::<_, MaterialTest>(
         "SELECT id, project_id, experiment_id, material_name, supplier, batch_number, test_results, conclusion, tested_by, tested_at, created_at FROM rs.material_tests WHERE deleted_at IS NULL AND id = $1",
@@ -457,7 +457,7 @@ pub async fn update_material_test(
 
     let existing = match existing {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "原料试验记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("原料试验记录不存在")),
         Err(e) => {
             return Json(ApiResponse::from(TopemsError::internal(
                 "查询原料试验记录失败",
@@ -498,7 +498,7 @@ pub async fn update_material_test(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             let response_data = serde_json::to_value(&record).ok();
@@ -536,7 +536,7 @@ pub async fn update_material_test(
                 &headers,
             )
             .await;
-            Json(ApiResponse::error(500, "原料试验记录更新失败"))
+            Json(ApiResponse::server_error("原料试验记录更新失败"))
         }
     }
 }
@@ -552,7 +552,7 @@ pub async fn delete_material_test(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let result = sqlx::query("UPDATE rs.material_tests SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
@@ -569,11 +569,11 @@ pub async fn delete_material_test(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             (
-                Json(ApiResponse::error(404, "原料试验记录不存在")),
+                Json(ApiResponse::not_found("原料试验记录不存在")),
                 "error".to_string(),
                 Some("原料试验记录不存在".to_string()),
             )
@@ -581,7 +581,7 @@ pub async fn delete_material_test(
         Err(e) => {
             tracing::error!("删除原料试验记录失败: {}", e);
             (
-                Json(ApiResponse::error(500, "原料试验记录删除失败")),
+                Json(ApiResponse::server_error("原料试验记录删除失败")),
                 "error".to_string(),
                 Some(e.to_string()),
             )

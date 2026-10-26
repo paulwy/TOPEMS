@@ -33,8 +33,6 @@ spec:
         env:
         - name: HRM_PORT
           value: "8020"
-        - name: CONSUL_URL
-          value: "http://consul-service:8500"
         resources:
           requests:
             cpu: "100m"

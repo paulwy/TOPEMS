@@ -348,7 +348,7 @@ pub async fn list_drill_plans(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list drill plans: {}", e);
-            return Json(ApiResponse::error(500, "获取演练计划列表失败"));
+            return Json(ApiResponse::server_error("获取演练计划列表失败"));
         }
     };
 
@@ -453,7 +453,7 @@ pub async fn create_drill_plan(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create drill plan: {}", e);
-            return Json(ApiResponse::error(500, "创建演练计划失败"));
+            return Json(ApiResponse::server_error("创建演练计划失败"));
         }
     };
 
@@ -525,10 +525,10 @@ pub async fn submit_drill_evaluation(
     .await
     {
         Ok(Some(_)) => {}
-        Ok(None) => return Json(ApiResponse::error(404, "演练记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("演练记录不存在")),
         Err(e) => {
             tracing::error!("Failed to check drill record: {}", e);
-            return Json(ApiResponse::error(500, "提交演练评估失败"));
+            return Json(ApiResponse::server_error("提交演练评估失败"));
         }
     }
 
@@ -563,7 +563,7 @@ pub async fn submit_drill_evaluation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to submit drill evaluation: {}", e);
-            return Json(ApiResponse::error(500, "提交演练评估失败"));
+            return Json(ApiResponse::server_error("提交演练评估失败"));
         }
     };
 
@@ -679,7 +679,7 @@ pub async fn list_drill_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list drill records: {}", e);
-            return Json(ApiResponse::error(500, "获取演练记录列表失败"));
+            return Json(ApiResponse::server_error("获取演练记录列表失败"));
         }
     };
     let list: Vec<DrillRecord> = rows.iter().map(drill_record_from_row).collect();
@@ -746,7 +746,7 @@ pub async fn create_drill_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create drill record: {}", e);
-            return Json(ApiResponse::error(500, "演练记录创建失败"));
+            return Json(ApiResponse::server_error("演练记录创建失败"));
         }
     };
     let record = drill_record_from_row(&row);
@@ -790,10 +790,10 @@ pub async fn get_drill_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "演练记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("演练记录不存在")),
         Err(e) => {
             tracing::error!("Failed to get drill record: {}", e);
-            return Json(ApiResponse::error(500, "获取演练详情失败"));
+            return Json(ApiResponse::server_error("获取演练详情失败"));
         }
     };
     let record = drill_record_from_row(&row);
@@ -893,10 +893,10 @@ pub async fn update_drill_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "演练记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("演练记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update drill record: {}", e);
-            return Json(ApiResponse::error(500, "演练记录更新失败"));
+            return Json(ApiResponse::server_error("演练记录更新失败"));
         }
     };
     let record = drill_record_from_row(&row);
@@ -937,11 +937,11 @@ pub async fn delete_drill_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete drill record: {}", e);
-            return Json(ApiResponse::error(500, "演练记录删除失败"));
+            return Json(ApiResponse::server_error("演练记录删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "演练记录不存在"));
+        return Json(ApiResponse::not_found("演练记录不存在"));
     }
     Json(ApiResponse::success((), "演练记录删除成功"))
 }

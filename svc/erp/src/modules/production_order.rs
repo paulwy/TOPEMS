@@ -216,7 +216,7 @@ pub async fn create_production_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(order, "生产订单创建成功"))
@@ -350,7 +350,7 @@ pub async fn update_production_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(order, "生产订单更新成功"))
@@ -408,7 +408,7 @@ pub async fn delete_production_order(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("事务提交失败: {}", e);
-                        return Json(ApiResponse::error(500, "事务提交失败"));
+                        return Json(ApiResponse::server_error("事务提交失败"));
                     }
                 }
                 Json(ApiResponse::success("".to_string(), "生产订单删除成功"))
@@ -483,7 +483,7 @@ pub async fn update_production_progress(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(order, "生产进度更新成功"))
@@ -604,7 +604,7 @@ pub async fn update_production_status(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(order, "生产订单状态更新成功"))

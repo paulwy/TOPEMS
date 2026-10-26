@@ -90,7 +90,7 @@ pub async fn get_performance_reports(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -262,8 +262,7 @@ pub async fn get_performance_reports(
         }
         Err(e) => {
             tracing::error!("获取供应商绩效报表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取供应商绩效报表失败",
             ))
         }
@@ -295,7 +294,7 @@ pub async fn get_performance_report(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -332,15 +331,13 @@ pub async fn get_performance_report(
     let (supplier_name, category, status, contact_person) = match supplier_info {
         Ok(Some(s)) => s,
         Ok(None) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                404,
+            return Json(ApiResponse::<serde_json::Value>::not_found(
                 "供应商不存在或已删除",
             ));
         }
         Err(e) => {
             tracing::error!("查询供应商信息失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            return Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询供应商信息失败",
             ));
         }
@@ -411,15 +408,13 @@ pub async fn get_performance_report(
     let performance = match performance {
         Ok(Some(p)) => p,
         Ok(None) => {
-            return Json(ApiResponse::<serde_json::Value>::error(
-                404,
+            return Json(ApiResponse::<serde_json::Value>::not_found(
                 "未找到供应商绩效数据",
             ));
         }
         Err(e) => {
             tracing::error!("查询供应商绩效失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            return Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询供应商绩效失败",
             ));
         }
@@ -523,7 +518,7 @@ pub async fn compare_supplier_performance(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -548,8 +543,7 @@ pub async fn compare_supplier_performance(
         .collect();
 
     if supplier_ids.is_empty() {
-        return Json(ApiResponse::<serde_json::Value>::error(
-            400,
+        return Json(ApiResponse::<serde_json::Value>::bad_request(
             "请至少选择一个供应商ID",
         ));
     }
@@ -646,8 +640,7 @@ pub async fn compare_supplier_performance(
         }
         Err(e) => {
             tracing::error!("供应商绩效对比失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "供应商绩效对比失败",
             ))
         }
@@ -676,7 +669,7 @@ pub async fn get_performance_trend(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -775,8 +768,7 @@ pub async fn get_performance_trend(
         }
         Err(e) => {
             tracing::error!("获取供应商绩效趋势失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "获取供应商绩效趋势失败",
             ))
         }
@@ -804,7 +796,7 @@ pub async fn get_top_suppliers(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -942,7 +934,7 @@ pub async fn export_performance_report(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -1061,8 +1053,7 @@ pub async fn export_performance_report(
         }
         Err(e) => {
             tracing::error!("导出供应商绩效报表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "导出供应商绩效报表失败",
             ))
         }
@@ -1090,7 +1081,7 @@ pub async fn get_score_level_distribution(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
@@ -1191,7 +1182,7 @@ pub async fn get_performance_summary(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}

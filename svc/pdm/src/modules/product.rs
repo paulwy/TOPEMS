@@ -139,7 +139,7 @@ pub async fn list_products(
         }
         Err(e) => {
             tracing::error!("获取产品列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取产品列表失败"))
+            Json(ApiResponse::server_error("获取产品列表失败"))
         }
     }
 }
@@ -170,10 +170,10 @@ pub async fn create_product(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.product_no.is_empty() {
-        return Json(ApiResponse::error(400, "产品编号不能为空"));
+        return Json(ApiResponse::bad_request("产品编号不能为空"));
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::error(400, "产品名称不能为空"));
+        return Json(ApiResponse::bad_request("产品名称不能为空"));
     }
 
     let status = req.status.unwrap_or_else(|| "active".to_string());
@@ -198,7 +198,7 @@ pub async fn create_product(
         Ok(product) => Json(ApiResponse::success(product, "产品创建成功")),
         Err(e) => {
             tracing::error!("创建产品失败: {}", e);
-            Json(ApiResponse::error(500, "创建产品失败"))
+            Json(ApiResponse::server_error("创建产品失败"))
         }
     }
 }
@@ -249,10 +249,10 @@ pub async fn get_product(
 
     match result {
         Ok(Some(product)) => Json(ApiResponse::success(product, "获取产品成功")),
-        Ok(None) => Json(ApiResponse::error(404, "产品不存在")),
+        Ok(None) => Json(ApiResponse::not_found("产品不存在")),
         Err(e) => {
             tracing::error!("获取产品失败: {}", e);
-            Json(ApiResponse::error(500, "获取产品失败"))
+            Json(ApiResponse::server_error("获取产品失败"))
         }
     }
 }
@@ -314,10 +314,10 @@ pub async fn update_product(
 
     match result {
         Ok(Some(product)) => Json(ApiResponse::success(product, "产品更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "产品不存在")),
+        Ok(None) => Json(ApiResponse::not_found("产品不存在")),
         Err(e) => {
             tracing::error!("更新产品失败: {}", e);
-            Json(ApiResponse::error(500, "更新产品失败"))
+            Json(ApiResponse::server_error("更新产品失败"))
         }
     }
 }
@@ -359,10 +359,10 @@ pub async fn delete_product(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "产品删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "产品不存在")),
+        Ok(_) => Json(ApiResponse::not_found("产品不存在")),
         Err(e) => {
             tracing::error!("删除产品失败: {}", e);
-            Json(ApiResponse::error(500, "删除产品失败"))
+            Json(ApiResponse::server_error("删除产品失败"))
         }
     }
 }

@@ -235,7 +235,7 @@ fn test_api_response_success_structure() {
 fn test_api_response_error_structure() {
     use topems_shared_core::response::ApiResponse;
 
-    let resp: ApiResponse<String> = ApiResponse::error(502, "工单服务不可用");
+    let resp: ApiResponse<String> = ApiResponse::bad_gateway("工单服务不可用");
 
     assert_eq!(resp.code, 502);
     assert!(!resp.success);
@@ -370,7 +370,7 @@ fn test_proxy_response_pattern_for_connection_failure() {
 
     // 模拟连接失败的响应模式（对应 Err(e) 分支）
     let error_msg = "工单服务不可用: error sending request";
-    let resp: ApiResponse<Value> = ApiResponse::error(502, error_msg);
+    let resp: ApiResponse<Value> = ApiResponse::bad_gateway(error_msg);
 
     assert_eq!(resp.code, 502);
     assert!(!resp.success);

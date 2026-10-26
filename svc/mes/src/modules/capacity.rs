@@ -252,7 +252,7 @@ pub async fn list_capacities(
         }
         Err(e) => {
             tracing::error!("获取产能列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取产能列表失败"))
+            Json(ApiResponse::server_error("获取产能列表失败"))
         }
     }
 }
@@ -293,10 +293,10 @@ pub async fn get_capacity(
 
     match result {
         Ok(Some(cap)) => Json(ApiResponse::success(cap, "获取产能详情成功")),
-        Ok(None) => Json(ApiResponse::error(404, "产能记录不存在")),
+        Ok(None) => Json(ApiResponse::not_found("产能记录不存在")),
         Err(e) => {
             tracing::error!("获取产能详情失败: {}", e);
-            Json(ApiResponse::error(500, "获取产能详情失败"))
+            Json(ApiResponse::server_error("获取产能详情失败"))
         }
     }
 }
@@ -364,7 +364,7 @@ pub async fn create_capacity(
         }
         Err(e) => {
             tracing::error!("创建产能记录失败: {}", e);
-            Json(ApiResponse::error(500, "创建产能记录失败"))
+            Json(ApiResponse::server_error("创建产能记录失败"))
         }
     }
 }
@@ -386,7 +386,7 @@ pub async fn update_capacity(
 
     let existing = match existing {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::error(404, "产能记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("产能记录不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
@@ -447,7 +447,7 @@ pub async fn update_capacity(
         }
         Err(e) => {
             tracing::error!("更新产能记录失败: {}", e);
-            Json(ApiResponse::error(500, "更新产能记录失败"))
+            Json(ApiResponse::server_error("更新产能记录失败"))
         }
     }
 }
@@ -492,10 +492,10 @@ pub async fn delete_capacity(
                 "产能记录删除成功",
             ))
         }
-        Ok(_) => Json(ApiResponse::error(404, "产能记录不存在")),
+        Ok(_) => Json(ApiResponse::not_found("产能记录不存在")),
         Err(e) => {
             tracing::error!("删除产能记录失败: {}", e);
-            Json(ApiResponse::error(500, "删除产能记录失败"))
+            Json(ApiResponse::server_error("删除产能记录失败"))
         }
     }
 }
@@ -532,13 +532,12 @@ pub async fn allocate_capacity(
     .await
     {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::error(404, "产能记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("产能记录不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "allocated") {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!("当前状态 {} 不允许分配产能", existing.status),
         ));
     }
@@ -548,8 +547,7 @@ pub async fn allocate_capacity(
     let new_used = current_used + req.hours.unwrap_or(0.0);
 
     if new_used > available {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!(
                 "分配工时 {} 超过可用工时 {}（当前已用 {}）",
                 new_used, available, current_used
@@ -582,7 +580,7 @@ pub async fn allocate_capacity(
         Ok(cap) => Json(ApiResponse::success(cap, "产能分配成功")),
         Err(e) => {
             tracing::error!("分配产能失败: {}", e);
-            Json(ApiResponse::error(500, "分配产能失败"))
+            Json(ApiResponse::server_error("分配产能失败"))
         }
     }
 }
@@ -617,13 +615,12 @@ pub async fn release_capacity(
     .await
     {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::error(404, "产能记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("产能记录不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "released") {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!("当前状态 {} 不允许释放产能", existing.status),
         ));
     }
@@ -656,7 +653,7 @@ pub async fn release_capacity(
         Ok(cap) => Json(ApiResponse::success(cap, "产能释放成功")),
         Err(e) => {
             tracing::error!("释放产能失败: {}", e);
-            Json(ApiResponse::error(500, "释放产能失败"))
+            Json(ApiResponse::server_error("释放产能失败"))
         }
     }
 }
@@ -690,7 +687,7 @@ pub async fn maintenance_capacity(
     .await
     {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::error(404, "产能记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("产能记录不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
@@ -701,8 +698,7 @@ pub async fn maintenance_capacity(
     };
 
     if !can_transition(&existing.status, target_status) {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!(
                 "当前状态 {} 不允许切换到 {}",
                 existing.status, target_status
@@ -738,7 +734,7 @@ pub async fn maintenance_capacity(
         }
         Err(e) => {
             tracing::error!("切换产能维护状态失败: {}", e);
-            Json(ApiResponse::error(500, "切换产能维护状态失败"))
+            Json(ApiResponse::server_error("切换产能维护状态失败"))
         }
     }
 }
@@ -814,13 +810,12 @@ pub async fn submit_capacity(
     .await
     {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::error(404, "产能记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("产能记录不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "allocated") {
-        return Json(ApiResponse::error(
-            409,
+        return Json(ApiResponse::conflict(
             &format!("当前状态 {} 不允许提交产能", existing.status),
         ));
     }
@@ -846,7 +841,7 @@ pub async fn submit_capacity(
         Ok(cap) => Json(ApiResponse::success(cap, "产能提交成功")),
         Err(e) => {
             tracing::error!("提交产能失败: {}", e);
-            Json(ApiResponse::error(500, "提交产能失败"))
+            Json(ApiResponse::server_error("提交产能失败"))
         }
     }
 }

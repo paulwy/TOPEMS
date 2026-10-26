@@ -150,7 +150,7 @@ pub async fn list_drawings(
         }
         Err(e) => {
             tracing::error!("获取图纸列表失败: {e}");
-            Json(ApiResponse::error(500, "获取图纸列表失败"))
+            Json(ApiResponse::server_error("获取图纸列表失败"))
         }
     }
 }
@@ -161,7 +161,7 @@ pub async fn create_drawing(
     Json(req): Json<CreateDrawingRequest>,
 ) -> Json<ApiResponse<Drawing>> {
     if req.drawing_no.trim().is_empty() || req.name.trim().is_empty() {
-        return Json(ApiResponse::error(400, "图纸编号与名称不能为空"));
+        return Json(ApiResponse::bad_request("图纸编号与名称不能为空"));
     }
     let tenant_id = tenant_opt_from_claims(&claims)
         .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
@@ -204,7 +204,7 @@ pub async fn create_drawing(
         Ok(row) => Json(ApiResponse::success(row, "创建图纸成功")),
         Err(e) => {
             tracing::error!("创建图纸失败: {e}");
-            Json(ApiResponse::error(500, "创建图纸失败"))
+            Json(ApiResponse::server_error("创建图纸失败"))
         }
     }
 }
@@ -231,10 +231,10 @@ pub async fn get_drawing(
 
     match result {
         Ok(Some(row)) => Json(ApiResponse::success(row, "获取图纸成功")),
-        Ok(None) => Json(ApiResponse::error(404, "图纸不存在")),
+        Ok(None) => Json(ApiResponse::not_found("图纸不存在")),
         Err(e) => {
             tracing::error!("获取图纸失败: {e}");
-            Json(ApiResponse::error(500, "获取图纸失败"))
+            Json(ApiResponse::server_error("获取图纸失败"))
         }
     }
 }
@@ -281,10 +281,10 @@ pub async fn update_drawing(
 
     match result {
         Ok(Some(row)) => Json(ApiResponse::success(row, "更新图纸成功")),
-        Ok(None) => Json(ApiResponse::error(404, "图纸不存在")),
+        Ok(None) => Json(ApiResponse::not_found("图纸不存在")),
         Err(e) => {
             tracing::error!("更新图纸失败: {e}");
-            Json(ApiResponse::error(500, "更新图纸失败"))
+            Json(ApiResponse::server_error("更新图纸失败"))
         }
     }
 }
@@ -311,10 +311,10 @@ pub async fn delete_drawing(
             serde_json::Value::Null,
             "删除图纸成功",
         )),
-        Ok(_) => Json(ApiResponse::error(404, "图纸不存在")),
+        Ok(_) => Json(ApiResponse::not_found("图纸不存在")),
         Err(e) => {
             tracing::error!("删除图纸失败: {e}");
-            Json(ApiResponse::error(500, "删除图纸失败"))
+            Json(ApiResponse::server_error("删除图纸失败"))
         }
     }
 }

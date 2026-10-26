@@ -82,7 +82,7 @@ pub async fn get_mapping(
     .await
     {
         Ok(Some(m)) => Json(ApiResponse::success(m, "获取成功")),
-        Ok(None) => Json(ApiResponse::error(404, "映射不存在")),
+        Ok(None) => Json(ApiResponse::not_found("映射不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
@@ -188,7 +188,7 @@ pub async fn update_mapping(
     .await
     {
         Ok(Some(m)) => Json(ApiResponse::success(m, "更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "映射不存在")),
+        Ok(None) => Json(ApiResponse::not_found("映射不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
@@ -221,7 +221,7 @@ pub async fn delete_mapping(
     .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "映射不存在")),
+        Ok(_) => Json(ApiResponse::not_found("映射不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }

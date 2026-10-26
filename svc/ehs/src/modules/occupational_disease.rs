@@ -373,7 +373,7 @@ pub async fn list_hazard_factors(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list hazard factors: {}", e);
-            return Json(ApiResponse::error(500, "获取危害因素列表失败"));
+            return Json(ApiResponse::server_error("获取危害因素列表失败"));
         }
     };
 
@@ -441,7 +441,7 @@ pub async fn create_hazard_factor(
     Json(_req): Json<CreateHazardFactorRequest>,
 ) -> Json<ApiResponse<HazardFactor>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -495,12 +495,12 @@ pub async fn get_hazard_factor(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to get hazard factor: {}", e);
-            return Json(ApiResponse::error(500, "获取危害因素详情失败"));
+            return Json(ApiResponse::server_error("获取危害因素详情失败"));
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::error(404, "危害因素不存在")),
+        None => return Json(ApiResponse::not_found("危害因素不存在")),
     };
 
     let sources = row
@@ -578,7 +578,7 @@ pub async fn update_hazard_factor(
     Json(_req): Json<UpdateHazardFactorRequest>,
 ) -> Json<ApiResponse<HazardFactor>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 // gate: admin-only
@@ -600,7 +600,7 @@ pub async fn delete_hazard_factor(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -616,7 +616,7 @@ pub async fn list_detection_records(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DetectionRecord>>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -634,7 +634,7 @@ pub async fn create_detection_record(
     Json(_req): Json<CreateDetectionRecordRequest>,
 ) -> Json<ApiResponse<DetectionRecord>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -655,7 +655,7 @@ pub async fn get_detection_record(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DetectionRecord>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -676,7 +676,7 @@ pub async fn delete_detection_record(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 #[derive(Debug, Deserialize)]
@@ -759,7 +759,7 @@ pub async fn list_disease_cases(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list disease cases: {}", e);
-            return Json(ApiResponse::error(500, "获取职业病案例列表失败"));
+            return Json(ApiResponse::server_error("获取职业病案例列表失败"));
         }
     };
     let list: Vec<DiseaseCase> = rows.iter().map(disease_case_from_row).collect();
@@ -838,7 +838,7 @@ pub async fn create_disease_case(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create disease case: {}", e);
-            return Json(ApiResponse::error(500, "职业病案例创建失败"));
+            return Json(ApiResponse::server_error("职业病案例创建失败"));
         }
     };
     let record = disease_case_from_row(&row);
@@ -882,10 +882,10 @@ pub async fn get_disease_case(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "职业病案例不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("职业病案例不存在")),
         Err(e) => {
             tracing::error!("Failed to get disease case: {}", e);
-            return Json(ApiResponse::error(500, "获取职业病案例详情失败"));
+            return Json(ApiResponse::server_error("获取职业病案例详情失败"));
         }
     };
     let record = disease_case_from_row(&row);
@@ -1013,10 +1013,10 @@ pub async fn update_disease_case(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "职业病案例不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("职业病案例不存在")),
         Err(e) => {
             tracing::error!("Failed to update disease case: {}", e);
-            return Json(ApiResponse::error(500, "职业病案例更新失败"));
+            return Json(ApiResponse::server_error("职业病案例更新失败"));
         }
     };
     let record = disease_case_from_row(&row);
@@ -1056,11 +1056,11 @@ pub async fn delete_disease_case(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete disease case: {}", e);
-            return Json(ApiResponse::error(500, "职业病案例删除失败"));
+            return Json(ApiResponse::server_error("职业病案例删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "职业病案例不存在"));
+        return Json(ApiResponse::not_found("职业病案例不存在"));
     }
     Json(ApiResponse::success((), "职业病案例删除成功"))
 }
@@ -1077,7 +1077,7 @@ pub async fn list_protection_measures(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ProtectionMeasure>>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -1095,7 +1095,7 @@ pub async fn create_protection_measure(
     Json(_req): Json<CreateProtectionMeasureRequest>,
 ) -> Json<ApiResponse<ProtectionMeasure>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -1116,7 +1116,7 @@ pub async fn get_protection_measure(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<ProtectionMeasure>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -1139,7 +1139,7 @@ pub async fn update_protection_measure(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ProtectionMeasure>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -1160,7 +1160,7 @@ pub async fn delete_protection_measure(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 #[utoipa::path(
@@ -1176,7 +1176,7 @@ pub async fn get_disease_statistics(
     _headers: HeaderMap,
 ) -> Json<ApiResponse<DiseaseStatistics>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 pub async fn update_detection_record(
@@ -1187,7 +1187,7 @@ pub async fn update_detection_record(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::error(501, "职业危害数据源尚未启用"))
+    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
 }
 
 /// 解析请求租户：超管 → nil UUID；否则取 claims.tenant_id。

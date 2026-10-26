@@ -31,14 +31,14 @@ pub struct NotificationListParams {
 fn unauthorized() -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
     (
         StatusCode::UNAUTHORIZED,
-        Json(ApiResponse::error(401, "未授权")),
+        Json(ApiResponse::unauthorized("未授权")),
     )
 }
 
 fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::error(500, msg)),
+        Json(ApiResponse::server_error(msg)),
     )
 }
 

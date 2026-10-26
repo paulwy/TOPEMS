@@ -10,8 +10,6 @@ description = "TOPEMS shared MCP (Model Context Protocol) library - JSON-RPC 2.0
 
 serde.workspace = true
 serde_json.workspace = true
-thiserror.workspace = true
-async-trait.workspace = true
 
 [dev-dependencies]
 serial_test.workspace = true

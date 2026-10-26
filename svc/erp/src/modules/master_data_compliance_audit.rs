@@ -953,7 +953,7 @@ pub async fn resolve_finding_handler(
     let _ = &state;
     match resolve_finding(&finding_id, &req).await {
         Some(finding) => Json(ApiResponse::success(finding, "审计发现已更新")),
-        None => Json(ApiResponse::error(404, "未找到审计发现")),
+        None => Json(ApiResponse::not_found("未找到审计发现")),
     }
 }
 

@@ -167,8 +167,7 @@ async fn get_project_budgets(
         Ok(b) => Json(ApiResponse::success(b, "获取项目预算列表成功")),
         Err(e) => {
             tracing::error!("获取预算失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取预算失败",
             ))
         }
@@ -196,14 +195,12 @@ async fn get_budget(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<Ap
 
     match budget {
         Ok(b) => Json(ApiResponse::success(b, "获取预算详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "预算不存在",
         )),
         Err(e) => {
             tracing::error!("获取预算失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取预算失败",
             ))
         }
@@ -274,8 +271,7 @@ async fn create_budget(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建预算失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建预算失败",
             ))
         }
@@ -341,8 +337,7 @@ async fn update_budget(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::error(
-                StatusCode::NOT_FOUND.as_u16(),
+            Json(ApiResponse::not_found(
                 "预算不存在",
             ))
         }
@@ -361,8 +356,7 @@ async fn update_budget(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新预算失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "更新预算失败",
             ))
         }
@@ -422,8 +416,7 @@ async fn submit_budget(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::error(
-                StatusCode::NOT_FOUND.as_u16(),
+            Json(ApiResponse::not_found(
                 "预算不存在",
             ))
         }
@@ -442,8 +435,7 @@ async fn submit_budget(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("提交审批失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "提交审批失败",
             ))
         }
@@ -503,8 +495,7 @@ async fn approve_budget(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::error(
-                StatusCode::NOT_FOUND.as_u16(),
+            Json(ApiResponse::not_found(
                 "预算不存在",
             ))
         }
@@ -523,8 +514,7 @@ async fn approve_budget(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("批准预算失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "批准预算失败",
             ))
         }
@@ -559,8 +549,7 @@ async fn get_budget_items(
         Ok(i) => Json(ApiResponse::success(i, "获取预算项列表成功")),
         Err(e) => {
             tracing::error!("获取预算项失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取预算项失败",
             ))
         }
@@ -604,8 +593,7 @@ async fn create_budget_item(
         Ok(i) => Json(ApiResponse::success(i, "创建预算项成功")),
         Err(e) => {
             tracing::error!("创建预算项失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建预算项失败",
             ))
         }
@@ -661,14 +649,12 @@ async fn update_budget_item(
 
     match item {
         Ok(i) => Json(ApiResponse::success(i, "更新预算项成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "预算项不存在",
         )),
         Err(e) => {
             tracing::error!("更新预算项失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "更新预算项失败",
             ))
         }
@@ -690,14 +676,12 @@ async fn delete_budget_item(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除预算项成功")),
-        Ok(_) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Ok(_) => Json(ApiResponse::not_found(
             "预算项不存在",
         )),
         Err(e) => {
             tracing::error!("删除预算项失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "删除预算项失败",
             ))
         }

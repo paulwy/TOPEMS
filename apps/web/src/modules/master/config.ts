@@ -30,6 +30,12 @@ const MASTER_PATHS = {
   aiGovernance: '/master/ai-governance',
   commercial: '/master/commercial',
   publicMasterData: '/master/public-master-data',
+  versioning: '/master/versioning',
+  governance: '/master/governance',
+  quality: '/master/quality',
+  knowledgeGraph: '/master/knowledge-graph',
+  semanticSearch: '/master/semantic-search',
+  disasterRecovery: '/master/disaster-recovery',
 } as const;
 
 // ---- 路由配置 ----
@@ -121,6 +127,93 @@ const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
   requiredPermissions: ['master:data-asset:read'],
   action: 'read',
 };
+const disasterRecoveryRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.disasterRecovery,
+  element: lazyWithRetry(
+    () => import('@/pages/master/MasterDisasterRecoveryPage'),
+    'MasterDisasterRecoveryPage'
+  ),
+  module: 'master',
+  code: 'master-disaster-recovery',
+  title: i18n.t('master.disasterRecovery'),
+  titleKey: 'master.disasterRecovery',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:disaster:read'],
+  action: 'read',
+};
+const semanticSearchRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.semanticSearch,
+  element: lazyWithRetry(
+    () => import('@/pages/master/MasterSemanticSearchPage'),
+    'MasterSemanticSearchPage'
+  ),
+  module: 'master',
+  code: 'master-semantic-search',
+  title: i18n.t('master.semanticSearch'),
+  titleKey: 'master.semanticSearch',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:semantic:read'],
+  action: 'read',
+};
+const knowledgeGraphRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.knowledgeGraph,
+  element: lazyWithRetry(
+    () => import('@/pages/master/MasterKnowledgeGraphPage'),
+    'MasterKnowledgeGraphPage'
+  ),
+  module: 'master',
+  code: 'master-knowledge-graph',
+  title: i18n.t('master.knowledgeGraph'),
+  titleKey: 'master.knowledgeGraph',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:knowledge:read'],
+  action: 'read',
+};
+const qualityRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.quality,
+  element: lazyWithRetry(() => import('@/pages/master/MasterQualityPage'), 'MasterQualityPage'),
+  module: 'master',
+  code: 'master-quality',
+  title: i18n.t('master.quality'),
+  titleKey: 'master.quality',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:quality:read'],
+  action: 'read',
+};
+const governanceRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.governance,
+  element: lazyWithRetry(
+    () => import('@/pages/master/MasterGovernancePage'),
+    'MasterGovernancePage'
+  ),
+  module: 'master',
+  code: 'master-governance',
+  title: i18n.t('master.governance'),
+  titleKey: 'master.governance',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:governance:read'],
+  action: 'read',
+};
+const versioningRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.versioning,
+  element: lazyWithRetry(
+    () => import('@/pages/master/MasterVersioningPage'),
+    'MasterVersioningPage'
+  ),
+  module: 'master',
+  code: 'master-versioning',
+  title: i18n.t('master.versioning'),
+  titleKey: 'master.versioning',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:versioning:read'],
+  action: 'read',
+};
 
 export const masterModuleConfig: RouteModuleConfig = {
   code: 'master',
@@ -141,6 +234,12 @@ export const masterModuleConfig: RouteModuleConfig = {
     aiGovernanceRoute,
     commercialRoute,
     publicMasterDataRoute,
+    versioningRoute,
+    governanceRoute,
+    qualityRoute,
+    knowledgeGraphRoute,
+    semanticSearchRoute,
+    disasterRecoveryRoute,
   ],
 };
 
@@ -226,6 +325,78 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.public_master_data.desc'),
+    },
+    {
+      code: 'master-versioning',
+      label: i18n.t('master.versioning'),
+      labelKey: 'master.versioning',
+      icon: 'History',
+      path: MASTER_PATHS.versioning,
+      permission: 'master_data:versioning:read',
+      order: 6,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.versioning.desc'),
+    },
+    {
+      code: 'master-governance',
+      label: i18n.t('master.governance'),
+      labelKey: 'master.governance',
+      icon: 'Gauge',
+      path: MASTER_PATHS.governance,
+      permission: 'master_data:governance:read',
+      order: 7,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.governance.desc'),
+    },
+    {
+      code: 'master-quality',
+      label: i18n.t('master.quality'),
+      labelKey: 'master.quality',
+      icon: 'ShieldCheck',
+      path: MASTER_PATHS.quality,
+      permission: 'master_data:quality:read',
+      order: 8,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.quality.desc'),
+    },
+    {
+      code: 'master-knowledge-graph',
+      label: i18n.t('master.knowledgeGraph'),
+      labelKey: 'master.knowledgeGraph',
+      icon: 'Network',
+      path: MASTER_PATHS.knowledgeGraph,
+      permission: 'master_data:knowledge:read',
+      order: 9,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.knowledgeGraph.desc'),
+    },
+    {
+      code: 'master-semantic-search',
+      label: i18n.t('master.semanticSearch'),
+      labelKey: 'master.semanticSearch',
+      icon: 'Search',
+      path: MASTER_PATHS.semanticSearch,
+      permission: 'master_data:semantic:read',
+      order: 10,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.semanticSearch.desc'),
+    },
+    {
+      code: 'master-disaster-recovery',
+      label: i18n.t('master.disasterRecovery'),
+      labelKey: 'master.disasterRecovery',
+      icon: 'LifeBuoy',
+      path: MASTER_PATHS.disasterRecovery,
+      permission: 'master_data:disaster:read',
+      order: 11,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.disasterRecovery.desc'),
     },
   ],
 };

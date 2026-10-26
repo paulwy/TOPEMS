@@ -176,32 +176,6 @@ export interface DischargePermit {
   updated_at: string;
 }
 
-export interface EnvironmentalEvent {
-  id: string;
-  event_no: string;
-  title: string;
-  event_type: string;
-  event_category:
-    'spill' | 'leak' | 'emission_exceedance' | 'waste_violation' | 'complaint' | 'other';
-  location: string | null;
-  occurred_at: string | null;
-  reported_at: string | null;
-  reported_by: string | null;
-  severity: 'minor' | 'moderate' | 'major' | 'catastrophic';
-  description: string | null;
-  immediate_actions: string | null;
-  root_cause: string | null;
-  corrective_actions: string | null;
-  preventive_measures: string | null;
-  environmental_impact: string | null;
-  regulatory_reporting_required: boolean;
-  status: 'reported' | 'investigating' | 'mitigating' | 'resolved' | 'closed';
-  responsible_person: string | null;
-  attachments: string[] | null;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface CreateEnvironmentalRegulationRequest {
   title: string;
   category: string;
@@ -302,47 +276,6 @@ export interface UpdateDischargePermitRequest {
   status?: 'valid' | 'expired' | 'revoked' | 'pending_renewal';
 }
 
-export interface CreateEnvironmentalEventRequest {
-  title: string;
-  event_type: string;
-  event_category:
-    'spill' | 'leak' | 'emission_exceedance' | 'waste_violation' | 'complaint' | 'other';
-  location?: string | null;
-  occurred_at?: string | null;
-  reported_by?: string | null;
-  severity?: 'minor' | 'moderate' | 'major' | 'catastrophic';
-  description?: string | null;
-  immediate_actions?: string | null;
-  root_cause?: string | null;
-  corrective_actions?: string | null;
-  preventive_measures?: string | null;
-  environmental_impact?: string | null;
-  regulatory_reporting_required?: boolean;
-  responsible_person?: string | null;
-  attachments?: string[] | null;
-  status?: 'reported' | 'investigating' | 'mitigating' | 'resolved' | 'closed';
-}
-
-export interface UpdateEnvironmentalEventRequest {
-  title?: string;
-  event_type?: string;
-  event_category?:
-    'spill' | 'leak' | 'emission_exceedance' | 'waste_violation' | 'complaint' | 'other';
-  location?: string | null;
-  occurred_at?: string | null;
-  severity?: 'minor' | 'moderate' | 'major' | 'catastrophic';
-  description?: string | null;
-  immediate_actions?: string | null;
-  root_cause?: string | null;
-  corrective_actions?: string | null;
-  preventive_measures?: string | null;
-  environmental_impact?: string | null;
-  regulatory_reporting_required?: boolean;
-  responsible_person?: string | null;
-  attachments?: string[] | null;
-  status?: 'reported' | 'investigating' | 'mitigating' | 'resolved' | 'closed';
-}
-
 export interface EnvironmentalRegulationListQueryParams extends ListQueryParams {
   category?: string;
   regulation_type?: string;
@@ -359,13 +292,4 @@ export interface DischargePermitListQueryParams extends ListQueryParams {
   permit_type?: string;
   permit_category?: string;
   status?: string;
-}
-
-export interface EnvironmentalEventListQueryParams extends ListQueryParams {
-  event_type?: string;
-  event_category?: string;
-  severity?: string;
-  status?: string;
-  start_date?: string;
-  end_date?: string;
 }

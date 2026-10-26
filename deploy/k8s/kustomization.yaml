@@ -11,7 +11,6 @@ resources:
   - base/postgres.yaml
   - base/redis.yaml
   - base/rabbitmq.yaml
-  - base/consul.yaml
   - base/monitoring.yaml
   - base/grafana-dashboard.yaml
   - base/ingress.yaml
@@ -66,8 +65,6 @@ images:
     newTag: latest
   - name: rabbitmq
     newTag: management
-  - name: consul
-    newTag: latest
   
   # Core services
   - name: topems-unified-core

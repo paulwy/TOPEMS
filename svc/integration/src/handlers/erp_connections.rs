@@ -96,7 +96,7 @@ pub async fn get_connection(
     .await
     {
         Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "获取成功")),
-        Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
+        Ok(None) => Json(ApiResponse::not_found("连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
@@ -200,7 +200,7 @@ pub async fn update_connection(
     .await
     {
         Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
+        Ok(None) => Json(ApiResponse::not_found("连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
@@ -230,7 +230,7 @@ pub async fn delete_connection(
     .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::error(404, "连接不存在")),
+        Ok(_) => Json(ApiResponse::not_found("连接不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }

@@ -37,7 +37,7 @@ pub async fn list_production_orders(
         )),
         Err(e) => {
             tracing::error!("调用MES服务获取生产订单列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取生产订单列表失败"))
+            Json(ApiResponse::server_error("获取生产订单列表失败"))
         }
     }
 }
@@ -66,7 +66,7 @@ pub async fn get_production_order(
         )),
         Err(e) => {
             tracing::error!("调用MES服务获取生产订单详情失败: {}", e);
-            Json(ApiResponse::error(500, "获取生产订单详情失败"))
+            Json(ApiResponse::server_error("获取生产订单详情失败"))
         }
     }
 }
@@ -80,7 +80,7 @@ pub async fn create_production_order(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "创建生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务创建生产订单失败: {}", e);
-            Json(ApiResponse::error(500, "创建生产订单失败"))
+            Json(ApiResponse::server_error("创建生产订单失败"))
         }
     }
 }
@@ -95,7 +95,7 @@ pub async fn update_production_order(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "更新生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务更新生产订单失败: {}", e);
-            Json(ApiResponse::error(500, "更新生产订单失败"))
+            Json(ApiResponse::server_error("更新生产订单失败"))
         }
     }
 }
@@ -109,7 +109,7 @@ pub async fn delete_production_order(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "删除生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务删除生产订单失败: {}", e);
-            Json(ApiResponse::error(500, "删除生产订单失败"))
+            Json(ApiResponse::server_error("删除生产订单失败"))
         }
     }
 }
@@ -123,7 +123,7 @@ pub async fn start_production_order(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "开始生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务开始生产订单失败: {}", e);
-            Json(ApiResponse::error(500, "开始生产订单失败"))
+            Json(ApiResponse::server_error("开始生产订单失败"))
         }
     }
 }
@@ -137,7 +137,7 @@ pub async fn complete_production_order(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "完成生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务完成生产订单失败: {}", e);
-            Json(ApiResponse::error(500, "完成生产订单失败"))
+            Json(ApiResponse::server_error("完成生产订单失败"))
         }
     }
 }
@@ -171,7 +171,7 @@ pub async fn get_today_production_orders(
         }
         Err(e) => {
             tracing::error!("调用MES服务获取今日生产订单失败: {}", e);
-            Json(ApiResponse::error(500, "获取今日生产订单失败"))
+            Json(ApiResponse::server_error("获取今日生产订单失败"))
         }
     }
 }
@@ -203,7 +203,7 @@ pub async fn get_workstation_orders(
         }
         Err(e) => {
             tracing::error!("调用MES服务获取工位订单失败: {}", e);
-            Json(ApiResponse::error(500, "获取工位订单失败"))
+            Json(ApiResponse::server_error("获取工位订单失败"))
         }
     }
 }
@@ -256,7 +256,7 @@ pub async fn submit_work_report(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "提交报工记录成功")),
         Err(e) => {
             tracing::error!("调用MES服务提交报工记录失败: {}", e);
-            Json(ApiResponse::error(500, "提交报工记录失败"))
+            Json(ApiResponse::server_error("提交报工记录失败"))
         }
     }
 }
@@ -298,7 +298,7 @@ pub async fn get_equipment(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取设备详情成功")),
         Err(e) => {
             tracing::error!("调用MES服务获取设备详情失败: {}", e);
-            Json(ApiResponse::error(500, "获取设备详情失败"))
+            Json(ApiResponse::server_error("获取设备详情失败"))
         }
     }
 }

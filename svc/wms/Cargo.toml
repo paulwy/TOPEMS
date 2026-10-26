@@ -24,7 +24,6 @@ topems-shared-auth = { workspace = true }
 topems-shared-db = { workspace = true }
 topems-shared-boundary = { path = "../../lib/shared-boundary" }
 utoipa.workspace = true
-reqwest.workspace = true
 num-traits.workspace = true
 bigdecimal.workspace = true
 rust_decimal.workspace = true

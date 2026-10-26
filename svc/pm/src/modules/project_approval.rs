@@ -79,10 +79,10 @@ async fn get_approval(
 
     match result {
         Ok(Some(approval)) => Json(ApiResponse::success(approval, "获取项目审批信息成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目审批信息不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目审批信息不存在")),
         Err(e) => {
             tracing::error!("获取项目审批信息失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目审批信息失败"))
+            Json(ApiResponse::server_error("获取项目审批信息失败"))
         }
     }
 }
@@ -204,7 +204,7 @@ async fn submit_approval(
         }
         Err(e) => {
             tracing::error!("提交审批失败: {}", e);
-            Json(ApiResponse::error(500, "提交审批失败"))
+            Json(ApiResponse::server_error("提交审批失败"))
         }
     }
 }
@@ -234,7 +234,7 @@ async fn handle_approval_action(
 ) -> Json<ApiResponse<ProjectApproval>> {
     let action = req.action.to_lowercase();
     if !["approve", "reject", "cancel"].contains(&action.as_str()) {
-        return Json(ApiResponse::error(400, "无效的审批操作"));
+        return Json(ApiResponse::bad_request("无效的审批操作"));
     }
 
     let result = sqlx::query_as::<_, ProjectApproval>(
@@ -246,10 +246,10 @@ async fn handle_approval_action(
 
     let approval = match result {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(ApiResponse::error(404, "项目审批信息不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("项目审批信息不存在")),
         Err(e) => {
             tracing::error!("获取审批信息失败: {}", e);
-            return Json(ApiResponse::error(500, "获取审批信息失败"));
+            return Json(ApiResponse::server_error("获取审批信息失败"));
         }
     };
 
@@ -373,7 +373,7 @@ async fn handle_approval_action(
             }
             Err(e) => {
                 tracing::error!("更新审批状态失败: {}", e);
-                Json(ApiResponse::error(500, "更新审批状态失败"))
+                Json(ApiResponse::server_error("更新审批状态失败"))
             }
         }
     } else {
@@ -461,7 +461,7 @@ async fn handle_approval_action(
             }
             Err(e) => {
                 tracing::error!("更新审批状态失败: {}", e);
-                Json(ApiResponse::error(500, "更新审批状态失败"))
+                Json(ApiResponse::server_error("更新审批状态失败"))
             }
         }
     }

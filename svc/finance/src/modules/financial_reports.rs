@@ -111,7 +111,7 @@ pub async fn get_report_item_details(
     };
     let account_code = match params.account_code.as_deref() {
         Some(c) if !c.is_empty() => c,
-        _ => return Json(ApiResponse::error(400, "account_code 不能为空")),
+        _ => return Json(ApiResponse::bad_request("account_code 不能为空")),
     };
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
@@ -172,7 +172,7 @@ pub async fn get_report_item_vouchers(
     };
     let account_code = match params.account_code.as_deref() {
         Some(c) if !c.is_empty() => c,
-        _ => return Json(ApiResponse::error(400, "account_code 不能为空")),
+        _ => return Json(ApiResponse::bad_request("account_code 不能为空")),
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
@@ -282,11 +282,11 @@ pub async fn get_report_comparison(
     let report_type = params.report_type.clone().unwrap_or_default();
     let period_from = match params.period_from.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::error(400, "period_from 不能为空")),
+        _ => return Json(ApiResponse::bad_request("period_from 不能为空")),
     };
     let period_to = match params.period_to.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::error(400, "period_to 不能为空")),
+        _ => return Json(ApiResponse::bad_request("period_to 不能为空")),
     };
     let (cur_d, cur_c, cur_net) = period_net_total(&state.pool, tenant_id, period_to).await;
     let (prev_d, prev_c, prev_net) = period_net_total(&state.pool, tenant_id, period_from).await;
@@ -339,15 +339,14 @@ pub async fn get_report_trend(
     let start = match params.period_from.as_deref().and_then(parse_period) {
         Some(p) => p,
         None => {
-            return Json(ApiResponse::error(
-                400,
+            return Json(ApiResponse::bad_request(
                 "period_from 格式无效，应为 YYYY-MM",
             ))
         }
     };
     let end = match params.period_to.as_deref().and_then(parse_period) {
         Some(p) => p,
-        None => return Json(ApiResponse::error(400, "period_to 格式无效，应为 YYYY-MM")),
+        None => return Json(ApiResponse::bad_request("period_to 格式无效，应为 YYYY-MM")),
     };
 
     let mut points: Vec<serde_json::Value> = Vec::new();
@@ -415,11 +414,11 @@ pub async fn get_report_year_over_year(
     let report_type = params.report_type.clone().unwrap_or_default();
     let current_period = match params.current_period.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::error(400, "current_period 不能为空")),
+        _ => return Json(ApiResponse::bad_request("current_period 不能为空")),
     };
     let previous_year_period = match params.previous_year_period.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::error(400, "previous_year_period 不能为空")),
+        _ => return Json(ApiResponse::bad_request("previous_year_period 不能为空")),
     };
     let (cur_d, cur_c, cur_net) = period_net_total(&state.pool, tenant_id, current_period).await;
     let (prev_d, prev_c, prev_net) =
@@ -472,11 +471,11 @@ pub async fn get_report_period_over_period(
     let report_type = params.report_type.clone().unwrap_or_default();
     let current_period = match params.current_period.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::error(400, "current_period 不能为空")),
+        _ => return Json(ApiResponse::bad_request("current_period 不能为空")),
     };
     let previous_period = match params.previous_period.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::error(400, "previous_period 不能为空")),
+        _ => return Json(ApiResponse::bad_request("previous_period 不能为空")),
     };
     let (cur_d, cur_c, cur_net) = period_net_total(&state.pool, tenant_id, current_period).await;
     let (prev_d, prev_c, prev_net) =
@@ -1697,7 +1696,7 @@ pub async fn submit_report_for_approval(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let report_id: Uuid = match req.report_id.parse() {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::error(400, "无效的报表ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的报表ID")),
     };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'pending', status = 'pending', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
@@ -1706,7 +1705,7 @@ pub async fn submit_report_for_approval(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::error(404, "报表不存在"))
+                Json(ApiResponse::not_found("报表不存在"))
             } else {
                 Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "pending"}), "提交审批成功"))
             }
@@ -1722,7 +1721,7 @@ pub async fn approve_report(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let report_id: Uuid = match req.report_id.parse() {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::error(400, "无效的报表ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的报表ID")),
     };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'approved', status = 'approved', approval_comment = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
@@ -1733,7 +1732,7 @@ pub async fn approve_report(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::error(404, "报表不存在"))
+                Json(ApiResponse::not_found("报表不存在"))
             } else {
                 Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "审批成功"))
             }
@@ -1749,7 +1748,7 @@ pub async fn reject_report(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let report_id: Uuid = match req.report_id.parse() {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::error(400, "无效的报表ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的报表ID")),
     };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'rejected', status = 'rejected', rejection_reason = $2, updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
@@ -1759,7 +1758,7 @@ pub async fn reject_report(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::error(404, "报表不存在"))
+                Json(ApiResponse::not_found("报表不存在"))
             } else {
                 Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "rejected"}), "驳回成功"))
             }
@@ -1788,7 +1787,7 @@ pub async fn lock_report(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let report_id: Uuid = match req.report_id.parse() {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::error(400, "无效的报表ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的报表ID")),
     };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'locked', status = 'locked', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
@@ -1797,7 +1796,7 @@ pub async fn lock_report(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::error(404, "报表不存在"))
+                Json(ApiResponse::not_found("报表不存在"))
             } else {
                 Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "locked"}), "锁定成功"))
             }
@@ -1813,7 +1812,7 @@ pub async fn unlock_report(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let report_id: Uuid = match req.report_id.parse() {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::error(400, "无效的报表ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的报表ID")),
     };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'approved', status = 'approved', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
@@ -1822,7 +1821,7 @@ pub async fn unlock_report(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::error(404, "报表不存在"))
+                Json(ApiResponse::not_found("报表不存在"))
             } else {
                 Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "解锁成功"))
             }

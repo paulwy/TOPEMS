@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use topems_shared_core::error::{Result, TopemsError};
+use topems_shared_core::shared_http_client;
 
 /// 嵌入配置
 #[derive(Debug, Clone, Deserialize)]
@@ -78,7 +79,7 @@ impl OpenAIEmbedding {
             api_key,
             model,
             dimension,
-            client: reqwest::Client::new(),
+            client: shared_http_client(),
         }
     }
 }
@@ -172,7 +173,7 @@ impl LocalEmbedding {
         Self {
             endpoint,
             dimension,
-            client: reqwest::Client::new(),
+            client: shared_http_client(),
         }
     }
 }

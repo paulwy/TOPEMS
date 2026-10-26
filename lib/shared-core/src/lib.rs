@@ -265,7 +265,7 @@ mod tests {
     #[test]
     fn api_response_into_response_status_code() {
         use axum::response::IntoResponse;
-        let resp: ApiResponse<()> = ApiResponse::error(404, "not found");
+        let resp: ApiResponse<()> = ApiResponse::not_found("not found");
         let response = resp.into_response();
         assert_eq!(response.status(), axum::http::StatusCode::NOT_FOUND);
     }

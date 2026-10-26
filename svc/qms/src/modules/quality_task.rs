@@ -116,7 +116,7 @@ pub async fn list_quality_tasks(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("quality-tasks count 失败: {}", e);
-            return Json(ApiResponse::error(500, "获取质检任务列表失败"));
+            return Json(ApiResponse::server_error("获取质检任务列表失败"));
         }
     };
 
@@ -158,7 +158,7 @@ pub async fn list_quality_tasks(
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("quality-tasks list 失败: {}", e);
-            return Json(ApiResponse::error(500, "获取质检任务列表失败"));
+            return Json(ApiResponse::server_error("获取质检任务列表失败"));
         }
     };
 
@@ -184,7 +184,7 @@ pub async fn get_quality_task(
     };
     let id = match uuid::Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的质检任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的质检任务ID")),
     };
 
     let row = sqlx::query_as::<_, QualityTask>(only_own_schema_query!(
@@ -219,10 +219,10 @@ pub async fn get_quality_task(
             serde_json::to_value(task).unwrap_or(serde_json::json!({})),
             "获取质检任务详情成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "质检任务不存在")),
+        Ok(None) => Json(ApiResponse::not_found("质检任务不存在")),
         Err(e) => {
             tracing::error!("quality-task get 失败: {}", e);
-            Json(ApiResponse::error(500, "获取质检任务详情失败"))
+            Json(ApiResponse::server_error("获取质检任务详情失败"))
         }
     }
 }
@@ -244,10 +244,10 @@ pub async fn update_quality_task_status(
     };
     let id = match uuid::Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的质检任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的质检任务ID")),
     };
     if req.status.is_empty() {
-        return Json(ApiResponse::error(400, "状态不能为空"));
+        return Json(ApiResponse::bad_request("状态不能为空"));
     }
 
     let updated = sqlx::query(only_own_schema_query!(
@@ -265,14 +265,14 @@ pub async fn update_quality_task_status(
     .await;
 
     match updated {
-        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::error(404, "质检任务不存在")),
+        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::not_found("质检任务不存在")),
         Ok(_) => Json(ApiResponse::success(
             serde_json::json!({ "id": id, "status": req.status }),
             "更新质检任务状态成功",
         )),
         Err(e) => {
             tracing::error!("quality-task status 更新失败: {}", e);
-            Json(ApiResponse::error(500, "更新质检任务状态失败"))
+            Json(ApiResponse::server_error("更新质检任务状态失败"))
         }
     }
 }
@@ -310,7 +310,7 @@ pub async fn list_defect_records(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("defect-records count 失败: {}", e);
-            return Json(ApiResponse::error(500, "获取缺陷记录列表失败"));
+            return Json(ApiResponse::server_error("获取缺陷记录列表失败"));
         }
     };
 
@@ -342,7 +342,7 @@ pub async fn list_defect_records(
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("defect-records list 失败: {}", e);
-            return Json(ApiResponse::error(500, "获取缺陷记录列表失败"));
+            return Json(ApiResponse::server_error("获取缺陷记录列表失败"));
         }
     };
 
@@ -369,11 +369,11 @@ pub async fn report_defect(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     if req.item_name.is_empty() {
-        return Json(ApiResponse::error(400, "缺陷项目名称不能为空"));
+        return Json(ApiResponse::bad_request("缺陷项目名称不能为空"));
     }
     let inspection_id = match req.inspection_id.as_deref().map(uuid::Uuid::parse_str) {
         Some(Ok(u)) => u,
-        Some(Err(_)) => return Json(ApiResponse::error(400, "无效的检查ID")),
+        Some(Err(_)) => return Json(ApiResponse::bad_request("无效的检查ID")),
         None => uuid::Uuid::nil(),
     };
 
@@ -403,7 +403,7 @@ pub async fn report_defect(
         )),
         Err(e) => {
             tracing::error!("defect-record 创建失败: {}", e);
-            Json(ApiResponse::error(500, "上报缺陷记录失败"))
+            Json(ApiResponse::server_error("上报缺陷记录失败"))
         }
     }
 }

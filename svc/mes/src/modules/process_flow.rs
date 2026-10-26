@@ -276,7 +276,7 @@ pub async fn list_process_flows(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count process flows: {}", e);
-            return Json(ApiResponse::error(500, "获取工艺流程列表失败"));
+            return Json(ApiResponse::server_error("获取工艺流程列表失败"));
         }
     };
 
@@ -310,7 +310,7 @@ pub async fn list_process_flows(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch process flows: {}", e);
-            return Json(ApiResponse::error(500, "获取工艺流程列表失败"));
+            return Json(ApiResponse::server_error("获取工艺流程列表失败"));
         }
     };
 
@@ -393,7 +393,7 @@ pub async fn get_process_flow(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺流程ID"));
+            return Json(ApiResponse::bad_request("无效的工艺流程ID"));
         }
     };
 
@@ -434,10 +434,10 @@ pub async fn get_process_flow(
             },
             "获取工艺流程成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工艺流程不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工艺流程不存在")),
         Err(e) => {
             tracing::error!("Failed to get process flow: {}", e);
-            Json(ApiResponse::error(500, "获取工艺流程失败"))
+            Json(ApiResponse::server_error("获取工艺流程失败"))
         }
     }
 }
@@ -510,7 +510,7 @@ pub async fn create_process_flow(
         )),
         Err(e) => {
             tracing::error!("Failed to create process flow: {}", e);
-            Json(ApiResponse::error(500, "创建工艺流程失败"))
+            Json(ApiResponse::server_error("创建工艺流程失败"))
         }
     }
 }
@@ -530,7 +530,7 @@ pub async fn update_process_flow(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺流程ID"));
+            return Json(ApiResponse::bad_request("无效的工艺流程ID"));
         }
     };
 
@@ -595,10 +595,10 @@ pub async fn update_process_flow(
             },
             "更新工艺流程成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工艺流程不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工艺流程不存在")),
         Err(e) => {
             tracing::error!("Failed to update process flow: {}", e);
-            Json(ApiResponse::error(500, "更新工艺流程失败"))
+            Json(ApiResponse::server_error("更新工艺流程失败"))
         }
     }
 }
@@ -617,7 +617,7 @@ pub async fn delete_process_flow(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺流程ID"));
+            return Json(ApiResponse::bad_request("无效的工艺流程ID"));
         }
     };
 
@@ -634,7 +634,7 @@ pub async fn delete_process_flow(
         Ok(_) => Json(ApiResponse::success(id, "删除工艺流程成功")),
         Err(e) => {
             tracing::error!("Failed to delete process flow: {}", e);
-            Json(ApiResponse::error(500, "删除工艺流程失败"))
+            Json(ApiResponse::server_error("删除工艺流程失败"))
         }
     }
 }
@@ -665,7 +665,7 @@ pub async fn get_flow_steps(
     let flow_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺流程ID"));
+            return Json(ApiResponse::bad_request("无效的工艺流程ID"));
         }
     };
 
@@ -725,7 +725,7 @@ pub async fn get_flow_steps(
         }
         Err(e) => {
             tracing::error!("Failed to get flow steps: {}", e);
-            Json(ApiResponse::error(500, "获取工艺步骤失败"))
+            Json(ApiResponse::server_error("获取工艺步骤失败"))
         }
     }
 }
@@ -745,14 +745,14 @@ pub async fn add_flow_step(
     let flow_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺流程ID"));
+            return Json(ApiResponse::bad_request("无效的工艺流程ID"));
         }
     };
 
     let process_uuid = match Uuid::parse_str(&body.process_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工序ID"));
+            return Json(ApiResponse::bad_request("无效的工序ID"));
         }
     };
 
@@ -846,7 +846,7 @@ pub async fn add_flow_step(
         }
         Err(e) => {
             tracing::error!("Failed to add flow step: {}", e);
-            Json(ApiResponse::error(500, "添加工艺步骤失败"))
+            Json(ApiResponse::server_error("添加工艺步骤失败"))
         }
     }
 }
@@ -880,7 +880,7 @@ pub async fn update_flow_step(
     let step_uuid = match Uuid::parse_str(&step_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的步骤ID"));
+            return Json(ApiResponse::bad_request("无效的步骤ID"));
         }
     };
 
@@ -972,10 +972,10 @@ pub async fn update_flow_step(
                 "更新工艺步骤成功",
             ))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工艺步骤不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工艺步骤不存在")),
         Err(e) => {
             tracing::error!("Failed to update flow step: {}", e);
-            Json(ApiResponse::error(500, "更新工艺步骤失败"))
+            Json(ApiResponse::server_error("更新工艺步骤失败"))
         }
     }
 }
@@ -994,7 +994,7 @@ pub async fn remove_flow_step(
     let step_uuid = match Uuid::parse_str(&step_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的步骤ID"));
+            return Json(ApiResponse::bad_request("无效的步骤ID"));
         }
     };
 
@@ -1011,7 +1011,7 @@ pub async fn remove_flow_step(
         Ok(_) => Json(ApiResponse::success(step_id, "删除工艺步骤成功")),
         Err(e) => {
             tracing::error!("Failed to remove flow step: {}", e);
-            Json(ApiResponse::error(500, "删除工艺步骤失败"))
+            Json(ApiResponse::server_error("删除工艺步骤失败"))
         }
     }
 }
@@ -1049,7 +1049,7 @@ pub async fn reorder_flow_steps(
     let flow_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺流程ID"));
+            return Json(ApiResponse::bad_request("无效的工艺流程ID"));
         }
     };
 
@@ -1057,7 +1057,7 @@ pub async fn reorder_flow_steps(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::error(500, "重排序工艺流程步骤失败"));
+            return Json(ApiResponse::server_error("重排序工艺流程步骤失败"));
         }
     };
 
@@ -1076,13 +1076,13 @@ pub async fn reorder_flow_steps(
         .await
         {
             tracing::error!("Failed to reorder step: {}", e);
-            return Json(ApiResponse::error(500, "重排序工艺流程步骤失败"));
+            return Json(ApiResponse::server_error("重排序工艺流程步骤失败"));
         }
     }
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::error(500, "重排序工艺流程步骤失败"));
+        return Json(ApiResponse::server_error("重排序工艺流程步骤失败"));
     }
 
     let result = sqlx::query!(
@@ -1141,7 +1141,7 @@ pub async fn reorder_flow_steps(
         }
         Err(e) => {
             tracing::error!("Failed to fetch reordered steps: {}", e);
-            Json(ApiResponse::error(500, "获取重排序后的步骤失败"))
+            Json(ApiResponse::server_error("获取重排序后的步骤失败"))
         }
     }
 }
@@ -1172,7 +1172,7 @@ pub async fn analyze_capacity(
     let flow_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的工艺流程ID"));
+            return Json(ApiResponse::bad_request("无效的工艺流程ID"));
         }
     };
 
@@ -1189,11 +1189,11 @@ pub async fn analyze_capacity(
     let flow = match flow_result {
         Ok(f) => f,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::error(404, "工艺流程不存在"));
+            return Json(ApiResponse::not_found("工艺流程不存在"));
         }
         Err(e) => {
             tracing::error!("Failed to get process flow: {}", e);
-            return Json(ApiResponse::error(500, "产能分析失败"));
+            return Json(ApiResponse::server_error("产能分析失败"));
         }
     };
 
@@ -1216,7 +1216,7 @@ pub async fn analyze_capacity(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to get flow steps: {}", e);
-            return Json(ApiResponse::error(500, "产能分析失败"));
+            return Json(ApiResponse::server_error("产能分析失败"));
         }
     };
 

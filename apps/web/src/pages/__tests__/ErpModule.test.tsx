@@ -2,7 +2,6 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import SalesOrderPage from '../erp/SalesOrderPage';
 import PurchaseOrderPage from '../erp/PurchaseOrderPage';
 import InventoryManagementPage from '../erp/InventoryManagementPage';
 import CustomerManagementPage from '../erp/CustomerManagementPage';
@@ -178,25 +177,6 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
-
-describe('SalesOrderPage', () => {
-  it('should render without crashing', () => {
-    const { container } = render(
-      <BrowserRouter>
-        <SalesOrderPage />
-      </BrowserRouter>
-    );
-    expect(container).toBeDefined();
-  });
-
-  it('should have sales order API methods defined', () => {
-    expect(erpApi.salesOrders.list).toBeDefined();
-    expect(erpApi.salesOrders.get).toBeDefined();
-    expect(erpApi.salesOrders.create).toBeDefined();
-    expect(erpApi.salesOrders.update).toBeDefined();
-    expect(erpApi.salesOrders.delete).toBeDefined();
-  });
-});
 
 describe('PurchaseOrderPage', () => {
   it('should render without crashing', () => {

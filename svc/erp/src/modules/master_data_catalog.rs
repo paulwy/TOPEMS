@@ -589,7 +589,7 @@ pub async fn get_catalog_entry_handler(
     let _ = &state;
     match get_catalog_entry(&entry_id).await {
         Some(entry) => Json(ApiResponse::success(entry, "目录条目获取成功")),
-        None => Json(ApiResponse::error(404, "未找到目录条目")),
+        None => Json(ApiResponse::not_found("未找到目录条目")),
     }
 }
 
@@ -628,7 +628,7 @@ pub async fn update_catalog_entry_handler(
     let _ = &state;
     match update_catalog_entry(&entry_id, &req).await {
         Some(entry) => Json(ApiResponse::success(entry, "目录条目更新成功")),
-        None => Json(ApiResponse::error(404, "未找到目录条目")),
+        None => Json(ApiResponse::not_found("未找到目录条目")),
     }
 }
 
@@ -652,7 +652,7 @@ pub async fn delete_catalog_entry_handler(
             "目录条目删除成功",
         ))
     } else {
-        Json(ApiResponse::error(404, "未找到目录条目"))
+        Json(ApiResponse::not_found("未找到目录条目"))
     }
 }
 

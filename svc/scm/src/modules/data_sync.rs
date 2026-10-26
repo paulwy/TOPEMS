@@ -112,7 +112,7 @@ pub async fn purchase_to_inbound(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let purchase_order_id = match Uuid::parse_str(&req.purchase_order_id) {
@@ -181,7 +181,7 @@ pub async fn create_inbound_from_purchase(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let (result, to_emit) =
@@ -575,7 +575,7 @@ pub async fn sync_supplier_from_srm(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
@@ -626,7 +626,7 @@ pub async fn sync_supplier_from_srm(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::error(500, "提交事务失败"));
+                        return Json(ApiResponse::server_error("提交事务失败"));
                     }
                 }
                 return Json(ApiResponse::success(
@@ -864,7 +864,7 @@ pub async fn sync_all_suppliers_from_srm(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let srm_suppliers = sqlx::query_as::<
@@ -1048,7 +1048,7 @@ pub async fn get_sync_logs(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let page = req.page.unwrap_or(1).max(1);
@@ -1141,7 +1141,7 @@ pub async fn retry_failed_syncs(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let sync_type_filter = req.sync_type.clone();
@@ -1271,7 +1271,7 @@ pub async fn get_sync_statistics(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let total_syncs: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -1364,7 +1364,7 @@ pub async fn batch_sync_purchase_to_wms(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let approved_po = sqlx::query_as::<_, PurchaseOrder>(
@@ -1648,7 +1648,7 @@ pub async fn check_consistency(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let mut results: Vec<ConsistencyCheckResult> = Vec::new();

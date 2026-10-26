@@ -204,8 +204,7 @@ pub async fn list_reviews(
         }
         Err(e) => {
             tracing::error!("查询绩效评核列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询绩效评核列表失败",
             ))
         }
@@ -305,7 +304,7 @@ pub async fn create_review(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -344,14 +343,12 @@ pub async fn get_review(
 
     match result {
         Ok(Some(review)) => Json(ApiResponse::success(review, "查询成功")),
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::not_found(
             "绩效评核不存在",
         )),
         Err(e) => {
             tracing::error!("查询绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::error(
-                500,
+            Json(ApiResponse::<PerformanceReview>::server_error(
                 "查询绩效评核失败",
             ))
         }
@@ -403,19 +400,17 @@ pub async fn update_review(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(review, "绩效评核更新成功"))
         }
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::not_found(
             "绩效评核不存在",
         )),
         Err(e) => {
             tracing::error!("更新绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::error(
-                500,
+            Json(ApiResponse::<PerformanceReview>::server_error(
                 "更新绩效评核失败",
             ))
         }
@@ -491,7 +486,7 @@ pub async fn delete_review(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -541,19 +536,17 @@ pub async fn submit_review(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(review, "绩效评核已提交"))
         }
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::not_found(
             "绩效评核不存在或状态不正确",
         )),
         Err(e) => {
             tracing::error!("提交绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::error(
-                500,
+            Json(ApiResponse::<PerformanceReview>::server_error(
                 "提交绩效评核失败",
             ))
         }
@@ -602,19 +595,17 @@ pub async fn approve_review(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(review, "绩效评核已批准"))
         }
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::error(
-            404,
+        Ok(None) => Json(ApiResponse::<PerformanceReview>::not_found(
             "绩效评核不存在或状态不正确",
         )),
         Err(e) => {
             tracing::error!("批准绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::error(
-                500,
+            Json(ApiResponse::<PerformanceReview>::server_error(
                 "批准绩效评核失败",
             ))
         }
@@ -693,8 +684,7 @@ pub async fn list_goals(
         }
         Err(e) => {
             tracing::error!("查询绩效目标列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询绩效目标列表失败",
             ))
         }
@@ -797,7 +787,7 @@ pub async fn create_goal(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -836,11 +826,10 @@ pub async fn get_goal(
 
     match result {
         Ok(Some(goal)) => Json(ApiResponse::success(goal, "查询成功")),
-        Ok(None) => Json(ApiResponse::<PerformanceGoal>::error(404, "绩效目标不存在")),
+        Ok(None) => Json(ApiResponse::<PerformanceGoal>::not_found("绩效目标不存在")),
         Err(e) => {
             tracing::error!("查询绩效目标失败: {}", e);
-            Json(ApiResponse::<PerformanceGoal>::error(
-                500,
+            Json(ApiResponse::<PerformanceGoal>::server_error(
                 "查询绩效目标失败",
             ))
         }
@@ -892,16 +881,15 @@ pub async fn update_goal(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(goal, "绩效目标更新成功"))
         }
-        Ok(None) => Json(ApiResponse::<PerformanceGoal>::error(404, "绩效目标不存在")),
+        Ok(None) => Json(ApiResponse::<PerformanceGoal>::not_found("绩效目标不存在")),
         Err(e) => {
             tracing::error!("更新绩效目标失败: {}", e);
-            Json(ApiResponse::<PerformanceGoal>::error(
-                500,
+            Json(ApiResponse::<PerformanceGoal>::server_error(
                 "更新绩效目标失败",
             ))
         }
@@ -977,7 +965,7 @@ pub async fn delete_goal(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
     }
@@ -1025,8 +1013,7 @@ pub async fn get_employee_reviews(
         )),
         Err(e) => {
             tracing::error!("查询员工绩效评核失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询员工绩效评核失败",
             ))
         }
@@ -1073,8 +1060,7 @@ pub async fn get_employee_goals(
         )),
         Err(e) => {
             tracing::error!("查询员工绩效目标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
+            Json(ApiResponse::<serde_json::Value>::server_error(
                 "查询员工绩效目标失败",
             ))
         }

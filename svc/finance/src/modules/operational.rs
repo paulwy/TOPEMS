@@ -111,7 +111,7 @@ pub async fn list_expenses(
         }
         Err(e) => {
             tracing::error!("获取费用报销列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取费用报销列表失败"))
+            Json(ApiResponse::server_error("获取费用报销列表失败"))
         }
     }
 }
@@ -134,7 +134,7 @@ pub async fn create_expense(
         .and_then(|v| v.as_str())
         .unwrap_or("");
     if expense_number.is_empty() {
-        return Json(ApiResponse::error(400, "报销编号不能为空"));
+        return Json(ApiResponse::bad_request("报销编号不能为空"));
     }
 
     // applicant_name 为 DB NOT NULL 列，缺失时须在入口返回 400，
@@ -145,7 +145,7 @@ pub async fn create_expense(
         .map(str::trim)
         .filter(|s| !s.is_empty());
     let Some(applicant_name) = applicant_name else {
-        return Json(ApiResponse::error(400, "申请人不能为空"));
+        return Json(ApiResponse::bad_request("申请人不能为空"));
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -197,7 +197,7 @@ pub async fn create_expense(
         )),
         Err(e) => {
             tracing::error!("创建费用报销失败: {}", e);
-            Json(ApiResponse::error(500, "费用报销创建失败"))
+            Json(ApiResponse::server_error("费用报销创建失败"))
         }
     }
 }
@@ -241,10 +241,10 @@ pub async fn get_expense(
             row_to_expense_json(&row),
             "获取费用报销成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "费用报销不存在")),
+        Ok(None) => Json(ApiResponse::not_found("费用报销不存在")),
         Err(e) => {
             tracing::error!("获取费用报销失败: {}", e);
-            Json(ApiResponse::error(500, "获取费用报销失败"))
+            Json(ApiResponse::server_error("获取费用报销失败"))
         }
     }
 }
@@ -361,10 +361,10 @@ pub async fn delete_expense(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "费用报销删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "费用报销不存在")),
+        Ok(_) => Json(ApiResponse::not_found("费用报销不存在")),
         Err(e) => {
             tracing::error!("删除费用报销失败: {}", e);
-            Json(ApiResponse::error(500, "费用报销删除失败"))
+            Json(ApiResponse::server_error("费用报销删除失败"))
         }
     }
 }
@@ -433,7 +433,7 @@ pub async fn list_budgets(
         }
         Err(e) => {
             tracing::error!("获取预算列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取预算列表失败"))
+            Json(ApiResponse::server_error("获取预算列表失败"))
         }
     }
 }
@@ -540,7 +540,7 @@ pub async fn create_budget(
         )),
         Err(e) => {
             tracing::error!("创建预算失败: {}", e);
-            Json(ApiResponse::error(500, "预算创建失败"))
+            Json(ApiResponse::server_error("预算创建失败"))
         }
     }
 }
@@ -578,10 +578,10 @@ pub async fn get_budget(
             row_to_budget_json(&row),
             "获取预算成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "预算不存在")),
+        Ok(None) => Json(ApiResponse::not_found("预算不存在")),
         Err(e) => {
             tracing::error!("获取预算失败: {}", e);
-            Json(ApiResponse::error(500, "获取预算失败"))
+            Json(ApiResponse::server_error("获取预算失败"))
         }
     }
 }
@@ -684,10 +684,10 @@ pub async fn delete_budget(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "预算删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "预算不存在")),
+        Ok(_) => Json(ApiResponse::not_found("预算不存在")),
         Err(e) => {
             tracing::error!("删除预算失败: {}", e);
-            Json(ApiResponse::error(500, "预算删除失败"))
+            Json(ApiResponse::server_error("预算删除失败"))
         }
     }
 }
@@ -767,7 +767,7 @@ pub async fn list_receivables(
         }
         Err(e) => {
             tracing::error!("获取应收列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取应收列表失败"))
+            Json(ApiResponse::server_error("获取应收列表失败"))
         }
     }
 }
@@ -789,7 +789,7 @@ pub async fn create_receivable(
         .and_then(|v| v.as_str())
         .unwrap_or("");
     if invoice_number.is_empty() {
-        return Json(ApiResponse::error(400, "发票编号不能为空"));
+        return Json(ApiResponse::bad_request("发票编号不能为空"));
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -844,7 +844,7 @@ pub async fn create_receivable(
         )),
         Err(e) => {
             tracing::error!("创建应收失败: {}", e);
-            Json(ApiResponse::error(500, "创建应收失败"))
+            Json(ApiResponse::server_error("创建应收失败"))
         }
     }
 }
@@ -888,10 +888,10 @@ pub async fn get_receivable(
             row_to_receivable_json(&row),
             "获取应收成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "应收不存在")),
+        Ok(None) => Json(ApiResponse::not_found("应收不存在")),
         Err(e) => {
             tracing::error!("获取应收失败: {}", e);
-            Json(ApiResponse::error(500, "获取应收失败"))
+            Json(ApiResponse::server_error("获取应收失败"))
         }
     }
 }
@@ -980,10 +980,10 @@ pub async fn delete_receivable(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "应收删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "应收不存在")),
+        Ok(_) => Json(ApiResponse::not_found("应收不存在")),
         Err(e) => {
             tracing::error!("删除应收失败: {}", e);
-            Json(ApiResponse::error(500, "删除应收失败"))
+            Json(ApiResponse::server_error("删除应收失败"))
         }
     }
 }
@@ -1063,7 +1063,7 @@ pub async fn list_payables(
         }
         Err(e) => {
             tracing::error!("获取应付列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取应付列表失败"))
+            Json(ApiResponse::server_error("获取应付列表失败"))
         }
     }
 }
@@ -1080,7 +1080,7 @@ pub async fn create_payable(
         .and_then(|v| v.as_str())
         .unwrap_or("");
     if invoice_number.is_empty() {
-        return Json(ApiResponse::error(400, "发票编号不能为空"));
+        return Json(ApiResponse::bad_request("发票编号不能为空"));
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1134,7 +1134,7 @@ pub async fn create_payable(
         )),
         Err(e) => {
             tracing::error!("创建应付失败: {}", e);
-            Json(ApiResponse::error(500, "创建应付失败"))
+            Json(ApiResponse::server_error("创建应付失败"))
         }
     }
 }
@@ -1178,10 +1178,10 @@ pub async fn get_payable(
             row_to_payable_json(&row),
             "获取应付成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "应付不存在")),
+        Ok(None) => Json(ApiResponse::not_found("应付不存在")),
         Err(e) => {
             tracing::error!("获取应付失败: {}", e);
-            Json(ApiResponse::error(500, "获取应付失败"))
+            Json(ApiResponse::server_error("获取应付失败"))
         }
     }
 }
@@ -1270,10 +1270,10 @@ pub async fn delete_payable(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "应付删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "应付不存在")),
+        Ok(_) => Json(ApiResponse::not_found("应付不存在")),
         Err(e) => {
             tracing::error!("删除应付失败: {}", e);
-            Json(ApiResponse::error(500, "删除应付失败"))
+            Json(ApiResponse::server_error("删除应付失败"))
         }
     }
 }

@@ -989,7 +989,7 @@ pub async fn apply_suggestion(
 ) -> Json<ApiResponse<GovernanceSuggestionV59>> {
     match db_exec!(GovernanceAIEngine::apply_suggestion(&state.db, &id).await) {
         Some(s) => Json(ApiResponse::success(s, "建议已应用")),
-        None => Json(ApiResponse::error(404, "未找到建议")),
+        None => Json(ApiResponse::not_found("未找到建议")),
     }
 }
 
@@ -1050,7 +1050,7 @@ pub async fn train_model(
 ) -> Json<ApiResponse<GovernanceModel>> {
     match db_exec!(GovernanceAIEngine::train_model(&state.db, &id).await) {
         Some(m) => Json(ApiResponse::success(m, "模型训练完成")),
-        None => Json(ApiResponse::error(404, "未找到模型")),
+        None => Json(ApiResponse::not_found("未找到模型")),
     }
 }
 
@@ -1073,7 +1073,7 @@ pub async fn create_match_rule(
 ) -> Json<ApiResponse<MatchRule>> {
     let rule_type = match parse_match_rule_type(&req.rule_type) {
         Some(r) => r,
-        None => return Json(ApiResponse::error(400, "无效的匹配规则类型")),
+        None => return Json(ApiResponse::bad_request("无效的匹配规则类型")),
     };
 
     let threshold = req.threshold.unwrap_or(0.8);
@@ -1173,12 +1173,12 @@ pub async fn review_match(
 ) -> Json<ApiResponse<MatchResult>> {
     let status = match parse_match_status(&req.action) {
         Some(s) => s,
-        None => return Json(ApiResponse::error(400, "无效的审核操作")),
+        None => return Json(ApiResponse::bad_request("无效的审核操作")),
     };
 
     match db_exec!(IntelligentMatcher::manual_review(&state.db, &id, status).await) {
         Some(r) => Json(ApiResponse::success(r, "匹配审核完成")),
-        None => Json(ApiResponse::error(404, "未找到匹配结果")),
+        None => Json(ApiResponse::not_found("未找到匹配结果")),
     }
 }
 
@@ -1201,7 +1201,7 @@ pub async fn confirm_match(
 ) -> Json<ApiResponse<MatchResult>> {
     match db_exec!(IntelligentMatcher::confirm_match(&state.db, &id).await) {
         Some(r) => Json(ApiResponse::success(r, "匹配已确认")),
-        None => Json(ApiResponse::error(404, "未找到匹配结果")),
+        None => Json(ApiResponse::not_found("未找到匹配结果")),
     }
 }
 
@@ -1224,7 +1224,7 @@ pub async fn reject_match(
 ) -> Json<ApiResponse<MatchResult>> {
     match db_exec!(IntelligentMatcher::reject_match(&state.db, &id).await) {
         Some(r) => Json(ApiResponse::success(r, "匹配已拒绝")),
-        None => Json(ApiResponse::error(404, "未找到匹配结果")),
+        None => Json(ApiResponse::not_found("未找到匹配结果")),
     }
 }
 
@@ -1343,7 +1343,7 @@ pub async fn get_classification(
 ) -> Json<ApiResponse<ClassificationResult>> {
     match db_exec!(AutoClassifier::get_classification(&state.db, &id).await) {
         Some(r) => Json(ApiResponse::success(r, "分类结果")),
-        None => Json(ApiResponse::error(404, "未找到分类结果")),
+        None => Json(ApiResponse::not_found("未找到分类结果")),
     }
 }
 
@@ -1391,7 +1391,7 @@ pub async fn review_classification(
             .await
     ) {
         Some(r) => Json(ApiResponse::success(r, "分类审核完成")),
-        None => Json(ApiResponse::error(404, "未找到分类结果")),
+        None => Json(ApiResponse::not_found("未找到分类结果")),
     }
 }
 

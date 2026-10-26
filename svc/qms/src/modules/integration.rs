@@ -92,7 +92,7 @@ pub async fn create_integration_action(
         )),
         Err(e) => {
             tracing::error!("[integration] 创建纠正措施失败: {}", e);
-            Json(ApiResponse::error(500, "集成纠正措施创建失败"))
+            Json(ApiResponse::server_error("集成纠正措施创建失败"))
         }
     }
 }
@@ -135,10 +135,10 @@ pub async fn update_integration_inspection_result(
             }),
             "质检结果回写成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "质检记录不存在或已删除")),
+        Ok(None) => Json(ApiResponse::not_found("质检记录不存在或已删除")),
         Err(e) => {
             tracing::error!("[integration] 回写质检结果失败: {}", e);
-            Json(ApiResponse::error(500, "质检结果回写失败"))
+            Json(ApiResponse::server_error("质检结果回写失败"))
         }
     }
 }

@@ -72,7 +72,7 @@ async fn list_expenses(
         Ok(expenses) => Json(ApiResponse::success(expenses, "获取项目费用列表成功")),
         Err(e) => {
             tracing::error!("获取项目费用列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目费用列表失败"))
+            Json(ApiResponse::server_error("获取项目费用列表失败"))
         }
     }
 }
@@ -143,7 +143,7 @@ async fn add_expense(
         Ok(expense) => Json(ApiResponse::success(expense, "添加项目费用成功")),
         Err(e) => {
             tracing::error!("添加项目费用失败: {}", e);
-            Json(ApiResponse::error(500, "添加项目费用失败"))
+            Json(ApiResponse::server_error("添加项目费用失败"))
         }
     }
 }
@@ -178,10 +178,10 @@ async fn get_expense(
 
     match result {
         Ok(Some(expense)) => Json(ApiResponse::success(expense, "获取项目费用成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目费用不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目费用不存在")),
         Err(e) => {
             tracing::error!("获取项目费用失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目费用失败"))
+            Json(ApiResponse::server_error("获取项目费用失败"))
         }
     }
 }
@@ -240,10 +240,10 @@ async fn update_expense(
 
     match result {
         Ok(Some(expense)) => Json(ApiResponse::success(expense, "更新项目费用成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目费用不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目费用不存在")),
         Err(e) => {
             tracing::error!("更新项目费用失败: {}", e);
-            Json(ApiResponse::error(500, "更新项目费用失败"))
+            Json(ApiResponse::server_error("更新项目费用失败"))
         }
     }
 }
@@ -281,10 +281,10 @@ async fn remove_expense(
         Ok(result) if result.rows_affected() > 0 => {
             Json(ApiResponse::success(true, "删除项目费用成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "项目费用不存在")),
+        Ok(_) => Json(ApiResponse::not_found("项目费用不存在")),
         Err(e) => {
             tracing::error!("删除项目费用失败: {}", e);
-            Json(ApiResponse::error(500, "删除项目费用失败"))
+            Json(ApiResponse::server_error("删除项目费用失败"))
         }
     }
 }

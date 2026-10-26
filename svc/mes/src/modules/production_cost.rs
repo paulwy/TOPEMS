@@ -427,7 +427,7 @@ pub async fn calculate_work_order_cost(
             tracing::error!("计算工单成本失败: {}", err);
             // ResourceNotFound 应返回 HTTP200+内层404，而非包装为 500
             if matches!(err, TopemsError::ResourceNotFound(_)) {
-                return Json(ApiResponse::error(404, "工单不存在"));
+                return Json(ApiResponse::not_found("工单不存在"));
             }
             Json(ApiResponse::from(TopemsError::internal(
                 "计算工单成本失败",
@@ -466,7 +466,7 @@ pub async fn get_work_order_cost_detail(
         Err(err) => {
             tracing::error!("获取工单成本详情失败: {}", err);
             if matches!(err, TopemsError::ResourceNotFound(_)) {
-                return Json(ApiResponse::error(404, "工单不存在"));
+                return Json(ApiResponse::not_found("工单不存在"));
             }
             Json(ApiResponse::from(TopemsError::internal(
                 "获取工单成本详情失败",
@@ -514,11 +514,11 @@ pub async fn calculate_production_order_cost(
     let order = match order {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::error(404, "生产订单不存在"));
+            return Json(ApiResponse::not_found("生产订单不存在"));
         }
         Err(e) => {
             tracing::error!("查询生产订单失败: {}", e);
-            return Json(ApiResponse::error(500, "查询生产订单失败"));
+            return Json(ApiResponse::server_error("查询生产订单失败"));
         }
     };
 

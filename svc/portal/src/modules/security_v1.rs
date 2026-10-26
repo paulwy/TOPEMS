@@ -1105,13 +1105,12 @@ pub async fn validate_query_handler(
             if result.valid {
                 Json(ApiResponse::success(result, "查询验证通过"))
             } else {
-                Json(ApiResponse::error(
-                    400,
+                Json(ApiResponse::bad_request(
                     result.reason.as_deref().unwrap_or("查询验证失败"),
                 ))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1207,7 +1206,7 @@ pub async fn update_policy_handler(
 ) -> Json<ApiResponse<SecurityPolicy>> {
     let existing = match SecurityGateway::get_policy_by_id(&id).await {
         Some(p) => p,
-        None => return Json(ApiResponse::error(404, "策略不存在")),
+        None => return Json(ApiResponse::not_found("策略不存在")),
     };
 
     let updates = SecurityPolicy {
@@ -1251,7 +1250,7 @@ pub async fn evaluate_trust_handler(
 
     match ZeroTrustEngine::evaluate_trust(&req.identity, context).await {
         Ok(decision) => Json(ApiResponse::success(decision, "信任评估完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1274,7 +1273,7 @@ pub async fn get_trust_score_handler(
 ) -> Json<ApiResponse<f64>> {
     match ZeroTrustEngine::get_trust_score(&identity).await {
         Ok(score) => Json(ApiResponse::success(score, "信任分数")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1345,7 +1344,7 @@ pub async fn get_session_trust_handler(
 ) -> Json<ApiResponse<SessionTrust>> {
     match ZeroTrustEngine::get_session_trust(&id).await {
         Some(trust) => Json(ApiResponse::success(trust, "会话信任状态")),
-        None => Json(ApiResponse::error(404, "会话信任记录不存在")),
+        None => Json(ApiResponse::not_found("会话信任记录不存在")),
     }
 }
 
@@ -1369,7 +1368,7 @@ pub async fn mask_response_handler(
 
     match DataMasker::mask_response(req.data, roles).await {
         Ok(masked) => Json(ApiResponse::success(masked, "数据脱敏完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1389,7 +1388,7 @@ pub async fn add_masking_rule_handler(
 ) -> Json<ApiResponse<MaskingRule>> {
     let mask_type = match MaskType::from_str(&req.mask_type) {
         Some(mt) => mt,
-        None => return Json(ApiResponse::error(400, "无效的脱敏类型")),
+        None => return Json(ApiResponse::bad_request("无效的脱敏类型")),
     };
 
     let rule = MaskingRule {
@@ -1403,7 +1402,7 @@ pub async fn add_masking_rule_handler(
 
     match DataMasker::add_masking_rule(rule).await {
         Ok(r) => Json(ApiResponse::success(r, "脱敏规则创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1443,8 +1442,8 @@ pub async fn remove_masking_rule_handler(
 ) -> Json<ApiResponse<bool>> {
     match DataMasker::remove_masking_rule(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "脱敏规则删除成功")),
-        Ok(false) => Json(ApiResponse::error(404, "脱敏规则不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Ok(false) => Json(ApiResponse::not_found("脱敏规则不存在")),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1464,7 +1463,7 @@ pub async fn preview_masking_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     match DataMasker::preview_masking(req.data, req.rule_ids).await {
         Ok(preview) => Json(ApiResponse::success(preview, "脱敏预览")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 

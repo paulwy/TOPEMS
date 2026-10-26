@@ -171,16 +171,16 @@ pub async fn get_announcement(
                         return Json(ApiResponse::success(a, "公告详情获取成功"));
                     }
                 }
-                Json(ApiResponse::error(404, "公告不存在"))
+                Json(ApiResponse::not_found("公告不存在"))
             }
             Err(e) => {
                 tracing::error!("Failed to parse announcement response: {}", e);
-                Json(ApiResponse::error(500, "获取公告详情失败"))
+                Json(ApiResponse::server_error("获取公告详情失败"))
             }
         },
         Err(e) => {
             tracing::error!("Failed to fetch announcement: {}", e);
-            Json(ApiResponse::error(500, "获取公告详情失败"))
+            Json(ApiResponse::server_error("获取公告详情失败"))
         }
     }
 }
@@ -220,16 +220,16 @@ pub async fn create_announcement(
                         return Json(ApiResponse::success(a, "公告创建成功"));
                     }
                 }
-                Json(ApiResponse::error(500, "创建公告失败"))
+                Json(ApiResponse::server_error("创建公告失败"))
             }
             Err(e) => {
                 tracing::error!("Failed to parse create response: {}", e);
-                Json(ApiResponse::error(500, "创建公告失败"))
+                Json(ApiResponse::server_error("创建公告失败"))
             }
         },
         Err(e) => {
             tracing::error!("Failed to create announcement: {}", e);
-            Json(ApiResponse::error(500, "创建公告失败"))
+            Json(ApiResponse::server_error("创建公告失败"))
         }
     }
 }
@@ -269,16 +269,16 @@ pub async fn update_announcement(
                         return Json(ApiResponse::success(a, "公告更新成功"));
                     }
                 }
-                Json(ApiResponse::error(500, "更新公告失败"))
+                Json(ApiResponse::server_error("更新公告失败"))
             }
             Err(e) => {
                 tracing::error!("Failed to parse update response: {}", e);
-                Json(ApiResponse::error(500, "更新公告失败"))
+                Json(ApiResponse::server_error("更新公告失败"))
             }
         },
         Err(e) => {
             tracing::error!("Failed to update announcement: {}", e);
-            Json(ApiResponse::error(500, "更新公告失败"))
+            Json(ApiResponse::server_error("更新公告失败"))
         }
     }
 }
@@ -309,7 +309,7 @@ pub async fn delete_announcement(
         )),
         Err(e) => {
             tracing::error!("Failed to delete announcement: {}", e);
-            Json(ApiResponse::error(500, "删除公告失败"))
+            Json(ApiResponse::server_error("删除公告失败"))
         }
     }
 }
@@ -327,16 +327,16 @@ pub async fn toggle_announcement_pin(
                         return Json(ApiResponse::success(a, "公告置顶状态已更新"));
                     }
                 }
-                Json(ApiResponse::error(500, "更新置顶状态失败"))
+                Json(ApiResponse::server_error("更新置顶状态失败"))
             }
             Err(e) => {
                 tracing::error!("Failed to parse pin response: {}", e);
-                Json(ApiResponse::error(500, "更新置顶状态失败"))
+                Json(ApiResponse::server_error("更新置顶状态失败"))
             }
         },
         Err(e) => {
             tracing::error!("Failed to toggle pin: {}", e);
-            Json(ApiResponse::error(500, "更新置顶状态失败"))
+            Json(ApiResponse::server_error("更新置顶状态失败"))
         }
     }
 }
@@ -362,12 +362,12 @@ pub async fn get_pinned_announcements(
             }
             Err(e) => {
                 tracing::error!("Failed to parse pinned response: {}", e);
-                Json(ApiResponse::error(500, "获取置顶公告失败"))
+                Json(ApiResponse::server_error("获取置顶公告失败"))
             }
         },
         Err(e) => {
             tracing::error!("Failed to fetch pinned announcements: {}", e);
-            Json(ApiResponse::error(500, "获取置顶公告失败"))
+            Json(ApiResponse::server_error("获取置顶公告失败"))
         }
     }
 }

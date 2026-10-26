@@ -18,7 +18,6 @@ uuid = { workspace = true, features = ["serde", "v4"] }
 tracing.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
-topems-shared = { workspace = true }
 topems-shared-bootstrap = { workspace = true }
 topems-shared-event = { workspace = true }
 topems-shared-core = { workspace = true }
@@ -30,7 +29,6 @@ topems-shared-service-client = { workspace = true }
 bigdecimal = { workspace = true, features = ["serde"] }
 prometheus.workspace = true
 utoipa.workspace = true
-reqwest = { workspace = true, features = ["json"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full", "test-util"] }

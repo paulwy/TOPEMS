@@ -24,7 +24,7 @@ pub async fn parse_instrument_data(
 ) -> Json<ApiResponse<InstrumentData>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的数据ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的数据ID")),
     };
 
     let data_row = sqlx::query(
@@ -39,16 +39,16 @@ pub async fn parse_instrument_data(
             row.get::<Option<serde_json::Value>, _>("raw_data"),
             row.get::<String, _>("protocol"),
         ),
-        Ok(None) => return Json(ApiResponse::error(404, "仪器数据不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("仪器数据不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch instrument data: {}", e);
-            return Json(ApiResponse::error(500, "获取仪器数据失败"));
+            return Json(ApiResponse::server_error("获取仪器数据失败"));
         }
     };
 
     let raw_data = match raw_data {
         Some(data) => data,
-        None => return Json(ApiResponse::error(400, "原始数据为空，无法解析")),
+        None => return Json(ApiResponse::bad_request("原始数据为空，无法解析")),
     };
 
     let parse_result = parse_data(&protocol, &raw_data);
@@ -109,10 +109,10 @@ pub async fn parse_instrument_data(
                 "数据解析失败"
             },
         )),
-        Ok(None) => Json(ApiResponse::error(404, "仪器数据不存在")),
+        Ok(None) => Json(ApiResponse::not_found("仪器数据不存在")),
         Err(e) => {
             tracing::error!("Failed to update parsed data: {}", e);
-            Json(ApiResponse::error(500, "解析数据失败"))
+            Json(ApiResponse::server_error("解析数据失败"))
         }
     }
 }

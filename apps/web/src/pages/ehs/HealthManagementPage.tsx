@@ -1,11 +1,25 @@
-import React from 'react';
-import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
-import { Heart, FileText, Users } from 'lucide-react';
+import React, { useState } from 'react';
+import { Box, Card, CardContent, Typography, Chip, Tabs, Tab } from '@mui/material';
+import { Heart, FileText, Users, ClipboardList, CheckSquare, ShieldAlert } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
-import { healthManagementSchema } from '@/schemas/ehs';
+import {
+  healthManagementSchema,
+  healthCheckPlanSchema,
+  healthCheckRecordSchema,
+  contraindicationSchema,
+} from '@/schemas/ehs';
 import { ehsApi } from '@/api/ehs';
-import type { HealthRecord, CreateHealthRecordRequest } from '@/api/ehs';
+import type {
+  HealthRecord,
+  CreateHealthRecordRequest,
+  HealthCheckPlan,
+  CreateHealthCheckPlanRequest,
+  HealthCheckRecord,
+  CreateHealthCheckRecordRequest,
+  Contraindication,
+  CreateContraindicationRequest,
+} from '@/api/ehs';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
@@ -20,8 +34,35 @@ const apiAdapter = createCrudPageAdapter<HealthRecord, CreateHealthRecordRequest
   delete: ehsApi.deleteHealthRecord,
 });
 
+const checkPlanAdapter = createCrudPageAdapter<HealthCheckPlan, CreateHealthCheckPlanRequest>({
+  list: ehsApi.listHealthCheckPlans,
+  create: ehsApi.createHealthCheckPlan,
+  update: ehsApi.updateHealthCheckPlan,
+  delete: ehsApi.deleteHealthCheckPlan,
+});
+
+const checkRecordAdapter = createCrudPageAdapter<HealthCheckRecord, CreateHealthCheckRecordRequest>(
+  {
+    list: ehsApi.listHealthCheckRecords,
+    create: ehsApi.createHealthCheckRecord,
+    update: ehsApi.updateHealthCheckRecord,
+    delete: ehsApi.deleteHealthCheckRecord,
+  }
+);
+
+const contraindicationAdapter = createCrudPageAdapter<
+  Contraindication,
+  CreateContraindicationRequest
+>({
+  list: ehsApi.listContraindications,
+  create: ehsApi.createContraindication,
+  update: ehsApi.updateContraindication,
+  delete: ehsApi.deleteContraindication,
+});
+
 const HealthManagementPage: React.FC = () => {
   const { t } = useTranslation();
+  const [tab, setTab] = useState(0);
 
   const headerContent = (rows: Record<string, unknown>[], total: number) => {
     const active = rows.filter((r) => r.status === 'active').length;
@@ -245,6 +286,11 @@ const HealthManagementPage: React.FC = () => {
     );
   };
 
+  const tabStyle = {
+    textTransform: 'none',
+    fontWeight: 600,
+  };
+
   return (
     <PageContainer
       headerProps={{
@@ -253,14 +299,71 @@ const HealthManagementPage: React.FC = () => {
       }}
       maxWidth='xl'
     >
-      <CrudPage
-        schema={healthManagementSchema}
-        apiAdapter={apiAdapter}
-        headerContent={headerContent}
-        detailContent={detailContent}
-        detailMaxWidth='lg'
-        breadcrumbs={[{ label: t('ehs.title') }, { label: t('ehs.health_management_page.list') }]}
-      />
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+      >
+        <Tab
+          sx={tabStyle}
+          icon={<FileText style={{ width: 16, height: 16 }} />}
+          iconPosition='start'
+          label={t('ehs.health_management_page.list')}
+        />
+        <Tab
+          sx={tabStyle}
+          icon={<ClipboardList style={{ width: 16, height: 16 }} />}
+          iconPosition='start'
+          label={t('ehs.health_check_plan.k0')}
+        />
+        <Tab
+          sx={tabStyle}
+          icon={<CheckSquare style={{ width: 16, height: 16 }} />}
+          iconPosition='start'
+          label={t('ehs.health_check_record.k0')}
+        />
+        <Tab
+          sx={tabStyle}
+          icon={<ShieldAlert style={{ width: 16, height: 16 }} />}
+          iconPosition='start'
+          label={t('ehs.contraindication.k0')}
+        />
+      </Tabs>
+
+      {tab === 0 && (
+        <CrudPage
+          schema={healthManagementSchema}
+          apiAdapter={apiAdapter}
+          headerContent={headerContent}
+          detailContent={detailContent}
+          detailMaxWidth='lg'
+          breadcrumbs={[{ label: t('ehs.title') }, { label: t('ehs.health_management_page.list') }]}
+        />
+      )}
+      {tab === 1 && (
+        <CrudPage
+          schema={healthCheckPlanSchema}
+          apiAdapter={checkPlanAdapter}
+          detailMaxWidth='lg'
+          breadcrumbs={[{ label: t('ehs.title') }, { label: t('ehs.health_check_plan.k0') }]}
+        />
+      )}
+      {tab === 2 && (
+        <CrudPage
+          schema={healthCheckRecordSchema}
+          apiAdapter={checkRecordAdapter}
+          detailMaxWidth='lg'
+          breadcrumbs={[{ label: t('ehs.title') }, { label: t('ehs.health_check_record.k0') }]}
+        />
+      )}
+      {tab === 3 && (
+        <CrudPage
+          schema={contraindicationSchema}
+          apiAdapter={contraindicationAdapter}
+          detailMaxWidth='lg'
+          breadcrumbs={[{ label: t('ehs.title') }, { label: t('ehs.contraindication.k0') }]}
+        />
+      )}
     </PageContainer>
   );
 };

@@ -67,7 +67,7 @@ pub struct UpdateAssetCategoryRequest {
 fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::error(500, msg)),
+        Json(ApiResponse::server_error(msg)),
     )
 }
 
@@ -206,7 +206,7 @@ pub async fn get_asset_category(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Ok(Json(ApiResponse::error(404, "资产分类不存在")));
+            return Ok(Json(ApiResponse::not_found("资产分类不存在")));
         }
         Err(e) => {
             tracing::error!("查询资产分类失败: {}", e);
@@ -263,7 +263,7 @@ pub async fn create_asset_category(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Ok(Json(ApiResponse::error(500, "事务提交失败")));
+            return Ok(Json(ApiResponse::server_error("事务提交失败")));
         }
     }
     Ok(Json(ApiResponse::success(
@@ -314,7 +314,7 @@ pub async fn update_asset_category(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Ok(Json(ApiResponse::error(404, "资产分类不存在")));
+            return Ok(Json(ApiResponse::not_found("资产分类不存在")));
         }
         Err(e) => {
             tracing::error!("更新资产分类失败: {}", e);
@@ -325,7 +325,7 @@ pub async fn update_asset_category(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Ok(Json(ApiResponse::error(500, "事务提交失败")));
+            return Ok(Json(ApiResponse::server_error("事务提交失败")));
         }
     }
     Ok(Json(ApiResponse::success(
@@ -358,14 +358,14 @@ pub async fn delete_asset_category(
     match result {
         Ok(res) => {
             if res.rows_affected() == 0 {
-                return Ok(Json(ApiResponse::error(404, "资产分类不存在")));
+                return Ok(Json(ApiResponse::not_found("资产分类不存在")));
             }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
                     return Err((
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::error(500, "事务提交失败")),
+                        Json(ApiResponse::server_error("事务提交失败")),
                     ));
                 }
             }

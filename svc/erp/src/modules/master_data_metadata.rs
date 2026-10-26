@@ -724,7 +724,7 @@ pub async fn get_schema_handler(
     let _ = &state;
     match get_schema(&schema_id).await {
         Some(schema) => Json(ApiResponse::success(schema, "Schema 获取成功")),
-        None => Json(ApiResponse::error(404, "未找到 Schema")),
+        None => Json(ApiResponse::not_found("未找到 Schema")),
     }
 }
 
@@ -748,7 +748,7 @@ pub async fn update_schema_handler(
             schema,
             "Schema 更新成功（已生成新版本）",
         )),
-        None => Json(ApiResponse::error(404, "未找到 Schema")),
+        None => Json(ApiResponse::not_found("未找到 Schema")),
     }
 }
 
@@ -799,7 +799,7 @@ pub async fn upsert_record_handler(
     match upsert_record(&req).await {
         Ok(record) => Json(ApiResponse::success(record, "元数据记录保存成功")),
         Err(errors) => {
-            let resp: ApiResponse<MetadataRecord> = ApiResponse::error(400, &errors.join("; "));
+            let resp: ApiResponse<MetadataRecord> = ApiResponse::bad_request(&errors.join("; "));
             Json(resp)
         }
     }
@@ -841,7 +841,7 @@ pub async fn get_record_handler(
     let _ = &state;
     match get_record(&record_id).await {
         Some(record) => Json(ApiResponse::success(record, "元数据记录获取成功")),
-        None => Json(ApiResponse::error(404, "未找到元数据记录")),
+        None => Json(ApiResponse::not_found("未找到元数据记录")),
     }
 }
 

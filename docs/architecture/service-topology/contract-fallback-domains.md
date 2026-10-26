@@ -1,8 +1,14 @@
 # 域内契约兜底分域台账（mobile / master-data）— F4 互补册
 
-> 生成：2026-10-20 · 配套主台账：[`contract-stub-mapping.md`](./contract-stub-mapping.md)（core `contract_stubs.rs` 78 条）。
+> 生成：2026-10-20 · 配套主台账：[`contract-stub-mapping.md`](./contract-stub-mapping.md)（core `contract_stubs.rs` 已 2026-10-24 清零）。
 > 本册登记主台账 §6「另案」列明的两套**域内兜底**，与 core 兜底体系**互补、不重复评估**；纯文档，不改代码。
 > 共同原则：兜底的意义是「禁止裸 404」，真实实现就位前不得删除，否则前端已调端点会 404 并被契约 smoke 判 route_missing；最终存废与 BE-08（349 条 API 待业务勾选）同源。
+
+> **终态核销（2026-10-26，用户拍板"根据项目实际评估后直接决策"）**：
+> 宽正则（含泛型调用）全量对账实测——
+> - **A. mobile 120 条 route**：被 apps/web `apiClient.mobile` **120/120 全部命中**（136 条调用，含 `/scan` 泛型 `post<ScanResult>('scan')`）；活消费占位，**无可删除项**，处置 = 上游真实实现逐条替换。
+> - **B. master-data 166 条 route**：**123 条活消费**（⑥ master 六页/① DSH 接入后前端实调）+ **43 条零消费**（audit/log、continuity、dict-items 冗余、lifecycle、lineage 部分、schemas、search/index、similar/subgraph、tag、version/diff 等）。43 条零消费无生产运行时调用，但被 master-data 自身 integration tests（disaster_v56/lineage_v52 等）与 openapi 文档引用，属**预埋契约骨架**——删除需连锁删测试/断言，成本>收益，**决策：保留**，随 V66 数据资产目录建设替换为真实 handler。
+> - 结论：两册兜底**无可静态删除项**；剩余动作均为「上游实现替换」或「BE-08 业务勾选」。
 
 ## A. mobile embedded BFF 轻量兜底（134 条 `.route`）
 

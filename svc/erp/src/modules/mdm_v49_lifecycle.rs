@@ -101,7 +101,7 @@ pub async fn get_lifecycle_entity(
     let entities = store.entities.lock().await;
     match entities.get(&master_data_id) {
         Some(e) => Json(ApiResponse::success(e.clone(), "生命周期实体")),
-        None => Json(ApiResponse::error(404, "未找到生命周期实体")),
+        None => Json(ApiResponse::not_found("未找到生命周期实体")),
     }
 }
 
@@ -208,7 +208,7 @@ pub async fn transition_lifecycle_stage(
     let mut entities = store.entities.lock().await;
 
     let Some(entity) = entities.get_mut(&master_data_id) else {
-        return Json(ApiResponse::error(404, "未找到生命周期实体"));
+        return Json(ApiResponse::not_found("未找到生命周期实体"));
     };
 
     let target = LifecycleStage::from_str(&req.target_stage);
@@ -216,8 +216,7 @@ pub async fn transition_lifecycle_stage(
         && target != LifecycleStage::Archived
         && target != LifecycleStage::Destroyed
     {
-        return Json(ApiResponse::error(
-            400,
+        return Json(ApiResponse::bad_request(
             &format!(
                 "stage transition not allowed: {} -> {}",
                 entity.stage.as_str(),
@@ -267,12 +266,12 @@ pub async fn update_lifecycle_task(
     let mut entities = store.entities.lock().await;
 
     let Some(entity) = entities.get_mut(&master_data_id) else {
-        return Json(ApiResponse::error(404, "未找到生命周期实体"));
+        return Json(ApiResponse::not_found("未找到生命周期实体"));
     };
 
     let task = match entity.tasks.iter_mut().find(|t| t.id == req.task_id) {
         Some(t) => t,
-        None => return Json(ApiResponse::error(404, "未找到任务")),
+        None => return Json(ApiResponse::not_found("未找到任务")),
     };
 
     if let Some(s) = &req.status {

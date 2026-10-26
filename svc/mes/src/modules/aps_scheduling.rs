@@ -1671,7 +1671,7 @@ pub async fn check_order_feasibility(
         Some(mut results) if !results.is_empty() => {
             Json(ApiResponse::success(results.remove(0), "可行性检查完成"))
         }
-        _ => Json(ApiResponse::error(500, "可行性检查失败")),
+        _ => Json(ApiResponse::server_error("可行性检查失败")),
     }
 }
 

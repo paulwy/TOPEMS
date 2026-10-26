@@ -79,7 +79,7 @@ pub async fn list_material_boms(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count material BOMs: {}", e);
-            return Json(ApiResponse::error(500, "获取物料BOM列表失败"));
+            return Json(ApiResponse::server_error("获取物料BOM列表失败"));
         }
     };
 
@@ -109,7 +109,7 @@ pub async fn list_material_boms(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch material BOMs: {}", e);
-            return Json(ApiResponse::error(500, "获取物料BOM列表失败"));
+            return Json(ApiResponse::server_error("获取物料BOM列表失败"));
         }
     };
 
@@ -187,7 +187,7 @@ pub async fn create_material_bom(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::error(500, "创建物料BOM失败"));
+            return Json(ApiResponse::server_error("创建物料BOM失败"));
         }
     };
 
@@ -217,7 +217,7 @@ pub async fn create_material_bom(
         Err(e) => {
             tracing::error!("Failed to create material BOM: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::error(500, "创建物料BOM失败"));
+            return Json(ApiResponse::server_error("创建物料BOM失败"));
         }
     };
 
@@ -275,14 +275,14 @@ pub async fn create_material_bom(
             Err(e) => {
                 tracing::error!("Failed to create BOM item: {}", e);
                 let _ = tx.rollback().await;
-                return Json(ApiResponse::error(500, "创建BOM明细失败"));
+                return Json(ApiResponse::server_error("创建BOM明细失败"));
             }
         }
     }
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::error(500, "创建物料BOM失败"));
+        return Json(ApiResponse::server_error("创建物料BOM失败"));
     }
 
     let bom_response = MaterialBomResponse {
@@ -345,10 +345,10 @@ pub async fn get_material_bom(
 
     let bom = match bom_result {
         Ok(Some(b)) => b,
-        Ok(None) => return Json(ApiResponse::error(404, "物料BOM不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("物料BOM不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch material BOM: {}", e);
-            return Json(ApiResponse::error(500, "获取物料BOM失败"));
+            return Json(ApiResponse::server_error("获取物料BOM失败"));
         }
     };
 
@@ -370,7 +370,7 @@ pub async fn get_material_bom(
         Ok(i) => i,
         Err(e) => {
             tracing::error!("Failed to fetch BOM items: {}", e);
-            return Json(ApiResponse::error(500, "获取BOM明细失败"));
+            return Json(ApiResponse::server_error("获取BOM明细失败"));
         }
     };
 
@@ -436,7 +436,7 @@ pub async fn update_material_bom(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::error(500, "更新物料BOM失败"));
+            return Json(ApiResponse::server_error("更新物料BOM失败"));
         }
     };
 
@@ -465,12 +465,12 @@ pub async fn update_material_bom(
         Ok(Some(b)) => b,
         Ok(None) => {
             let _ = tx.rollback().await;
-            return Json(ApiResponse::error(404, "物料BOM不存在"));
+            return Json(ApiResponse::not_found("物料BOM不存在"));
         }
         Err(e) => {
             tracing::error!("Failed to update material BOM: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::error(500, "更新物料BOM失败"));
+            return Json(ApiResponse::server_error("更新物料BOM失败"));
         }
     };
 
@@ -514,7 +514,7 @@ pub async fn update_material_bom(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::error(500, "更新物料BOM失败"));
+        return Json(ApiResponse::server_error("更新物料BOM失败"));
     }
 
     get_material_bom(
@@ -557,13 +557,13 @@ pub async fn delete_material_bom(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete material BOM: {}", e);
-            return Json(ApiResponse::error(500, "删除物料BOM失败"));
+            return Json(ApiResponse::server_error("删除物料BOM失败"));
         }
     };
 
     if result.rows_affected() > 0 {
         Json(ApiResponse::success("".to_string(), "物料BOM删除成功"))
     } else {
-        Json(ApiResponse::error(404, "物料BOM不存在或状态不允许删除"))
+        Json(ApiResponse::not_found("物料BOM不存在或状态不允许删除"))
     }
 }

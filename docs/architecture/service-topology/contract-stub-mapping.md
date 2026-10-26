@@ -2,11 +2,17 @@
 
 **契约基线（自动同步 2026-10-23）**：前端 2653 / 后端 6336 / 缺口 0
 
+> **终态核销（2026-10-26，用户拍板"根据项目实际评估后直接决策"）**：
+> **core `contract_stubs.rs` 已整体删除清零**（2026-10-24，`svc/unified-core/src/routes/mod.rs:193` 注释与文件删除实证；copilot 末 2 条随 svc/ai 实现改指）——本文档旧计数（125/78/82）与 §4.x 各节状态**均已过期作废**，仅保留为历史演变记录。
+> 全仓兜底现状（2026-10-26 实测定口径，替代旧计数）：
+> - **core 主兜底**：0 条（已清零）✅
+> - **mobile embedded BFF 兜底**：120 条 route，**120 条全部被 apps/web `apiClient.mobile` 实调命中**（宽正则含泛型，136 条调用覆盖；含 `/scan`→`post<ScanResult>('scan')` 泛型调用，早前窄正则假阴性已纠正）→ 活消费占位，保留待上游真实实现替换，无删除项。
+> - **master-data 版本段预埋**：166 条 route = **123 条活消费**（⑥ master 六页 + ① DSH 接入后前端实调，去版本段前缀对账命中）+ **43 条零消费**（audit/log、continuity、dict-items 冗余、lifecycle、lineage 部分、schemas、search/index、similar/subgraph、tag、version/diff 等）。43 条零消费虽无生产运行时调用，但被 master-data 自身 integration tests（disaster_v56/lineage_v52 等）与 openapi 契约文档引用，属**预埋契约骨架**（V66 数据资产目录建设时替换为真实 handler）——删除需连锁删测试/断言，成本>收益，**决策：保留**，与"冻结历史、规范未来"治理一致。
+> - **唯一真外部项**：BE-08「349 条 API 存废待业务勾选」（含本台账 ⚪ 面），待业务拍板，不在技术侧可静态闭环范围。
+>
+> 结论：**F4 台账 🔴 经评估无可静态删除项**（core 已清零；mobile 120 全活；master 43 为契约骨架），后续动作均为「上游真实实现替换」或「业务勾选」，非死代码清理。
 
-> 生成：2026-10-19（2026-10-20 修订 §4.19/§5）· 来源：`svc/unified-core/src/routes/contract_stubs.rs`
-> **计数口径（防对账歧义）**：旧基线 125 为原始 `.route(` 注册数；现存活 **78** 为 `.route(` 注册数口径；按「方法-端点对」计为 **82**（help 等链式 `get().post()` 同一 path 注册多方法，故方法对多于 route 注册数）。后续对账须注明用哪种口径。
-> 挂载：`svc/unified-core/src/routes/mod.rs:187` `.merge(contract_stub_routes())`，位于 core 受保护路由轨，实际前缀 `/api/core/*`（双轨 `/api/v1/core/*`）。
-> 口径：本文档为**纯文档台账，不改任何代码**；用于后续逐条对接/挂载/存废决策。端点最终存废与 BE-08（349 条 API 存废待业务勾选）同源，需业务确认后再动。
+## 0. B4 第一批核销记录（2026-10-19，已落地代码）
 
 ## 0. B4 第一批核销记录（2026-10-19，已落地代码）
 

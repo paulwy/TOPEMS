@@ -179,7 +179,7 @@ pub async fn get_retirement_plan(
     let plans = store.retirement_plans.lock().await;
     match plans.iter().find(|p| p.id == plan_id) {
         Some(p) => Json(ApiResponse::success(p.clone(), "退役计划")),
-        None => Json(ApiResponse::error(404, "未找到退役计划")),
+        None => Json(ApiResponse::not_found("未找到退役计划")),
     }
 }
 
@@ -200,7 +200,7 @@ pub async fn assess_impact(
     let store = get_lifecycle_store();
     let mut plans = store.retirement_plans.lock().await;
     let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-        return Json(ApiResponse::error(404, "未找到退役计划"));
+        return Json(ApiResponse::not_found("未找到退役计划"));
     };
 
     // 简化版影响评估：基于实体类型模拟下游依赖
@@ -261,7 +261,7 @@ pub async fn notify_stakeholders(
     let store = get_lifecycle_store();
     let mut plans = store.retirement_plans.lock().await;
     let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-        return Json(ApiResponse::error(404, "未找到退役计划"));
+        return Json(ApiResponse::not_found("未找到退役计划"));
     };
 
     plan.notify_status = "sent".to_string();
@@ -290,7 +290,7 @@ pub async fn confirm_retirement_plan(
     let store = get_lifecycle_store();
     let mut plans = store.retirement_plans.lock().await;
     let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-        return Json(ApiResponse::error(404, "未找到退役计划"));
+        return Json(ApiResponse::not_found("未找到退役计划"));
     };
 
     plan.confirmed_by = Some(req.confirmed_by);
@@ -322,7 +322,7 @@ pub async fn execute_retirement_plan(
     let (master_data_id, planned_rollback_window) = {
         let mut plans = store.retirement_plans.lock().await;
         let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-            return Json(ApiResponse::error(404, "未找到退役计划"));
+            return Json(ApiResponse::not_found("未找到退役计划"));
         };
 
         plan.status = RetirementStatus::Completed;
@@ -348,7 +348,7 @@ pub async fn execute_retirement_plan(
     let _ = planned_rollback_window;
     match p {
         Some(plan) => Json(ApiResponse::success(plan, "退役已执行")),
-        None => Json(ApiResponse::error(500, "执行失败")),
+        None => Json(ApiResponse::server_error("执行失败")),
     }
 }
 
@@ -373,14 +373,14 @@ pub async fn rollback_retirement_plan(
     let master_data_id = {
         let mut plans = store.retirement_plans.lock().await;
         let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-            return Json(ApiResponse::error(404, "未找到退役计划"));
+            return Json(ApiResponse::not_found("未找到退役计划"));
         };
 
         if !matches!(
             plan.status,
             RetirementStatus::Completed | RetirementStatus::Executing
         ) {
-            return Json(ApiResponse::error(400, "当前状态不支持回滚"));
+            return Json(ApiResponse::bad_request("当前状态不支持回滚"));
         }
 
         plan.status = RetirementStatus::RolledBack;
@@ -400,7 +400,7 @@ pub async fn rollback_retirement_plan(
     let p = plans.iter().find(|x| x.id == plan_id).cloned();
     match p {
         Some(plan) => Json(ApiResponse::success(plan, "已回滚")),
-        None => Json(ApiResponse::error(500, "回滚失败")),
+        None => Json(ApiResponse::server_error("回滚失败")),
     }
 }
 
@@ -422,11 +422,11 @@ pub async fn cancel_retirement_plan(
     let store = get_lifecycle_store();
     let mut plans = store.retirement_plans.lock().await;
     let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-        return Json(ApiResponse::error(404, "未找到退役计划"));
+        return Json(ApiResponse::not_found("未找到退役计划"));
     };
 
     if matches!(plan.status, RetirementStatus::Completed) {
-        return Json(ApiResponse::error(400, "已执行的退役计划不可取消"));
+        return Json(ApiResponse::bad_request("已执行的退役计划不可取消"));
     }
 
     plan.status = RetirementStatus::Cancelled;

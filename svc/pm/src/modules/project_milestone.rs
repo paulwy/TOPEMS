@@ -82,7 +82,7 @@ async fn list_milestones(
         Ok(milestones) => Json(ApiResponse::success(milestones, "获取项目里程碑列表成功")),
         Err(e) => {
             tracing::error!("获取项目里程碑列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目里程碑列表失败"))
+            Json(ApiResponse::server_error("获取项目里程碑列表失败"))
         }
     }
 }
@@ -141,7 +141,7 @@ async fn create_milestone(
         Ok(milestone) => Json(ApiResponse::success(milestone, "创建项目里程碑成功")),
         Err(e) => {
             tracing::error!("创建项目里程碑失败: {}", e);
-            Json(ApiResponse::error(500, "创建项目里程碑失败"))
+            Json(ApiResponse::server_error("创建项目里程碑失败"))
         }
     }
 }
@@ -176,10 +176,10 @@ async fn get_milestone(
 
     match result {
         Ok(Some(milestone)) => Json(ApiResponse::success(milestone, "获取项目里程碑成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目里程碑不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目里程碑不存在")),
         Err(e) => {
             tracing::error!("获取项目里程碑失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目里程碑失败"))
+            Json(ApiResponse::server_error("获取项目里程碑失败"))
         }
     }
 }
@@ -237,10 +237,10 @@ async fn update_milestone(
 
     match result {
         Ok(Some(milestone)) => Json(ApiResponse::success(milestone, "更新项目里程碑成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目里程碑不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目里程碑不存在")),
         Err(e) => {
             tracing::error!("更新项目里程碑失败: {}", e);
-            Json(ApiResponse::error(500, "更新项目里程碑失败"))
+            Json(ApiResponse::server_error("更新项目里程碑失败"))
         }
     }
 }
@@ -278,10 +278,10 @@ async fn delete_milestone(
         Ok(result) if result.rows_affected() > 0 => {
             Json(ApiResponse::success(true, "删除项目里程碑成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "项目里程碑不存在")),
+        Ok(_) => Json(ApiResponse::not_found("项目里程碑不存在")),
         Err(e) => {
             tracing::error!("删除项目里程碑失败: {}", e);
-            Json(ApiResponse::error(500, "删除项目里程碑失败"))
+            Json(ApiResponse::server_error("删除项目里程碑失败"))
         }
     }
 }

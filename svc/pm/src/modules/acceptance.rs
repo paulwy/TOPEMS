@@ -75,8 +75,7 @@ async fn get_project_plans(
         Ok(p) => Json(ApiResponse::success(p, "获取验收计划列表成功")),
         Err(e) => {
             tracing::error!("获取验收计划失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取验收计划失败",
             ))
         }
@@ -109,14 +108,12 @@ async fn get_plan(
 
     match plan {
         Ok(p) => Json(ApiResponse::success(p, "获取验收计划详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "验收计划不存在",
         )),
         Err(e) => {
             tracing::error!("获取验收计划失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取验收计划失败",
             ))
         }
@@ -193,8 +190,7 @@ async fn create_plan(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建验收计划失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建验收计划失败",
             ))
         }
@@ -266,8 +262,7 @@ async fn update_plan(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::error(
-                StatusCode::NOT_FOUND.as_u16(),
+            Json(ApiResponse::not_found(
                 "验收计划不存在",
             ))
         }
@@ -286,8 +281,7 @@ async fn update_plan(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新验收计划失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "更新验收计划失败",
             ))
         }
@@ -322,8 +316,7 @@ async fn get_plan_items(
         Ok(i) => Json(ApiResponse::success(i, "获取验收项列表成功")),
         Err(e) => {
             tracing::error!("获取验收项失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取验收项失败",
             ))
         }
@@ -360,8 +353,7 @@ async fn create_plan_item(
         Ok(i) => Json(ApiResponse::success(i, "创建验收项成功")),
         Err(e) => {
             tracing::error!("创建验收项失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建验收项失败",
             ))
         }
@@ -405,14 +397,12 @@ async fn update_plan_item(
 
     match item {
         Ok(i) => Json(ApiResponse::success(i, "更新验收项成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "验收项不存在",
         )),
         Err(e) => {
             tracing::error!("更新验收项失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "更新验收项失败",
             ))
         }
@@ -433,14 +423,12 @@ async fn delete_plan_item(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除验收项成功")),
-        Ok(_) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Ok(_) => Json(ApiResponse::not_found(
             "验收项不存在",
         )),
         Err(e) => {
             tracing::error!("删除验收项失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "删除验收项失败",
             ))
         }
@@ -475,8 +463,7 @@ async fn get_project_records(
         Ok(r) => Json(ApiResponse::success(r, "获取验收记录列表成功")),
         Err(e) => {
             tracing::error!("获取验收记录失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取验收记录失败",
             ))
         }
@@ -509,14 +496,12 @@ async fn get_record(
 
     match record {
         Ok(r) => Json(ApiResponse::success(r, "获取验收记录详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "验收记录不存在",
         )),
         Err(e) => {
             tracing::error!("获取验收记录失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "获取验收记录失败",
             ))
         }
@@ -553,15 +538,13 @@ async fn create_record(
     let plan = match plan {
         Ok(p) => p,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::error(
-                StatusCode::NOT_FOUND.as_u16(),
+            return Json(ApiResponse::not_found(
                 "验收计划不存在",
             ));
         }
         Err(e) => {
             tracing::error!("获取验收计划失败: {}", e);
-            return Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            return Json(ApiResponse::server_error(
                 "获取验收计划失败",
             ));
         }
@@ -597,8 +580,7 @@ async fn create_record(
         Ok(r) => Json(ApiResponse::success(r, "创建验收记录成功")),
         Err(e) => {
             tracing::error!("创建验收记录失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "创建验收记录失败",
             ))
         }
@@ -635,14 +617,12 @@ async fn update_record(
 
     match record {
         Ok(r) => Json(ApiResponse::success(r, "更新验收记录成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(
-            StatusCode::NOT_FOUND.as_u16(),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found(
             "验收记录不存在",
         )),
         Err(e) => {
             tracing::error!("更新验收记录失败: {}", e);
-            Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+            Json(ApiResponse::server_error(
                 "更新验收记录失败",
             ))
         }

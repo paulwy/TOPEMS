@@ -1,5 +1,43 @@
 # TOPEMS 上线检查清单
 
+## 0. 状态基线（2026-10-26 终态，权威入口）
+
+> 阶段判断：**准上线/预发布**——代码与治理已就绪，无技术阻断；唯一未决均属外部（部署实跑/CI 额度/业务勾选）。
+> 本块由 2026-10-26 全量门禁重跑 + F4 台账终态核销实测定稿；下方 1-11 节为通用人工确认模板（上线时逐项勾）。
+
+### 0.1 已闭环（实证，今日快照）
+
+| 门禁 | 结果 |
+|---|---|
+| `cargo check --workspace`（SQLX_OFFLINE） | exit 0 |
+| `cargo clippy --workspace --lib -D correctness` | exit 0 |
+| `tsc --noEmit` | exit 0 |
+| `eslint .` | 0 problems |
+| `vitest src/__tests__` | 1760 passed |
+| `scripts/migration/validate.sh` | 0 errors / 0 checksum errors（480 文件） |
+| `pnpm audit` | 剩 1（node-forge 待 expo 升级，dev 工具链非生产运行时） |
+
+### 0.2 F4 契约兜底终态（2026-10-26 实证）
+
+| 面 | 实测 | 状态 |
+|---|---|---|
+| core contract_stubs | 0 条（文件已删） | ✅ 清零 |
+| mobile BFF 兜底 | 120 条 route 全活消费（apps/web apiClient.mobile 136 调用） | 保留待上游替换 |
+| master-data 版本段预埋 | 166 = 123 活消费 + 43 零消费（integration tests/openapi 引用的预埋骨架） | 保留待 V66 建设 |
+
+### 0.3 剩余外部阻塞（上线前需外部介入）
+
+| # | 项 | 需要动作 | 阻塞方 |
+|---|---|---|---|
+| 1 | 生产部署三件套实跑（nginx reload / systemd install·update·rollback / smoke-prod 层2） | 提供生产机 SSH 端点 | 用户/运维 |
+| 2 | CI Billing 额度 | GitHub 账号开通计费 | 用户 |
+| 3 | EAS 真机构建 | iOS 真机 + EAS 账号 | 用户 |
+| 4 | BE-08 349 条 API 存废勾选（strong45/weak189/none115，勾选表已交付） | 业务逐条勾选 `artifacts/BE-08-业务确认决策表-2026-10-18.md` | 业务 |
+| 5 | 30 天流量观测（115 条 none 面） | 上线后 30 天观测 | 时间/业务 |
+| 6 | node-forge 漏洞 | 待 expo 升级（dev 链） | 上游 |
+
+---
+
 ## 概述
 
 本文档是 TOPEMS 项目的上线检查清单，用于在系统正式上线前进行全面检查，确保上线过程顺利、系统稳定运行。

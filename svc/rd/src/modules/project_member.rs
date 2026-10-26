@@ -42,7 +42,7 @@ pub async fn create_member(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -71,7 +71,7 @@ pub async fn create_member(
             request_id = %request_id,
             "创建项目成员失败: 分配比例必须在0到1之间"
         );
-        return Json(ApiResponse::error(400, "分配比例必须在0到1之间"));
+        return Json(ApiResponse::bad_request("分配比例必须在0到1之间"));
     }
 
     let id = Uuid::new_v4();
@@ -109,7 +109,7 @@ pub async fn create_member(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             tracing::info!(
@@ -128,11 +128,11 @@ pub async fn create_member(
                 "创建项目成员数据库错误"
             );
             if db_err.code().map(|c| c == "23503").unwrap_or(false) {
-                Json(ApiResponse::error(400, "关联的项目不存在"))
+                Json(ApiResponse::bad_request("关联的项目不存在"))
             } else if db_err.code().map(|c| c == "23505").unwrap_or(false) {
-                Json(ApiResponse::error(400, "该成员已加入此项目"))
+                Json(ApiResponse::bad_request("该成员已加入此项目"))
             } else {
-                Json(ApiResponse::error(500, "数据库操作失败"))
+                Json(ApiResponse::server_error("数据库操作失败"))
             }
         }
         Err(e) => {
@@ -142,7 +142,7 @@ pub async fn create_member(
                 duration_ms = duration.num_milliseconds(),
                 "创建项目成员失败"
             );
-            Json(ApiResponse::error(500, "创建项目成员失败"))
+            Json(ApiResponse::server_error("创建项目成员失败"))
         }
     }
 }
@@ -171,7 +171,7 @@ pub async fn get_project_members(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -220,7 +220,7 @@ pub async fn get_project_members(
                 duration_ms = duration.num_milliseconds(),
                 "获取项目成员列表失败"
             );
-            Json(ApiResponse::error(500, "获取项目成员列表失败"))
+            Json(ApiResponse::server_error("获取项目成员列表失败"))
         }
     }
 }
@@ -250,7 +250,7 @@ pub async fn update_member(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -276,7 +276,7 @@ pub async fn update_member(
                 member_id = %id,
                 "更新项目成员失败: 分配比例必须在0到1之间"
             );
-            return Json(ApiResponse::error(400, "分配比例必须在0到1之间"));
+            return Json(ApiResponse::bad_request("分配比例必须在0到1之间"));
         }
     }
 
@@ -319,7 +319,7 @@ pub async fn update_member(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::error(500, "提交事务失败"));
+                    return Json(ApiResponse::server_error("提交事务失败"));
                 }
             }
             tracing::info!(
@@ -337,7 +337,7 @@ pub async fn update_member(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目成员失败: 成员不存在"
             );
-            Json(ApiResponse::error(404, "成员不存在"))
+            Json(ApiResponse::not_found("成员不存在"))
         }
         Err(SqlxError::Database(db_err)) => {
             tracing::error!(
@@ -347,7 +347,7 @@ pub async fn update_member(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目成员数据库错误"
             );
-            Json(ApiResponse::error(500, "数据库操作失败"))
+            Json(ApiResponse::server_error("数据库操作失败"))
         }
         Err(e) => {
             tracing::error!(
@@ -357,7 +357,7 @@ pub async fn update_member(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目成员失败"
             );
-            Json(ApiResponse::error(500, "更新项目成员失败"))
+            Json(ApiResponse::server_error("更新项目成员失败"))
         }
     }
 }
@@ -386,7 +386,7 @@ pub async fn delete_member(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::error(500, "rls transaction unavailable")),
+        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -420,7 +420,7 @@ pub async fn delete_member(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             tracing::info!(
@@ -438,7 +438,7 @@ pub async fn delete_member(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目成员失败: 成员不存在"
             );
-            Json(ApiResponse::error(404, "成员不存在"))
+            Json(ApiResponse::not_found("成员不存在"))
         }
         Err(e) => {
             tracing::error!(
@@ -448,7 +448,7 @@ pub async fn delete_member(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目成员失败"
             );
-            Json(ApiResponse::error(500, "删除项目成员失败"))
+            Json(ApiResponse::server_error("删除项目成员失败"))
         }
     }
 }

@@ -306,7 +306,7 @@ pub async fn list_methods(
         Ok(data) => Json(ApiResponse::success(data, "获取检测方法列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch test methods: {}", e);
-            Json(ApiResponse::error(500, "获取检测方法列表失败"))
+            Json(ApiResponse::server_error("获取检测方法列表失败"))
         }
     }
 }
@@ -384,7 +384,7 @@ pub async fn create_method(
         )),
         Err(e) => {
             tracing::error!("Failed to create test method: {}", e);
-            Json(ApiResponse::error(500, "检测方法创建失败"))
+            Json(ApiResponse::server_error("检测方法创建失败"))
         }
     }
 }
@@ -410,7 +410,7 @@ pub async fn get_method(
 ) -> Json<ApiResponse<TestMethod>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
     };
 
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -468,11 +468,11 @@ pub async fn get_method(
             state.test_method_cache.set(cache_key, method.clone()).await;
             Json(ApiResponse::success(method, "获取检测方法成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch test method: {}", e);
-            Json(ApiResponse::error(500, "获取检测方法失败"))
+            Json(ApiResponse::server_error("获取检测方法失败"))
         }
     }
 }
@@ -485,7 +485,7 @@ pub async fn update_method(
 ) -> Json<ApiResponse<TestMethod>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
     };
 
     let row = sqlx::query(
@@ -571,11 +571,11 @@ pub async fn update_method(
                 "检测方法更新成功",
             ))
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to update test method: {}", e);
-            Json(ApiResponse::error(500, "检测方法更新失败"))
+            Json(ApiResponse::server_error("检测方法更新失败"))
         }
     }
 }
@@ -587,7 +587,7 @@ pub async fn delete_method(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
     };
 
     let result = sqlx::query(
@@ -611,7 +611,7 @@ pub async fn delete_method(
         }
         Err(e) => {
             tracing::error!("Failed to delete test method: {}", e);
-            Json(ApiResponse::error(500, "检测方法删除失败"))
+            Json(ApiResponse::server_error("检测方法删除失败"))
         }
     }
 }
@@ -669,7 +669,7 @@ pub async fn list_categories(
         Ok(data) => Json(ApiResponse::success(data, "获取方法分类列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch method categories: {}", e);
-            Json(ApiResponse::error(500, "获取方法分类列表失败"))
+            Json(ApiResponse::server_error("获取方法分类列表失败"))
         }
     }
 }
@@ -715,7 +715,7 @@ pub async fn create_category(
         )),
         Err(e) => {
             tracing::error!("Failed to create method category: {}", e);
-            Json(ApiResponse::error(500, "方法分类创建失败"))
+            Json(ApiResponse::server_error("方法分类创建失败"))
         }
     }
 }
@@ -741,7 +741,7 @@ pub async fn update_category(
 ) -> Json<ApiResponse<MethodCategory>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的分类ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的分类ID")),
     };
 
     let row = sqlx::query(
@@ -783,11 +783,11 @@ pub async fn update_category(
             },
             "方法分类更新成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to update method category: {}", e);
-            Json(ApiResponse::error(500, "方法分类更新失败"))
+            Json(ApiResponse::server_error("方法分类更新失败"))
         }
     }
 }
@@ -799,7 +799,7 @@ pub async fn delete_category(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的分类ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的分类ID")),
     };
 
     let result = sqlx::query(
@@ -814,7 +814,7 @@ pub async fn delete_category(
         Ok(_) => Json(ApiResponse::success(true, "方法分类删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete method category: {}", e);
-            Json(ApiResponse::error(500, "方法分类删除失败"))
+            Json(ApiResponse::server_error("方法分类删除失败"))
         }
     }
 }
@@ -877,7 +877,7 @@ pub async fn list_validations(
         Ok(data) => Json(ApiResponse::success(data, "获取方法验证记录列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch method validations: {}", e);
-            Json(ApiResponse::error(500, "获取方法验证记录列表失败"))
+            Json(ApiResponse::server_error("获取方法验证记录列表失败"))
         }
     }
 }
@@ -889,7 +889,7 @@ pub async fn create_validation(
 ) -> Json<ApiResponse<MethodValidationRecord>> {
     let method_id = match Uuid::parse_str(&req.method_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
     };
 
     let method_row = sqlx::query(
@@ -906,7 +906,7 @@ pub async fn create_validation(
             row.get::<String, _>("method_name"),
             row.get::<String, _>("version"),
         ),
-        Ok(None) => return Json(ApiResponse::error(404, "检测方法不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("检测方法不存在")),
         Err(e) => {
             return Json(ApiResponse::from(TopemsError::internal(
                 "查询检测方法失败",
@@ -980,7 +980,7 @@ pub async fn create_validation(
         )),
         Err(e) => {
             tracing::error!("Failed to create method validation: {}", e);
-            Json(ApiResponse::error(500, "方法验证记录创建失败"))
+            Json(ApiResponse::server_error("方法验证记录创建失败"))
         }
     }
 }
@@ -1006,7 +1006,7 @@ pub async fn list_method_versions(
 ) -> Json<ApiResponse<Vec<MethodVersion>>> {
     let id = match Uuid::parse_str(&method_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
     };
 
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -1048,7 +1048,7 @@ pub async fn list_method_versions(
         }
         Err(e) => {
             tracing::error!("Failed to fetch method versions: {}", e);
-            Json(ApiResponse::error(500, "获取方法版本列表失败"))
+            Json(ApiResponse::server_error("获取方法版本列表失败"))
         }
     }
 }
@@ -1074,7 +1074,7 @@ pub async fn create_new_version(
 ) -> Json<ApiResponse<TestMethod>> {
     let id = match Uuid::parse_str(&method_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
     };
 
     let method_row = sqlx::query(
@@ -1091,7 +1091,7 @@ pub async fn create_new_version(
             row.get::<String, _>("method_name"),
             row.get::<String, _>("version"),
         ),
-        Ok(None) => return Json(ApiResponse::error(404, "检测方法不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("检测方法不存在")),
         Err(e) => {
             return Json(ApiResponse::from(TopemsError::internal(
                 "查询检测方法失败",
@@ -1174,7 +1174,7 @@ pub async fn create_new_version(
         )),
         Err(e) => {
             tracing::error!("Failed to create new method version: {}", e);
-            Json(ApiResponse::error(500, "方法版本更新失败"))
+            Json(ApiResponse::server_error("方法版本更新失败"))
         }
     }
 }

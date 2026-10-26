@@ -32,6 +32,7 @@ export * from './dshAgent';
 export * from './businessCopilot';
 export * from './businessIntelligence';
 export * from './governanceDashboard';
+export * from './dshEnhanced';
 
 export const aiApi = {
   ...documentApi,

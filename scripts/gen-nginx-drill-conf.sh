@@ -49,7 +49,9 @@ s = s.replace("include /etc/nginx/mime.types;", "include /opt/homebrew/etc/nginx
 s = s.replace("/etc/nginx/certs/", "%s/certs/" % out)       # 5
 s = re.sub(r"(server localhost:)\d+", r"\g<1>8099", s)      # 6
 s = re.sub(r"^[ \t]*brotli[^;]*;[ \t]*\n", "", s, flags=re.M)  # 7
-s = s.replace("root /usr/share/nginx/html;", "root %s/html;" % out)
+# 7b: root 改演练 html（覆盖 TOPEMS 生产 root /var/www/topems/web 与 nginx 默认 /usr/share/nginx/html；
+#     2026-10-26 演练实测：原脚本只匹配默认路径，TOPEMS root 未替换 → try_files 内部重定向循环 500）
+s = re.sub(r"root (?:/var/www/topems/web|/usr/share/nginx/html);", "root %s/html;" % out, s)
 # 8: nginx >=1.25.1 建议独立 http2 指令；本机 1.31 对 listen ... http2 报 deprecated warn
 s = re.sub(r"^([ \t]*)listen\s+443 ssl http2;[ \t]*\n", r"\1listen 443 ssl;\n\1http2 on;\n", s, flags=re.M)
 # 9: 本机自签证书无 OCSP responder，ssl_stapling on/verify 报 warn → 演练关掉（生产正式证书保留 on）

@@ -385,7 +385,7 @@ pub async fn create_threshold(
     {
         Ok(row) => match row_to_threshold(&row) {
             Some(threshold) => axum::Json(ApiResponse::success(threshold, "阈值创建成功")),
-            None => axum::Json(ApiResponse::error(500, "阈值行反序列化失败")),
+            None => axum::Json(ApiResponse::server_error("阈值行反序列化失败")),
         },
         Err(e) => axum::Json(ApiResponse::from(TopemsError::internal("创建阈值失败", e))),
     }
@@ -424,9 +424,9 @@ pub async fn get_threshold(
     {
         Ok(Some(row)) => match row_to_threshold(&row) {
             Some(threshold) => axum::Json(ApiResponse::success(threshold, "获取阈值详情成功")),
-            None => axum::Json(ApiResponse::error(500, "阈值行反序列化失败")),
+            None => axum::Json(ApiResponse::server_error("阈值行反序列化失败")),
         },
-        Ok(None) => axum::Json(ApiResponse::error(404, "阈值不存在")),
+        Ok(None) => axum::Json(ApiResponse::not_found("阈值不存在")),
         Err(e) => axum::Json(ApiResponse::from(TopemsError::internal(
             "获取阈值详情失败",
             e,
@@ -481,9 +481,9 @@ pub async fn update_threshold(
     {
         Ok(Some(row)) => match row_to_threshold(&row) {
             Some(threshold) => axum::Json(ApiResponse::success(threshold, "阈值更新成功")),
-            None => axum::Json(ApiResponse::error(500, "阈值行反序列化失败")),
+            None => axum::Json(ApiResponse::server_error("阈值行反序列化失败")),
         },
-        Ok(None) => axum::Json(ApiResponse::error(404, "阈值不存在")),
+        Ok(None) => axum::Json(ApiResponse::not_found("阈值不存在")),
         Err(e) => axum::Json(ApiResponse::from(TopemsError::internal("更新阈值失败", e))),
     }
 }
@@ -523,7 +523,7 @@ pub async fn delete_threshold(
             serde_json::json!({"id": id.to_string()}),
             "阈值删除成功",
         )),
-        Ok(_) => axum::Json(ApiResponse::error(404, "阈值不存在")),
+        Ok(_) => axum::Json(ApiResponse::not_found("阈值不存在")),
         Err(e) => axum::Json(ApiResponse::from(TopemsError::internal("删除阈值失败", e))),
     }
 }

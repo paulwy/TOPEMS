@@ -163,10 +163,10 @@ pub async fn forward_traceability(
 
     let order = match order {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(ApiResponse::error(404, "生产工单不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("生产工单不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch order: {}", e);
-            return Json(ApiResponse::error(500, "正向追溯失败"));
+            return Json(ApiResponse::server_error("正向追溯失败"));
         }
     };
 
@@ -351,7 +351,7 @@ pub async fn backward_traceability(
         }
         Err(e) => {
             tracing::error!("Failed to fetch batch: {}", e);
-            return Json(ApiResponse::error(500, "反向追溯失败"));
+            return Json(ApiResponse::server_error("反向追溯失败"));
         }
     };
 
@@ -466,7 +466,7 @@ pub async fn get_trace_chain(
     let id = match Uuid::parse_str(&query.identifier) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::error(400, "无效的标识符"));
+            return Json(ApiResponse::bad_request("无效的标识符"));
         }
     };
 
@@ -489,10 +489,10 @@ pub async fn get_trace_chain(
 
     match order {
         Ok(Some(_)) => forward_traceability(State(state), Extension(claims), Path(id)).await,
-        Ok(None) => Json(ApiResponse::error(404, "追溯对象不存在")),
+        Ok(None) => Json(ApiResponse::not_found("追溯对象不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch trace chain: {}", e);
-            Json(ApiResponse::error(500, "追溯链查询失败"))
+            Json(ApiResponse::server_error("追溯链查询失败"))
         }
     }
 }
@@ -611,7 +611,7 @@ pub async fn list_quality_records(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality records: {}", e);
-            return Json(ApiResponse::error(500, "获取质量记录列表失败"));
+            return Json(ApiResponse::server_error("获取质量记录列表失败"));
         }
     };
 
@@ -644,7 +644,7 @@ pub async fn list_quality_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality records: {}", e);
-            return Json(ApiResponse::error(500, "获取质量记录列表失败"));
+            return Json(ApiResponse::server_error("获取质量记录列表失败"));
         }
     };
 

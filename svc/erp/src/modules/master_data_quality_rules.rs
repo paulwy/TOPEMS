@@ -296,7 +296,7 @@ pub async fn create_quality_rule(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(
@@ -450,7 +450,7 @@ pub async fn get_quality_rule(
     };
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的规则 ID")),
     };
 
     let sql = format!(
@@ -465,7 +465,7 @@ pub async fn get_quality_rule(
                 Json(ApiResponse::from(TopemsError::internal("解析规则失败", e)))
             }
         },
-        Ok(None) => Json(ApiResponse::error(404, "未找到质量规则")),
+        Ok(None) => Json(ApiResponse::not_found("未找到质量规则")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询质量规则失败: {}", e);
             Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
@@ -497,7 +497,7 @@ pub async fn update_quality_rule(
     };
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的规则 ID")),
     };
 
     // 先查询现有规则
@@ -511,7 +511,7 @@ pub async fn update_quality_rule(
         .await
     {
         Ok(Some(row)) => quality_rule_from_row(&row),
-        Ok(None) => return Json(ApiResponse::error(404, "未找到质量规则")),
+        Ok(None) => return Json(ApiResponse::not_found("未找到质量规则")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询质量规则失败: {}", e);
             return Json(ApiResponse::from(TopemsError::internal("查询失败", e)));
@@ -558,7 +558,7 @@ pub async fn update_quality_rule(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
+                    return Json(ApiResponse::server_error("事务提交失败"));
                 }
             }
             Json(ApiResponse::success(
@@ -608,7 +608,7 @@ pub async fn delete_quality_rule(
     };
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的规则 ID")),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -622,12 +622,12 @@ pub async fn delete_quality_rule(
     match result {
         Ok(res) => {
             if res.rows_affected() == 0 {
-                Json(ApiResponse::error(404, "未找到质量规则"))
+                Json(ApiResponse::not_found("未找到质量规则"))
             } else {
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("事务提交失败: {}", e);
-                        return Json(ApiResponse::error(500, "事务提交失败"));
+                        return Json(ApiResponse::server_error("事务提交失败"));
                     }
                 }
                 Json(ApiResponse::success(
@@ -672,7 +672,7 @@ pub async fn run_quality_check(
     // 1. 加载规则
     let rules = load_quality_rules(txn, req.domain.as_deref(), req.rule_ids.as_deref()).await;
     if rules.is_empty() {
-        return Json(ApiResponse::error(404, "未找到匹配的质量规则"));
+        return Json(ApiResponse::not_found("未找到匹配的质量规则"));
     }
 
     // 2. 加载主数据记录（排除已销毁）
@@ -739,7 +739,7 @@ pub async fn run_quality_check(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::error(500, "事务提交失败"));
+            return Json(ApiResponse::server_error("事务提交失败"));
         }
     }
     Json(ApiResponse::success(

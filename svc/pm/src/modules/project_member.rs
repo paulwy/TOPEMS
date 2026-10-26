@@ -56,7 +56,7 @@ async fn list_members(
         Ok(members) => Json(ApiResponse::success(members, "获取项目成员列表成功")),
         Err(e) => {
             tracing::error!("获取项目成员列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目成员列表失败"))
+            Json(ApiResponse::server_error("获取项目成员列表失败"))
         }
     }
 }
@@ -114,10 +114,10 @@ async fn create_member(
 
     match result {
         Ok(Some(member)) => Json(ApiResponse::success(member, "添加项目成员成功")),
-        Ok(None) => Json(ApiResponse::error(409, "成员已存在")),
+        Ok(None) => Json(ApiResponse::conflict("成员已存在")),
         Err(e) => {
             tracing::error!("添加项目成员失败: {}", e);
-            Json(ApiResponse::error(500, "添加项目成员失败"))
+            Json(ApiResponse::server_error("添加项目成员失败"))
         }
     }
 }
@@ -152,10 +152,10 @@ async fn get_member(
 
     match result {
         Ok(Some(member)) => Json(ApiResponse::success(member, "获取项目成员成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目成员不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目成员不存在")),
         Err(e) => {
             tracing::error!("获取项目成员失败: {}", e);
-            Json(ApiResponse::error(500, "获取项目成员失败"))
+            Json(ApiResponse::server_error("获取项目成员失败"))
         }
     }
 }
@@ -209,10 +209,10 @@ async fn update_member(
 
     match result {
         Ok(Some(member)) => Json(ApiResponse::success(member, "更新项目成员成功")),
-        Ok(None) => Json(ApiResponse::error(404, "项目成员不存在")),
+        Ok(None) => Json(ApiResponse::not_found("项目成员不存在")),
         Err(e) => {
             tracing::error!("更新项目成员失败: {}", e);
-            Json(ApiResponse::error(500, "更新项目成员失败"))
+            Json(ApiResponse::server_error("更新项目成员失败"))
         }
     }
 }
@@ -250,10 +250,10 @@ async fn delete_member(
         Ok(result) if result.rows_affected() > 0 => {
             Json(ApiResponse::success(true, "删除项目成员成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "项目成员不存在")),
+        Ok(_) => Json(ApiResponse::not_found("项目成员不存在")),
         Err(e) => {
             tracing::error!("删除项目成员失败: {}", e);
-            Json(ApiResponse::error(500, "删除项目成员失败"))
+            Json(ApiResponse::server_error("删除项目成员失败"))
         }
     }
 }

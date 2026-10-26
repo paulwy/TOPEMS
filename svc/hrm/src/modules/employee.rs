@@ -528,7 +528,7 @@ pub async fn update_employee(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("更新员工事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
+                return Json(ApiResponse::server_error("事务提交失败"));
             }
         }
         for k in employee_cache_keys_all_locales(&tenant_id, &id) {
@@ -675,7 +675,7 @@ pub async fn delete_employee(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("删除员工事务提交失败: {}", e);
-                return Json(ApiResponse::<String>::error(500, "事务提交失败"));
+                return Json(ApiResponse::<String>::server_error("事务提交失败"));
             }
         }
         for k in employee_cache_keys_all_locales(&tenant_id, &id) {

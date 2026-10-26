@@ -11,8 +11,10 @@ use tokio::sync::RwLock;
 use topems_shared_mcp::jsonrpc::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 use topems_shared_mcp::protocol::{
     InitializeParams, InitializeResult, McpCapability, McpProtocolVersion, McpServerInfo,
-    McpToolResult, ResourcesCapability, ToolsCapability,
+    McpToolResult, PromptsCapability, ResourcesCapability, ToolsCapability,
 };
+
+use super::prompts::{get_prompt, list_prompts};
 
 use super::resources::{register_business_resources, ResourceRegistry};
 use super::security::{AuthenticatedUser, McpSecurityMiddleware};
@@ -226,6 +228,8 @@ impl McpServer {
             "tools/call" => Some(self.handle_tools_call(id, request.params, user).await),
             "resources/list" => Some(self.handle_resources_list(id).await),
             "resources/read" => Some(self.handle_resources_read(id, request.params, user).await),
+            "prompts/list" => Some(self.handle_prompts_list(id).await),
+            "prompts/get" => Some(self.handle_prompts_get(id, request.params).await),
             "ping" => Some(JsonRpcResponse::success(id, json!({}))),
             // P2-6：shutdown——置 Shutdown 状态（后续请求返回未初始化错误），
             // 供运维/客户端优雅关闭；stdio EOF 仍为主关闭路径。
@@ -290,9 +294,9 @@ impl McpServer {
         //   不发送 notifications/tools/list_changed（避免 Client 端缓存后永远等不到增量推送）。
         // - resources.list_changed=false：同上，3 个业务资源在启动时固定注册。
         // - resources.subscribe=false：不支持资源订阅（无资源变更推送）。
-        // - prompts=None：有意不实现 MCP prompts 能力——62 个业务工具的 description
-        //   字段已承载足够的工具说明，外部 Agent 可自行构造 system prompt；
-        //   MCP 协议允许 prompts 为 None（表示"不提供 prompt 模板"）。
+        // - prompts.list_changed=false：4 个内置业务 prompt 模板固定注册，无动态增删。
+        //   （2026-10-26 解冻：原 prompts=None 有意冻结——62 工具 description 承载说明；
+        //   现按 MCP 协议暴露 erp/crm/finance/hrm 四域模板，prompts/get 静态渲染无需鉴权。）
         // - sampling=None：不主动请求 Client 侧 LLM 采样。
         let result = InitializeResult {
             protocol_version: self.protocol_version,
@@ -304,7 +308,9 @@ impl McpServer {
                     list_changed: Some(false),
                     subscribe: Some(false),
                 }),
-                prompts: None,
+                prompts: Some(PromptsCapability {
+                    list_changed: Some(false),
+                }),
                 sampling: None,
             },
             server_info: McpServerInfo {
@@ -441,6 +447,42 @@ impl McpServer {
 
                 JsonRpcResponse::error(id, JsonRpcError::app_error(code, message, None))
             }
+        }
+    }
+
+    /// 处理 prompts/list 请求（2026-10-26 解冻：暴露内置业务 Prompt 模板）
+    async fn handle_prompts_list(&self, id: Value) -> JsonRpcResponse {
+        JsonRpcResponse::success(id, json!({ "prompts": list_prompts() }))
+    }
+
+    /// 处理 prompts/get 请求：按名称渲染模板，未知名返回 -32602
+    async fn handle_prompts_get(&self, id: Value, params: Option<Value>) -> JsonRpcResponse {
+        let name = match params
+            .as_ref()
+            .and_then(|p| p.get("name"))
+            .and_then(|v| v.as_str())
+        {
+            Some(name) => name.to_string(),
+            None => {
+                return JsonRpcResponse::error(
+                    id,
+                    JsonRpcError::invalid_params(Some(json!({"error": "Missing prompt name"}))),
+                )
+            }
+        };
+        let arguments = params
+            .and_then(|p| p.get("arguments").cloned())
+            .and_then(|v| v.as_object().cloned())
+            .unwrap_or_default();
+        match get_prompt(&name, &arguments) {
+            Some(result) => JsonRpcResponse::success(id, result),
+            None => JsonRpcResponse::error(
+                id,
+                JsonRpcError::invalid_params(Some(json!({
+                    "error": "Unknown prompt",
+                    "name": name,
+                }))),
+            ),
         }
     }
 

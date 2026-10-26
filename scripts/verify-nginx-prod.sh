@@ -17,6 +17,7 @@
 #     --services "erp bi hrm portal core wms" \
 #     --probe "/health" \
 #     --insecure   # 自签证书演练环境（生产正式证书不需要）
+#     --target deploy@nginx-prod   # 生产目标机 SSH 端点；设值后追加远程 nginx -t + reload
 # ============================================================================
 set -uo pipefail
 
@@ -26,6 +27,10 @@ BASE=""
 SERVICES="erp bi hrm portal core wms"
 PROBE="/health"
 CURL_INSECURE=0
+# 生产目标机（SSH 端点 user@host 或 ~/.ssh/config 别名）。设值后在校验末尾追加
+# [4/4] 远程 nginx -t + reload（nginx 语法与 reload 必须在生产 Linux 机上做）。
+# 需要：SSH 免密（ssh-key），且该账号可执行 nginx -t / systemctl reload（root 或 NOPASSWD sudo）。
+TARGET=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -35,6 +40,7 @@ while [[ $# -gt 0 ]]; do
     --services) SERVICES="$2"; shift 2 ;;
     --probe) PROBE="$2"; shift 2 ;;
     --insecure) CURL_INSECURE=1; shift ;;
+    --target) TARGET="$2"; shift 2 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
@@ -90,6 +96,23 @@ else
   echo "SMOKE $ok/$total 200"
   # 冒烟须全部 200（生产验收标准：6 域全 200；演练可按可用域收窄）
   [[ "$ok" -ne "$total" ]] && FAIL=1
+fi
+
+echo "== [4/4] 目标机 nginx reload =="
+if [[ -z "$TARGET" ]]; then
+  echo "RELOAD_SKIP (未传 --target，仅本地校验；生产 reload 需在目标机上执行)"
+else
+  # 先确认目标机可达，再在目标机上做权威 nginx -t + reload。
+  # 账号需可执行 nginx -t / systemctl reload nginx（root 或 NOPASSWD sudo）。
+  if ! ssh -o BatchMode=yes -o ConnectTimeout=10 "$TARGET" 'echo ok' >/dev/null 2>&1; then
+    echo "TARGET_UNREACHABLE ($TARGET——检查 SSH 免密与主机可达性)"; FAIL=1
+  else
+    if ssh -o BatchMode=yes "$TARGET" 'nginx -t && systemctl reload nginx'; then
+      echo "RELOAD_OK ($TARGET nginx -t 通过并已 reload)"
+    else
+      echo "RELOAD_FAIL ($TARGET——nginx -t 或 systemctl reload 失败，见上方输出)"; FAIL=1
+    fi
+  fi
 fi
 
 echo "== 结果: $([ $FAIL -eq 0 ] && echo PASS || echo FAIL) =="

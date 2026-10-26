@@ -160,7 +160,7 @@ pub async fn list_reagents(
         Ok(data) => Json(ApiResponse::success(data, "获取试剂列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch reagents: {}", e);
-            Json(ApiResponse::error(500, "获取试剂列表失败"))
+            Json(ApiResponse::server_error("获取试剂列表失败"))
         }
     }
 }
@@ -263,7 +263,7 @@ pub async fn create_reagent(
         }
         Err(e) => {
             tracing::error!("Failed to create reagent: {}", e);
-            Json(ApiResponse::error(500, "试剂创建失败"))
+            Json(ApiResponse::server_error("试剂创建失败"))
         }
     }
 }
@@ -290,7 +290,7 @@ pub async fn get_reagent(
 ) -> Json<ApiResponse<Reagent>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的试剂ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的试剂ID")),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -327,11 +327,11 @@ pub async fn get_reagent(
             },
             "获取试剂成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch reagent: {}", e);
-            Json(ApiResponse::error(500, "获取试剂失败"))
+            Json(ApiResponse::server_error("获取试剂失败"))
         }
     }
 }
@@ -344,7 +344,7 @@ pub async fn update_reagent(
 ) -> Json<ApiResponse<Reagent>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的试剂ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的试剂ID")),
     };
     let tenant_id = ctx.tenant_id;
 
@@ -383,11 +383,11 @@ pub async fn update_reagent(
             },
             "试剂更新成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to update reagent: {}", e);
-            Json(ApiResponse::error(500, "试剂更新失败"))
+            Json(ApiResponse::server_error("试剂更新失败"))
         }
     }
 }
@@ -399,7 +399,7 @@ pub async fn delete_reagent(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的试剂ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的试剂ID")),
     };
     let tenant_id = ctx.tenant_id;
 
@@ -415,7 +415,7 @@ pub async fn delete_reagent(
         Ok(_) => Json(ApiResponse::success(true, "试剂删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete reagent: {}", e);
-            Json(ApiResponse::error(500, "试剂删除失败"))
+            Json(ApiResponse::server_error("试剂删除失败"))
         }
     }
 }

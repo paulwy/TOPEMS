@@ -1,3 +1,259 @@
+## 冻结面解冻 ①：DSH 增强能力前端面板（2026-10-26）✅ 完成
+
+> 后端 svc/ai dsh 路由 6 组全真（agent/performance/enhanced/copilot/governance/smart-forms）；审计时前端 agent/copilot/governance/smart-forms 均已就绪，**仅 enhanced（kg/rag/multi-agent）+ performance 16 方法零封装零页面**。三批解冻完成：
+
+### 第一批：api 补齐 dshEnhanced ✅ 完成（commit b6116687d3，已推送）
+- **apps/web/src/api/ai/dshEnhanced.ts** 18 封装：kg 12（listEntities/addEntity/getEntity/deleteEntity/getEntityNeighbors/listRelations/addRelation/shortestPath/linkEntity/detectCommunities/getGraphStats/extractEntities）+ rag 2（ragRetrieve/getRagStats）+ multi-agent 1（multiAgentExecute）+ performance 3（getPerformanceMetrics/getToolPerformance/resetPerformanceMetrics）。类型对齐 svc/ai struct。
+
+### 第二批：DshKnowledgePage 知识图谱 ✅ 完成（commit 98f77853ad，已推送）
+- **4 tab**：图谱统计（getGraphStats 指标卡+detectCommunities+extractEntities）/实体管理（listEntities+addEntity+deleteEntity+getEntityNeighbors）/关系管理（listRelations+addRelation+linkEntity）/路径分析（shortestPath）。
+- 挂载 /ai/dsh-knowledge + 侧栏第 12 项（ai:knowledge:read）。i18n zh/en 各 48 key。smoke 1 测试。
+- 修正（首跑 tsc 1 错）：GitFork 不在 lucide→GitBranch。
+
+### 第三批：DshRagPage 语义检索与性能 ✅ 完成（commit 82949d5a7f，已推送）
+- **3 tab**：检索与协作（ragRetrieve 表单+文档结果表+multiAgentExecute）/RAG 统计（getRagStats 6 指标卡）/Agent 性能（getPerformanceMetrics+工具明细表+getToolPerformance+resetPerformanceMetrics）。
+- 挂载 /ai/dsh-rag + 侧栏第 13 项（ai:knowledge:read）。i18n zh/en 各 40 key。smoke 1 测试。
+
+### ① 全量收口 ✅（2026-10-26）
+> 三批完成并推送（b6116687d3 / 98f77853ad / 82949d5a7f）。**DSH 增强面解冻完成**：enhanced+performance 16 方法全封装、2 页全挂载、每页 smoke 齐全。
+
+## 冻结面解冻 ⑦：MCP prompts 规范对齐（2026-10-26）✅ 完成
+
+> 原 `prompts=None` 有意冻结（62 工具 description 承载说明，`server.rs:301`）。按 MCP 协议规范对齐补最小实现（commit bb3ef2b431，已推送）。
+
+- **新建 dsh/mcp/prompts.rs**：4 个业务模板（erp.sales_review / crm.pipeline_review / finance.voucher_audit / hrm.people_insight），list_prompts/get_prompt 纯函数 + 4 单测。
+- **server.rs**：capabilities.prompts=Some(PromptsCapability{list_changed:false})；prompts/list + prompts/get 分发与 handler（未知名 -32602）；更新冻结注释。
+- **顺清 2 处遗留 unused import**（handler.rs / workflow_handlers.rs）。
+- 验证：cargo clippy -p topems-ai --lib -D correctness 0/0；prompts 单测 4 passed。
+
+## 上线清单同步终态基线（2026-10-26）✅ 完成
+
+> go-live-checklist.md 顶部新增「0. 状态基线」权威块：阶段判断（准上线/预发布、无技术阻断）、0.1 今日门禁快照（7 项全绿）、0.2 F4 兜底终态（core 0 / mobile 120 全活 / master 166=123+43）、0.3 剩余外部阻塞 6 项（生产部署三件套 / CI Billing / EAS 真机 / BE-08 349 勾选 / 30 天观测 / node-forge）。1-11 节通用模板保留待上线人工勾。
+
+## F4 台账终态核销（2026-10-26，用户拍板直接决策）✅ 完成
+
+> 用户授权"根据项目实际评估后直接决策"。全量实证（宽正则含泛型调用对账 + 全仓引用核查）结论：**F4 无可静态删除项**，全部 🔴 分层归位。
+
+| 面 | 实测计数 | 决策 |
+|---|---|---|
+| core contract_stubs | 0 条（文件已删，10-24 清零） | ✅ 已闭环，台账刷新终态 |
+| mobile BFF 兜底 | 120 条 route **120/120 全活消费**（apps/web apiClient.mobile 136 调用；含 /scan 泛型调用假阴性纠正） | 保留待上游替换，无可删 |
+| master-data 版本段预埋 | 166 条 = 123 活消费（⑥六页/①DSH 实调）+ 43 零消费 | 43 零消费被 integration tests + openapi 引用，属预埋契约骨架，删需连锁删测试，成本>收益 → 保留 |
+| BE-08 349 条 | 业务勾选 | 唯一真外部项，转业务 |
+
+- 两本台账（contract-stub-mapping / contract-fallback-domains）已刷新终态块，旧计数（125/78/82、134、43）标注作废。
+- 口径修正：早前窄正则把 mobile `/scan` 判零消费，实为 `post<ScanResult>('scan')` 泛型调用假阴性，宽正则纠正后全命中。
+
+## 终态门禁快照（2026-10-26）✅ 完成
+
+> 技术面本地可闭环项已清零（代码 TODO/FIXME 扫描 21 处均为测试数据/示例/跟踪注释；gen-nginx-drill-conf.sh root 漂移已在 09fae7a6b2 回补；F4 台账剩余 🔴 全部挂在 BE-08 业务勾选）。全量门禁重跑快照：
+
+| 门禁 | 结果 |
+|---|---|
+| `cargo check --workspace`（SQLX_OFFLINE） | exit 0 |
+| `cargo clippy --workspace --lib -D correctness` | exit 0 |
+| `tsc --noEmit` | exit 0 |
+| `eslint .` | 0 problems |
+| `vitest src/__tests__` | 1760 passed（全量 458 files/6160 为 10-25 基线） |
+| `scripts/migration/validate.sh` | 0 errors / 0 checksum errors（480 文件） |
+| `pnpm audit` | 7→1（node-forge 待 expo 升级） |
+
+工作区干净（HEAD==origin/main）。剩余全部为外部阻塞项，见文末「外部阻塞待办」。
+
+## 待拍板项1 · training records 表重设计（2026-10-26，用户拍板）✅ 完成
+
+> ehs.training_records 技术列（10-17 补 13 列 + 5 handler 接真 + RLS FORCE）此前已落地；本轮用户拍板做**设计层加固**，同步修 hrm 侧同名片潜在缺陷。commit a45908340a 已推送。
+
+- **ehs.training_records**：`record_no UNIQUE`、`status CHECK('ongoing','completed','failed')` 对齐前端契约、`title NOT NULL`、`duration_hours>=0` / `pass_rate 0-100` CHECK。
+- **hrm.training_records**：修 **status DEFAULT 'planned' ↔ CHECK('active','inactive','archived') 冲突**（表 0 行未暴露的 INSERT 必败炸弹，重建 CHECK 覆盖计划态全家桶）；`course_id→training_courses` / `employee_id→employees` FK（ON DELETE SET NULL）+ 高频查询索引；`cost>=0` / `score 0-100` / `duration_hours>=0` CHECK。
+- 迁移 `20261026090000_training_records_redesign_hardening.sql`：全 DO 条件守卫幂等；validate.sh **0 errors / 0 checksum errors**（checksums 已登记）。
+- 实测（dev 库）：DEFAULT 'planned' INSERT 成功；非法 status/score/record_no 重复均被约束拒绝（savepoint 复验）；合法行成功；0 测试残留；两表仍 0 行零迁移风险。
+
+## 依赖安全清理：dependabot 6 漏洞（2026-10-26）✅ 完成
+
+> GitHub dependabot 报 1 critical + 3 high + 2 moderate（6 项）。本地 `pnpm audit` 实测 7 项（2 moderate | 4 high | 1 critical）。commit 328f8b31a0 已推送。
+
+- **storybook 家族 ^10.4.6/^10.5.4 → ^10.6.3**：消 critical（GHSA-f2ph-cmg5-wxc8 预览代码注入）+ high（本地网络注入）。
+- **package.json pnpm.overrides**：`undici 7.29.1→7.30.1`（jsdom 测试链 DoS GHSA-xjj6-f33q-929c）、新增 `body-parser 1.20.9`（lhci→express 链 DoS GHSA-27r3-jxmh-p828）。
+- **剩 1 不可修**：node-forge GHSA-86w9-cpqp-85rv（expo→@expo/code-signing-certificates@0.0.6 内嵌，patched `<0.0.0` 无上游补丁）→ **登记待 expo 升级**，dev 工具链非生产运行时。
+- **顺修 storybook 构建回归**（升级后 build-storybook 首次跑通，70 stories）：恢复 29800fb8ad 误删的 .storybook/main.ts + preview.tsx + storybook-theme.ts；vite.config.ts fix-cjs-interop-build closeBundle 加守卫；恢复 chartPalette.ts（3 stories 引用）+ Avatar.stories.tsx 清 AvatarGroup 残留块。
+- 验证：tsc 0 / eslint 0 / vitest 关键 5 passed / storybook build 全绿 / audit 7→1。
+
+## P3-3 收尾：eslint 残留 11 处 unused-vars 清零（2026-10-26）✅ 完成
+
+> 前批收敛后残留 11 warnings（全部在解冻面新建页），本批清完——eslint 全量 **0 problems**（连 warning 级也归零）。commit a544fd213f 已推送。
+
+- Master{DisasterRecovery,KnowledgeGraph,Quality,SemanticSearch}Page：删未用 Box import 各 1 处
+- MasterKnowledgeGraphPage/MasterVersioningPage：删未用 useQueryClient 解构 + import 移除；MasterVersioningPage 另删未用 permPage useState
+- DshRagPage：删未用 retrieveText useState + map 回调未用索引 i
+- 验证：tsc 0 error / eslint 全量 exit 0 / 6 页 smoke 8/8 passed
+
+## 冻结面全景收口 ✅（2026-10-26）
+> **全部冻结面处理完毕**：②④⑥ 解冻✅、③ 保留后端/前端不接线、⑤⑧ 删除、① DSH 增强面解冻✅、⑦ MCP prompts 解冻✅。本地可闭环的技术冻结面清零。
+
+## 冻结面解冻 ⑥：master-data 5 业务模块前端页（2026-10-26）✅ 完成
+
+> 后端 svc/master-data 16 模块全实现（129 handler sqlx），前端 api/master 12 文件 126 方法全封装；6 个页面已挂载（dataAssetCatalog/schemaRegistry/lineageAnalytics/aiGovernance/commercial/publicMasterData），**缺 6 页 = versioning/governance/quality/knowledgeGraph/semanticSearch/disasterRecovery**。已选 versioning 为首批并完成。
+
+### 第一批：versioning 版本管理 ✅ 完成（commit 75147d9c83，已推送）
+- **MasterVersioningPage 5 tab**：版本历史（listHistory）/分支（createBranch+mergeBranch Dialog）/审计日志（queryAuditLog 分页）/权限（getResourcePermissions）/合规（getComplianceAudit）。实体定位输入（默认 mdm_material/MAT-001）+ 查询。
+- 挂载：MASTER_PATHS.versioning + versioningRoute（master_data:versioning:read）+ 侧栏第 7 项。
+- i18n：zh/en master.json 各 56 key。
+- smoke：master-versioning.smoke.test.tsx 2 测试（样本渲染断言）。
+- 验证：tsc 0 / eslint 0 errors / vitest 2+22 passed。
+- 修正（首跑 tsc 6 错）：FileClock 不在 lucide→ClipboardList；store API 是 addNotification 非 notify；getResourcePermissions 无分页参数；MergeBranchRequest 需 branch_id+target_version+strategy。
+
+### 第二批：governance 治理面板 ✅ 完成（commit fe6f6a70f8，已推送）
+- **MasterGovernancePage 4 tab**：成熟度（getDimensionScores+assessMaturity+getMaturityHistory）/改进计划（createImprovementPlan+trackProgress）/治理工作流（listWorkflows+startWorkflow+approveStep）/数据产品（listDataProducts+createDataProduct）。
+- 挂载 /master/governance + 侧栏第 8 项（master_data:governance:read）。i18n zh/en 各 40 key。smoke 2 测试。
+- 验证：tsc 0 / eslint 0 errors / vitest 2 passed。
+
+### 第三批：quality 数据质量 ✅ 完成（commit 9f1b3f64c6，已推送）
+- **MasterQualityPage 4 tab**：总览（getDashboard+getScore 指标卡）/检查记录（listChecks+runCheck）/规则管理（listRules+createRule+deleteRule）/建议与修复（getSuggestions+approve/reject+getFixHistory）。
+- 挂载 /master/quality + 侧栏第 9 项。i18n zh/en 各 40 key。smoke 2 测试。验证：tsc 0 / eslint 0 / vitest 2 passed。
+
+### 第四批：knowledgeGraph 知识图谱 ✅ 完成（commit ae4ce8d0a5，已推送）
+- **MasterKnowledgeGraphPage 4 tab**：图谱概览（getOverview 指标卡+getRelationshipTypes）/路径分析（findPath+graphTraversal）/实体搜索（searchEntities+getEntityDetails）/关系管理（createRelationship+deleteRelationship）。
+- 挂载 /master/knowledge-graph + 侧栏第 10 项（master_data:knowledge:read）。i18n zh/en 各 33 key。smoke 1 测试。
+- 验证：tsc 0 / eslint 0 / vitest 1 passed。
+
+### 第五批：semanticSearch 语义库 ✅ 完成（commit 332fc03c33，已推送）
+- **MasterSemanticSearchPage 3 tab**：语义检索（getSearchStats+searchSemantic+reindexAll）/图谱操作（getSubgraph+findShortestPath）/标签管理（createTag+getTagsForEntity）。
+- 挂载 /master/semantic-search + 侧栏第 11 项（master_data:semantic:read）。i18n zh/en 各 33 key。smoke 1 测试。
+- 修正（首跑 tsc 2 错）：getTagsForEntity 双参（entityType+id）；Stack flexWrap 入 sx。
+- 验证：tsc 0 / eslint 0 / vitest 1 passed。
+
+### 第六批：disasterRecovery 灾难恢复 ✅ 完成（commit 5551ae1b54，已推送）
+- **MasterDisasterRecoveryPage 4 tab**：恢复点（getRecoveryStatus+listRecoveryPoints+createRecoveryPoint+restoreFromPoint）/恢复计划（getPlanProgress+createRecoveryPlan+executeRecoveryPlan+testRecovery）/业务连续性（getContinuityScore+listContinuityPlans+createContinuityPlan+testContinuityPlan）/复制与切换（getReplicationStatus+getRegionHealth+getFailoverHistory+initiateFailover）。
+- 挂载 /master/disaster-recovery + 侧栏第 12 项（master_data:disaster:read）。i18n zh/en 各 61 key。smoke 1 测试。
+- 修正（首跑 tsc 5 错）：ListRestart/DatabaseBackup 不在 lucide→History/Database；Stack flexWrap 入 sx。
+- 验证：tsc 0 / eslint 0 / vitest 1 passed。
+
+### ⑥ 全量收口 ✅（2026-10-26）
+> 六批全部完成并推送（75147d9c83 / fe6f6a70f8 / 9f1b3f64c6 / ae4ce8d0a5 / 332fc03c33 / 5551ae1b54）。**master-data 解冻完成**：12 导航项全挂载、后端 129 handler 全接真、前端 126 方法全封装、每页 smoke 齐全。冻结面剩余：① DSH 18 端点（前端面板 4–5 人日）、⑦ MCP prompts（0.5–1 人日，依赖规范对齐）。
+
+## 冻结面解冻 ②：occupational 前端 3 页签接入（2026-10-26）✅ 完成
+
+> 用户拍板接真。实测发现**后端 16 桩已在更早批次去内存桩接真**（git `422cd1efe4`/`9840b6bdf1`：21 handler 全 sqlx + 3 表全建（qa_ehs_health_exam_plans/qa_ehs_health_exam_records/qa_ehs_contraindications，当前 0 行））——② 剩余工作仅前端接入。
+
+- **HealthManagementPage 改 4 页签**：健康档案（records 原有）+ 体检计划（check-plans）+ 检查记录（check-records）+ 职业禁忌症（contraindications），各挂 CrudPage + adapter（ehsApi.listHealthCheckPlans 等）。
+- **新建 3 schema**：healthCheckPlan/healthCheckRecord/contraindication（EntitySchema，status 枚举/statusBadge/filters/formSections 对齐后端枚举）。
+- **i18n**：zh/en ehs.json 各加 71 key（health_check_plan/health_check_record/contraindication 三块）。
+- **验证**：tsc 0 / eslint 0（--fix 4 处 prettier）/ vitest 5 文件 42 passed（含 3 smoke）；BFF 冒烟 3 条路由均 401（存在）、假路由 404 对照；冒烟后 8099 停止。
+- **遗留**：表 0 行数据（前端可正常建单）；统计卡未接 /occupational-health/statistics（get_health_statistics 已真，前端 healthMonitoringApi 的 getHealthStatistics 指 /health/statistics 另一路由——未消费，低优先级）。
+
+## 冻结面解冻 ④：emergencyDrill 新 API 前端接线（2026-10-26）✅ 完成
+
+> 用户拍板接入。后端 `/drills/plans`、`/drills/records` 已接真（SQL 别名映射：表列 record_no/title/started_at/participant_list/duration/actual_content → struct 旧字段 drill_no/drill_name/drill_date/participants/duration_hours/summary），前端页面原走旧 `/drills` 兼容路由 → 切新路由。
+
+- **EhsDrillPage**：drillApi 切 `ehsApi.listDrillRecords/createDrillRecord/updateDrillRecord/deleteDrillRecord`；stats useQuery 切 `listDrillRecords`。
+- **emergencyDrill.ts 类型修正**：DrillRecord/CreateDrillRecordRequest/UpdateDrillRecordRequest 此前误用表列新字段名（record_no/title/started_at/…）——与后端 API JSON 契约（drill_no/drill_name/…）不一致；改为后端真实契约，DrillRecord 对齐 `types/plan.ts`（非可选）。
+- **测试**：ehs-emergency-drill.test.ts create/update mock 数据字段改真实契约（drill_name/summary）。
+- **验证**：tsc 0 / eslint 0 / emergency-drill 13 passed；BFF 冒烟 `/api/ehs/drills/records`、`/api/ehs/drills/plans` 无 token = **401**（存在），假路由 404 对照；冒烟后 8099 已停复。
+- **遗留**：页面仍单页（records 主列表）；plans/evaluation/statistics API 前端已封装待页签接入（价值低，冻结标注）。
+
+## 冻结面 ③⑤ 删除决策（2026-10-26）✅ 完成
+
+> 用户拍板：③⑤ 按"已声明不做前端接线"处理。⑤ 执行删除（死封装+别名路由），③ 保留后端（已接真 39 行数据+测试，删除损失>收益）仅标注。
+
+- **⑤ enviro events 删除**：前端删 compliance.ts 5 个 events 方法 + 4 类型（environment.ts）+ index.ts 再导出 5 行；后端删 `/environmental-compliance/events` + `/events/{id}` 两条**别名路由**（= incidents handler 复用，incidents 路由保留）。验证：tsc 0 / eslint 0 / 前端 3 文件 75 passed / 后端 incident 相关 30 passed / cargo check --tests 0 error。
+- **③ training 基础 /training 决策**：**保留后端、不删**——list/create/get/update/delete 已接真 `ehs.qa_ehs_trainings`（39 行数据），`test_create_training` 有覆盖；前端 trainingApi 无基础方法（无死封装可删）。标注：前端不接线（已声明不做），解冻成本=前端接入 ≤0.5 人日。
+- **冻结面状态**：③ 已声明不做（后端保留）；⑤ 已删除（冻结面消除）；①-⑦ 中 ⑧ 已删，①-④⑥⑦ 维持冻结（前端触发再补）。
+
+## 冻结面解冻 ⑧：NavigationRegistryV2 死方法删除（2026-10-26）✅ 完成
+
+> 用户拍板解冻删除。MF 远程注册清理后，`CORE_MODULES_CONFIG` 无 `source` 字段（category 代替），两个按 source 过滤的方法恒返回 `[]` 且 0 消费者——死方法删除（commit `e206fcbbd3`）。
+
+- **删 getCoreModules**（`source==='core'` 过滤，恒空，0 消费）、**getBusinessModules**（`source==='plugin'` 过滤，恒空，0 消费）
+- **保留**：getModuleCards（无 source 过滤，3 消费者，活）、toModuleCard 的 source 输出字段（getModuleCards 经其输出）
+- **验证**：tsc --noEmit exit 0 / eslint 目标文件 0 error / 导航测试 2 passed / smoke 三件套 22 passed
+- **冻结面状态**：⑧ 已解冻删除；①-⑦ 维持冻结（前端触发再补，见解冻矩阵）。
+
+## F10 · 502 语义化补漏 + 演练实例停复（2026-10-26）✅ 完成
+
+> F10 语义构造器最后一块：补齐 502 `bad_gateway`，并停掉演练实例恢复端口。
+
+- **502 语义化补漏（commit `b2180df440`）**：`lib/shared-core/src/response.rs` 新增 `ApiResponse::bad_gateway(502)`（至此 500/400/404/401/403/409/501/**502**/503 构造器全集），单测矩阵补 (502, 网关错误)；`svc/portal/src/modules/monitoring.rs` 1 处 + `bff_finance_integration.rs` 2 处 502 直写 → `bad_gateway`。验证：response 单测 22/22、bff_finance 24/24 passed、cargo check --workspace --tests exit 0。
+- **演练实例停复**：演练 nginx（80/443）kill + BFF topems-server（8099）kill -9 → 三端口全部空闲，环境恢复原状。
+- **R1c 确认**：lib 层 7 依赖（anyhow/sqlx/dashmap/hmac/sha2/thiserror/async-trait）已在 main（`2698954584` + TODO `d9fdfa89cd`），无需重复提交。
+- 工作区状态：**干净**（HEAD==origin/main==`b2180df440`）；并行线 F10 批次（4 shard 4013 + 范本 342 + 跨行 536）与 F11（`9c1d8a9fbf`）全部闭合。
+
+## 生产 nginx reload · 本机演练闭环（2026-10-26）✅ 完成（演练侧）
+
+> 目标：P-5/P-6 在本机做"校验→reload"一次到位闭环。仓库 conf 为 Linux 生产主 conf（use epoll//run//etc/nginx/www-data/443 证书），本机 macOS 无法原样加载 → 走 runbook §1 演练路径（gen-nginx-drill-conf.sh 生成等价演练 conf，upstream 统一 8099）。
+
+- **本机校验**：仓库事实源 `server_service → localhost:8099` 无遗留 map（MAP_OK）；演练 conf `nginx -t` 语法通过（syntax is ok）。
+- **reload 闭环**：演练 conf 修正 root → 演练 html（生产 root /var/www 本机无，原 500 rewrite 循环 → 200）；`kill -HUP <master>` 平滑重载生效（macOS 无 systemctl，`nginx -s reload` 读默认 pid 路径无效，HUP 为等价动作）；80→301→443 index **200 "ok"**。
+- **verify 全流程 PASS**：`verify-nginx-prod.sh --conf 演练conf --repo-conf 仓库conf --base https://localhost --insecure` → UPSTREAM_OK + **SMOKE 6/6 200**（起 BFF 8099 后经 nginx 反代 erp/bi/hrm/portal/core/wms 全 200）；[1/3] NGINX_T_SKIP_WARN 为 macOS 已知（-t 已单独通过）。
+- **--target 能力补推**：`verify-nginx-prod.sh` 的 `--target user@host` SSH reload 支持（BatchMode 探活 + 远程 nginx -t && systemctl reload）为遗留未提交改动，本轮补 commit 推送（f3535c737d）。
+- **遗留（外部，需目标 Linux 机）**：生产 reload 本身（--target 已就位，等待用户提供生产机 SSH 端点）；演练实例已停（80/443 复检空闲；BFF 8099 停止动作等待用户确认未执行，若需保留可继续使用）。
+- 演练产物：/tmp/topems-nginx-dev/（topems-drill.conf + certs/ + html/）。
+
+## 冗余清理批次1-3：7 个 redesign 页全部挂载（2026-10-26）✅ 完成
+
+> 全项目冗余审计（2026-10-26 只读扫盘）→ 确认 7 个 redesign 页为"已完成开发、单测齐备、API 契约全绿但路由未切换"的高完成度页面（erp 域同模式已上线先例）→ 用户决策：全部挂载、分三批切换。
+
+- **批次1（crm，commit `43aa03d00e`）**：customers 路由→CrmCustomerRedesignPage（1049行/24hooks）；opportunities 路由→CrmOpportunityRedesignPage（1041行/24hooks）
+- **批次2（hrm，commit `854bfce7fd`）**：员工路由→HrmEmployeeRedesignPage（1040行/24hooks）；绩效路由→HrmPerformanceRedesignPage（1060行/24hooks）
+- **批次3（qms+hrm，commit `c20e469af7`）**：检验→QmsInspectionRedesignPage（1012行/27hooks）；不合格品→QmsNonconformanceRedesignPage（1116行/28hooks）；考勤→HrmAttendanceRedesignPage（993行/24hooks）
+- **每批验证**：tsc 0 / eslint 0（批次2/3 各 2 prettier --fix）/ core+extended+form-open smoke 23 passed（每批复跑）；CrmCustomerRedesignPage.test 12 passed
+- **后端路由可达（全部 401 认证保护=已挂载非 404）**：/api/crm/customers、/api/crm/opportunities(+/stats/funnel)、/api/hrm/employees、/api/hrm/performance-reviews、/api/hrm/performance-goals、/api/qms/checks、/api/qms/issues、/api/hrm/attendance
+- **遗留备注**：QmsInspectionRedesignPage.tsx / QmsNonconformanceRedesignPage.tsx 内部 export 名仍为旧名（文件名/组件名复制遗留，不影响 lazy import 路径；随后续卫生批次对齐）
+
+## 冗余清理 R2：删除被 redesign 替换的 9 个旧页 + 连测 + 死配套（2026-10-26）✅ 完成
+
+> commit `f2d74ae327`（已推送 HEAD==origin/main）。R1（Cargo 未引用依赖 6 个）与 MF 远程注册残留（registry/core-modules.ts、remote-modules.d.ts 的 topems_crm 块）另行批次。
+
+- **删 9 个旧页**：crm/CustomerManagementPage、crm/OpportunityManagementPage、hrm/HrmEmployeePage(目录)、hrm/HrmPerformancePage、hrm/HrmAttendancePage、qms/QmsInspectionPage、qms/QmsNonconformancePage、erp/SalesOrderPage、wms/WmsInventoryPage
+- **删 10 个页面专属测试**：CustomerManagementPage / CrmCustomerManagementPage / CrmOpportunityManagementPage / HrmEmployeePage(+form) / HrmAttendancePage / QmsInspectionPage / QmsNonconformancePage / SalesOrderPage / WmsInventoryPage .test
+- **删死配套**：deploy/docker/consul/（3 文件）+ etcd-compose.yml（对应 F7 三套未启用服务发现）；apps/web/src/_archive-microfrontend（MF 遗留 MicroAppRouter.tsx）
+- **编辑同步**：ErpModule.test（删 SalesOrderPage 用例，erp/CustomerManagementPage 活页保留）、HrmWmsMesCrudPages.test（删 HrmPerformancePage 条目）、QmsModule.test（删 QmsInspection/QmsNonconformance 用例）、extended-pages-data.smoke.test（删 WmsInventoryPage 条目）
+- **验证**：tsc --noEmit exit 0 / vitest 6 文件 52 passed / eslint 0 errors
+
+## 冗余清理 MF：Module Federation 远程注册残留面（2026-10-26）✅ 完成
+
+> commit `634683e158`（已推送 HEAD==origin/main）。**microfrontend/**（插件市场 MF 运行时：registry/canary-release/version-manager/observability）为活面不在本批范围。
+
+- **core-modules.ts（668→~90 行）**：删 62 条 `topems_*` 远程路由（@vite-ignore 字符串 import）、getRemoteEntryUrl 函数（V64 CORS 块）、7 个模块 remoteEntry 字段、4 个空模块块（hrm/crm/pm/scm）；保留本地路由 /core/users、/core/roles、/finance/accounts、/mes/workstations
+- **registry/index.ts**：删 isMFMode 模式切换（远程移除后 static/MF 等价）；删 loadRemoteModule 的 MF 远程分支（Webpack container 加载，不可达）
+- **类型**：删 remote-modules.d.ts（75 声明零引用）、topems-core.d.ts（18 声明零引用）；保留 webpack-federation.d.ts（DynamicRouter 插件加载器仍用 Webpack 全局 + Window index signature 被 runtime-protection/LimsDashboard 依赖）
+- **配置**：plugins.config.ts 去 REMOTE_MODULES 的 port/url + MF_PORTS import（pluginStore 仅消费 .code）；保留 ports.ts 的 MF_PORTS/getMfPort（microfrontend/config.ts 仍用）
+- **验证**：tsc --noEmit exit 0 / vitest 4 文件 28 passed（DynamicRouter + 3 smoke）/ eslint 0
+
+## 冗余清理 R1：6 个 Cargo 未引用依赖移除（2026-10-26）✅ 完成
+
+> commit `590c36cf21`（已推送 HEAD==origin/main）。源码 0 引用逐项实测复核后删除。
+
+- **svc/search**：topems-shared-db、topems-shared-service-client
+- **svc/monitor**：topems-shared-db
+- **svc/communication**：reqwest（features json）
+- **svc/srm**：reqwest（features json）
+- **svc/gis**：reqwest（features json）
+- **验证**：cargo check --workspace（SQLX_OFFLINE）exit 0 / Cargo.lock 仅删 6 个依赖边（包本体仍被其他 crate 引用）
+- **备注**：svc/search 的 reqwest 与 svc/communication 的 topems-shared-db 已实测有真实引用（projection.rs / schema_defense.rs），**确认保留**（审计清单准确）
+
+## 冗余清理 R1b：26 个 [dependencies] 段未引用依赖（2026-10-26）✅ 完成
+
+> commit `f19cb7568c`（已推送 HEAD==origin/main）。全仓 48 crate 依赖引用快扫（修正解析正则）→ src+tests 均 0 引用且非宏敏感 → 实测甄别删除。
+
+- **topems-shared（聚合 common，14 个 svc）**：analytics/finance/hrm/master-data/mes/monitor/plugin-registry/pm/portal/qms/rd/scm/search/srm
+- **reqwest（9 个 svc）**：analytics/ehs/mes/monitor/pm/qms/scm/tms/wms（hrm/lims/master-data/rd 因 tests 引用保留）
+- **rust_decimal（mes/tms）**：src 0 引用（Decimal 均走 sqlx::types）
+- **redis（erp）**：0 引用
+- **验证**：cargo check --workspace --tests（SQLX_OFFLINE）exit 0（3m17s 含 tests 编译）；warning 均为既有 duplicate
+
+## 冗余清理 R1c：lib 层 7 个未引用依赖（2026-10-26）✅ 完成
+
+> commit `2698954584`（已推送 HEAD==origin/main）。宏/derive 敏感依赖人工甄别（src+tests+benches+examples+build.rs 全 0 引用、无 build.rs）后删除。
+
+- **lib/shared-ai**：anyhow、sqlx
+- **lib/shared-auth**：dashmap
+- **lib/shared-core**：hmac、sha2
+- **lib/shared-mcp**：thiserror、async-trait
+- **验证**：cargo check --workspace --tests（SQLX_OFFLINE）exit 0（3m21s 含 tests 编译）
+
+> **至此 Cargo 冗余清理收官**：R1（6）+ R1b（26）+ R1c（7）共 **39 个未引用依赖**移除，三次均以 cargo check --workspace --tests 全量验证。
+
 ## 补测续：erp 域剩余复杂/自绘形态页（批次7，33 用例）（2026-10-28）✅ 完成
 
 > **erp 域自绘/复杂形态页收尾补测**：包装页已全覆盖（批次6），本批补 5 个复杂页 + 修 setup-mocks useMutation 陈旧闭包缺陷
@@ -11,6 +267,132 @@
 > - 验证：本批 33/33 passed；eslint 0（setup-mocks 被 ignore，测试文件 0 error/warning）；tsc 0；**全量 vitest 463 files / 6198 passed / 1 skipped / 0 failed / 0 errors**；lefthook pre-commit 全绿（含 frontend-typecheck/lint/api-boundary-gate/i18n 多门禁）
 > - 提交：6 commits（setup-mocks fix + 5 测试文件各自独立 commit），HEAD `a1c45e1a2`
 
+## F10 · erp,srm,hrm,finance,crm 语义化收敛（批次2，845 处）（2026-10-26）✅ 完成
+
+> ApiResponse 语义构造器机械替换（范本 wms 批次1 已完成）：svc/{erp,srm,hrm,finance,crm} 下 `ApiResponse::error(<码>, msg)` → 语义构造器（500→server_error / 400→bad_request / 404→not_found / 401→unauthorized / 403→forbidden / 409→conflict / 501→not_implemented / 503→unavailable），行为严格等价，消息文本/状态码/控制流零改动。
+
+- **替换数**：845 处（替换前 grep 计数 845 → 替换后残留 0）；perl 两轮（带空格 + 无空格变体）；泛型形态 `ApiResponse::<T>::error(...)` 同步收敛为 `ApiResponse::<T>::server_error(...)` 等；110 个 .rs 文件。
+- **验证**：残留 grep 计数 0；`SQLX_OFFLINE=true cargo check -p topems-erp -p topems-srm -p topems-hrm -p topems-finance -p topems-crm` exit 0；5 包 `cargo test --lib` 全部 0 failed（erp 870 / srm 559 / hrm 291 / finance 1086 / crm 504）；`git diff --stat` 110 files changed, +845/-845 对称。
+- **commit 哈希**：`ee6ffaa8a`
+
+## F10 · mes,pdm,qms,rd,ehs,lims 语义化收敛（批次3，2005 处）（2026-10-26）✅ 完成
+
+> ApiResponse 语义构造器机械替换（范本 wms 批次1 已完成）：svc/{mes,pdm,qms,rd,ehs,lims} 下 `ApiResponse::error(<码>, msg)` → 语义构造器（500→server_error / 400→bad_request / 404→not_found / 401→unauthorized / 403→forbidden / 409→conflict / 501→not_implemented / 503→unavailable），行为严格等价，消息文本/状态码/控制流零改动。
+
+- **替换数**：2005 处（替换前 grep 计数 2005 → 替换后残留 0）；perl 单轮带空格形态即全覆盖（无空格变体 grep 复跑仍 0）；泛型形态 `ApiResponse::<T>::error(...)` 同步收敛为 `ApiResponse::<T>::server_error(...)` 等；115 个 .rs 文件。
+- **验证**：残留 grep 计数 0；`SQLX_OFFLINE=true cargo check -p topems-mes -p topems-pdm -p topems-qms -p topems-rd -p topems-ehs -p topems-lims` exit 0；6 包 `cargo test --lib` 全部 0 failed（mes 368 / pdm 322 / qms 262 / rd 155 / ehs 231 / lims 151）；`git diff --stat` 115 files changed, +2005/-2005 对称。
+- **commit 哈希**：`8dc0461041`
+
+## F10 · mobile,portal,scm,pm,ai,gis 语义化收敛（批次4，815 处）（2026-10-26）✅ 完成
+
+> ApiResponse 语义构造器机械替换（范本 wms 批次1 已完成）：svc/{mobile,portal,scm,pm,ai,gis} 下 `ApiResponse::error(<码>, msg)` → 语义构造器（500→server_error / 400→bad_request / 404→not_found / 401→unauthorized / 403→forbidden / 409→conflict / 501→not_implemented / 503→unavailable），行为严格等价，消息文本/状态码/控制流零改动。
+
+- **替换数**：815 处（替换前 grep 计数 815 → 替换后残留 0）；perl 单轮带空格形态即全覆盖（无空格变体无需补跑）；泛型形态 `ApiResponse::<T>::error(...)` 同步收敛为 `ApiResponse::<T>::server_error(...)` 等；94 个 .rs 文件。
+- **验证**：残留 grep 计数 0；`SQLX_OFFLINE=true cargo check -p topems-mobile -p topems-portal -p topems-scm -p topems-pm -p topems-ai -p topems-gis` exit 0；6 包 `cargo test --lib` 全部 0 failed（mobile 250 / portal 582 / scm 337 / pm 497 / ai 988 / gis 156）；`git diff --stat` 94 files changed, +815/-815 对称。
+- **commit 哈希**：`ad3218d885`
+
+## F10 · master-data,integration,tms,unified-core,ticket,monitor,server,shared-core 语义化收敛（批次5，348 处）（2026-10-26）✅ 完成
+
+> ApiResponse 语义构造器机械替换（范本 wms 批次1 已完成）：svc/{master-data,integration,tms,unified-core,ticket,monitor,server} + lib/shared-core（仅调用点，src/response.rs 为范本定稿不动）下 `ApiResponse::error(<码>, msg)` → 语义构造器（500→server_error / 400→bad_request / 404→not_found / 401→unauthorized / 403→forbidden / 409→conflict / 501→not_implemented / 503→unavailable），行为严格等价，消息文本/状态码/控制流零改动。并入收尾：svc/analytics 1 处、svc/communication 3 处真实调用点一并收敛。
+
+- **替换数**：348 处（替换前 grep 计数 348 → 替换后残留 0）；perl 单轮带空格形态即全覆盖（无空格变体无需补跑）；泛型形态 `ApiResponse::<T>::error(...)` 同步收敛为 `ApiResponse::<T>::server_error(...)` 等；暂存 diff 38 files changed（37 .rs + TODO.md），+356/-348（.rs 部分严格 +348/-348 对称）。
+- **验证**：残留 grep 计数 0（已排除 lib/shared-core/src/response.rs）；`SQLX_OFFLINE=true cargo check` 对 10 包 exit 0；10 包 `cargo test --lib` 全部 0 failed（shared-core 766 / master-data 451 / integration 194 / tms 172 / unified-core 538 / ticket 226 / monitor 140 / server 0 lib 用例 / analytics 185 / communication 210）；`git diff --stat -- lib/shared-core/src/response.rs` 为空（范本文件零改动）。
+- **commit 哈希**：`70a0d6f8f`
+
+## F10 · 跨行形态收尾（536 处）（2026-10-26）✅ 完成
+
+> ApiResponse 语义构造器跨行形态机械收尾（行级批次1-5 之后）：`ApiResponse::error(` 位于行尾换行、状态码在续行（字面量数字 或 `StatusCode::X.as_u16()`）→ 语义构造器（500→server_error / 400→bad_request / 404→not_found / 401→unauthorized / 403→forbidden / 409→conflict / 501→not_implemented / 503→unavailable），吞掉状态码行，消息行原样保留。行为严格等价，消息文本/状态码/控制流零改动。
+
+- **替换数**：536 处（替换前 awk 普查 536 = 字面量 374 + StatusCode 162；替换后同款普查 0）；perl -0777 跨行逐码替换（8 字面量 + 8 StatusCode 各一条）；泛型形态 `ApiResponse::<T>::error(\n 500, ...)` 同步收敛为 `ApiResponse::<T>::server_error(\n ...)`；81 个 .rs 文件、21 个 crate。
+- **验证**：替换后续行首 token 仅余 `410,`×4 与局部单参形态 `"性能监控未启用",`×1（按约束保留）；行级残留 grep 0；`SQLX_OFFLINE=true cargo check` 对 21 包 exit 0；21 包 `cargo test --lib` 全部 0 failed；`git diff --stat -- lib/shared-core/src/response.rs` 为空（范本文件零改动）；.rs diff 消息串多重集 +/- 均 0（消息文本零改动）。
+- **commit 哈希**：`9bdeee3828`
+
+## F10 · 502 收尾（bad_gateway 构造器，3 处）（2026-10-26）✅ 完成
+
+> ApiResponse 语义构造器补漏：`lib/shared-core/src/response.rs` 新增 `pub fn bad_gateway(message: &str) -> Self { Self::error(502, message) }`（风格与 not_found…unavailable 完全一致），并在 `test_semantic_error_constructors_equivalent_to_error` 等价性循环中补入 502 臂（`502 => ApiResponse::bad_gateway(ctor_msg)`），与 `Self::error(502, msg)` 行为逐字等价。3 处调用点 `error(502, …)` → `bad_gateway(…)`，消息文本零改动。
+
+- **转换数**：3 处（`svc/portal/src/modules/monitoring.rs:235` 告警确认 502；`svc/portal/tests/bff_finance_integration.rs:238` 字面量串；`:373` `error_msg` 变量）。
+- **验证**：`grep -rnE 'ApiResponse::(<[^>]*>::)?error\(502,'` 残留 0；`SQLX_OFFLINE=true cargo check -p topems-shared-core -p topems-portal --all-targets` exit 0（覆盖 tests/ 编译）；`cargo test -p topems-shared-core --lib` 766 passed / 0 failed（含 502 等价性单测 ok）；`cargo test -p topems-portal --lib` 582 passed / 0 failed；`cargo test -p topems-portal --test bff_finance_integration` 24 passed / 0 failed（本地可跑，无外部服务/DB 依赖）。
+- **commit 哈希**：`b2180df440`
+
+## 生产部署就绪核对（2026-10-25）✅ 完成
+
+> 外部阻塞项（生产机实跑）的本地可闭环交付前准备：部署脚本链/单元/nginx/清单四维一致性核对。
+
+- **shellcheck 全链 0/0**：`scripts/deploy/{install,update,rollback,start-production,production-deploy,production-verify,smoke-prod,uninstall,setup-db,service-monitor,domain-start}.sh` + `scripts/dev/health-check.sh` + `scripts/verify-nginx-prod.sh` 13 个脚本 0 error/warning。
+- **systemd 单元 ↔ install.sh 服务清单一一覆盖**：`deploy/systemd/` 29 个 `topems-*.service` ↔ install.sh `SERVICES` 29 项（含 communication/server/search/ticket/tms/monitor/plugin-registry/master-data 补齐组），无缺口。
+- **nginx 端口口径**：`deploy/nginx/topems.conf` upstream `server_service = localhost:8099`，`listen 80/443`，/api/* 直代 BFF :8099（P0-3 双轨合一，原 per-service upstream 与 URI 前缀 map 已移除），与 E3 单上游口径一致。
+- **上机清单引用完整性**：`docs/deploy/production-execution-checklist.md` 引用的脚本/SQL 全部存在（install/update/rollback/smoke-prod/health-check/verify-nginx-prod、`database/scripts/verify_rls_coverage_production.sql`、`scripts/audit/audit-force-rls-no-policy.sql`、`scripts/db/rls-policy-unify.sql`、`scripts/audit/traffic-observe.sh` 等）。
+- **smoke-prod 口径**：凭证强制（--user/--password 或 SMOKE_ADMIN/SMOKE_PASS，无内置默认弱口令）；层1B 走 BFF 聚合面 15 域 `/api/<域>/health`（core erp hrm finance mes qms lims ehs bi pm portal wms scm srm rd）。
+- **唯一漂移已修**：smoke-prod.sh 头注释"经 nginx map 路由"过时（P0-3 已移除 map），改"经 BFF 统一入口 :8099"；bash -n 语法 OK、shellcheck 复跑 0。
+- 结论：生产部署三件套（verify-nginx/health-check/smoke-prod）与 install/update/rollback 链就绪待目标机实跑，无本地可修缺陷。
+
+## 生产架构双模式核对 + 注释漂移修正（2026-10-25）✅ 完成
+
+> 生产（nginx 8099 单体）与开发/standalone（独立服务端口表）双模式厘清，两处过时注释/文档修正。
+
+- **双模式厘清（并存成立，非漂移）**：生产 = `deploy/nginx/topems.conf` upstream `server_service:8099`（`svc/server/src/main.rs:529` `unwrap_or(8099)` 权威）→ topems-server 模块化单体聚合全部域 real_module；`topems.target` `Requires` 29 个 systemd 单元（install.sh 只 `enable topems.target`）。开发/standalone = 29 独立服务各自监听 8000-8079（`config/services.yaml` 权威源 → `config/ports.env` 生成 → `scripts/windows/ports.ps1` 同源，均一致无漂移）。
+- **漂移已修 1**：`svc/server/src/main.rs:534` 注释"生产 nginx 把 /api/mes/* 转发独立 svc/mes:8030"与 nginx 实际不符（nginx 无 8030 转发、全 /api/* 统一代理 8099）→ 改"生产 nginx 全 /api/* 统一代理 topems-server:8099（无 per-service 转发，P0-3 双轨合一）"；纯注释改动，不影响编译。
+- **漂移已修 2**：`scripts/windows/README_WINDOWS.md` 目录结构漏列 `install-deps.ps1`（存在 16KB，前置依赖安装脚本）→ 补行并标注 ports.ps1 与 config 同源。
+- 验证：diff 仅 3+/2-（纯注释/文档）；server 全量 cargo check 本地耗时过长未跑完（纯注释改动无编译影响，已按 diff 判定）；shellcheck 不受影响。
+
+## k8s 部署面 consul 残留清理（2026-10-25，P2-5 清理尾巴）✅ 完成
+
+> P2-5（F7 三套服务发现物理删除，用户 2026-10-20 拍板）的 k8s 部署面收尾：consul 死配置清零，docker 面因整个目录已 DEPRECATED（2026-10-08 弃用标注）不动。
+
+- **残留确认**：后端 `DiscoveryMode` 仅剩 `Static/Env/K8s`（`svc/unified-core/src/shared/service_client.rs:1925`），consul/etcd 零代码引用；traefik 用 file provider（`traefik.yml:56`）不依赖 consul → k8s 面 consul 纯死配置。
+- **清理范围**：删 `deploy/k8s/base/consul.yaml`（Service+Deployment）；`kustomization.yaml` 删 resources `base/consul.yaml` 行 + images `consul newTag` 4 行；`base/configmap.yaml` 删 `CONSUL_ENABLED/CONSUL_URL` 2 行；21 个 `services/*.yaml` 各删 `CONSUL_URL` env 2 行（perl 批量，模式统一）。
+- **验证**：k8s 面 `CONSUL_URL/CONSUL_ENABLED` 复查 0 命中；30 个 yaml 文件解析全 OK；kustomization 引用 base/services 文件全部存在（无 MISS）；本机无 kustomize，未跑 kustomize build（引用完整性已静态验证）。
+- **docker 面不动作**：`deploy/docker/README.md` 头部 DEPRECATED（生产禁容器、docker 仅临时验证），consul/etcd-compose 属弃用资产保留备查。
+
+## 交付前门禁绿复验（2026-10-25，HEAD `490559cb37`）✅ 完成
+
+> 当前 main 四维核心门禁实测快照（本地真实 exit code，未照抄历史）。
+
+- **前端 `tsc --noEmit`**：exit 0。
+- **前端 `eslint .` 全量（默认格式）**：exit 0（0 error；此前 compact formatter 在 eslint 9 已移出核心，仅 formatter 报错非 lint 失败，已用默认格式复跑取真值）。
+- **后端 `cargo check --workspace`（SQLX_OFFLINE）**：exit 0，2m48s（含 topems-server/unified-core/mobile/portal/ehs/monitor/pdm 等全部 crate）。
+- **后端 `cargo clippy --workspace -D correctness`**：exit 0，5m39s。
+- **vitest 全量**：本机运行 18.5k 行日志后被系统终止未出汇总（日志中 ERROR 均为测试用例预期输出：querySharding/API Batch Operation 等）；本轮改动仅注释/文档/k8s manifest，无 JS 逻辑改动，无回归面；代表性文件 CrmContractRedesignPage 12/12 已于前轮实跑验证；全量基线 463 files / 6198 passed 见 10-28 批次7 记录。
+- 结论：HEAD `490559cb37` 前后端核心门禁全绿，交付面无本地可修缺陷。
+
+## F10 · ApiResponse 语义构造器 + wms 试点收敛（批次1）（2026-10-26）✅ 完成
+
+> F10 长尾启动（审计建议：经语义构造器收敛手写 error(code, msg) 样板）。本批：构造器就位 + wms 全量试点，行为严格等价。
+
+- **现状基线（实测，2026-10-26）**：`ApiResponse::error(` 全量（svc+lib，含 tests）约 5000 处；生产侧约 4000+；错误码分布 500×2583（大头为静态业务文案，非泄露形态）/ 404×1025 / 400×580 / 401×109 / 501×25 / 409×23 / 403×14 / 503×5 / 502×3。泄露面（`&e.to_string()` 等）此前 V517 已闭环，本长尾为**非泄露存量样板**。
+- **语义构造器**（`lib/shared-core/src/response.rs`，纯新增 API，行为 = `Self::error(<码>, msg)` 逐字等价）：`not_found(404)` / `bad_request(400)` / `unauthorized(401)` / `forbidden(403)` / `conflict(409)` / `server_error(500)` / `not_implemented(501)` / `unavailable(503)`；新增等价性单测 `test_semantic_error_constructors_equivalent_to_error` 逐码断言 code/message/success/data。
+- **wms 试点**：`svc/wms` 全量 342 处机械替换（500→server_error ×311 / 400→bad_request ×15 / 404→not_found ×14 / 401→unauthorized ×2；泛型形态 `ApiResponse::<T>::` 同步处理），残留 0。
+- **验证**：shared-core 71 passed / 0 failed；wms `cargo check` exit 0（48.6s）、`cargo test -p topems-wms --lib` 541 passed / 0 failed；diff 417+/342- 纯替换无其他改动。
+- 提交：见 git log 本批（F10 批次1）。
+
+## F11 · 裸 Client::new() 生产残留清零（2026-10-26）✅ 完成
+
+> F11 收尾：审计口径生产 `reqwest::Client::new()` 60 处 → 经 P2-4 收敛后剩 9 处（含 2 处纯注释），本批清掉全部代码调用，生产侧代码残留 0。
+
+- **替换 7 处代码调用 → `shared_http_client()`**（`lib/shared-core/src/http_client.rs`，30s 整体/5s 连接超时 + 进程级单例连接池，与 BaseServiceClient 对齐）：
+  - `svc/ai/src/dsh/mcp/client.rs:147`（McpTransport::Http 传输 client，connect_http 每次新建→复用）
+  - `lib/shared-ai/src/embedding.rs` ×2（OpenAIEmbedding / LocalEmbedding 构造）
+  - `lib/shared-auth/src/permission_center.rs:80`（fetch_from_iam 每次拉取新建）
+  - `lib/shared-auth/src/service_monitor.rs:296`（非 loopback 分支；loopback 分支保留 `.no_proxy()` builder——特殊豁免）
+  - `lib/shared-core/src/health.rs:306`、`lib/shared-core/src/plugin/mod.rs:388`（同 crate 经 `crate::http_client::shared_http_client`）
+- **豁免/注释**：`alerting/mod.rs:460`、`http_client.rs:3` 为注释非代码，不动。
+- **验证**：`cargo check` 4 crate exit 0；shared-core 766 / shared-auth 205 / shared-ai 71 / topems-ai mcp 174 passed，全 0 failed；生产侧残留 grep 仅 2 处注释。
+- 提交：见 git log 本批。
+
+## P-5/P-6 · nginx 本机演练闭环：语法校验 → reload → 6 域冒烟（2026-10-26）✅ 完成（生产 Linux 侧仍待目标机）
+
+> "一次到位：本机校验 → reload"。仓库 `deploy/nginx/topems.conf` 为 **Linux 生产主 conf**（use epoll / /run/nginx.pid / /etc/nginx 路径 / www-data / 443 证书——本机 macOS 无法原样加载，这正是脚本标注"需生产 Linux"的根因）；目标机 SSH 端点仓库与 ssh config 均未配置，用户确认"目标机就是本机"→ 走 runbook §1 本机演练路径闭环。
+
+- **本机校验（仓库侧）**：`deploy/nginx/topems.conf` upstream `server_service → localhost:8099`（ip_hash+keepalive 64）✅、无遗留 `map $request_uri $api_upstream`（MAP_OK）✅。
+- **演练 conf 生成**：`scripts/gen-nginx-drill-conf.sh /tmp/topems-nginx-dev`（等价 conf + 自签证书，upstream 统一 8099）。
+- **nginx -t 语法校验**：`nginx -t -c /tmp/topems-nginx-dev/topems-drill.conf` → **syntax is ok / test successful** ✅。
+- **启动 + reload**：`nginx -c 演练conf` 启动（master 监听 80/443）→ `kill -HUP <master>` 平滑重载生效（`nginx -s reload` 读 brew 默认 pid 路径不可用，演练 conf pid 在 /tmp——用 HUP 等价）；80 → 301 → https://localhost、443 index **200**。
+- **演练 conf 修正 1 处**：gen 脚本保留生产 `root /var/www/topems/web`（本机无此目录 → try_files 内部重定向循环 500）；演练 conf root 改 `/tmp/topems-nginx-dev/html`（仅改 /tmp 演练文件，不碰仓库事实源）→ 200。⚠️ 此 root 漂移建议回补 gen-nginx-drill-conf.sh（可选小批）。
+- **verify-nginx-prod.sh 全流程（BFF 8099 起栈后）**：`bash scripts/verify-nginx-prod.sh --conf /tmp/.../topems-drill.conf --repo-conf ./deploy/nginx/topems.conf --base https://localhost --insecure` → **UPSTREAM_OK + SMOKE 6/6 200（erp/bi/hrm/portal/core/wms）+ 结果 PASS（exit 0）**（[1/3] NGINX_T_SKIP_WARN 为 macOS 已知跳过，nginx -t 已单独 PASS）。
+- **收尾**：演练 nginx 实例按 runbook §4 停止（80/443 已释放）；BFF 8099 由 run-e2e-stack.sh up 起、保留运行（日志 /tmp/topems_monolith_e2e.log）。
+- **边界（如实标注）**：生产 Linux 机 `nginx -t && systemctl reload nginx` + 6 域冒烟仍待目标机执行（P-5/P-6 生产侧 🟡 不勾）；本机演练证明配置加载/SSL/upstream/反代链路全部正确。
+
 ## 补测续：crm 客户页（CrmCustomerRedesignPage·redesign 形态 19 hooks）（2026-10-25）✅ 完成
 
 > **crm redesign 形态页补测首例**：CrmCustomerRedesignPage（19 hooks / 1049 行）——useQuery（服务端分页）+ 3 mutations（delete/create/update）+ ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环
@@ -18,6 +400,14 @@
 > - **可测性要点**：全 mock react-query（useMutation mutate 执行 mutationFn+onSuccess；useQueryClient 返 invalidateQueries）；redesign 13 组件 mock（**Modal 需渲染 footer**）；直接调闭包 onClick 需 act()；**mutationFn 含 300ms 延迟需 waitFor**；mapApiCustomers 未跑（全 mock useQuery）——stats 按原始字段算
 > - 验证：6/6 passed；eslint 0；tsc 0；component 全量 343 files / 3510 passed / 0 failed
 > - 提交：已推送 main（见 git log 本批提交）
+
+## 补测续：crm 合同页（CrmContractRedesignPage·redesign 形态 19 hooks）（2026-10-25，10-25 收尾提交）✅ 完成
+
+> **crm redesign 形态页补测同构第二例**：CrmContractRedesignPage（19 hooks / 700+ 行）——useQuery（apiClient.get 服务端分页）+ 3 mutations + ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环（delete 无 API 调用）
+> - `CrmContractRedesignPage.test.tsx`（6 用例）：ListPageTemplate props（header/breadcrumbs/data/rowKey/columns）；footer 4 StatTile；列渲染（localizedName/status/actions 3 按钮）；Tabs（label+badge）；toolbar（refresh/create）；**删除确认闭环**（确认后 invalidate + toast，断言 delete 不触发 API）
+> - **可测性要点**：与 CrmCustomerRedesignPage.test.tsx 同构——redesign 组件 mock（Modal 渲染 footer）、act() 包裹、waitFor（mutationFn 延迟）、mapApiContracts 未跑（全 mock useQuery 直返原始形态）
+> - 验证：6/6 passed；eslint 0；tsc 0（文件系 10-25 补测线遗留未提交，收尾核验后补齐提交）
+> - 提交：见 git log 本批（crm 合同页补测提交）
 
 ## 补测续：erp 域剩余 CrudPage 包装页（批次6，14 用例）（2026-10-25）✅ 完成
 
@@ -427,7 +817,7 @@
 - [x] **Phase 1-3 · mock 外部 server + 集成测试** ✅ 完成：`scripts/tools/mcp_mock_external_server.py`（python3 stdio NDJSON，greet/echo 2 工具）+ `svc/ai/tests/mcp_external_client_integration.rs`（握手/探测/调用、注册挂载透明调用、不可达跳过、空配置 noop，4/4 通过）
 - [x] **Phase 1-4 · 双入口接入** ✅ 完成：`routes.rs` spawn 块 + `bin/mcp-stdio.rs` 均挂 `register_external_tools`（日志含 external_count）；DSH AgentOrchestrator 直调 ToolRegistry 零改动受益
 - [x] **Phase 2 · 治理化** ✅ 完成（2026-10-24）：`svc/ai/src/dsh/mcp/governance.rs` 新增——① `source=external` 标记（注册描述前缀 `[external-mcp]` + 审计事件 source 字段）；② 结果就地消毒（外部注册闭包内，双入口 orchestrator/server 均生效）：大小上限 64 KiB（JSON 结构截断顶层注入 `__truncated` 保持合法、非 JSON UTF-8 安全截断 `[truncated]`）+ 敏感字段递归脱敏（复用 security::SENSITIVE_FIELDS 单一清单）+ JSON 深度限制 8 层；③ 审计日志 + 原子指标（calls_total/calls_failed/redacted_fields_total/truncated_total，`metrics_snapshot()` 读取）。mock server 增 `echo_secret` 工具；单测 6 个 + 集成测试 5/5（脱敏断言：token/secret → `***REDACTED***`、明文不透传、非敏感字段保留、指标递增）；clippy -D warnings / fmt / mcp 模块 162 测试全绿
-- [ ] **Phase 3 · 第三方开放（后续）**：**B 档实施中**（2026-10-24）——首个接入候选 topems-search。✅ **第 1 步完成**（`7936996dde`）：`svc/search` 新增 `POST /mcp` Streamable HTTP 端点（JSON-RPC 2.0：initialize/tools/list/tools/call/ping）+ `MCP_SERVER_TOKEN` Bearer 认证（fail-closed，未配置/不匹配 → 401 -32001）+ 三工具 `search.global`/`search.suggest`/`search.documents`（桥接 handlers 既有 SQL，suggest_terms 抽取共用）；179 单测全绿、clippy/fmt 通过、起服务 curl 全链路实测通过。✅ **第 2 步完成**（`c2cc2b2142`）：`McpClient` 双传输抽象 + `connect_http(url, token)`（Streamable HTTP，Bearer 认证；非 2xx 带 JSON-RPC error 透传、协议不匹配/连接拒绝分类报错）；axum mock server 测试 5 项全过、mcp 模块 167 用例全绿。✅ **第 3 步完成**（`ddd45635e3`）：`MCP_EXTERNAL_SERVERS` 配置扩展——`transport=stdio|http`（缺省 stdio 向后兼容）、http 需 `url`、`token` Bearer 可选；注册按传输分发、缺必需字段 fail-open 跳过；单测 + 集成测试（http 挂载/透明调用/错 token 跳过）全绿。✅ **第 4 步完成**（`e30d164cef`）：输入面出站脱敏 `sanitize_external_input`——调用参数递归剥离 SENSITIVE_FIELDS 键整体不出网（与返回路径占位脱敏互补），redacted>0 时 warn 留痕；审计指标扩展 `outbound_args_total`/`outbound_redacted_total`（恒有 redacted≤args 可审计剥离比例）；集成测试用 mock server 回显 arguments 验证出站净载荷无明文凭据。✅ **第 5 步完成**：双进程联调通过——真实 search（8082 /mcp，MCP_SERVER_TOKEN）↔ DSH `MCP_EXTERNAL_SERVERS` http 配置注册 `ext.search.*` 三工具，真实 HTTP 调用返回合法形状（本机投影表空→0 条属数据面正常）、错误 token fail-open 跳过；联调测试 `svc/ai/tests/mcp_http_real_e2e.rs` 以 `REAL_MCP_URL` env 守卫（未设置自动跳过，不进 CI 常规路径）。**B 档 6 步路径全部落地。** **C 档（全开放）维持挂起**（登记同步决策文档 §6.x）：触发条件①真实第三方 server 消费需求（≥1 外部 server 明确接入）未满足；条件②工具级权限声明设计——代码基座已就绪（`tools/mod.rs` `register_async_with_permission`/`required_permission`/`sensitive_output`），外部注册路径 `external.rs` 仍用 `register_async` 未启用声明，条件①满足后再按工具声明接入。
+- [x] **Phase 3 · 第三方开放（后续）**：**B 档 6 步路径全部落地**（2026-10-24）——首个接入候选 topems-search。✅ **第 1 步完成**（`7936996dde`）：`svc/search` 新增 `POST /mcp` Streamable HTTP 端点（JSON-RPC 2.0：initialize/tools/list/tools/call/ping）+ `MCP_SERVER_TOKEN` Bearer 认证（fail-closed，未配置/不匹配 → 401 -32001）+ 三工具 `search.global`/`search.suggest`/`search.documents`（桥接 handlers 既有 SQL，suggest_terms 抽取共用）；179 单测全绿、clippy/fmt 通过、起服务 curl 全链路实测通过。✅ **第 2 步完成**（`c2cc2b2142`）：`McpClient` 双传输抽象 + `connect_http(url, token)`（Streamable HTTP，Bearer 认证；非 2xx 带 JSON-RPC error 透传、协议不匹配/连接拒绝分类报错）；axum mock server 测试 5 项全过、mcp 模块 167 用例全绿。✅ **第 3 步完成**（`ddd45635e3`）：`MCP_EXTERNAL_SERVERS` 配置扩展——`transport=stdio|http`（缺省 stdio 向后兼容）、http 需 `url`、`token` Bearer 可选；注册按传输分发、缺必需字段 fail-open 跳过；单测 + 集成测试（http 挂载/透明调用/错 token 跳过）全绿。✅ **第 4 步完成**（`e30d164cef`）：输入面出站脱敏 `sanitize_external_input`——调用参数递归剥离 SENSITIVE_FIELDS 键整体不出网（与返回路径占位脱敏互补），redacted>0 时 warn 留痕；审计指标扩展 `outbound_args_total`/`outbound_redacted_total`（恒有 redacted≤args 可审计剥离比例）；集成测试用 mock server 回显 arguments 验证出站净载荷无明文凭据。✅ **第 5 步完成**：双进程联调通过——真实 search（8082 /mcp，MCP_SERVER_TOKEN）↔ DSH `MCP_EXTERNAL_SERVERS` http 配置注册 `ext.search.*` 三工具，真实 HTTP 调用返回合法形状（本机投影表空→0 条属数据面正常）、错误 token fail-open 跳过；联调测试 `svc/ai/tests/mcp_http_real_e2e.rs` 以 `REAL_MCP_URL` env 守卫（未设置自动跳过，不进 CI 常规路径）。**B 档 6 步路径全部落地。** **C 档（全开放）维持挂起**（登记同步决策文档 §6.x）：触发条件①真实第三方 server 消费需求（≥1 外部 server 明确接入）未满足；条件②工具级权限声明设计——代码基座已就绪（`tools/mod.rs` `register_async_with_permission`/`required_permission`/`sensitive_output`），外部注册路径 `external.rs` 仍用 `register_async` 未启用声明，条件①满足后再按工具声明接入。
 
 ---
 
@@ -980,6 +1370,12 @@
 - **门禁**：`tsc --noEmit` exit 0；四文件定点 eslint 0 error 0 warning；全量 eslint error 仅剩 5 个既有 prettier（StatTile/modules registry/FinanceVoucher/NotFound/appRoutes，非本批触碰）。
 - **no-explicit-any 产品代码收口完成 ✅**：剩余 299 处中——测试 mock any 285 处（`__tests__` 有意保留）+ `api/client.ts` 10 处（第一批判定保留：改 unknown 引发 ApiResponse 连锁不兼容）+ **产品代码仅余 14 处**，全部为前批已判定项：LazyChart 2（tooltipFormatter 返回不兼容）、AmapLayer 2（高德实例）、CrudPage 2（适配器泛型）、routes/v2 2（P=any 逆变）、eventBus 1（EventHandler 逆变）、crudPageAdapter 1（PaginationParams 逆变）、SystemSettings 2 + Tenant 2（表单模型待对齐）——**保留口径已全部登记，本规则债收无可收，转入按需处理**。
 
+### no-explicit-any 收尾 · 补测新引入测试侧 1 处清理（2026-10-25）✅
+
+- 全量复测发现补测线新引入 `ErpDashboardPage.test.tsx:126` `mockUseQuery.mockImplementation((opts: any))` 1 处 → 改 `(opts: { queryFn?: () => unknown })` + `opts.queryFn?.()`。
+- **门禁**：`tsc --noEmit` exit 0；该测试 4/4 passed；全量 `eslint .` exit 0（no-explicit-any 全仓归零，含测试侧）。
+- 至此 no-explicit-any 长尾彻底收口：产品代码 14 处有意保留（已登记）、测试 mock 有意保留口径维持、无新增违规。
+
 ---
 
 ## 批 A1 · 财务报表聚合 f64→Decimal（2026-10-18）✅ 完成
@@ -996,6 +1392,7 @@
 - **补单测**：`decimal_growth_rate` 3 例（基期为 0 不除零 / +25% / −20%）。
 - **验证**：`SQLX_OFFLINE=true cargo check -p topems-finance` exit 0；`cargo test -p topems-finance --lib` **1087 passed / 0 failed**；clippy 对本文件 0 warning；cargo fmt 合规。
 - **遗留登记（本批已接真，2026-10-22 闭环）**：`get_business_overview`（`svc/finance/src/modules/financial_reports.rs:2042`，路由 `/reports/business-overview`）已由占位改接真表。实现：凭证表 period 存 `YYYYMM`、前端可能传 `YYYY-MM`，统一 `chars().filter(is_ascii_digit)` 归一；`voucher_count` 取期间 `status='posted'` 凭证数；单条 GROUP BY 查询 `core_finance_voucher_lines` JOIN `core_finance_vouchers` JOIN `core_finance_accounts`，按 `account_type::text` 聚合借/贷，映射 `income→total_revenue`（贷方）、`expense/cost→total_expenses`（借方）、`asset→total_assets`（借-贷）、`liability→total_liabilities`（贷-借），`net_profit = total_revenue - total_expenses`；返回 `period/voucher_count/total_debit/total_credit/total_assets/total_liabilities/total_revenue/net_profit`，与前端 `FinanceReportsPage.tsx` 四张统计卡完全对齐。金额全程 Decimal（NUMERIC(18,4)），net_profit 由真实收入-费用派生、不再硬编码 0.0。`total_credit` 为独立贷方 SUM（消除原"误复用 total_debit"的数值撒谎）。验证：`SQLX_OFFLINE=true cargo check -p topems-finance` exit 0；`cargo test -p topems-finance --lib` **1091 passed / 0 failed**；DB 实查 period=202608（已过账凭证无分录）聚合返回 0 行，端点如实返回零值，不编造。finance 查询走 `sqlx::query_as(only_own_schema_query!(...))` 运行时字符串，不依赖 `.sqlx/` 离线缓存，本次未改动 `.sqlx/`。
+- **E2E 核销（2026-10-26）**：连库实测插入测试凭证（202610 posted，income 行 credit 1000 / expense 行 debit 600），按函数 SQL 同构复算 → `voucher_count=1`、`total_debit=600`、`total_credit=1000`、`income→total_revenue=1000`、`expense→total_expenses=600`、`net_profit=1000-600=400`，与手工预期一致；测试数据已物理清理（残留 0）。**F1 占位彻底清掉（10-22 接真 + 10-26 E2E 核销）**。
 - **合并报表虚构数据清零（2026-10-23）**：`financial_reports.rs` 多公司合并段 9 个 handler（generate/get consolidated report、entities 增删改查、elims 列表/新增、export）原为内存桩，返回硬编码虚构数字——总资产 1000 万/负债 500 万/权益 500 万/收入 800 万/费用 600 万/净利 200 万、5 家虚构公司（集团母公司/子公司A/B/联营C/合营D）、50 万与 30 万抵消分录、随机 UUID 回显后称「创建成功」、拼接并不存在的导出 URL 称「导出成功」。真值归属 ERP 合并模块（`erp.consolidation_scopes` / `consolidation_scope_companies` / `elimination_rules` / `consolidation_reports`，实测均 0 行），finance schema 无同源表且 boundary-gate 禁止跨 schema 直读；前端零消费（`apps/web/src` 仅 i18n 文案提及 consolidated，无 API 调用）。处理：读接口返回空集 + 保留分页字段 + `success:false`/`error` 指向 `/api/erp/consolidation/*`；写接口返回 `success:false` 不再假装成功；export 不再返回虚构地址。验证：`cargo check -p topems-finance` / `clippy --lib` / `fmt` 全绿，`cargo test -p topems-finance --lib` **1091 passed / 0 failed**，端点实跑见下条。
 
 ---
@@ -1096,10 +1493,12 @@
 ## 待拍板项1 training records 表重设计（2026-10-18）✅ 核实已落地，无新改动
 
 > 原判"需业务拍板"——本次实读核实，发现此前批次已一步到位落地。
+
 - **前端契约**（`types/training.ts:24-44` TrainingRecord）：record_no/plan_id/title/training_type/category/trainer/training_date/location/duration_hours/participants(string[])/content/materials(string[])/result/pass_rate/status。TrainingPage 实调 records CRUD（TrainingPage.tsx:37-40,85）。
 - **现表 vs 契约**：`ehs.training_records` 已补齐全部契约列（record_no/title/training_type/category/trainer/training_date/location/duration_hours/participants/materials/content/result/pass_rate；participants/materials jsonb），保留 enrollment/completion/score/certificate 历史列；RLS FORCE + tenant policy 已开。
 - **handler 接真**：list(1052)/create(1206 INSERT RETURNING)/get(504)/update(554)/delete(666) 全 sqlx，`training_record_from_row` 列别名对齐契约（program_id→plan_id）。
 - 验证：DB `\d ehs.training_records` 列齐可查；`cargo check -p topems-ehs --lib` 0 错；`cargo test -p topems-ehs --lib` 231 绿。本批无代码/迁移改动（纯核实闭环）。
+- **2026-10-26 独立复核（同结论）**：5 handler 全真查询（SELECT :697/:1077/:1321、UPDATE :804/:853、INSERT :1417）实读确认；`get_training_statistics` 已接真 COUNT 4 表（commit `871d5d6e47`）；RLS `tenant_isolation_training_records`（ALL，租户隔离范式）在库；表 21 行数据；后端 TrainingRecord struct 与前端契约 19 字段逐项对齐。**待拍板项正式核销**——已由 10-17~18 批次落地（training 模块 5 handler 接真 commit `39451a9af9`），无需再拍板。
 
 ---
 
@@ -1248,7 +1647,7 @@
 - **7 域前端消费面裁决**（grep `@/api/ehs` barrel 具名 import 实测）：
   - 消费中（后续批接真表）：`trainingApi=15`、`emergencyDrillApi=30`、`environmentalComplianceApi=58`、`healthMonitoringApi=15`。
     - **training 域接真表评估（2026-10-17）**：本机 DB 可连（127.0.0.1:5432/topems）；`ehs` schema 已就绪表——`qa_ehs_trainings`（列与后端 Training struct/基础 `/training` 路由完全匹配，但前端 trainingApi 15 个 API 均指向 plans/records/certificates，基础 /training 无消费=冻结）；`training_programs`（plans 用：**实测含 tenant_id/deleted_at/created_at/updated_at 22 列 + RLS 策略 tenant_isolation_training_programs 已就绪**——无需补列迁移）；`training_records`（records 用：**表结构与前端 TrainingRecord 契约差异大**——缺 record_no/title/training_type/trainer/training_date/location/participants/materials 等，仅 status/tenant_id 可直映射，接真需重设计表或改契约，**需业务拍板**）；`training/certificates` 无表（需新建迁移）。**→ 批1 已完成（2026-10-17，commit 见下）**：plans 5 handler（list/get/create/update/delete）接 sqlx 真查询——列别名映射（plan_no←program_no、description←content、trainer←instructor、planned_date←start_date）+ 动态 where/SET + tenant 过滤（nil 超管豁免）+ 404/500 语义；list 新增分页/筛选（page/page_size/status/training_type/search，前端契约参数）与 TrainingPlanQuery；验证：cargo check 0 错、单测 231/231 绿、DB 实机全链路 PASS（INSERT RETURNING/list ILIKE/get/update/软删/清理）；**批2 = certificates 建表，批3 = records 表重设计**
-    - **批2 已完成（2026-10-17）**：新建迁移 `20261017000003_ehs_training_certificates.sql`（`ehs.qa_ehs_training_certificates`：列对齐前端 TrainingCertificate 14 字段契约——certificate_no UNIQUE/employee_id/employee_name/training_type/certificate_type/issue_date/expiry_date/issuing_authority/status/record_id uuid/attachments jsonb 默认 '[]'/created_at/updated_at/deleted_at/tenant_id 默认 000…001 + RLS FORCE + `qa_ehs_training_certificates_tenant_policy`（USING+WITH CHECK 双策略，nil/空 GUC 豁免范式同 accident）——已应用开发库、checksums 已登记）；后端 `TrainingCertificate` struct 由 9 字段扩展为 15 字段（对齐契约：加 employee_id/training_type/issuing_authority/record_id/attachments/created_at/updated_at，删 training_title，certificate_type 改非 Option）；5 个 certificates handler 全部接真——list（新增 TrainingCertificateQuery：page/page_size/search/status/training_type/employee_id，动态 where+ILIKE 双字段搜索）/create（INSERT 12 列 RETURNING，certificate_no 自动 CERT-xxxx）/get/update（动态 SET 含 attachments jsonb）/delete（软删）均带 tenant 过滤 + 404/500；新增 `training_certificate_from_row` 行映射（attachments jsonb→Vec<String>）；验证：cargo check 0 错、单测 231/231 绿、DB 实机全链路 PASS（INSERT RETURNING 14 列/list ILIKE/get/update status+attachments/软删后 count 0/清理）；**批3 = records 表重设计（待业务拍板）**
+    - **批2 已完成（2026-10-17）**：新建迁移 `20261017000003_ehs_training_certificates.sql`（`ehs.qa_ehs_training_certificates`：列对齐前端 TrainingCertificate 14 字段契约——certificate_no UNIQUE/employee_id/employee_name/training_type/certificate_type/issue_date/expiry_date/issuing_authority/status/record_id uuid/attachments jsonb 默认 '[]'/created_at/updated_at/deleted_at/tenant_id 默认 000…001 + RLS FORCE + `qa_ehs_training_certificates_tenant_policy`（USING+WITH CHECK 双策略，nil/空 GUC 豁免范式同 accident）——已应用开发库、checksums 已登记）；后端 `TrainingCertificate` struct 由 9 字段扩展为 15 字段（对齐契约：加 employee_id/training_type/issuing_authority/record_id/attachments/created_at/updated_at，删 training_title，certificate_type 改非 Option）；5 个 certificates handler 全部接真——list（新增 TrainingCertificateQuery：page/page_size/search/status/training_type/employee_id，动态 where+ILIKE 双字段搜索）/create（INSERT 12 列 RETURNING，certificate_no 自动 CERT-xxxx）/get/update（动态 SET 含 attachments jsonb）/delete（软删）均带 tenant 过滤 + 404/500；新增 `training_certificate_from_row` 行映射（attachments jsonb→Vec<String>）；验证：cargo check 0 错、单测 231/231 绿、DB 实机全链路 PASS（INSERT RETURNING 14 列/list ILIKE/get/update status+attachments/软删后 count 0/清理）；**批3 = records 表重设计（待业务拍板）→ ✅ 已落地（10-17~18 完成，10-18/10-26 双次核实核销，见"待拍板项1"）**
     - **批3 已完成（2026-10-17）**：迁移 `20261017000004_ehs_training_records_columns.sql`——`ehs.training_records` 原 16 列 vs 前端 TrainingRecord 20 字段契约差异大（缺 record_no/title/training_type/category/trainer/training_date/location/duration_hours/participants/content/materials/result/pass_rate 13 列；表 0 行零风险）——按"后端宽容、零回归"拍板补列方案：ALTER ADD COLUMN IF NOT EXISTS 补 13 列 + 放开 program_id/employee_id/employee_name/enrollment_date 4 个 NOT NULL（前端契约不含后者、plan_id 可空）；保留既有列/FK program_id→training_programs/RLS 策略 tenant_isolation_training_records 不动；后端 `TrainingRecord` struct 由 9 字段扩展为 20 字段（对齐契约，plan_id←program_id 别名映射）；5 个 records handler 全部接真——list（新增 TrainingRecordQuery：page/page_size/search/status/training_type/category，title/record_no/trainer 三字段 ILIKE）/create（INSERT 16 列 RETURNING，record_no 自动 TRC-xxxx，plan_id 可空）/get/update（动态 SET 含 participants/materials/pass_rate）/delete（软删）均带 tenant 过滤 + 404/500；新增 `training_record_from_row` 行映射（participants/materials jsonb→Vec\<String\>、duration_hours/pass_rate numeric→f64）；验证：cargo check 0 错、单测 231/231 绿、DB 实机全链路 PASS（INSERT 14 列含 NULL plan_id/list 三字段 ILIKE/get/update status+pass_rate+materials/软删后 count 0/清理）+ validate.sh Errors 0 + checksums 登记；**training 域三批全部闭环（plans→certificates→records）**
     - **enviro-compliance regulations 批已完成（2026-10-17）**：核实 ehs 域前端聚合 `ehsApi` 真实调用面——**environmental_compliance 域（前端 CompliancePage 调 listEnvironmentalRegulations/createEnvironmentalRegulation 等）后端此前返回空数组桩=契约撒谎面**；emergency_drill/health/occupational_health/emergency_plan/environment 前端零消费（冻结不动）。**本批 regulations 5 handler 接真**：迁移 `20261017000005_ehs_env_compliance_regulations_cols.sql`（qa_ehs_environmental_regulations 19 列已就绪+RLS 就绪，补 keywords/applicable_scopes/created_by 3 列，0 行零风险；列别名：regulation_no←reg_no、issue_date←issued_date、attachments←related_files）；`EnvironmentalRegulation` struct 19 字段对齐前端契约（删 remarks、applicability→applicable_scopes Vec、related_files→attachments、新增 keywords/created_by）；Create/UpdateRegulationRequest 同步对齐；5 handler 接真——list（新增 RegulationQuery：page/page_size/search/category/status，title/reg_no 双 ILIKE）/create（INSERT 15 列，reg_no 自动 ER-xxxx，status 默认 draft）/get/update（动态 SET 含 jsonb）/delete（软删）均带 tenant 过滤+404/500；新增 `resolve_tenant_id`/`environmental_regulation_from_row`；验证：cargo check 0 错、单测 231/231 绿、DB 实机全链路 PASS + validate.sh Errors 0；**environmental_compliance 剩余实体（permits/evaluations/monitoring）待同法接真** → ✅ 已全部接真（permits/evaluations :181，monitoring/incidents/statistics :183）
     - **enviro-compliance assessments+permits 批已完成（2026-10-17）**：核实前端消费面——CompliancePage 真实调用 listComplianceAssessments/listDischargePermits（queryFn page_size 500 + stats completedAssessments/validPermits）；**assessments 路径此前撕裂**（前端 /environmental-compliance/assessments vs 后端 /evaluations → 前端 404）；incidents 前端指向 accidentApi（已真，无撒谎面）；events 前端页面未消费（冻结）。**本批 10 handler 接真**：迁移 `20261017000006_ehs_env_compliance_assess_permits_cols.sql`——qa_ehs_compliance_evaluations 补 non_complianceitems jsonb/corrective_actions 2 列、qa_ehs_discharge_permits 补 permit_category/discharge_limits jsonb/monitoring_requirements 3 列（两表 0 行零风险）；后端 `ComplianceEvaluation`→`ComplianceAssessment` struct 对齐前端契约（assessment_no←eval_no、assessment_type←eval_type、scope←eval_period、period_start←start_date、period_end←end_date、assessor←evaluator、assessment_date←evaluated_at、result←overall_result、score←compliance_rate、improvements→non_complianceitems）；`DischargePermit` struct 对齐（title←permit_name、issue_date←issued_date、effective_date←valid_from、expiry_date←valid_to、pollutant_list→discharge_limits 对象数组、删 total_amount_limit/remarks、新增 permit_category/monitoring_requirements）+ 新 DischargeLimit struct；Create/Update 请求全对齐；5+5 handler 接真——list（AssessmentQuery/PermitQuery：page/page_size/search/类型/status，双 ILIKE）/create（INSERT RETURNING，CE-xxxx/DP-xxxx 自动编号）/get/update（动态 SET 含 jsonb）/delete（软删）均带 tenant 过滤+404/500；新增 `compliance_assessment_from_row`/`discharge_permit_from_row`（jsonb→Vec/DischargeLimit）；**路由双注册兼容**（/assessments + /evaluations 挂同一 handler，前端两套 API 都通）；验证：cargo check 0 错、单测 231/231 绿、DB 实机全链路 PASS（评估 INSERT 全列 RETURNING/list 双筛选、许可 INSERT discharge_limits 对象数组/list permit_category/软删 count 0/清理）+ validate.sh Errors 0；**environmental_compliance 剩余仅 monitoring/incidents/statistics 桩（前端零消费或指向 accident 域），评估+许可+regulations 三大实调面已全部接真**

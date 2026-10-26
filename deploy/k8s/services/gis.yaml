@@ -33,8 +33,6 @@ spec:
         env:
         - name: GIS_PORT
           value: "8071"
-        - name: CONSUL_URL
-          value: "http://consul-service:8500"
         - name: MES_URL
           value: "http://mes-service:8030"
         resources:

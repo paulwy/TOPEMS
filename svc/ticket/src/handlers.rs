@@ -693,9 +693,9 @@ pub async fn update_ticket_handler(
     match service.update_ticket(tenant_id, id, user_id, req).await {
         Ok(ticket) => Json(ApiResponse::success(ticket, "工单更新成功")),
         // 状态机白名单拒绝（非法状态值/非法转移）→ 400
-        Err(TopemsError::ValidationFailed(msg)) => Json(ApiResponse::error(400, &msg)),
+        Err(TopemsError::ValidationFailed(msg)) => Json(ApiResponse::bad_request(&msg)),
         // 假 UUID 探测：get_ticket 走 fetch_one RowNotFound → 记录不存在 → 404
-        Err(TopemsError::DatabaseRecordNotFound(_)) => Json(ApiResponse::error(404, "工单不存在")),
+        Err(TopemsError::DatabaseRecordNotFound(_)) => Json(ApiResponse::not_found("工单不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新工单失败", e))),
     }
 }
@@ -715,7 +715,7 @@ pub async fn delete_ticket_handler(
             json!({"cancelled": true}),
             "工单已取消",
         )),
-        Ok(false) => Json(ApiResponse::error(404, "工单不存在或已关闭")),
+        Ok(false) => Json(ApiResponse::not_found("工单不存在或已关闭")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("取消工单失败", e))),
     }
 }
@@ -731,7 +731,7 @@ pub async fn add_comment_handler(
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(401, "Invalid user id")),
+        Err(_) => return Json(ApiResponse::unauthorized("Invalid user id")),
     };
     let user_name = Some(claims.username.clone());
 
@@ -995,7 +995,7 @@ pub async fn update_sla_policy_handler(
     match service.update_policy(tenant_id, id, req, locale).await {
         Ok(policy) => Json(ApiResponse::success(policy, "SLA策略更新成功")),
         // 假 UUID 探测：结尾 get_policy 走 fetch_one RowNotFound → 内层 404（HTTP200）
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "SLA策略不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("SLA策略不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "更新SLA策略失败",
             e,
@@ -1027,7 +1027,7 @@ pub async fn delete_sla_policy_handler(
             json!({"deleted": true}),
             "SLA策略已删除",
         )),
-        Ok(false) => Json(ApiResponse::error(404, "SLA策略不存在或为默认策略不可删除")),
+        Ok(false) => Json(ApiResponse::not_found("SLA策略不存在或为默认策略不可删除")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "删除SLA策略失败",
             e,
@@ -1351,7 +1351,7 @@ pub async fn get_automation_rule_handler(
     .await
     {
         Ok(Some(rule)) => Json(ApiResponse::success(rule, "自动化规则获取成功")),
-        Ok(None) => Json(ApiResponse::error(404, "自动化规则不存在")),
+        Ok(None) => Json(ApiResponse::not_found("自动化规则不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("获取自动化规则失败", e))),
     }
 }
@@ -1408,7 +1408,7 @@ pub async fn update_automation_rule_handler(
     .await;
     match result {
         Ok(Some(rule)) => Json(ApiResponse::success(rule, "自动化规则更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "自动化规则不存在")),
+        Ok(None) => Json(ApiResponse::not_found("自动化规则不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "更新自动化规则失败",
             e,
@@ -1446,7 +1446,7 @@ pub async fn delete_automation_rule_handler(
             json!({"deleted": true}),
             "自动化规则已删除",
         )),
-        Ok(_) => Json(ApiResponse::error(404, "自动化规则不存在")),
+        Ok(_) => Json(ApiResponse::not_found("自动化规则不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "删除自动化规则失败",
             e,
@@ -1597,7 +1597,7 @@ pub async fn get_knowledge_article_handler(
     .await
     {
         Ok(Some(a)) => Json(ApiResponse::success(a, "知识文章获取成功")),
-        Ok(None) => Json(ApiResponse::error(404, "知识文章不存在")),
+        Ok(None) => Json(ApiResponse::not_found("知识文章不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("获取知识文章失败", e))),
     }
 }
@@ -1646,7 +1646,7 @@ pub async fn update_knowledge_article_handler(
     .await;
     match result {
         Ok(Some(a)) => Json(ApiResponse::success(a, "知识文章更新成功")),
-        Ok(None) => Json(ApiResponse::error(404, "知识文章不存在")),
+        Ok(None) => Json(ApiResponse::not_found("知识文章不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "更新知识文章失败",
             e,
@@ -1686,7 +1686,7 @@ pub async fn delete_knowledge_article_handler(
             json!({"deleted": true}),
             "知识文章已删除",
         )),
-        Ok(_) => Json(ApiResponse::error(404, "知识文章不存在")),
+        Ok(_) => Json(ApiResponse::not_found("知识文章不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "删除知识文章失败",
             e,
@@ -1728,7 +1728,7 @@ pub async fn update_comment_handler(
     .await
     {
         Ok(res) if res.rows_affected() > 0 => {}
-        Ok(_) => return Json(ApiResponse::error(404, "评论不存在")),
+        Ok(_) => return Json(ApiResponse::not_found("评论不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("更新评论失败", e))),
     }
     match sqlx::query_as::<_, TicketComment>(
@@ -1764,7 +1764,7 @@ pub async fn delete_comment_handler(
         Ok(res) if res.rows_affected() > 0 => {
             Json(ApiResponse::success(json!({"deleted": true}), "评论已删除"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "评论不存在")),
+        Ok(_) => Json(ApiResponse::not_found("评论不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("删除评论失败", e))),
     }
 }
@@ -1788,7 +1788,7 @@ pub async fn get_activity_handler(
     .await
     {
         Ok(Some(activity)) => Json(ApiResponse::success(activity, "查询成功")),
-        Ok(None) => Json(ApiResponse::error(404, "活动不存在")),
+        Ok(None) => Json(ApiResponse::not_found("活动不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询活动失败", e))),
     }
 }
@@ -1820,7 +1820,7 @@ pub async fn assign_ticket_handler(
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
-            sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
+            sqlx::Error::RowNotFound => Json(ApiResponse::not_found("工单不存在")),
             other => Json(ApiResponse::from(TopemsError::internal(
                 "查询工单失败",
                 other,
@@ -1863,7 +1863,7 @@ pub async fn resolve_ticket_handler(
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
-            sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
+            sqlx::Error::RowNotFound => Json(ApiResponse::not_found("工单不存在")),
             other => Json(ApiResponse::from(TopemsError::internal(
                 "查询工单失败",
                 other,
@@ -1901,7 +1901,7 @@ pub async fn close_ticket_handler(
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
-            sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
+            sqlx::Error::RowNotFound => Json(ApiResponse::not_found("工单不存在")),
             other => Json(ApiResponse::from(TopemsError::internal(
                 "查询工单失败",
                 other,
@@ -1941,7 +1941,7 @@ pub async fn list_sla_escalations_handler(
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = ticket_service.get_ticket(tenant_id, id).await {
         return match e {
-            sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
+            sqlx::Error::RowNotFound => Json(ApiResponse::not_found("工单不存在")),
             other => Json(ApiResponse::from(TopemsError::internal(
                 "查询工单失败",
                 other,
@@ -1968,7 +1968,7 @@ pub async fn calculate_ticket_sla_handler(
     let tenant_id = tenant_id_of(&claims);
     let ticket = match ticket_service.get_ticket(tenant_id, id).await {
         Ok(t) => t,
-        Err(sqlx::Error::RowNotFound) => return Json(ApiResponse::error(404, "工单不存在")),
+        Err(sqlx::Error::RowNotFound) => return Json(ApiResponse::not_found("工单不存在")),
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询工单失败", e))),
     };
     match sla_service.calculate_sla(&ticket).await {

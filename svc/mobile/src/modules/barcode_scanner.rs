@@ -152,7 +152,7 @@ pub async fn scan_barcode(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -162,7 +162,7 @@ pub async fn scan_barcode(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -201,7 +201,7 @@ pub async fn scan_barcode(
             tracing::error!("保存扫描记录失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "保存扫描记录失败")),
+                Json(ApiResponse::server_error("保存扫描记录失败")),
             );
         }
     };
@@ -330,7 +330,7 @@ pub async fn get_scan_history(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -340,7 +340,7 @@ pub async fn get_scan_history(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -354,7 +354,7 @@ pub async fn get_scan_history(
             tracing::error!("获取扫描历史失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "获取扫描历史失败")),
+                Json(ApiResponse::server_error("获取扫描历史失败")),
             );
         }
     };
@@ -410,7 +410,7 @@ pub async fn get_scan_by_id(
             tracing::error!("查询扫描记录失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "查询扫描记录失败")),
+                Json(ApiResponse::server_error("查询扫描记录失败")),
             );
         }
     };
@@ -422,7 +422,7 @@ pub async fn get_scan_by_id(
                 tracing::error!("解析扫描记录失败: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(500, "解析扫描记录失败")),
+                    Json(ApiResponse::server_error("解析扫描记录失败")),
                 );
             }
         };
@@ -433,7 +433,7 @@ pub async fn get_scan_by_id(
     } else {
         (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "扫描记录不存在")),
+            Json(ApiResponse::not_found("扫描记录不存在")),
         )
     }
 }
@@ -502,7 +502,7 @@ pub async fn delete_scan_record(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -512,7 +512,7 @@ pub async fn delete_scan_record(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -533,13 +533,13 @@ pub async fn delete_scan_record(
         ),
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "扫描记录不存在或无权删除")),
+            Json(ApiResponse::not_found("扫描记录不存在或无权删除")),
         ),
         Err(e) => {
             tracing::error!("删除扫描记录失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "删除扫描记录失败")),
+                Json(ApiResponse::server_error("删除扫描记录失败")),
             )
         }
     }

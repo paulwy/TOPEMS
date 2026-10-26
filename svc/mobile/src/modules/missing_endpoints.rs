@@ -61,7 +61,7 @@ pub async fn list_inspection_tasks(
             tracing::error!("查询巡检任务失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<Value>::error(500, "查询巡检任务失败")),
+                Json(ApiResponse::<Value>::server_error("查询巡检任务失败")),
             );
         }
     };
@@ -176,7 +176,7 @@ pub async fn get_push_config(
         tracing::error!("初始化 push_config 表失败: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<Value>::error(500, "初始化失败")),
+            Json(ApiResponse::<Value>::server_error("初始化失败")),
         );
     }
     let row = sqlx::query(r#"SELECT channel_config FROM mobile.push_config LIMIT 1"#)
@@ -209,14 +209,14 @@ pub async fn update_push_config(
             Err(_) => {
                 return (
                     StatusCode::UNAUTHORIZED,
-                    Json(ApiResponse::<Value>::error(401, "无效的用户ID")),
+                    Json(ApiResponse::<Value>::unauthorized("无效的用户ID")),
                 );
             }
         },
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::<Value>::error(401, "未授权")),
+                Json(ApiResponse::<Value>::unauthorized("未授权")),
             );
         }
     };
@@ -224,7 +224,7 @@ pub async fn update_push_config(
         tracing::error!("初始化 push_config 表失败: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<Value>::error(500, "初始化失败")),
+            Json(ApiResponse::<Value>::server_error("初始化失败")),
         );
     }
     // 租户取自 token claims，去掉硬编码 '...0001' 字面量。
@@ -256,7 +256,7 @@ pub async fn update_push_config(
             tracing::error!("保存推送配置失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<Value>::error(500, "保存推送配置失败")),
+                Json(ApiResponse::<Value>::server_error("保存推送配置失败")),
             )
         }
     }
@@ -329,13 +329,13 @@ pub async fn update_push_template(
         Ok(None) => (
             // 契约约定：业务层未找到一律 HTTP200 + 内层 code=404，避免被探测误判为路由缺失
             StatusCode::OK,
-            Json(ApiResponse::<Value>::error(404, "模板不存在")),
+            Json(ApiResponse::<Value>::not_found("模板不存在")),
         ),
         Err(e) => {
             tracing::error!("更新模板失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<Value>::error(500, "更新模板失败")),
+                Json(ApiResponse::<Value>::server_error("更新模板失败")),
             )
         }
     }

@@ -148,7 +148,7 @@ pub async fn get_mes_erp_sync(
     .await
     {
         Ok(sync) => Json(ApiResponse::success(sync, "MES↔ERP sync found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
             Json(ApiResponse::from(TopemsError::internal(
@@ -198,7 +198,7 @@ pub async fn sync_mes_erp(
     .await
     {
         Ok(Some(s)) => s,
-        Ok(None) => return Json(ApiResponse::error(404, "Sync not found")),
+        Ok(None) => return Json(ApiResponse::not_found("Sync not found")),
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
             return Json(ApiResponse::from(TopemsError::internal(

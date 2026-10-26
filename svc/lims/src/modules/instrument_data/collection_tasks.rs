@@ -30,7 +30,7 @@ pub async fn trigger_collection(
 ) -> Json<ApiResponse<InstrumentData>> {
     let task_id = match Uuid::parse_str(&task_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     let task_row = sqlx::query(
@@ -46,10 +46,10 @@ pub async fn trigger_collection(
             row.get::<String, _>("protocol"),
             row.get::<String, _>("task_no"),
         ),
-        Ok(None) => return Json(ApiResponse::error(404, "采集任务不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("采集任务不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch collection task: {}", e);
-            return Json(ApiResponse::error(500, "获取采集任务失败"));
+            return Json(ApiResponse::server_error("获取采集任务失败"));
         }
     };
 
@@ -159,7 +159,7 @@ pub async fn trigger_collection(
         }
         Err(e) => {
             tracing::error!("Failed to trigger collection: {}", e);
-            Json(ApiResponse::error(500, "触发数据采集失败"))
+            Json(ApiResponse::server_error("触发数据采集失败"))
         }
     }
 }
@@ -256,7 +256,7 @@ pub async fn list_collection_tasks(
         Ok(data) => Json(ApiResponse::success(data, "获取采集任务列表成功")),
         Err(e) => {
             tracing::error!("Failed to fetch collection tasks: {}", e);
-            Json(ApiResponse::error(500, "获取采集任务列表失败"))
+            Json(ApiResponse::server_error("获取采集任务列表失败"))
         }
     }
 }
@@ -281,7 +281,7 @@ pub async fn get_collection_task(
 ) -> Json<ApiResponse<CollectionTask>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
     let locale = Locale::from_headers(&headers).as_sql();
 
@@ -330,10 +330,10 @@ pub async fn get_collection_task(
             },
             "获取采集任务成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "采集任务不存在")),
+        Ok(None) => Json(ApiResponse::not_found("采集任务不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch collection task: {}", e);
-            Json(ApiResponse::error(500, "获取采集任务失败"))
+            Json(ApiResponse::server_error("获取采集任务失败"))
         }
     }
 }
@@ -349,7 +349,7 @@ pub async fn create_collection_task(
     let instrument_uuid = match &req.instrument_id {
         Some(id) => match Uuid::parse_str(id) {
             Ok(u) => Some(u),
-            Err(_) => return Json(ApiResponse::error(400, "无效的仪器ID")),
+            Err(_) => return Json(ApiResponse::bad_request("无效的仪器ID")),
         },
         None => None,
     };
@@ -409,7 +409,7 @@ pub async fn create_collection_task(
         )),
         Err(e) => {
             tracing::error!("Failed to create collection task: {}", e);
-            Json(ApiResponse::error(500, "创建采集任务失败"))
+            Json(ApiResponse::server_error("创建采集任务失败"))
         }
     }
 }
@@ -421,7 +421,7 @@ pub async fn update_collection_task(
 ) -> Json<ApiResponse<CollectionTask>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     let row = sqlx::query(
@@ -477,10 +477,10 @@ pub async fn update_collection_task(
             },
             "采集任务更新成功",
         )),
-        Ok(None) => Json(ApiResponse::error(404, "采集任务不存在")),
+        Ok(None) => Json(ApiResponse::not_found("采集任务不存在")),
         Err(e) => {
             tracing::error!("Failed to update collection task: {}", e);
-            Json(ApiResponse::error(500, "更新采集任务失败"))
+            Json(ApiResponse::server_error("更新采集任务失败"))
         }
     }
 }
@@ -491,7 +491,7 @@ pub async fn delete_collection_task(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     let result =
@@ -504,7 +504,7 @@ pub async fn delete_collection_task(
         Ok(_) => Json(ApiResponse::success(true, "采集任务删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete collection task: {}", e);
-            Json(ApiResponse::error(500, "删除采集任务失败"))
+            Json(ApiResponse::server_error("删除采集任务失败"))
         }
     }
 }

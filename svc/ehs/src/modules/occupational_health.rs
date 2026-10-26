@@ -405,7 +405,7 @@ pub async fn list_exam_plans(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list exam plans: {}", e);
-            return Json(ApiResponse::error(500, "体检计划列表获取失败"));
+            return Json(ApiResponse::server_error("体检计划列表获取失败"));
         }
     };
     let list: Vec<HealthExamPlan> = rows
@@ -451,8 +451,7 @@ pub async fn create_exam_plan(
 ) -> Json<ApiResponse<HealthExamPlan>> {
     // 真表 ehs.qa_ehs_health_exam_plans 当前空表，写接口假装成功会制造假数据。
     tracing::warn!("Exam plan create called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检计划数据源尚未启用，写入操作暂不可用",
     ))
 }
@@ -498,10 +497,10 @@ pub async fn get_exam_plan(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "体检计划不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("体检计划不存在")),
         Err(e) => {
             tracing::error!("Failed to get exam plan {}: {}", id, e);
-            return Json(ApiResponse::error(500, "体检计划获取失败"));
+            return Json(ApiResponse::server_error("体检计划获取失败"));
         }
     };
     let plan = HealthExamPlan {
@@ -548,8 +547,7 @@ pub async fn update_exam_plan(
     Json(_req): Json<UpdateExamPlanRequest>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
     tracing::warn!("Exam plan update called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检计划数据源尚未启用，更新操作暂不可用",
     ))
 }
@@ -572,8 +570,7 @@ pub async fn delete_exam_plan(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("Exam plan delete called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检计划数据源尚未启用，删除操作暂不可用",
     ))
 }
@@ -614,7 +611,7 @@ pub async fn list_exam_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list exam records: {}", e);
-            return Json(ApiResponse::error(500, "体检记录列表获取失败"));
+            return Json(ApiResponse::server_error("体检记录列表获取失败"));
         }
     };
     let list: Vec<HealthExamRecord> = rows
@@ -675,8 +672,7 @@ pub async fn create_exam_record(
     Json(_req): Json<CreateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
     tracing::warn!("Exam record create called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检记录数据源尚未启用，写入操作暂不可用",
     ))
 }
@@ -724,10 +720,10 @@ pub async fn get_exam_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "体检记录不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("体检记录不存在")),
         Err(e) => {
             tracing::error!("Failed to get exam record {}: {}", id, e);
-            return Json(ApiResponse::error(500, "体检记录获取失败"));
+            return Json(ApiResponse::server_error("体检记录获取失败"));
         }
     };
     let rec = HealthExamRecord {
@@ -790,8 +786,7 @@ pub async fn update_exam_record(
     Json(_req): Json<UpdateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
     tracing::warn!("Exam record update called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检记录数据源尚未启用，更新操作暂不可用",
     ))
 }
@@ -814,8 +809,7 @@ pub async fn delete_exam_record(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("Exam record delete called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "体检记录数据源尚未启用，删除操作暂不可用",
     ))
 }
@@ -855,7 +849,7 @@ pub async fn list_contraindications(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list contraindications: {}", e);
-            return Json(ApiResponse::error(500, "职业禁忌症列表获取失败"));
+            return Json(ApiResponse::server_error("职业禁忌症列表获取失败"));
         }
     };
     let list: Vec<Contraindication> = rows
@@ -901,8 +895,7 @@ pub async fn create_contraindication(
 ) -> Json<ApiResponse<Contraindication>> {
     // ehs.qa_ehs_contraindications 为空表，写接口假装成功会制造假数据；诚实返回 501。
     tracing::warn!("Contraindication create called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "职业禁忌症数据源尚未启用，写入操作暂不可用",
     ))
 }
@@ -946,10 +939,10 @@ pub async fn get_contraindication(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "职业禁忌症不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("职业禁忌症不存在")),
         Err(e) => {
             tracing::error!("Failed to get contraindication {}: {}", id, e);
-            return Json(ApiResponse::error(500, "职业禁忌症获取失败"));
+            return Json(ApiResponse::server_error("职业禁忌症获取失败"));
         }
     };
     let contra = Contraindication {
@@ -995,8 +988,7 @@ pub async fn update_contraindication(
     Json(_req): Json<CreateContraindicationRequest>,
 ) -> Json<ApiResponse<Contraindication>> {
     tracing::warn!("Contraindication update called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "职业禁忌症数据源尚未启用，更新操作暂不可用",
     ))
 }
@@ -1016,8 +1008,7 @@ pub async fn delete_contraindication(
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
     tracing::warn!("Contraindication delete called but data source not yet enabled");
-    Json(ApiResponse::error(
-        501,
+    Json(ApiResponse::not_implemented(
         "职业禁忌症数据源尚未启用，删除操作暂不可用",
     ))
 }
@@ -1181,7 +1172,7 @@ pub async fn list_health_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list health records: {}", e);
-            return Json(ApiResponse::error(500, "获取健康档案列表失败"));
+            return Json(ApiResponse::server_error("获取健康档案列表失败"));
         }
     };
     let list: Vec<HealthRecord> = rows.iter().map(health_record_from_row).collect();
@@ -1244,7 +1235,7 @@ pub async fn create_health_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create health record: {}", e);
-            return Json(ApiResponse::error(500, "健康档案创建失败"));
+            return Json(ApiResponse::server_error("健康档案创建失败"));
         }
     };
     let record = health_record_from_row(&row);
@@ -1284,10 +1275,10 @@ pub async fn get_health_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "健康档案不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("健康档案不存在")),
         Err(e) => {
             tracing::error!("Failed to get health record: {}", e);
-            return Json(ApiResponse::error(500, "获取健康档案失败"));
+            return Json(ApiResponse::server_error("获取健康档案失败"));
         }
     };
     let record = health_record_from_row(&row);
@@ -1390,10 +1381,10 @@ pub async fn update_health_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::error(404, "健康档案不存在")),
+        Ok(None) => return Json(ApiResponse::not_found("健康档案不存在")),
         Err(e) => {
             tracing::error!("Failed to update health record: {}", e);
-            return Json(ApiResponse::error(500, "健康档案更新失败"));
+            return Json(ApiResponse::server_error("健康档案更新失败"));
         }
     };
     let record = health_record_from_row(&row);
@@ -1431,11 +1422,11 @@ pub async fn delete_health_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete health record: {}", e);
-            return Json(ApiResponse::error(500, "健康档案删除失败"));
+            return Json(ApiResponse::server_error("健康档案删除失败"));
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::error(404, "健康档案不存在"));
+        return Json(ApiResponse::not_found("健康档案不存在"));
     }
     Json(ApiResponse::success((), "健康档案删除成功"))
 }

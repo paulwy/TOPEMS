@@ -135,7 +135,7 @@ pub async fn sync_data(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -145,7 +145,7 @@ pub async fn sync_data(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -252,7 +252,7 @@ pub async fn get_offline_status(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -262,7 +262,7 @@ pub async fn get_offline_status(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -363,7 +363,7 @@ pub async fn get_sync_history(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -373,7 +373,7 @@ pub async fn get_sync_history(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -411,7 +411,7 @@ pub async fn get_sync_history(
             tracing::error!("查询同步历史失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "内部服务器错误")),
+                Json(ApiResponse::server_error("内部服务器错误")),
             );
         }
     };
@@ -463,7 +463,7 @@ pub async fn get_sync_policy(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -473,7 +473,7 @@ pub async fn get_sync_policy(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -495,7 +495,7 @@ pub async fn get_sync_policy(
             tracing::error!("查询同步策略失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "内部服务器错误")),
+                Json(ApiResponse::server_error("内部服务器错误")),
             );
         }
     };
@@ -506,7 +506,7 @@ pub async fn get_sync_policy(
             tracing::error!("解析同步策略失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "内部服务器错误")),
+                Json(ApiResponse::server_error("内部服务器错误")),
             );
         }
         // 无记录时返回默认策略（HTTP 200），避免裸 404 被前端契约探测判为路由缺失。
@@ -540,7 +540,7 @@ pub async fn update_sync_policy(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -550,7 +550,7 @@ pub async fn update_sync_policy(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -612,7 +612,7 @@ pub async fn update_sync_policy(
             tracing::error!("更新同步策略失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "更新同步策略失败")),
+                Json(ApiResponse::server_error("更新同步策略失败")),
             );
         }
     };
@@ -623,14 +623,14 @@ pub async fn update_sync_policy(
             tracing::error!("解析同步策略失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "内部服务器错误")),
+                Json(ApiResponse::server_error("内部服务器错误")),
             );
         }
         None => {
             tracing::error!("更新同步策略后未返回记录");
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "内部服务器错误")),
+                Json(ApiResponse::server_error("内部服务器错误")),
             );
         }
     };
@@ -661,7 +661,7 @@ pub async fn retry_failed_sync(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -671,7 +671,7 @@ pub async fn retry_failed_sync(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -695,7 +695,7 @@ pub async fn retry_failed_sync(
             tracing::error!("查询失败操作失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "内部服务器错误")),
+                Json(ApiResponse::server_error("内部服务器错误")),
             );
         }
     };

@@ -33,8 +33,6 @@ spec:
         env:
         - name: SRM_PORT
           value: "8042"
-        - name: CONSUL_URL
-          value: "http://consul-service:8500"
         - name: SCM_URL
           value: "http://scm-service:8040"
         resources:

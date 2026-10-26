@@ -86,7 +86,7 @@ pub async fn upload_photo(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -96,7 +96,7 @@ pub async fn upload_photo(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -163,7 +163,7 @@ pub async fn upload_photo(
     if !mime_type.starts_with("image/") {
         return (
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::error(400, "无效的文件类型，仅支持图片")),
+            Json(ApiResponse::bad_request("无效的文件类型，仅支持图片")),
         );
     }
 
@@ -187,7 +187,7 @@ pub async fn upload_photo(
             tracing::error!("创建上传记录失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "创建上传记录失败")),
+                Json(ApiResponse::server_error("创建上传记录失败")),
             );
         }
     };
@@ -236,7 +236,7 @@ pub async fn batch_upload_photos(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -246,7 +246,7 @@ pub async fn batch_upload_photos(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -344,7 +344,7 @@ pub async fn get_photo_list(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -354,7 +354,7 @@ pub async fn get_photo_list(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -394,7 +394,7 @@ pub async fn get_photo_list(
             tracing::error!("获取照片列表失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "获取照片列表失败")),
+                Json(ApiResponse::server_error("获取照片列表失败")),
             );
         }
     };
@@ -462,7 +462,7 @@ pub async fn get_photo_by_id(
             tracing::error!("查询照片失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "查询照片失败")),
+                Json(ApiResponse::server_error("查询照片失败")),
             );
         }
     };
@@ -474,7 +474,7 @@ pub async fn get_photo_by_id(
                 tracing::error!("解析照片失败: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::error(500, "解析照片失败")),
+                    Json(ApiResponse::server_error("解析照片失败")),
                 );
             }
         };
@@ -485,7 +485,7 @@ pub async fn get_photo_by_id(
     } else {
         // 数据不存在语义：HTTP 200 + 内层 code 404（与 announcements 约定一致），
         // 避免裸 HTTP 404 被前端契约探测判为路由缺失。
-        (StatusCode::OK, Json(ApiResponse::error(404, "照片不存在")))
+        (StatusCode::OK, Json(ApiResponse::not_found("照片不存在")))
     }
 }
 
@@ -523,7 +523,7 @@ pub async fn get_upload_progress(
             tracing::error!("查询上传进度失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "查询上传进度失败")),
+                Json(ApiResponse::server_error("查询上传进度失败")),
             );
         }
     };
@@ -545,7 +545,7 @@ pub async fn get_upload_progress(
         // 数据不存在语义：HTTP 200 + 内层 code 404。
         (
             StatusCode::OK,
-            Json(ApiResponse::error(404, "上传记录不存在")),
+            Json(ApiResponse::not_found("上传记录不存在")),
         )
     }
 }
@@ -561,7 +561,7 @@ pub async fn delete_photo(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::error(401, "未授权")),
+                Json(ApiResponse::unauthorized("未授权")),
             );
         }
     };
@@ -571,7 +571,7 @@ pub async fn delete_photo(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::error(400, "无效的用户ID")),
+                Json(ApiResponse::bad_request("无效的用户ID")),
             );
         }
     };
@@ -593,13 +593,13 @@ pub async fn delete_photo(
         Ok(_) => (
             // 数据不存在语义：HTTP 200 + 内层 code 404。
             StatusCode::OK,
-            Json(ApiResponse::error(404, "照片不存在或无权删除")),
+            Json(ApiResponse::not_found("照片不存在或无权删除")),
         ),
         Err(e) => {
             tracing::error!("删除照片失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "删除照片失败")),
+                Json(ApiResponse::server_error("删除照片失败")),
             )
         }
     }

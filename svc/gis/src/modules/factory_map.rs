@@ -107,7 +107,7 @@ pub async fn get_factory_map(
 
     match service.get_factory_map(id).await {
         Ok(Some(map)) => Json(ApiResponse::success(map, "获取厂区地图成功")),
-        Ok(None) => Json(ApiResponse::error(404, "厂区地图未找到")),
+        Ok(None) => Json(ApiResponse::not_found("厂区地图未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "数据库查询失败",
             e,
@@ -158,7 +158,7 @@ pub async fn update_factory_map(
         .await
     {
         Ok(Some(map)) => Json(ApiResponse::success(map, "更新厂区地图成功")),
-        Ok(None) => Json(ApiResponse::error(404, "厂区地图未找到")),
+        Ok(None) => Json(ApiResponse::not_found("厂区地图未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "数据库更新失败",
             e,
@@ -187,7 +187,7 @@ pub async fn delete_factory_map(
 
     match service.delete_factory_map(id).await {
         Ok(true) => Json(ApiResponse::success("".to_string(), "删除厂区地图成功")),
-        Ok(false) => Json(ApiResponse::error(404, "厂区地图未找到")),
+        Ok(false) => Json(ApiResponse::not_found("厂区地图未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "数据库删除失败",
             e,

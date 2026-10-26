@@ -75,7 +75,7 @@ pub async fn get_mes_qms_sync_api(
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
     match mes_qms_integration::get_mes_qms_sync(&state.pool, id).await {
         Ok(Some(sync)) => Json(ApiResponse::success(sync, "MES↔QMS sync found")),
-        Ok(None) => Json(ApiResponse::error(404, "MES↔QMS sync not found")),
+        Ok(None) => Json(ApiResponse::not_found("MES↔QMS sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch MES↔QMS sync: {}", e);
             Json(ApiResponse::from(TopemsError::internal(

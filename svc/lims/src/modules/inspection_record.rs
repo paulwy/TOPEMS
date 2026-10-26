@@ -64,7 +64,7 @@ pub async fn list_records(
         Some(tid) => {
             let tid = match Uuid::parse_str(tid) {
                 Ok(u) => u,
-                Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+                Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
             };
             sqlx::query(
                 "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT, r.tenant_id FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC LIMIT $2 OFFSET $3"
@@ -105,7 +105,7 @@ pub async fn list_records(
         }
         Err(e) => {
             tracing::error!("Failed to fetch records: {}", e);
-            Json(ApiResponse::error(500, "获取检测记录列表失败"))
+            Json(ApiResponse::server_error("获取检测记录列表失败"))
         }
     }
 }
@@ -122,7 +122,7 @@ pub async fn create_record(
 
     let task_id = match Uuid::parse_str(&req.task_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     let row = sqlx::query(
@@ -164,7 +164,7 @@ pub async fn create_record(
         }
         Err(e) => {
             tracing::error!("Failed to create record: {}", e);
-            Json(ApiResponse::error(500, "检测记录创建失败"))
+            Json(ApiResponse::server_error("检测记录创建失败"))
         }
     }
 }
@@ -176,7 +176,7 @@ pub async fn list_records_by_task(
 ) -> Json<ApiResponse<Vec<InspectionRecord>>> {
     let task_id = match Uuid::parse_str(&task_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
     };
 
     let rows = sqlx::query(
@@ -206,7 +206,7 @@ pub async fn list_records_by_task(
         )),
         Err(e) => {
             tracing::error!("获取任务检测记录失败: {}", e);
-            Json(ApiResponse::error(500, "获取任务检测记录失败"))
+            Json(ApiResponse::server_error("获取任务检测记录失败"))
         }
     }
 }
@@ -230,7 +230,7 @@ pub async fn get_record(
 ) -> Json<ApiResponse<InspectionRecord>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的记录ID")),
     };
 
     let row = sqlx::query(
@@ -256,11 +256,11 @@ pub async fn get_record(
             },
             "获取检测记录成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
 
         Err(e) => {
             tracing::error!("Failed to fetch record: {}", e);
-            Json(ApiResponse::error(500, "获取检测记录失败"))
+            Json(ApiResponse::server_error("获取检测记录失败"))
         }
     }
 }
@@ -271,7 +271,7 @@ pub async fn delete_record(
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的记录ID")),
+        Err(_) => return Json(ApiResponse::bad_request("无效的记录ID")),
     };
 
     let result = sqlx::query("UPDATE qa_lab_records SET deleted_at = NOW() WHERE id = $1")
@@ -283,7 +283,7 @@ pub async fn delete_record(
         Ok(_) => Json(ApiResponse::success(true, "检测记录删除成功")),
         Err(e) => {
             tracing::error!("Failed to delete record: {}", e);
-            Json(ApiResponse::error(500, "检测记录删除失败"))
+            Json(ApiResponse::server_error("检测记录删除失败"))
         }
     }
 }

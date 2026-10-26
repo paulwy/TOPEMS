@@ -200,8 +200,7 @@ pub async fn send_location_message(
     let (lat, lon) = match parse_coordinates(&payload.coordinates) {
         Some(coords) => coords,
         None => {
-            return Json(ApiResponse::error(
-                StatusCode::BAD_REQUEST.as_u16(),
+            return Json(ApiResponse::bad_request(
                 "坐标格式无效：需要包含 lat/lng 或 lat/lon 或 latitude/longitude 的对象",
             ));
         }
@@ -427,7 +426,7 @@ pub async fn get_geofence(
     .await
     {
         Ok(g) => Json(ApiResponse::success(g, "获取地理围栏成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理围栏未找到")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地理围栏未找到")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "数据库查询失败",
             e,
@@ -509,7 +508,7 @@ pub async fn update_geofence(
     {
         Ok(g) => g,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::error(404, "地理围栏未找到"));
+            return Json(ApiResponse::not_found("地理围栏未找到"));
         }
         Err(e) => {
             return Json(ApiResponse::from(TopemsError::internal(
@@ -603,7 +602,7 @@ pub async fn delete_geofence(
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(true, "删除地理围栏成功"))
             } else {
-                Json(ApiResponse::error(404, "地理围栏未找到"))
+                Json(ApiResponse::not_found("地理围栏未找到"))
             }
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal(

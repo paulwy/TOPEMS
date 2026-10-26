@@ -157,7 +157,7 @@ pub async fn get_archive_policy(
     let policies = store.archive_policies.lock().await;
     match policies.iter().find(|p| p.id == policy_id) {
         Some(p) => Json(ApiResponse::success(p.clone(), "归档策略")),
-        None => Json(ApiResponse::error(404, "未找到归档策略")),
+        None => Json(ApiResponse::not_found("未找到归档策略")),
     }
 }
 
@@ -180,7 +180,7 @@ pub async fn update_archive_policy(
     let store = get_lifecycle_store();
     let mut policies = store.archive_policies.lock().await;
     let Some(policy) = policies.iter_mut().find(|p| p.id == policy_id) else {
-        return Json(ApiResponse::error(404, "未找到归档策略"));
+        return Json(ApiResponse::not_found("未找到归档策略"));
     };
 
     policy.policy_name = req.policy_name;
@@ -233,7 +233,7 @@ pub async fn delete_archive_policy(
     let before = policies.len();
     policies.retain(|p| p.id != policy_id);
     if policies.len() == before {
-        return Json(ApiResponse::error(404, "未找到归档策略"));
+        return Json(ApiResponse::not_found("未找到归档策略"));
     }
     Json(ApiResponse::success((), "归档策略已删除"))
 }
@@ -477,7 +477,7 @@ pub async fn get_archive_record(
     let records = store.archive_records.lock().await;
     match records.iter().find(|r| r.id == record_id) {
         Some(r) => Json(ApiResponse::success(r.clone(), "归档记录")),
-        None => Json(ApiResponse::error(404, "未找到归档记录")),
+        None => Json(ApiResponse::not_found("未找到归档记录")),
     }
 }
 
@@ -502,11 +502,11 @@ pub async fn restore_archive_record(
     let (restored_record_id, master_data_id, entity_type) = {
         let mut records = store.archive_records.lock().await;
         let Some(record) = records.iter_mut().find(|r| r.id == record_id) else {
-            return Json(ApiResponse::error(404, "未找到归档记录"));
+            return Json(ApiResponse::not_found("未找到归档记录"));
         };
 
         if record.status != "archived" {
-            return Json(ApiResponse::error(400, "记录状态不支持恢复"));
+            return Json(ApiResponse::bad_request("记录状态不支持恢复"));
         }
 
         record.restore_count += 1;
@@ -544,6 +544,6 @@ pub async fn restore_archive_record(
     let r = records.iter().find(|x| x.id == restored_record_id).cloned();
     match r {
         Some(rec) => Json(ApiResponse::success(rec, "已恢复归档记录")),
-        None => Json(ApiResponse::error(500, "恢复失败")),
+        None => Json(ApiResponse::server_error("恢复失败")),
     }
 }

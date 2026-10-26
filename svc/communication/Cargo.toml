@@ -29,7 +29,6 @@ topems-shared-auth = { workspace = true }
 topems-shared-core = { workspace = true }
 utoipa.workspace = true
 anyhow.workspace = true
-reqwest = { workspace = true, features = ["json"] }
 [lints.rust]
 unknown_lints = "allow"
 renamed_and_removed_lints = "allow"

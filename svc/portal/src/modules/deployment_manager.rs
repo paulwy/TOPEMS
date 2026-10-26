@@ -1488,7 +1488,7 @@ pub async fn create_deployment_handler(
 
     match DeploymentManager::create_deployment(req.version, environment, strategy).await {
         Ok(deployment) => Json(ApiResponse::success(deployment, "部署创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1561,7 +1561,7 @@ pub async fn start_deployment_handler(
 ) -> Json<ApiResponse<Deployment>> {
     match DeploymentManager::start_deployment(&id).await {
         Ok(deployment) => Json(ApiResponse::success(deployment, "部署已启动")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1584,7 +1584,7 @@ pub async fn cancel_deployment_handler(
 ) -> Json<ApiResponse<Deployment>> {
     match DeploymentManager::cancel_deployment(&id).await {
         Ok(deployment) => Json(ApiResponse::success(deployment, "部署已取消")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1618,7 +1618,7 @@ pub async fn promote_canary_handler(
 ) -> Json<ApiResponse<DeploymentRollout>> {
     match DeploymentManager::promote_canary(&id, req.percentage).await {
         Ok(rollout) => Json(ApiResponse::success(rollout, "灰度推广成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1641,7 +1641,7 @@ pub async fn rollback_deployment_handler(
 ) -> Json<ApiResponse<Deployment>> {
     match DeploymentManager::rollback_deployment(&id).await {
         Ok(deployment) => Json(ApiResponse::success(deployment, "部署已回滚")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1693,7 +1693,7 @@ pub async fn create_config_handler(
 
     match ConfigurationManager::create_config(req.name, req.version, environment, settings).await {
         Ok(config) => Json(ApiResponse::success(config, "配置创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1763,7 +1763,7 @@ pub async fn update_config_handler(
 ) -> Json<ApiResponse<GatewayConfig>> {
     match ConfigurationManager::update_config(&id, req.settings, req.name).await {
         Ok(config) => Json(ApiResponse::success(config, "配置更新成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1786,7 +1786,7 @@ pub async fn activate_config_handler(
 ) -> Json<ApiResponse<GatewayConfig>> {
     match ConfigurationManager::activate_config(&id).await {
         Ok(config) => Json(ApiResponse::success(config, "配置已激活")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1858,7 +1858,7 @@ pub async fn rollback_config_handler(
 ) -> Json<ApiResponse<GatewayConfig>> {
     match ConfigurationManager::rollback_config(&id, req.diff_id.as_deref()).await {
         Ok(config) => Json(ApiResponse::success(config, "配置已回滚")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 
@@ -1922,7 +1922,7 @@ pub async fn create_rollback_policy_handler(
     .await
     {
         Ok(policy) => Json(ApiResponse::success(policy, "回滚策略创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
     }
 }
 
@@ -1977,7 +1977,7 @@ pub async fn execute_rollback_handler(
 
     match RollbackManager::execute_rollback(&policy_id, action_type, req.reason).await {
         Ok(action) => Json(ApiResponse::success(action, "回滚执行成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
+        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
     }
 }
 

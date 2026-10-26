@@ -338,7 +338,7 @@ pub async fn get_plan(
     {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::error(404, "应急预案不存在"));
+            return Json(ApiResponse::not_found("应急预案不存在"));
         }
         Err(e) => {
             tracing::error!("get_plan error: {}", e);
@@ -469,7 +469,7 @@ pub async fn update_plan(
         push(v, "expiry_date");
     }
     if set_clauses.is_empty() {
-        return Json(ApiResponse::error(400, "无更新字段"));
+        return Json(ApiResponse::bad_request("无更新字段"));
     }
     set_clauses.push("updated_at = NOW()".to_string());
     let id_param = params.len() + 1;
@@ -486,7 +486,7 @@ pub async fn update_plan(
     qb = qb.bind(&tenant_bind);
     match qb.fetch_optional(&state.pool).await {
         Ok(Some(r)) => Json(ApiResponse::success(plan_from_row(&r), "更新应急预案成功")),
-        Ok(None) => Json(ApiResponse::error(404, "应急预案不存在")),
+        Ok(None) => Json(ApiResponse::not_found("应急预案不存在")),
         Err(e) => {
             tracing::error!("update_plan error: {}", e);
             Json(ApiResponse::from(TopemsError::internal(
@@ -519,7 +519,7 @@ pub async fn delete_plan(
         .await
     {
         Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success((), "删除应急预案成功")),
-        Ok(_) => Json(ApiResponse::error(404, "应急预案不存在")),
+        Ok(_) => Json(ApiResponse::not_found("应急预案不存在")),
         Err(e) => {
             tracing::error!("delete_plan error: {}", e);
             Json(ApiResponse::from(TopemsError::internal(
@@ -626,7 +626,7 @@ pub async fn list_plan_categories(
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     // 预案分类无持久化字典表，声明式 501。
     tracing::warn!("Emergency plan categories data source not yet enabled");
-    Json(ApiResponse::error(501, "预案分类数据源尚未启用"))
+    Json(ApiResponse::not_implemented("预案分类数据源尚未启用"))
 }
 
 /// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
