@@ -1,3 +1,13 @@
+## 冻结面解冻 ②：occupational 前端 3 页签接入（2026-10-26）✅ 完成
+
+> 用户拍板接真。实测发现**后端 16 桩已在更早批次去内存桩接真**（git `422cd1efe4`/`9840b6bdf1`：21 handler 全 sqlx + 3 表全建（qa_ehs_health_exam_plans/qa_ehs_health_exam_records/qa_ehs_contraindications，当前 0 行））——② 剩余工作仅前端接入。
+
+- **HealthManagementPage 改 4 页签**：健康档案（records 原有）+ 体检计划（check-plans）+ 检查记录（check-records）+ 职业禁忌症（contraindications），各挂 CrudPage + adapter（ehsApi.listHealthCheckPlans 等）。
+- **新建 3 schema**：healthCheckPlan/healthCheckRecord/contraindication（EntitySchema，status 枚举/statusBadge/filters/formSections 对齐后端枚举）。
+- **i18n**：zh/en ehs.json 各加 71 key（health_check_plan/health_check_record/contraindication 三块）。
+- **验证**：tsc 0 / eslint 0（--fix 4 处 prettier）/ vitest 5 文件 42 passed（含 3 smoke）；BFF 冒烟 3 条路由均 401（存在）、假路由 404 对照；冒烟后 8099 停止。
+- **遗留**：表 0 行数据（前端可正常建单）；统计卡未接 /occupational-health/statistics（get_health_statistics 已真，前端 healthMonitoringApi 的 getHealthStatistics 指 /health/statistics 另一路由——未消费，低优先级）。
+
 ## 冻结面解冻 ④：emergencyDrill 新 API 前端接线（2026-10-26）✅ 完成
 
 > 用户拍板接入。后端 `/drills/plans`、`/drills/records` 已接真（SQL 别名映射：表列 record_no/title/started_at/participant_list/duration/actual_content → struct 旧字段 drill_no/drill_name/drill_date/participants/duration_hours/summary），前端页面原走旧 `/drills` 兼容路由 → 切新路由。
