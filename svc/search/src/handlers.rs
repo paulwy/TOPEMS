@@ -70,7 +70,7 @@ async fn query_projection(
         r#"SELECT entity_id, name, contact_person, contact_phone, email, address, status, remark
            FROM public.search_entity_projections
            WHERE entity_type = $1
-             AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID))
+             AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
              AND (
                 name ILIKE $2 OR contact_person ILIKE $2 OR contact_phone ILIKE $2
                 OR email ILIKE $2 OR address ILIKE $2 OR status ILIKE $2 OR remark ILIKE $2
@@ -222,7 +222,7 @@ pub(crate) async fn search_documents(
         r#"SELECT id, name, path, mime_type
            FROM core_files
            WHERE (name ILIKE $1 OR path ILIKE $1)
-             AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID))
+             AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
            ORDER BY created_at DESC
            LIMIT $2"#,
     )

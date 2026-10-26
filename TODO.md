@@ -5094,3 +5094,4 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - **DB 修复**：topems_app 对投影表缺 SELECT（实际仅 INSERT，迁移 20261015000071 意图为 SELECT,INSERT,UPDATE,DELETE）→ 已手动 GRANT SELECT 补齐对齐迁移；
   - **未闭环**：HTTP /api/search?keyword=客户|e2e 仍 total=0（用户类检索 test/admin 正常，可排除 search 整体故障）；psql 全模拟通过但 HTTP 空，疑为 monolith 运行时 tenant_middleware 注入的 RLS txn 上下文细节（需 RUST_LOG=debug 重启定位，列为后续项）。
 - **系统**：重启后 PID 84086（health=200）。
+  - **闭环补记（2026-10-27 同轮）**：RUST_LOG=debug 重启实证——query_projection 与 search_documents 的 SQL `::UUID))` 括号不匹配（1 开 2 闭）→ syntax error → 投影/文档检索降级空；用户检索无该过滤故正常。修复：handlers.rs 2 处删多余右括号。复测 keyword=客户|张三|e2e 全部命中（customer 投影行）。
