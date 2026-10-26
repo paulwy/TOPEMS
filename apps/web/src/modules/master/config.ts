@@ -34,6 +34,7 @@ const MASTER_PATHS = {
   governance: '/master/governance',
   quality: '/master/quality',
   knowledgeGraph: '/master/knowledge-graph',
+  semanticSearch: '/master/semantic-search',
 } as const;
 
 // ---- 路由配置 ----
@@ -125,6 +126,18 @@ const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
   requiredPermissions: ['master:data-asset:read'],
   action: 'read',
 };
+const semanticSearchRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.semanticSearch,
+  element: lazyWithRetry(() => import('@/pages/master/MasterSemanticSearchPage'), 'MasterSemanticSearchPage'),
+  module: 'master',
+  code: 'master-semantic-search',
+  title: i18n.t('master.semanticSearch'),
+  titleKey: 'master.semanticSearch',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:semantic:read'],
+  action: 'read',
+};
 const knowledgeGraphRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.knowledgeGraph,
   element: lazyWithRetry(() => import('@/pages/master/MasterKnowledgeGraphPage'), 'MasterKnowledgeGraphPage'),
@@ -203,6 +216,7 @@ export const masterModuleConfig: RouteModuleConfig = {
     governanceRoute,
     qualityRoute,
     knowledgeGraphRoute,
+    semanticSearchRoute,
   ],
 };
 
@@ -336,6 +350,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.knowledgeGraph.desc'),
+    },
+    {
+      code: 'master-semantic-search',
+      label: i18n.t('master.semanticSearch'),
+      labelKey: 'master.semanticSearch',
+      icon: 'Search',
+      path: MASTER_PATHS.semanticSearch,
+      permission: 'master_data:semantic:read',
+      order: 10,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.semanticSearch.desc'),
     },
   ],
 };
