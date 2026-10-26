@@ -305,7 +305,7 @@ pub async fn register_sample(
     }
 
     let row = sqlx::query(
-        "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'received') RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'received') RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
     )
     .bind(tenant_id)
     .bind(sample_no)
