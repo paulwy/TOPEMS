@@ -25,16 +25,37 @@
 | mobile BFF 兜底 | 120 条 route 全活消费（apps/web apiClient.mobile 136 调用） | 保留待上游替换 |
 | master-data 版本段预埋 | 166 = 123 活消费 + 43 零消费（integration tests/openapi 引用的预埋骨架） | 保留待 V66 建设 |
 
-### 0.3 剩余外部阻塞（上线前需外部介入）
+### 0.3 生产部署状态与剩余外部阻塞（2026-10-26 更新）
+
+**生产部署（方案 B：原生 macOS + launchd）已于 2026-10-26 在 xingzhai 机完成并验证通过**（xingzhai 部署回报 §8 验收 6/6）：
+
+| 证据 | 结果 |
+|---|---|
+| 环境 | macOS 26.6.2 / 24GB；PostgreSQL 17.11（复用 5432）+ pgvector；库 `topems_prod` 与开发库隔离 |
+| 迁移 | 485/485，validate.sh 0 errors / 0 checksum / 0 schema drift（与我方 main 迁移数一致） |
+| 服务 | launchd `com.topems.server` 常驻，30 模块全加载；nginx upstream localhost:8099 |
+| BFF health / nginx health | 200 `{"data":"healthy"}` / 200 healthy |
+| 契约 smoke | 4105/4105 PASS, 0 FAIL |
+| smoke-prod | 20 通过 / 0 失败，整体 PASS（`--base https://localhost --insecure`） |
+| 偏离清单 | 7 项全部为环境适配（手工建库/sudo 路径/JWT+URL 必需/8099 入口），无红线项 |
+| 遗留 P2 | 密钥曾现终端输出 → admin 换密脚本已就绪；DB/JWT 轮换方案已记录待用户决策 |
+
+**剩余外部阻塞（上线前需外部介入）**
 
 | # | 项 | 需要动作 | 阻塞方 |
 |---|---|---|---|
-| 1 | 生产部署三件套实跑（nginx reload / systemd install·update·rollback / smoke-prod 层2） | 提供生产机 SSH 端点 | 用户/运维 |
-| 2 | CI Billing 额度 | GitHub 账号开通计费 | 用户 |
-| 3 | EAS 真机构建 | iOS 真机 + EAS 账号 | 用户 |
-| 4 | BE-08 349 条 API 存废勾选（strong45/weak189/none115，勾选表已交付） | 业务逐条勾选 `artifacts/BE-08-业务确认决策表-2026-10-18.md` | 业务 |
-| 5 | 30 天流量观测（115 条 none 面） | 上线后 30 天观测 | 时间/业务 |
-| 6 | node-forge 漏洞 | 待 expo 升级（dev 链） | 上游 |
+| 1 | ~~生产部署三件套实跑~~ | ✅ 2026-10-26 xingzhai 方案 B 完成（上方证据）；airdeair 侧待：核对 §4 证据 + 回填本块（已完成） | 用户 |
+| 2 | 部署后待决策 ① 证书 | 自签 → 是否换受信证书 / 签发方式 | 用户 |
+| 3 | 部署后待决策 ② DB 备份 | 备份策略 + 定时任务决策 | 用户 |
+| 4 | 部署后待决策 ③ 外网开放 | 是否对外网开放 | 用户 |
+| 5 | 首次登录换密 | 首次登录后立即执行 `~/topems/change-admin-password.sh` | 用户/运维 |
+| 6 | CI Billing 额度 | GitHub 账号开通计费 | 用户 |
+| 7 | EAS 真机构建 | iOS 真机 + EAS 账号 | 用户 |
+| 8 | BE-08 349 条 API 存废勾选（strong45/weak189/none115，勾选表已交付） | 业务逐条勾选 `artifacts/BE-08-业务确认决策表-2026-10-18.md` | 业务 |
+| 9 | 30 天流量观测（115 条 none 面） | 上线后 30 天观测 | 时间/业务 |
+| 10 | node-forge 漏洞 | 待 expo 升级（dev 链） | 上游 |
+
+> 注：xingzhai 部署时点 HEAD `0b5a10e75`；我方后续提交 `52fe134fa8`（init 快照对齐，纯文档无迁移变更）不影响已部署环境，无需重拉。
 
 ---
 

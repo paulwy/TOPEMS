@@ -1,3 +1,11 @@
+## xingzhai 生产部署完成：回报核对 + go-live-checklist §0.3 回填（2026-10-26）✅ 已完成
+
+> xingzhai 侧按 `docs/deploy/xingzhai-ai-runbook.md` 完成部署并回传 §10 回报（方案 B：原生 macOS + launchd，无 Linux VM）。
+
+- **核对结论**：与任务书契约一致——迁移 485/485 与我方 main 一致（含 164d39546b ehs.health_records handler 契约列）；BFF/nginx health 200、契约 smoke 4105/4105 PASS、smoke-prod 20/0 PASS（§8 验收 6/6）；偏离 7 项全为环境适配（手工建库/路径/JWT+URL 必需/8099 入口），无红线项。
+- **已回填**：go-live-checklist §0.3 部署阻塞核销（第 1 项 ✅）+ 部署证据块 + 新增待决策 4 项（证书/DB 备份/外网开放/首次登录换密）。
+- **注意**：xingzhai 部署时点 HEAD 0b5a10e75；我方后续 52fe134fa8（init 快照对齐，纯文档）无迁移变更，已部署环境无需重拉。
+
 ## init 快照漂移对齐：111 张差异表全部对齐迁移链终态（2026-10-26）✅ 已完成
 
 > 承接「全库同类问题扫描」登记项：init∩dev 共同表 289 张中 111 张结构不一致（dev 独有列 324 个=init 落后；init 独有列 68 个=init 超前/迁移链已删列）。运行无风险（init 不被消费），但作为参考快照误导，按 ehs B 项做法批量对齐。
