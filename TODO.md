@@ -1,4 +1,23 @@
-## 冻结面解冻 ⑥：master-data 5 业务模块前端页（2026-10-26）🟡 进行中
+## 冻结面解冻 ①：DSH 增强能力前端面板（2026-10-26）✅ 完成
+
+> 后端 svc/ai dsh 路由 6 组全真（agent/performance/enhanced/copilot/governance/smart-forms）；审计时前端 agent/copilot/governance/smart-forms 均已就绪，**仅 enhanced（kg/rag/multi-agent）+ performance 16 方法零封装零页面**。三批解冻完成：
+
+### 第一批：api 补齐 dshEnhanced ✅ 完成（commit b6116687d3，已推送）
+- **apps/web/src/api/ai/dshEnhanced.ts** 18 封装：kg 12（listEntities/addEntity/getEntity/deleteEntity/getEntityNeighbors/listRelations/addRelation/shortestPath/linkEntity/detectCommunities/getGraphStats/extractEntities）+ rag 2（ragRetrieve/getRagStats）+ multi-agent 1（multiAgentExecute）+ performance 3（getPerformanceMetrics/getToolPerformance/resetPerformanceMetrics）。类型对齐 svc/ai struct。
+
+### 第二批：DshKnowledgePage 知识图谱 ✅ 完成（commit 98f77853ad，已推送）
+- **4 tab**：图谱统计（getGraphStats 指标卡+detectCommunities+extractEntities）/实体管理（listEntities+addEntity+deleteEntity+getEntityNeighbors）/关系管理（listRelations+addRelation+linkEntity）/路径分析（shortestPath）。
+- 挂载 /ai/dsh-knowledge + 侧栏第 12 项（ai:knowledge:read）。i18n zh/en 各 48 key。smoke 1 测试。
+- 修正（首跑 tsc 1 错）：GitFork 不在 lucide→GitBranch。
+
+### 第三批：DshRagPage 语义检索与性能 ✅ 完成（commit 82949d5a7f，已推送）
+- **3 tab**：检索与协作（ragRetrieve 表单+文档结果表+multiAgentExecute）/RAG 统计（getRagStats 6 指标卡）/Agent 性能（getPerformanceMetrics+工具明细表+getToolPerformance+resetPerformanceMetrics）。
+- 挂载 /ai/dsh-rag + 侧栏第 13 项（ai:knowledge:read）。i18n zh/en 各 40 key。smoke 1 测试。
+
+### ① 全量收口 ✅（2026-10-26）
+> 三批完成并推送（b6116687d3 / 98f77853ad / 82949d5a7f）。**DSH 增强面解冻完成**：enhanced+performance 16 方法全封装、2 页全挂载、每页 smoke 齐全。冻结面剩余：**⑦ MCP prompts（0.5–1 人日，依赖 prompts 规范对齐）**。
+
+## 冻结面解冻 ⑥：master-data 5 业务模块前端页（2026-10-26）✅ 完成
 
 > 后端 svc/master-data 16 模块全实现（129 handler sqlx），前端 api/master 12 文件 126 方法全封装；6 个页面已挂载（dataAssetCatalog/schemaRegistry/lineageAnalytics/aiGovernance/commercial/publicMasterData），**缺 6 页 = versioning/governance/quality/knowledgeGraph/semanticSearch/disasterRecovery**。已选 versioning 为首批并完成。
 
