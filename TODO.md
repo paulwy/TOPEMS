@@ -1,3 +1,13 @@
+## 迁移缺陷审计：20261026090000 training_records 加固遗留（2026-10-26）✅ 已修复
+
+> 用户询问"20261026090000 迁移是否有缺陷未修复" → 连库实测审计，发现并修复 1 个坐实缺陷 + 1 个收紧：
+
+- **缺陷 A（P2 坐实可复现）**：ehs.training_records `status DEFAULT 'enrolled'` 不在新建三态 CHECK ('ongoing','completed','failed') 内——**不带 status 的 INSERT 必违反 ck_training_records_status**（事务内实测复现 ERROR；显式传 ongoing 成功）。迁移修了 hrm 同款炸弹（B1 重建六态 CHECK 覆盖 DEFAULT 'planned'）但漏了 ehs 同款。`'enrolled'` 为历史遗留默认值，svc/ehs 代码零引用。
+- **缺陷 B（P3）**：`uq_training_records_record_no UNIQUE (record_no)` 未 NOT NULL（UNIQUE 允许多 NULL，业务单号语义应非空）；实测 21 行全非空，安全收紧。
+- **注释失真（P3 文档）**：加固迁移头注"两表均 0 行实测"与 DB 不符——ehs 实际 21 行（created_at ≤ 2026-10-23，早于迁移；status 全 'ongoing'、record_no 全非空，均在约束内，无数据风险）。
+- **修复**：`database/migrations/20261026100000_training_records_defect_fix.sql`——F1 DEFAULT 'enrolled'→'ongoing'（对齐 CHECK 与业务默认创建态）；F2 record_no SET NOT NULL（存在 NULL 时守卫跳过）。已应用 dev 库 + 复现验证（不带 status INSERT 成功 RETURNING 'ongoing'）+ validate.sh 481 文件 0 errors / 0 checksum errors。
+- 观察项（未动）：ehs.employee_id 无外键（hrm B3 有 fk_training_records_employee），跨 schema 语义待业务确认。
+
 ## 部署面：macOS 生产机（xingzhai）部署指南（2026-10-26）✅ 完成
 
 > 用户询问"xingzhai 能否当生产机 / Mac 可不可以做生产线"。实测局域网 192.168.110.0/24：**当前无可 SSH 主机**（ARP 全表 .7/.33/.57/.90/.146/.155/.158 仅 .7:80/443 与 .89:80 开放，均为纯 Web 设备；xingzhai ping/mDNS/ARP 三重不可达，等待其接入后验证）。结论：**Mac 可作生产机，推荐方案 A = Linux 虚拟机 + systemd**（UTM/lima/OrbStack 跑 Ubuntu，install.sh + systemd 单元 + Linux nginx conf 原样，与 Linux 生产零差异，等效 Windows/WSL2 思路）；方案 B 原生 macOS（launchd + drill conf）为备选；Docker 因 2026-10-08 弃用不推荐。文档 `docs/deploy/macos-deployment.md`（commit f97fc50b90，已推送）含前置条件 / VM 部署 / nginx 8099 单上游 / 数据迁移（airdeair→xingzhai）/ smoke-prod+verify-nginx+契约 smoke 三件套验证 / 运维 / 差异总表。xingzhai 接入后可实跑三件套闭环（go-live §0.3 项 1）。
