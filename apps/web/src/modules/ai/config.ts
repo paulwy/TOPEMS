@@ -19,6 +19,7 @@ export const AI_PATHS = {
   difyChat: '/ai/dify-chat',
   businessCopilot: '/ai/businessCopilot',
   governanceDashboard: '/ai/governanceDashboard',
+  dshKnowledge: '/ai/dsh-knowledge',
 } as const;
 interface AiDashboardPageProps {}
 
@@ -68,6 +69,8 @@ interface BusinessCopilotPageProps {
 interface GovernanceDashboardPageProps {
   timeRange?: string;
 }
+
+interface DshKnowledgePageProps {}
 
 const aiDashboardRoute: RouteConfigV2<AiDashboardPageProps> = {
   path: AI_PATHS.dashboard,
@@ -217,6 +220,19 @@ const businessCopilotRoute: RouteConfigV2<BusinessCopilotPageProps> = {
   action: 'read',
 };
 
+const dshKnowledgeRoute: RouteConfigV2<DshKnowledgePageProps> = {
+  path: AI_PATHS.dshKnowledge,
+  element: lazyWithRetry(() => import('@/pages/ai/DshKnowledgePage'), '@/pages/ai/DshKnowledgePage'),
+  module: 'ai',
+  code: 'ai-dsh-knowledge',
+  title: i18n.t('ai.nav.ai-dshKnowledge'),
+  titleKey: 'ai.nav.ai-dshKnowledge',
+  template: 'dashboard',
+  group: 'business',
+  requiredPermissions: ['ai:knowledge:read'],
+  action: 'read',
+};
+
 const governanceDashboardRoute: RouteConfigV2<GovernanceDashboardPageProps> = {
   path: AI_PATHS.governanceDashboard,
   element: lazyWithRetry(
@@ -258,6 +274,7 @@ export const aiModuleConfig: RouteModuleConfig = {
     difyChatRoute,
     businessCopilotRoute,
     governanceDashboardRoute,
+    dshKnowledgeRoute,
   ],
 };
 
@@ -403,6 +420,18 @@ export const aiNavConfig: ModuleNavConfig = {
       group: 'overview',
       showInTabs: true,
       description: i18n.t('ai.nav.ai-governanceDashboard_desc'),
+    },
+    {
+      code: 'ai-dsh-knowledge',
+      label: i18n.t('ai.nav.ai-dshKnowledge'),
+      labelKey: 'ai.nav.ai-dshKnowledge',
+      icon: 'Network',
+      path: AI_PATHS.dshKnowledge,
+      permission: 'ai:knowledge:read',
+      order: 4,
+      group: 'business',
+      showInTabs: true,
+      description: i18n.t('ai.nav.ai-dshKnowledge_desc'),
     },
   ],
 };
