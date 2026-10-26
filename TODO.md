@@ -26,6 +26,22 @@
 - **顺清 2 处遗留 unused import**（handler.rs / workflow_handlers.rs）。
 - 验证：cargo clippy -p topems-ai --lib -D correctness 0/0；prompts 单测 4 passed。
 
+## 终态门禁快照（2026-10-26）✅ 完成
+
+> 技术面本地可闭环项已清零（代码 TODO/FIXME 扫描 21 处均为测试数据/示例/跟踪注释；gen-nginx-drill-conf.sh root 漂移已在 09fae7a6b2 回补；F4 台账剩余 🔴 全部挂在 BE-08 业务勾选）。全量门禁重跑快照：
+
+| 门禁 | 结果 |
+|---|---|
+| `cargo check --workspace`（SQLX_OFFLINE） | exit 0 |
+| `cargo clippy --workspace --lib -D correctness` | exit 0 |
+| `tsc --noEmit` | exit 0 |
+| `eslint .` | 0 problems |
+| `vitest src/__tests__` | 1760 passed（全量 458 files/6160 为 10-25 基线） |
+| `scripts/migration/validate.sh` | 0 errors / 0 checksum errors（480 文件） |
+| `pnpm audit` | 7→1（node-forge 待 expo 升级） |
+
+工作区干净（HEAD==origin/main）。剩余全部为外部阻塞项，见文末「外部阻塞待办」。
+
 ## 待拍板项1 · training records 表重设计（2026-10-26，用户拍板）✅ 完成
 
 > ehs.training_records 技术列（10-17 补 13 列 + 5 handler 接真 + RLS FORCE）此前已落地；本轮用户拍板做**设计层加固**，同步修 hrm 侧同名片潜在缺陷。commit a45908340a 已推送。
