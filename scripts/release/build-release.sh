@@ -22,7 +22,7 @@ TS="$(date +%Y%m%d-%H%M%S)"
 PKG="topems-server-${VERSION}-${TS}"
 ARCH="$(uname -m)"
 
-echo "==> 构建 topems-server release（$ARCH, commit $COMMIT）"
+echo "==> 构建 topems-server release（${ARCH}, commit ${COMMIT}）"
 cargo build --release -p topems-server
 
 BIN="target/release/topems-server"
