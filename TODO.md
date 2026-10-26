@@ -5085,3 +5085,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **验证（最新 debug 构建 + 重启 PID 76294）**：hrm 创建 code=200（id 9883e10e）、pm 创建 code=200（id f8469ade）、portal 创建 code=200（id d9d107f5，due_date/priority/completed 正确）、lims 带 quantity 创建 code=200（id 8ec0762c，quantity=10.0）+ list 正常（count=4）、finance 缺省 invoice_type 创建 code=200（id 591502e0，兜底 tax 落库）。5 项全部复测通过。
 - **提交**：`a8566dcd6`（P1/P2 第一版 4 文件）+ `f77b78ce0`（portal cast + lims INSERT 修正 2 文件）；累计 5 提交待推送（0a31a27e3→f77b78ce0）。
 - **push**：pre-push 门禁最终一轮运行中（此前 fmt/test 因 sales_invoice 未格式化与 E0599 拦截，已修）。
+## 第三十五轮（2026-10-27）：审计收尾清理 + P3 search 投影链路排查
+- **清理**：删除 svc/mes/src/modules/ 下 7 个 .rej 残留（equipment/process_flow/process_route/production_record/production_scheduling/quality_traceability/team——补丁冲突过时记录，对应文件编译已通过、无未应用内容）；mobile/mes 缺口文件（task/device/media/offline*/aps_scheduling/audit/equipment_oee/production_process/record/scheduling）复查无 TODO/unimplemented/panic 残留。
+- **P3 search 投影链路验证**（结果：机制通、HTTP 层未闭环）：
+  - erp 快照接口可用（GET /api/erp/internal/searchable-snapshot 带 token 返回 1 条 e2e 客户）；
+  - 投影表写入成功（手动 UPSERT public.search_entity_projections）；
+  - SQL 检索命中（psql 模拟 topems/topems_app + app.tenant_id 全上下文 ILIKE 命中）；
+  - **DB 修复**：topems_app 对投影表缺 SELECT（实际仅 INSERT，迁移 20261015000071 意图为 SELECT,INSERT,UPDATE,DELETE）→ 已手动 GRANT SELECT 补齐对齐迁移；
+  - **未闭环**：HTTP /api/search?keyword=客户|e2e 仍 total=0（用户类检索 test/admin 正常，可排除 search 整体故障）；psql 全模拟通过但 HTTP 空，疑为 monolith 运行时 tenant_middleware 注入的 RLS txn 上下文细节（需 RUST_LOG=debug 重启定位，列为后续项）。
+- **系统**：重启后 PID 84086（health=200）。
