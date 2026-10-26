@@ -132,7 +132,7 @@ curl -sk -m 5 https://localhost/health && echo " <- NGINX OK"
 - [ ] `curl -sk https://localhost/health` == 200（nginx → 8099 链路）
 - [ ] 迁移：`scripts/migration/validate.sh` 0 errors / 0 checksum errors
 - [ ] 契约 smoke：`python3 scripts/web_contract_smoke.py` 0 FAIL
-- [ ] smoke-prod：`bash scripts/deploy/smoke-prod.sh --base localhost:8098` 全 PASS（按实际可达域收窄 services 参数）
+- [ ] smoke-prod：`SMOKE_ADMIN=<用户> SMOKE_PASS=<密码> bash scripts/deploy/smoke-prod.sh --base http://localhost:80` 全 PASS（nginx 门户 80；BFF 直连改 `--base http://localhost:8099`；**脚本无默认口令，凭据必填**）
 - [ ] 端口冲突、密码、偏离项已在 `~/topems/deploy-notes.md` 记录
 
 ## 9. 安全红线（违反即中止并向 airdeair 侧回报）

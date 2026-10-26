@@ -103,7 +103,9 @@ bash scripts/migration/validate.sh
 
 ```bash
 # 1) smoke-prod 层1+2（登录/健康/业务域；层2 专项 E/F/G/H 在 VM 内实跑）
-bash scripts/deploy/smoke-prod.sh --base localhost:8098
+#    凭据无默认，必须显式提供（SMOKE_ADMIN/SMOKE_PASS 或 --user/--password）；
+#    nginx 门户起后走 http://localhost:80，BFF 直连用 http://localhost:8099（生产 monolith 入口）
+SMOKE_ADMIN=admin SMOKE_PASS=<TOPEMS_PASS> bash scripts/deploy/smoke-prod.sh --base http://localhost:80
 
 # 2) nginx verify（upstream 8099 + 冒烟）
 bash scripts/verify-nginx-prod.sh --conf /etc/nginx/topems.conf --base https://<xingzhai-ip> \
