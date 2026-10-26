@@ -5102,3 +5102,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ## 第三十七轮（2026-10-27）：最终回归验证（全部缺陷修复后）
 - **16 模块接口回归抽查全部 code=200**：iam、master-data、crm、erp、finance、wms、mes、qms、lims、hrm、gis、pm、portal、rd、mobile（list 读回）+ search（keyword=客户 total=1 投影命中）。确认 P1×4+P2×1+P3×2 修复无回归。
 - **状态**：系统运行中（PID 89293）；本地与 origin/main 一致（全部提交已推送）。
+## 第三十八轮（2026-10-27）：场景化跨模块串联测试
+- **5 类常用业务场景从登录开始执行**：A 销售履约（master-data→crm→erp→finance→wms 跨模块 ID 引用）、B 生产质量（mes→qms）、C 实验室检测（lims quantity=25.0 解码）、D 项目人力门户（pm→hrm→portal）、E 移动/GIS/搜索（gis→mobile sync-data→search）。
+- **结果**：核心业务主链跨模块引用全链路通过，无 P1/P2 新缺陷。3 项记录级发现：① search 投影不覆盖 crm 客户（架构边界）；② finance 重复发票 500 应为 409（语义）；③ mobile sync 请求体实际为 operations 结构（文档勘误）。
+- **交付**：e2e_reports/场景化跨模块串联测试报告.md
+## 第三十九轮（2026-10-27）：记录级发现处理（finance 409 + mobile 澄清）
+- **finance 重复发票语义修复**：sales_invoice.rs create Err 分支捕获 SQLSTATE 23505 → 409（"发票编号已存在，请勿重复创建"）。验证：重复 INV-SC-A-001 → code=409；新 INV-SC-A-002 → code=200。
+- **mobile 同步端点澄清**：/offline/sync（OfflineSyncRequest: sync_type/data/records_count）与 /offline/sync-data（SyncRequest: operations/last_sync_time）并存均正常，场景报告发现③表述已修正。
+- **search 投影不覆盖 crm 客户**：架构边界（投影由 erp 快照维护），记录留待后续。

@@ -462,7 +462,14 @@ pub async fn create_sales_invoice(
                 )),
             }
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => {
+            if e.as_database_error().and_then(|db| db.code()).as_deref() == Some("23505") {
+                return Json(ApiResponse::<SalesInvoiceOut>::conflict(
+                    "发票编号已存在，请勿重复创建",
+                ));
+            }
+            Json(crate::shared::err_resp(e))
+        }
     }
 }
 
