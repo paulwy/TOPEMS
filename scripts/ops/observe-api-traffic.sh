@@ -23,11 +23,15 @@ echo "观测 log: ${LOG}（近 ${DAYS} 天）" | tee -a "$OUT"
 TAIL_LINES=$(( $(wc -l < "$LOG") / 1 ))   # 全量读；轮转日志可在此调整
 CUTOFF=$(date -v-${DAYS}d +%Y-%m-%d 2>/dev/null || date -d "-${DAYS} days" +%Y-%m-%d)
 
-# 候选前缀提取：优先读清单 md（路径前缀列），否则内嵌最小表
-if [ -f "$LIST" ]; then
+# 候选前缀提取：优先读同目录入库 txt（xingzhai git pull 可用）→ 读 artifacts md → 内嵌兜底
+LIST_TXT="$(dirname "$0")/be08-candidates-148.txt"
+LIST="$(dirname "$0")/../../artifacts/BE-08-下线候选清单-148-2026-10-26.md"
+if [ -f "$LIST_TXT" ]; then
+  PREFIXES=$(grep -v '^$' "$LIST_TXT")
+elif [ -f "$LIST" ]; then
   PREFIXES=$(awk -F'|' '/^\| (none|weak) / {gsub(/^ +| +$|`/,"",$7); print $7}' "$LIST")
 else
-  # 内嵌兜底（48 条 none 主要面；缺失时提示复制清单）
+  # 内嵌兜底（主要面；缺失时提示复制清单）
   PREFIXES='/api/ehs/emergency-plans /api/ehs/occupational-health /api/monitor/suppression /api/pdm/change-notices'
 fi
 [ -n "$PREFIXES" ] || { echo "ERROR: 无候选前缀（检查清单路径）" >&2; exit 1; }

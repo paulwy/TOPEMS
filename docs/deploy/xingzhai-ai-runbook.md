@@ -190,3 +190,32 @@ curl -sk -m 5 https://localhost/health && echo " <- NGINX OK"
 ```
 
 **回报出口**：文件 `~/topems/deploy-notes.md`（本机留档）+ 将上述内容发给 airdeair 侧（人工或 AI 均可）。airdeair 侧收到后核对 §4 证据、决策 §6 待决项，并把结论回填 `docs/project/go-live-checklist.md §0.3`。
+
+---
+
+## 11. 部署后运维：流量观测 + 版本升级（2026-10-26 追加）
+
+> 首次部署验收（§8）通过后进入运维循环。以下任务书可直接执行；完整参考见 `docs/deploy/macos-production-ops.md` 与 `docs/deploy/release-pipeline.md`。
+
+### 11.1 30 天流量观测（BE-08 下线候选双证之一，**部署后当天启用**）
+
+1. 仓库同步：`cd ~/topems/repo && git fetch origin && git reset --hard origin/main`（仅拉取脚本与清单）
+2. 首次观测：`bash ~/topems/repo/scripts/ops/observe-api-traffic.sh`（默认读 `~/topems/nginx/logs/access.log`，输出 `~/topems/backups/be08-observe-<日期>.md`）
+3. 每 7 天复跑一次（或加入 cron/launchd），**30 天观测期后**回传最终报告给 airdeair 侧：
+   - 零命中清单（可下线坐实，配合业务勾选）
+   - 有命中清单（保留，复核使用场景）
+4. 说明：候选清单 `scripts/ops/be08-candidates-148.txt`（148 条 = none 49 + weak 99 前端零定义面）；脚本自动逐前缀统计命中/零命中。
+
+### 11.2 版本升级（代码更新入生产）
+
+1. airdeair 侧用 `scripts/release/build-release.sh` 构建交付包（`topems-server-<commit>-<ts>.tar.gz` + SHA256）。
+2. xingzhai 侧按 `docs/deploy/release-pipeline.md` §3 安装：校验 → 备份当前二进制为 `.prev` → 替换 → `launchctl kickstart -k gui/$(id -u)/com.topems.server` → health 探针。
+3. 含新迁移时：**生产禁 sqlx migrate run**，按 §4 迁移面逐条执行 + validate.sh 校验后再启动。
+4. 升级后按 §6 回报模板回传 airdeair 侧。
+
+### 11.3 高频提醒（今日可落）
+
+- **备份**：按 `macos-production-ops.md` §2 落地每日 03:00 pg_dump + 保留 7 份 + 每周异地（脚本/plist 模板已给）。
+- **换密**：首次登录后立即执行 `~/topems/change-admin-password.sh`，完成后回报。
+- **证书/外网**：随上线节奏决策（维持自签 → 对外前换受信）。
+

@@ -1,3 +1,11 @@
+## xingzhai 运维闭环：观测清单入库版 + runbook §11 追加（2026-10-26）✅ 已完成
+
+> 承接 A2/A3 收口后「交给 xingzhai 侧」落地：候选清单 artifacts/ 不入库 → xingzhai 拿不到，故产出入库版闭环。
+
+- **新增 `scripts/ops/be08-candidates-148.txt`**（148 条路径前缀，入库，xingzhai git pull 即得）；observe 脚本读取顺序改为 txt 优先 → artifacts md → 内嵌兜底。
+- **runbook 追加 §11 部署后运维**：11.1 流量观测（同步仓库→首次观测→每 7 天复跑→30 天回传报告）；11.2 版本升级（airdeair 构建包→xingzhai 校验/备份 .prev/替换/重启/探针；生产禁 migrate run 沿用）；11.3 高频提醒（备份/换密今日可落，证书外网随节奏）。
+- 至此 xingzhai 侧运维闭环：首装（runbook §0-10）→ 运维（§11 + ops 文档 + release-pipeline）。
+
 ## A1-A3 收口批：checklist 回填 + 30 天观测工具包 + 发布流程（2026-10-26）✅ 已完成
 
 > 按「下一步工作规划」A 线执行（技术可闭环三件）。
