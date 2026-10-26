@@ -35,7 +35,16 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE IF NOT EXISTS iam.audit_logs (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    user_id uuid,
+    action character varying(100) DEFAULT ''::character varying NOT NULL,
+    resource character varying(100),
+    resource_id uuid,
+    ip_address text,
+    user_agent text,
+    details jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    tenant_id uuid,
     deleted_at timestamp with time zone,
     entity_type text,
     entity_id uuid,
@@ -45,7 +54,9 @@ CREATE TABLE IF NOT EXISTS iam.audit_logs (
     response_details jsonb,
     status character varying(32),
     error_message text,
-    success boolean
+    success boolean,
+    CONSTRAINT ck_audit_logs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT audit_logs_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.audit_logs FORCE ROW LEVEL SECURITY;
@@ -80,7 +91,8 @@ CREATE TABLE IF NOT EXISTS iam.core_chat_members (
     user_id uuid NOT NULL,
     role character varying(32) DEFAULT 'member'::character varying,
     tenant_id uuid NOT NULL,
-    joined_at timestamp with time zone DEFAULT now()
+    joined_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT core_chat_members_pkey PRIMARY KEY (room_id, user_id)
 );
 
 ALTER TABLE ONLY iam.core_chat_members FORCE ROW LEVEL SECURITY;
@@ -101,7 +113,8 @@ CREATE TABLE IF NOT EXISTS iam.core_chat_messages (
     is_recalled boolean DEFAULT false,
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_chat_messages_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_chat_messages FORCE ROW LEVEL SECURITY;
@@ -119,7 +132,8 @@ CREATE TABLE IF NOT EXISTS iam.core_chat_rooms (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_chat_rooms_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_chat_rooms FORCE ROW LEVEL SECURITY;
@@ -139,7 +153,8 @@ CREATE TABLE IF NOT EXISTS iam.core_dashboard_refresh_log (
     row_count integer DEFAULT 0,
     error_message text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_dashboard_refresh_log_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_dashboard_refresh_log FORCE ROW LEVEL SECURITY;
@@ -162,7 +177,9 @@ CREATE TABLE IF NOT EXISTS iam.core_dict_items (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_dict_items_dict_type_id_code_key UNIQUE (dict_type_id, code),
+    CONSTRAINT core_dict_items_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_dict_items FORCE ROW LEVEL SECURITY;
@@ -182,7 +199,9 @@ CREATE TABLE IF NOT EXISTS iam.core_dict_types (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_dict_types_code_key UNIQUE (code),
+    CONSTRAINT core_dict_types_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_dict_types FORCE ROW LEVEL SECURITY;
@@ -209,7 +228,8 @@ CREATE TABLE IF NOT EXISTS iam.core_email_queue (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     sent_at timestamp with time zone,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_email_queue_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_email_queue FORCE ROW LEVEL SECURITY;
@@ -228,7 +248,8 @@ CREATE TABLE IF NOT EXISTS iam.core_email_templates (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_email_templates_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_email_templates FORCE ROW LEVEL SECURITY;
@@ -252,7 +273,8 @@ CREATE TABLE IF NOT EXISTS iam.core_emails (
     sent_at timestamp with time zone,
     read_at timestamp with time zone,
     deleted_at timestamp with time zone,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT core_emails_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_emails FORCE ROW LEVEL SECURITY;
@@ -273,7 +295,8 @@ CREATE TABLE IF NOT EXISTS iam.core_faqs (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_faqs_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_faqs FORCE ROW LEVEL SECURITY;
@@ -291,7 +314,8 @@ CREATE TABLE IF NOT EXISTS iam.core_file_folders (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_file_folders_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_file_folders FORCE ROW LEVEL SECURITY;
@@ -315,7 +339,8 @@ CREATE TABLE IF NOT EXISTS iam.core_files (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_files_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_files FORCE ROW LEVEL SECURITY;
@@ -335,7 +360,8 @@ CREATE TABLE IF NOT EXISTS iam.core_guide_lessons (
     is_active boolean DEFAULT true NOT NULL,
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_guide_lessons_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_guide_lessons FORCE ROW LEVEL SECURITY;
@@ -354,7 +380,9 @@ CREATE TABLE IF NOT EXISTS iam.core_guide_progress (
     completed_at timestamp with time zone,
     tenant_id uuid NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_guide_progress_guide_id_user_id_key UNIQUE (guide_id, user_id),
+    CONSTRAINT core_guide_progress_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_guide_progress FORCE ROW LEVEL SECURITY;
@@ -376,7 +404,8 @@ CREATE TABLE IF NOT EXISTS iam.core_guides (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_guides_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_guides FORCE ROW LEVEL SECURITY;
@@ -403,7 +432,8 @@ CREATE TABLE IF NOT EXISTS iam.core_inter_module_sync (
     executed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_inter_module_sync_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_inter_module_sync FORCE ROW LEVEL SECURITY;
@@ -424,7 +454,8 @@ CREATE TABLE IF NOT EXISTS iam.core_login_logs (
     error_message text,
     login_time timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_login_logs_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_login_logs FORCE ROW LEVEL SECURITY;
@@ -444,7 +475,9 @@ CREATE TABLE IF NOT EXISTS iam.core_menu_groups (
     status character varying(20) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_menu_groups_pkey PRIMARY KEY (id),
+    CONSTRAINT core_menu_groups_tenant_id_code_key UNIQUE (tenant_id, code)
 );
 
 ALTER TABLE ONLY iam.core_menu_groups FORCE ROW LEVEL SECURITY;
@@ -468,7 +501,9 @@ CREATE TABLE IF NOT EXISTS iam.core_menus (
     permissions jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_menus_pkey PRIMARY KEY (id),
+    CONSTRAINT core_menus_tenant_id_code_key UNIQUE (tenant_id, code)
 );
 
 ALTER TABLE ONLY iam.core_menus FORCE ROW LEVEL SECURITY;
@@ -490,7 +525,9 @@ CREATE TABLE IF NOT EXISTS iam.core_migration_history (
     error_message text,
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_migration_history_pkey PRIMARY KEY (id),
+    CONSTRAINT core_migration_history_plugin_name_version_key UNIQUE (plugin_name, version)
 );
 
 ALTER TABLE ONLY iam.core_migration_history FORCE ROW LEVEL SECURITY;
@@ -513,7 +550,8 @@ CREATE TABLE IF NOT EXISTS iam.core_mobile_offline_records (
     error_message text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_mobile_offline_records_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_mobile_offline_records FORCE ROW LEVEL SECURITY;
@@ -534,7 +572,8 @@ CREATE TABLE IF NOT EXISTS iam.core_notification_templates (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_notification_templates_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_notification_templates FORCE ROW LEVEL SECURITY;
@@ -557,7 +596,8 @@ CREATE TABLE IF NOT EXISTS iam.core_notifications (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     read_at timestamp with time zone,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_notifications_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_notifications FORCE ROW LEVEL SECURITY;
@@ -575,7 +615,9 @@ CREATE TABLE IF NOT EXISTS iam.core_permissions (
     resource character varying(64),
     action character varying(32),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_permissions_code_key UNIQUE (code),
+    CONSTRAINT core_permissions_pkey PRIMARY KEY (id)
 );
 
 
@@ -594,7 +636,9 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_categories (
     is_active boolean DEFAULT true,
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_plugin_categories_code_key UNIQUE (code),
+    CONSTRAINT core_plugin_categories_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_plugin_categories FORCE ROW LEVEL SECURITY;
@@ -615,7 +659,9 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_instances (
     stopped_at timestamp with time zone,
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_plugin_instances_pkey PRIMARY KEY (id),
+    CONSTRAINT core_plugin_instances_plugin_id_key UNIQUE (plugin_id)
 );
 
 ALTER TABLE ONLY iam.core_plugin_instances FORCE ROW LEVEL SECURITY;
@@ -634,7 +680,9 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_permissions (
     action character varying(50),
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_plugin_permissions_pkey PRIMARY KEY (id),
+    CONSTRAINT core_plugin_permissions_plugin_code_permission_code_key UNIQUE (plugin_code, permission_code)
 );
 
 ALTER TABLE ONLY iam.core_plugin_permissions FORCE ROW LEVEL SECURITY;
@@ -654,7 +702,9 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_pricing (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_plugin_pricing_pkey PRIMARY KEY (id),
+    CONSTRAINT core_plugin_pricing_plugin_code_key UNIQUE (plugin_code)
 );
 
 ALTER TABLE ONLY iam.core_plugin_pricing FORCE ROW LEVEL SECURITY;
@@ -679,7 +729,8 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_reviews (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    CONSTRAINT core_plugin_reviews_rating_check CHECK (((rating >= 1) AND (rating <= 5)))
+    CONSTRAINT core_plugin_reviews_rating_check CHECK (((rating >= 1) AND (rating <= 5))),
+    CONSTRAINT core_plugin_reviews_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_plugin_reviews FORCE ROW LEVEL SECURITY;
@@ -701,7 +752,9 @@ CREATE TABLE IF NOT EXISTS iam.core_plugin_versions (
     file_size bigint,
     min_app_version character varying(32),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_plugin_versions_pkey PRIMARY KEY (id),
+    CONSTRAINT core_plugin_versions_plugin_id_version_key UNIQUE (plugin_id, version)
 );
 
 
@@ -742,7 +795,9 @@ CREATE TABLE IF NOT EXISTS iam.core_plugins (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     published_at timestamp with time zone,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_plugins_code_key UNIQUE (code),
+    CONSTRAINT core_plugins_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_plugins FORCE ROW LEVEL SECURITY;
@@ -755,7 +810,8 @@ ALTER TABLE ONLY iam.core_plugins FORCE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS iam.core_role_permissions (
     role_id uuid NOT NULL,
     permission_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT core_role_permissions_pkey PRIMARY KEY (role_id, permission_id)
 );
 
 
@@ -770,7 +826,9 @@ CREATE TABLE IF NOT EXISTS iam.core_roles (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_roles_name_key UNIQUE (name),
+    CONSTRAINT core_roles_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_roles FORCE ROW LEVEL SECURITY;
@@ -788,7 +846,9 @@ CREATE TABLE IF NOT EXISTS iam.core_tenant_modules (
     is_active boolean DEFAULT true,
     activated_at timestamp with time zone DEFAULT now(),
     expires_at timestamp with time zone,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_tenant_modules_pkey PRIMARY KEY (id),
+    CONSTRAINT core_tenant_modules_tenant_id_module_code_key UNIQUE (tenant_id, module_code)
 );
 
 ALTER TABLE ONLY iam.core_tenant_modules FORCE ROW LEVEL SECURITY;
@@ -812,7 +872,9 @@ CREATE TABLE IF NOT EXISTS iam.core_tenant_plugins (
     usage_count integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_tenant_plugins_pkey PRIMARY KEY (id),
+    CONSTRAINT core_tenant_plugins_tenant_id_plugin_id_key UNIQUE (tenant_id, plugin_id)
 );
 
 ALTER TABLE ONLY iam.core_tenant_plugins FORCE ROW LEVEL SECURITY;
@@ -829,7 +891,9 @@ CREATE TABLE IF NOT EXISTS iam.core_tenant_settings (
     setting_value text,
     is_public boolean DEFAULT false,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_tenant_settings_pkey PRIMARY KEY (id),
+    CONSTRAINT core_tenant_settings_tenant_id_setting_key_key UNIQUE (tenant_id, setting_key)
 );
 
 ALTER TABLE ONLY iam.core_tenant_settings FORCE ROW LEVEL SECURITY;
@@ -871,7 +935,10 @@ CREATE TABLE IF NOT EXISTS iam.core_tenant_users (
     status character varying(32) DEFAULT 'active'::character varying,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     last_login timestamp with time zone,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_tenant_users_pkey PRIMARY KEY (id),
+    CONSTRAINT core_tenant_users_tenant_id_email_key UNIQUE (tenant_id, email),
+    CONSTRAINT core_tenant_users_tenant_id_user_id_key UNIQUE (tenant_id, user_id)
 );
 
 ALTER TABLE ONLY iam.core_tenant_users FORCE ROW LEVEL SECURITY;
@@ -903,7 +970,9 @@ CREATE TABLE IF NOT EXISTS iam.core_tenants (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     activated_at timestamp with time zone,
     suspended_at timestamp with time zone,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_tenants_code_key UNIQUE (code),
+    CONSTRAINT core_tenants_pkey PRIMARY KEY (id)
 );
 
 
@@ -922,7 +991,8 @@ CREATE TABLE IF NOT EXISTS iam.core_usage_records (
     period_end timestamp with time zone NOT NULL,
     cost_cents integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_usage_records_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_usage_records FORCE ROW LEVEL SECURITY;
@@ -935,7 +1005,8 @@ ALTER TABLE ONLY iam.core_usage_records FORCE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS iam.core_user_roles (
     user_id uuid NOT NULL,
     role_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT core_user_roles_pkey PRIMARY KEY (user_id, role_id)
 );
 
 
@@ -957,7 +1028,10 @@ CREATE TABLE IF NOT EXISTS iam.core_users (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     last_login_at timestamp with time zone,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_users_email_key UNIQUE (email),
+    CONSTRAINT core_users_pkey PRIMARY KEY (id),
+    CONSTRAINT core_users_username_key UNIQUE (username)
 );
 
 ALTER TABLE ONLY iam.core_users FORCE ROW LEVEL SECURITY;
@@ -980,7 +1054,8 @@ CREATE TABLE IF NOT EXISTS iam.core_workflow_instances (
     completed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_workflow_instances_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_workflow_instances FORCE ROW LEVEL SECURITY;
@@ -1000,7 +1075,8 @@ CREATE TABLE IF NOT EXISTS iam.core_workflow_tasks (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     completed_at timestamp with time zone,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_workflow_tasks_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_workflow_tasks FORCE ROW LEVEL SECURITY;
@@ -1022,7 +1098,8 @@ CREATE TABLE IF NOT EXISTS iam.core_workflows (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     published_at timestamp with time zone,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_workflows_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.core_workflows FORCE ROW LEVEL SECURITY;
@@ -1044,7 +1121,9 @@ CREATE TABLE IF NOT EXISTS iam.crm_dashboard_snapshots (
     trend_data jsonb DEFAULT '[]'::jsonb,
     industry_distribution jsonb DEFAULT '[]'::jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT crm_dashboard_snapshots_pkey PRIMARY KEY (id),
+    CONSTRAINT crm_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date)
 );
 
 ALTER TABLE ONLY iam.crm_dashboard_snapshots FORCE ROW LEVEL SECURITY;
@@ -1061,7 +1140,8 @@ CREATE TABLE IF NOT EXISTS iam.data_permissions (
     conditions jsonb NOT NULL,
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT data_permissions_pkey PRIMARY KEY (id)
 );
 
 
@@ -1075,7 +1155,8 @@ CREATE TABLE IF NOT EXISTS iam.dynamic_data (
     data_json jsonb NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT dynamic_data_pkey PRIMARY KEY (id)
 );
 
 
@@ -1095,7 +1176,9 @@ CREATE TABLE IF NOT EXISTS iam.ehs_dashboard_snapshots (
     hazard_types jsonb DEFAULT '[]'::jsonb,
     training_trend jsonb DEFAULT '[]'::jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT ehs_dashboard_snapshots_pkey PRIMARY KEY (id),
+    CONSTRAINT ehs_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date)
 );
 
 ALTER TABLE ONLY iam.ehs_dashboard_snapshots FORCE ROW LEVEL SECURITY;
@@ -1117,7 +1200,9 @@ CREATE TABLE IF NOT EXISTS iam.hrm_dashboard_snapshots (
     hire_trend jsonb DEFAULT '[]'::jsonb,
     education_distribution jsonb DEFAULT '[]'::jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT hrm_dashboard_snapshots_pkey PRIMARY KEY (id),
+    CONSTRAINT hrm_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date)
 );
 
 ALTER TABLE ONLY iam.hrm_dashboard_snapshots FORCE ROW LEVEL SECURITY;
@@ -1139,7 +1224,9 @@ CREATE TABLE IF NOT EXISTS iam.lims_dashboard_snapshots (
     task_status jsonb DEFAULT '[]'::jsonb,
     instrument_status jsonb DEFAULT '[]'::jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT lims_dashboard_snapshots_pkey PRIMARY KEY (id),
+    CONSTRAINT lims_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date)
 );
 
 ALTER TABLE ONLY iam.lims_dashboard_snapshots FORCE ROW LEVEL SECURITY;
@@ -1151,7 +1238,8 @@ ALTER TABLE ONLY iam.lims_dashboard_snapshots FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS iam.password_reset_tokens (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT password_reset_tokens_pkey PRIMARY KEY (id)
 );
 
 
@@ -1171,7 +1259,9 @@ CREATE TABLE IF NOT EXISTS iam.pdm_dashboard_snapshots (
     document_types jsonb DEFAULT '[]'::jsonb,
     change_trend jsonb DEFAULT '[]'::jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT pdm_dashboard_snapshots_pkey PRIMARY KEY (id),
+    CONSTRAINT pdm_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date)
 );
 
 ALTER TABLE ONLY iam.pdm_dashboard_snapshots FORCE ROW LEVEL SECURITY;
@@ -1201,7 +1291,8 @@ CREATE TABLE IF NOT EXISTS iam.permission_audit_logs (
     new_value jsonb,
     old_value jsonb,
     user_agent text,
-    CONSTRAINT chk_action CHECK (((action)::text = ANY (ARRAY[('create'::character varying)::text, ('update'::character varying)::text, ('delete'::character varying)::text, ('activate'::character varying)::text, ('deactivate'::character varying)::text, ('role_change'::character varying)::text])))
+    CONSTRAINT chk_action CHECK (((action)::text = ANY (ARRAY[('create'::character varying)::text, ('update'::character varying)::text, ('delete'::character varying)::text, ('activate'::character varying)::text, ('deactivate'::character varying)::text, ('role_change'::character varying)::text]))),
+    CONSTRAINT permission_audit_logs_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.permission_audit_logs FORCE ROW LEVEL SECURITY;
@@ -1220,7 +1311,9 @@ CREATE TABLE IF NOT EXISTS iam.permission_templates (
     is_system boolean DEFAULT false,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT permission_templates_name_tenant_id_key UNIQUE (name, tenant_id),
+    CONSTRAINT permission_templates_pkey PRIMARY KEY (id)
 );
 
 
@@ -1229,8 +1322,15 @@ CREATE TABLE IF NOT EXISTS iam.permission_templates (
 --
 
 CREATE TABLE IF NOT EXISTS iam.permissions (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    name character varying(100) NOT NULL,
+    resource character varying(100) NOT NULL,
+    action character varying(50) NOT NULL,
+    description text,
+    tenant_id uuid,
+    deleted_at timestamp with time zone,
+    CONSTRAINT permissions_name_key UNIQUE (name),
+    CONSTRAINT permissions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.permissions FORCE ROW LEVEL SECURITY;
@@ -1241,11 +1341,13 @@ ALTER TABLE ONLY iam.permissions FORCE ROW LEVEL SECURITY;
 --
 
 CREATE TABLE IF NOT EXISTS iam.position_permissions (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id bigint NOT NULL,
     position_id uuid NOT NULL,
-    permission character varying(128) NOT NULL,
-    tenant_id uuid NOT NULL,
-    deleted_at timestamp with time zone
+    permission character varying(255),
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT position_permissions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.position_permissions FORCE ROW LEVEL SECURITY;
@@ -1256,11 +1358,13 @@ ALTER TABLE ONLY iam.position_permissions FORCE ROW LEVEL SECURITY;
 --
 
 CREATE TABLE IF NOT EXISTS iam.position_roles (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id bigint NOT NULL,
     position_id uuid NOT NULL,
     role_id uuid NOT NULL,
-    tenant_id uuid NOT NULL,
-    deleted_at timestamp with time zone
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT position_roles_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.position_roles FORCE ROW LEVEL SECURITY;
@@ -1279,7 +1383,8 @@ CREATE TABLE IF NOT EXISTS iam.positions (
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     tenant_id uuid NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT positions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.positions FORCE ROW LEVEL SECURITY;
@@ -1292,15 +1397,7 @@ ALTER TABLE ONLY iam.positions FORCE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS iam.refresh_tokens (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     deleted_at timestamp with time zone,
-    user_id uuid NOT NULL,
-    token_hash character varying(255) NOT NULL,
-    device_info jsonb,
-    ip_address inet,
-    user_agent text,
-    expires_at timestamp with time zone NOT NULL,
-    revoked_at timestamp with time zone,
-    revoked_reason character varying(255),
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    CONSTRAINT refresh_tokens_pkey PRIMARY KEY (id)
 );
 
 
@@ -1316,7 +1413,8 @@ CREATE TABLE IF NOT EXISTS iam.resource_permissions (
     permission character varying(128) NOT NULL,
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT resource_permissions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.resource_permissions FORCE ROW LEVEL SECURITY;
@@ -1327,18 +1425,16 @@ ALTER TABLE ONLY iam.resource_permissions FORCE ROW LEVEL SECURITY;
 --
 
 CREATE TABLE IF NOT EXISTS iam.roles (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    code character varying(100) NOT NULL,
-    name character varying(255) NOT NULL,
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    name character varying(50) NOT NULL,
     description text,
-    permissions jsonb DEFAULT '[]'::jsonb NOT NULL,
-    is_system boolean DEFAULT false NOT NULL,
-    created_by uuid,
-    updated_by uuid,
-    status character varying(50) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    tenant_id uuid,
+    deleted_at timestamp with time zone,
+    status character varying(50),
+    CONSTRAINT ck_roles_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT roles_name_key UNIQUE (name),
+    CONSTRAINT roles_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.roles FORCE ROW LEVEL SECURITY;
@@ -1373,7 +1469,9 @@ CREATE TABLE IF NOT EXISTS iam.schema_registry (
     version integer DEFAULT 1 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT schema_registry_name_key UNIQUE (name),
+    CONSTRAINT schema_registry_pkey PRIMARY KEY (id)
 );
 
 
@@ -1384,15 +1482,7 @@ CREATE TABLE IF NOT EXISTS iam.schema_registry (
 CREATE TABLE IF NOT EXISTS iam.sessions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     deleted_at timestamp with time zone,
-    user_id uuid NOT NULL,
-    token_hash character varying(255) NOT NULL,
-    ip_address inet,
-    user_agent text,
-    device_info jsonb,
-    expires_at timestamp with time zone NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    refresh_expires_at timestamp with time zone,
-    last_active_at timestamp with time zone DEFAULT now()
+    CONSTRAINT sessions_pkey PRIMARY KEY (id)
 );
 
 
@@ -1409,7 +1499,8 @@ CREATE TABLE IF NOT EXISTS iam.tenant_users (
     status character varying,
     created_at timestamp with time zone NOT NULL,
     last_login timestamp with time zone,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT tenant_users_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.tenant_users FORCE ROW LEVEL SECURITY;
@@ -1421,7 +1512,8 @@ ALTER TABLE ONLY iam.tenant_users FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS iam.user_access_logs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT user_access_logs_pkey PRIMARY KEY (id)
 );
 
 
@@ -1430,11 +1522,13 @@ CREATE TABLE IF NOT EXISTS iam.user_access_logs (
 --
 
 CREATE TABLE IF NOT EXISTS iam.user_positions (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    id bigint NOT NULL,
     user_id uuid NOT NULL,
     position_id uuid NOT NULL,
-    tenant_id uuid NOT NULL,
-    deleted_at timestamp with time zone
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT user_positions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY iam.user_positions FORCE ROW LEVEL SECURITY;
@@ -1446,7 +1540,8 @@ ALTER TABLE ONLY iam.user_positions FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS iam.user_roles (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT user_roles_pkey PRIMARY KEY (id)
 );
 
 
@@ -1484,7 +1579,10 @@ CREATE TABLE IF NOT EXISTS iam.users (
     roles text[],
     permissions text[],
     deleted_at timestamp with time zone,
-    full_name_en character varying
+    full_name_en character varying,
+    CONSTRAINT users_email_key UNIQUE (email),
+    CONSTRAINT users_pkey PRIMARY KEY (id),
+    CONSTRAINT users_username_key UNIQUE (username)
 );
 
 
@@ -1504,7 +1602,9 @@ CREATE TABLE IF NOT EXISTS iam.wms_dashboard_snapshots (
     category_distribution jsonb DEFAULT '[]'::jsonb,
     outbound_trend jsonb DEFAULT '[]'::jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT wms_dashboard_snapshots_pkey PRIMARY KEY (id),
+    CONSTRAINT wms_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date)
 );
 
 ALTER TABLE ONLY iam.wms_dashboard_snapshots FORCE ROW LEVEL SECURITY;

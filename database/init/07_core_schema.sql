@@ -55,7 +55,13 @@ CREATE TABLE IF NOT EXISTS core.ai_conversations (
     user_id character varying(128) NOT NULL,
     title character varying(200) DEFAULT '新对话'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    module character varying(64) DEFAULT 'erp'::character varying,
+    messages jsonb DEFAULT '[]'::jsonb NOT NULL,
+    selected_records jsonb DEFAULT '[]'::jsonb NOT NULL,
+    context_data jsonb DEFAULT '{}'::jsonb NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT ai_conversations_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY core.ai_conversations FORCE ROW LEVEL SECURITY;
@@ -75,7 +81,9 @@ CREATE TABLE IF NOT EXISTS core.core_plugin_categories (
     plugin_count integer DEFAULT 0,
     is_active boolean DEFAULT true,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_plugin_categories_code_key UNIQUE (code),
+    CONSTRAINT core_plugin_categories_pkey PRIMARY KEY (id)
 );
 
 
@@ -86,13 +94,16 @@ CREATE TABLE IF NOT EXISTS core.core_plugin_categories (
 CREATE TABLE IF NOT EXISTS core.core_plugin_instances (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     plugin_id uuid NOT NULL,
-    runtime_url character varying(512),
-    runtime_status character varying(32) DEFAULT 'stopped'::character varying,
-    base_path character varying(128) DEFAULT '/api/plugins/{code}'::character varying,
+    runtime_url text NOT NULL,
+    runtime_status character varying(50) DEFAULT 'stopped'::character varying,
+    base_path character varying(255),
     last_heartbeat timestamp with time zone,
-    started_at timestamp with time zone,
     stopped_at timestamp with time zone,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    started_at timestamp with time zone,
+    CONSTRAINT core_plugin_instances_pkey PRIMARY KEY (id)
 );
 
 
@@ -106,7 +117,9 @@ CREATE TABLE IF NOT EXISTS core.core_plugin_navigation (
     nav_config jsonb DEFAULT '[]'::jsonb NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_plugin_navigation_pkey PRIMARY KEY (id),
+    CONSTRAINT core_plugin_navigation_plugin_code_key UNIQUE (plugin_code)
 );
 
 
@@ -116,12 +129,15 @@ CREATE TABLE IF NOT EXISTS core.core_plugin_navigation (
 
 CREATE TABLE IF NOT EXISTS core.core_plugin_permissions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    plugin_code character varying(64) NOT NULL,
+    plugin_code character varying(100) NOT NULL,
     permission_code character varying(100) NOT NULL,
-    permission_name character varying(255),
-    resource_type character varying(50),
-    action character varying(50),
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    permission_name character varying(255) NOT NULL,
+    resource_type character varying(100),
+    action character varying(100),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_plugin_permissions_pkey PRIMARY KEY (id)
 );
 
 
@@ -143,7 +159,8 @@ CREATE TABLE IF NOT EXISTS core.core_plugin_reviews (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    CONSTRAINT core_plugin_reviews_rating_check CHECK (((rating >= 1) AND (rating <= 5)))
+    CONSTRAINT core_plugin_reviews_rating_check CHECK (((rating >= 1) AND (rating <= 5))),
+    CONSTRAINT core_plugin_reviews_pkey PRIMARY KEY (id)
 );
 
 
@@ -163,7 +180,9 @@ CREATE TABLE IF NOT EXISTS core.core_plugin_versions (
     file_size bigint,
     min_app_version character varying(32),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_plugin_versions_pkey PRIMARY KEY (id),
+    CONSTRAINT core_plugin_versions_plugin_id_version_key UNIQUE (plugin_id, version)
 );
 
 
@@ -205,7 +224,9 @@ CREATE TABLE IF NOT EXISTS core.core_plugins (
     tags jsonb,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     version character varying(50),
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT core_plugins_code_key UNIQUE (code),
+    CONSTRAINT core_plugins_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY core.core_plugins FORCE ROW LEVEL SECURITY;
@@ -217,7 +238,20 @@ ALTER TABLE ONLY core.core_plugins FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS core.core_tenant_plugins (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    tenant_id uuid NOT NULL,
+    plugin_id uuid NOT NULL,
+    installed_version character varying(50),
+    is_active boolean DEFAULT true,
+    license_type character varying(50) DEFAULT 'free'::character varying,
+    license_expires_at timestamp with time zone,
+    purchase_order_id uuid,
+    activated_at timestamp with time zone,
+    last_used_at timestamp with time zone,
+    usage_count integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_tenant_plugins_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY core.core_tenant_plugins FORCE ROW LEVEL SECURITY;
@@ -238,7 +272,8 @@ CREATE TABLE IF NOT EXISTS core.knowledge_bases (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT knowledge_bases_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY core.knowledge_bases FORCE ROW LEVEL SECURITY;
@@ -259,7 +294,8 @@ CREATE TABLE IF NOT EXISTS core.knowledge_chunks (
     embedding public.vector(1536),
     metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT knowledge_chunks_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY core.knowledge_chunks FORCE ROW LEVEL SECURITY;
@@ -284,7 +320,8 @@ CREATE TABLE IF NOT EXISTS core.knowledge_documents (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT knowledge_documents_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY core.knowledge_documents FORCE ROW LEVEL SECURITY;
@@ -304,7 +341,8 @@ CREATE TABLE IF NOT EXISTS core.knowledge_qa_history (
     user_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     feedback integer,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT knowledge_qa_history_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY core.knowledge_qa_history FORCE ROW LEVEL SECURITY;
@@ -321,7 +359,9 @@ CREATE TABLE IF NOT EXISTS core.user_preferences (
     preference_value jsonb NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT user_preferences_pkey PRIMARY KEY (id),
+    CONSTRAINT user_preferences_user_id_preference_key_key UNIQUE (user_id, preference_key)
 );
 
 ALTER TABLE ONLY core.user_preferences FORCE ROW LEVEL SECURITY;

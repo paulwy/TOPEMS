@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_ai_models (
     domain text NOT NULL,
     accuracy double precision NOT NULL,
     last_trained text,
-    features jsonb DEFAULT '[]'::jsonb NOT NULL
+    features jsonb DEFAULT '[]'::jsonb NOT NULL,
+    CONSTRAINT mdm_ai_models_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_ai_models FORCE ROW LEVEL SECURITY;
@@ -56,7 +57,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_ai_suggestions (
     description text NOT NULL,
     confidence double precision NOT NULL,
     action text NOT NULL,
-    created_at text NOT NULL
+    created_at text NOT NULL,
+    CONSTRAINT mdm_ai_suggestions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_ai_suggestions FORCE ROW LEVEL SECURITY;
@@ -74,7 +76,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_api_exposures (
     rate_limit text NOT NULL,
     enabled boolean DEFAULT true NOT NULL,
     created_at text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_api_exposures_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_api_exposures FORCE ROW LEVEL SECURITY;
@@ -93,7 +96,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_api_products (
     features jsonb DEFAULT '[]'::jsonb NOT NULL,
     price_monthly double precision DEFAULT 0 NOT NULL,
     active boolean DEFAULT true NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_api_products_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_api_products FORCE ROW LEVEL SECURITY;
@@ -108,7 +112,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_asset_categories (
     name text DEFAULT ''::text NOT NULL,
     parent_id text,
     asset_count bigint DEFAULT 0 NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_asset_categories_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_asset_categories FORCE ROW LEVEL SECURITY;
@@ -130,7 +135,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_assets (
     quality_score double precision DEFAULT 0 NOT NULL,
     access_level text DEFAULT 'internal'::text NOT NULL,
     updated_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_assets_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_assets FORCE ROW LEVEL SECURITY;
@@ -152,7 +158,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_audit_events (
     ip_address text DEFAULT ''::text NOT NULL,
     "timestamp" text DEFAULT ''::text NOT NULL,
     session_id text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_audit_events_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_audit_events FORCE ROW LEVEL SECURITY;
@@ -169,7 +176,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_audit_export_logs (
     record_count bigint DEFAULT 0 NOT NULL,
     exported_at text DEFAULT ''::text NOT NULL,
     ip_address text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_audit_export_logs_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_audit_export_logs FORCE ROW LEVEL SECURITY;
@@ -190,7 +198,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_auto_fix_actions (
     confidence double precision DEFAULT 0 NOT NULL,
     status text DEFAULT 'pending'::text NOT NULL,
     applied_at text,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_auto_fix_actions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_auto_fix_actions FORCE ROW LEVEL SECURITY;
@@ -207,7 +216,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_bc_tests (
     tested_at text DEFAULT ''::text NOT NULL,
     result text DEFAULT ''::text NOT NULL,
     duration_minutes bigint DEFAULT 0 NOT NULL,
-    issues_found jsonb DEFAULT '[]'::jsonb NOT NULL
+    issues_found jsonb DEFAULT '[]'::jsonb NOT NULL,
+    CONSTRAINT mdm_bc_tests_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_bc_tests FORCE ROW LEVEL SECURITY;
@@ -219,14 +229,16 @@ ALTER TABLE ONLY master_data.mdm_bc_tests FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS master_data.mdm_billing_records (
     id text NOT NULL,
-    tenant_id text DEFAULT ''::text NOT NULL,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
     period_start text DEFAULT ''::text NOT NULL,
     period_end text DEFAULT ''::text NOT NULL,
     tier text DEFAULT 'free'::text NOT NULL,
     usage_summary jsonb DEFAULT '{}'::jsonb NOT NULL,
     total_amount double precision DEFAULT 0 NOT NULL,
     status text DEFAULT 'pending'::text NOT NULL,
-    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    deleted_at timestamp with time zone,
+    CONSTRAINT mdm_billing_records_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_billing_records FORCE ROW LEVEL SECURITY;
@@ -244,7 +256,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_change_events (
     old_value jsonb,
     new_value jsonb,
     triggered_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_change_events_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_change_events FORCE ROW LEVEL SECURITY;
@@ -262,7 +275,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_classification_models (
     categories jsonb DEFAULT '[]'::jsonb NOT NULL,
     algorithm text NOT NULL,
     accuracy double precision NOT NULL,
-    status text NOT NULL
+    status text NOT NULL,
+    CONSTRAINT mdm_classification_models_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_classification_models FORCE ROW LEVEL SECURITY;
@@ -279,7 +293,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_classification_results (
     category text NOT NULL,
     confidence double precision NOT NULL,
     alternatives jsonb DEFAULT '[]'::jsonb NOT NULL,
-    classified_at text NOT NULL
+    classified_at text NOT NULL,
+    CONSTRAINT mdm_classification_results_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_classification_results FORCE ROW LEVEL SECURITY;
@@ -292,7 +307,8 @@ ALTER TABLE ONLY master_data.mdm_classification_results FORCE ROW LEVEL SECURITY
 CREATE TABLE IF NOT EXISTS master_data.mdm_classifier_rules (
     id text NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    rules jsonb DEFAULT '[]'::jsonb NOT NULL
+    rules jsonb DEFAULT '[]'::jsonb NOT NULL,
+    CONSTRAINT mdm_classifier_rules_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_classifier_rules FORCE ROW LEVEL SECURITY;
@@ -306,7 +322,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_collections (
     module text NOT NULL,
     entity text NOT NULL,
     data jsonb NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_collections_pkey PRIMARY KEY (module, entity)
 );
 
 
@@ -323,7 +340,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_continuity_plans (
     recovery_strategy text DEFAULT 'hot_standby'::text NOT NULL,
     test_frequency text DEFAULT ''::text NOT NULL,
     last_tested text,
-    status text DEFAULT 'draft'::text NOT NULL
+    status text DEFAULT 'draft'::text NOT NULL,
+    CONSTRAINT mdm_continuity_plans_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_continuity_plans FORCE ROW LEVEL SECURITY;
@@ -340,7 +358,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_critical_functions (
     description text DEFAULT ''::text NOT NULL,
     dependencies jsonb DEFAULT '[]'::jsonb NOT NULL,
     max_downtime_minutes bigint DEFAULT 0 NOT NULL,
-    recovery_procedure text DEFAULT ''::text NOT NULL
+    recovery_procedure text DEFAULT ''::text NOT NULL,
+    CONSTRAINT mdm_critical_functions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_critical_functions FORCE ROW LEVEL SECURITY;
@@ -359,7 +378,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_data_contracts (
     version text NOT NULL,
     updated_at text NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_data_contracts_pkey PRIMARY KEY (product_id)
 );
 
 ALTER TABLE ONLY master_data.mdm_data_contracts FORCE ROW LEVEL SECURITY;
@@ -377,7 +397,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_data_permissions (
     action text DEFAULT 'read'::text NOT NULL,
     condition jsonb,
     inherited boolean DEFAULT false NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_data_permissions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_data_permissions FORCE ROW LEVEL SECURITY;
@@ -399,7 +420,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_data_products (
     status text NOT NULL,
     created_at text NOT NULL,
     updated_at text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_data_products_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_data_products FORCE ROW LEVEL SECURITY;
@@ -416,7 +438,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_dimension_scores (
     maturity_level text NOT NULL,
     evidence jsonb DEFAULT '[]'::jsonb NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_dimension_scores_pkey PRIMARY KEY (dimension)
 );
 
 ALTER TABLE ONLY master_data.mdm_dimension_scores FORCE ROW LEVEL SECURITY;
@@ -435,7 +458,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_failover_records (
     started_at text DEFAULT ''::text NOT NULL,
     completed_at text,
     reason text DEFAULT ''::text NOT NULL,
-    status text DEFAULT 'initiated'::text NOT NULL
+    status text DEFAULT 'initiated'::text NOT NULL,
+    CONSTRAINT mdm_failover_records_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_failover_records FORCE ROW LEVEL SECURITY;
@@ -448,7 +472,8 @@ ALTER TABLE ONLY master_data.mdm_failover_records FORCE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS master_data.mdm_fix_strategies (
     key text NOT NULL,
     label text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_fix_strategies_pkey PRIMARY KEY (key)
 );
 
 ALTER TABLE ONLY master_data.mdm_fix_strategies FORCE ROW LEVEL SECURITY;
@@ -464,7 +489,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_governance_insights (
     affected_records bigint DEFAULT 0 NOT NULL,
     trend_analysis text DEFAULT ''::text NOT NULL,
     recommendations jsonb DEFAULT '[]'::jsonb NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_governance_insights_pkey PRIMARY KEY (insight_type)
 );
 
 ALTER TABLE ONLY master_data.mdm_governance_insights FORCE ROW LEVEL SECURITY;
@@ -485,7 +511,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_governance_suggestions (
     ai_model_version text DEFAULT ''::text NOT NULL,
     status text DEFAULT 'pending'::text NOT NULL,
     created_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_governance_suggestions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_governance_suggestions FORCE ROW LEVEL SECURITY;
@@ -502,7 +529,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_graph_communities (
     algorithm text DEFAULT 'label_propagation'::text NOT NULL,
     modularity double precision DEFAULT 0.0 NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_graph_communities_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_graph_communities FORCE ROW LEVEL SECURITY;
@@ -519,7 +547,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_graph_edges (
     weight double precision DEFAULT 1.0 NOT NULL,
     confidence double precision DEFAULT 1.0 NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_graph_edges_pkey PRIMARY KEY (source_id, target_id, relation_type)
 );
 
 ALTER TABLE ONLY master_data.mdm_graph_edges FORCE ROW LEVEL SECURITY;
@@ -538,7 +567,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_graph_nodes (
     degree bigint DEFAULT 0 NOT NULL,
     community_id text,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_graph_nodes_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_graph_nodes FORCE ROW LEVEL SECURITY;
@@ -552,7 +582,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_impact_analyses (
     id text NOT NULL,
     data jsonb DEFAULT '{}'::jsonb NOT NULL,
     analyzed_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_impact_analyses_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_impact_analyses FORCE ROW LEVEL SECURITY;
@@ -566,7 +597,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_impact_simulations (
     id text NOT NULL,
     data jsonb DEFAULT '{}'::jsonb NOT NULL,
     created_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_impact_simulations_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_impact_simulations FORCE ROW LEVEL SECURITY;
@@ -585,7 +617,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_improvement_plans (
     due_date text,
     status text NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_improvement_plans_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_improvement_plans FORCE ROW LEVEL SECURITY;
@@ -601,7 +634,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_interactions (
     item_id text DEFAULT ''::text NOT NULL,
     interaction_type text DEFAULT 'view'::text NOT NULL,
     "timestamp" text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_interactions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_interactions FORCE ROW LEVEL SECURITY;
@@ -618,7 +652,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_kg_edges (
     relation_type text DEFAULT 'derived_from'::text NOT NULL,
     weight double precision DEFAULT 1 NOT NULL,
     confidence double precision DEFAULT 1 NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_kg_edges_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_kg_edges FORCE ROW LEVEL SECURITY;
@@ -634,7 +669,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_kg_graphs (
     edges jsonb DEFAULT '[]'::jsonb NOT NULL,
     version bigint DEFAULT 0 NOT NULL,
     last_updated text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_kg_graphs_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_kg_graphs FORCE ROW LEVEL SECURITY;
@@ -651,7 +687,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_kg_nodes (
     properties jsonb DEFAULT '{}'::jsonb NOT NULL,
     embeddings jsonb DEFAULT '[]'::jsonb NOT NULL,
     created_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_kg_nodes_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_kg_nodes FORCE ROW LEVEL SECURITY;
@@ -669,7 +706,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_lifecycle_history (
     reason text DEFAULT ''::text NOT NULL,
     changed_at text DEFAULT ''::text NOT NULL,
     changed_by text DEFAULT ''::text NOT NULL,
-    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_lifecycle_history_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_lifecycle_history FORCE ROW LEVEL SECURITY;
@@ -685,7 +723,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_lifecycle_policies (
     transitions jsonb DEFAULT '{}'::jsonb NOT NULL,
     duration_days bigint DEFAULT 0 NOT NULL,
     actions jsonb DEFAULT '[]'::jsonb NOT NULL,
-    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_lifecycle_policies_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_lifecycle_policies FORCE ROW LEVEL SECURITY;
@@ -698,7 +737,8 @@ ALTER TABLE ONLY master_data.mdm_lifecycle_policies FORCE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS master_data.mdm_lifecycle_stages (
     entity_id text NOT NULL,
     stage text DEFAULT 'created'::text NOT NULL,
-    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_lifecycle_stages_pkey PRIMARY KEY (entity_id)
 );
 
 ALTER TABLE ONLY master_data.mdm_lifecycle_stages FORCE ROW LEVEL SECURITY;
@@ -714,7 +754,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_lineage_edges (
     to_node_id text NOT NULL,
     edge_type text DEFAULT 'derives_from'::text NOT NULL,
     transformation_description text,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_lineage_edges_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_lineage_edges FORCE ROW LEVEL SECURITY;
@@ -730,7 +771,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_lineage_graphs (
     edges jsonb DEFAULT '[]'::jsonb NOT NULL,
     version bigint DEFAULT 0 NOT NULL,
     last_updated text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_lineage_graphs_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_lineage_graphs FORCE ROW LEVEL SECURITY;
@@ -747,7 +789,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_lineage_nodes (
     name text NOT NULL,
     description text,
     created_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_lineage_nodes_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_lineage_nodes FORCE ROW LEVEL SECURITY;
@@ -766,7 +809,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_match_results (
     match_type text NOT NULL,
     confidence double precision NOT NULL,
     status text NOT NULL,
-    matched_at text NOT NULL
+    matched_at text NOT NULL,
+    CONSTRAINT mdm_match_results_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_match_results FORCE ROW LEVEL SECURITY;
@@ -783,7 +827,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_match_rules (
     rule_type text NOT NULL,
     field_config jsonb DEFAULT '{}'::jsonb NOT NULL,
     threshold double precision NOT NULL,
-    enabled boolean DEFAULT true NOT NULL
+    enabled boolean DEFAULT true NOT NULL,
+    CONSTRAINT mdm_match_rules_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_match_rules FORCE ROW LEVEL SECURITY;
@@ -803,7 +848,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_maturity_assessments (
     recommendations jsonb DEFAULT '[]'::jsonb NOT NULL,
     assessed_at text NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_maturity_assessments_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_maturity_assessments FORCE ROW LEVEL SECURITY;
@@ -820,7 +866,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_maturity_history (
     level text NOT NULL,
     recorded_at text NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_maturity_history_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_maturity_history FORCE ROW LEVEL SECURITY;
@@ -837,7 +884,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_metadata_attributes (
     value text DEFAULT ''::text NOT NULL,
     data_type text DEFAULT 'string'::text NOT NULL,
     is_required boolean DEFAULT false NOT NULL,
-    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_metadata_attributes_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_metadata_attributes FORCE ROW LEVEL SECURITY;
@@ -857,7 +905,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_metadata_objects (
     attributes jsonb DEFAULT '{}'::jsonb NOT NULL,
     created_at text DEFAULT ''::text NOT NULL,
     updated_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_metadata_objects_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_metadata_objects FORCE ROW LEVEL SECURITY;
@@ -873,7 +922,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_metadata_tags (
     color text DEFAULT '#95a5a6'::text NOT NULL,
     description text DEFAULT ''::text NOT NULL,
     usage_count bigint DEFAULT 0 NOT NULL,
-    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_metadata_tags_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_metadata_tags FORCE ROW LEVEL SECURITY;
@@ -889,7 +939,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_permission_roles (
     description text DEFAULT ''::text NOT NULL,
     inherited_from text,
     created_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_permission_roles_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_permission_roles FORCE ROW LEVEL SECURITY;
@@ -909,7 +960,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_propagation_logs (
     status text DEFAULT 'propagated'::text NOT NULL,
     propagated_at text DEFAULT ''::text NOT NULL,
     rollback_id text,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_propagation_logs_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_propagation_logs FORCE ROW LEVEL SECURITY;
@@ -925,7 +977,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_propagation_rules (
     target_entity_type text NOT NULL,
     condition text DEFAULT ''::text NOT NULL,
     action text DEFAULT 'cascade_update'::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_propagation_rules_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_propagation_rules FORCE ROW LEVEL SECURITY;
@@ -944,7 +997,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_quality_checks (
     score double precision DEFAULT 0 NOT NULL,
     details jsonb,
     checked_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_quality_checks_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_quality_checks FORCE ROW LEVEL SECURITY;
@@ -960,7 +1014,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_quality_loop_configs (
     auto_fix_enabled boolean DEFAULT false NOT NULL,
     notification_channels jsonb DEFAULT '[]'::jsonb NOT NULL,
     max_retries integer DEFAULT 3 NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_quality_loop_configs_pkey PRIMARY KEY (entity_type)
 );
 
 ALTER TABLE ONLY master_data.mdm_quality_loop_configs FORCE ROW LEVEL SECURITY;
@@ -980,7 +1035,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_quality_rules (
     parameters jsonb DEFAULT '{}'::jsonb NOT NULL,
     enabled boolean DEFAULT true NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_quality_rules_pkey PRIMARY KEY (id)
 );
 
 
@@ -995,7 +1051,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_rate_cards (
     cost_per_mb double precision DEFAULT 0 NOT NULL,
     overage_multiplier double precision DEFAULT 1 NOT NULL,
     currency text DEFAULT 'CNY'::text NOT NULL,
-    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_rate_cards_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_rate_cards FORCE ROW LEVEL SECURITY;
@@ -1012,7 +1069,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_recommendations (
     score double precision DEFAULT 0 NOT NULL,
     reason jsonb DEFAULT '{}'::jsonb NOT NULL,
     source text DEFAULT 'hybrid'::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_recommendations_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_recommendations FORCE ROW LEVEL SECURITY;
@@ -1030,7 +1088,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_recovery_plans (
     rto_minutes bigint DEFAULT 0 NOT NULL,
     rpo_minutes bigint DEFAULT 0 NOT NULL,
     steps jsonb DEFAULT '[]'::jsonb NOT NULL,
-    status text DEFAULT 'draft'::text NOT NULL
+    status text DEFAULT 'draft'::text NOT NULL,
+    CONSTRAINT mdm_recovery_plans_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_recovery_plans FORCE ROW LEVEL SECURITY;
@@ -1049,7 +1108,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_recovery_points (
     data jsonb DEFAULT '{}'::jsonb NOT NULL,
     checksum text DEFAULT ''::text NOT NULL,
     created_at text DEFAULT ''::text NOT NULL,
-    size_bytes bigint DEFAULT 0 NOT NULL
+    size_bytes bigint DEFAULT 0 NOT NULL,
+    CONSTRAINT mdm_recovery_points_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_recovery_points FORCE ROW LEVEL SECURITY;
@@ -1065,7 +1125,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_region_configs (
     primary_flag boolean DEFAULT false NOT NULL,
     endpoint text DEFAULT ''::text NOT NULL,
     latency_ms bigint DEFAULT 0 NOT NULL,
-    status text DEFAULT 'online'::text NOT NULL
+    status text DEFAULT 'online'::text NOT NULL,
+    CONSTRAINT mdm_region_configs_pkey PRIMARY KEY (region_id)
 );
 
 ALTER TABLE ONLY master_data.mdm_region_configs FORCE ROW LEVEL SECURITY;
@@ -1082,7 +1143,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_replication_configs (
     target_region text NOT NULL,
     replication_mode text DEFAULT 'asynchronous'::text NOT NULL,
     lag_max_ms bigint DEFAULT 0 NOT NULL,
-    status text DEFAULT 'stopped'::text NOT NULL
+    status text DEFAULT 'stopped'::text NOT NULL,
+    CONSTRAINT mdm_replication_configs_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_replication_configs FORCE ROW LEVEL SECURITY;
@@ -1097,7 +1159,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_search_history (
     query text DEFAULT ''::text NOT NULL,
     results_count bigint DEFAULT 0 NOT NULL,
     created_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT mdm_search_history_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_search_history FORCE ROW LEVEL SECURITY;
@@ -1110,7 +1173,8 @@ ALTER TABLE ONLY master_data.mdm_search_history FORCE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS master_data.mdm_search_indexes (
     key text NOT NULL,
     value jsonb DEFAULT '[]'::jsonb NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_search_indexes_pkey PRIMARY KEY (key)
 );
 
 ALTER TABLE ONLY master_data.mdm_search_indexes FORCE ROW LEVEL SECURITY;
@@ -1128,7 +1192,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_semantic_search_indexes (
     text text DEFAULT ''::text NOT NULL,
     metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_semantic_search_indexes_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_semantic_search_indexes FORCE ROW LEVEL SECURITY;
@@ -1145,7 +1210,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_sla_configs (
     unit text DEFAULT ''::text NOT NULL,
     penalty_per_min double precision DEFAULT 0 NOT NULL,
     measurement_window bigint DEFAULT 30 NOT NULL,
-    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_sla_configs_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_sla_configs FORCE ROW LEVEL SECURITY;
@@ -1158,13 +1224,15 @@ ALTER TABLE ONLY master_data.mdm_sla_configs FORCE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS master_data.mdm_sla_incidents (
     id text NOT NULL,
     config_id text DEFAULT ''::text NOT NULL,
-    tenant_id text DEFAULT ''::text NOT NULL,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
     incident_type text DEFAULT 'downtime'::text NOT NULL,
     duration_min bigint DEFAULT 0 NOT NULL,
     impact_severity text DEFAULT 'medium'::text NOT NULL,
     compensation_amount double precision DEFAULT 0 NOT NULL,
     status text DEFAULT 'open'::text NOT NULL,
-    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    deleted_at timestamp with time zone,
+    CONSTRAINT mdm_sla_incidents_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_sla_incidents FORCE ROW LEVEL SECURITY;
@@ -1177,14 +1245,16 @@ ALTER TABLE ONLY master_data.mdm_sla_incidents FORCE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS master_data.mdm_sla_measurements (
     id text NOT NULL,
     config_id text DEFAULT ''::text NOT NULL,
-    tenant_id text DEFAULT ''::text NOT NULL,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
     measured_value double precision DEFAULT 0 NOT NULL,
     target_value double precision DEFAULT 0 NOT NULL,
     met boolean DEFAULT false NOT NULL,
     measured_at text DEFAULT ''::text NOT NULL,
     window_start text DEFAULT ''::text NOT NULL,
     window_end text DEFAULT ''::text NOT NULL,
-    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    deleted_at timestamp with time zone,
+    CONSTRAINT mdm_sla_measurements_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_sla_measurements FORCE ROW LEVEL SECURITY;
@@ -1197,12 +1267,15 @@ ALTER TABLE ONLY master_data.mdm_sla_measurements FORCE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS master_data.mdm_subscriptions (
     id text NOT NULL,
     api_product_id text NOT NULL,
-    tenant_id text DEFAULT ''::text NOT NULL,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
     tier text DEFAULT 'free'::text NOT NULL,
     starts_at text DEFAULT ''::text NOT NULL,
     expires_at text DEFAULT ''::text NOT NULL,
     status text DEFAULT 'active'::text NOT NULL,
-    db_tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    db_tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    deleted_at timestamp with time zone,
+    CONSTRAINT ck_mdm_subscriptions_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text])))),
+    CONSTRAINT mdm_subscriptions_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_subscriptions FORCE ROW LEVEL SECURITY;
@@ -1219,7 +1292,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_tag_rules (
     auto_apply boolean DEFAULT false NOT NULL,
     priority integer DEFAULT 0 NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_tag_rules_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_tag_rules FORCE ROW LEVEL SECURITY;
@@ -1236,7 +1310,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_tagged_entities (
     confidence double precision DEFAULT 1.0 NOT NULL,
     applied_at text DEFAULT ''::text NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_tagged_entities_pkey PRIMARY KEY (entity_type, entity_id)
 );
 
 ALTER TABLE ONLY master_data.mdm_tagged_entities FORCE ROW LEVEL SECURITY;
@@ -1254,7 +1329,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_tags (
     description text DEFAULT ''::text NOT NULL,
     usage_count bigint DEFAULT 0 NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_tags_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_tags FORCE ROW LEVEL SECURITY;
@@ -1266,14 +1342,16 @@ ALTER TABLE ONLY master_data.mdm_tags FORCE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS master_data.mdm_usage_records (
     id text NOT NULL,
-    tenant_id text DEFAULT ''::text NOT NULL,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
     api_product_id text DEFAULT ''::text NOT NULL,
     endpoint text DEFAULT ''::text NOT NULL,
     requests bigint DEFAULT 0 NOT NULL,
     errors bigint DEFAULT 0 NOT NULL,
     data_transferred double precision DEFAULT 0 NOT NULL,
     recorded_at text DEFAULT ''::text NOT NULL,
-    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_uid uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    deleted_at timestamp with time zone,
+    CONSTRAINT mdm_usage_records_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_usage_records FORCE ROW LEVEL SECURITY;
@@ -1288,7 +1366,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_user_role_assignments (
     user_id text NOT NULL,
     role_id text NOT NULL,
     assigned_at text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_user_role_assignments_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_user_role_assignments FORCE ROW LEVEL SECURITY;
@@ -1359,7 +1438,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_version_branches (
     merged_at text,
     merged_by text,
     status text DEFAULT 'active'::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_version_branches_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_version_branches FORCE ROW LEVEL SECURITY;
@@ -1379,7 +1459,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_version_snapshots (
     created_by text DEFAULT ''::text NOT NULL,
     created_at text DEFAULT ''::text NOT NULL,
     comment text DEFAULT ''::text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_version_snapshots_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_version_snapshots FORCE ROW LEVEL SECURITY;
@@ -1398,7 +1479,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_workflow_history (
     comment text,
     recorded_at text NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_workflow_history_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_workflow_history FORCE ROW LEVEL SECURITY;
@@ -1415,7 +1497,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_workflow_templates (
     workflow_type text NOT NULL,
     steps jsonb DEFAULT '[]'::jsonb NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT mdm_workflow_templates_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_workflow_templates FORCE ROW LEVEL SECURITY;
@@ -1434,7 +1517,8 @@ CREATE TABLE IF NOT EXISTS master_data.mdm_workflows (
     status text NOT NULL,
     created_at text NOT NULL,
     updated_at text NOT NULL,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT mdm_workflows_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE ONLY master_data.mdm_workflows FORCE ROW LEVEL SECURITY;

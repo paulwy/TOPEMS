@@ -41,7 +41,19 @@ SET default_table_access_method = heap;
 
 CREATE TABLE IF NOT EXISTS ehs.audit_logs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    module character varying(50) NOT NULL,
+    action character varying(50) NOT NULL,
+    resource_type character varying(50) NOT NULL,
+    resource_id uuid,
+    user_id character varying(100),
+    user_name character varying(100),
+    old_values jsonb,
+    new_values jsonb,
+    ip_address character varying(50),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    tenant_id uuid,
+    deleted_at timestamp with time zone,
+    CONSTRAINT audit_logs_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='audit_logs' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.audit_logs FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -50,7 +62,24 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.drill_records (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    drill_no character varying(50) NOT NULL,
+    plan_id uuid,
+    drill_name character varying(200) NOT NULL,
+    drill_date timestamp with time zone,
+    participants jsonb DEFAULT '[]'::jsonb,
+    duration_hours numeric(10,2) NOT NULL,
+    location character varying(200),
+    summary text,
+    issues_found text,
+    improvements text,
+    attachments jsonb,
+    created_by character varying(100),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    tenant_id uuid,
+    CONSTRAINT drill_records_drill_no_key UNIQUE (drill_no),
+    CONSTRAINT drill_records_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='drill_records' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.drill_records FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -59,7 +88,23 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.emergency_plans (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    plan_no character varying(50) NOT NULL,
+    name character varying(200) NOT NULL,
+    plan_type character varying(50) NOT NULL,
+    scope text,
+    trigger_conditions text,
+    response_procedures text,
+    responsible_persons jsonb DEFAULT '[]'::jsonb,
+    contact_info text,
+    status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
+    created_by character varying(100),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    tenant_id uuid,
+    CONSTRAINT ck_emergency_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT emergency_plans_pkey PRIMARY KEY (id),
+    CONSTRAINT emergency_plans_plan_no_key UNIQUE (plan_no)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='emergency_plans' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.emergency_plans FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -68,7 +113,23 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.environmental_alerts (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    point_id uuid NOT NULL,
+    alert_type character varying(50) NOT NULL,
+    alert_level character varying(20) NOT NULL,
+    parameter character varying(50) NOT NULL,
+    threshold_value numeric(20,6) NOT NULL,
+    actual_value numeric(20,6) NOT NULL,
+    alert_time timestamp with time zone NOT NULL,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    handled_by character varying(100),
+    handled_time timestamp with time zone,
+    handle_result text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    tenant_id uuid,
+    deleted_at timestamp with time zone,
+    CONSTRAINT ck_environmental_alerts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT environmental_alerts_pkey PRIMARY KEY (id),
+    CONSTRAINT environmental_alerts_point_id_fkey FOREIGN KEY (point_id) REFERENCES ehs.monitoring_points(id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='environmental_alerts' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.environmental_alerts FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -77,7 +138,18 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.environmental_data (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    point_id uuid NOT NULL,
+    data_time timestamp with time zone NOT NULL,
+    parameter character varying(50) NOT NULL,
+    value numeric(20,6) NOT NULL,
+    unit character varying(20) NOT NULL,
+    quality character varying(20),
+    remarks text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    tenant_id uuid,
+    deleted_at timestamp with time zone,
+    CONSTRAINT environmental_data_pkey PRIMARY KEY (id),
+    CONSTRAINT environmental_data_point_id_fkey FOREIGN KEY (point_id) REFERENCES ehs.monitoring_points(id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='environmental_data' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.environmental_data FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -96,7 +168,9 @@ CREATE TABLE IF NOT EXISTS ehs.hazard_control_measures (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT hazard_control_measures_pkey PRIMARY KEY (id),
+    CONSTRAINT hazard_control_measures_hazard_id_fkey FOREIGN KEY (hazard_id) REFERENCES ehs.qa_ehs_hazards(id)
 );
 
 
@@ -113,14 +187,33 @@ CREATE TABLE IF NOT EXISTS ehs.hazard_risk_assessments (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT hazard_risk_assessments_pkey PRIMARY KEY (id),
+    CONSTRAINT hazard_risk_assessments_hazard_id_fkey FOREIGN KEY (hazard_id) REFERENCES ehs.qa_ehs_hazards(id)
 );
 
 
 
 CREATE TABLE IF NOT EXISTS ehs.health_checkups (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    employee_id character varying(50) NOT NULL,
+    employee_name character varying(100) NOT NULL,
+    checkup_date timestamp with time zone NOT NULL,
+    checkup_type character varying(50) NOT NULL,
+    institution character varying(200),
+    result_summary text,
+    abnormal_items jsonb,
+    recommendations text,
+    attachments jsonb,
+    next_checkup_date timestamp with time zone,
+    status character varying(20) DEFAULT 'completed'::character varying NOT NULL,
+    created_by character varying(100),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    tenant_id uuid,
+    CONSTRAINT ck_health_checkups_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT health_checkups_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='health_checkups' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.health_checkups FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -155,7 +248,8 @@ CREATE TABLE IF NOT EXISTS ehs.health_records (
     check_type character varying(50),
     check_date date,
     result character varying(50),
-    remarks text
+    remarks text,
+    CONSTRAINT health_records_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='health_records' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.health_records FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -164,8 +258,24 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.monitoring_points (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    point_no character varying(50) NOT NULL,
+    name character varying(200) NOT NULL,
+    point_type character varying(50) NOT NULL,
+    location character varying(200),
+    latitude numeric(10,6),
+    longitude numeric(10,6),
+    parameters jsonb DEFAULT '[]'::jsonb,
+    thresholds jsonb,
+    status character varying(20) DEFAULT 'active'::character varying NOT NULL,
+    last_data_time timestamp with time zone,
+    created_by character varying(100),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid
+    tenant_id uuid,
+    CONSTRAINT ck_monitoring_points_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT monitoring_points_pkey PRIMARY KEY (id),
+    CONSTRAINT monitoring_points_point_no_key UNIQUE (point_no)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='monitoring_points' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.monitoring_points FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -184,7 +294,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_accident_investigations (
     completed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_accident_investigations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_accident_investigations_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_accident_investigations_accident_id_fkey FOREIGN KEY (accident_id) REFERENCES ehs.qa_ehs_accidents(id)
 );
 
 
@@ -198,7 +312,10 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_accident_reviews (
     reviewer character varying(64),
     reviewed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_accident_reviews_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_accident_reviews_accident_id_fkey FOREIGN KEY (accident_id) REFERENCES ehs.qa_ehs_accidents(id)
 );
 
 
@@ -213,7 +330,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_accident_treatments (
     completed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_accident_treatments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_accident_treatments_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_accident_treatments_accident_id_fkey FOREIGN KEY (accident_id) REFERENCES ehs.qa_ehs_accidents(id)
 );
 
 
@@ -234,7 +355,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_accidents (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT qa_ehs_accidents_accident_no_key UNIQUE (accident_no),
+    CONSTRAINT qa_ehs_accidents_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_accidents' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_accidents FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -254,7 +377,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_alerts (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT qa_ehs_alerts_pkey PRIMARY KEY (id),
+    CONSTRAINT uq_qa_ehs_alerts_no UNIQUE (alert_no)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_alerts' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_alerts FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -280,18 +405,12 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_compliance_evaluations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
     non_complianceitems jsonb DEFAULT '[]'::jsonb,
     corrective_actions text,
-    assessment_no character varying(64),
-    assessment_type character varying(64),
-    assessment_date timestamp with time zone,
-    assessor character varying(128),
-    scope character varying(64),
-    score numeric(10,2),
-    result character varying(32),
-    period_start timestamp with time zone,
-    period_end timestamp with time zone,
-    tenant_id uuid
+    CONSTRAINT ck_qa_ehs_compliance_evaluations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_compliance_evaluations_eval_no_key UNIQUE (eval_no),
+    CONSTRAINT qa_ehs_compliance_evaluations_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_compliance_evaluations' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_compliance_evaluations FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -312,7 +431,12 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_compliance_items (
     deadline date,
     status character varying(32) DEFAULT 'pending'::character varying,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_compliance_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_compliance_items_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_compliance_items_evaluation_id_fkey FOREIGN KEY (evaluation_id) REFERENCES ehs.qa_ehs_compliance_evaluations(id),
+    CONSTRAINT qa_ehs_compliance_items_regulation_id_fkey FOREIGN KEY (regulation_id) REFERENCES ehs.qa_ehs_environmental_regulations(id)
 );
 
 
@@ -334,7 +458,10 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_contraindications (
     remarks text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_contraindications_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_contraindications_pkey PRIMARY KEY (id)
 );
 
 
@@ -359,7 +486,12 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_detection_records (
     attachments jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_detection_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_detection_records_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_detection_records_record_no_key UNIQUE (record_no),
+    CONSTRAINT qa_ehs_detection_records_factor_id_fkey FOREIGN KEY (factor_id) REFERENCES ehs.qa_ehs_hazard_factors(id)
 );
 
 
@@ -384,14 +516,13 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_discharge_permits (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
     permit_category character varying(64),
     discharge_limits jsonb DEFAULT '[]'::jsonb,
     monitoring_requirements text,
-    title character varying(256),
-    issue_date date,
-    effective_date date,
-    expiry_date date,
-    tenant_id uuid
+    CONSTRAINT ck_qa_ehs_discharge_permits_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_discharge_permits_permit_no_key UNIQUE (permit_no),
+    CONSTRAINT qa_ehs_discharge_permits_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_discharge_permits' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_discharge_permits FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -421,17 +552,16 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_disease_cases (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
     gender character varying(16),
     age integer,
     hazard_factor character varying(128),
     work_related boolean DEFAULT false NOT NULL,
     attachments jsonb,
     reported_at timestamp with time zone,
-    diagnosis_date timestamp with time zone,
-    diagnosis_hospital character varying(256),
-    treatment text,
-    compensation text,
-    tenant_id uuid
+    CONSTRAINT ck_qa_ehs_disease_cases_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_disease_cases_case_no_key UNIQUE (case_no),
+    CONSTRAINT qa_ehs_disease_cases_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_disease_cases' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_disease_cases FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -452,7 +582,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_drill_evaluations (
     evaluated_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid
+    tenant_id uuid,
+    CONSTRAINT qa_ehs_drill_evaluations_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_drill_evaluations_drill_id_fkey FOREIGN KEY (drill_id) REFERENCES ehs.qa_ehs_drill_records(id)
 );
 
 
@@ -473,7 +605,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_drill_plans (
     related_plan_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_drill_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_drill_plans_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_drill_plans_plan_no_key UNIQUE (plan_no)
 );
 
 
@@ -493,7 +629,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_drill_problems (
     verified_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_drill_problems_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_drill_problems_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_drill_problems_drill_id_fkey FOREIGN KEY (drill_id) REFERENCES ehs.qa_ehs_drill_records(id)
 );
 
 
@@ -522,7 +662,10 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_drill_records (
     issues_found text,
     improvements text,
     created_by character varying(128),
-    tenant_id uuid
+    tenant_id uuid,
+    CONSTRAINT qa_ehs_drill_records_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_drill_records_record_no_key UNIQUE (record_no),
+    CONSTRAINT qa_ehs_drill_records_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES ehs.qa_ehs_drill_plans(id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_drill_records' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_drill_records FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -539,7 +682,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_emergency_plan_approvals (
     approved_at timestamp with time zone,
     order_num integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_emergency_plan_approvals_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_emergency_plan_approvals_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_emergency_plan_approvals_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES ehs.qa_ehs_emergency_plans(id)
 );
 
 
@@ -555,7 +702,10 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_emergency_plan_supplies (
     responsible_person character varying(64),
     remarks text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_emergency_plan_supplies_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_emergency_plan_supplies_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES ehs.qa_ehs_emergency_plans(id)
 );
 
 
@@ -569,7 +719,10 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_emergency_plan_versions (
     changed_at timestamp with time zone,
     content text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_emergency_plan_versions_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_emergency_plan_versions_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES ehs.qa_ehs_emergency_plans(id)
 );
 
 
@@ -596,7 +749,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_emergency_plans (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid
+    tenant_id uuid,
+    CONSTRAINT qa_ehs_emergency_plans_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_emergency_plans_plan_no_key UNIQUE (plan_no)
 );
 
 
@@ -613,7 +768,8 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_employees (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
+    CONSTRAINT qa_ehs_employees_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_employees' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_employees FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -642,7 +798,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_env_monitor_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid
+    tenant_id uuid,
+    CONSTRAINT qa_ehs_env_monitor_records_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_env_monitor_records_record_no_key UNIQUE (record_no)
 );
 
 
@@ -657,7 +815,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_environment (
     monitored_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_environment_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_environment_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_environment_record_no_key UNIQUE (record_no)
 );
 
 
@@ -686,7 +848,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_environment_incidents (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid
+    tenant_id uuid,
+    CONSTRAINT qa_ehs_environment_incidents_incident_no_key UNIQUE (incident_no),
+    CONSTRAINT qa_ehs_environment_incidents_pkey PRIMARY KEY (id)
 );
 
 
@@ -708,7 +872,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_environment_monitors (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    created_by uuid
+    created_by uuid,
+    CONSTRAINT qa_ehs_environment_monitors_monitor_no_key UNIQUE (monitor_no),
+    CONSTRAINT qa_ehs_environment_monitors_pkey PRIMARY KEY (id)
 );
 
 
@@ -735,7 +901,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_environmental_regulations (
     keywords jsonb DEFAULT '[]'::jsonb,
     applicable_scopes jsonb DEFAULT '[]'::jsonb,
     created_by character varying(128),
-    tenant_id uuid
+    tenant_id uuid,
+    CONSTRAINT qa_ehs_environmental_regulations_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_environmental_regulations_reg_no_key UNIQUE (reg_no)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_environmental_regulations' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_environmental_regulations FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -744,25 +912,27 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.qa_ehs_hazard_factors (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    factor_no character varying(64),
+    factor_no character varying(64) NOT NULL,
     name character varying(256) NOT NULL,
-    name_en character varying(256),
-    factor_type character varying(64),
+    factor_type character varying(64) NOT NULL,
     category character varying(64),
     description text,
     hazard_level character varying(32),
     exposure_limit character varying(128),
     unit character varying(32),
-    sources text,
-    affected_positions text,
-    affected_count integer DEFAULT 0,
+    sources jsonb,
+    affected_positions jsonb,
+    affected_count integer,
     status character varying(32) DEFAULT 'active'::character varying,
     remarks text,
-    tenant_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    en text
+    name_en character varying(255),
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_hazard_factors_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_hazard_factors_factor_no_key UNIQUE (factor_no),
+    CONSTRAINT qa_ehs_hazard_factors_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_hazard_factors' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_hazard_factors FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -781,7 +951,10 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_hazard_rectifications (
     completed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_hazard_rectifications_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_hazard_rectifications_hazard_id_fkey FOREIGN KEY (hazard_id) REFERENCES ehs.qa_ehs_hazards(id)
 );
 
 
@@ -794,7 +967,10 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_hazard_verifications (
     remarks text,
     verified_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_hazard_verifications_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_hazard_verifications_hazard_id_fkey FOREIGN KEY (hazard_id) REFERENCES ehs.qa_ehs_hazards(id)
 );
 
 
@@ -831,7 +1007,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_hazardous_materials (
     description text,
     hazards jsonb,
     storage_requirements text,
-    handling_requirements text
+    handling_requirements text,
+    CONSTRAINT qa_ehs_hazardous_materials_material_no_key UNIQUE (material_no),
+    CONSTRAINT qa_ehs_hazardous_materials_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_hazardous_materials' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_hazardous_materials FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -840,26 +1018,25 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.qa_ehs_hazards (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    hazard_no character varying(64),
+    hazard_no character varying(64) NOT NULL,
     title character varying(256) NOT NULL,
-    title_en character varying(256),
     description text,
     category character varying(64),
     level character varying(32),
-    source character varying(128),
-    location character varying(256),
-    reported_by character varying(128),
+    source character varying(64),
+    location character varying(128),
+    reported_by character varying(64),
     reported_at timestamp with time zone,
-    status character varying(32) DEFAULT 'active'::character varying,
+    status character varying(32) DEFAULT 'reported'::character varying,
     inspection_id uuid,
-    tenant_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    assessments jsonb,
-    controls jsonb,
-    en text,
-    locale character varying(16)
+    title_en character varying(255),
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_hazards_hazard_no_key UNIQUE (hazard_no),
+    CONSTRAINT qa_ehs_hazards_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_hazards_inspection_id_fkey FOREIGN KEY (inspection_id) REFERENCES ehs.qa_ehs_inspection_records(id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_hazards' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_hazards FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -882,7 +1059,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_health_abnormalities (
     responsible_person character varying(64),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_health_abnormalities_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_health_abnormalities_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_health_abnormalities_record_id_fkey FOREIGN KEY (record_id) REFERENCES ehs.qa_ehs_health_exam_records(id)
 );
 
 
@@ -902,7 +1083,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_health_exam_plans (
     organizer character varying(64),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_health_exam_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_health_exam_plans_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_health_exam_plans_plan_no_key UNIQUE (plan_no)
 );
 
 
@@ -937,7 +1122,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_health_exam_records (
     attachments jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_health_exam_records_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_health_exam_records_record_no_key UNIQUE (record_no),
+    CONSTRAINT qa_ehs_health_exam_records_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES ehs.qa_ehs_health_exam_plans(id)
 );
 
 
@@ -958,7 +1147,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_health_trainings (
     attachments jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_health_trainings_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_health_trainings_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_health_trainings_training_no_key UNIQUE (training_no)
 );
 
 
@@ -971,7 +1164,8 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_incident_actions (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT qa_ehs_incident_actions_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_incident_actions' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_incident_actions FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -989,7 +1183,10 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_inspection_items (
     order_num integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_inspection_items_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_inspection_items_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES ehs.qa_ehs_inspection_plans(id)
 );
 
 
@@ -1008,7 +1205,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_inspection_plans (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid
+    tenant_id uuid,
+    CONSTRAINT qa_ehs_inspection_plans_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_inspection_plans_plan_no_key UNIQUE (plan_no)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_inspection_plans' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_inspection_plans FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1024,7 +1223,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_inspection_record_items (
     result character varying(32),
     remarks text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_inspection_record_items_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_inspection_record_items_item_id_fkey FOREIGN KEY (item_id) REFERENCES ehs.qa_ehs_inspection_items(id),
+    CONSTRAINT qa_ehs_inspection_record_items_record_id_fkey FOREIGN KEY (record_id) REFERENCES ehs.qa_ehs_inspection_records(id)
 );
 
 
@@ -1045,7 +1248,10 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_inspection_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid
+    tenant_id uuid,
+    CONSTRAINT qa_ehs_inspection_records_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_inspection_records_record_no_key UNIQUE (record_no),
+    CONSTRAINT qa_ehs_inspection_records_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES ehs.qa_ehs_inspection_plans(id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_inspection_records' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_inspection_records FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1065,7 +1271,8 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_investigations (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT qa_ehs_investigations_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_investigations' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_investigations FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1087,7 +1294,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_material_stocks (
     remarks text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_material_stocks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_material_stocks_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_material_stocks_material_id_fkey FOREIGN KEY (material_id) REFERENCES ehs.qa_ehs_hazardous_materials(id)
 );
 
 
@@ -1114,13 +1325,12 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_msds (
     other_info text,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
     product_name character varying(256),
     manufacturer character varying(256),
     emergency_phone character varying(64),
-    composition_info text,
-    exposure_controls text,
-    reactivity_info text,
-    tenant_id uuid
+    CONSTRAINT qa_ehs_msds_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_msds_material_id_fkey FOREIGN KEY (material_id) REFERENCES ehs.qa_ehs_hazardous_materials(id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_msds' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_msds FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1143,7 +1353,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_protection_measures (
     remarks text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_protection_measures_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_protection_measures_measure_no_key UNIQUE (measure_no),
+    CONSTRAINT qa_ehs_protection_measures_pkey PRIMARY KEY (id)
 );
 
 
@@ -1158,7 +1372,8 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_reviews (
     reviewed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT qa_ehs_reviews_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_reviews' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_reviews FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1176,7 +1391,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_risk_controls (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT qa_ehs_risk_controls_measure_no_key UNIQUE (measure_no),
+    CONSTRAINT qa_ehs_risk_controls_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_risk_controls' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_risk_controls FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1200,11 +1417,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_risks (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    location text,
-    department_id uuid,
-    mitigation jsonb,
-    created_by uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_risks_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_risks_risk_no_key UNIQUE (risk_no)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_risks' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_risks FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1228,7 +1443,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_stock_records (
     recipient character varying(64),
     remarks text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_stock_records_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_stock_records_record_no_key UNIQUE (record_no),
+    CONSTRAINT qa_ehs_stock_records_material_id_fkey FOREIGN KEY (material_id) REFERENCES ehs.qa_ehs_hazardous_materials(id)
 );
 
 
@@ -1246,7 +1465,11 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_sync_records (
     error_msg text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT ck_qa_ehs_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT qa_ehs_sync_records_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_sync_records_sync_no_key UNIQUE (sync_no)
 );
 
 
@@ -1267,7 +1490,9 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_training_certificates (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT qa_ehs_training_certificates_certificate_no_key UNIQUE (certificate_no),
+    CONSTRAINT qa_ehs_training_certificates_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_training_certificates' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_training_certificates FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1286,7 +1511,10 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_trainings (
     status character varying(32) DEFAULT 'scheduled'::character varying,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    CONSTRAINT qa_ehs_trainings_pkey PRIMARY KEY (id),
+    CONSTRAINT qa_ehs_trainings_training_no_key UNIQUE (training_no)
 );
 
 
@@ -1302,7 +1530,8 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_treatment_actions (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT qa_ehs_treatment_actions_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_treatment_actions' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_treatment_actions FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1319,7 +1548,8 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_treatments (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT qa_ehs_treatments_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='qa_ehs_treatments' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.qa_ehs_treatments FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1328,7 +1558,31 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.risk_assessments (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    assessment_no character varying(50) NOT NULL,
+    title character varying(200) NOT NULL,
+    assessment_type character varying(50) NOT NULL,
+    risk_source character varying(100) NOT NULL,
+    risk_category character varying(50) NOT NULL,
+    likelihood integer NOT NULL,
+    consequence integer NOT NULL,
+    risk_level character varying(20) NOT NULL,
+    risk_score integer NOT NULL,
+    description text,
+    affected_area character varying(200),
+    affected_persons integer,
+    existing_controls jsonb,
+    status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
+    assessor character varying(100),
+    assessment_date timestamp with time zone,
+    review_date timestamp with time zone,
+    created_by character varying(100),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    tenant_id uuid,
+    CONSTRAINT ck_risk_assessments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT risk_assessments_assessment_no_key UNIQUE (assessment_no),
+    CONSTRAINT risk_assessments_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='risk_assessments' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.risk_assessments FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1337,7 +1591,23 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.risk_controls (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    assessment_id uuid NOT NULL,
+    control_type character varying(50) NOT NULL,
+    control_measure text NOT NULL,
+    implementation_plan text,
+    responsible_person character varying(100),
+    target_date timestamp with time zone,
+    completion_date timestamp with time zone,
+    effectiveness character varying(50),
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    created_by character varying(100),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    tenant_id uuid,
+    CONSTRAINT ck_risk_controls_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT risk_controls_pkey PRIMARY KEY (id),
+    CONSTRAINT risk_controls_assessment_id_fkey FOREIGN KEY (assessment_id) REFERENCES ehs.risk_assessments(id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='risk_controls' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.risk_controls FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1346,7 +1616,23 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.safety_checks (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    check_no character varying(50) NOT NULL,
+    check_type character varying(50) NOT NULL,
+    inspector character varying(100) NOT NULL,
+    check_date timestamp with time zone,
+    location character varying(200),
+    result character varying(20) NOT NULL,
+    issues jsonb DEFAULT '[]'::jsonb,
+    attachments jsonb,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    created_by character varying(100),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    tenant_id uuid,
+    CONSTRAINT ck_safety_checks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT safety_checks_check_no_key UNIQUE (check_no),
+    CONSTRAINT safety_checks_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='safety_checks' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.safety_checks FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1372,7 +1658,9 @@ CREATE TABLE IF NOT EXISTS ehs.safety_hazards (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     status character varying(32) DEFAULT 'active'::character varying,
-    tenant_id uuid
+    tenant_id uuid,
+    CONSTRAINT safety_hazards_hazard_no_key UNIQUE (hazard_no),
+    CONSTRAINT safety_hazards_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='safety_hazards' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.safety_hazards FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1381,7 +1669,30 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.safety_incidents (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    incident_no character varying(50) NOT NULL,
+    title character varying(200) NOT NULL,
+    incident_type character varying(50) NOT NULL,
+    incident_level character varying(20) NOT NULL,
+    location character varying(200),
+    incident_time timestamp with time zone NOT NULL,
+    description text,
+    casualties integer DEFAULT 0,
+    injuries integer DEFAULT 0,
+    economic_loss numeric(15,2),
+    cause_analysis text,
+    corrective_actions jsonb,
+    responsible_persons jsonb,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    handled_by character varying(100),
+    handled_time timestamp with time zone,
+    attachments jsonb,
+    created_by character varying(100),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    tenant_id uuid,
+    CONSTRAINT safety_incidents_incident_no_key UNIQUE (incident_no),
+    CONSTRAINT safety_incidents_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='safety_incidents' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.safety_incidents FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1394,28 +1705,37 @@ CREATE TABLE IF NOT EXISTS ehs.schema_defense_ledger (
     tables_count integer DEFAULT 0 NOT NULL,
     cols_count integer DEFAULT 0 NOT NULL,
     applied_at timestamp with time zone DEFAULT now() NOT NULL,
-    last_skipped_ensure boolean DEFAULT false NOT NULL
+    last_skipped_ensure boolean DEFAULT false NOT NULL,
+    CONSTRAINT schema_defense_ledger_pkey PRIMARY KEY (service_schema)
 );
 
 
 
 CREATE TABLE IF NOT EXISTS ehs.training_programs (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone,
-    program_no character varying(64),
-    plan_no character varying(64),
-    title character varying(256),
-    training_type character varying(64),
-    trainer character varying(128),
-    instructor character varying(128),
-    description text,
+    program_no character varying(50) NOT NULL,
+    title character varying(200) NOT NULL,
+    training_type character varying(50) NOT NULL,
     content text,
-    planned_date timestamp with time zone,
+    objectives text,
+    target_audience text,
+    duration_hours numeric(10,2),
+    training_method character varying(50),
+    instructor character varying(100),
+    location character varying(200),
     start_date timestamp with time zone,
-    status character varying(32) DEFAULT 'active'::character varying,
+    end_date timestamp with time zone,
+    max_participants integer,
+    materials jsonb,
+    status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
+    completion_rate numeric(5,2),
+    created_by character varying(100),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
     tenant_id uuid,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    CONSTRAINT training_programs_pkey PRIMARY KEY (id),
+    CONSTRAINT training_programs_program_no_key UNIQUE (program_no)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='training_programs' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.training_programs FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1451,7 +1771,10 @@ CREATE TABLE IF NOT EXISTS ehs.training_records (
     content text,
     materials jsonb DEFAULT '[]'::jsonb,
     result character varying(32),
-    pass_rate numeric(5,2)
+    pass_rate numeric(5,2),
+    CONSTRAINT training_records_pkey PRIMARY KEY (id),
+    CONSTRAINT uq_training_records_record_no UNIQUE (record_no),
+    CONSTRAINT training_records_program_id_fkey FOREIGN KEY (program_id) REFERENCES ehs.training_programs(id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='training_records' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.training_records FORCE ROW LEVEL SECURITY; END IF; END $$;
@@ -1460,7 +1783,26 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.vaccination_records (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    employee_id character varying(50) NOT NULL,
+    employee_name character varying(100) NOT NULL,
+    vaccine_name character varying(100) NOT NULL,
+    vaccine_type character varying(50) NOT NULL,
+    vaccination_date timestamp with time zone NOT NULL,
+    dose_number integer NOT NULL,
+    institution character varying(200),
+    batch_number character varying(50),
+    expiry_date timestamp with time zone,
+    next_dose_date timestamp with time zone,
+    remarks text,
+    attachments jsonb,
+    status character varying(20) DEFAULT 'completed'::character varying NOT NULL,
+    created_by character varying(100),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    tenant_id uuid,
+    CONSTRAINT ck_vaccination_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT vaccination_records_pkey PRIMARY KEY (id)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='vaccination_records' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.vaccination_records FORCE ROW LEVEL SECURITY; END IF; END $$;

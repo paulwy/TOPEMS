@@ -1,27 +1,26 @@
 -- TOPEMS Mobile Service - Database Initialization
 
 -- Mobile Users Table
-CREATE TABLE IF NOT EXISTS mobile_users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    nickname VARCHAR(255),
-    phone VARCHAR(50),
-    email VARCHAR(255),
-    avatar_url VARCHAR(500),
-    department VARCHAR(255),
-    position VARCHAR(255),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.mobile_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    username character varying(255) NOT NULL,
+    password_hash character varying(255) NOT NULL,
+    nickname character varying(255),
+    phone text,
+    email text,
+    avatar_url character varying(500),
+    department character varying(255),
+    "position" character varying(255),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 
 -- Refresh Tokens Table
-CREATE TABLE IF NOT EXISTS refresh_tokens (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
-    refresh_token VARCHAR(512) NOT NULL UNIQUE,
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS iam.refresh_tokens (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT refresh_tokens_pkey PRIMARY KEY (id)
 );
 
 -- Notifications Table
@@ -30,73 +29,83 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 -- 不直连本表。历史定义已删除，索引见 database/postgres/02_create_performance_indexes.sql 同批清理。
 
 -- Devices Table
-CREATE TABLE IF NOT EXISTS devices (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
-    device_id VARCHAR(255) NOT NULL,
-    device_name VARCHAR(255) NOT NULL,
-    device_type VARCHAR(100) NOT NULL,
-    os_type VARCHAR(100) NOT NULL,
-    os_version VARCHAR(50) NOT NULL,
-    app_version VARCHAR(50) NOT NULL,
-    push_token VARCHAR(512),
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    last_login_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.devices (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    device_id character varying(255) NOT NULL,
+    device_name character varying(255) NOT NULL,
+    device_type character varying(100) NOT NULL,
+    os_type character varying(100) NOT NULL,
+    os_version character varying(50) NOT NULL,
+    app_version character varying(50) NOT NULL,
+    push_token character varying(512),
+    is_active boolean DEFAULT true NOT NULL,
+    last_login_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 
 -- Mobile Scan Records Table (for new scan API)
-CREATE TABLE IF NOT EXISTS mobile_scan_records (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
-    scan_type VARCHAR(100) NOT NULL,
-    scan_data TEXT NOT NULL,
-    result_data JSONB,
-    location_lat DOUBLE PRECISION,
-    location_lng DOUBLE PRECISION,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.mobile_scan_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    scan_type character varying(100) NOT NULL,
+    scan_data text NOT NULL,
+    result_data jsonb,
+    location_lat double precision,
+    location_lng double precision,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 
 -- Offline Sync Records Table
-CREATE TABLE IF NOT EXISTS offline_sync_records (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
-    sync_type VARCHAR(100) NOT NULL,
-    sync_data JSONB NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'pending',
-    synced_count INTEGER NOT NULL DEFAULT 0,
-    failed_count INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    completed_at TIMESTAMP WITH TIME ZONE
+CREATE TABLE IF NOT EXISTS public.offline_sync_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    sync_type character varying(100) NOT NULL,
+    sync_data jsonb NOT NULL,
+    status character varying(50) DEFAULT 'pending'::character varying NOT NULL,
+    synced_count integer DEFAULT 0 NOT NULL,
+    failed_count integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    completed_at timestamp with time zone,
+    deleted_at timestamp with time zone,
+    CONSTRAINT ck_offline_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
 );
 
 -- Shortcuts Table
-CREATE TABLE IF NOT EXISTS shortcuts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
-    name VARCHAR(100) NOT NULL,
-    icon VARCHAR(100) NOT NULL,
-    action_type VARCHAR(100) NOT NULL,
-    action_params JSONB,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.shortcuts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    name character varying(100) NOT NULL,
+    icon character varying(100) NOT NULL,
+    action_type character varying(100) NOT NULL,
+    action_params jsonb,
+    sort_order integer DEFAULT 0 NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 
 -- User Settings Table
-CREATE TABLE IF NOT EXISTS user_settings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE UNIQUE,
-    language VARCHAR(50) NOT NULL DEFAULT 'zh-CN',
-    theme VARCHAR(50) NOT NULL DEFAULT 'light',
-    notification_enabled BOOLEAN NOT NULL DEFAULT true,
-    sound_enabled BOOLEAN NOT NULL DEFAULT true,
-    auto_sync BOOLEAN NOT NULL DEFAULT true,
-    sync_interval INTEGER NOT NULL DEFAULT 300,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.user_settings (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    tenant_id uuid NOT NULL,
+    user_id character varying(255) NOT NULL,
+    theme character varying(50) DEFAULT 'light'::character varying,
+    language character varying(20) DEFAULT 'zh-CN'::character varying,
+    timezone character varying(50) DEFAULT 'Asia/Shanghai'::character varying,
+    notification_enabled boolean DEFAULT true,
+    notification_sound boolean DEFAULT false,
+    auto_refresh boolean DEFAULT false,
+    refresh_interval integer DEFAULT 60,
+    default_dashboard character varying(100) DEFAULT 'overview'::character varying,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT user_settings_pkey PRIMARY KEY (id)
 );
 
 -- Legacy Tables (existing)
@@ -164,111 +173,120 @@ CREATE TABLE IF NOT EXISTS mobile_tasks (
 );
 
 -- Offline Operations Table
-CREATE TABLE IF NOT EXISTS offline_operations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
-    operation_type VARCHAR(50) NOT NULL,
-    entity_type VARCHAR(100) NOT NULL,
-    entity_id VARCHAR(255),
-    operation_data JSONB NOT NULL,
-    sync_status VARCHAR(50) NOT NULL DEFAULT 'pending',
-    sync_attempts INTEGER NOT NULL DEFAULT 0,
-    last_sync_error TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    synced_at TIMESTAMP WITH TIME ZONE
+CREATE TABLE IF NOT EXISTS public.offline_operations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    operation_type character varying(50) NOT NULL,
+    entity_type character varying(100) NOT NULL,
+    entity_id character varying(255),
+    operation_data jsonb NOT NULL,
+    sync_status character varying(50) DEFAULT 'pending'::character varying NOT NULL,
+    sync_attempts integer DEFAULT 0 NOT NULL,
+    last_sync_error text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    synced_at timestamp with time zone,
+    deleted_at timestamp with time zone
 );
 
 -- Sync Policies Table
-CREATE TABLE IF NOT EXISTS sync_policies (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE UNIQUE,
-    auto_sync_enabled BOOLEAN NOT NULL DEFAULT true,
-    sync_interval_minutes INTEGER NOT NULL DEFAULT 5,
-    sync_on_network_change BOOLEAN NOT NULL DEFAULT true,
-    conflict_strategy VARCHAR(50) NOT NULL DEFAULT 'server优先',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.sync_policies (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    auto_sync_enabled boolean DEFAULT true NOT NULL,
+    sync_interval_minutes integer DEFAULT 5 NOT NULL,
+    sync_on_network_change boolean DEFAULT true NOT NULL,
+    conflict_strategy character varying(50) DEFAULT 'server优先'::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 
 -- Push Devices Table
-CREATE TABLE IF NOT EXISTS push_devices (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
-    device_token VARCHAR(512) NOT NULL UNIQUE,
-    platform VARCHAR(50) NOT NULL,
-    device_model VARCHAR(255) NOT NULL,
-    app_version VARCHAR(50) NOT NULL,
-    os_version VARCHAR(50) NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.push_devices (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    device_token character varying(512) NOT NULL,
+    platform character varying(50) NOT NULL,
+    device_model character varying(255) NOT NULL,
+    app_version character varying(50) NOT NULL,
+    os_version character varying(50) NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 
 -- Push Notifications Table
-CREATE TABLE IF NOT EXISTS push_notifications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(255) NOT NULL,
-    body TEXT NOT NULL,
-    notification_type VARCHAR(100) NOT NULL DEFAULT 'info',
-    data JSONB,
-    target_type VARCHAR(50) NOT NULL,
-    target_ids TEXT[] NOT NULL,
-    status VARCHAR(50) NOT NULL DEFAULT 'pending',
-    sent_count INTEGER NOT NULL DEFAULT 0,
-    delivered_count INTEGER NOT NULL DEFAULT 0,
-    clicked_count INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    sent_at TIMESTAMP WITH TIME ZONE
+CREATE TABLE IF NOT EXISTS public.push_notifications (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    title character varying(255) NOT NULL,
+    body text NOT NULL,
+    notification_type character varying(100) DEFAULT 'info'::character varying NOT NULL,
+    data jsonb,
+    target_type character varying(50) NOT NULL,
+    target_ids text[] NOT NULL,
+    status character varying(50) DEFAULT 'pending'::character varying NOT NULL,
+    sent_count integer DEFAULT 0 NOT NULL,
+    delivered_count integer DEFAULT 0 NOT NULL,
+    clicked_count integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    sent_at timestamp with time zone,
+    deleted_at timestamp with time zone,
+    CONSTRAINT ck_push_notifications_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
 );
 
 -- Push Templates Table
-CREATE TABLE IF NOT EXISTS push_templates (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL UNIQUE,
-    title_template TEXT NOT NULL,
-    body_template TEXT NOT NULL,
-    notification_type VARCHAR(100) NOT NULL,
-    description TEXT,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.push_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(255) NOT NULL,
+    title_template text NOT NULL,
+    body_template text NOT NULL,
+    notification_type character varying(100) NOT NULL,
+    description text,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 
 -- Barcode Scans Table
-CREATE TABLE IF NOT EXISTS barcode_scans (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
-    barcode VARCHAR(500) NOT NULL,
-    barcode_type VARCHAR(50) NOT NULL,
-    decoded_data TEXT NOT NULL,
-    location_lat DOUBLE PRECISION,
-    location_lng DOUBLE PRECISION,
-    result_action VARCHAR(100),
-    result_data JSONB,
-    scanned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.barcode_scans (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    barcode character varying(500) NOT NULL,
+    barcode_type character varying(50) NOT NULL,
+    decoded_data text NOT NULL,
+    location_lat double precision,
+    location_lng double precision,
+    result_action character varying(100),
+    result_data jsonb,
+    scanned_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT barcode_scans_pkey PRIMARY KEY (id)
 );
 
 -- Photo Uploads Table
-CREATE TABLE IF NOT EXISTS photo_uploads (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
-    file_name VARCHAR(255) NOT NULL,
-    file_path VARCHAR(500) NOT NULL,
-    file_size BIGINT NOT NULL,
-    mime_type VARCHAR(100) NOT NULL,
-    width INTEGER,
-    height INTEGER,
-    compression_ratio DOUBLE PRECISION,
-    has_watermark BOOLEAN NOT NULL DEFAULT false,
-    watermark_text VARCHAR(255),
-    upload_status VARCHAR(50) NOT NULL DEFAULT 'uploading',
-    upload_progress INTEGER NOT NULL DEFAULT 0,
-    thumbnail_url VARCHAR(500),
-    location_lat DOUBLE PRECISION,
-    location_lng DOUBLE PRECISION,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    uploaded_at TIMESTAMP WITH TIME ZONE
+CREATE TABLE IF NOT EXISTS public.photo_uploads (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    file_name character varying(255) NOT NULL,
+    file_path character varying(500) NOT NULL,
+    file_size bigint NOT NULL,
+    mime_type character varying(100) NOT NULL,
+    width integer,
+    height integer,
+    compression_ratio double precision,
+    has_watermark boolean DEFAULT false NOT NULL,
+    watermark_text character varying(255),
+    upload_status character varying(50) DEFAULT 'uploading'::character varying NOT NULL,
+    upload_progress integer DEFAULT 0 NOT NULL,
+    thumbnail_url character varying(500),
+    location_lat double precision,
+    location_lng double precision,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    uploaded_at timestamp with time zone,
+    deleted_at timestamp with time zone
 );
 
 -- Mobile Approvals Table
@@ -294,18 +312,19 @@ CREATE TABLE IF NOT EXISTS mobile_approvals (
 );
 
 -- Media Files Table
-CREATE TABLE IF NOT EXISTS media_files (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    file_name VARCHAR(255) NOT NULL,
-    file_type VARCHAR(50) NOT NULL,
-    file_url VARCHAR(500),
-    file_size BIGINT NOT NULL,
-    mime_type VARCHAR(100) NOT NULL,
-    uploaded_by VARCHAR(255) NOT NULL,
-    uploaded_by_name VARCHAR(255),
-    description TEXT,
-    tags TEXT[],
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.media_files (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    file_name character varying(255) NOT NULL,
+    file_type character varying(50) NOT NULL,
+    file_url character varying(500),
+    file_size bigint NOT NULL,
+    mime_type character varying(100) NOT NULL,
+    uploaded_by character varying(255) NOT NULL,
+    uploaded_by_name character varying(255),
+    description text,
+    tags text[],
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 
 -- Inventory Items Table

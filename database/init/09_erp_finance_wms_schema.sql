@@ -21,7 +21,10 @@ CREATE TABLE IF NOT EXISTS erp.asset_categories (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     name_en character varying(255),
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    CONSTRAINT asset_categories_code_key UNIQUE (code),
+    CONSTRAINT asset_categories_pkey PRIMARY KEY (id),
+    CONSTRAINT asset_categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES erp.asset_categories(id) ON DELETE SET NULL
 );
 
 -- ---------- 2. 缺表：finance.reconcile_orders ----------
@@ -40,7 +43,9 @@ CREATE TABLE IF NOT EXISTS finance.reconcile_orders (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
+    CONSTRAINT reconcile_orders_order_no_key UNIQUE (order_no),
+    CONSTRAINT reconcile_orders_pkey PRIMARY KEY (id)
 );
 
 -- ---------- 3. 缺列：erp.bank_accounts（主库残壳仅 id+status，补全权威 16 列） ----------

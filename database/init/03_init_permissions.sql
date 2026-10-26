@@ -18,15 +18,19 @@
 -- ============================================================
 
 -- 创建 tenants 表（如果不存在）
-CREATE TABLE IF NOT EXISTS tenants (
-    id UUID PRIMARY KEY DEFAULT '00000000-0000-0000-0000-000000000001',
-    name VARCHAR(128) NOT NULL DEFAULT 'Default Tenant',
-    slug VARCHAR(64) NOT NULL DEFAULT 'default',
-    status VARCHAR(32) DEFAULT 'active',
-    plan VARCHAR(32) DEFAULT 'enterprise',
-    settings JSONB DEFAULT '{}',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.tenants (
+    id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
+    name character varying(128) DEFAULT 'Default Tenant'::character varying NOT NULL,
+    slug character varying(64) DEFAULT 'default'::character varying NOT NULL,
+    status character varying(32) DEFAULT 'active'::character varying,
+    plan character varying(32) DEFAULT 'enterprise'::character varying,
+    settings jsonb DEFAULT '{}'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    tenant_id uuid,
+    deleted_at timestamp with time zone,
+    CONSTRAINT ck_tenants_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT tenants_pkey PRIMARY KEY (id)
 );
 
 -- 插入默认租户（On-Premise 模式）
@@ -44,58 +48,75 @@ VALUES (
 -- ============================================================
 
 -- 用户表
-CREATE TABLE IF NOT EXISTS core_users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username VARCHAR(64) NOT NULL UNIQUE,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    full_name VARCHAR(128),
-    phone VARCHAR(32),
-    avatar_url VARCHAR(512),
-    status VARCHAR(32) DEFAULT 'active',
-    is_superuser BOOLEAN DEFAULT FALSE,
-    tenant_id UUID DEFAULT '00000000-0000-0000-0000-000000000001',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    last_login_at TIMESTAMP
+CREATE TABLE IF NOT EXISTS public.core_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    username character varying(64) NOT NULL,
+    email text NOT NULL,
+    password_hash character varying(255) NOT NULL,
+    full_name character varying(128),
+    phone text,
+    avatar_url character varying(512),
+    status character varying(32) DEFAULT 'active'::character varying,
+    is_superuser boolean DEFAULT false,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_login_at timestamp with time zone,
+    deleted_at timestamp with time zone,
+    full_name_en character varying(128),
+    CONSTRAINT ck_core_users_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[])))),
+    CONSTRAINT core_users_email_key UNIQUE (email),
+    CONSTRAINT core_users_pkey PRIMARY KEY (id),
+    CONSTRAINT core_users_username_key UNIQUE (username)
 );
 
 -- 角色表
-CREATE TABLE IF NOT EXISTS core_roles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(64) NOT NULL UNIQUE,
-    description TEXT,
-    tenant_id UUID DEFAULT '00000000-0000-0000-0000-000000000001',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.core_roles (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(64) NOT NULL,
+    description text,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_roles_name_key UNIQUE (name),
+    CONSTRAINT core_roles_pkey PRIMARY KEY (id)
 );
 
 -- 权限表
-CREATE TABLE IF NOT EXISTS core_permissions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(128) NOT NULL UNIQUE,
-    name VARCHAR(128) NOT NULL,
-    description TEXT,
-    resource VARCHAR(64),
-    action VARCHAR(32),
-    level INTEGER DEFAULT 1,
-    created_at TIMESTAMP DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.core_permissions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code character varying(128) NOT NULL,
+    name character varying(128) NOT NULL,
+    description text,
+    resource character varying(64),
+    action character varying(32),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    level integer DEFAULT 1,
+    deleted_at timestamp with time zone,
+    tenant_id uuid,
+    CONSTRAINT core_permissions_code_key UNIQUE (code),
+    CONSTRAINT core_permissions_pkey PRIMARY KEY (id)
 );
 
 -- 用户角色关联表
-CREATE TABLE IF NOT EXISTS core_user_roles (
-    user_id UUID NOT NULL REFERENCES core_users(id) ON DELETE CASCADE,
-    role_id UUID NOT NULL REFERENCES core_roles(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT NOW(),
-    PRIMARY KEY (user_id, role_id)
+CREATE TABLE IF NOT EXISTS public.core_user_roles (
+    user_id uuid NOT NULL,
+    role_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    tenant_id uuid,
+    CONSTRAINT core_user_roles_pkey PRIMARY KEY (user_id, role_id),
+    CONSTRAINT core_user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.core_users(id)
 );
 
 -- 角色权限关联表
-CREATE TABLE IF NOT EXISTS core_role_permissions (
-    role_id UUID NOT NULL REFERENCES core_roles(id) ON DELETE CASCADE,
-    permission_id UUID NOT NULL REFERENCES core_permissions(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT NOW(),
-    PRIMARY KEY (role_id, permission_id)
+CREATE TABLE IF NOT EXISTS public.core_role_permissions (
+    role_id uuid NOT NULL,
+    permission_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    tenant_id uuid,
+    CONSTRAINT core_role_permissions_pkey PRIMARY KEY (role_id, permission_id),
+    CONSTRAINT core_role_permissions_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.core_roles(id)
 );
 
 -- ============================================================
