@@ -19,10 +19,25 @@
 - **MasterQualityPage 4 tab**：总览（getDashboard+getScore 指标卡）/检查记录（listChecks+runCheck）/规则管理（listRules+createRule+deleteRule）/建议与修复（getSuggestions+approve/reject+getFixHistory）。
 - 挂载 /master/quality + 侧栏第 9 项。i18n zh/en 各 40 key。smoke 2 测试。验证：tsc 0 / eslint 0 / vitest 2 passed。
 
-### 待建 3 页
-- knowledgeGraph_v53（16/16）
-- semanticSearch_v57（23/22）
-- disasterRecovery_v56（25/24）
+### 第四批：knowledgeGraph 知识图谱 ✅ 完成（commit ae4ce8d0a5，已推送）
+- **MasterKnowledgeGraphPage 4 tab**：图谱概览（getOverview 指标卡+getRelationshipTypes）/路径分析（findPath+graphTraversal）/实体搜索（searchEntities+getEntityDetails）/关系管理（createRelationship+deleteRelationship）。
+- 挂载 /master/knowledge-graph + 侧栏第 10 项（master_data:knowledge:read）。i18n zh/en 各 33 key。smoke 1 测试。
+- 验证：tsc 0 / eslint 0 / vitest 1 passed。
+
+### 第五批：semanticSearch 语义库 ✅ 完成（commit 332fc03c33，已推送）
+- **MasterSemanticSearchPage 3 tab**：语义检索（getSearchStats+searchSemantic+reindexAll）/图谱操作（getSubgraph+findShortestPath）/标签管理（createTag+getTagsForEntity）。
+- 挂载 /master/semantic-search + 侧栏第 11 项（master_data:semantic:read）。i18n zh/en 各 33 key。smoke 1 测试。
+- 修正（首跑 tsc 2 错）：getTagsForEntity 双参（entityType+id）；Stack flexWrap 入 sx。
+- 验证：tsc 0 / eslint 0 / vitest 1 passed。
+
+### 第六批：disasterRecovery 灾难恢复 ✅ 完成（commit 5551ae1b54，已推送）
+- **MasterDisasterRecoveryPage 4 tab**：恢复点（getRecoveryStatus+listRecoveryPoints+createRecoveryPoint+restoreFromPoint）/恢复计划（getPlanProgress+createRecoveryPlan+executeRecoveryPlan+testRecovery）/业务连续性（getContinuityScore+listContinuityPlans+createContinuityPlan+testContinuityPlan）/复制与切换（getReplicationStatus+getRegionHealth+getFailoverHistory+initiateFailover）。
+- 挂载 /master/disaster-recovery + 侧栏第 12 项（master_data:disaster:read）。i18n zh/en 各 61 key。smoke 1 测试。
+- 修正（首跑 tsc 5 错）：ListRestart/DatabaseBackup 不在 lucide→History/Database；Stack flexWrap 入 sx。
+- 验证：tsc 0 / eslint 0 / vitest 1 passed。
+
+### ⑥ 全量收口 ✅（2026-10-26）
+> 六批全部完成并推送（75147d9c83 / fe6f6a70f8 / 9f1b3f64c6 / ae4ce8d0a5 / 332fc03c33 / 5551ae1b54）。**master-data 解冻完成**：12 导航项全挂载、后端 129 handler 全接真、前端 126 方法全封装、每页 smoke 齐全。冻结面剩余：① DSH 18 端点（前端面板 4–5 人日）、⑦ MCP prompts（0.5–1 人日，依赖规范对齐）。
 
 ## 冻结面解冻 ②：occupational 前端 3 页签接入（2026-10-26）✅ 完成
 
