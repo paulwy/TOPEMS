@@ -26,6 +26,20 @@
 - **顺清 2 处遗留 unused import**（handler.rs / workflow_handlers.rs）。
 - 验证：cargo clippy -p topems-ai --lib -D correctness 0/0；prompts 单测 4 passed。
 
+## F4 台账终态核销（2026-10-26，用户拍板直接决策）✅ 完成
+
+> 用户授权"根据项目实际评估后直接决策"。全量实证（宽正则含泛型调用对账 + 全仓引用核查）结论：**F4 无可静态删除项**，全部 🔴 分层归位。
+
+| 面 | 实测计数 | 决策 |
+|---|---|---|
+| core contract_stubs | 0 条（文件已删，10-24 清零） | ✅ 已闭环，台账刷新终态 |
+| mobile BFF 兜底 | 120 条 route **120/120 全活消费**（apps/web apiClient.mobile 136 调用；含 /scan 泛型调用假阴性纠正） | 保留待上游替换，无可删 |
+| master-data 版本段预埋 | 166 条 = 123 活消费（⑥六页/①DSH 实调）+ 43 零消费 | 43 零消费被 integration tests + openapi 引用，属预埋契约骨架，删需连锁删测试，成本>收益 → 保留 |
+| BE-08 349 条 | 业务勾选 | 唯一真外部项，转业务 |
+
+- 两本台账（contract-stub-mapping / contract-fallback-domains）已刷新终态块，旧计数（125/78/82、134、43）标注作废。
+- 口径修正：早前窄正则把 mobile `/scan` 判零消费，实为 `post<ScanResult>('scan')` 泛型调用假阴性，宽正则纠正后全命中。
+
 ## 终态门禁快照（2026-10-26）✅ 完成
 
 > 技术面本地可闭环项已清零（代码 TODO/FIXME 扫描 21 处均为测试数据/示例/跟踪注释；gen-nginx-drill-conf.sh root 漂移已在 09fae7a6b2 回补；F4 台账剩余 🔴 全部挂在 BE-08 业务勾选）。全量门禁重跑快照：
