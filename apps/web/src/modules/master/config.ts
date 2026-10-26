@@ -32,6 +32,7 @@ const MASTER_PATHS = {
   publicMasterData: '/master/public-master-data',
   versioning: '/master/versioning',
   governance: '/master/governance',
+  quality: '/master/quality',
 } as const;
 
 // ---- 路由配置 ----
@@ -123,6 +124,18 @@ const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
   requiredPermissions: ['master:data-asset:read'],
   action: 'read',
 };
+const qualityRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.quality,
+  element: lazyWithRetry(() => import('@/pages/master/MasterQualityPage'), 'MasterQualityPage'),
+  module: 'master',
+  code: 'master-quality',
+  title: i18n.t('master.quality'),
+  titleKey: 'master.quality',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:quality:read'],
+  action: 'read',
+};
 const governanceRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.governance,
   element: lazyWithRetry(
@@ -175,6 +188,7 @@ export const masterModuleConfig: RouteModuleConfig = {
     publicMasterDataRoute,
     versioningRoute,
     governanceRoute,
+    qualityRoute,
   ],
 };
 
@@ -284,6 +298,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.governance.desc'),
+    },
+    {
+      code: 'master-quality',
+      label: i18n.t('master.quality'),
+      labelKey: 'master.quality',
+      icon: 'ShieldCheck',
+      path: MASTER_PATHS.quality,
+      permission: 'master_data:quality:read',
+      order: 8,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.quality.desc'),
     },
   ],
 };

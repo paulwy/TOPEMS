@@ -10,8 +10,12 @@
 - 验证：tsc 0 / eslint 0 errors / vitest 2+22 passed。
 - 修正（首跑 tsc 6 错）：FileClock 不在 lucide→ClipboardList；store API 是 addNotification 非 notify；getResourcePermissions 无分页参数；MergeBranchRequest 需 branch_id+target_version+strategy。
 
-### 待建 5 页（每页同版式：tab 控制台 + 挂载 + i18n + smoke）
-- governance_v58（24 handler / 23 方法）
+### 第二批：governance 治理面板 ✅ 完成（commit fe6f6a70f8，已推送）
+- **MasterGovernancePage 4 tab**：成熟度（getDimensionScores+assessMaturity+getMaturityHistory）/改进计划（createImprovementPlan+trackProgress）/治理工作流（listWorkflows+startWorkflow+approveStep）/数据产品（listDataProducts+createDataProduct）。
+- 挂载 /master/governance + 侧栏第 8 项（master_data:governance:read）。i18n zh/en 各 40 key。smoke 2 测试。
+- 验证：tsc 0 / eslint 0 errors / vitest 2 passed。
+
+### 待建 4 页（每页同版式：tab 控制台 + 挂载 + i18n + smoke）
 - quality_v51（21/21）
 - knowledgeGraph_v53（16/16）
 - semanticSearch_v57（23/22）
