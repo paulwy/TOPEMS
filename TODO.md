@@ -1,3 +1,12 @@
+## 部署文档口径漂移修正：smoke-prod 命令契约（2026-10-26）✅ 已修复
+
+> 防文档漂移审计（对标 P2-6 nginx 口径漂移先例）：核对 macos-deployment.md / xingzhai-ai-runbook.md 引用的部署脚本 CLI 契约与真实脚本一致性。
+
+- **发现（2 处漂移）**：两文档 smoke-prod 命令写 `--base localhost:8098`——① 缺 `http://` 协议前缀（脚本用法要求 `--base http://localhost:80`）；② **无凭据**（smoke-prod.sh 已无默认口令，`--user/--password` 或 `SMOKE_ADMIN/SMOKE_PASS` 必填，否则直接失败）；③ 端口 8098 为 dev 态 BFF，生产走 nginx 门户 80 或 BFF 8099。
+- **已核对无漂移**：verify-nginx-prod.sh（--conf/--repo-conf/--base/--services/--probe/--insecure 与文档一致）、gen-nginx-drill-conf.sh、web_contract_smoke.py、setup-db.sh、install.sh 路径/参数。
+- **修复**：两文档 smoke-prod 改为 `SMOKE_ADMIN=<u> SMOKE_PASS=<p> bash scripts/deploy/smoke-prod.sh --base http://localhost:80`（门户）／`http://localhost:8099`（BFF 直连）。（commit d6e255ff86，已推送）
+- 8098 保留场景（非漂移）：mobile_contract_smoke.py 8099 优先 + 8098 dev fallback（设计如此）；system-onboarding 历史记录（语境正确不改）。
+
 ## 迁移缺陷审计：20261026090000 training_records 加固遗留（2026-10-26）✅ 已修复
 
 > 用户询问"20261026090000 迁移是否有缺陷未修复" → 连库实测审计，发现并修复 1 个坐实缺陷 + 1 个收紧：
