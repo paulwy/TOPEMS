@@ -26,6 +26,10 @@
 - **顺清 2 处遗留 unused import**（handler.rs / workflow_handlers.rs）。
 - 验证：cargo clippy -p topems-ai --lib -D correctness 0/0；prompts 单测 4 passed。
 
+## 上线清单同步终态基线（2026-10-26）✅ 完成
+
+> go-live-checklist.md 顶部新增「0. 状态基线」权威块：阶段判断（准上线/预发布、无技术阻断）、0.1 今日门禁快照（7 项全绿）、0.2 F4 兜底终态（core 0 / mobile 120 全活 / master 166=123+43）、0.3 剩余外部阻塞 6 项（生产部署三件套 / CI Billing / EAS 真机 / BE-08 349 勾选 / 30 天观测 / node-forge）。1-11 节通用模板保留待上线人工勾。
+
 ## F4 台账终态核销（2026-10-26，用户拍板直接决策）✅ 完成
 
 > 用户授权"根据项目实际评估后直接决策"。全量实证（宽正则含泛型调用对账 + 全仓引用核查）结论：**F4 无可静态删除项**，全部 🔴 分层归位。
