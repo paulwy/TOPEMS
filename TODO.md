@@ -1,3 +1,7 @@
+## 部署面：macOS 生产机（xingzhai）部署指南（2026-10-26）✅ 完成
+
+> 用户询问"xingzhai 能否当生产机 / Mac 可不可以做生产线"。实测局域网 192.168.110.0/24：**当前无可 SSH 主机**（ARP 全表 .7/.33/.57/.90/.146/.155/.158 仅 .7:80/443 与 .89:80 开放，均为纯 Web 设备；xingzhai ping/mDNS/ARP 三重不可达，等待其接入后验证）。结论：**Mac 可作生产机，推荐方案 A = Linux 虚拟机 + systemd**（UTM/lima/OrbStack 跑 Ubuntu，install.sh + systemd 单元 + Linux nginx conf 原样，与 Linux 生产零差异，等效 Windows/WSL2 思路）；方案 B 原生 macOS（launchd + drill conf）为备选；Docker 因 2026-10-08 弃用不推荐。文档 `docs/deploy/macos-deployment.md`（commit f97fc50b90，已推送）含前置条件 / VM 部署 / nginx 8099 单上游 / 数据迁移（airdeair→xingzhai）/ smoke-prod+verify-nginx+契约 smoke 三件套验证 / 运维 / 差异总表。xingzhai 接入后可实跑三件套闭环（go-live §0.3 项 1）。
+
 ## 冻结面解冻 ①：DSH 增强能力前端面板（2026-10-26）✅ 完成
 
 > 后端 svc/ai dsh 路由 6 组全真（agent/performance/enhanced/copilot/governance/smart-forms）；审计时前端 agent/copilot/governance/smart-forms 均已就绪，**仅 enhanced（kg/rag/multi-agent）+ performance 16 方法零封装零页面**。三批解冻完成：
