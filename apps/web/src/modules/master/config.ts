@@ -31,6 +31,7 @@ const MASTER_PATHS = {
   commercial: '/master/commercial',
   publicMasterData: '/master/public-master-data',
   versioning: '/master/versioning',
+  governance: '/master/governance',
 } as const;
 
 // ---- 路由配置 ----
@@ -122,6 +123,21 @@ const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
   requiredPermissions: ['master:data-asset:read'],
   action: 'read',
 };
+const governanceRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.governance,
+  element: lazyWithRetry(
+    () => import('@/pages/master/MasterGovernancePage'),
+    'MasterGovernancePage'
+  ),
+  module: 'master',
+  code: 'master-governance',
+  title: i18n.t('master.governance'),
+  titleKey: 'master.governance',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:governance:read'],
+  action: 'read',
+};
 const versioningRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.versioning,
   element: lazyWithRetry(
@@ -158,6 +174,7 @@ export const masterModuleConfig: RouteModuleConfig = {
     commercialRoute,
     publicMasterDataRoute,
     versioningRoute,
+    governanceRoute,
   ],
 };
 
@@ -255,6 +272,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.versioning.desc'),
+    },
+    {
+      code: 'master-governance',
+      label: i18n.t('master.governance'),
+      labelKey: 'master.governance',
+      icon: 'Gauge',
+      path: MASTER_PATHS.governance,
+      permission: 'master_data:governance:read',
+      order: 7,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.governance.desc'),
     },
   ],
 };

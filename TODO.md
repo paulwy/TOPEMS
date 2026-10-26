@@ -1,3 +1,22 @@
+## 冻结面解冻 ⑥：master-data 5 业务模块前端页（2026-10-26）🟡 进行中
+
+> 后端 svc/master-data 16 模块全实现（129 handler sqlx），前端 api/master 12 文件 126 方法全封装；6 个页面已挂载（dataAssetCatalog/schemaRegistry/lineageAnalytics/aiGovernance/commercial/publicMasterData），**缺 6 页 = versioning/governance/quality/knowledgeGraph/semanticSearch/disasterRecovery**。已选 versioning 为首批并完成。
+
+### 第一批：versioning 版本管理 ✅ 完成（commit 75147d9c83，已推送）
+- **MasterVersioningPage 5 tab**：版本历史（listHistory）/分支（createBranch+mergeBranch Dialog）/审计日志（queryAuditLog 分页）/权限（getResourcePermissions）/合规（getComplianceAudit）。实体定位输入（默认 mdm_material/MAT-001）+ 查询。
+- 挂载：MASTER_PATHS.versioning + versioningRoute（master_data:versioning:read）+ 侧栏第 7 项。
+- i18n：zh/en master.json 各 56 key。
+- smoke：master-versioning.smoke.test.tsx 2 测试（样本渲染断言）。
+- 验证：tsc 0 / eslint 0 errors / vitest 2+22 passed。
+- 修正（首跑 tsc 6 错）：FileClock 不在 lucide→ClipboardList；store API 是 addNotification 非 notify；getResourcePermissions 无分页参数；MergeBranchRequest 需 branch_id+target_version+strategy。
+
+### 待建 5 页（每页同版式：tab 控制台 + 挂载 + i18n + smoke）
+- governance_v58（24 handler / 23 方法）
+- quality_v51（21/21）
+- knowledgeGraph_v53（16/16）
+- semanticSearch_v57（23/22）
+- disasterRecovery_v56（25/24）
+
 ## 冻结面解冻 ②：occupational 前端 3 页签接入（2026-10-26）✅ 完成
 
 > 用户拍板接真。实测发现**后端 16 桩已在更早批次去内存桩接真**（git `422cd1efe4`/`9840b6bdf1`：21 handler 全 sqlx + 3 表全建（qa_ehs_health_exam_plans/qa_ehs_health_exam_records/qa_ehs_contraindications，当前 0 行））——② 剩余工作仅前端接入。
