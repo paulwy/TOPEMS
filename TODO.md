@@ -1,3 +1,13 @@
+## DDL 双轨根治：上游建议 A/B 项落地（2026-10-26）✅ 已完成
+
+> 用户转述上游两条精确修复建议，评估后全采纳实施：A = CHECK 前 status 列守卫；B = init 快照对齐迁移链（根治 DDL 双轨）。
+
+- **根因实证**：`database/init/10_ehs_schema.sql` 是**未被迁移链消费的幽灵快照**（postgres/init.sql 已收敛为说明文件、ehs 建表全走迁移链）：training_records 缺 8 列（employee_id/employee_name/enrollment_date/completion_date/score/certificate_no/certificate_expiry/remarks）、status DEFAULT 'active'；health_records 缺 3 列（chronic_diseases/emergency_contact/emergency_phone）、birth_date 类型 date（迁移链终态 timestamptz）。任何按该快照建库的环境结构与迁移链不符 = 漂移根源。
+- **A 项（`20261026080000_ehs_training_records_status_guard.sql`）**：置于 090000 之前——status 列缺失环境先补列（DEFAULT 'ongoing'），并把 'active'/'enrolled'/'planned' 遗留默认值归一 'ongoing'，保证 090000 的 CHECK 在任何环境可建。已应用 + 复现验证（不带 status INSERT 成功 RETURNING 'ongoing'）。
+- **B 项（`20261026120000_ehs_ddl_dual_track_align.sql`）**：幂等补齐两表缺失列/类型/DEFAULT 至迁移链终态（对齐 dev 实测：train 29 列 / health 28 列 / birth_date timestamptz / program_id·employee_id 可空对齐前端契约）。已应用。
+- **init 快照同步**：`database/init/10_ehs_schema.sql` 两表定义重写为终态 + 头部加注「参考快照·已对齐迁移链·新库一律走迁移链」（消除幽灵双轨）。
+- **验证**：validate.sh 483 文件 0 errors / 0 checksum errors；dev 应用后终态核对通过。（commit 待推送后回填）
+
 ## 部署文档口径漂移修正：smoke-prod 命令契约（2026-10-26）✅ 已修复
 
 > 防文档漂移审计（对标 P2-6 nginx 口径漂移先例）：核对 macos-deployment.md / xingzhai-ai-runbook.md 引用的部署脚本 CLI 契约与真实脚本一致性。

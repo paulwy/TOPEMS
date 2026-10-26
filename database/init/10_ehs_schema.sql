@@ -13,6 +13,23 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+-- =============================================================
+-- 本文件为 ehs 域结构「参考快照」（2026-10-26 对齐迁移链终态）
+-- -------------------------------------------------------------
+-- 背景：本文件曾是未被迁移链消费的静态 DDL 快照，ehs 两表真实建表/演进全部走
+--       database/migrations/（迁移链），快照严重滞后（training_records 缺 8 列、
+--       health_records 缺 3 列、birth_date 类型 date、status DEFAULT 'active'），
+--       构成「DDL 双轨」漂移根源。
+-- 处置（2026-10-26，上游建议 B 项落地）：
+--   1) 新增迁移 20261026120000_ehs_ddl_dual_track_align.sql，把两表补齐至迁移链
+--      终态（dev 库实测：training_records 29 列 / health_records 28 列 / birth_date
+--      timestamptz / status DEFAULT 三态对齐）。
+--   2) 本文件两张表定义已同步为与迁移链相同的终态（仅作参考/追溯，不再作为建库输入）。
+--   3) status DEFAULT：training_records 统一 'ongoing'（三态 ongoing/completed/failed）；
+--      health_records 保持 'active'（与迁移链终态一致）。
+-- 新库/生产建库一律以迁移链为准；本文件任何修改需与迁移链同步，否则视为漂移。
+-- =============================================================
+
 
 CREATE SCHEMA IF NOT EXISTS ehs;
 
@@ -112,7 +129,22 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.health_records (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    employee_id character varying(128) NOT NULL,
+    employee_name character varying(128) NOT NULL,
+    gender character varying(16),
+    birth_date timestamp with time zone,
+    blood_type character varying(16),
+    allergies jsonb DEFAULT '[]'::jsonb,
+    chronic_diseases jsonb DEFAULT '[]'::jsonb,
+    medical_history text,
+    emergency_contact character varying(128),
+    emergency_phone character varying(32),
+    status character varying(32) DEFAULT 'active'::character varying NOT NULL,
+    created_by character varying(128),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
+    tenant_id uuid,
     record_no character varying(64),
     department character varying(100),
     "position" character varying(100),
@@ -120,18 +152,6 @@ CREATE TABLE IF NOT EXISTS ehs.health_records (
     hazard_factors jsonb,
     allergy_history text,
     contact_info text,
-    employee_id character varying(128),
-    employee_name character varying(128),
-    gender character varying(16),
-    birth_date date,
-    blood_type character varying(16),
-    allergies jsonb DEFAULT '[]'::jsonb,
-    medical_history text,
-    status character varying(32) DEFAULT 'active'::character varying,
-    created_by character varying(128),
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    tenant_id uuid,
     check_type character varying(50),
     check_date date,
     result character varying(50),
@@ -1404,7 +1424,21 @@ DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.r
 
 CREATE TABLE IF NOT EXISTS ehs.training_records (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    program_id uuid,
+    employee_id character varying(128),
+    employee_name character varying(128),
+    enrollment_date timestamp with time zone,
+    completion_date timestamp with time zone,
+    score numeric,
+    certificate_no character varying(64),
+    certificate_expiry timestamp with time zone,
+    status character varying(32) DEFAULT 'ongoing'::character varying NOT NULL,
+    remarks text,
+    created_by character varying(128),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
+    tenant_id uuid,
     record_no character varying(64),
     title character varying(200),
     training_type character varying(64),
@@ -1417,13 +1451,7 @@ CREATE TABLE IF NOT EXISTS ehs.training_records (
     content text,
     materials jsonb DEFAULT '[]'::jsonb,
     result character varying(32),
-    pass_rate numeric(5,2),
-    program_id uuid,
-    status character varying(32) DEFAULT 'active'::character varying,
-    created_by character varying(128),
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    tenant_id uuid
+    pass_rate numeric(5,2)
 );
 
 DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='ehs' AND c.relname='training_records' AND c.relrowsecurity) THEN ALTER TABLE ONLY ehs.training_records FORCE ROW LEVEL SECURITY; END IF; END $$;
