@@ -36,6 +36,15 @@
 - **顺修 storybook 构建回归**（升级后 build-storybook 首次跑通，70 stories）：恢复 29800fb8ad 误删的 .storybook/main.ts + preview.tsx + storybook-theme.ts；vite.config.ts fix-cjs-interop-build closeBundle 加守卫；恢复 chartPalette.ts（3 stories 引用）+ Avatar.stories.tsx 清 AvatarGroup 残留块。
 - 验证：tsc 0 / eslint 0 / vitest 关键 5 passed / storybook build 全绿 / audit 7→1。
 
+## P3-3 收尾：eslint 残留 11 处 unused-vars 清零（2026-10-26）✅ 完成
+
+> 前批收敛后残留 11 warnings（全部在解冻面新建页），本批清完——eslint 全量 **0 problems**（连 warning 级也归零）。commit a544fd213f 已推送。
+
+- Master{DisasterRecovery,KnowledgeGraph,Quality,SemanticSearch}Page：删未用 Box import 各 1 处
+- MasterKnowledgeGraphPage/MasterVersioningPage：删未用 useQueryClient 解构 + import 移除；MasterVersioningPage 另删未用 permPage useState
+- DshRagPage：删未用 retrieveText useState + map 回调未用索引 i
+- 验证：tsc 0 error / eslint 全量 exit 0 / 6 页 smoke 8/8 passed
+
 ## 冻结面全景收口 ✅（2026-10-26）
 > **全部冻结面处理完毕**：②④⑥ 解冻✅、③ 保留后端/前端不接线、⑤⑧ 删除、① DSH 增强面解冻✅、⑦ MCP prompts 解冻✅。本地可闭环的技术冻结面清零。
 
