@@ -238,7 +238,10 @@ const dshRagRoute: RouteConfigV2<DshRagPageProps> = {
 
 const dshKnowledgeRoute: RouteConfigV2<DshKnowledgePageProps> = {
   path: AI_PATHS.dshKnowledge,
-  element: lazyWithRetry(() => import('@/pages/ai/DshKnowledgePage'), '@/pages/ai/DshKnowledgePage'),
+  element: lazyWithRetry(
+    () => import('@/pages/ai/DshKnowledgePage'),
+    '@/pages/ai/DshKnowledgePage'
+  ),
   module: 'ai',
   code: 'ai-dsh-knowledge',
   title: i18n.t('ai.nav.ai-dshKnowledge'),

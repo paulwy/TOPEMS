@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
-import { Avatar, AvatarGroup } from './Avatar';
+import { Avatar } from './Avatar';
 import { Box } from '@mui/material';
 
 const meta = {
@@ -155,33 +155,6 @@ const AllSizes: Story = {
         size='xl'
       />
     </Box>
-  ),
-};
-
-const AvatarGroupDefault: Story = {
-  render: () => (
-    <AvatarGroup
-      avatars={[
-        { name: '张三', src: 'https://i.pravatar.cc/150?img=1' },
-        { name: '李四', src: 'https://i.pravatar.cc/150?img=2' },
-        { name: '王五', src: 'https://i.pravatar.cc/150?img=3' },
-        { name: '赵六', src: 'https://i.pravatar.cc/150?img=4' },
-        { name: '钱七', src: 'https://i.pravatar.cc/150?img=5' },
-        { name: '孙八', src: 'https://i.pravatar.cc/150?img=6' },
-        { name: '周九', src: 'https://i.pravatar.cc/150?img=7' },
-      ]}
-      max={5}
-    />
-  ),
-};
-
-const AvatarGroupSmall: Story = {
-  render: () => (
-    <AvatarGroup
-      avatars={[{ name: '张三' }, { name: '李四' }, { name: '王五' }, { name: '赵六' }]}
-      size='sm'
-      max={3}
-    />
   ),
 };
 

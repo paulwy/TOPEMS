@@ -129,7 +129,10 @@ const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
 };
 const disasterRecoveryRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.disasterRecovery,
-  element: lazyWithRetry(() => import('@/pages/master/MasterDisasterRecoveryPage'), 'MasterDisasterRecoveryPage'),
+  element: lazyWithRetry(
+    () => import('@/pages/master/MasterDisasterRecoveryPage'),
+    'MasterDisasterRecoveryPage'
+  ),
   module: 'master',
   code: 'master-disaster-recovery',
   title: i18n.t('master.disasterRecovery'),
@@ -141,7 +144,10 @@ const disasterRecoveryRoute: RouteConfigV2<Record<string, never>> = {
 };
 const semanticSearchRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.semanticSearch,
-  element: lazyWithRetry(() => import('@/pages/master/MasterSemanticSearchPage'), 'MasterSemanticSearchPage'),
+  element: lazyWithRetry(
+    () => import('@/pages/master/MasterSemanticSearchPage'),
+    'MasterSemanticSearchPage'
+  ),
   module: 'master',
   code: 'master-semantic-search',
   title: i18n.t('master.semanticSearch'),
@@ -153,7 +159,10 @@ const semanticSearchRoute: RouteConfigV2<Record<string, never>> = {
 };
 const knowledgeGraphRoute: RouteConfigV2<Record<string, never>> = {
   path: MASTER_PATHS.knowledgeGraph,
-  element: lazyWithRetry(() => import('@/pages/master/MasterKnowledgeGraphPage'), 'MasterKnowledgeGraphPage'),
+  element: lazyWithRetry(
+    () => import('@/pages/master/MasterKnowledgeGraphPage'),
+    'MasterKnowledgeGraphPage'
+  ),
   module: 'master',
   code: 'master-knowledge-graph',
   title: i18n.t('master.knowledgeGraph'),
