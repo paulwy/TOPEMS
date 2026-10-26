@@ -1,3 +1,10 @@
+## 部署后运维与决策建议文档：macos-production-ops.md（2026-10-26）✅ 已完成
+
+> 承接部署闭环后 §0.3 待决策 4 项（证书/DB 备份/外网开放/首次登录换密），产出决策材料 + 运维参考。
+
+- **新增 `docs/deploy/macos-production-ops.md`**：待决策总览（含推荐默认值：②备份今日落、④换密立即做，①③随上线节奏）｜证书 4 选项对比（推荐演示期自签、对外前 Let's Encrypt DNS-01）｜DB 备份方案（pg_dump 每日 03:00 + launchd plist 模板 + 保留 7 份 + 每周异地 + 恢复演练，含生产禁 migrate run 注记）｜外网最小开放矩阵与对策（443 白名单/SSH 密钥/端口禁令）｜日常运维速查（launchd/nginx reload/health 探针）+ 升级与回滚流程｜决策清单（勾选后回传回填 checklist）。
+- 定位：决策材料（xingzhai 侧执行 + airdeair 侧接收决策回传更新 §0.3），不直接操作生产机。
+
 ## xingzhai 生产部署完成：回报核对 + go-live-checklist §0.3 回填（2026-10-26）✅ 已完成
 
 > xingzhai 侧按 `docs/deploy/xingzhai-ai-runbook.md` 完成部署并回传 §10 回报（方案 B：原生 macOS + launchd，无 Linux VM）。
