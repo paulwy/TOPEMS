@@ -15,7 +15,19 @@
 - 挂载 /ai/dsh-rag + 侧栏第 13 项（ai:knowledge:read）。i18n zh/en 各 40 key。smoke 1 测试。
 
 ### ① 全量收口 ✅（2026-10-26）
-> 三批完成并推送（b6116687d3 / 98f77853ad / 82949d5a7f）。**DSH 增强面解冻完成**：enhanced+performance 16 方法全封装、2 页全挂载、每页 smoke 齐全。冻结面剩余：**⑦ MCP prompts（0.5–1 人日，依赖 prompts 规范对齐）**。
+> 三批完成并推送（b6116687d3 / 98f77853ad / 82949d5a7f）。**DSH 增强面解冻完成**：enhanced+performance 16 方法全封装、2 页全挂载、每页 smoke 齐全。
+
+## 冻结面解冻 ⑦：MCP prompts 规范对齐（2026-10-26）✅ 完成
+
+> 原 `prompts=None` 有意冻结（62 工具 description 承载说明，`server.rs:301`）。按 MCP 协议规范对齐补最小实现（commit bb3ef2b431，已推送）。
+
+- **新建 dsh/mcp/prompts.rs**：4 个业务模板（erp.sales_review / crm.pipeline_review / finance.voucher_audit / hrm.people_insight），list_prompts/get_prompt 纯函数 + 4 单测。
+- **server.rs**：capabilities.prompts=Some(PromptsCapability{list_changed:false})；prompts/list + prompts/get 分发与 handler（未知名 -32602）；更新冻结注释。
+- **顺清 2 处遗留 unused import**（handler.rs / workflow_handlers.rs）。
+- 验证：cargo clippy -p topems-ai --lib -D correctness 0/0；prompts 单测 4 passed。
+
+## 冻结面全景收口 ✅（2026-10-26）
+> **全部冻结面处理完毕**：②④⑥ 解冻✅、③ 保留后端/前端不接线、⑤⑧ 删除、① DSH 增强面解冻✅、⑦ MCP prompts 解冻✅。本地可闭环的技术冻结面清零。
 
 ## 冻结面解冻 ⑥：master-data 5 业务模块前端页（2026-10-26）✅ 完成
 
