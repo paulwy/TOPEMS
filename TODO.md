@@ -26,6 +26,15 @@
 - **顺清 2 处遗留 unused import**（handler.rs / workflow_handlers.rs）。
 - 验证：cargo clippy -p topems-ai --lib -D correctness 0/0；prompts 单测 4 passed。
 
+## 待拍板项1 · training records 表重设计（2026-10-26，用户拍板）✅ 完成
+
+> ehs.training_records 技术列（10-17 补 13 列 + 5 handler 接真 + RLS FORCE）此前已落地；本轮用户拍板做**设计层加固**，同步修 hrm 侧同名片潜在缺陷。commit a45908340a 已推送。
+
+- **ehs.training_records**：`record_no UNIQUE`、`status CHECK('ongoing','completed','failed')` 对齐前端契约、`title NOT NULL`、`duration_hours>=0` / `pass_rate 0-100` CHECK。
+- **hrm.training_records**：修 **status DEFAULT 'planned' ↔ CHECK('active','inactive','archived') 冲突**（表 0 行未暴露的 INSERT 必败炸弹，重建 CHECK 覆盖计划态全家桶）；`course_id→training_courses` / `employee_id→employees` FK（ON DELETE SET NULL）+ 高频查询索引；`cost>=0` / `score 0-100` / `duration_hours>=0` CHECK。
+- 迁移 `20261026090000_training_records_redesign_hardening.sql`：全 DO 条件守卫幂等；validate.sh **0 errors / 0 checksum errors**（checksums 已登记）。
+- 实测（dev 库）：DEFAULT 'planned' INSERT 成功；非法 status/score/record_no 重复均被约束拒绝（savepoint 复验）；合法行成功；0 测试残留；两表仍 0 行零迁移风险。
+
 ## 依赖安全清理：dependabot 6 漏洞（2026-10-26）✅ 完成
 
 > GitHub dependabot 报 1 critical + 3 high + 2 moderate（6 项）。本地 `pnpm audit` 实测 7 项（2 moderate | 4 high | 1 critical）。commit 328f8b31a0 已推送。
