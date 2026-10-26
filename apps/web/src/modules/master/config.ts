@@ -35,6 +35,7 @@ const MASTER_PATHS = {
   quality: '/master/quality',
   knowledgeGraph: '/master/knowledge-graph',
   semanticSearch: '/master/semantic-search',
+  disasterRecovery: '/master/disaster-recovery',
 } as const;
 
 // ---- 路由配置 ----
@@ -124,6 +125,18 @@ const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
   template: 'list',
   group: 'master',
   requiredPermissions: ['master:data-asset:read'],
+  action: 'read',
+};
+const disasterRecoveryRoute: RouteConfigV2<Record<string, never>> = {
+  path: MASTER_PATHS.disasterRecovery,
+  element: lazyWithRetry(() => import('@/pages/master/MasterDisasterRecoveryPage'), 'MasterDisasterRecoveryPage'),
+  module: 'master',
+  code: 'master-disaster-recovery',
+  title: i18n.t('master.disasterRecovery'),
+  titleKey: 'master.disasterRecovery',
+  template: 'list',
+  group: 'master',
+  requiredPermissions: ['master_data:disaster:read'],
   action: 'read',
 };
 const semanticSearchRoute: RouteConfigV2<Record<string, never>> = {
@@ -217,6 +230,7 @@ export const masterModuleConfig: RouteModuleConfig = {
     qualityRoute,
     knowledgeGraphRoute,
     semanticSearchRoute,
+    disasterRecoveryRoute,
   ],
 };
 
@@ -362,6 +376,18 @@ export const masterNavConfig: ModuleNavConfig = {
       group: 'master',
       showInSidebar: true,
       description: i18n.t('master.semanticSearch.desc'),
+    },
+    {
+      code: 'master-disaster-recovery',
+      label: i18n.t('master.disasterRecovery'),
+      labelKey: 'master.disasterRecovery',
+      icon: 'LifeBuoy',
+      path: MASTER_PATHS.disasterRecovery,
+      permission: 'master_data:disaster:read',
+      order: 11,
+      group: 'master',
+      showInSidebar: true,
+      description: i18n.t('master.disasterRecovery.desc'),
     },
   ],
 };
