@@ -142,3 +142,51 @@ curl -sk -m 5 https://localhost/health && echo " <- NGINX OK"
 3. 任何一步失败：停止，记录报错全文与环境差异，**不猜测、不跳过、不换法重试超过 2 次**。
 4. **只部署，不改代码**。发现仓库 bug 或需适配改动 → 回报 airdeair 侧，由仓库侧决定。
 5. 未通过 §8 验收前，不得对外宣称部署完成。
+
+---
+
+## 10. 部署后回报模板（写给 airdeair 侧）
+
+> 部署执行完毕后，按下面结构输出一份回报（Markdown 代码块内为填写模板，**占位符全部替换为实测值**；密码/密钥绝不写入回报）。
+
+```markdown
+# xingzhai 部署回报（YYYY-MM-DD HH:MM）
+
+## 1. 结论
+- [ ] 部署成功（§8 验收全过）｜ [ ] 部分成功（见 §6）｜ [ ] 失败（见 §6）
+- 当前形态：原生 macOS（launchd）｜ Linux VM（UTM/lima/OrbStack）｜ 其他：____
+
+## 2. 环境事实
+- macOS：`<sw_vers 输出>`；内存 `<N>GB`；磁盘空闲 `<N>GB`
+- 端口占用/分配：5432 `<>`、8099 `<>`、80/443 `<>`（如有改端口，写明新值）
+- PostgreSQL：`<版本>`（brew / VM 内）；pgvector：`<已装/未装/编译>`
+
+## 3. 构建与部署
+- 仓库 HEAD：`<git rev-parse HEAD>`
+- 二进制：`target/release/topems-server` `<存在/大小>`
+- 数据库：库 `topems`、角色 `topems`、迁移 validate.sh `0 errors / 0 checksum errors`（附输出行）
+- 服务：launchd label `<com.topems.server 等>` 运行中 `是/否`；日志尾 5 行摘要
+- nginx：conf `<路径>`，`nginx -t` 输出，证书 `<自签/LE/其他>`
+
+## 4. 验证证据（§8 逐项）
+- BFF health：`curl http://localhost:8099/health` → `<状态码/body>`
+- nginx health：`curl -sk https://localhost/health` → `<状态码/body>`
+- 契约 smoke：`<总用例数> FAIL=0`（附失败用例 ID，如有）
+- smoke-prod：`<--base 参数>/<PASS 数>/<FAIL 数>`（附失败项）
+
+## 5. 偏离清单（与任务书不一致处）
+| 步骤 | 任务书要求 | 实际执行 | 原因 |
+|---|---|---|---|
+| §2 | 端口 5432 | `5433` | 5432 被占用（`<占用进程>`） |
+| … | … | … | … |
+
+## 6. 问题 / 风险 / 待决策
+- P1（阻断验收）：____
+- P2（影响使用）：____
+- 待 airdeair 决策：证书签发方式、域名指向、是否切 Linux VM、DB 备份策略
+
+## 7. 建议下一步
+- ____（如：等待 airdeair 核对后开启对外访问 / 补备份定时任务 / 切 VM 方案重部署）
+```
+
+**回报出口**：文件 `~/topems/deploy-notes.md`（本机留档）+ 将上述内容发给 airdeair 侧（人工或 AI 均可）。airdeair 侧收到后核对 §4 证据、决策 §6 待决项，并把结论回填 `docs/project/go-live-checklist.md §0.3`。
