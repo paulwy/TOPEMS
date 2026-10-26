@@ -51,7 +51,7 @@
 | 5 | 首次登录换密 | 首次登录后立即执行 `~/topems/change-admin-password.sh` | 用户/运维 |
 | 6 | CI Billing 额度 | GitHub 账号开通计费 | 用户 |
 | 7 | EAS 真机构建 | iOS 真机 + EAS 账号 | 用户 |
-| 8 | BE-08 349 条 API 存废勾选（strong45/weak189/none115，勾选表已交付） | 业务逐条勾选 `artifacts/BE-08-业务确认决策表-2026-10-18.md` | 业务 |
+| 8 | BE-08 349 条 API 存废勾选（strong45/weak189/none115） | 业务确认 **148 条候选**（none 49 + weak 99，辅助表已就绪）；其余 201 条有技术默认建议；勾选回传后派发下线批（需另行授权） | 业务 |
 | 9 | 30 天流量观测（115 条 none 面） | 上线后 30 天观测 | 时间/业务 |
 | 10 | node-forge 漏洞 | 待 expo 升级（dev 链） | 上游 |
 

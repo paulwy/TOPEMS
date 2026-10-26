@@ -1,3 +1,12 @@
+## A1-A3 收口批：checklist 回填 + 30 天观测工具包 + 发布流程（2026-10-26）✅ 已完成
+
+> 按「下一步工作规划」A 线执行（技术可闭环三件）。
+
+- **A1**：go-live-checklist §0.3 第 8 项更新为「148 条确认 + 辅助表就绪（none 49 + weak 99）」，其余 201 条有技术默认。
+- **A2**：30 天流量观测工具包——`artifacts/BE-08-下线候选清单-148-2026-10-26.md`（none 49 + weak 99，含匹配用路径前缀列，{param} 已去尾段、URL 服务段以路径首段为准）+ `scripts/ops/observe-api-traffic.sh`（跑在 xingzhai：逐前缀统计 nginx access log 命中/零命中，输出观测报告，零命中 = 下线双证之一）。修正两处：none 侧字段误用（字面量计数 vs 相对段）；analytics 服务名≠URL 首段（/api/bi/）前缀错位。
+- **A3**：发布流程——`scripts/release/build-release.sh`（airdeair 侧构建 arm64 release + tar 打包 + SHA256 + VERSION 注记，含二进制校验）+ `docs/deploy/release-pipeline.md`（升级循环 SOP：前置检查/构建/交付/安装/迁移面/回滚/回报模板；原则=生产机不构建，airdeair 交付二进制；生产禁 migrate run 沿用）。
+- **验证**：两脚本 bash -n 通过；build-release.sh 真实构建在跑（产物 ~/topems-release/topems-server-*.tar.gz）。
+
 ## BE-08 勾选辅助：weak 级 189 条代码证据预填表（2026-10-26）✅ 已完成
 
 > 承接 none 115 条辅助后，对 weak 189 条（弱绑定，业务确认后决定）做同款双证据扫描。
