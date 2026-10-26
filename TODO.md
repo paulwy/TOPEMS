@@ -26,6 +26,16 @@
 - **顺清 2 处遗留 unused import**（handler.rs / workflow_handlers.rs）。
 - 验证：cargo clippy -p topems-ai --lib -D correctness 0/0；prompts 单测 4 passed。
 
+## 依赖安全清理：dependabot 6 漏洞（2026-10-26）✅ 完成
+
+> GitHub dependabot 报 1 critical + 3 high + 2 moderate（6 项）。本地 `pnpm audit` 实测 7 项（2 moderate | 4 high | 1 critical）。commit 328f8b31a0 已推送。
+
+- **storybook 家族 ^10.4.6/^10.5.4 → ^10.6.3**：消 critical（GHSA-f2ph-cmg5-wxc8 预览代码注入）+ high（本地网络注入）。
+- **package.json pnpm.overrides**：`undici 7.29.1→7.30.1`（jsdom 测试链 DoS GHSA-xjj6-f33q-929c）、新增 `body-parser 1.20.9`（lhci→express 链 DoS GHSA-27r3-jxmh-p828）。
+- **剩 1 不可修**：node-forge GHSA-86w9-cpqp-85rv（expo→@expo/code-signing-certificates@0.0.6 内嵌，patched `<0.0.0` 无上游补丁）→ **登记待 expo 升级**，dev 工具链非生产运行时。
+- **顺修 storybook 构建回归**（升级后 build-storybook 首次跑通，70 stories）：恢复 29800fb8ad 误删的 .storybook/main.ts + preview.tsx + storybook-theme.ts；vite.config.ts fix-cjs-interop-build closeBundle 加守卫；恢复 chartPalette.ts（3 stories 引用）+ Avatar.stories.tsx 清 AvatarGroup 残留块。
+- 验证：tsc 0 / eslint 0 / vitest 关键 5 passed / storybook build 全绿 / audit 7→1。
+
 ## 冻结面全景收口 ✅（2026-10-26）
 > **全部冻结面处理完毕**：②④⑥ 解冻✅、③ 保留后端/前端不接线、⑤⑧ 删除、① DSH 增强面解冻✅、⑦ MCP prompts 解冻✅。本地可闭环的技术冻结面清零。
 
