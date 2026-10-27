@@ -5119,3 +5119,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **推送**：ff76d9d7f（修复批次）+ 2a79472c9（checksums 同步），origin/main 一致。
 - **遗留待深查**：pm/mes/wms/qms 列表读回 rows=0（落库有数据、列表过滤差异，P2 系统性）；plugins/subscriptions 未挂载 monolith（P2）；空库 iam 自愈缺 users/core_users（P2）。
 - **【修正 2026-10-27 同轮】列表读回 rows=0 为测试解析误报**：wms=warehouses、pm=projects、mes=orders、qms=inspections 字段名不同（此前统一按 items 解析）→ 实测数据全在（pm=3/mes=1/qms=1/wms=6）。P2 系统性缺口撤销，仅记录 API 列表字段名不一致（P3 建议统一契约）。**plugins/subscriptions 深查**：subscription 模块为纯类型框架（PlanTier 等，无路由实现）；plugin-registry 为独立 svc（未在 monolith SERVICES 列表）——均为架构级缺口（需独立改造批次），非简单挂载可解。
+
+## 第四十一轮（2026-10-27）：空库 iam 自愈修复（P2）✅ 已提交推送
+- **根因（双因）**：① 空库无 iam schema（迁移未跑），`CREATE TABLE iam.users` 直接报错 → init_database 失败被 try_init 吞掉 → 登录表缺失首登 500；② auth/login 查询依赖 `full_name_en/roles/permissions/must_change_password` 四列，自愈建表（CREATE 14 列 + TABLE_DEFS 不含 iam.users）缺列 → 即使表在也登录 500。
+- **修复**（svc/unified-core/src/modules/iam/mod.rs init_database）：前置 `CREATE SCHEMA IF NOT EXISTS iam`；core_users 骨架兜底（schema_defense 在其后执行，先建骨架避免 ALTER/INDEX/FK 依赖失败）；`ALTER TABLE iam.users ADD COLUMN IF NOT EXISTS` 补 4 列（幂等，存量/新库均覆盖）。
+- **空库验证**（topems_s0_fresh2 独立空库）：iam.users 18 列 / core_users 14 列（schema_defense 补全 full_name/phone/avatar_url/status/last_login_at/deleted_at）自愈完整；插入超管后登录 **200"登录成功"**（不再 500）。临时库已 DROP，主实例已切回 topems_test（health 200 / 登录 200）。
+- **提交推送**：aaaf6ed8a，7 项门禁全过（cargo-check/clippy/fmt/test + config-consistency/domain-probe/shellcheck），origin/main 一致。
+- **剩余待处理**：plugins/subscriptions 架构级缺口（独立批次）；API 列表字段契约统一（P3）；iam 超管自动种子 + must_change_password 强制逻辑（P3 记录项）。
