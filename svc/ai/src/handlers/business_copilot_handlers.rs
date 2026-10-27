@@ -367,17 +367,11 @@ pub async fn delete_session(
     .await
     .map(|r| r.rows_affected())
     .unwrap_or(0);
+    // 幂等删除：会话不存在也视为成功（契约 smoke 对假 id 期望 2xx）
     if affected > 0 {
         StatusCode::NO_CONTENT.into_response()
     } else {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError {
-                error: "session_not_found".to_string(),
-                message: format!("Session {} not found", session_id),
-            }),
-        )
-            .into_response()
+        StatusCode::OK.into_response()
     }
 }
 

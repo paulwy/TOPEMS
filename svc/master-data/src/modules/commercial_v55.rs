@@ -668,7 +668,7 @@ pub async fn list_subscriptions(
     // K1：真表读取，可选 tenant_id / api_product_id 过滤。
     let rows = sqlx::query(&format!(
         "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions
-             WHERE ($1::text IS NULL OR tenant_id = $1)
+             WHERE ($1::text IS NULL OR tenant_id::text = $1)
                AND ($2::text IS NULL OR api_product_id = $2)
              ORDER BY starts_at DESC"
     ))
@@ -702,7 +702,7 @@ pub async fn cancel_subscription(
     // K1：写真表 master_data.mdm_subscriptions（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(&format!(
         r#"UPDATE master_data.mdm_subscriptions SET status = 'cancelled'
-           WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))
+           WHERE id = $1::uuid AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000'::uuid))
            RETURNING {SUBSCRIPTION_COLS}"#,
     ))
     .bind(&id)
@@ -738,7 +738,7 @@ pub async fn upgrade_tier(
 ) -> Json<ApiResponse<Subscription>> {
     // K1：写真表（先查后更，无行 404）。
     let row = sqlx::query(&format!(
-        r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1 LIMIT 1"#,
+        r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
     ))
     .bind(&id)
     .fetch_optional(&state.db)
@@ -757,7 +757,7 @@ pub async fn upgrade_tier(
         .unwrap_or(current.tier);
 
     if let Err(e) = sqlx::query(
-        "UPDATE master_data.mdm_subscriptions SET tier = $1, status = 'active' WHERE id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE master_data.mdm_subscriptions SET tier = $1, status = 'active' WHERE id = $2::uuid AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000'::uuid))",
     )
     .bind(product_tier_to_string(&new_tier))
     .bind(&id)
@@ -768,7 +768,7 @@ pub async fn upgrade_tier(
     }
 
     let row = sqlx::query(&format!(
-        r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1 LIMIT 1"#,
+        r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
     ))
     .bind(&id)
     .fetch_optional(&state.db)
@@ -848,10 +848,10 @@ pub async fn get_usage_summary(
     // K1：数据源改真表 master_data.mdm_usage_records，聚合逻辑保留。
     let query = sqlx::query(&format!(
         r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
-           WHERE ($1::text IS NULL OR tenant_id = $1)
+           WHERE ($1::text IS NULL OR tenant_id::text = $1)
              AND ($2::text IS NULL OR api_product_id = $2)
-             AND ($3::text IS NULL OR recorded_at >= $3)
-             AND ($4::text IS NULL OR recorded_at <= $4)
+             AND ($3::text IS NULL OR recorded_at::text >= $3)
+             AND ($4::text IS NULL OR recorded_at::text <= $4)
            ORDER BY recorded_at"#,
     ))
     .bind(params.tenant_id.as_deref())
@@ -911,7 +911,7 @@ pub async fn generate_bill(
 
     let usage_rows = sqlx::query(&format!(
         r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
-           WHERE tenant_id = $1 AND recorded_at >= $2 AND recorded_at <= $3
+           WHERE tenant_id = $1 AND recorded_at::text >= $2 AND recorded_at::text <= $3
            ORDER BY recorded_at"#,
     ))
     .bind(&req.tenant_id)
@@ -1039,7 +1039,7 @@ pub async fn get_billing_history(
     let page_size = params.page_size.unwrap_or(20).min(100);
 
     let count_rows = sqlx::query(
-        "SELECT COUNT(*) AS total FROM master_data.mdm_billing_records WHERE ($1::text IS NULL OR tenant_id = $1)",
+        "SELECT COUNT(*) AS total FROM master_data.mdm_billing_records WHERE ($1::text IS NULL OR tenant_id::text = $1)",
     )
     .bind(params.tenant_id.as_deref())
     .fetch_one(&state.db)
@@ -1051,7 +1051,7 @@ pub async fn get_billing_history(
 
     let rows = sqlx::query(&format!(
         r#"SELECT {BILLING_COLS} FROM master_data.mdm_billing_records
-           WHERE ($1::text IS NULL OR tenant_id = $1)
+           WHERE ($1::text IS NULL OR tenant_id::text = $1)
            ORDER BY period_end DESC
            LIMIT $2 OFFSET $3"#,
     ))
@@ -1162,7 +1162,7 @@ pub async fn mark_bill_paid(
     // K1：写真表（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(&format!(
         r#"UPDATE master_data.mdm_billing_records SET status = 'paid'
-           WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))
+           WHERE id = $1::uuid AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000'::uuid))
            RETURNING {BILLING_COLS}"#,
     ))
     .bind(&id)
@@ -1313,7 +1313,7 @@ pub async fn get_sla_status(
     // K1：数据源改真表（configs + measurements），聚合逻辑保留。
     let config_rows = sqlx::query(&format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs
-           WHERE ($1::text IS NULL OR id = $1) ORDER BY metric"#,
+           WHERE ($1::text IS NULL OR id::text = $1) ORDER BY metric"#,
     ))
     .bind(params.config_id.as_deref())
     .fetch_all(&state.db)
@@ -1329,7 +1329,7 @@ pub async fn get_sla_status(
 
     let meas_rows = sqlx::query(&format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
-           WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY measured_at"#,
+           WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY measured_at"#,
     ))
     .bind(params.tenant_id.as_deref())
     .fetch_all(&state.db)
@@ -1393,10 +1393,10 @@ pub async fn get_sla_history(
     // K1：真表 COALESCE 过滤。
     let rows = sqlx::query(&format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
-           WHERE ($1::text IS NULL OR tenant_id = $1)
+           WHERE ($1::text IS NULL OR tenant_id::text = $1)
              AND ($2::text IS NULL OR config_id = $2)
-             AND ($3::text IS NULL OR measured_at >= $3)
-             AND ($4::text IS NULL OR measured_at <= $4)
+             AND ($3::text IS NULL OR measured_at::text >= $3)
+             AND ($4::text IS NULL OR measured_at::text <= $4)
            ORDER BY measured_at"#,
     ))
     .bind(params.tenant_id.as_deref())
@@ -1571,7 +1571,7 @@ pub async fn get_incidents(
     // K1：真表 COALESCE 过滤。
     let rows = sqlx::query(&format!(
         r#"SELECT {SLA_INCIDENT_COLS} FROM master_data.mdm_sla_incidents
-           WHERE ($1::text IS NULL OR tenant_id = $1)
+           WHERE ($1::text IS NULL OR tenant_id::text = $1)
              AND ($2::text IS NULL OR status = $2)
            ORDER BY id"#,
     ))

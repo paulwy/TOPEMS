@@ -122,9 +122,22 @@ pub async fn start_projection_subscriber(pool: PgPool) -> Result<(), TopemsError
 
     tokio::spawn(async move {
         // 订阅者长驻；断线重连由 start_listening 内部策略处理，这里仅记录异常退出。
-        if let Err(e) = sub.start_listening().await {
-            tracing::error!("[search] 投影事件订阅者异常退出: {}", e);
+        let h = tokio::spawn(async move {
+            if let Err(e) = sub.start_listening().await {
+                tracing::error!("[search] 投影事件订阅者异常退出: {}", e);
+            }
+            tracing::warn!("[search] 投影事件订阅者返回（不应发生）");
+        });
+        // 心跳监视：每 30s 报告订阅者 task 存活（低频诊断，避免日志噪音）。
+        let mut tick = tokio::time::interval(Duration::from_secs(30));
+        loop {
+            tick.tick().await;
+            if h.is_finished() {
+                break;
+            }
+            tracing::info!("[search] 订阅者心跳 alive");
         }
+        let _ = h.await;
     });
 
     // 给 Redis/Stream 一点就绪时间（非严格要求，仅避免启动日志噪音）

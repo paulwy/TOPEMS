@@ -209,8 +209,12 @@ pub async fn get_tool_performance(
     match monitor.get_tool_metric(&tool_name) {
         Some(metrics) => (StatusCode::OK, Json(ApiResponse::success(metrics))).into_response(),
         None => (
-            StatusCode::NOT_FOUND,
-            Json(ApiResponse::<ToolMetrics>::error("工具不存在或无指标")),
+            StatusCode::OK,
+            Json(ApiResponse::success(serde_json::json!({
+                "tool": tool_name,
+                "metrics": [],
+                "message": "工具暂无指标数据"
+            }))),
         )
             .into_response(),
     }

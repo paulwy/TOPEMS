@@ -317,7 +317,7 @@ pub async fn update_report(
         UPDATE bi.reports
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
-            status = COALESCE($3::bi.report_status, status),
+            status = COALESCE($3::bi.report_status::text, status),
             config = COALESCE($4, config),
             updated_at = $5
         WHERE id = $6

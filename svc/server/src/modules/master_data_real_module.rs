@@ -52,6 +52,14 @@ impl MasterDataRealModule {
         // 立即建立连接，固化本连接池的 search_path
         let _conn = ctx.db.acquire().await?;
 
+        // 对齐独立进程 main.rs：Schema 防御（建表/补列，best-effort 不阻塞）。
+        // 根治恢复库缺 master_data.* 表（如 uoms）问题——此前仅在独立进程调用。
+        if let Err(e) =
+            topems_master_data::schema_defense::run_schema_migration_and_verify(&ctx.db).await
+        {
+            tracing::warn!("⚠️ master-data Schema 防御失败（降级运行）: {}", e);
+        }
+
         // 2. 构建业务 AppState（与独立部署 main.rs 一致）
         let app_state = AppState {
             db: ctx.db.clone(),

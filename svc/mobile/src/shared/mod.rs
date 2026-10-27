@@ -211,7 +211,7 @@ pub async fn build_service_clients(
                 "⚠️ WMS服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(WmsApi, "http://localhost:8041")
+            TypedServiceClient::new(WmsApi, "http://localhost:8099")
                 .and_then(|c| c.with_service_token(jwt_secret, "mobile-service", &["wms:admin"]))
                 .expect("hardcoded fallback URL is valid")
         }
@@ -232,7 +232,7 @@ pub async fn build_service_clients(
             TypedServiceClient::new(
                 MesApi,
                 std::env::var("MES_SERVICE_URL")
-                    .unwrap_or_else(|_| "http://localhost:8030".to_string()),
+                    .unwrap_or_else(|_| "http://localhost:8099".to_string()),
             )
             .and_then(|c| c.with_service_token(jwt_secret, "mobile-service", &["mes:admin"]))
             .expect("hardcoded fallback URL is valid")
@@ -251,7 +251,7 @@ pub async fn build_service_clients(
                 "⚠️ QMS API服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(QmsApi, "http://localhost:8050")
+            TypedServiceClient::new(QmsApi, "http://localhost:8099")
                 .and_then(|c| c.with_service_token(jwt_secret, "mobile-service", &["qms:admin"]))
                 .expect("hardcoded fallback URL is valid")
         }
@@ -269,7 +269,7 @@ pub async fn build_service_clients(
                 "⚠️ HRM服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(HrmApi, "http://localhost:8020")
+            TypedServiceClient::new(HrmApi, "http://localhost:8099")
                 .and_then(|c| c.with_service_token(jwt_secret, "mobile-service", &["hrm:admin"]))
                 .expect("hardcoded fallback URL is valid")
         }
@@ -287,7 +287,7 @@ pub async fn build_service_clients(
                 "⚠️ Workflow服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(WorkflowApi, "http://localhost:8000")
+            TypedServiceClient::new(WorkflowApi, "http://localhost:8099")
                 .and_then(|c| {
                     c.with_service_token(jwt_secret, "mobile-service", &["workflow:read"])
                 })
@@ -307,7 +307,7 @@ pub async fn build_service_clients(
                 "⚠️ Notification服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(NotificationApi, "http://localhost:8084")
+            TypedServiceClient::new(NotificationApi, "http://localhost:8099")
                 .and_then(|c| {
                     c.with_service_token(jwt_secret, "mobile-service", &["notification:read"])
                 })
@@ -327,7 +327,7 @@ pub async fn build_service_clients(
                 "⚠️ CRM服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(CrmApi, "http://localhost:8029")
+            TypedServiceClient::new(CrmApi, "http://localhost:8099")
                 .and_then(|c| c.with_service_token(jwt_secret, "mobile-service", &["crm:admin"]))
                 .expect("hardcoded fallback URL is valid")
         }

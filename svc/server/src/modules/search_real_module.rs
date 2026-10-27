@@ -40,6 +40,17 @@ impl SearchRealModule {
         let ctx = bootstrap_service(&config).await?;
         let _conn = ctx.db.acquire().await?;
 
+        // 对齐独立进程 main.rs：自举投影表 + 启动事件订阅者 + 差距对账（best-effort，
+        // 失败不阻塞——投影未就绪时搜索为空结果，待事件追平）。
+        if let Err(e) = topems_search::projection::init_projection_table(&ctx.db).await {
+            tracing::warn!("⚠️ search 投影表自举失败: {}", e);
+        }
+        if let Err(e) = topems_search::projection::start_projection_subscriber(ctx.db.clone()).await
+        {
+            tracing::warn!("⚠️ search 投影订阅者启动失败: {}", e);
+        }
+        topems_search::projection::backfill_projections(&ctx.db).await;
+
         // 公开路由（无状态）
         let public_routes =
             Router::new().route("/api/search/health", get(handlers::health_handler));

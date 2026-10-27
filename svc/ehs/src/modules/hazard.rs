@@ -884,6 +884,11 @@ pub async fn create_rectification(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create rectification: {}", e);
+            if let sqlx::Error::Database(db) = &e {
+                if db.code().as_deref() == Some("23503") {
+                    return Json(ApiResponse::not_found("危险源不存在"));
+                }
+            }
             return Json(ApiResponse::server_error("整改方案创建失败"));
         }
     };
@@ -975,6 +980,11 @@ pub async fn update_rectification(
         Ok(None) => return Json(ApiResponse::not_found("整改方案不存在")),
         Err(e) => {
             tracing::error!("Failed to update rectification: {}", e);
+            if let sqlx::Error::Database(db) = &e {
+                if db.code().as_deref() == Some("23503") {
+                    return Json(ApiResponse::not_found("危险源不存在"));
+                }
+            }
             return Json(ApiResponse::server_error("整改方案更新失败"));
         }
     };
@@ -1111,6 +1121,11 @@ pub async fn verify_hazard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to verify hazard: {}", e);
+            if let sqlx::Error::Database(db) = &e {
+                if db.code().as_deref() == Some("23503") {
+                    return Json(ApiResponse::not_found("危险源不存在"));
+                }
+            }
             return Json(ApiResponse::server_error("隐患验收失败"));
         }
     };
