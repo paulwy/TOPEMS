@@ -4,52 +4,50 @@
  * enter the login first-paint chain.
  *
  * Prism syntax highlighter is dynamically imported only when code blocks
- * are present, splitting ~150KB of highlighting code into its own chunk.
+ * are present, splitting ~100KB of highlighting code into its own chunk.
+ * Uses prismjs directly (no react-syntax-highlighter wrapper) for smaller bundle.
  */
 import { useTheme } from '@mui/material';
 import { designTokens } from '@topems/tokens';
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-// Dynamically import SyntaxHighlighter only when code blocks are rendered.
-// This splits react-syntax-highlighter (~150KB) into a separate chunk.
-const SyntaxHighlighter = lazy(() =>
-  import('react-syntax-highlighter').then(async (mod) => {
-    const { PrismLight } = mod;
-    const vscDarkPlus = (await import('react-syntax-highlighter/dist/esm/styles/prism')).vscDarkPlus;
-    const [javascript, typescript, jsx, tsx, python, java, json, bash, sql, css] = await Promise.all([
-      import('react-syntax-highlighter/dist/esm/languages/prism/javascript'),
-      import('react-syntax-highlighter/dist/esm/languages/prism/typescript'),
-      import('react-syntax-highlighter/dist/esm/languages/prism/jsx'),
-      import('react-syntax-highlighter/dist/esm/languages/prism/tsx'),
-      import('react-syntax-highlighter/dist/esm/languages/prism/python'),
-      import('react-syntax-highlighter/dist/esm/languages/prism/java'),
-      import('react-syntax-highlighter/dist/esm/languages/prism/json'),
-      import('react-syntax-highlighter/dist/esm/languages/prism/bash'),
-      import('react-syntax-highlighter/dist/esm/languages/prism/sql'),
-      import('react-syntax-highlighter/dist/esm/languages/prism/css'),
+// Dynamically import prismjs only when code blocks are rendered.
+// Uses prismjs directly instead of react-syntax-highlighter wrapper (~500KB saving).
+const CodeBlock = lazy(() =>
+  import('prismjs').then(async (PrismModule) => {
+    const Prism = PrismModule.default;
+    await Promise.all([
+      import('prismjs/components/prism-javascript'),
+      import('prismjs/components/prism-typescript'),
+      import('prismjs/components/prism-jsx'),
+      import('prismjs/components/prism-tsx'),
+      import('prismjs/components/prism-python'),
+      import('prismjs/components/prism-java'),
+      import('prismjs/components/prism-json'),
+      import('prismjs/components/prism-bash'),
+      import('prismjs/components/prism-sql'),
+      import('prismjs/components/prism-css'),
     ]);
-    PrismLight.registerLanguage('javascript', javascript.default);
-    PrismLight.registerLanguage('typescript', typescript.default);
-    PrismLight.registerLanguage('jsx', jsx.default);
-    PrismLight.registerLanguage('tsx', tsx.default);
-    PrismLight.registerLanguage('python', python.default);
-    PrismLight.registerLanguage('java', java.default);
-    PrismLight.registerLanguage('json', json.default);
-    PrismLight.registerLanguage('bash', bash.default);
-    PrismLight.registerLanguage('sql', sql.default);
-    PrismLight.registerLanguage('css', css.default);
+    await import('prismjs/themes/prism-okaidia.css');
+
     return {
-      default: ({ children, ...rest }: { children?: React.ReactNode } & Record<string, unknown>) => (
-        <PrismLight
-          {...rest}
-          style={vscDarkPlus as { [key: string]: React.CSSProperties }}
-          PreTag='div'
-        >
-          {String(children ?? '').replace(/\n$/, '')}
-        </PrismLight>
-      ),
+      default: ({ language, children }: { language: string; children: string }) => {
+        const codeRef = useRef<HTMLElement>(null);
+        useEffect(() => {
+          if (codeRef.current && Prism.languages[language]) {
+            Prism.highlightElement(codeRef.current);
+          }
+        }, [language, children]);
+        return (
+          <pre style={{ margin: '1rem 0', padding: '1rem', borderRadius: '4px', overflow: 'auto' }}>
+            <code ref={codeRef} className={`language-${language}`}>
+              {children}
+            </code>
+          </pre>
+        );
+      },
     };
   }),
 );
@@ -74,10 +72,10 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
             const match = /language-(\w+)/.exec(className || '');
             const isInline = (props as unknown as Record<string, unknown>).inline;
             return !isInline && match ? (
-              <Suspense fallback={<code className={className}>{children}</code>}>
-                <SyntaxHighlighter language={match[1]}>
+              <Suspense fallback={<pre><code className={className}>{children}</code></pre>}>
+                <CodeBlock language={match[1]}>
                   {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
+                </CodeBlock>
               </Suspense>
             ) : (
               <code

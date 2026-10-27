@@ -577,10 +577,10 @@ function topemsRechartsSplitPlugin(): Plugin {
           name: 'markdown-vendor',
         },
         // Prism syntax highlighter split from markdown-vendor; only loaded
-        // when markdown content actually contains code blocks (~150KB saving
-        // on the initial markdown chunk)
+        // when markdown content actually contains code blocks.
+        // Uses prismjs directly (no react-syntax-highlighter wrapper).
         {
-          test: /[\\/]node_modules[\\/]react-syntax-highlighter[\\/]/,
+          test: /[\\/]node_modules[\\/](prismjs|react-syntax-highlighter)[\\/]/,
           name: 'prism-vendor',
         },
         {
