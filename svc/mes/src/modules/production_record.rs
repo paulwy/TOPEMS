@@ -307,6 +307,12 @@ pub async fn create_record(
 
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims);
+    // P1 修复（第四十六轮遗留）：operator 列 NOT NULL，此前硬编码 NULL 导致创建必 500。
+    // 优先用 operator_id 的字符串形式，未提供时回退当前登录用户（Claims.username）。
+    let operator_name = req
+        .operator_id
+        .map(|id| id.to_string())
+        .unwrap_or_else(|| claims.username.clone());
 
     let result = sqlx::query!(
         r#"
@@ -315,7 +321,7 @@ pub async fn create_record(
             operator_id, operator, start_time, end_time,
             completed_quantity, status, notes,
             created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, NULL, $5, NULL, $6, 'in_progress', $7, $8, $8, $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, 'in_progress', $8, $9, $9, $10)
         RETURNING
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,
@@ -326,6 +332,7 @@ pub async fn create_record(
         req.process_id,
         req.work_station_id,
         req.operator_id,
+        operator_name,
         req.start_time,
         f64_to_big_decimal(req.quantity_produced),
         req.notes,
