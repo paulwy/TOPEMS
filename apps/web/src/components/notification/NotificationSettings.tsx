@@ -1,5 +1,5 @@
 import React from 'react';
-import { flexRowCenter } from '../sharedStyles';
+import { flexRowCenter, flexColumnGap16 } from '../sharedStyles';
 import { Volume2, VolumeX, Monitor, Smartphone } from 'lucide-react';
 import type { NotificationSettingsData } from '../../hooks/useNotificationSettings';
 import useNotificationSettings from '../../hooks/useNotificationSettings';
@@ -29,7 +29,7 @@ const NotificationSettings: React.FC = () => {
         {i18n.t('components.notification_settings.k0')}
       </h4>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={flexColumnGap16}>
         <div
           style={{
             display: 'flex',

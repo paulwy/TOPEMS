@@ -5455,3 +5455,23 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 
 ### 优先级
 P2（2-4 周后）
+
+---
+
+## 内联样式迁移排期（专门排期）- 更新
+
+### 当前进度
+- [x] Step 1: lucide 图标 size prop 迁移（91 处）✅ 已完成
+- [ ] Step 2: 普通 div flex 布局 -> MUI Box + sx prop（~200 处）
+- [ ] Step 3: 其他内联样式 -> sx prop（~500 处）
+- [ ] Step 4: 验证 + typecheck
+
+### 剩余工作量
+- 总工作量：5d
+- 已完成：91 处
+- 剩余：~787 处
+- 风险：低（样式不改变）
+- 预期收益：代码可维护性提升
+
+### 优先级
+P2（2-4 周后）
