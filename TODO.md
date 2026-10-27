@@ -5157,3 +5157,23 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **实测验证**（编译通过 + 重启）：`/api/pm/projects` items=3、`/api/wms/warehouses` items=6、`/api/wms/outbound-orders` items=0、`/api/wms/inbound-orders` items=0、`/api/mes/quality/inspections` data keys 含 items；原字段全部保留（legacy 兼容）。
 - **备注**：`/api/mes/inspections`（另一 handler）返回 `records` 字段，不属本次 5 处范围，可后续按需统一。
 - **至此 P1-P2 缺陷清单 + P3 记录项（超管种子/must_change 澄清/列表契约）全部关闭。**
+
+## 第四十六轮（2026-10-27）：mobile/mes 语句级审计遗留文件（14 文件）——静态通过 + 实测发现 3 类真实缺陷
+- **范围**：mobile（offline_records/offline/device/media/task/offline_sync）+ mes（aps_scheduling/audit/equipment_oee/aps_compat/production_scheduling/record/process/oee_logic）共 14 文件、约 119 条 SQL。
+- **静态核对（脚本 + psql 全量对照）**：
+  - INSERT/UPDATE 列引用：DB 6905 列全量对照 **0 缺失**；
+  - SELECT 列引用：601 列检查 **0 真实缺失**（2 个为动态 SQL `{}` 正则误报）；
+  - 唯一索引齐备：sync_policies(user_id)、production_schedules(schedule_no)——ON CONFLICT 依赖全部存在；
+  - 动态 SQL 安全：production_record/process 的 `{}` 条件由代码构造 + 参数化 bind，无注入面；
+  - 绑定序列抽查：mobile 3 处 INSERT/UPDATE 占位符=bind 数，aps INSERT 16 列=16 bind，全部对齐。
+- **运行时实测发现（3 类真实缺陷）**：
+  | 级别 | 位置 | 缺陷 | 处理 |
+  |---|---|---|---|
+  | P1 | mes production_record.rs create_record | INSERT 硬编码 `operator=NULL`（表 operator NOT NULL）→ **创建必 500"创建生产记录失败"** | 已修代码（operator 绑 operator_id 字符串、占位符重排 $1-$10）；因 sqlx 缓存门禁（prepare 全 workspace 卡预先漂移）无法更新缓存，**已 checkout 还原待下批** |
+  | P1 | mes quality_standard_values | 代码 INSERT 引用 `tenant_id` 列但**表无此列** → 插入必 500 | **DB 已 ALTER 加列**（运行时生效，旧 build 直接受益） |
+  | P1 | mes work_reports | 同上缺 `tenant_id` 列 | **DB 已 ALTER 加列** |
+  | P2 | analytics bi comparison_analysis/widget | `DateTime.unwrap_or_else(Utc::now)` 编译错（6 处，E0599） | 已修代码；因缓存门禁 checkout 还原待下批 |
+  | P2 | analytics datasource 等 / wms | `sqlx prepare` 连库后 query! Row 与代码期望类型漂移（E0308 51 处，row_to_response 参数错） | 预先漂移（DB↔缓存↔代码三方契约），需独立批次 |
+  | P3 | mes processes | 创建请求必填字段为 `name`（非 process_name），422 为 API 契约字段名差异 | 记录 |
+- **环境处置**：`cargo sqlx prepare --workspace` 因 analytics/wms/mes 预先漂移失败（且破坏 .sqlx 缓存）→ 已 `git checkout .sqlx/` 恢复 362 条缓存，`cargo build --bin topems-server` 通过（44s），工作区与 origin 一致（无代码改动待提交）。
+- **遗留待下批**：① production_record operator NOT NULL 缺陷（代码已备好）；② analytics 6 处 unwrap_or_else + 51 处 E0308 类型漂移；③ quality_standard_values/work_reports 的 tenant_id 迁移文件入库（DB 已改）。
