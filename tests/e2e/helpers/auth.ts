@@ -32,7 +32,6 @@ export async function loginViaUi(
   await page.goto('/login', { waitUntil: 'networkidle' });
   await page.getByLabel(/用户名|username|账号/i).fill(user.username);
   await page.getByLabel(/密码|password/i).fill(user.password);
-  await page.getByLabel(/租户|tenant/i).fill(user.tenantId);
   await page.getByRole('button', { name: /登录|login|sign in/i }).click();
   await expect(page).toHaveURL(/\/(dashboard|home|portal)/i, { timeout: 30_000 });
 }
