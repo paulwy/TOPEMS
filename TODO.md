@@ -1,3 +1,11 @@
+## e2e 批 A 收尾 · 批 B 前置（DB 侧三处补齐 + 复验）完成（2026-10-27）✅ 已完成
+
+> 按用户拍板"批 B 前置（DB 侧，无需改代码）"执行：补表/列按原迁移 DDL 幂等落地并逐一复验。
+
+- **已补齐**：① `public.search_entity_projections`（迁移 71 原样：表+idx+GRANT）→ 查询链路复验命中（手工行 /api/search 返回高亮/facets）；② `communication.core_notification_subscriptions`（迁移 02 原样：+RLS policy）→ GET/POST 订阅均 200；③ `rs.audit_logs` 补 entity_ids+user_name+status（对齐 shared.audit_logs 13 列契约）→ rd 创建后审计落库成功、无新增 ERROR。
+- **新增代码级缺口（登记待排期）**：**search 事件订阅者未在 monolith 启动**（`start_projection_subscriber` 仅 search 独立 main.rs 调用，SearchRealModule 未调）→ erp 事件无人消费、投影不自动更新；与 master_data schema_defense 未挂载**同根源（monolith 挂载不完整）**，建议随批 B 代码批一并处理（几行 + fmt + 重编译）。
+- **产物更新**：`docs/reports/e2e/批A_R0-R4_实机验证小结_20261027.md` 补「六、批 B 前置执行记录」。
+
 ## e2e 17 域扩展 · 批 A（R0–R4）实机验证完成（2026-10-27）✅ 批 A 完成，待确认后进批 B
 
 > 用户拍板"分两批推进 + test_admin 授超管"后执行批 A = R0 系统初始化 + R1 核心业务主链 + R2 专项生态 + R3 服务知识域 + R4 四新域（S1–S17）。
