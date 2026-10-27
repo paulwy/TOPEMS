@@ -14,7 +14,6 @@
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     routing::{get, post},
     Extension, Json, Router,
 };
