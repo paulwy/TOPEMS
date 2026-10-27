@@ -5110,3 +5110,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **finance 重复发票语义修复**：sales_invoice.rs create Err 分支捕获 SQLSTATE 23505 → 409（"发票编号已存在，请勿重复创建"）。验证：重复 INV-SC-A-001 → code=409；新 INV-SC-A-002 → code=200。
 - **mobile 同步端点澄清**：/offline/sync（OfflineSyncRequest: sync_type/data/records_count）与 /offline/sync-data（SyncRequest: operations/last_sync_time）并存均正常，场景报告发现③表述已修正。
 - **search 投影不覆盖 crm 客户**：架构边界（投影由 erp 快照维护），记录留待后续。
+## 第四十轮（2026-10-27）：场景化测试 v2.1 修复批次（R0-R7 缺陷 P1-P2）
+- **crm 软删单查**（P2）：get_customer SQL 补 `AND deleted_at IS NULL` → GET 软删客户 404"客户不存在" ✅ 已提交推送。
+- **pm 创建**（P1，三重 schema 漂移根因）：① tags 表列 jsonb→text[]（Project.tags Vec<String>，DROP+ADD）；② code 唯一索引缺失（ON CONFLICT(code) 依赖）→ CREATE UNIQUE INDEX idx_projects_code_unique；③ cost_center_id/cost_center_name 列缺失（INSERT/RETURNING/SELECT 引用）→ 补列。create code=200 ✅。
+- **rd 挂起**（P1）：重启后 16ms 快速响应（瞬态进程状态问题，非代码缺陷）；create 422 为请求缺 start_date（必填字段，补全 payload 即可）。
+- **DB 契约补丁入库**：database/migrations/20261027100000_scenario_fix_contract_align.sql（materials 建表/hrm NOT NULL 放宽/portal 补列/ehs tenant_id/pm 三修复，全部幂等）。
+- **迁移门禁顺带修复**：20261026990000 无效时间戳 → git mv 为 20261026230000（migration naming gate STRICT 曾拦截）。
+- **推送**：ff76d9d7f（修复批次）+ 2a79472c9（checksums 同步），origin/main 一致。
+- **遗留待深查**：pm/mes/wms/qms 列表读回 rows=0（落库有数据、列表过滤差异，P2 系统性）；plugins/subscriptions 未挂载 monolith（P2）；空库 iam 自愈缺 users/core_users（P2）。
+- **【修正 2026-10-27 同轮】列表读回 rows=0 为测试解析误报**：wms=warehouses、pm=projects、mes=orders、qms=inspections 字段名不同（此前统一按 items 解析）→ 实测数据全在（pm=3/mes=1/qms=1/wms=6）。P2 系统性缺口撤销，仅记录 API 列表字段名不一致（P3 建议统一契约）。**plugins/subscriptions 深查**：subscription 模块为纯类型框架（PlanTier 等，无路由实现）；plugin-registry 为独立 svc（未在 monolith SERVICES 列表）——均为架构级缺口（需独立改造批次），非简单挂载可解。

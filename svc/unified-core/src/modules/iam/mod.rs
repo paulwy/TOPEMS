@@ -14,6 +14,11 @@ use sqlx::PgPool;
 
 /// Initialize IAM database tables
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
+    // 空库首启自愈：iam schema 可能不存在（迁移未跑），先确保 schema 存在
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS iam")
+        .execute(pool)
+        .await?;
+
     // Create users table
     sqlx::query(
         r#"
@@ -32,6 +37,37 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMPTZ DEFAULT NOW(),
             last_login_at TIMESTAMP,
                 deleted_at TIMESTAMP
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 空库自愈补齐 handler 依赖列（auth/login 查询 full_name_en/roles/permissions/must_change_password）
+    // CREATE TABLE 已含新库全列；ALTER 兜底存量表
+    sqlx::query(
+        "ALTER TABLE IF EXISTS iam.users \
+         ADD COLUMN IF NOT EXISTS full_name_en VARCHAR(128), \
+         ADD COLUMN IF NOT EXISTS roles TEXT[] DEFAULT '{}', \
+         ADD COLUMN IF NOT EXISTS permissions TEXT[] DEFAULT '{}', \
+         ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE",
+    )
+    .execute(pool)
+    .await?;
+
+    // core_users 兜底：schema_defense 在 init_database 之后执行，
+    // 此处先建骨架避免 ALTER/INDEX/FK 依赖失败（后续 run_schema_defense 补全列）
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS public.core_users (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            username VARCHAR(64) NOT NULL UNIQUE,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            password_hash VARCHAR(255) NOT NULL,
+            tenant_id UUID,
+            is_superuser BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
         )
         "#,
     )
