@@ -1,6 +1,7 @@
 import { iconSm, iconMd, iconLg } from '../sharedStyles';
 import { ListPageHeader } from './ListPageHeader';
 import { useListPageForm } from './useListPageForm';
+import { useListPageSortSearch } from './useListPageSortSearch';
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
@@ -1509,32 +1510,22 @@ export function ListPageTemplate<
   );
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [sortBy, setSortBy] = useState(defaultSortBy || '');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(defaultSortOrder);
-  // searchInput：
-  // - 受控模式（searchValue 传入）：以外部值为准
-  // - internalListState 模式：以内部 searchQuery 为准
-  // - 否则：本地 useState + persistSearch
-  const [localSearchInput, setLocalSearchInput] = useState(() => {
-    if (persistSearch) {
-      const key = filterStorageKey || window.location.pathname;
-      try {
-        const stored = localStorage.getItem(`listpage:search:${key}`);
-        if (stored) {
-          return stored;
-        }
-      } catch {
-        // ignore
-      }
-    }
-    return searchValue || '';
+  const {
+    sortBy,
+    sortOrder,
+    setSortBy,
+    setSortOrder,
+    searchInput,
+    localSearchInput,
+    setLocalSearchInput,
+  } = useListPageSortSearch({
+    defaultSortBy,
+    defaultSortOrder,
+    searchValue,
+    persistSearch,
+    filterStorageKey,
+    internalSearchQuery: internalListStateResult?.searchQuery,
   });
-  const searchInput =
-    searchValue !== undefined
-      ? searchValue
-      : internalListStateResult
-        ? internalListStateResult.searchQuery
-        : localSearchInput;
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRow, setSelectedRow] = useState<T | null>(null);
   // 批量选择状态 - 从 localStorage 恢复
