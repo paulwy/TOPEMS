@@ -32,7 +32,7 @@ export function useListPageMisc<T = unknown>(options: UseListPageMiscOptions = {
   const [expandedIds, setExpandedIds] = useState<Array<string | number>>(defaultExpandedIds);
 
   // ============ 列配置状态 ============
-  const [columnConfig, setColumnConfig] = useState<Array<{ id: string; visible: boolean; label?: string }>>([]);
+  const [columnConfig, setColumnConfig] = useState<Array<{ id: string; visible: boolean; label?: string; order?: number }>>([]);
   const columnConfigInitialized = useRef(false);
 
   // 初始化 columnConfig
@@ -101,6 +101,14 @@ export function useListPageMisc<T = unknown>(options: UseListPageMiscOptions = {
     [columnConfigStorageKey]
   );
 
+  // ============ 导出状态 ============
+  const [exporting, setExporting] = useState(false);
+  const [exportComplete, setExportComplete] = useState(false);
+  const [exportAnchorEl, setExportAnchorEl] = useState<HTMLElement | null>(null);
+
+  // ============ 移动端菜单状态 ============
+  const [mobileMenuEl, setMobileMenuEl] = useState<HTMLElement | null>(null);
+
   return {
     // 确认对话框
     confirmDialogOpen,
@@ -117,5 +125,15 @@ export function useListPageMisc<T = unknown>(options: UseListPageMiscOptions = {
     columnConfig,
     setColumnConfig,
     toggleColumnVisibility,
+    // 导出状态
+    exporting,
+    setExporting,
+    exportComplete,
+    setExportComplete,
+    exportAnchorEl,
+    setExportAnchorEl,
+    // 移动端菜单
+    mobileMenuEl,
+    setMobileMenuEl,
   };
 }

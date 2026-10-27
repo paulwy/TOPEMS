@@ -1549,11 +1549,19 @@ export function ListPageTemplate<
     setPendingAction,
     expandedIds,
     setExpandedIds,
+    columnConfig,
+    setColumnConfig,
+    exporting,
+    setExporting,
+    exportComplete,
+    setExportComplete,
+    exportAnchorEl,
+    setExportAnchorEl,
+    mobileMenuEl,
+    setMobileMenuEl,
   } = useListPageMisc<T>({
     defaultExpandedIds,
   });
-  // 内部 columnConfig 状态（延迟初始化，首次渲染后根据 resolvedColumns 同步）
-  const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>([]);
   // 初始化 columnConfig（使用 resolvedColumns，支持 crud 自动生成的列）
   const columnConfigInitialized = useRef(false);
   useEffect(() => {
@@ -1583,13 +1591,6 @@ export function ListPageTemplate<
   }, [resolvedColumns, defaultColumnConfig, persistColumnConfig, columnConfigStorageKey]);
   // 列配置 Popover 状态
   const [columnConfigAnchor, setColumnConfigAnchor] = useState<HTMLElement | null>(null);
-  // 导出状态
-  const [exporting, setExporting] = useState(false);
-  const [exportComplete, setExportComplete] = useState(false);
-  const [exportAnchorEl, setExportAnchorEl] = useState<HTMLElement | null>(null);
-  // 移动端溢出菜单的 anchor 状态
-  // 原在 L3825 IIFE 内调用 React.useState 违反 hooks/rules-of-hooks，上提到顶层
-  const [mobileMenuEl, setMobileMenuEl] = React.useState<HTMLElement | null>(null);
   // URL 同步列配置（当 columnConfig prop 启用时）
   const urlColSyncEnabled = columnConfigProp?.urlSync && columnConfigProp.key;
   const columnConfigResult = useColumnConfig({
