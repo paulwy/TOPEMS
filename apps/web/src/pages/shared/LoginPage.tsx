@@ -28,6 +28,7 @@ import { designTokens } from '@/theme/tokens';
 import { AuthPageTemplate } from '@/components/templates';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 const loginFormSchema = z.object({
   username: z
     .string()
@@ -70,6 +71,13 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
       });
     },
     onSuccess: (response) => {
+      // S2 强制改密：登录成功且 must_change_password=true（初始密码用户）→ 跳转强制改密页
+      const userInfo = (response as { data?: { user?: { must_change_password?: boolean } } }).data
+        ?.user;
+      if (userInfo?.must_change_password) {
+        navigate(AUTH_PATHS.forceChangePassword, { replace: true });
+        return;
+      }
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.SHARED_ATTACHMENTS_BASE,
         exact: false,

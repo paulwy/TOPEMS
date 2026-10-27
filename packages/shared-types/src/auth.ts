@@ -34,6 +34,8 @@ export interface User {
   roles?: string[];
   /** 超级用户标识 */
   is_superuser?: boolean;
+  /** 首次/初始密码用户必须改密（强制改密流程） */
+  must_change_password?: boolean;
   /** isActive - status 的别名（用于旧 API） */
   isActive?: boolean;
   /** createdAt 的别名（用于旧 API） */
@@ -67,6 +69,7 @@ interface RawApiUserResponse {
   departmentId?: string;
   position_id?: string;
   positionId?: string;
+  must_change_password?: boolean;
   role?: string;
   roles?: string[];
   is_superuser?: boolean;
@@ -95,6 +98,7 @@ export const mapApiUserToUser = (apiResponse: RawApiUserResponse): User => {
     role: apiResponse.role,
     roles: apiResponse.roles,
     is_superuser: apiResponse.is_superuser,
+    must_change_password: apiResponse.must_change_password,
     isActive: apiResponse.isActive,
     created_at: apiResponse.created_at,
     updated_at: apiResponse.updated_at,
