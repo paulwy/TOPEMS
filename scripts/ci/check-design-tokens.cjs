@@ -49,6 +49,11 @@ const IGNORED_PATH_PARTS = [
   '/theme/gradients.',
   '/theme/presets.',
   '/theme/theme.',
+  // token 定义文件本身（误报）：它们是 token 源，不是使用方
+  '/theme/redesign-tokens.',
+  '/theme/redesign-global.',
+  '/theme/generated-tokens.',
+  'packages/shared-components/src/theme/',
 ];
 
 const PATTERNS = [
