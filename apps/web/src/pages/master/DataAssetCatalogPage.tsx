@@ -39,7 +39,7 @@ import type {
   V60LifecycleHistory,
 } from '@/api/master/dataAssetCatalogV66';
 import i18n from '@/i18n';
-import { assetTypeColors, assetStatusColors, assetSensitivityColors } from '@/theme/presets';
+import { assetTypeColors } from '@/theme/presets';
 
 const LIFECYCLE_TRANSITIONS: Array<
   'active' | 'maintenance' | 'deprecated' | 'archived' | 'deleted'
@@ -388,16 +388,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   {i18n.t('master.data_asset_catalog.col_name')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>
-                  {i18n.t('master.data_asset_catalog.col_display_name')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>
                   {i18n.t('master.data_asset_catalog.col_type')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>
-                  {i18n.t('master.data_asset_catalog.col_status')}
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>
-                  {i18n.t('master.data_asset_catalog.col_sensitivity')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>
                   {i18n.t('master.data_asset_catalog.col_owner')}
@@ -417,7 +408,7 @@ const DataAssetCatalogPage: React.FC = () => {
               {loading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={6}
                     sx={{ textAlign: 'center', py: 4 }}
                   >
                     <CircularProgress />
@@ -426,7 +417,7 @@ const DataAssetCatalogPage: React.FC = () => {
               ) : assets.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={6}
                     sx={{ textAlign: 'center', py: 4 }}
                   >
                     <Typography color='text.secondary'>
@@ -449,35 +440,12 @@ const DataAssetCatalogPage: React.FC = () => {
                         {asset.name}
                       </Button>
                     </TableCell>
-                    <TableCell>{asset.display_name || '-'}</TableCell>
                     <TableCell>
                       <Chip
                         label={asset.type}
                         size='small'
                         sx={{
                           backgroundColor: assetTypeColors[asset.type],
-                          color: 'common.white',
-                          fontWeight: 500,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={asset.status}
-                        size='small'
-                        sx={{
-                          backgroundColor: assetStatusColors[asset.status],
-                          color: 'common.white',
-                          fontWeight: 500,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={asset.sensitivity}
-                        size='small'
-                        sx={{
-                          backgroundColor: assetSensitivityColors[asset.sensitivity],
                           color: 'common.white',
                           fontWeight: 500,
                         }}
@@ -603,15 +571,6 @@ const DataAssetCatalogPage: React.FC = () => {
                   {detailAsset.name}
                 </Typography>
               </Box>
-              <Box sx={{ flex: '1 1 45%', minWidth: 200 }}>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  {i18n.t('master.data_asset_catalog.col_display_name')}
-                </Typography>
-                <Typography variant='body1'>{detailAsset.display_name || '-'}</Typography>
-              </Box>
               <Box sx={{ flex: '1 1 22%', minWidth: 150 }}>
                 <Typography
                   variant='body2'
@@ -634,52 +593,9 @@ const DataAssetCatalogPage: React.FC = () => {
                   variant='body2'
                   color='text.secondary'
                 >
-                  {i18n.t('master.data_asset_catalog.col_status')}
-                </Typography>
-                <Chip
-                  label={detailAsset.status}
-                  size='small'
-                  sx={{
-                    backgroundColor: assetStatusColors[detailAsset.status],
-                    color: 'common.white',
-                    mt: 0.5,
-                  }}
-                />
-              </Box>
-              <Box sx={{ flex: '1 1 22%', minWidth: 150 }}>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  {i18n.t('master.data_asset_catalog.col_sensitivity')}
-                </Typography>
-                <Chip
-                  label={detailAsset.sensitivity}
-                  size='small'
-                  sx={{
-                    backgroundColor: assetSensitivityColors[detailAsset.sensitivity],
-                    color: 'common.white',
-                    mt: 0.5,
-                  }}
-                />
-              </Box>
-              <Box sx={{ flex: '1 1 22%', minWidth: 150 }}>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
                   {i18n.t('master.data_asset_catalog.col_owner')}
                 </Typography>
                 <Typography variant='body1'>{detailAsset.owner || '-'}</Typography>
-              </Box>
-              <Box sx={{ flex: '1 1 22%', minWidth: 150 }}>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  {i18n.t('master.data_asset_catalog.fld_owner_team')}
-                </Typography>
-                <Typography variant='body1'>{detailAsset.owner_team || '-'}</Typography>
               </Box>
               <Box sx={{ flex: '1 1 22%', minWidth: 150 }}>
                 <Typography
