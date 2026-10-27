@@ -24,7 +24,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAllPermissions = false,
   fallbackPath = AUTH_PATHS.login,
 }) => {
-  const { isAuthenticated, isLoading, logout } = useAuth();
+  const { isAuthenticated, isLoading, logout, user } = useAuth();
   const { checkAnyPermission, checkAllPermissions } = usePermission();
   const { checkAnyRole } = useRole();
   const location = useLocation();
@@ -65,6 +65,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return (
       <Navigate
         to={fallbackPath}
+        state={{ from: location }}
+        replace
+      />
+    );
+  }
+
+  // S2 强制改密守卫：must_change_password 用户只能访问强制改密页，
+  // 访问任何受保护路由一律重定向（防深链绕过）。
+  if (user?.must_change_password && location.pathname !== AUTH_PATHS.forceChangePassword) {
+    return (
+      <Navigate
+        to={AUTH_PATHS.forceChangePassword}
         state={{ from: location }}
         replace
       />

@@ -8627,5 +8627,21 @@
   "pages.tenant_settings_page.subtitle": "Manage tenant information and configuration",
   "pages.tenant_settings_page.title": "Tenant Settings",
   "pages.dataset_page.sql_test_result": "SQL Test Result",
-  "pages.dataset_page.sql_test_empty": "Query returned no data"
+  "pages.dataset_page.sql_test_empty": "Query returned no data",
+  "pages.force_change_password_page.k0": "Security Verification",
+  "pages.force_change_password_page.k1": "For security reasons, you must change the initial password before continuing.",
+  "pages.force_change_password_page.k2": "Current Password",
+  "pages.force_change_password_page.k3": "Enter current password",
+  "pages.force_change_password_page.k4": "New Password",
+  "pages.force_change_password_page.k5": "Enter new password (at least 6 chars)",
+  "pages.force_change_password_page.k6": "Confirm New Password",
+  "pages.force_change_password_page.k7": "Re-enter new password",
+  "pages.force_change_password_page.k8": "The two new passwords do not match",
+  "pages.force_change_password_page.k9": "Submitting...",
+  "pages.force_change_password_page.k10": "Submit",
+  "pages.force_change_password_page.k11": "Password Changed",
+  "pages.force_change_password_page.k12": "Password updated. Please sign in with your new password.",
+  "pages.force_change_password_page.k13": "Password Change Failed",
+  "pages.force_change_password_page.k14": "Change Password",
+  "pages.force_change_password_page.k15": "New password must be at least 6 characters"
 }

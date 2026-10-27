@@ -43,6 +43,7 @@ export interface User {
   created_at: string;
   isactive: boolean;
   is_superuser?: boolean;
+  must_change_password?: boolean;
   avatar_url?: string;
   tenant_id?: string;
   tenants?: UserTenantInfo[];

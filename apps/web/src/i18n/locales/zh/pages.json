@@ -4026,5 +4026,21 @@
   "pages.tenant_settings_page.subtitle": "管理租户信息与配置",
   "pages.tenant_settings_page.title": "租户设置",
   "pages.dataset_page.sql_test_result": "SQL 测试结果",
-  "pages.dataset_page.sql_test_empty": "查询未返回数据"
+  "pages.dataset_page.sql_test_empty": "查询未返回数据",
+  "pages.force_change_password_page.k0": "安全验证",
+  "pages.force_change_password_page.k1": "出于安全考虑，您必须修改初始密码后才能继续使用系统。",
+  "pages.force_change_password_page.k2": "当前密码",
+  "pages.force_change_password_page.k3": "请输入当前密码",
+  "pages.force_change_password_page.k4": "新密码",
+  "pages.force_change_password_page.k5": "请输入新密码（至少6位）",
+  "pages.force_change_password_page.k6": "确认新密码",
+  "pages.force_change_password_page.k7": "请再次输入新密码",
+  "pages.force_change_password_page.k8": "两次输入的新密码不一致",
+  "pages.force_change_password_page.k9": "提交中...",
+  "pages.force_change_password_page.k10": "提交",
+  "pages.force_change_password_page.k11": "修改密码成功",
+  "pages.force_change_password_page.k12": "密码已修改，请使用新密码重新登录",
+  "pages.force_change_password_page.k13": "修改密码失败",
+  "pages.force_change_password_page.k14": "修改密码",
+  "pages.force_change_password_page.k15": "新密码长度不能少于6位"
 }
