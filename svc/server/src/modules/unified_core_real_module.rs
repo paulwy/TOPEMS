@@ -21,7 +21,7 @@ pub struct UnifiedCoreRealModule {
 impl UnifiedCoreRealModule {
     /// 异步构建真实 Unified Core 模块
     pub async fn build() -> Result<Self> {
-        std::env::set_var("SEARCH_PATH", "public");
+        std::env::set_var("SEARCH_PATH", "public"); // unified-core 权威表统一 public（flow 业务表已收敛）
 
         let config = topems_shared_bootstrap::ServiceConfig {
             name: "topems-unified-core",

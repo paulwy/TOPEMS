@@ -66,7 +66,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // ===== 业务操作日志表 =====
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_operation_logs (
+        CREATE TABLE IF NOT EXISTS public.core_operation_logs (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             user_id UUID,

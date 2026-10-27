@@ -737,7 +737,7 @@ pub async fn list_workflow_versions(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let versions = sqlx::query_as::<_, WorkflowVersion>(
-        // flow.core_workflow_versions.version 为 integer、created_by 为 uuid，
+        // core_workflow_versions.version 为 integer、created_by 为 uuid，
         // 而 WorkflowVersion 模型二者均为 String，显式 ::text 对齐解码（API 仍输出字符串）
         "SELECT id, workflow_id, version::text, definition, change_description, created_by::text, isactive, created_at
          FROM core_workflow_versions

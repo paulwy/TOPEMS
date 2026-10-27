@@ -1419,7 +1419,7 @@ pub struct PendingApprovalQuery {
 pub async fn init_mdm_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_master_data_refs (
+        CREATE TABLE IF NOT EXISTS public.core_master_data_refs (
             master_data_id TEXT PRIMARY KEY,
             tenant_id UUID NOT NULL,
             domain TEXT NOT NULL,
@@ -1458,7 +1458,7 @@ pub async fn init_mdm_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_master_data_change_log (
+        CREATE TABLE IF NOT EXISTS public.core_master_data_change_log (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             master_data_id TEXT NOT NULL,
             tenant_id UUID NOT NULL,
@@ -1489,7 +1489,7 @@ pub async fn init_mdm_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     // V31.0 对账日志表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_mdm_reconciliation_log (
+        CREATE TABLE IF NOT EXISTS public.core_mdm_reconciliation_log (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             domain TEXT NOT NULL,
@@ -1517,7 +1517,7 @@ pub async fn init_mdm_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     // V31.0 审批表
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_mdm_approvals (
+        CREATE TABLE IF NOT EXISTS public.core_mdm_approvals (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             master_data_id TEXT NOT NULL,

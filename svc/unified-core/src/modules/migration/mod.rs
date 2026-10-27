@@ -7,7 +7,7 @@ pub mod service;
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_migration_history (
+        CREATE TABLE IF NOT EXISTS public.core_migration_history (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             plugin_name VARCHAR(128) NOT NULL,
             version VARCHAR(64) NOT NULL,

@@ -565,7 +565,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // 空库首启 INSERT 时表不存在（relation does not exist）导致关联缺失。
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_tenants (
+        CREATE TABLE IF NOT EXISTS public.core_tenants (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(128) NOT NULL,
             code VARCHAR(64) NOT NULL UNIQUE,

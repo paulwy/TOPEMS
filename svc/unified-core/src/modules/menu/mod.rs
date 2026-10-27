@@ -9,7 +9,7 @@ use sqlx::PgPool;
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_menu_groups (
+        CREATE TABLE IF NOT EXISTS public.core_menu_groups (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             name VARCHAR(200) NOT NULL,
@@ -29,7 +29,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_menus (
+        CREATE TABLE IF NOT EXISTS public.core_menus (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             group_id UUID NOT NULL REFERENCES core_menu_groups(id) ON DELETE CASCADE,

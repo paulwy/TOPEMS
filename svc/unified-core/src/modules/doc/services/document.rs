@@ -106,7 +106,7 @@ impl DocumentService {
 pub async fn init_database(pool: &PgPool) -> Result<()> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_doc_documents (
+        CREATE TABLE IF NOT EXISTS public.core_doc_documents (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             title VARCHAR(200) NOT NULL,
@@ -139,7 +139,7 @@ pub async fn init_database(pool: &PgPool) -> Result<()> {
     // 文档版本表（list_document_versions / get_document_version / restore_document_version 使用）
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_doc_document_versions (
+        CREATE TABLE IF NOT EXISTS public.core_doc_document_versions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             document_id UUID NOT NULL REFERENCES core_doc_documents(id) ON DELETE CASCADE,
             version INTEGER NOT NULL,

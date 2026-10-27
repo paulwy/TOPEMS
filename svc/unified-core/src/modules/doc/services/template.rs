@@ -123,7 +123,7 @@ impl TemplateService {
 pub async fn init_database(pool: &PgPool) -> Result<()> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_doc_templates (
+        CREATE TABLE IF NOT EXISTS public.core_doc_templates (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             name VARCHAR(200) NOT NULL,

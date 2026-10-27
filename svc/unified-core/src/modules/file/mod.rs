@@ -37,7 +37,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_file_folders (
+        CREATE TABLE IF NOT EXISTS public.core_file_folders (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(128) NOT NULL,
             parent_id UUID,
@@ -52,7 +52,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_file_permissions (
+        CREATE TABLE IF NOT EXISTS public.core_file_permissions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             file_id UUID NOT NULL,
             user_id UUID NOT NULL,

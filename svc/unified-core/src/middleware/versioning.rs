@@ -262,7 +262,7 @@ pub struct VersionStatistics {
 pub async fn init_version_config_table(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_api_version_configs (
+        CREATE TABLE IF NOT EXISTS public.core_api_version_configs (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             version VARCHAR(50) NOT NULL UNIQUE,
             status VARCHAR(20) NOT NULL DEFAULT 'active',

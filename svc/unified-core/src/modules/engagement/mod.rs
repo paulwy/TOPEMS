@@ -17,7 +17,7 @@ use sqlx::PgPool;
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_comments (
+        CREATE TABLE IF NOT EXISTS public.core_comments (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
             content TEXT NOT NULL,
@@ -37,7 +37,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_favorites (
+        CREATE TABLE IF NOT EXISTS public.core_favorites (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
             user_id VARCHAR(128) NOT NULL,

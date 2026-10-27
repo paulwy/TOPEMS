@@ -14,7 +14,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Tenants table
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_tenants (
+        CREATE TABLE IF NOT EXISTS public.core_tenants (
         -- tenant_id Uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(128) NOT NULL,
@@ -59,7 +59,7 @@ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     // Tenant usage statistics
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_tenant_usage (
+        CREATE TABLE IF NOT EXISTS public.core_tenant_usage (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL REFERENCES core_tenants(id),
             
@@ -89,7 +89,7 @@ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     // Tenant modules (activated plugins/features)
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_tenant_modules (
+        CREATE TABLE IF NOT EXISTS public.core_tenant_modules (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL REFERENCES core_tenants(id),
             module_code VARCHAR(64) NOT NULL,
@@ -115,7 +115,7 @@ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     // Tenant settings (key-value store)
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_tenant_settings (
+        CREATE TABLE IF NOT EXISTS public.core_tenant_settings (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL REFERENCES core_tenants(id),
             setting_key VARCHAR(128) NOT NULL,
@@ -133,7 +133,7 @@ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     // Tenant users table
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_tenant_users (
+        CREATE TABLE IF NOT EXISTS public.core_tenant_users (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL REFERENCES core_tenants(id) ON DELETE CASCADE,
             user_id UUID NOT NULL,

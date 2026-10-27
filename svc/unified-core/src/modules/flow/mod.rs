@@ -23,7 +23,7 @@ use sqlx::PgPool;
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_workflows (
+        CREATE TABLE IF NOT EXISTS public.core_workflows (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(128) NOT NULL,
             name_en VARCHAR(128),
@@ -33,6 +33,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'draft',
             version INTEGER DEFAULT 1,
             created_by UUID NOT NULL,
+            tenant_id UUID,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW(),
             published_at TIMESTAMPTZ,
@@ -45,7 +46,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_workflow_instances (
+        CREATE TABLE IF NOT EXISTS public.core_workflow_instances (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             workflow_id UUID NOT NULL REFERENCES core_workflows(id),
             title VARCHAR(256) NOT NULL,
@@ -65,7 +66,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_workflow_versions (
+        CREATE TABLE IF NOT EXISTS public.core_workflow_versions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             workflow_id UUID NOT NULL REFERENCES core_workflows(id),
             version VARCHAR(64) NOT NULL,
@@ -83,7 +84,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_workflow_tasks (
+        CREATE TABLE IF NOT EXISTS public.core_workflow_tasks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             instance_id UUID NOT NULL REFERENCES core_workflow_instances(id),
             node_id VARCHAR(64) NOT NULL,
@@ -115,7 +116,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_flow_categories (
+        CREATE TABLE IF NOT EXISTS public.core_flow_categories (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(128) NOT NULL,
             code VARCHAR(64),
@@ -135,7 +136,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_flow_variables (
+        CREATE TABLE IF NOT EXISTS public.core_flow_variables (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             scope VARCHAR(16) NOT NULL,
             instance_id UUID,
@@ -155,7 +156,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_flow_variable_history (
+        CREATE TABLE IF NOT EXISTS public.core_flow_variable_history (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             variable_id UUID REFERENCES core_flow_variables(id),
             var_key VARCHAR(128) NOT NULL,
@@ -171,7 +172,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_flow_delegates (
+        CREATE TABLE IF NOT EXISTS public.core_flow_delegates (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             delegator_id UUID NOT NULL,
             attorney_id UUID NOT NULL,
@@ -192,7 +193,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_flow_rules (
+        CREATE TABLE IF NOT EXISTS public.core_flow_rules (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(128) NOT NULL,
             workflow_id UUID,
