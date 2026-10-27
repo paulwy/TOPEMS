@@ -23,6 +23,7 @@ mod rate_limit_config;
 mod mdm_dlq;
 mod settings;
 mod system;
+mod subscription;
 // V430: SSE (Server-Sent Events) 端点 - 公共路由, 支持实时通信
 mod sse;
 // V436: Business Tools 路由 - 统一业务工具API接口
@@ -172,6 +173,7 @@ pub fn create_routes(
         .nest("/file", file::file_routes(state))
         .merge(master::master_routes(state))
         .merge(feature_flag::feature_flag_routes(state))
+        .merge(subscription::subscription_routes(state))
         // 限流/非重放配置管理（前端 admin RateLimitConfigPage 契约 /api/core/iam/v1/rate-limit/config[/anti-replay]）
         .nest(
             "/iam/v1",
