@@ -183,6 +183,7 @@ pub async fn list_warehouses(
 
             let response_data = serde_json::json!({
                 "warehouses": warehouses,
+                "items": warehouses,
                 "total": total,
                 "page": page,
                 "page_size": page_size

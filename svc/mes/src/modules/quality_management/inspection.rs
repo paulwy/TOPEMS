@@ -273,6 +273,7 @@ pub async fn list_inspections(
     Json(ApiResponse::success(
         serde_json::json!({
             "inspections": inspections,
+            "items": inspections,
             "total": total.unwrap_or(0),
             "page": page,
             "page_size": page_size,

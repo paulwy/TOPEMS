@@ -5145,3 +5145,15 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **验证闭环**（test_admin 置 must_change=true 实测）：登录成功 → 访问 /iam/users **403"首次登录须先修改初始密码"** → 改密（current_password=admin123, new_password=admin1234）**200"修改密码成功"** → 新密码登录 **200** → 访问 /iam/users **200"获取用户列表成功"**（强制解除）。测试后已恢复 test_admin 密码/标记。
 - **结论**：S0 记录"无强制逻辑"为漏查/误报；期间尝试的自建改密端点与权限中间件拦截（重复实现）已 git checkout 还原，无代码残留。
 - **剩余待处理**：API 列表字段契约统一（P3，items/projects/orders/warehouses/inspections 命名不一致）。
+
+## 第四十五轮（2026-10-27）：API 列表字段契约统一（P3 关闭，5 端点加 items 规范字段）✅
+- **方案**：保留原字段（projects/orders/warehouses/inspections）+ 新增 `items` 统一规范字段（兼容不破坏，前端/调用方可平滑迁移到 items）。
+- **改动 5 处**：
+  - `svc/pm/src/modules/project.rs`：ProjectListResponse 结构体加 `pub items: Vec<Project>`（+ list_projects 构造 + 2 处测试构造同步）。
+  - `svc/wms/src/modules/outbound_order.rs:174`：json 加 `"items": orders`。
+  - `svc/wms/src/modules/inbound_order.rs:214`：json 加 `"items": orders`。
+  - `svc/wms/src/modules/warehouse.rs:185`：json 加 `"items": warehouses`。
+  - `svc/mes/src/modules/quality_management/inspection.rs:275`：json 加 `"items": inspections`。
+- **实测验证**（编译通过 + 重启）：`/api/pm/projects` items=3、`/api/wms/warehouses` items=6、`/api/wms/outbound-orders` items=0、`/api/wms/inbound-orders` items=0、`/api/mes/quality/inspections` data keys 含 items；原字段全部保留（legacy 兼容）。
+- **备注**：`/api/mes/inspections`（另一 handler）返回 `records` 字段，不属本次 5 处范围，可后续按需统一。
+- **至此 P1-P2 缺陷清单 + P3 记录项（超管种子/must_change 澄清/列表契约）全部关闭。**

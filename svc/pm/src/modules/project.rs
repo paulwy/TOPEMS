@@ -80,7 +80,10 @@ pub struct ProjectQuery {
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ProjectListResponse {
+    /// 兼容字段（原名），新调用方请使用 items
     pub projects: Vec<Project>,
+    /// 统一列表契约字段
+    pub items: Vec<Project>,
     pub total: i32,
     pub page: i32,
     pub page_size: i32,
@@ -225,7 +228,8 @@ async fn list_projects(
 
     Json(ApiResponse::success(
         ProjectListResponse {
-            projects: filtered_projects,
+            projects: filtered_projects.clone(),
+            items: filtered_projects,
             total,
             page,
             page_size,
@@ -1014,6 +1018,7 @@ mod tests {
         let p = sample_project();
         let resp = ProjectListResponse {
             projects: vec![p.clone()],
+            items: vec![p.clone()],
             total: 1,
             page: 1,
             page_size: 20,
@@ -1030,6 +1035,7 @@ mod tests {
     fn test_project_list_response_empty() {
         let resp = ProjectListResponse {
             projects: vec![],
+            items: vec![],
             total: 0,
             page: 1,
             page_size: 20,
