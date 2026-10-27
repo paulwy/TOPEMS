@@ -1,15 +1,19 @@
-import React from 'react';
-import { Box, useTheme, useMediaQuery } from '@mui/material';
+import React, { lazy, Suspense } from 'react';
+import { Box, useTheme, useMediaQuery, CircularProgress } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { glassSx } from '@/theme/effects';
 import { HeaderLogo } from './HeaderLogo';
 import { HeaderSearch } from './HeaderSearch';
-import { HeaderNotifications } from './HeaderNotifications';
 import { HeaderUserMenu } from './HeaderUserMenu';
 import { HeaderBreadcrumbs } from './HeaderBreadcrumbs';
 import { BusinessDomainTabs } from './BusinessDomainTabs';
 import LanguageSelector from '@/components/LanguageSelector';
 import { TenantSwitcher } from '@/components/TenantSwitcher/TenantSwitcher';
+
+// 通知铃铛懒加载（点击才加载面板，减少首屏 bundle）
+const HeaderNotifications = lazy(() =>
+  import('./HeaderNotifications').then(m => ({ default: m.HeaderNotifications }))
+);
 
 interface AppHeaderProps {
   mobileMenuOpen?: boolean;
@@ -92,7 +96,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {rightActions || (
             <>
               <TenantSwitcher />
-              <HeaderNotifications />
+              <Suspense fallback={<CircularProgress size={20} />}>
+                <HeaderNotifications />
+              </Suspense>
               <LanguageSelector />
               <HeaderUserMenu />
               {MobileNavComponent && onMobileMenuOpen && onMobileMenuClose && (
