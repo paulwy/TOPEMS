@@ -45,6 +45,8 @@ async fn main() -> anyhow::Result<()> {
         auth_state: ctx.auth_state.clone(),
         metrics: Arc::new(SystemMetrics::new()),
         start_time,
+        bff_url: std::env::var("MONITOR_BFF_URL")
+            .unwrap_or_else(|_| "http://localhost:8099".to_string()),
     };
 
     let public_routes = Router::new().route("/", get(home));

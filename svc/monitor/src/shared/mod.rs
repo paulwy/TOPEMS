@@ -12,6 +12,8 @@ pub struct AppState {
     pub auth_state: AuthState,
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
+    /// BFF 网关基址（真实探活目标；env MONITOR_BFF_URL 或默认 http://localhost:8099）
+    pub bff_url: String,
 }
 
 impl FromRef<AppState> for AuthState {

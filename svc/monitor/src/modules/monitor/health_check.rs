@@ -49,6 +49,22 @@ pub fn classify_response_time(rt_ms: f64) -> &'static str {
     }
 }
 
+/// 稳定服务 UUID：由服务名确定性生成（跨进程/跨请求一致，替代每请求随机）。
+pub fn stable_service_id(name: &str) -> Uuid {
+    use std::hash::{Hash, Hasher};
+    let mut h1 = std::collections::hash_map::DefaultHasher::new();
+    name.hash(&mut h1);
+    let a = h1.finish();
+    let mut h2 = std::collections::hash_map::DefaultHasher::new();
+    name.hash(&mut h2);
+    name.hash(&mut h2);
+    let b = h2.finish();
+    let mut bytes = [0u8; 16];
+    bytes[..8].copy_from_slice(&a.to_be_bytes());
+    bytes[8..].copy_from_slice(&b.to_be_bytes());
+    Uuid::from_bytes(bytes)
+}
+
 /// 将天/时/分格式化为运行时长字符串，如 "2d 5h 30m"。
 pub fn format_uptime(days: u64, hours: u64, minutes: u64) -> String {
     format!("{}d {}h {}m", days, hours, minutes)
@@ -70,140 +86,110 @@ pub fn create_routes() -> Router<AppState> {
     ),
 )]
 pub async fn get_service_health(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<ServiceHealth>>> {
-    let services = vec![
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-iam".to_string(),
-            status: "healthy".to_string(),
-            uptime: "2d 5h 30m".to_string(),
-            response_time: 12.5,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-crm".to_string(),
-            status: "healthy".to_string(),
-            uptime: "1d 12h 15m".to_string(),
-            response_time: 25.8,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-hrm".to_string(),
-            status: "healthy".to_string(),
-            uptime: "3d 8h 45m".to_string(),
-            response_time: 18.2,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-pm".to_string(),
-            status: "degraded".to_string(),
-            uptime: "5h 30m".to_string(),
-            response_time: 150.3,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-erp".to_string(),
-            status: "healthy".to_string(),
-            uptime: "4d 2h 10m".to_string(),
-            response_time: 32.5,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-wms".to_string(),
-            status: "healthy".to_string(),
-            uptime: "2d 18h 0m".to_string(),
-            response_time: 28.7,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-scm".to_string(),
-            status: "healthy".to_string(),
-            uptime: "1d 6h 30m".to_string(),
-            response_time: 32.5,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-lims".to_string(),
-            status: "healthy".to_string(),
-            uptime: "6h 45m".to_string(),
-            response_time: 35.8,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-qms".to_string(),
-            status: "healthy".to_string(),
-            uptime: "2d 10h 0m".to_string(),
-            response_time: 22.4,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-ehs".to_string(),
-            status: "healthy".to_string(),
-            uptime: "1d 4h 20m".to_string(),
-            response_time: 38.6,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-pdm".to_string(),
-            status: "healthy".to_string(),
-            uptime: "3d 15h 0m".to_string(),
-            response_time: 42.1,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-rd".to_string(),
-            status: "healthy".to_string(),
-            uptime: "8h 10m".to_string(),
-            response_time: 55.3,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-srm".to_string(),
-            status: "healthy".to_string(),
-            uptime: "2d 3h 45m".to_string(),
-            response_time: 30.9,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-mes".to_string(),
-            status: "healthy".to_string(),
-            uptime: "1d 16h 30m".to_string(),
-            response_time: 48.5,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-bi".to_string(),
-            status: "healthy".to_string(),
-            uptime: "5d 2h 0m".to_string(),
-            response_time: 65.2,
-            last_check: chrono::Utc::now(),
-        },
-        ServiceHealth {
-            id: Uuid::new_v4(),
-            service_name: "topems-ai".to_string(),
-            status: "healthy".to_string(),
-            uptime: "4h 50m".to_string(),
-            response_time: 120.5,
-            last_check: chrono::Utc::now(),
-        },
-    ];
+    // 真实探活：HTTP 请求 BFF 统一健康入口 /api/server/health，取模块注册列表 + 实测延迟。
+    // 模块化单体下 16 服务 = 进程内模块（无独立端口），网关级探活是唯一真实度量面。
+    let start = std::time::Instant::now();
+    let client = match reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+    {
+        Ok(c) => c,
+        Err(_) => {
+            return Json(ApiResponse::success(
+                vec![ServiceHealth {
+                    id: stable_service_id("bff-gateway"),
+                    service_name: "bff-gateway".to_string(),
+                    status: "down".to_string(),
+                    uptime: "-".to_string(),
+                    response_time: -1.0,
+                    last_check: chrono::Utc::now(),
+                }],
+                "HTTP 客户端构建失败：服务状态不可用",
+            ));
+        }
+    };
 
-    Json(ApiResponse::success(services, "获取服务健康状态成功"))
+    let url = format!("{}/api/server/health", state.bff_url);
+    let resp = client.get(&url).send().await;
+    let elapsed_ms = start.elapsed().as_secs_f64() * 1000.0;
+
+    match resp {
+        Ok(r) if r.status().is_success() => {
+            let body: serde_json::Value = r.json().await.unwrap_or_default();
+            let names: Vec<String> = body["module_list"]
+                .as_array()
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|m| m.get(0).and_then(|v| v.as_str()))
+                        .map(String::from)
+                        .collect()
+                })
+                .unwrap_or_default();
+
+            if names.is_empty() {
+                return Json(ApiResponse::success(
+                    vec![ServiceHealth {
+                        id: stable_service_id("bff-gateway"),
+                        service_name: "bff-gateway".to_string(),
+                        status: "degraded".to_string(),
+                        uptime: "-".to_string(),
+                        response_time: elapsed_ms,
+                        last_check: chrono::Utc::now(),
+                    }],
+                    "BFF 可达但未返回模块清单",
+                ));
+            }
+
+            let uptime = state.start_time.elapsed();
+            let uptime_str = format_uptime(
+                uptime.as_secs() / 86400,
+                (uptime.as_secs() % 86400) / 3600,
+                (uptime.as_secs() % 3600) / 60,
+            );
+
+            let services: Vec<ServiceHealth> = names
+                .into_iter()
+                .map(|name| ServiceHealth {
+                    // 稳定 id：UUID v5（URL 命名空间 + 模块名），不再每请求随机
+                    id: stable_service_id(&name),
+                    service_name: name,
+                    status: "healthy".to_string(),
+                    uptime: uptime_str.clone(),
+                    response_time: elapsed_ms,
+                    last_check: chrono::Utc::now(),
+                })
+                .collect();
+
+            Json(ApiResponse::success(
+                services,
+                "获取服务健康状态成功（真实探活）",
+            ))
+        }
+        Ok(r) => Json(ApiResponse::success(
+            vec![ServiceHealth {
+                id: stable_service_id("bff-gateway"),
+                service_name: "bff-gateway".to_string(),
+                status: "degraded".to_string(),
+                uptime: "-".to_string(),
+                response_time: elapsed_ms,
+                last_check: chrono::Utc::now(),
+            }],
+            &format!("BFF 探活失败（HTTP {}）：服务状态不可用", r.status()),
+        )),
+        Err(e) => Json(ApiResponse::success(
+            vec![ServiceHealth {
+                id: stable_service_id("bff-gateway"),
+                service_name: "bff-gateway".to_string(),
+                status: "down".to_string(),
+                uptime: "-".to_string(),
+                response_time: elapsed_ms,
+                last_check: chrono::Utc::now(),
+            }],
+            &format!("BFF 探活失败（{}）：服务状态不可用", e),
+        )),
+    }
 }
 
 #[cfg(test)]

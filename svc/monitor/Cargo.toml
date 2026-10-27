@@ -17,6 +17,7 @@ tracing.workspace = true
 sqlx.workspace = true
 topems-shared-bootstrap = { workspace = true }
 topems-shared-core = { workspace = true }
+reqwest.workspace = true
 topems-shared-auth = { workspace = true }
 utoipa.workspace = true
 prometheus.workspace = true
