@@ -8,13 +8,6 @@ import {
   Typography,
   Chip,
   LinearProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   InputLabel,
   Dialog,
   DialogTitle,
@@ -25,8 +18,7 @@ import {
 } from '@mui/material';
 import { PieChart, TrendingUp, DollarSign, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { budgetApi, financeApi } from '@/api/finance';
-import type { AccountBalance } from '@/types/finance';
+import { budgetApi } from '@/api/finance';
 import { useNotification } from '@/hooks/useNotification';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -34,19 +26,8 @@ import { PageContainer } from '@/components/common';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-interface BudgetItem {
-  id: string;
-  subject: string;
-  category: string;
-  budgetAmount: number;
-  usedAmount: number;
-  remainingAmount: number;
-  usageRate: number;
-}
-
 interface BudgetDetail {
   id: string;
-  code: string;
   name: string;
   type: string;
   fiscalYear: string;
@@ -56,7 +37,6 @@ interface BudgetDetail {
   remainingAmount: number;
   usageRate: number;
   status: 'active' | 'completed' | 'frozen' | 'expired';
-  items: BudgetItem[];
   createdAt: string;
   updatedAt: string;
 }
@@ -77,55 +57,20 @@ const FinanceBudgetDetailPage: React.FC = () => {
         throw new Error(t('finance.finance_budget_detail_page.error_no_id'));
       }
 
-      const [budgetRes, periodRes] = await Promise.all([
-        budgetApi.get(id),
-        financeApi.period.getCurrent(),
-      ]);
+      const budgetRes = await budgetApi.get(id);
 
       if (!budgetRes.success || !budgetRes.data) {
         throw new Error(t('finance.finance_budget_detail_page.detail'));
       }
 
       const budgetData = budgetRes.data;
-      let items: BudgetItem[] = [];
-
-      if (periodRes.success && periodRes.data) {
-        const balancesRes = await financeApi.account.getBalances({
-          period: periodRes.data.period,
-        });
-        if (balancesRes.success && balancesRes.data) {
-          items = balancesRes.data.slice(0, 5).map((balance: AccountBalance, index: number) => ({
-            id: balance.account_id || `item-${index}`,
-            subject: balance.account_name,
-            category: getCategoryLabel(balance.category),
-            budgetAmount: Math.abs(balance.debit_balance + balance.credit_balance) || 1000000,
-            usedAmount: balance.period_debit || 0,
-            remainingAmount: Math.max(
-              0,
-              (Math.abs(balance.debit_balance + balance.credit_balance) || 1000000) -
-                (balance.period_debit || 0)
-            ),
-            usageRate:
-              balance.period_debit > 0
-                ? Math.min(
-                    100,
-                    (balance.period_debit /
-                      (Math.abs(balance.debit_balance + balance.credit_balance) || 1000000)) *
-                      100
-                  )
-                : 0,
-          }));
-        }
-      }
-
-      const totalUsed = items.reduce((sum, item) => sum + item.usedAmount, 0);
-      const totalRemaining = (budgetData.total_budget ?? 0) - totalUsed;
-      const usageRate =
-        (budgetData.total_budget ?? 0) > 0 ? (totalUsed / (budgetData.total_budget ?? 0)) * 100 : 0;
+      // 后端金额/比率字段可能以 JSON 字符串返回，统一转 number
+      const totalBudget = Number(budgetData.total_budget ?? 0);
+      const usedAmount = Number(budgetData.used_amount ?? 0);
+      const remainingAmount = Number(budgetData.remaining_amount ?? 0);
 
       return {
         id: budgetData.id ?? '',
-        code: `BUD-${budgetData.fiscal_year}-${(budgetData.id ?? '').slice(-3).toUpperCase()}`,
         name: t('finance.finance_budget_detail_page.e1', {
           v1: budgetData.fiscal_year,
           v2: getBudgetTypeName(budgetData.budget_type || ''),
@@ -133,12 +78,11 @@ const FinanceBudgetDetailPage: React.FC = () => {
         type: budgetData.budget_type || '',
         fiscalYear: budgetData.fiscal_year || '',
         department: '-',
-        totalBudget: budgetData.total_budget ?? 0,
-        usedAmount: totalUsed,
-        remainingAmount: totalRemaining,
-        usageRate: Math.round(usageRate * 100) / 100,
+        totalBudget,
+        usedAmount,
+        remainingAmount,
+        usageRate: Number(budgetData.usage_rate ?? 0),
         status: budgetData.status as BudgetDetail['status'],
-        items,
         createdAt: budgetData.created_at ?? '',
         updatedAt: budgetData.updated_at ?? '',
       };
@@ -152,18 +96,6 @@ const FinanceBudgetDetailPage: React.FC = () => {
   const errorMessage = budgetQuery.error
     ? t('finance.finance_budget_detail_page.detail_1')
     : undefined;
-
-  const getCategoryLabel = (category?: string) => {
-    const labels: Record<string, string> = {
-      asset: t('finance.finance_budget_detail_page.category_asset'),
-      liability: t('finance.finance_budget_detail_page.category_liability'),
-      equity: t('finance.finance_budget_detail_page.category_equity'),
-      cost: t('finance.finance_budget_detail_page.category_cost'),
-      expense: t('finance.finance_budget_detail_page.category_expense'),
-      income: t('finance.finance_budget_detail_page.category_income'),
-    };
-    return labels[category || ''] || t('finance.finance_budget_detail_page.other');
-  };
 
   const getBudgetTypeName = useCallback(
     (type: string) => {
@@ -294,12 +226,6 @@ const FinanceBudgetDetailPage: React.FC = () => {
         >
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
-              {t('finance.finance_budget_detail_page.k0')}
-            </InputLabel>
-            <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>{budget.code}</Typography>
-          </Box>
-          <Box>
-            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
               {t('finance.finance_budget_detail_page.k1')}
             </InputLabel>
             <Typography sx={{ mt: 0.5 }}>{getBudgetTypeName(budget.type)}</Typography>
@@ -348,119 +274,6 @@ const FinanceBudgetDetailPage: React.FC = () => {
       </Box>
     );
   }, [budget, t, getBudgetTypeName, getStatusConfig]);
-
-  const itemsContent = useMemo(() => {
-    if (!budget) return null;
-    return (
-      <Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Typography
-            variant='subtitle1'
-            sx={{ fontWeight: 600 }}
-          >
-            {t('finance.finance_budget_detail_page.e5')}
-          </Typography>
-          <Chip
-            label={t('finance.finance_budget_detail_page.e6', { v1: budget.items.length })}
-            size='small'
-            variant='outlined'
-          />
-        </Box>
-        <TableContainer
-          component={Paper}
-          variant='outlined'
-        >
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell>{i18n.t('finance.finance_budget_detail_page.k6')}</TableCell>
-                <TableCell>{i18n.t('finance.finance_budget_detail_page.k7')}</TableCell>
-                <TableCell align='right'>
-                  {i18n.t('finance.finance_budget_detail_page.k8')}
-                </TableCell>
-                <TableCell align='right'>
-                  {i18n.t('finance.finance_budget_detail_page.k9')}
-                </TableCell>
-                <TableCell align='right'>
-                  {i18n.t('finance.finance_budget_detail_page.k10')}
-                </TableCell>
-                <TableCell>{i18n.t('finance.finance_budget_detail_page.k11')}</TableCell>
-                <TableCell>{i18n.t('finance.finance_budget_detail_page.k12')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {budget.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 'medium' }}>{item.subject}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={item.category}
-                      size='small'
-                      variant='outlined'
-                    />
-                  </TableCell>
-                  <TableCell align='right'>
-                    <Typography sx={{ fontWeight: 'medium' }}>
-                      {formatCurrency(item.budgetAmount)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align='right'>
-                    <Typography color='warning.main'>{formatCurrency(item.usedAmount)}</Typography>
-                  </TableCell>
-                  <TableCell align='right'>
-                    <Typography color='success.main'>
-                      {formatCurrency(item.remainingAmount)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ flex: 1, maxWidth: 80 }}>
-                        <LinearProgress
-                          variant='determinate'
-                          value={item.usageRate}
-                          sx={{ height: 6, borderRadius: 1 }}
-                        />
-                      </Box>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                        sx={{ width: 40 }}
-                      >
-                        {item.usageRate.toFixed(1)}%
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    {item.usageRate >= 80 ? (
-                      <Chip
-                        label={t('finance.finance_budget_detail_page.chip_overwarning')}
-                        size='small'
-                        color='error'
-                      />
-                    ) : item.usageRate >= 60 ? (
-                      <Chip
-                        label={t('finance.finance_budget_detail_page.normal')}
-                        size='small'
-                        color='success'
-                      />
-                    ) : (
-                      <Chip
-                        label={t('finance.finance_budget_detail_page.chip_normal')}
-                        size='small'
-                        color='warning'
-                      />
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
-    );
-  }, [budget, t]);
 
   const analysisContent = useMemo(() => {
     if (!budget) return null;
@@ -567,17 +380,12 @@ const FinanceBudgetDetailPage: React.FC = () => {
         content: basicInfoContent || <></>,
       },
       {
-        id: 'items',
-        label: t('finance.finance_budget_detail_page.tab_items'),
-        content: itemsContent || <></>,
-      },
-      {
         id: 'analysis',
         label: t('finance.finance_budget_detail_page.analysis'),
         content: analysisContent || <></>,
       },
     ],
-    [basicInfoContent, itemsContent, analysisContent, t]
+    [basicInfoContent, analysisContent, t]
   );
 
   const infoCard = useMemo(
@@ -589,7 +397,6 @@ const FinanceBudgetDetailPage: React.FC = () => {
         />
       ),
       title: budget?.name,
-      subtitle: budget?.code || undefined,
       tags: [budget?.fiscalYear ? t('finance.finance_budget_detail_page.e12') : ''],
       stats: [
         {
@@ -617,9 +424,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        detailItemName={
-          budget?.name || budget?.code || budget?.id || t('finance.finance_budget_detail_page.k13')
-        }
+        detailItemName={budget?.name || budget?.id || t('finance.finance_budget_detail_page.k13')}
         backHref={FINANCE_PATHS.budget}
         loading={loading}
         emptyState={{ show: !loading && !budget }}
