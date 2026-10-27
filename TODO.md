@@ -5139,3 +5139,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **验证**：空库 fresh4/fresh5 实测 iam.users=1 + core_users=1 + admin/admin123 登录 200；core_tenants/core_tenant_users 手动插入关联验证通过（逻辑 OK）。临时库已清理，主实例已切回 topems_test。
 - **提交推送**：9b8432d69，origin/main 一致。
 - **剩余待处理**：must_change_password 强制逻辑（P3 记录项，列已存在+种子已标记 true，仅登录后未强制改密拦截）；API 列表字段契约统一（P3）。
+
+## 第四十四轮（2026-10-27）：must_change_password 强制机制澄清（P3 记录项关闭，无需代码变更）✅
+- **澄清**：强制改密机制**已存在且完整**——shared-auth JWT 认证中间件拦截（must_change=true 时除改密/登出外全部 403"首次登录须先修改初始密码"），改密端点 `POST /users/me/password`（profile_ext.rs change_my_password，校验 current_password + 强度）。
+- **验证闭环**（test_admin 置 must_change=true 实测）：登录成功 → 访问 /iam/users **403"首次登录须先修改初始密码"** → 改密（current_password=admin123, new_password=admin1234）**200"修改密码成功"** → 新密码登录 **200** → 访问 /iam/users **200"获取用户列表成功"**（强制解除）。测试后已恢复 test_admin 密码/标记。
+- **结论**：S0 记录"无强制逻辑"为漏查/误报；期间尝试的自建改密端点与权限中间件拦截（重复实现）已 git checkout 还原，无代码残留。
+- **剩余待处理**：API 列表字段契约统一（P3，items/projects/orders/warehouses/inspections 命名不一致）。
