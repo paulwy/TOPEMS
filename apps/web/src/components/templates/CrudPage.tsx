@@ -19,6 +19,7 @@
 
 import React, { useCallback, useMemo, useState, useRef } from 'react';
 import { useCrudPagination } from './useCrudPagination';
+import { useCrudDialogs } from './useCrudDialogs';
 import {
   Dialog,
   DialogTitle,
@@ -249,18 +250,22 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<T | null>(null);
-  const [detailTarget, setDetailTarget] = useState<T | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
-  const [confirmConfig, setConfirmConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-  } | null>(null);
-
-  const [createFormValues, setCreateFormValues] = useState<Record<string, unknown>>({});
-  const [editFormValues, setEditFormValues] = useState<Record<string, unknown>>({});
+  const {
+    createOpen,
+    setCreateOpen,
+    createFormValues,
+    setCreateFormValues,
+    editTarget,
+    setEditTarget,
+    editFormValues,
+    setEditFormValues,
+    detailTarget,
+    setDetailTarget,
+    deleteTarget,
+    setDeleteTarget,
+    confirmConfig,
+    setConfirmConfig,
+  } = useCrudDialogs<T>();
 
   const dynamicDeps = useMemo(() => {
     const result: Record<string, unknown> = {};
