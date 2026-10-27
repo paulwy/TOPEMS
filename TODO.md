@@ -1,3 +1,13 @@
+## 未决项逐项闭环 · 批 C 后（2026-10-28）✅ 已完成
+
+> 批 C 快验后按未决记录项顺序逐个闭环，本批 5 项。
+
+- **S11 tenant 详情 404**：根因 = handler SELECT 仅 6 列 vs 结构体 20+ 字段（FromRow 解码失败被吞）；get_tenant/get_tenant_by_code 两处补全 21 列，实测默认租户/test_ehs 详情返回 name/plan；列表 404 系路径误测（真实 `/tenant/tenants`）；`features` 端点未挂载（设计意图，登记）✅
+- **S13 通知字段契约**：channels 404 系方案勘误（实际路径 notifications）；content 后端可空 vs 前端 string 必选——notification.rs 8 处 COALESCE（unwrap_or_default），实测 NULL→`""` ✅
+- **refresh/logout HTTP 语义（S25 同类）**：auth.rs refresh 13 处 + logout 8 处错误应答统一为显式 StatusCode（400/401/500 与 envelope code 对齐）；连带修复 login 事务 abort 根因 = core_sessions/core_refresh_tokens 缺 tenant_id 列（INSERT 引用但表缺失，refresh token 从未落库）——新增迁移 20261028020000/20261028030000 补列 + RLS 策略；实测 refresh 空 token 400 / 无效 401 / 正确 200 旋转 / logout 正确 200 吊销 ✅
+- **must_change_password 排期**：后端已闭环（JWT claim + PUT /iam/users/change-password 端点存在）；前端强制改密流程未实施——待排期（业务拍板后实施）📋
+- **pm response_time degraded 监控项**：根因查清 = svc/monitor /health 为静态 mock（16 服务硬编码数据，150.3ms 系占位非真实探活）；非真实故障；真实探活改造待排期 📋
+
 ## 批 C · 轻量回归快验（2026-10-28）✅ 已完成
 
 > 用户拍板「按轻量回归快验推进」后闭环：对近期 4 个已闭环行为变更项做独立回归快验。报告 `docs/reports/e2e/modules/批C_轻量回归快验_20261028.md`。
