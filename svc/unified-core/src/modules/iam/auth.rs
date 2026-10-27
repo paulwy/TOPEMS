@@ -219,11 +219,14 @@ pub async fn login(
             Some("用户名和密码不能为空"),
         )
         .await;
-        return Json(topems_shared_core::response::error_value(
-            400,
-            "用户名和密码不能为空",
-        ))
-        .into_response();
+        return (
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(topems_shared_core::response::error_value(
+                400,
+                "用户名和密码不能为空",
+            )),
+        )
+            .into_response();
     }
 
     let user = match sqlx::query_as::<_, UserRow>(
@@ -258,7 +261,7 @@ pub async fn login(
                 Some("用户不存在"),
             )
             .await;
-            return Json(topems_shared_core::response::error_value(401, "用户名或密码错误")).into_response();
+            return (axum::http::StatusCode::UNAUTHORIZED, Json(topems_shared_core::response::error_value(401, "用户名或密码错误"))).into_response();
         }
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
@@ -273,7 +276,7 @@ pub async fn login(
                 Some("内部服务器错误"),
             )
             .await;
-            return Json(topems_shared_core::response::error_value(500, "内部服务器错误")).into_response();
+            return (axum::http::StatusCode::INTERNAL_SERVER_ERROR, Json(topems_shared_core::response::error_value(500, "内部服务器错误"))).into_response();
         }
     };
 
@@ -290,11 +293,14 @@ pub async fn login(
             Some("用户账号已被禁用"),
         )
         .await;
-        return Json(topems_shared_core::response::error_value(
-            401,
-            "用户账号已被禁用",
-        ))
-        .into_response();
+        return (
+            axum::http::StatusCode::UNAUTHORIZED,
+            Json(topems_shared_core::response::error_value(
+                401,
+                "用户账号已被禁用",
+            )),
+        )
+            .into_response();
     }
 
     if !verify_password(password, &user.password_hash) {
@@ -310,11 +316,14 @@ pub async fn login(
             Some("密码错误"),
         )
         .await;
-        return Json(topems_shared_core::response::error_value(
-            401,
-            "用户名或密码错误",
-        ))
-        .into_response();
+        return (
+            axum::http::StatusCode::UNAUTHORIZED,
+            Json(topems_shared_core::response::error_value(
+                401,
+                "用户名或密码错误",
+            )),
+        )
+            .into_response();
     }
 
     let jwt_expire_minutes = state.auth_state.token_expiry_hours * 60;

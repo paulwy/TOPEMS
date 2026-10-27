@@ -1,3 +1,13 @@
+## S25 HTTP 4xx 语义（2026-10-28）✅ 已完成
+
+> 用户点名「S25 HTTP 4xx 语义」后闭环：登录失败从 HTTP 200 + envelope 401 改为标准 HTTP 4xx 语义。
+
+- **背景**：R6 负例记录——错误口令返回 HTTP 200 + envelope code=401，语义错位（envelope 4xx/5xx 却 HTTP 200）。
+- **落地**：`svc/unified-core/src/modules/iam/auth.rs` 登录链 5 处错误应答改为显式状态码——错误口令/用户不存在/账号禁用 → `HTTP 401`（`StatusCode::UNAUTHORIZED`）、空参数 → `HTTP 400`（`BAD_REQUEST`）、查询异常 → `HTTP 500`（`INTERNAL_SERVER_ERROR`）；envelope code 与 HTTP 状态严格对齐。
+- **前端无改动**：client.ts 401 拦截器已豁免登录/注册等 public API（注释明确"密码错误是正常业务失败，不应清除 token 或触发登出"）；登录页错误提示读 body.message，不受 HTTP 状态影响。
+- **实机验证**：错误口令 → 401、不存在用户 → 401（安全设计不区分用户存在与否）、空参 → 400、正确登录 → 200；web-contract-smoke 4105/4105 PASS。
+- **遗留同类项**：refresh 链（refresh token 无效 401/查询异常 500）与 logout 链（4 处 500）仍是 envelope 码 + HTTP 200 错位，登记待后续同类治理（涉及前端登出/刷新处理需联动评估）。
+
 ## subscriptions 顶层契约落地（2026-10-28）✅ 已完成
 
 > 用户点名「subscriptions 顶层契约」后闭环：启用 module-subscription feature，/api/subscriptions 三端点契约完整落地。commit `c05880aa1`（+ checksums 同步）。
