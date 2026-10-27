@@ -319,11 +319,11 @@ pub async fn list_work_orders(
     let tenant_idx = params.len() + 1;
     if where_clause.is_empty() {
         where_clause.push_str(&format!(
-            " WHERE (${tenant_idx}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR EXISTS (SELECT 1 FROM mes.production_orders po WHERE po.id = wo.order_id AND po.tenant_id = ${tenant_idx}::uuid))"
+            " WHERE (${tenant_idx}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR wo.tenant_id = ${tenant_idx}::uuid)"
         ));
     } else {
         where_clause.push_str(&format!(
-            " AND (${tenant_idx}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR EXISTS (SELECT 1 FROM mes.production_orders po WHERE po.id = wo.order_id AND po.tenant_id = ${tenant_idx}::uuid))"
+            " AND (${tenant_idx}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR wo.tenant_id = ${tenant_idx}::uuid)"
         ));
     }
 
@@ -534,10 +534,7 @@ pub async fn get_work_order(
         FROM mes.work_orders wo
         WHERE wo.id = $1
           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
-                   SELECT 1 FROM mes.production_orders po
-                   WHERE po.id = wo.order_id AND po.tenant_id = $2::uuid
-               ))
+               OR wo.tenant_id = $2::uuid)
         "#,
     )
     .bind(uuid)
@@ -577,6 +574,7 @@ pub async fn create_work_order(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
     let order_id = parse_opt_uuid(&body.order_id);
     let work_station_id = parse_opt_uuid(&body.work_station_id);
     let process_id = parse_opt_uuid(&body.process_id);
@@ -591,7 +589,7 @@ pub async fn create_work_order(
         .and_then(|p| p.parse::<i32>().ok())
         .unwrap_or(0);
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         INSERT INTO work_orders (
             work_order_no, order_id, order_no, product_code, product_name,
@@ -599,9 +597,9 @@ pub async fn create_work_order(
             planned_quantity,
             plan_start_date, plan_end_date,
             team_id, operator,
-            status, priority, remark
+            status, priority, remark, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13, $14)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13, $14, $15)
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -613,54 +611,78 @@ pub async fn create_work_order(
             status, priority, remark,
             created_at, updated_at
         "#,
-        body.work_order_no,
-        order_id,
-        body.order_no,
-        body.product_code,
-        body.product_name,
-        work_station_id,
-        process_id,
-        planned_quantity,
-        plan_start_date,
-        plan_end_date,
-        team_id,
-        body.operator,
-        priority,
-        body.remark,
     )
+    .bind(&body.work_order_no)
+    .bind(order_id)
+    .bind(&body.order_no)
+    .bind(&body.product_code)
+    .bind(&body.product_name)
+    .bind(work_station_id)
+    .bind(process_id)
+    .bind(planned_quantity)
+    .bind(plan_start_date)
+    .bind(plan_end_date)
+    .bind(team_id)
+    .bind(&body.operator)
+    .bind(priority)
+    .bind(&body.remark)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
-            WorkOrderResponse {
-                id: r.id.to_string(),
-                work_order_no: r.work_order_no,
-                order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
-                product_code: r.product_code.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
-                work_station_id: r.work_station_id.map(|u| u.to_string()),
-                process_id: r.process_id.map(|u| u.to_string()),
-                planned_quantity: big_decimal_to_f64(r.planned_quantity),
-                completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_datetime_to_string(r.plan_start_date),
-                plan_end_date: opt_datetime_to_string(r.plan_end_date),
-                actual_start_date: opt_datetime_to_string(r.actual_start_date),
-                actual_end_date: opt_datetime_to_string(r.actual_end_date),
-                team_id: r.team_id.map(|u| u.to_string()),
-                operator: r.operator,
-                process_name: None,
-                work_station_name: None,
-                team_name: None,
-                status: r.status.unwrap_or_default(),
-                priority: r.priority.map(|v| v.to_string()),
-                remark: r.remark,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
-            },
-            "创建工单成功",
-        )),
+        Ok(r) => {
+            let id: Uuid = r.get("id");
+            let work_order_no: String = r.get("work_order_no");
+            let order_id: Option<Uuid> = r.get("order_id");
+            let order_no: Option<String> = r.get("order_no");
+            let product_code: Option<String> = r.get("product_code");
+            let product_name: Option<String> = r.get("product_name");
+            let work_station_id: Option<Uuid> = r.get("work_station_id");
+            let process_id: Option<Uuid> = r.get("process_id");
+            let planned_quantity: BigDecimal = r.get("planned_quantity");
+            let completed_quantity: Option<BigDecimal> = r.get("completed_quantity");
+            let plan_start_date: Option<DateTime<Utc>> = r.get("plan_start_date");
+            let plan_end_date: Option<DateTime<Utc>> = r.get("plan_end_date");
+            let actual_start_date: Option<DateTime<Utc>> = r.get("actual_start_date");
+            let actual_end_date: Option<DateTime<Utc>> = r.get("actual_end_date");
+            let team_id: Option<Uuid> = r.get("team_id");
+            let operator: Option<String> = r.get("operator");
+            let status: Option<String> = r.get("status");
+            let priority: Option<i32> = r.get("priority");
+            let remark: Option<String> = r.get("remark");
+            let created_at: Option<DateTime<Utc>> = r.get("created_at");
+            let updated_at: Option<DateTime<Utc>> = r.get("updated_at");
+            Json(ApiResponse::success(
+                WorkOrderResponse {
+                    id: id.to_string(),
+                    work_order_no,
+                    order_id: order_id.map(|u| u.to_string()),
+                    order_no,
+                    product_code: product_code.unwrap_or_default(),
+                    product_name: product_name.unwrap_or_default(),
+                    work_station_id: work_station_id.map(|u| u.to_string()),
+                    process_id: process_id.map(|u| u.to_string()),
+                    planned_quantity: big_decimal_to_f64(Some(planned_quantity)),
+                    completed_quantity: big_decimal_to_f64(completed_quantity),
+                    plan_start_date: opt_datetime_to_string(plan_start_date),
+                    plan_end_date: opt_datetime_to_string(plan_end_date),
+                    actual_start_date: opt_datetime_to_string(actual_start_date),
+                    actual_end_date: opt_datetime_to_string(actual_end_date),
+                    team_id: team_id.map(|u| u.to_string()),
+                    operator,
+                    process_name: None,
+                    work_station_name: None,
+                    team_name: None,
+                    status: status.unwrap_or_default(),
+                    priority: priority.map(|v| v.to_string()),
+                    remark,
+                    created_at: created_at.unwrap_or_else(Utc::now),
+                    updated_at: updated_at.unwrap_or_else(Utc::now),
+                },
+                "创建工单成功",
+            ))
+        }
         Err(e) => {
             if let Some(db_err) = e.as_database_error() {
                 if db_err.is_unique_violation() {
@@ -738,10 +760,7 @@ pub async fn update_work_order(
             updated_at = NOW()
         WHERE wo.id = $16
           AND ($17::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
-                   SELECT 1 FROM mes.production_orders po
-                   WHERE po.id = wo.order_id AND po.tenant_id = $17::uuid
-               ))
+               OR wo.tenant_id = $17::uuid)
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -827,10 +846,7 @@ pub async fn delete_work_order(
         UPDATE mes.work_orders wo SET deleted_at = NOW()
         WHERE wo.id = $1 AND wo.status IN ('pending', 'cancelled')
           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
-                   SELECT 1 FROM mes.production_orders po
-                   WHERE po.id = wo.order_id AND po.tenant_id = $2::uuid
-               ))
+               OR wo.tenant_id = $2::uuid)
         "#,
     )
     .bind(uuid)
@@ -892,10 +908,7 @@ pub async fn start_work_order(
         SET status = 'in_progress', actual_start_date = NOW(), updated_at = NOW()
         WHERE wo.id = $1 AND wo.status = 'pending'
           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
-                   SELECT 1 FROM mes.production_orders po
-                   WHERE po.id = wo.order_id AND po.tenant_id = $2::uuid
-               ))
+               OR wo.tenant_id = $2::uuid)
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -964,10 +977,7 @@ pub async fn complete_work_order(
         SET status = 'completed', actual_end_date = NOW(), updated_at = NOW()
         WHERE wo.id = $1 AND wo.status = 'in_progress'
           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
-                   SELECT 1 FROM mes.production_orders po
-                   WHERE po.id = wo.order_id AND po.tenant_id = $2::uuid
-               ))
+               OR wo.tenant_id = $2::uuid)
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1036,10 +1046,7 @@ pub async fn cancel_work_order(
         SET status = 'cancelled', updated_at = NOW()
         WHERE wo.id = $1 AND wo.status IN ('pending', 'in_progress', 'paused')
           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
-                   SELECT 1 FROM mes.production_orders po
-                   WHERE po.id = wo.order_id AND po.tenant_id = $2::uuid
-               ))
+               OR wo.tenant_id = $2::uuid)
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1108,10 +1115,7 @@ pub async fn pause_work_order(
         SET status = 'paused', updated_at = NOW()
         WHERE wo.id = $1 AND wo.status = 'in_progress'
           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
-                   SELECT 1 FROM mes.production_orders po
-                   WHERE po.id = wo.order_id AND po.tenant_id = $2::uuid
-               ))
+               OR wo.tenant_id = $2::uuid)
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
@@ -1180,10 +1184,7 @@ pub async fn resume_work_order(
         SET status = 'in_progress', updated_at = NOW()
         WHERE wo.id = $1 AND wo.status = 'paused'
           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
-               OR EXISTS (
-                   SELECT 1 FROM mes.production_orders po
-                   WHERE po.id = wo.order_id AND po.tenant_id = $2::uuid
-               ))
+               OR wo.tenant_id = $2::uuid)
         RETURNING 
             id, work_order_no, order_id, order_no,
             product_code, product_name,
