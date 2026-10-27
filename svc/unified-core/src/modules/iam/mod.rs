@@ -494,7 +494,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         ON CONFLICT (username) DO NOTHING
         "#,
     )
-    .bind(admin_password_hash)
+    .bind(&admin_password_hash)
+    .execute(pool)
+    .await?;
+
+    // core_users（租户关联/授权表）同步播种 admin，与 iam.users 同密码同邮箱。
+    // 只插骨架现有列（status/full_name 由 schema_defense 后续补列带默认值）。
+    sqlx::query(
+        r#"
+        INSERT INTO core_users (username, email, password_hash, is_superuser)
+        VALUES ('admin', 'admin@topems.com', $1, true)
+        ON CONFLICT (username) DO NOTHING
+        "#,
+    )
+    .bind(admin_password_hash.clone())
     .execute(pool)
     .await?;
 
@@ -548,6 +561,24 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // ---- 默认租户 + admin 关联（tenant 中间件依赖 JWT claims.tenant_id） ----
+    // core_tenants 骨架：schema_defense 在其后补全列，此处先建最小骨架避免
+    // 空库首启 INSERT 时表不存在（relation does not exist）导致关联缺失。
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_tenants (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(128) NOT NULL,
+            code VARCHAR(64) NOT NULL UNIQUE,
+            tenant_type VARCHAR(32) DEFAULT 'shared',
+            plan VARCHAR(32) DEFAULT 'basic',
+            quota_users INTEGER DEFAULT 20,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
     sqlx::query(
         r#"
         INSERT INTO core_tenants (name, code, tenant_type, plan, quota_users)
