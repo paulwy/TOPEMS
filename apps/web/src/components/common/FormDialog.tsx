@@ -111,6 +111,8 @@ export const FormDialog = React.memo(function FormDialog({
           triggers a native GET navigation (page reload, request lost). */}
       <div
         onKeyDown={handleKeyDown}
+        role='presentation'
+        tabIndex={-1}
         style={{ display: 'flex', flexDirection: 'column' }}
       >
         {children}

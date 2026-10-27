@@ -164,6 +164,8 @@ export const FormDrawer = React.memo(function FormDrawer({
           children render their own <form>, nesting triggers native GET). */}
       <div
         onKeyDown={handleKeyDown}
+        role='presentation'
+        tabIndex={-1}
         style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
       >
         {children}

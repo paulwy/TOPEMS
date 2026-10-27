@@ -142,6 +142,7 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
           conditionally below (keyboard semantics equal to mouse). Static lint cannot confirm
           the conditional branch, so these rules are disabled for this element. */
 
+      /* eslint-disable jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-tabindex */
       <div
         ref={ref}
         id={avatarId}
@@ -243,6 +244,7 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
           </span>
         )}
       </div>
+      /* eslint-enable jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-tabindex */
     );
   }
 );
