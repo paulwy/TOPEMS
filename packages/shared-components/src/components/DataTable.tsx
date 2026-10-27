@@ -958,7 +958,7 @@ export function DataTable<TData, TValue>({
   columnConfigKey = 'default',
   enableRowExpansion = false,
   expandedRowRender,
-  enableVirtualization = false,
+  enableVirtualization = true,
   rowHeight = 52,
   virtualHeight = 400,
   enableStickyHeader = false,
