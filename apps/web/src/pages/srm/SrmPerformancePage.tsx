@@ -5,15 +5,13 @@ import type { ColumnDef } from '@/components/templates/list/types';
 import { performanceSchema } from '@/schemas/srm';
 import { srmApi } from '@/api/srm';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Card, CardContent, Typography, Chip, Rating } from '@mui/material';
+import { Box, Card, CardContent, Typography, Chip, Rating, useTheme } from '@mui/material';
 import { TrendingUp, TrendingDown, Award, Target, BarChart3 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
-
-const ct = designTokens.colors;
 
 interface SupplierPerformance {
   supplier_id: string;
@@ -203,6 +201,7 @@ const customColumns: ColumnDef[] = [
 ];
 
 const PerformanceStats: React.FC = () => {
+  const theme = useTheme();
   const summaryQuery = useQuery<PerformanceSummary | null>({
     queryKey: QUERY_KEYS.AD_HOC.SRM_PERFORMANCE_SUMMARY_BASE,
     queryFn: async () => {
@@ -341,7 +340,7 @@ const PerformanceStats: React.FC = () => {
                   />
                 </Typography>
               </Box>
-              <Award sx={{ color: ct.warning[500], width: 28, height: 28 }} />
+              <Award sx={{ color: theme.palette.warning[500], width: 28, height: 28 }} />
             </Box>
           </CardContent>
         </Card>

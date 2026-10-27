@@ -25,13 +25,12 @@ import {
   Typography,
   Select,
   MenuItem,
+  useTheme,
 } from '@mui/material';
 import { versioningApi } from '@/api/master/versioning';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 
 interface ListLike {
   items?: unknown[];
@@ -41,6 +40,7 @@ interface ListLike {
 const emptyEntity = { entity_type: 'mdm_material', entity_id: 'MAT-001' };
 
 const MasterVersioningPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const addNotification = useNotificationStore((s) => s.addNotification);
 
@@ -503,7 +503,7 @@ const MasterVersioningPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <History sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.info[500]} 0%, ${ct.info[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.info[500]} 0%, ${theme.palette.info[600]} 100%)`,
       }}
       maxWidth='xl'
     >

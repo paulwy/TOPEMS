@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  useTheme,
 } from '@mui/material';
 import { FileText, Calendar, User, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -22,10 +23,8 @@ import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const HrmContractDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -404,7 +403,7 @@ const HrmContractDetailPage: React.FC = () => {
       avatar: (
         <FileText
           size={32}
-          color={ct.primary.dark}
+          color={theme.palette.primary.dark}
         />
       ),
       title: contract?.contract_name,

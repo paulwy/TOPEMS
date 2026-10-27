@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Tabs, Tab } from '@mui/material';
+import { Box, Tabs, Tab, useTheme } from '@mui/material';
 import { Wallet, Receipt, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
@@ -9,8 +9,6 @@ import type { Budget } from '@/api/finance';
 import type { Expense } from '@/api/finance/expense';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const budgetAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await budgetApi.list({
@@ -106,6 +104,7 @@ const StatCard: React.FC<{
   </Box>
 );
 const BudgetManagementPage: React.FC = () => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const budgetHeaderContent = (rows: Record<string, unknown>[], total: number) => {
     const budgets = rows as unknown as Budget[];
@@ -129,7 +128,7 @@ const BudgetManagementPage: React.FC = () => {
           label={i18n.t('erp.budget_management_page.k6')}
           value={total}
           icon={<Wallet size={18} />}
-          bgColor={ct.secondary[100]}
+          bgColor={theme.palette.secondary[100]}
           iconColor='secondary.700'
         />
         <StatCard
@@ -175,7 +174,7 @@ const BudgetManagementPage: React.FC = () => {
           label={i18n.t('erp.budget_management_page.k10')}
           value={total}
           icon={<Receipt size={18} />}
-          bgColor={ct.secondary[100]}
+          bgColor={theme.palette.secondary[100]}
           iconColor='secondary.700'
         />
         <StatCard
@@ -213,7 +212,7 @@ const BudgetManagementPage: React.FC = () => {
           ) : (
             <Receipt style={{ width: 20, height: 20 }} />
           ),
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <Tabs

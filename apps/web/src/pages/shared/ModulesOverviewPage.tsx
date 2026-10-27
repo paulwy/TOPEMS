@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Typography, Paper, TextField, Grid, Chip, InputAdornment } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Paper,
+  TextField,
+  Grid,
+  Chip,
+  InputAdornment,
+  useTheme,
+} from '@mui/material';
 import { Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { navigationRegistryV2, type ModuleCardConfig } from '@/lib/navigation';
@@ -8,9 +17,6 @@ import { DashboardTemplate } from '@/components/templates';
 import { lucideIcons } from '@/lib/iconMapping';
 import { designTokens } from '@/theme/tokens';
 import i18n, { ensureNamespacesLoaded } from '@/i18n';
-
-const ct = designTokens.colors;
-
 /* ------------------------------------------------------------------ */
 /*  Icon name -> component mapping                                     */
 /* ------------------------------------------------------------------ */
@@ -18,13 +24,14 @@ const ct = designTokens.colors;
 const iconMap = lucideIcons;
 
 const renderIcon = (iconName?: string, size = 26): React.ReactNode => {
+  const theme = useTheme();
   if (!iconName) return null;
   const Icon = iconMap[iconName];
   if (!Icon) return null;
   return (
     <Icon
       size={size}
-      style={{ color: ct.background.paper }}
+      style={{ color: theme.palette.background.paper }}
     />
   );
 };
@@ -45,6 +52,7 @@ interface ModuleCardProps {
 }
 
 const ModuleCard: React.FC<ModuleCardProps> = ({ card, onClick }) => {
+  const theme = useTheme();
   const gradientBg = (gradients.modules as Record<string, string>)[card.code] || gradients.primary;
 
   return (
@@ -81,7 +89,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ card, onClick }) => {
         {renderIcon(card.icon) || (
           <Typography
             sx={{
-              color: ct.background.paper,
+              color: theme.palette.background.paper,
               fontWeight: 700,
               fontSize: 22,
               lineHeight: 1,

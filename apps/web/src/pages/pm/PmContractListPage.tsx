@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, useTheme } from '@mui/material';
 import { AlertCircle, CheckCircle, DollarSign, FileText } from 'lucide-react';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -10,8 +10,6 @@ import type { Contract } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const CURRENCY_FORMATTER = new Intl.NumberFormat('zh-CN', {
   style: 'currency',
   currency: 'CNY',
@@ -122,6 +120,7 @@ const contractApiAdapter: CrudApiAdapter = {
   },
 };
 const PmContractListPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const customRowActions: RowAction[] = useMemo(
     () => [
@@ -174,15 +173,15 @@ const PmContractListPage: React.FC = () => {
           valueColor='warning.dark'
           bgColor='warning.light'
           icon={<AlertCircle size={24} />}
-          iconColor={ct.yellow[600]}
+          iconColor={theme.palette.yellow[600]}
         />
         <StatCard
           label={i18n.t('pm.pm_contract_list_page.k7')}
           value={CURRENCY_FORMATTER.format(totalAmount)}
           valueColor='secondary.dark'
-          bgColor={ct.purple[200]}
+          bgColor={theme.palette.purple[200]}
           icon={<DollarSign size={24} />}
-          iconColor={ct.purple[700]}
+          iconColor={theme.palette.purple[700]}
         />
       </Box>
     );

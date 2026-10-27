@@ -13,12 +13,13 @@ import {
   ReferenceLine,
 } from 'recharts';
 import i18n from '@/i18n';
-import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { getAgePareto, type AgeParetoData } from '@/api/wms/analytics';
+import { useTheme } from '@mui/material';
 
 export default function WmsAgeParetoPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { data: response, loading } = useAnalyticsData({
     fetcher: () => getAgePareto(),
@@ -125,7 +126,7 @@ export default function WmsAgeParetoPage() {
             <ReferenceLine
               yAxisId='right'
               y={80}
-              stroke={designTokens.colors.error.main}
+              stroke={theme.palette.error.main}
               strokeDasharray='4 4'
               label={i18n.t('pages.wms_age_pareto_page.80_1')}
             />
@@ -133,7 +134,7 @@ export default function WmsAgeParetoPage() {
               yAxisId='left'
               dataKey='amount'
               name={i18n.t('pages.wms_age_pareto_page.sku_2')}
-              fill={designTokens.colors.primary.main}
+              fill={theme.palette.primary.main}
               radius={[4, 4, 0, 0]}
             />
             <Line
@@ -141,7 +142,7 @@ export default function WmsAgeParetoPage() {
               type='monotone'
               dataKey='cumulative'
               name={i18n.t('pages.wms_age_pareto_page.k4')}
-              stroke={designTokens.colors.success.dark}
+              stroke={theme.palette.success.dark}
               strokeWidth={2.5}
               dot={{ r: 3 }}
             />

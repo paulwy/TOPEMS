@@ -25,6 +25,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  useTheme,
 } from '@mui/material';
 import {
   FileText,
@@ -47,9 +48,6 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 import { aiApi } from '@/api/ai';
-
-const ct = designTokens.colors;
-
 type AnalysisTab = 'summary' | 'translate' | 'qa' | 'extract' | 'ocr';
 
 const recentDocuments = [
@@ -115,6 +113,7 @@ const getKeyPoints = () => [
 ];
 
 export const AiDocumentAnalysisPage: React.FC = () => {
+  const theme = useTheme();
   const {} = useQuery({
     queryKey: ['ai', 'documentAnalysis'],
     queryFn: async () => {
@@ -244,7 +243,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
       pageContainerProps={{
         headerProps: {
           pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-          pageGradient: `linear-gradient(135deg, ${ct.cyan[600]} 0%, ${ct.cyan[300]} 100%)`,
+          pageGradient: `linear-gradient(135deg, ${theme.palette.cyan[600]} 0%, ${theme.palette.cyan[300]} 100%)`,
         },
       }}
       leftPanel={
@@ -287,7 +286,10 @@ export const AiDocumentAnalysisPage: React.FC = () => {
               />
               <Upload
                 size={32}
-                style={{ margin: `0 auto ${designTokens.spacing.sm}px`, color: ct.grey[400] }}
+                style={{
+                  margin: `0 auto ${designTokens.spacing.sm}px`,
+                  color: theme.palette.grey[400],
+                }}
               />
               <Typography variant='body2'>
                 {i18n.t('ai.document_analysis.label.click_upload')}
@@ -314,7 +316,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
               >
                 <FileText
                   size={20}
-                  style={{ color: ct.primary.main }}
+                  style={{ color: theme.palette.primary.main }}
                 />
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography
@@ -379,7 +381,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                   <ListItemIcon sx={{ minWidth: 36 }}>
                     <FileText
                       size={18}
-                      style={{ color: ct.error.main }}
+                      style={{ color: theme.palette.error.main }}
                     />
                   </ListItemIcon>
                   <ListItemText
@@ -464,7 +466,10 @@ export const AiDocumentAnalysisPage: React.FC = () => {
             <Box sx={{ p: 8, textAlign: 'center' }}>
               <Zap
                 size={64}
-                style={{ margin: `0 auto ${designTokens.spacing.md}px`, color: ct.text.disabled }}
+                style={{
+                  margin: `0 auto ${designTokens.spacing.md}px`,
+                  color: theme.palette.text.disabled,
+                }}
               />
               <Typography
                 variant='h6'
@@ -551,7 +556,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         <ListItemIcon sx={{ minWidth: 32, pt: 0.5 }}>
                           <Lightbulb
                             size={18}
-                            style={{ color: ct.warning.main }}
+                            style={{ color: theme.palette.warning.main }}
                           />
                         </ListItemIcon>
                         <ListItemText primary={point} />
@@ -645,7 +650,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                       <Box sx={{ textAlign: 'center', py: 8 }}>
                         <Languages
                           size={48}
-                          style={{ margin: '0 auto 12px', color: ct.text.disabled }}
+                          style={{ margin: '0 auto 12px', color: theme.palette.text.disabled }}
                         />
                         <Typography
                           variant='body2'
@@ -698,7 +703,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                     <Box sx={{ textAlign: 'center', py: 6 }}>
                       <MessageSquare
                         size={48}
-                        style={{ margin: '0 auto 12px', color: ct.text.disabled }}
+                        style={{ margin: '0 auto 12px', color: theme.palette.text.disabled }}
                       />
                       <Typography
                         variant='body2'

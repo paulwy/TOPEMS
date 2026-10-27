@@ -6,7 +6,6 @@ import type { Approval, ApprovalRecord } from '@/api/workflow';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
-const ct = designTokens.colors;
 interface ApprovalTimelineProps {
   approval: Approval | null;
   records: ApprovalRecord[];
@@ -52,12 +51,12 @@ export const RecordsTabContent: React.FC<{ records: ApprovalRecord[]; theme: The
             {record.action === 'approve' ? (
               <CheckCircle2
                 size={16}
-                style={{ color: ct.success[600] }}
+                style={{ color: theme.palette.success[600] }}
               />
             ) : (
               <XCircle
                 size={16}
-                style={{ color: ct.error[600] }}
+                style={{ color: theme.palette.error[600] }}
               />
             )}
             <Typography

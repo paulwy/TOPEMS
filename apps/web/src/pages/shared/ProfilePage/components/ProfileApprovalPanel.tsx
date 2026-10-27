@@ -16,8 +16,6 @@ import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
 import { IM_PATHS } from '@/modules/im/config';
 
-const ct = designTokens.colors;
-
 interface ActivityItem {
   id: string;
   action: string;
@@ -210,7 +208,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               icon: Bell,
               label: i18n.t('pages.profile_approval_panel.k3'),
               desc: i18n.t('pages.profile_approval_panel.k4'),
-              color: ct.yellow[600],
+              color: theme.palette.yellow[600],
             },
             {
               key: 'workflow_enabled' as const,
@@ -224,7 +222,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               icon: FileText,
               label: i18n.t('pages.profile_approval_panel.k7'),
               desc: i18n.t('pages.profile_approval_panel.k8'),
-              color: ct.purple[600],
+              color: theme.palette.purple[600],
             },
             {
               key: 'security_enabled' as const,
@@ -331,7 +329,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               icon: GitBranch,
               iconName: 'GitBranch',
               path: '/flow/definitions',
-              color: ct.purple[500],
+              color: theme.palette.purple[500],
             },
             {
               id: '4',
@@ -347,7 +345,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
               icon: Bot,
               iconName: 'Bot',
               path: '/ai',
-              color: ct.pink[500],
+              color: theme.palette.pink[500],
             },
             {
               id: '6',

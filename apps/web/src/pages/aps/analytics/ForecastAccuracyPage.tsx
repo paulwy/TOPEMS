@@ -9,13 +9,12 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, useTheme } from '@mui/material';
 import { Target, CheckCircle, AlertTriangle } from 'lucide-react';
 import { apsApi } from '@/api/aps';
 import type { DemandForecast } from '@/api/aps/types';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import { designTokens } from '@topems/tokens';
 import {
   ResponsiveContainer,
   LineChart,
@@ -36,6 +35,7 @@ interface ForecastAccuracyItem {
 }
 
 export default function ForecastAccuracyPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiData, isLoading } = useQuery({
@@ -207,7 +207,7 @@ export default function ForecastAccuracyPage() {
               <ReferenceLine
                 yAxisId='right'
                 y={95}
-                stroke={designTokens.colors.success.dark}
+                stroke={theme.palette.success.dark}
                 strokeDasharray='4 4'
                 label={t('aps.forecast_accuracy_page.95_8')}
               />
@@ -216,7 +216,7 @@ export default function ForecastAccuracyPage() {
                 type='monotone'
                 dataKey='forecast'
                 name={t('aps.forecast_accuracy_page.k9')}
-                stroke={designTokens.colors.secondary.dark}
+                stroke={theme.palette.secondary.dark}
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />
@@ -225,7 +225,7 @@ export default function ForecastAccuracyPage() {
                 type='monotone'
                 dataKey='actual'
                 name={t('aps.forecast_accuracy_page.k10')}
-                stroke={designTokens.colors.warning.main}
+                stroke={theme.palette.warning.main}
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />
@@ -234,7 +234,7 @@ export default function ForecastAccuracyPage() {
                 type='monotone'
                 dataKey='accuracy'
                 name={t('aps.forecast_accuracy_page.k11')}
-                stroke={designTokens.colors.success.dark}
+                stroke={theme.palette.success.dark}
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />

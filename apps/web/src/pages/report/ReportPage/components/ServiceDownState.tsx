@@ -1,14 +1,12 @@
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, useTheme } from '@mui/material';
 import { FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const ServiceDownState: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
 
   return (
@@ -18,7 +16,7 @@ const ServiceDownState: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
+        background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, border.default 100%)`,
       }}
     >
       <Box

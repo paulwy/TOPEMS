@@ -1,4 +1,4 @@
-import { Chip, Typography, Box, InputLabel, LinearProgress } from '@mui/material';
+import { Chip, Typography, Box, InputLabel, LinearProgress, useTheme } from '@mui/material';
 import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TrendingUp } from 'lucide-react';
@@ -13,10 +13,8 @@ import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const OpportunityDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -285,7 +283,7 @@ const OpportunityDetailPage: React.FC = () => {
       avatar: (
         <TrendingUp
           size={32}
-          color={ct.primary.dark}
+          color={theme.palette.primary.dark}
         />
       ),
       title: opportunity?.name,

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import {
   FileText as FileTextIcon,
   Clock as ClockIcon,
@@ -23,9 +23,6 @@ import { designTokens } from '@/theme/tokens';
 import { REPORT_PATHS } from '@/modules/report/config';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const reportApiAdapter: CrudApiAdapter<ReportData> = {
   list: async (params) => {
     const response = await reportApi.listReports();
@@ -63,6 +60,7 @@ const reportApiAdapter: CrudApiAdapter<ReportData> = {
 };
 
 const ReportListPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -194,7 +192,7 @@ const ReportListPage: React.FC = () => {
       subtitle={i18n.t('pages.report_list_page.k16')}
       headerProps={{
         pageIcon: <FileBarChart style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <CrudPage

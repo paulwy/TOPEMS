@@ -9,7 +9,7 @@
  * - Tab 2: 期初余额（openingBalanceSchema 驱动 + 结转按钮）
  */
 import React, { useMemo } from 'react';
-import { Box, Tabs, Tab, Button } from '@mui/material';
+import { Box, Tabs, Tab, Button, useTheme } from '@mui/material';
 import { FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -25,9 +25,8 @@ import {
 import i18n from '@/i18n';
 import { accountingSubjectSchema, openingBalanceSchema } from '@/schemas/finance';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 const AccountingManagementPage: React.FC = () => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = React.useState(0);
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -173,7 +172,7 @@ const AccountingManagementPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <FileSpreadsheet style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <Tabs

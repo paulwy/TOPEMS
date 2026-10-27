@@ -42,7 +42,6 @@ import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
 import { alpha } from '@mui/material/styles';
 
-const ct = designTokens.colors;
 interface ScanHistoryItem {
   id: string;
   content: string;
@@ -338,14 +337,14 @@ const MobileScanPage: React.FC = () => {
               borderRadius: 2,
               overflow: 'hidden',
               mb: 3,
-              backgroundColor: ct.grey[900],
+              backgroundColor: theme.palette.grey[900],
             }}
           >
             <Box
               sx={{
                 position: 'absolute',
                 inset: 0,
-                background: `linear-gradient(135deg, ${ct.grey[900]} 0%, ${ct.blue[900]} 100%)`,
+                background: `linear-gradient(135deg, ${theme.palette.grey[900]} 0%, ${theme.palette.blue[900]} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

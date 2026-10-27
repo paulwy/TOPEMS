@@ -4,14 +4,12 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { scoringDimensionSchema } from '@/schemas/srm';
 import { srmApi } from '@/api/srm';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { Sliders } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 
 interface ScoringDimension {
   id: string;
@@ -74,6 +72,7 @@ const scoringDimensionApiAdapter: CrudApiAdapter = {
 };
 
 const ScoringDimensionStats: React.FC = () => {
+  const theme = useTheme();
   const { data: dimensions = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.SRM_SCORING_DIMENSIONS_STATS_BASE,
     queryFn: async () => {
@@ -101,7 +100,7 @@ const ScoringDimensionStats: React.FC = () => {
     {
       label: i18n.t('pages.srm_scoring_dimension_page.k3'),
       value: stats.total,
-      color: ct.purple[500],
+      color: theme.palette.purple[500],
       bgColor: 'secondary.light',
     },
     {

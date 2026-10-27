@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Typography, Card, CardContent, Stack } from '@mui/material';
+import { Box, Typography, Card, CardContent, Stack, useTheme } from '@mui/material';
 import { Download, Check, Package, ClipboardCheck } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
@@ -15,9 +15,6 @@ import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const inboundCrudApi: CrudOperations<InboundOrder> = {
   list: (params) =>
     wmsApi.inboundOrders.list(params as PaginationParams) as ReturnType<
@@ -37,6 +34,7 @@ const inboundCrudApi: CrudOperations<InboundOrder> = {
 };
 
 const InboundStats: React.FC = () => {
+  const theme = useTheme();
   const { data: orders = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.WMS_INBOUND_ORDERS_STATS_BASE,
     queryFn: async () => {
@@ -65,12 +63,12 @@ const InboundStats: React.FC = () => {
     {
       label: i18n.t('pages.inbound_page.k0'),
       value: stats.total,
-      color: ct.success.main,
+      color: theme.palette.success.main,
       bgColor: 'grey.100',
       icon: (
         <Download
           size={20}
-          color={ct.success.main}
+          color={theme.palette.success.main}
         />
       ),
     },

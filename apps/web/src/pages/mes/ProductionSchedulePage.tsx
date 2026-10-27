@@ -9,6 +9,7 @@ import {
   TextField,
   InputLabel,
   Tooltip,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
@@ -25,13 +26,12 @@ import { productionScheduleSchema } from '@/schemas/mes';
 import { Calendar, GanttChart, RefreshCw } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.schedules, {
   itemsField: 'schedules',
 });
 // ============ 甘特图视图 ============
 function GanttView() {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const { data: ganttData, isPending } = useQuery<GanttData | null>({
     queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT,
@@ -117,7 +117,7 @@ function GanttView() {
                     const totalDuration = totalEnd - totalStart;
                     const left = ((start - totalStart) / totalDuration) * 100;
                     const width = ((end - start) / totalDuration) * 100;
-                    let bgColor = ct.secondary[400];
+                    let bgColor = theme.palette.secondary[400];
                     if (task.status === 'in_progress') bgColor = 'primary.main';
                     if (task.status === 'completed') bgColor = 'success.main';
                     if (task.status === 'cancelled') bgColor = 'error.main';
@@ -161,6 +161,7 @@ function GanttView() {
 }
 // ============ 生产排程页面 ============
 const ProductionSchedulePage: React.FC = () => {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
   const [showAdjustDialog, setShowAdjustDialog] = useState(false);
@@ -253,7 +254,7 @@ const ProductionSchedulePage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Calendar style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[500]} 0%, ${ct.secondary[700]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[500]} 0%, ${theme.palette.secondary[700]} 100%)`,
       }}
     >
       <CrudPage
@@ -277,7 +278,7 @@ const ProductionSchedulePage: React.FC = () => {
                 mb: 3,
               }}
             >
-              <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
+              <Box sx={{ p: 2, bgcolor: theme.palette.secondary[100], borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}

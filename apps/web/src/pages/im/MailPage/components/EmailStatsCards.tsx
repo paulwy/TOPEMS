@@ -1,10 +1,8 @@
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box, useTheme } from '@mui/material';
 import { Mail, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import type { EmailStats } from '@/api/mail';
 import { useTranslation } from 'react-i18next';
-
-const ct = designTokens.colors;
 
 interface EmailStatsCardsProps {
   stats: EmailStats | null;
@@ -12,6 +10,7 @@ interface EmailStatsCardsProps {
 }
 
 const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }) => {
+  const theme = useTheme();
   const { t } = useTranslation('im');
   return (
     <Box
@@ -81,7 +80,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
       </Card>
       <Card
         sx={{
-          background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
           border: 'none',
         }}
       >
@@ -134,7 +133,7 @@ const EmailStatsCards: React.FC<EmailStatsCardsProps> = ({ stats, statsLoading }
       </Card>
       <Card
         sx={{
-          background: `linear-gradient(135deg, ${ct.yellow.main} 0%, ${ct.yellow[600]} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.yellow.main} 0%, ${theme.palette.yellow[600]} 100%)`,
           border: 'none',
         }}
       >

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { Download, CheckCircle } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -10,8 +10,6 @@ import { qualityApi } from '@/api/mes/quality';
 import type { QualityInspection } from '@/api/mes/quality';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const qualityApiAdapter: CrudApiAdapter<QualityInspection> = {
   list: async (params) => {
     const response = await qualityApi.listInspections({
@@ -55,6 +53,7 @@ const qualityApiAdapter: CrudApiAdapter<QualityInspection> = {
   },
 };
 const QualityInspectionPage: React.FC = () => {
+  const theme = useTheme();
   const { addNotification } = useNotificationStore();
   const handleBatchExport = useCallback(
     async (rows: QualityInspection[]) => {
@@ -158,7 +157,7 @@ const QualityInspectionPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <CheckCircle style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <CrudPage
@@ -264,7 +263,7 @@ const QualityInspectionPage: React.FC = () => {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: ct.secondary[100],
+                  bgcolor: theme.palette.secondary[100],
                   borderRadius: 3,
                   cursor: 'pointer',
                 }}

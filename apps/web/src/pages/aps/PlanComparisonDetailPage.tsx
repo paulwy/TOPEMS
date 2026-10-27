@@ -16,12 +16,11 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Box, Grid, Paper, Typography, Alert, Button } from '@mui/material';
+import { Box, Grid, Paper, Typography, Alert, Button, useTheme } from '@mui/material';
 import i18n from '@/i18n';
 import { productionPlanApi } from '@/api/aps';
 import type { ProductionPlan } from '@/api/aps/types';
 import { StatusBadge } from '@/components/aps/StatusBadge';
-import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import { DetailPageTemplate } from '@/components/templates';
 import { type SectionConfig } from '@/components/templates/DetailPageTemplate';
@@ -42,6 +41,7 @@ const MOCK_COMPARISON: ComparisonData[] = [
 ];
 
 export default function PlanComparisonDetailPage() {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation('aps');
@@ -107,12 +107,12 @@ export default function PlanComparisonDetailPage() {
                   <Bar
                     dataKey='planned'
                     name={t('aps.plan_comparison_detail_page.k11')}
-                    fill={designTokens.colors.primary.main}
+                    fill={theme.palette.primary.main}
                   />
                   <Bar
                     dataKey='actual'
                     name={t('aps.plan_comparison_detail_page.k12')}
-                    fill={designTokens.colors.success.dark}
+                    fill={theme.palette.success.dark}
                   />
                 </BarChart>
               </ResponsiveContainer>

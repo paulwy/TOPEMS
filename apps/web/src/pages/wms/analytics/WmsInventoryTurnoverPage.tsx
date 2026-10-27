@@ -13,13 +13,14 @@ import {
   Legend,
 } from 'recharts';
 import i18n from '@/i18n';
-import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { useAnalyticsData, getDefaultDateRange } from '@/hooks/useAnalyticsData';
 import { wmsAnalyticsApi } from '@/api/wms/analytics';
 import type { InventoryTurnoverData } from '@/api/wms/types';
+import { useTheme } from '@mui/material';
 
 export default function WmsInventoryTurnoverPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { startDate, endDate } = getDefaultDateRange();
   const [groupBy, setGroupBy] = useState<'month' | 'week' | 'day'>('month');
@@ -200,7 +201,7 @@ export default function WmsInventoryTurnoverPage() {
                 type='monotone'
                 dataKey='turnoverRate'
                 name={i18n.t('pages.wms_inventory_turnover_page.k6')}
-                stroke={designTokens.colors.success.dark}
+                stroke={theme.palette.success.dark}
                 strokeWidth={2}
                 dot={{ r: 2 }}
               />
@@ -226,7 +227,7 @@ export default function WmsInventoryTurnoverPage() {
               <Bar
                 dataKey='days'
                 name={i18n.t('pages.wms_inventory_turnover_page.k8')}
-                fill={designTokens.colors.primary.main}
+                fill={theme.palette.primary.main}
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>

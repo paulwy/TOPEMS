@@ -21,6 +21,7 @@ import {
   TablePagination,
   Alert,
   Button,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { LoadingSpinner } from '@topems/shared-components';
@@ -60,6 +61,7 @@ interface ComparisonRow {
   changeRate: number;
 }
 const BIComparisonPage = () => {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
@@ -358,12 +360,12 @@ const BIComparisonPage = () => {
                 />
                 <XAxis
                   dataKey='name'
-                  tick={{ fill: ct.text.secondary, fontSize: 12 }}
+                  tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
                   angle={-45}
                   textAnchor='end'
                   height={80}
                 />
-                <YAxis tick={{ fill: ct.text.secondary, fontSize: 12 }} />
+                <YAxis tick={{ fill: theme.palette.text.secondary, fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
                 <Bar

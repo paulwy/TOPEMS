@@ -9,6 +9,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { Calculator, Trophy, Activity, Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -24,20 +25,20 @@ import type {
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 
-const METHOD_COLORS: Record<ForecastMethod, string> = {
-  moving_average: designTokens.colors.primary.dark,
-  weighted_moving_average: designTokens.colors.purple['500'],
-  exponential_smoothing: designTokens.colors.success.dark,
-  linear_regression: 'colors.orange.700',
-};
-
 const CrmForecastAlgorithmPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
+
+  const methodColors: Record<ForecastMethod, string> = {
+    moving_average: theme.palette.primary.dark,
+    weighted_moving_average: theme.palette.purple[500],
+    exponential_smoothing: theme.palette.success.dark,
+    linear_regression: theme.palette.orange[700],
+  };
 
   const [method, setMethod] = useState<ForecastMethod>('moving_average');
   const [historyInput, setHistoryInput] = useState(
@@ -215,9 +216,7 @@ const CrmForecastAlgorithmPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Activity
                 size={14}
-                color={
-                  METHOD_COLORS[row.method as ForecastMethod] ?? designTokens.colors.primary.dark
-                }
+                color={methodColors[row.method as ForecastMethod] ?? theme.palette.primary.dark}
               />
               <Typography
                 variant='body2'
@@ -483,7 +482,7 @@ const CrmForecastAlgorithmPage: React.FC = () => {
                 >
                   <Activity
                     size={16}
-                    color={METHOD_COLORS[m.method] ?? designTokens.colors.primary.dark}
+                    color={methodColors[m.method] ?? theme.palette.primary.dark}
                   />
                   <Box>
                     <Typography

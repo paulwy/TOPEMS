@@ -5,15 +5,13 @@ import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { evaluationSchema } from '@/schemas/srm';
 import { srmApi } from '@/api/srm';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Card, CardContent, Typography, Rating, Chip } from '@mui/material';
+import { Box, Card, CardContent, Typography, Rating, Chip, useTheme } from '@mui/material';
 import { FileText, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 import { getChipStatusColor as getStatusColor } from '@/utils/status';
-
-const ct = designTokens.colors;
 
 interface SupplierEvaluation {
   id: string;
@@ -142,6 +140,7 @@ function getCustomColumns(): ColumnDef[] {
 }
 
 const EvaluationStats: React.FC = () => {
+  const theme = useTheme();
   const { data: evaluations = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.SRM_EVALUATIONS_STATS_BASE,
     queryFn: async () => {
@@ -169,7 +168,7 @@ const EvaluationStats: React.FC = () => {
     {
       label: i18n.t('pages.srm_evaluation_page.k9'),
       value: stats.total,
-      color: ct.purple[500],
+      color: theme.palette.purple[500],
       bgColor: 'secondary.light',
       icon: <FileText sx={{ width: 20, height: 20 }} />,
     },

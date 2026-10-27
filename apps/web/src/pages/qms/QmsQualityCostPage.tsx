@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Box, Typography } from '@mui/material';
+import { Card, CardContent, Box, Typography, useTheme } from '@mui/material';
 import { DollarSign, TrendingDown, AlertTriangle, CheckCircle, BarChart3 } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter, type CrudApi } from '@/schema/crudPageAdapter';
@@ -8,8 +8,6 @@ import { qualityCostApi } from '@/api/qms';
 import type { QualityCost } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter<QualityCost>({
   list: qualityCostApi.listQualityCosts as unknown as CrudApi<QualityCost>['list'],
   create: qualityCostApi.createQualityCost as unknown as CrudApi<QualityCost>['create'],
@@ -17,6 +15,7 @@ const apiAdapter = createCrudPageAdapter<QualityCost>({
   delete: qualityCostApi.deleteQualityCost as unknown as CrudApi<QualityCost>['delete'],
 });
 function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
+  const theme = useTheme();
   const stats = {
     total: rows.reduce((sum, c) => sum + (c.amount || 0), 0),
     prevention: rows
@@ -71,7 +70,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
       </Card>
       <Card
         sx={{
-          background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
           color: 'common.white',
         }}
       >
@@ -99,7 +98,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
       </Card>
       <Card
         sx={{
-          background: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
           color: 'common.white',
         }}
       >
@@ -127,7 +126,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
       </Card>
       <Card
         sx={{
-          background: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
           color: 'common.white',
         }}
       >
@@ -155,7 +154,7 @@ function QualityCostStatsCards({ rows }: { rows: QualityCost[] }) {
       </Card>
       <Card
         sx={{
-          background: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error[600]} 100%)`,
           color: 'common.white',
         }}
       >

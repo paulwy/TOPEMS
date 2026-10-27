@@ -20,7 +20,7 @@ import {
   Network,
 } from 'lucide-react';
 import i18n from '@/i18n';
-import { Box, Tabs, Tab, Stack, Menu, MenuItem, Button } from '@mui/material';
+import { Box, Tabs, Tab, Stack, Menu, MenuItem, Button, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
 import { LazyChart } from '@/components/charts';
@@ -30,8 +30,6 @@ import { designTokens } from '@/theme/tokens';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { monitorApi } from '@/api/monitor';
-
-const ct = designTokens.colors;
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
 type MetricCategory = 'host' | 'service' | 'database' | 'middleware';
 type ServiceType = 'all' | 'user' | 'order' | 'payment' | 'inventory' | 'gateway';
@@ -122,6 +120,7 @@ const generateMultiServiceTrendData = (labels: string[], services: string[]) => 
   });
 };
 export const MonitorMetricsPage: React.FC = () => {
+  const theme = useTheme();
   const {} = useQuery({
     queryKey: ['monitor', 'metrics'],
     queryFn: async () => {
@@ -360,7 +359,12 @@ export const MonitorMetricsPage: React.FC = () => {
               .map((name, i) => ({
                 key: name,
                 name,
-                color: ['secondary.main', ct.cyan[500], ct.pink[500], 'success.main'][i],
+                color: [
+                  'secondary.main',
+                  theme.palette.cyan[500],
+                  theme.palette.pink[500],
+                  'success.main',
+                ][i],
               }))}
             height={280}
           />
@@ -443,7 +447,7 @@ export const MonitorMetricsPage: React.FC = () => {
               'warning.main',
               'error.main',
               'secondary.main',
-              ct.cyan[500],
+              theme.palette.cyan[500],
             ]}
             tooltipFormatter={(value) =>
               [
@@ -579,7 +583,7 @@ export const MonitorMetricsPage: React.FC = () => {
       subtitle={i18n.t('monitor.monitor_metrics_page.k58')}
       headerProps={{
         pageIcon: <BarChart3 size={20} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.main} 100%)`,
         backButton: {
           href: MONITOR_PATHS.dashboard,
           visible: true,

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Box, Typography, Button, InputBase } from '@mui/material';
+import { Box, Typography, Button, InputBase, useTheme } from '@mui/material';
 import {
   DollarSign,
   FileText,
@@ -27,10 +27,8 @@ import { payrollSchema, salaryAdjustmentSchema } from '@/schemas/hrm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const HrmPayrollPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
@@ -537,7 +535,7 @@ const HrmPayrollPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <BadgeDollarSign style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success.main}, ${ct.success.dark})`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
       }}
     >
       <CrudPage

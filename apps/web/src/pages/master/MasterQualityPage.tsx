@@ -21,15 +21,14 @@ import {
   Tabs,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { qualityApi } from '@/api/master/quality';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
-
 const MasterQualityPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const qc = useQueryClient();
   const addNotification = useNotificationStore((s) => s.addNotification);
@@ -228,10 +227,10 @@ const MasterQualityPage: React.FC = () => {
         spacing={2}
         sx={{ flexWrap: 'wrap' }}
       >
-        {metric(t('master.quality.k4'), dash?.total_entities, ct.info[600])}
-        {metric(t('master.quality.k5'), dash?.passed_checks, ct.success[600])}
-        {metric(t('master.quality.k6'), dash?.failed_checks, ct.error[600])}
-        {metric(t('master.quality.k7'), `${dash?.pass_rate ?? '-'}%`, ct.warning[600])}
+        {metric(t('master.quality.k4'), dash?.total_entities, theme.palette.info[600])}
+        {metric(t('master.quality.k5'), dash?.passed_checks, theme.palette.success[600])}
+        {metric(t('master.quality.k6'), dash?.failed_checks, theme.palette.error[600])}
+        {metric(t('master.quality.k7'), `${dash?.pass_rate ?? '-'}%`, theme.palette.warning[600])}
       </Stack>
       <Card sx={{ p: 3 }}>
         <Typography
@@ -448,7 +447,7 @@ const MasterQualityPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Gauge sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.info[500]} 0%, ${ct.info[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.info[500]} 0%, ${theme.palette.info[600]} 100%)`,
       }}
       maxWidth='xl'
     >

@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { useQueryClient } from '@tanstack/react-query';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { formulaSchema } from '@/schemas/pdm';
@@ -8,9 +8,8 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 
-const ct = designTokens.colors;
-
 export default function PdmFormulaPage() {
+  const theme = useTheme();
   const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
 
@@ -95,7 +94,7 @@ export default function PdmFormulaPage() {
             mb: 3,
           }}
         >
-          <Box sx={{ p: 2, bgcolor: ct.pink[50], borderRadius: 3 }}>
+          <Box sx={{ p: 2, bgcolor: theme.palette.pink[50], borderRadius: 3 }}>
             <Typography
               variant='body2'
               sx={{ color: 'slate.600' }}

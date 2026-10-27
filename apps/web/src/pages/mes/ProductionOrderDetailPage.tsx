@@ -6,6 +6,7 @@ import {
   Card,
   CardContent,
   type ChipProps,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import React, { useMemo } from 'react';
@@ -20,9 +21,8 @@ import type { ProductionOrder, QualityRecord } from '@/api/mes';
 import { designTokens } from '@/theme/tokens';
 import { MES_PATHS } from '@/modules/mes/config';
 import { getChipStatusColor } from '@/utils/status';
-
-const ct = designTokens.colors;
 const ProductionOrderDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const {
     data: order,
@@ -431,7 +431,7 @@ const ProductionOrderDetailPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <Package
                 size={18}
-                color={ct.primary.dark}
+                color={theme.palette.primary.dark}
               />
               <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
                 {i18n.t('mes.production_order_detail_page.k22')}
@@ -475,7 +475,7 @@ const ProductionOrderDetailPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <AlertCircle
                 size={18}
-                color={ct.error[700]}
+                color={theme.palette.error[700]}
               />
               <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
                 {i18n.t('mes.production_order_detail_page.k24')}
@@ -549,7 +549,7 @@ const ProductionOrderDetailPage: React.FC = () => {
       avatar: (
         <Package
           size={32}
-          color={ct.primary.dark}
+          color={theme.palette.primary.dark}
         />
       ),
       title: order?.product_name,
@@ -575,7 +575,7 @@ const ProductionOrderDetailPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <DetailPageTemplate

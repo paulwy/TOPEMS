@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Chip, Grid } from '@mui/material';
+import { Box, Chip, Grid, useTheme } from '@mui/material';
 import { Settings, Zap, Package, Shield } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -12,8 +12,6 @@ import { pdmApi, type ProductConfig } from '@/api/pdm';
 import { productConfigSchema } from '@/schemas/pdm/productConfig';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 
 interface FlatProductConfig {
   id: string;
@@ -123,6 +121,7 @@ function getStatusLabel(status: string): string {
 }
 
 export const PdmProductConfigPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('pdm');
   const { data: configs = [] } = useQuery<FlatProductConfig[]>({
     queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS,
@@ -164,7 +163,7 @@ export const PdmProductConfigPage: React.FC = () => {
             <span
               style={{
                 fontSize: designTokens.typography.fontSize.scale['0.75rem'],
-                color: ct.text.muted,
+                color: theme.palette.text.muted,
               }}
             >
               {String(row.material || '-')} / {String(row.grade || '-')}
@@ -290,7 +289,7 @@ export const PdmProductConfigPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Settings style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary[600]} 100%)`,
       }}
     >
       <CrudPage

@@ -18,15 +18,14 @@ import {
   Tabs,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { dshEnhancedApi } from '@/api/ai/dshEnhanced';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
-
 const DshRagPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const addNotification = useNotificationStore((s) => s.addNotification);
 
@@ -95,7 +94,7 @@ const DshRagPage: React.FC = () => {
     },
   });
 
-  const metric = (label: string, value: unknown, color = ct.info[600]) => (
+  const metric = (label: string, value: unknown, color = theme.palette.info[600]) => (
     <Card sx={{ p: 2.5, minWidth: 150, flex: 1 }}>
       <Typography
         variant='body2'
@@ -254,10 +253,10 @@ const DshRagPage: React.FC = () => {
       >
         {metric(t('ai.dshRag.k17'), ragStats?.total_retrievals)}
         {metric(t('ai.dshRag.k18'), ragStats?.total_documents_retrieved)}
-        {metric(t('ai.dshRag.k19'), ragStats?.avg_documents_per_query, ct.warning[600])}
+        {metric(t('ai.dshRag.k19'), ragStats?.avg_documents_per_query, theme.palette.warning[600])}
         {metric(t('ai.dshRag.k20'), ragStats?.query_rewrites)}
         {metric(t('ai.dshRag.k21'), ragStats?.rerank_count)}
-        {metric(t('ai.dshRag.k22'), ragStats?.cache_hits, ct.success[600])}
+        {metric(t('ai.dshRag.k22'), ragStats?.cache_hits, theme.palette.success[600])}
       </Stack>
     </Stack>
   );
@@ -270,8 +269,8 @@ const DshRagPage: React.FC = () => {
         sx={{ flexWrap: 'wrap' }}
       >
         {metric(t('ai.dshRag.k23'), perf?.execution?.total_executions)}
-        {metric(t('ai.dshRag.k24'), perf?.execution?.avg_duration_ms, ct.warning[600])}
-        {metric(t('ai.dshRag.k25'), perf?.execution?.success_rate, ct.success[600])}
+        {metric(t('ai.dshRag.k24'), perf?.execution?.avg_duration_ms, theme.palette.warning[600])}
+        {metric(t('ai.dshRag.k25'), perf?.execution?.success_rate, theme.palette.success[600])}
         {metric(t('ai.dshRag.k26'), perf?.history_size)}
       </Stack>
       <Stack
@@ -347,7 +346,7 @@ const DshRagPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Search sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success[500]} 0%, ${ct.info[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.success[500]} 0%, ${theme.palette.info[600]} 100%)`,
       }}
       maxWidth='xl'
     >

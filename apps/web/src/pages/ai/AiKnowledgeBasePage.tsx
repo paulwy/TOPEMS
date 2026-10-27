@@ -18,6 +18,7 @@ import {
   IconButton,
   ListItemSecondaryAction,
   Tooltip,
+  useTheme,
 } from '@mui/material';
 import {
   Search,
@@ -37,9 +38,6 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { knowledgeApi } from '@/api/ai/knowledge';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -110,6 +108,7 @@ type ChatMessage = {
 };
 
 export const AiKnowledgeBasePage: React.FC = () => {
+  const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [query, setQuery] = useState('');
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
@@ -301,28 +300,28 @@ export const AiKnowledgeBasePage: React.FC = () => {
         return (
           <BookOpen
             size={16}
-            style={{ color: ct.primary.main }}
+            style={{ color: theme.palette.primary.main }}
           />
         );
       case 'guide':
         return (
           <FileText
             size={16}
-            style={{ color: ct.info.main }}
+            style={{ color: theme.palette.info.main }}
           />
         );
       case 'process':
         return (
           <FolderOpen
             size={16}
-            style={{ color: ct.success.main }}
+            style={{ color: theme.palette.success.main }}
           />
         );
       default:
         return (
           <FileText
             size={16}
-            style={{ color: ct.text.secondary }}
+            style={{ color: theme.palette.text.secondary }}
           />
         );
     }
@@ -350,7 +349,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
       pageContainerProps={{
         headerProps: {
           pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
-          pageGradient: `linear-gradient(135deg, ${ct.blue[400]} 0%, ${ct.purple[500]} 100%)`,
+          pageGradient: `linear-gradient(135deg, ${theme.palette.blue[400]} 0%, ${theme.palette.purple[500]} 100%)`,
         },
       }}
       leftPanel={
@@ -500,7 +499,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Sparkles
                   size={18}
-                  style={{ color: ct.yellow[500] }}
+                  style={{ color: theme.palette.yellow[500] }}
                 />
                 {i18n.t('ai.knowledge_base.label.smart_qa')}
               </Box>
@@ -536,7 +535,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
               >
                 <HelpCircle
                   size={48}
-                  style={{ color: ct.text.disabled, marginBottom: 12 }}
+                  style={{ color: theme.palette.text.disabled, marginBottom: 12 }}
                 />
                 <Typography
                   variant='body1'

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
+import { Box, Card, CardContent, Typography, Chip, useTheme } from '@mui/material';
 import { HeartPulse, CalendarCheck, AlertCircle, ClipboardList } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -18,9 +18,6 @@ import { designTokens } from '@/theme/tokens';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const occupationalDiseaseCaseApi = {
   list: ehsApi.occupationalDiseases.listOccupationalDiseaseCases,
   create: ehsApi.occupationalDiseases.createOccupationalDiseaseCase,
@@ -86,6 +83,7 @@ function extractListData(response: unknown): OccupationalDiseaseCase[] {
 }
 
 const EhsOccupationalDiseasePage: React.FC = () => {
+  const theme = useTheme();
   const { data: casesResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_OCCUPATIONALDISEASES_STATS_BASE,
     queryFn: async () =>
@@ -204,7 +202,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertCircle sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
+              <AlertCircle sx={{ width: 20, height: 20, color: theme.palette.yellow[600] }} />
             </Box>
             <Box>
               <Typography
@@ -464,7 +462,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <HeartPulse sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error[600]} 100%)`,
       }}
       maxWidth='xl'
     >

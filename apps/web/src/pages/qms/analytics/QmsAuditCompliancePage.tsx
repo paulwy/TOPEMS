@@ -7,7 +7,7 @@
  * 数据来自 useQmsMock 的 auditPlans / auditTasks / auditFindings。
  */
 import { useMemo } from 'react';
-import { Grid, Paper, Typography, Alert } from '@mui/material';
+import { Grid, Paper, Typography, Alert, useTheme } from '@mui/material';
 import {
   ResponsiveContainer,
   BarChart,
@@ -20,7 +20,6 @@ import {
   RadialBarChart,
   RadialBar,
 } from 'recharts';
-import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { StatsPageTemplate, type StatCard } from '@/components/templates/StatsPageTemplate';
@@ -29,6 +28,7 @@ import { auditApi } from '@/api/qms/audit';
 import type { AuditPlan, AuditTask, AuditFinding } from '@/api/qms/types';
 
 export default function QmsAuditCompliancePage() {
+  const theme = useTheme();
   const { t } = useTranslation('qms');
   const { data: plansData, loading: plansLoading } = useAnalyticsData<AuditPlan[]>({
     fetcher: () => auditApi.listAuditPlans(),
@@ -179,17 +179,17 @@ export default function QmsAuditCompliancePage() {
     {
       name: t('qms.qms_audit_compliance_page.k0'),
       value: overall.planCompletionRate,
-      fill: designTokens.colors.secondary.dark,
+      fill: theme.palette.secondary.dark,
     },
     {
       name: t('qms.qms_audit_compliance_page.k1'),
       value: overall.taskCompletionRate,
-      fill: designTokens.colors.success.dark,
+      fill: theme.palette.success.dark,
     },
     {
       name: t('qms.qms_audit_compliance_page.k2'),
       value: overall.findingCloseRate,
-      fill: designTokens.colors.warning.main,
+      fill: theme.palette.warning.main,
     },
   ];
 
@@ -288,13 +288,13 @@ export default function QmsAuditCompliancePage() {
                 <Bar
                   dataKey='completionRate'
                   name={t('qms.qms_audit_compliance_page.k8')}
-                  fill={designTokens.colors.success.dark}
+                  fill={theme.palette.success.dark}
                   barSize={20}
                 />
                 <Bar
                   dataKey='findingCloseRate'
                   name={t('qms.qms_audit_compliance_page.k9')}
-                  fill={designTokens.colors.warning.main}
+                  fill={theme.palette.warning.main}
                   barSize={20}
                 />
               </BarChart>
@@ -333,7 +333,7 @@ export default function QmsAuditCompliancePage() {
                 <Bar
                   dataKey='complianceRate'
                   name={t('qms.qms_audit_compliance_page.k11')}
-                  fill={designTokens.colors.secondary.dark}
+                  fill={theme.palette.secondary.dark}
                   barSize={32}
                 />
               </BarChart>

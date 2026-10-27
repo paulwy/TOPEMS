@@ -14,6 +14,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  useTheme,
 } from '@mui/material';
 import { Package, GitCompare, CheckCircle, Archive } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -36,9 +37,6 @@ import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const baseAdapter = createCrudPageAdapter<BomVersion, CreateBomVersionRequest>({
   list: bomApi.listVersions,
   create: bomApi.createVersion,
@@ -76,6 +74,7 @@ function extractListData(response: unknown): BomVersion[] {
 }
 
 export const BomPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -587,7 +586,7 @@ export const BomPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
       maxWidth='xl'
     >

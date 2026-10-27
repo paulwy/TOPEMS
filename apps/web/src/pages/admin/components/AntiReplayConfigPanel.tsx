@@ -10,13 +10,13 @@ import {
   Switch,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { AlertCircle, Save } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import type { AntiReplayConfig } from '../hooks/UseRateLimitConfig';
 
-const ct = designTokens.colors;
 interface AntiReplayConfigPanelProps {
   antiReplay: AntiReplayConfig;
   setAntiReplay: React.Dispatch<React.SetStateAction<AntiReplayConfig>>;
@@ -37,6 +37,7 @@ const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
   onSave,
   isSaving,
 }) => {
+  const theme = useTheme();
   return (
     <Grid size={{ xs: 12, md: 6 }}>
       <Card>
@@ -44,7 +45,7 @@ const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <AlertCircle
               size={20}
-              color={ct.warning.dark}
+              color={theme.palette.warning.dark}
             />
             <Typography
               variant='subtitle1'

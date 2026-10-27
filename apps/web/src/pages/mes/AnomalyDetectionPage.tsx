@@ -17,6 +17,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
@@ -78,26 +79,27 @@ const getAnomalyTypeLabels = (): Record<string, string> => ({
 });
 
 const getTrendIcon = (trend: string) => {
+  const theme = useTheme();
   switch (trend) {
     case 'rising':
       return (
         <TrendingUp
           size={14}
-          color={ct.error.main}
+          color={theme.palette.error.main}
         />
       );
     case 'falling':
       return (
         <TrendingDown
           size={14}
-          color={ct.success.main}
+          color={theme.palette.success.main}
         />
       );
     default:
       return (
         <Minus
           size={14}
-          color={ct.grey[500]}
+          color={theme.palette.grey[500]}
         />
       );
   }

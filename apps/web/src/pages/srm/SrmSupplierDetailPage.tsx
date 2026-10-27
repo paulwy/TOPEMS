@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Box, Typography, Chip, Avatar, InputLabel } from '@mui/material';
+import { Box, Typography, Chip, Avatar, InputLabel, useTheme } from '@mui/material';
 import { Building2, Phone, Mail, MapPin, CreditCard, AlertTriangle } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { srmApi, type Supplier } from '@/api/srm';
@@ -10,7 +10,6 @@ import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
 
@@ -21,6 +20,7 @@ const riskColors: Record<string, string> = {
 };
 
 const SrmSupplierDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
 
   const supplierQuery = useQuery<Supplier | null>({
@@ -54,7 +54,7 @@ const SrmSupplierDetailPage: React.FC = () => {
       avatar: (
         <Building2
           size={36}
-          color={designTokens.colors.background.paper}
+          color={theme.palette.background.paper}
         />
       ),
       title: localizedName(supplier?.name, supplier?.name_en),

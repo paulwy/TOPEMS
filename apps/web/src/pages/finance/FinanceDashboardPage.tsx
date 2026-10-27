@@ -27,10 +27,9 @@ import { useTranslation } from 'react-i18next';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
+import { useTheme } from '@mui/material';
 const FinanceDashboardPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -188,42 +187,42 @@ const FinanceDashboardPage: React.FC = () => {
         label: i18n.t('finance.finance_dashboard_page.nav_vouchers'),
         icon: <FileText size={20} />,
         onClick: () => navigate(FINANCE_PATHS.vouchers),
-        color: ct.primary.dark,
+        color: theme.palette.primary.dark,
       },
       {
         id: 'ledger-manage',
         label: i18n.t('finance.finance_dashboard_page.nav_ledger'),
         icon: <BookOpen size={20} />,
         onClick: () => navigate(FINANCE_PATHS.ledger),
-        color: ct.purple[700],
+        color: theme.palette.purple[700],
       },
       {
         id: 'receivable-manage',
         label: i18n.t('finance.finance_dashboard_page.nav_receivable'),
         icon: <TrendingUp size={20} />,
         onClick: () => navigate(FINANCE_PATHS.receivablePayable),
-        color: ct.success[700],
+        color: theme.palette.success[700],
       },
       {
         id: 'payable-manage',
         label: i18n.t('finance.finance_dashboard_page.nav_payable'),
         icon: <TrendingDown size={20} />,
         onClick: () => navigate(FINANCE_PATHS.receivablePayable),
-        color: ct.orange[600],
+        color: theme.palette.orange[600],
       },
       {
         id: 'report',
         label: i18n.t('finance.finance_dashboard_page.nav_reports'),
         icon: <BarChart3 size={20} />,
         onClick: () => navigate(FINANCE_PATHS.reports),
-        color: ct.teal[700],
+        color: theme.palette.teal[700],
       },
       {
         id: 'budget-manage',
         label: i18n.t('finance.finance_dashboard_page.nav_budget'),
         icon: <Target size={20} />,
         onClick: () => navigate(FINANCE_PATHS.budget),
-        color: ct.error[700],
+        color: theme.palette.error[700],
       },
     ],
     [navigate]

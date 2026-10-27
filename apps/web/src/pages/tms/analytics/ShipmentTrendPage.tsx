@@ -1,4 +1,3 @@
-import { designTokens } from '@topems/tokens';
 /**
  * 运单趋势分析页
  *
@@ -27,10 +26,11 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, useTheme } from '@mui/material';
 import { Package, CheckCircle, XCircle, TrendingUp } from 'lucide-react';
 
 export default function ShipmentTrendPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiData, isLoading } = useQuery({
@@ -145,19 +145,19 @@ export default function ShipmentTrendPage() {
               <Bar
                 dataKey='total'
                 name={t('tms.shipment_trend_page.k7')}
-                fill={designTokens.colors.primary.main}
+                fill={theme.palette.primary.main}
                 barSize={20}
               />
               <Bar
                 dataKey='delivered'
                 name={t('tms.shipment_trend_page.k8')}
-                fill={designTokens.colors.success.dark}
+                fill={theme.palette.success.dark}
                 barSize={20}
               />
               <Bar
                 dataKey='cancelled'
                 name={t('tms.shipment_trend_page.k9')}
-                fill={designTokens.colors.error.main}
+                fill={theme.palette.error.main}
                 barSize={20}
               />
             </BarChart>
@@ -195,7 +195,7 @@ export default function ShipmentTrendPage() {
                 type='monotone'
                 dataKey='deliveryRate'
                 name={t('tms.shipment_trend_page.k11')}
-                stroke={designTokens.colors.primary.main}
+                stroke={theme.palette.primary.main}
                 strokeWidth={2}
                 dot={{ r: 4 }}
                 activeDot={{ r: 6 }}

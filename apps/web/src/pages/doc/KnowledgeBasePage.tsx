@@ -10,8 +10,6 @@ import { documentSchema } from '@/schemas/doc';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
-const ct = designTokens.colors;
-
 interface KnowledgeDoc {
   id: string;
   title: string;
@@ -231,7 +229,7 @@ const DocumentKnowledgeBasePage: React.FC = () => {
             >
               <FileText
                 size={14}
-                style={{ color: ct.grey[500] }}
+                style={{ color: theme.palette.grey[500] }}
               />
             </Box>
           ),

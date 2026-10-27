@@ -21,8 +21,7 @@ import { useTranslation } from 'react-i18next';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
+import { useTheme } from '@mui/material';
 
 interface DepartmentSummary {
   department_id: string;
@@ -32,6 +31,7 @@ interface DepartmentSummary {
 }
 
 const HrmReportsPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { error } = useNotification();
 
@@ -301,7 +301,7 @@ const HrmReportsPage: React.FC = () => {
               {
                 name: i18n.t('hrm.hrm_reports_page.late'),
                 value: attendanceSummary?.late_count || 0,
-                color: ct.yellow[600],
+                color: theme.palette.yellow[600],
               },
               {
                 name: i18n.t('hrm.hrm_reports_page.absent'),
@@ -376,7 +376,7 @@ const HrmReportsPage: React.FC = () => {
               {
                 name: t('hrm.hrm_reports_page.female'),
                 value: employeeSummary?.female_count || 0,
-                color: ct.secondary[500],
+                color: theme.palette.secondary[500],
               },
             ].filter((d) => d.value > 0),
           },

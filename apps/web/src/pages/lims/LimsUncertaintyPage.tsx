@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Calculator } from 'lucide-react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
@@ -128,6 +128,7 @@ const StatCard: React.FC<{
   </Card>
 );
 const LimsUncertaintyPage: React.FC = () => {
+  const theme = useTheme();
   const { data: allProjects } = useQuery({
     queryKey: [uncertaintyProjectSchema.entity, 'stats'],
     queryFn: async () => {
@@ -171,16 +172,16 @@ const LimsUncertaintyPage: React.FC = () => {
         label={i18n.t('lims.lims_uncertainty_page.k6')}
         value={stats.total}
         icon={<Calculator size={20} />}
-        bgColor={ct.orange[50]}
-        iconBgColor={ct.orange[100]}
+        bgColor={theme.palette.orange[50]}
+        iconBgColor={theme.palette.orange[100]}
         iconColor='warning.600'
       />
       <StatCard
         label={i18n.t('lims.lims_uncertainty_page.k7')}
         value={stats.draft}
         icon={<Calculator size={20} />}
-        iconBgColor={ct.primary.main}
-        iconColor={ct.primary[600]}
+        iconBgColor={theme.palette.primary.main}
+        iconColor={theme.palette.primary[600]}
         gradient
       />
       <StatCard
@@ -194,8 +195,8 @@ const LimsUncertaintyPage: React.FC = () => {
         label={i18n.t('lims.lims_uncertainty_page.k9')}
         value={stats.completed}
         icon={<Calculator size={20} />}
-        iconBgColor={ct.success.main}
-        iconColor={ct.success[600]}
+        iconBgColor={theme.palette.success.main}
+        iconColor={theme.palette.success[600]}
         gradient
       />
     </Box>
@@ -206,7 +207,7 @@ const LimsUncertaintyPage: React.FC = () => {
       subtitle='Uncertainty Evaluation'
       headerProps={{
         pageIcon: <Calculator style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.orange.main} 0%, ${ct.orange.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.orange.main} 0%, ${theme.palette.orange.dark} 100%)`,
       }}
     >
       <CrudPage

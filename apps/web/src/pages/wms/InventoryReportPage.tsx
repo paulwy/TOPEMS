@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { Box, FormControl, InputLabel, MenuItem, Select, useTheme } from '@mui/material';
 import { BarChart3, Warehouse as WarehouseIcon } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { StatsPageTemplate, type TabItem } from '@/components/templates/StatsPageTemplate';
@@ -25,9 +25,6 @@ import {
   InventoryReportTurnoverTable,
   InventoryReportValueByWarehouseTable,
 } from './components/InventoryReportTable';
-
-const ct = designTokens.colors;
-
 const TAB_VALUES = {
   statistics: 'statistics',
   abc: 'abc',
@@ -73,6 +70,7 @@ function WarehouseFilter({
 }
 
 const InventoryReportPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const [currentTab, setCurrentTab] = useState<TabValue>(TAB_VALUES.statistics);
@@ -279,7 +277,7 @@ const InventoryReportPage: React.FC = () => {
       subtitle={t('wms.inventory_report_page.subtitle')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]}, ${ct.secondary[600]})`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]}, ${theme.palette.secondary[600]})`,
       }}
     >
       <StatsPageTemplate

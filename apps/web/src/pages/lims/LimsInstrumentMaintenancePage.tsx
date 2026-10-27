@@ -3,7 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Wrench, Calendar, DollarSign, Clock, AlertCircle } from 'lucide-react';
-import { Chip, Card, CardContent, CardHeader, Box, Typography, Button } from '@mui/material';
+import {
+  Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Box,
+  Typography,
+  Button,
+  useTheme,
+} from '@mui/material';
 import i18n from '@/i18n';
 import { limsApi } from '@/api/lims';
 import type { Instrument, MaintenanceRecord, CreateMaintenanceRecordRequest } from '@/api/lims';
@@ -13,9 +22,8 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { getInstrumentMaintenanceSchema } from '@/schemas/lims';
-
-const ct = designTokens.colors;
 const LimsInstrumentMaintenancePage: React.FC = () => {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: instrument, isPending: loadingInstrument } = useQuery({
@@ -89,7 +97,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       },
       calibration: {
         bg: 'warning.100',
-        color: ct.yellow[600],
+        color: theme.palette.yellow[600],
         label: i18n.t('lims.lims_instrument_maintenance_page.k6'),
       },
       calibrated: {
@@ -143,7 +151,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
             >
               <Box
                 component={Wrench}
-                sx={{ fontSize: 20, color: ct.teal[400] }}
+                sx={{ fontSize: 20, color: theme.palette.teal[400] }}
               />
               {i18n.t('pages.lims_instrument_maintenance_page.k0')}
             </Typography>
@@ -256,7 +264,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
-          <p style={{ color: ct.grey[600] }}>
+          <p style={{ color: theme.palette.grey[600] }}>
             {i18n.t('pages.lims_instrument_maintenance_page.k0')}
           </p>
         </Box>
@@ -275,7 +283,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       >
         <Box sx={{ textAlign: 'center' }}>
           <AlertCircle sx={{ width: 64, height: 64, color: 'error.main', mb: 2 }} />
-          <p style={{ color: ct.grey[600] }}>
+          <p style={{ color: theme.palette.grey[600] }}>
             {i18n.t('lims.lims_instrument_maintenance_page.k12')}
           </p>
           <Button
@@ -294,7 +302,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       subtitle='Instrument Maintenance'
       headerProps={{
         pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.teal[400]}, ${ct.teal[600]})`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]}, ${theme.palette.teal[600]})`,
         backButton: { onClick: () => navigate(LIMS_PATHS.root) },
       }}
       maxWidth='xl'

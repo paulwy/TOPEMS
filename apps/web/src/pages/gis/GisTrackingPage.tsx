@@ -21,6 +21,7 @@ import {
   Slider,
   CircularProgress,
   Alert,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { MapPin, Play, Pause, RotateCcw, User, Truck, AlertCircle, Map } from 'lucide-react';
@@ -34,10 +35,8 @@ import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
-
-const ct = designTokens.colors;
-
 export const GisTrackingPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('gis');
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -228,7 +227,7 @@ export const GisTrackingPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         pageIcon: <Map style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
     >
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>

@@ -1,12 +1,10 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { Loader2 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const LoadingState: React.FC = () => {
+  const theme = useTheme();
   return (
     <Box
       sx={{
@@ -14,7 +12,7 @@ const LoadingState: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
+        background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, border.default 100%)`,
       }}
     >
       <Box sx={{ textAlign: 'center' }}>

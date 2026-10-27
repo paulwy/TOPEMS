@@ -9,13 +9,12 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Paper, Typography, Chip, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, Chip, CircularProgress, useTheme } from '@mui/material';
 import { Package, AlertCircle, Boxes } from 'lucide-react';
 import { apsApi } from '@/api/aps';
 import type { MaterialPlan } from '@/api/aps/types';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
-import { designTokens } from '@topems/tokens';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -36,6 +35,7 @@ interface ShortageParetoItem {
 }
 
 export default function MaterialShortagePage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiData, isLoading } = useQuery({
@@ -228,7 +228,7 @@ export default function MaterialShortagePage() {
               <ReferenceLine
                 yAxisId='right'
                 y={80}
-                stroke={designTokens.colors.error.main}
+                stroke={theme.palette.error.main}
                 strokeDasharray='4 4'
                 label={t('pages.material_shortage_page.80_3')}
               />
@@ -236,7 +236,7 @@ export default function MaterialShortagePage() {
                 yAxisId='left'
                 dataKey='shortage'
                 name={t('pages.material_shortage_page.k12')}
-                fill={designTokens.colors.secondary.dark}
+                fill={theme.palette.secondary.dark}
                 barSize={36}
               />
               <Line
@@ -244,7 +244,7 @@ export default function MaterialShortagePage() {
                 type='monotone'
                 dataKey='cumulativePct'
                 name={t('pages.material_shortage_page.k13')}
-                stroke={designTokens.colors.error.main}
+                stroke={theme.palette.error.main}
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />

@@ -15,7 +15,7 @@ import { apsApi } from '@/api/aps';
 import type { Schedule } from '@/api/aps/types';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, useTheme } from '@mui/material';
 import { Calendar, CheckCircle, PlayCircle } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -46,6 +46,7 @@ interface GanttItem {
 }
 
 export default function ScheduleGanttPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiData, isLoading } = useQuery({
@@ -198,7 +199,7 @@ export default function ScheduleGanttPage() {
                 {data.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={STATUS_COLORS[entry.status] ?? designTokens.colors.grey[400]}
+                    fill={STATUS_COLORS[entry.status] ?? theme.palette.grey[400]}
                   />
                 ))}
               </Bar>

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
-import { Box, Typography, InputLabel, Avatar } from '@mui/material';
+import { Box, Typography, InputLabel, Avatar, useTheme } from '@mui/material';
 import { User, Briefcase } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Employee } from '@/api/hrm';
@@ -14,10 +14,8 @@ import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const HrmEmployeeDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -348,7 +346,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
       avatar: (
         <User
           size={32}
-          color={ct.primary.dark}
+          color={theme.palette.primary.dark}
         />
       ),
       title: employee?.name,

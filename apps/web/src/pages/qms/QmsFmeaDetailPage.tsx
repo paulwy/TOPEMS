@@ -20,6 +20,7 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  useTheme,
 } from '@mui/material';
 import {
   ResponsiveContainer,
@@ -36,7 +37,6 @@ import { fmeaApi } from '@/api/qms/fmea';
 import type { FmeaAnalysis, FmeaItem } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
 import { QMS_PATHS } from '@/modules/qms/config';
-import { designTokens } from '@topems/tokens';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 
 function riskLevel(rpn: number): 'high' | 'medium' | 'low' {
@@ -69,19 +69,20 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 function RpnChip({ rpn }: { rpn: number }) {
+  const theme = useTheme();
   const level = riskLevel(rpn);
   const colorConfig = {
     high: {
-      bgcolor: designTokens.colors.error[100],
-      color: designTokens.colors.error[700],
+      bgcolor: theme.palette.error[100],
+      color: theme.palette.error[700],
     },
     medium: {
-      bgcolor: designTokens.colors.warning[100],
-      color: designTokens.colors.warning[700],
+      bgcolor: theme.palette.warning[100],
+      color: theme.palette.warning[700],
     },
     low: {
-      bgcolor: designTokens.colors.success[100],
-      color: designTokens.colors.success[700],
+      bgcolor: theme.palette.success[100],
+      color: theme.palette.success[700],
     },
   }[level];
 
@@ -130,6 +131,7 @@ function SummaryFooter({ maxRpn, avgRpn }: { maxRpn: number; avgRpn: number }) {
 }
 
 export default function QmsFmeaDetailPage() {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [analysis, setAnalysis] = useState<FmeaAnalysis | null>(null);
@@ -177,17 +179,17 @@ export default function QmsFmeaDetailPage() {
       {
         level: i18n.t('pages.qms_fmea_detail_page.200_0'),
         count: buckets.high,
-        fill: designTokens.colors.error.main,
+        fill: theme.palette.error.main,
       },
       {
         level: i18n.t('pages.qms_fmea_detail_page.100199_3'),
         count: buckets.medium,
-        fill: designTokens.colors.warning.main,
+        fill: theme.palette.warning.main,
       },
       {
         level: i18n.t('pages.qms_fmea_detail_page.100_1'),
         count: buckets.low,
-        fill: designTokens.colors.success.dark,
+        fill: theme.palette.success.dark,
       },
     ];
   }, [items]);
@@ -447,7 +449,7 @@ export default function QmsFmeaDetailPage() {
                     <Bar
                       dataKey='count'
                       name={i18n.t('pages.qms_fmea_detail_page.k22')}
-                      fill={designTokens.colors.secondary.dark}
+                      fill={theme.palette.secondary.dark}
                       barSize={40}
                     />
                   </BarChart>
@@ -489,7 +491,7 @@ export default function QmsFmeaDetailPage() {
                     <Bar
                       dataKey='rpn'
                       name='RPN'
-                      fill={designTokens.colors.error.main}
+                      fill={theme.palette.error.main}
                       barSize={16}
                     />
                   </BarChart>

@@ -11,6 +11,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
@@ -26,8 +27,6 @@ import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 type AuditLogSource = 'lims' | 'rd' | 'core';
 const formatDateTimeForApi = (dateTimeString: string): string => {
   if (!dateTimeString) return '';
@@ -75,6 +74,7 @@ const getStatusChip = (status: string | null | undefined): React.ReactNode => {
   );
 };
 const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
+  const theme = useTheme();
   const formatDate = (val: unknown) =>
     val ? new Date(val as string).toLocaleString('zh-CN') : '-';
   const renderJson = (val: unknown) => {
@@ -292,7 +292,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-all',
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                color: ct.grey[800],
+                color: theme.palette.grey[800],
                 margin: 0,
               }}
             >
@@ -316,7 +316,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-all',
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
-                color: ct.grey[800],
+                color: theme.palette.grey[800],
                 margin: 0,
               }}
             >
@@ -329,6 +329,7 @@ const DetailContent: React.FC<{ row: Record<string, unknown> }> = ({ row }) => {
   );
 };
 const AuditLogPage: React.FC = () => {
+  const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [source, setSource] = useState<AuditLogSource>('core');
   const [startDate, setStartDate] = useState('');
@@ -534,7 +535,7 @@ const AuditLogPage: React.FC = () => {
               >
                 <User
                   size={16}
-                  color={ct.primary.dark}
+                  color={theme.palette.primary.dark}
                 />
               </Box>
               <Typography
@@ -682,7 +683,7 @@ const AuditLogPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Calendar
                   size={18}
-                  color={ct.grey[600]}
+                  color={theme.palette.grey[600]}
                 />
                 <Typography
                   variant='body2'

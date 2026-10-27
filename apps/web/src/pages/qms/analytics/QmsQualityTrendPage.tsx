@@ -18,14 +18,14 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
-import { Box, Paper, Typography, CircularProgress, Alert } from '@mui/material';
-import { designTokens } from '@topems/tokens';
+import { Box, Paper, Typography, CircularProgress, Alert, useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { qualityDashboardApi, type QualityTrendItem } from '@/api/qms/dashboard';
 
 export default function QmsQualityTrendPage() {
+  const theme = useTheme();
   const { t } = useTranslation('qms');
   const [range, setRange] = useState<'6m' | '12m'>('12m');
   const days = range === '6m' ? 180 : 365;
@@ -170,7 +170,7 @@ export default function QmsQualityTrendPage() {
                 <ReferenceLine
                   yAxisId='left'
                   y={95}
-                  stroke={designTokens.colors.success.dark}
+                  stroke={theme.palette.success.dark}
                   strokeDasharray='4 4'
                   label={t('qms.qms_quality_trend_page.95_10')}
                 />
@@ -179,7 +179,7 @@ export default function QmsQualityTrendPage() {
                   type='monotone'
                   dataKey='passRate'
                   name={t('qms.qms_quality_trend_page.k11')}
-                  stroke={designTokens.colors.success.dark}
+                  stroke={theme.palette.success.dark}
                   strokeWidth={2}
                   dot={{ r: 3 }}
                 />
@@ -188,7 +188,7 @@ export default function QmsQualityTrendPage() {
                   type='monotone'
                   dataKey='defectCount'
                   name={t('qms.qms_quality_trend_page.k12')}
-                  stroke={designTokens.colors.error.main}
+                  stroke={theme.palette.error.main}
                   strokeWidth={2}
                   dot={{ r: 3 }}
                 />
@@ -197,7 +197,7 @@ export default function QmsQualityTrendPage() {
                   type='monotone'
                   dataKey='issueCount'
                   name={t('qms.qms_quality_trend_page.k13')}
-                  stroke={designTokens.colors.warning.main}
+                  stroke={theme.palette.warning.main}
                   strokeWidth={2}
                   dot={{ r: 3 }}
                 />
@@ -232,7 +232,7 @@ export default function QmsQualityTrendPage() {
                 type='monotone'
                 dataKey='inspectionCount'
                 name={t('qms.qms_quality_trend_page.k15')}
-                stroke={designTokens.colors.secondary.dark}
+                stroke={theme.palette.secondary.dark}
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />

@@ -11,6 +11,7 @@ import {
   TextField,
   Button,
   Stack,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { ClipboardList, Play, CheckCircle, Clock, ClipboardCheck } from 'lucide-react';
@@ -30,8 +31,6 @@ import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
-const ct = designTokens.colors;
 const mapStatusToChinese = (status: string): string => {
   const statusMap: Record<string, string> = {
     pending: i18n.t('lims.inspection_task_page.k0'),
@@ -44,6 +43,7 @@ const mapStatusToChinese = (status: string): string => {
   return statusMap[status] || status;
 };
 const InspectionTaskPage: React.FC = () => {
+  const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
   const [showRecordModal, setShowRecordModal] = useState(false);
@@ -313,7 +313,7 @@ const InspectionTaskPage: React.FC = () => {
       subtitle='Inspection Task Management'
       headerProps={{
         pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary[600]} 100%)`,
       }}
     >
       <CrudPage

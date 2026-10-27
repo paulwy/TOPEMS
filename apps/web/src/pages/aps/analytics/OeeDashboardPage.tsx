@@ -11,13 +11,12 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Paper, Typography, Chip, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, Chip, CircularProgress, useTheme } from '@mui/material';
 import { Gauge, Zap, Activity, CheckCircle } from 'lucide-react';
 import { mesAnalyticsApi } from '@/api/mes/analytics';
 import type { OeeDashboardResponse } from '@/api/mes/analytics';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
-import { designTokens } from '@topems/tokens';
 import {
   ResponsiveContainer,
   RadialBarChart,
@@ -33,6 +32,7 @@ import {
 } from 'recharts';
 
 export default function OeeDashboardPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiResponse, isLoading } = useQuery({
@@ -88,19 +88,19 @@ export default function OeeDashboardPage() {
     {
       name: t('aps.oee_dashboard_page.k0'),
       value: avgAvailability,
-      fill: designTokens.colors.secondary.dark,
+      fill: theme.palette.secondary.dark,
     },
     {
       name: t('aps.oee_dashboard_page.k1'),
       value: avgPerformance,
-      fill: designTokens.colors.warning.main,
+      fill: theme.palette.warning.main,
     },
     {
       name: t('aps.oee_dashboard_page.k2'),
       value: avgQuality,
-      fill: designTokens.colors.success.dark,
+      fill: theme.palette.success.dark,
     },
-    { name: 'OEE', value: avgOee, fill: designTokens.colors.error.main },
+    { name: 'OEE', value: avgOee, fill: theme.palette.error.main },
   ];
 
   const statCards: StatCard[] = [
@@ -286,25 +286,25 @@ export default function OeeDashboardPage() {
               <Bar
                 dataKey='availability'
                 name={t('aps.oee_dashboard_page.k0')}
-                fill={designTokens.colors.secondary.dark}
+                fill={theme.palette.secondary.dark}
                 barSize={12}
               />
               <Bar
                 dataKey='performance'
                 name={t('aps.oee_dashboard_page.k1')}
-                fill={designTokens.colors.warning.main}
+                fill={theme.palette.warning.main}
                 barSize={12}
               />
               <Bar
                 dataKey='quality'
                 name={t('aps.oee_dashboard_page.k2')}
-                fill={designTokens.colors.success.dark}
+                fill={theme.palette.success.dark}
                 barSize={12}
               />
               <Bar
                 dataKey='oee'
                 name='OEE'
-                fill={designTokens.colors.error.main}
+                fill={theme.palette.error.main}
                 barSize={12}
               />
             </BarChart>

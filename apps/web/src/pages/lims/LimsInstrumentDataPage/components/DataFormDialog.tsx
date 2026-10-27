@@ -13,14 +13,12 @@ import {
   Box,
   Typography,
   TextareaAutosize,
-  Button,
-} from '@mui/material';
+  Button, useTheme } from '@mui/material';
 import i18n from '@/i18n';
 import type { CreateInstrumentDataRequest } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
 interface DataFormDialogProps {
   open: boolean;
   isEditing: boolean;
@@ -39,6 +37,7 @@ const DataFormDialog: React.FC<DataFormDialogProps> = ({
   onFormDataChange,
   onSave,
 }) => {
+    const theme = useTheme();
   return (
     <Dialog
       open={open}
@@ -87,7 +86,7 @@ const DataFormDialog: React.FC<DataFormDialogProps> = ({
                 padding: 2,
                 fontFamily: 'monospace',
                 fontSize: '12px',
-                border: `1px solid ${ct.grey[300]}`,
+                border: `1px solid ${theme.palette.grey[300]}`,
                 borderRadius: 'xs',
               }}
               value={formatJson(formData.raw_data)}

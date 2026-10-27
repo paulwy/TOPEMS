@@ -1,4 +1,3 @@
-import { designTokens } from '@topems/tokens';
 /**
  * 计划达成率分析页
  *
@@ -14,7 +13,7 @@ import { apsApi } from '@/api/aps';
 import type { ProductionPlan } from '@/api/aps/types';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import { Box, Paper, Typography, CircularProgress, Alert } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, Alert, useTheme } from '@mui/material';
 import { Target, ClipboardList, Package } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -38,6 +37,7 @@ interface PlanAdherenceItem {
 }
 
 export default function PlanAdherencePage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiData, isLoading } = useQuery({
@@ -213,7 +213,7 @@ export default function PlanAdherencePage() {
               <ReferenceLine
                 yAxisId='right'
                 y={100}
-                stroke={designTokens.colors.success.dark}
+                stroke={theme.palette.success.dark}
                 strokeDasharray='4 4'
                 label={t('aps.plan_adherence_page.100_7')}
               />
@@ -221,14 +221,14 @@ export default function PlanAdherencePage() {
                 yAxisId='left'
                 dataKey='plan'
                 name={t('aps.plan_adherence_page.k8')}
-                fill={designTokens.colors.secondary.dark}
+                fill={theme.palette.secondary.dark}
                 barSize={20}
               />
               <Bar
                 yAxisId='left'
                 dataKey='actual'
                 name={t('aps.plan_adherence_page.k9')}
-                fill={designTokens.colors.warning.main}
+                fill={theme.palette.warning.main}
                 barSize={20}
               />
               <Line
@@ -236,7 +236,7 @@ export default function PlanAdherencePage() {
                 type='monotone'
                 dataKey='adherenceRate'
                 name={t('aps.plan_adherence_page.k10')}
-                stroke={designTokens.colors.success.dark}
+                stroke={theme.palette.success.dark}
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />

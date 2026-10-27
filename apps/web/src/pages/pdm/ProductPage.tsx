@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { Package } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -10,9 +10,8 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 
-const ct = designTokens.colors;
-
 export default function ProductPage() {
+  const theme = useTheme();
   const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
 
@@ -192,7 +191,7 @@ export default function ProductPage() {
     <PageContainer
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
     >
       <CrudPage

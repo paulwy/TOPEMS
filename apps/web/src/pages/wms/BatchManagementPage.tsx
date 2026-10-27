@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Chip } from '@mui/material';
+import { Box, Chip, useTheme } from '@mui/material';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
@@ -12,10 +12,8 @@ import { wmsApi } from '@/api/wms';
 import type { Batch } from '@/api/wms';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const BatchManagementPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
 
@@ -259,7 +257,7 @@ const BatchManagementPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         pageIcon: <Layers style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.warning.main}, ${ct.warning.dark})`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
       }}
     >
       <CrudPage

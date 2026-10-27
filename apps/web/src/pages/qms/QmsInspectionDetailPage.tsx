@@ -20,8 +20,8 @@ import {
   TableCell,
   TableBody,
   Alert,
+  useTheme,
 } from '@mui/material';
-import { designTokens } from '@topems/tokens';
 import { inspectionApi } from '@/api/qms/inspection';
 import type { QualityCheck, InspectionResult } from '@/api/qms/types';
 import { StatusBadge } from '@/components/qms/StatusBadge';
@@ -31,6 +31,7 @@ import { QMS_PATHS } from '@/modules/qms/config';
 import i18n from '@/i18n';
 
 export default function QmsInspectionDetailPage() {
+  const theme = useTheme();
   const { id } = useParams<{
     id: string;
   }>();
@@ -228,11 +229,11 @@ export default function QmsInspectionDetailPage() {
                         }
                         sx={{
                           bgcolor: result.is_qualified
-                            ? designTokens.colors.success[100]
-                            : designTokens.colors.error[100],
+                            ? theme.palette.success[100]
+                            : theme.palette.error[100],
                           color: result.is_qualified
-                            ? designTokens.colors.success[700]
-                            : designTokens.colors.error[700],
+                            ? theme.palette.success[700]
+                            : theme.palette.error[700],
                         }}
                       />
                     </TableCell>

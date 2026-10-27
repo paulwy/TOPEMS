@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, LinearProgress, InputLabel } from '@mui/material';
+import { Box, Typography, LinearProgress, InputLabel, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -11,8 +11,6 @@ import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Gauge, Activity, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.equipmentOee, {
   itemsField: 'records',
 });
@@ -33,6 +31,7 @@ const formatPercent = (value: number | undefined | null) => {
   return `${value.toFixed(1)}%`;
 };
 const EquipmentOEEPage: React.FC = () => {
+  const theme = useTheme();
   const { data: statistics } = useQuery({
     queryKey: QUERY_KEYS.MES.EQUIPMENT_OEE_STATISTICS,
     queryFn: async () => {
@@ -110,7 +109,9 @@ const EquipmentOEEPage: React.FC = () => {
               {formatPercent(record.oee)}
             </Typography>
           </Box>
-          <Box sx={{ p: 2, bgcolor: ct.success[100], borderRadius: 3, textAlign: 'center' }}>
+          <Box
+            sx={{ p: 2, bgcolor: theme.palette.success[100], borderRadius: 3, textAlign: 'center' }}
+          >
             <Typography
               variant='body2'
               sx={{ color: 'text.secondary', mb: 0.5 }}
@@ -138,7 +139,14 @@ const EquipmentOEEPage: React.FC = () => {
               {formatPercent(record.performance)}
             </Typography>
           </Box>
-          <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3, textAlign: 'center' }}>
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: theme.palette.secondary[100],
+              borderRadius: 3,
+              textAlign: 'center',
+            }}
+          >
             <Typography
               variant='body2'
               sx={{ color: 'text.secondary', mb: 0.5 }}
@@ -274,7 +282,7 @@ const EquipmentOEEPage: React.FC = () => {
           color={statistics ? getOEEColor(statistics.avg_oee) : 'primary'}
         />
       </Box>
-      <Box sx={{ p: 2, bgcolor: ct.success[100], borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: theme.palette.success[100], borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Gauge
             size={18}
@@ -326,7 +334,7 @@ const EquipmentOEEPage: React.FC = () => {
           color='warning'
         />
       </Box>
-      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: theme.palette.secondary[100], borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <CheckCircle2
             size={18}
@@ -360,7 +368,7 @@ const EquipmentOEEPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Gauge style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <CrudPage

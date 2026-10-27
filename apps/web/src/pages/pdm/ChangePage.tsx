@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
+import { Box, Card, CardContent, Typography, Chip, useTheme } from '@mui/material';
 import { FileWarning, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -16,9 +16,6 @@ import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const baseAdapter = createCrudPageAdapter<ChangeOrder, CreateChangeOrderRequest>({
   list: pdmApi.listChangeOrders,
   create: pdmApi.createChangeOrder,
@@ -65,6 +62,7 @@ function extractListData(response: unknown): ChangeOrder[] {
 }
 
 export const ChangePage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -524,7 +522,7 @@ export const ChangePage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <FileWarning style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
       maxWidth='xl'
     >

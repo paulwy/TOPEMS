@@ -1,14 +1,11 @@
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chip, Button } from '@mui/material';
+import { Chip, Button, useTheme } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Trash2, Building2 } from 'lucide-react';
 import { DataTable } from '@/components/common/DataTable';
 import type { ConsolidationCompany } from '@/types/consolidation';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
-
 // L14 B类：文件内同构重复布局等价抽常量，值逐字不变，视觉零差异
 const styles: Record<string, CSSProperties> = {
   iconRow: { display: 'flex', alignItems: 'center', gap: 8 },
@@ -17,10 +14,11 @@ const styles: Record<string, CSSProperties> = {
 
 // Helper to convert tailwind color class to sx
 const getChipSx = (colorClass: string): object => {
+  const theme = useTheme();
   const colorMap: Record<string, { backgroundColor: string; color: string }> = {
     'bg-green-100 text-green-800': {
       backgroundColor: 'success.lighter',
-      color: ct.success[800],
+      color: theme.palette.success[800],
     },
     'bg-gray-100 text-gray-800': {
       backgroundColor: 'grey.100',
@@ -36,15 +34,15 @@ const getChipSx = (colorClass: string): object => {
     },
     'bg-purple-100 text-purple-800': {
       backgroundColor: 'secondary.light',
-      color: ct.purple[700],
+      color: theme.palette.purple[700],
     },
     'bg-teal-100 text-teal-800': {
-      backgroundColor: ct.teal[100],
-      color: ct.teal[800],
+      backgroundColor: theme.palette.teal[100],
+      color: theme.palette.teal[800],
     },
     'bg-orange-100 text-orange-800': {
-      backgroundColor: ct.orange[100],
-      color: ct.orange[800],
+      backgroundColor: theme.palette.orange[100],
+      color: theme.palette.orange[800],
     },
   };
   return colorMap[colorClass] || { backgroundColor: 'grey.100', color: 'grey.700' };

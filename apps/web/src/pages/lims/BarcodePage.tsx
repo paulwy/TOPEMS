@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { Box, Typography, Card, CardContent } from '@mui/material';
+import { Box, Typography, Card, CardContent, useTheme } from '@mui/material';
 import { Barcode as BarcodeIcon, Printer, ScanLine } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -16,9 +16,8 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useNotificationStore } from '@/store';
-
-const ct = designTokens.colors;
 const BarcodePage: React.FC = () => {
+  const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const barcodeApiAdapter: CrudApiAdapter<BarcodeType> = useMemo(
     () => ({
@@ -426,7 +425,7 @@ const BarcodePage: React.FC = () => {
       subtitle='Barcode Management'
       headerProps={{
         pageIcon: <BarcodeIcon style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >
       <CrudPage

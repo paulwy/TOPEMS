@@ -1,4 +1,3 @@
-import { designTokens } from '@topems/tokens';
 /**
  * 路线效率分析页
  *
@@ -13,7 +12,7 @@ import { tmsAnalyticsApi } from '@/api/tms';
 import type { RouteEfficiencyItem } from '@/api/tms';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, useTheme } from '@mui/material';
 import { Clock, DollarSign, Navigation, MapPin } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -30,6 +29,7 @@ import {
 } from 'recharts';
 
 export default function RouteEfficiencyPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiData, isLoading } = useQuery({
@@ -163,14 +163,14 @@ export default function RouteEfficiencyPage() {
                 yAxisId='left'
                 dataKey='avgHours'
                 name={t('pages.route_efficiency_page.h_15')}
-                fill={designTokens.colors.primary.main}
+                fill={theme.palette.primary.main}
                 barSize={20}
               />
               <Bar
                 yAxisId='right'
                 dataKey='costPerKm'
                 name={t('pages.route_efficiency_page.km_0')}
-                fill={designTokens.colors.warning.main}
+                fill={theme.palette.warning.main}
                 barSize={20}
               />
             </BarChart>
@@ -215,7 +215,7 @@ export default function RouteEfficiencyPage() {
               <Scatter
                 name={t('pages.route_efficiency_page.k20')}
                 data={data}
-                fill={designTokens.colors.secondary.dark}
+                fill={theme.palette.secondary.dark}
               />
             </ScatterChart>
           </ResponsiveContainer>

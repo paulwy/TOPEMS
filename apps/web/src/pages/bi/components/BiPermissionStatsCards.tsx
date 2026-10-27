@@ -3,12 +3,11 @@
  * Four stat cards summarizing BI permission counts.
  */
 import React from 'react';
-import { Box, Card, CardContent, Typography, Grid } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, useTheme } from '@mui/material';
 import { Shield, Database, CheckCircle2, Users } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
-const ct = designTokens.colors;
 interface BiPermissionStatsCardsProps {
   rowPermissionsCount: number;
   dataPermissionsCount: number;
@@ -19,6 +18,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
   dataPermissionsCount,
   enabledRowPermissionsCount,
 }) => {
+  const theme = useTheme();
   return (
     <Grid
       container
@@ -34,7 +34,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
                   width: 48,
                   height: 48,
                   borderRadius: 1,
-                  backgroundColor: ct.error[50],
+                  backgroundColor: theme.palette.error[50],
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -110,7 +110,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
                   width: 48,
                   height: 48,
                   borderRadius: 1,
-                  backgroundColor: ct.success[100],
+                  backgroundColor: theme.palette.success[100],
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

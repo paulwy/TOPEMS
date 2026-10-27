@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  useTheme,
 } from '@mui/material';
 import { PieChart, TrendingUp, DollarSign, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
@@ -32,8 +33,6 @@ import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 
 interface BudgetItem {
   id: string;
@@ -63,6 +62,7 @@ interface BudgetDetail {
 }
 
 const FinanceBudgetDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { success } = useNotification();
@@ -585,7 +585,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
       avatar: (
         <DollarSign
           size={32}
-          color={ct.primary.dark}
+          color={theme.palette.primary.dark}
         />
       ),
       title: budget?.name,

@@ -5,7 +5,7 @@ import type { RowAction } from '@/components/templates/list/types';
 import { contractSchema } from '@/schemas/srm';
 import { srmApi } from '@/api/srm';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { FileText, CheckCircle, Clock, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SRM_PATHS } from '@/modules/srm/config';
@@ -13,8 +13,6 @@ import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 
 interface SupplierContract {
   id: string;
@@ -81,6 +79,7 @@ const contractApiAdapter: CrudApiAdapter = {
 };
 
 const ContractStats: React.FC = () => {
+  const theme = useTheme();
   const { data: contracts = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.SRM_CONTRACTS_STATS_BASE,
     queryFn: async () => {
@@ -108,7 +107,7 @@ const ContractStats: React.FC = () => {
     {
       label: i18n.t('pages.srm_contract_page.k3'),
       value: stats.total,
-      color: ct.purple[500],
+      color: theme.palette.purple[500],
       bgColor: 'secondary.light',
       icon: <FileText sx={{ width: 20, height: 20 }} />,
     },

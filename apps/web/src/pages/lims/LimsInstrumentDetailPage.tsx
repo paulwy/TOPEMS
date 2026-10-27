@@ -17,6 +17,7 @@ import {
   Card,
   CardContent,
   Button,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
@@ -27,26 +28,26 @@ import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 
-const ct = designTokens.colors;
 interface LimsListResponse<T> {
   items?: T[];
   records?: T[];
   tasks?: T[];
   instruments?: T[];
 }
-const statusColorMap: Record<string, { bg: string; color: string }> = {
-  [i18n.t('pages.lims_instrument_detail_page.k0')]: { bg: 'success.lighter', color: 'success.700' },
-  [i18n.t('pages.lims_instrument_detail_page.k1')]: { bg: 'primary.100', color: 'primary.dark' },
-  [i18n.t('pages.lims_instrument_detail_page.k2')]: { bg: ct.error[50], color: 'error.700' },
-  [i18n.t('pages.lims_instrument_detail_page.k3')]: { bg: 'grey.100', color: 'grey.600' },
-  [i18n.t('pages.lims_instrument_detail_page.k4')]: { bg: 'grey.100', color: 'grey.600' },
-  normal: { bg: 'success.lighter', color: 'success.700' },
-  calibration: { bg: 'primary.100', color: 'primary.dark' },
-  maintenance: { bg: ct.error[50], color: 'error.700' },
-  disabled: { bg: 'grey.100', color: 'grey.600' },
-};
 function getStatusBadge(status: string) {
-  const colors = statusColorMap[status] || { bg: 'grey.100', color: ct.grey[600] };
+  const theme = useTheme();
+  const statusColorMap: Record<string, { bg: string; color: string }> = {
+    [i18n.t('pages.lims_instrument_detail_page.k0')]: { bg: 'success.lighter', color: 'success.700' },
+    [i18n.t('pages.lims_instrument_detail_page.k1')]: { bg: 'primary.100', color: 'primary.dark' },
+    [i18n.t('pages.lims_instrument_detail_page.k2')]: { bg: theme.palette.error[50], color: 'error.700' },
+    [i18n.t('pages.lims_instrument_detail_page.k3')]: { bg: 'grey.100', color: 'grey.600' },
+    [i18n.t('pages.lims_instrument_detail_page.k4')]: { bg: 'grey.100', color: 'grey.600' },
+    normal: { bg: 'success.lighter', color: 'success.700' },
+    calibration: { bg: 'primary.100', color: 'primary.dark' },
+    maintenance: { bg: theme.palette.error[50], color: 'error.700' },
+    disabled: { bg: 'grey.100', color: 'grey.600' },
+  };
+  const colors = statusColorMap[status] || { bg: 'grey.100', color: theme.palette.grey[600] };
   return (
     <Chip
       label={status}
@@ -206,12 +207,13 @@ function SidebarTasks({
   tasks: InspectionTask[];
   navigate: ReturnType<typeof useNavigate>;
 }) {
+  const theme = useTheme();
   const taskStatusColor = (status: string) => {
     if (status === i18n.t('lims.lims_instrument_detail_page.k12') || status === 'completed')
       return { bg: 'success.lighter', color: 'success.dark' };
     if (status === i18n.t('lims.lims_instrument_detail_page.k13') || status === 'in_progress')
       return { bg: 'primary.100', color: 'primary.dark' };
-    return { bg: 'warning.100', color: ct.yellow[600] };
+    return { bg: 'warning.100', color: theme.palette.yellow[600] };
   };
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -289,6 +291,7 @@ function SidebarTasks({
   );
 }
 const LimsInstrumentDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data, isPending, error, refetch } = useQuery({
@@ -435,7 +438,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.teal[50]} 0%, ${ct.background.default} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.teal[50]} 0%, ${theme.palette.background.default} 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -467,14 +470,14 @@ const LimsInstrumentDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.teal[50]} 0%, ${ct.background.default} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.teal[50]} 0%, ${theme.palette.background.default} 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
           <AlertCircle
             sx={{ width: 64, height: 64, color: 'error.main', mb: 2, mx: 'auto', display: 'block' }}
           />
-          <p style={{ color: ct.grey[600] }}>
+          <p style={{ color: theme.palette.grey[600] }}>
             {pageError || i18n.t('lims.lims_instrument_detail_page.k38')}
           </p>
           <Button
@@ -493,7 +496,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <Settings style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >
       <DetailPageTemplate

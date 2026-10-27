@@ -21,15 +21,14 @@ import {
   Tabs,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { knowledgeGraphApi } from '@/api/master/knowledgeGraph';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
-
 const MasterKnowledgeGraphPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const addNotification = useNotificationStore((s) => s.addNotification);
 
@@ -366,7 +365,7 @@ const MasterKnowledgeGraphPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Network sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.info[500]} 0%, ${ct.info[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.info[500]} 0%, ${theme.palette.info[600]} 100%)`,
       }}
       maxWidth='xl'
     >

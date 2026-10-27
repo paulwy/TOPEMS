@@ -4,12 +4,10 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { categorySchema } from '@/schemas/srm';
 import { supplierCategoryApi } from '@/api/srm';
 import type { SupplierCategory as ApiSupplierCategory } from '@/api/srm/supplierCategory';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { FolderTree } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 
 interface SupplierCategory {
   id: string;
@@ -81,6 +79,7 @@ const categoryApiAdapter: CrudApiAdapter = {
 };
 
 const CategoryStats: React.FC<{ rows: SupplierCategory[] }> = ({ rows }) => {
+  const theme = useTheme();
   const stats = React.useMemo(
     () => ({
       total: rows.length,
@@ -95,7 +94,7 @@ const CategoryStats: React.FC<{ rows: SupplierCategory[] }> = ({ rows }) => {
     {
       label: i18n.t('pages.srm_category_page.k17'),
       value: stats.total,
-      color: ct.purple[500],
+      color: theme.palette.purple[500],
       bgColor: 'secondary.light',
     },
     {

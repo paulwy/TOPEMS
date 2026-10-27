@@ -29,6 +29,7 @@ import {
   ListItemButton,
   Paper,
   Chip,
+  useTheme,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate } from '@/components/templates';
@@ -37,60 +38,12 @@ import { ChartComponent } from '@/components/bi/ChartLibrary';
 import { fetchDashboards, listDatasets, type Dashboard, type Report, type Dataset } from '@/api/bi';
 import { fetchReports } from '@/api/report';
 import { logger } from '@/utils/logger';
-import { designTokens } from '@/theme/tokens';
 import { BI_PATHS } from '@/modules/bi/config';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
-const quickActions = [
-  {
-    icon: <LayoutDashboard size={24} />,
-    label: i18n.t('bi.bi_index_page.k0'),
-    path: BI_PATHS.dashboard,
-    color: ct.secondary[400],
-    bg: ct.secondary[50],
-  },
-  {
-    icon: <FileText size={24} />,
-    label: i18n.t('bi.bi_index_page.k1'),
-    path: '/bi/reports',
-    color: 'warning.main',
-    bg: ct.warning[50],
-  },
-  {
-    icon: <Database size={24} />,
-    label: i18n.t('bi.bi_index_page.k2'),
-    path: '/bi/datasets',
-    color: 'success.main',
-    bg: ct.success[50],
-  },
-  {
-    icon: <BarChart3 size={24} />,
-    label: i18n.t('bi.bi_index_page.k3'),
-    path: '/bi/analysis',
-    color: 'secondary.main',
-    bg: ct.secondary[50],
-  },
-  {
-    icon: <PieChart size={24} />,
-    label: i18n.t('bi.bi_index_page.k4'),
-    path: '/bi/visualizations',
-    color: ct.pink[500],
-    bg: ct.pink[50],
-  },
-  {
-    icon: <Shield size={24} />,
-    label: i18n.t('bi.bi_index_page.k5'),
-    path: '/bi/permissions',
-    color: 'error.main',
-    bg: ct.error[50],
-  },
-];
 
 const recentActivities = [
   {
@@ -131,8 +84,54 @@ const recentActivities = [
 ];
 
 const BiIndexPage = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
+
+  const quickActions = [
+    {
+      icon: <LayoutDashboard size={24} />,
+      label: t('bi.bi_index_page.k0'),
+      path: BI_PATHS.dashboard,
+      color: theme.palette.secondary[400],
+      bg: theme.palette.secondary[50],
+    },
+    {
+      icon: <FileText size={24} />,
+      label: t('bi.bi_index_page.k1'),
+      path: '/bi/reports',
+      color: 'warning.main',
+      bg: theme.palette.warning[50],
+    },
+    {
+      icon: <Database size={24} />,
+      label: t('bi.bi_index_page.k2'),
+      path: '/bi/datasets',
+      color: 'success.main',
+      bg: theme.palette.success[50],
+    },
+    {
+      icon: <BarChart3 size={24} />,
+      label: t('bi.bi_index_page.k3'),
+      path: '/bi/analysis',
+      color: 'secondary.main',
+      bg: theme.palette.secondary[50],
+    },
+    {
+      icon: <PieChart size={24} />,
+      label: t('bi.bi_index_page.k4'),
+      path: '/bi/visualizations',
+      color: theme.palette.pink[500],
+      bg: theme.palette.pink[50],
+    },
+    {
+      icon: <Shield size={24} />,
+      label: t('bi.bi_index_page.k5'),
+      path: '/bi/permissions',
+      color: 'error.main',
+      bg: theme.palette.error[50],
+    },
+  ];
 
   const biDataQuery = useQuery<{
     dashboards: Dashboard[];
@@ -224,7 +223,7 @@ const BiIndexPage = () => {
       subtitle={t('bi.bi_index_page.hero_subtitle')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.main} 100%)`,
       }}
       padding={false}
       maxWidth={false}
@@ -269,7 +268,7 @@ const BiIndexPage = () => {
                   startAdornment: (
                     <Search
                       size={18}
-                      style={{ marginRight: 8, color: ct.grey[400] }}
+                      style={{ marginRight: 8, color: theme.palette.grey[400] }}
                     />
                   ),
                 },
@@ -308,13 +307,13 @@ const BiIndexPage = () => {
               border: '1px solid',
               borderColor: 'divider',
               borderRadius: 3,
-              background: `linear-gradient(135deg, ${designTokens.colors.primary.dark}0A 0%, ${designTokens.colors.secondary.main}0A 100%)`,
+              background: `linear-gradient(135deg, ${theme.palette.primary.dark}0A 0%, ${theme.palette.secondary.main}0A 100%)`,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
               <Sparkles
                 size={20}
-                style={{ color: ct.secondary.main, marginRight: 8 }}
+                style={{ color: theme.palette.secondary.main, marginRight: 8 }}
               />
               <Typography
                 variant='h6'
@@ -571,7 +570,7 @@ const BiIndexPage = () => {
                                     width: 28,
                                     height: 28,
                                     borderRadius: 0.5,
-                                    backgroundColor: ct.warning[50],
+                                    backgroundColor: theme.palette.warning[50],
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -610,7 +609,7 @@ const BiIndexPage = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Clock
                       size={18}
-                      style={{ marginRight: 8, color: ct.grey[500] }}
+                      style={{ marginRight: 8, color: theme.palette.grey[500] }}
                     />
                     <Typography
                       variant='subtitle1'
@@ -664,7 +663,7 @@ const BiIndexPage = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Database
                       size={18}
-                      style={{ marginRight: 8, color: ct.success.main }}
+                      style={{ marginRight: 8, color: theme.palette.success.main }}
                     />
                     <Typography
                       variant='subtitle1'
@@ -705,7 +704,7 @@ const BiIndexPage = () => {
                               width: 28,
                               height: 28,
                               borderRadius: 0.5,
-                              backgroundColor: ct.success[50],
+                              backgroundColor: theme.palette.success[50],
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -753,13 +752,13 @@ const BiIndexPage = () => {
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: 3,
-                  background: `linear-gradient(135deg, ${designTokens.colors.success.dark}0A 0%, ${designTokens.colors.success.dark}0A 100%)`,
+                  background: `linear-gradient(135deg, ${theme.palette.success.dark}0A 0%, ${theme.palette.success.dark}0A 100%)`,
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <Zap
                     size={20}
-                    style={{ color: ct.success.main, marginRight: 8 }}
+                    style={{ color: theme.palette.success.main, marginRight: 8 }}
                   />
                   <Typography
                     variant='subtitle1'
@@ -780,7 +779,7 @@ const BiIndexPage = () => {
                   variant='contained'
                   startIcon={<Sparkles size={16} />}
                   sx={{
-                    background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+                    background: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
                   }}
                 >
                   {t('bi.bi_index_page.k24')}

@@ -1,10 +1,8 @@
 import React from 'react';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, useTheme } from '@mui/material';
 import { MapPin, ArrowRight, Warehouse, Camera, Map, Building2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 
 interface StatisticsCardsProps {
   statistics?: {
@@ -32,6 +30,7 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
   factoryMapsLength,
   businessLocationsLength,
 }) => {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const cards = [
@@ -74,7 +73,7 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
       icon: (
         <Camera
           size={20}
-          style={{ color: ct.pink.dark } as React.CSSProperties}
+          style={{ color: theme.palette.pink.dark } as React.CSSProperties}
         />
       ),
       bg: 'secondary.100' as const,
@@ -85,7 +84,7 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
       icon: (
         <Map
           size={20}
-          style={{ color: ct.purple.dark } as React.CSSProperties}
+          style={{ color: theme.palette.purple.dark } as React.CSSProperties}
         />
       ),
       bg: 'secondary.100' as const,
@@ -96,10 +95,10 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({
       icon: (
         <Building2
           size={20}
-          style={{ color: ct.teal.main } as React.CSSProperties}
+          style={{ color: theme.palette.teal.main } as React.CSSProperties}
         />
       ),
-      bg: ct.teal[100],
+      bg: theme.palette.teal[100],
     },
   ];
 

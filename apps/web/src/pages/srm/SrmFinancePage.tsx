@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Grid } from '@mui/material';
+import { Box, Grid, useTheme } from '@mui/material';
 import { DollarSign, CreditCard, Receipt, TrendingUp } from 'lucide-react';
 import { srmApi } from '@/api/srm';
 import type { SupplierContract, PurchaseOrder } from '@/api/srm';
@@ -14,8 +14,6 @@ import { financeSchema } from '@/schemas/srm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 
 interface FinanceRecord {
   id: string;
@@ -138,6 +136,7 @@ const financeAdapter: CrudApiAdapter<FinanceRecord> = {
 };
 
 const SrmFinancePage: React.FC = () => {
+  const theme = useTheme();
   const recordsQuery = useQuery<FinanceRecord[]>({
     queryKey: QUERY_KEYS.SRM.FINANCE,
     queryFn: async () => {
@@ -194,7 +193,7 @@ const SrmFinancePage: React.FC = () => {
             title={i18n.t('pages.srm_finance_page.k15')}
             value={stats.orders}
             icon={<CreditCard style={{ width: 24, height: 24 }} />}
-            gradient={['primary.main', ct.primary.dark]}
+            gradient={['primary.main', theme.palette.primary.dark]}
             subtitle={i18n.t('pages.srm_finance_page.k16')}
             trend='neutral'
           />
@@ -204,7 +203,7 @@ const SrmFinancePage: React.FC = () => {
             title={i18n.t('pages.srm_finance_page.k17')}
             value={stats.contracts}
             icon={<Receipt style={{ width: 24, height: 24 }} />}
-            gradient={[ct.teal.main, ct.teal.dark]}
+            gradient={[theme.palette.teal.main, theme.palette.teal.dark]}
             subtitle={i18n.t('pages.srm_finance_page.k18')}
             trend='neutral'
           />
@@ -214,7 +213,7 @@ const SrmFinancePage: React.FC = () => {
             title={i18n.t('pages.srm_finance_page.k19')}
             value={`¥${stats.totalAmount.toLocaleString()}`}
             icon={<DollarSign style={{ width: 24, height: 24 }} />}
-            gradient={[ct.secondary.main, ct.secondary.dark]}
+            gradient={[theme.palette.secondary.main, theme.palette.secondary.dark]}
             subtitle={i18n.t('pages.srm_finance_page.k20')}
             trend='neutral'
           />
@@ -224,7 +223,7 @@ const SrmFinancePage: React.FC = () => {
             title={i18n.t('pages.srm_finance_page.k21')}
             value={`¥${stats.pendingAmount.toLocaleString()}`}
             icon={<TrendingUp style={{ width: 24, height: 24 }} />}
-            gradient={['warning.main', ct.warning.dark]}
+            gradient={['warning.main', theme.palette.warning.dark]}
             subtitle={i18n.t('pages.srm_finance_page.k22')}
             trend='neutral'
           />

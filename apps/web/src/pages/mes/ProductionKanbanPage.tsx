@@ -14,6 +14,7 @@ import {
   TableRow,
   Paper,
   Divider,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { DashboardTemplate, type StatCardConfig } from '@/components/templates/DashboardTemplate';
@@ -34,9 +35,8 @@ import {
   Wrench,
 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 const ProductionKanbanPage: React.FC = () => {
+  const theme = useTheme();
   const {
     data: kanbanData,
     isPending: loading,
@@ -149,7 +149,7 @@ const ProductionKanbanPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Package
                   size={20}
-                  color={ct.primary.main}
+                  color={theme.palette.primary.main}
                 />
                 <Typography
                   variant='h6'
@@ -265,7 +265,7 @@ const ProductionKanbanPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Monitor
                   size={20}
-                  color={ct.primary.main}
+                  color={theme.palette.primary.main}
                 />
                 <Typography
                   variant='h6'
@@ -334,7 +334,7 @@ const ProductionKanbanPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <TrendingUp
                   size={20}
-                  color={ct.success.main}
+                  color={theme.palette.success.main}
                 />
                 <Typography
                   variant='h6'
@@ -421,7 +421,7 @@ const ProductionKanbanPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Wrench
                   size={20}
-                  color={ct.warning.main}
+                  color={theme.palette.warning.main}
                 />
                 <Typography
                   variant='h6'

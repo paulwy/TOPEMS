@@ -11,12 +11,13 @@ import {
   Legend,
 } from 'recharts';
 import i18n from '@/i18n';
-import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { getLocationUtilization, type LocationUtilizationData } from '@/api/wms/analytics';
+import { useTheme } from '@mui/material';
 
 export default function WmsLocationUtilizationPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { data: response, loading } = useAnalyticsData({
     fetcher: () => getLocationUtilization(),
@@ -127,19 +128,19 @@ export default function WmsLocationUtilizationPage() {
               dataKey='utilization'
               name={i18n.t('pages.wms_location_utilization_page.k8')}
               stackId='a'
-              fill={designTokens.colors.success.dark}
+              fill={theme.palette.success.dark}
             />
             <Bar
               dataKey='vacancy'
               name={i18n.t('pages.wms_location_utilization_page.k9')}
               stackId='a'
-              fill={designTokens.colors.primary.main}
+              fill={theme.palette.primary.main}
             />
             <Bar
               dataKey='deadStock'
               name={i18n.t('pages.wms_location_utilization_page.k10')}
               stackId='a'
-              fill={designTokens.colors.error.main}
+              fill={theme.palette.error.main}
               radius={[6, 6, 0, 0]}
             />
           </BarChart>

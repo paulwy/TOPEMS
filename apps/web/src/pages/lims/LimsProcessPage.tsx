@@ -11,6 +11,7 @@ import {
   Stack,
   Button,
   IconButton,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
@@ -26,8 +27,6 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
 const processAdapter: CrudApiAdapter<InspectionProcess> = {
   list: async (params) => {
     const response = await limsApi.processes.list({
@@ -50,6 +49,7 @@ const processAdapter: CrudApiAdapter<InspectionProcess> = {
   delete: async () => {},
 };
 const LimsProcessPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [serviceStatuses, setServiceStatuses] = useState<{
     [key: string]: boolean;
@@ -138,7 +138,7 @@ const LimsProcessPage: React.FC = () => {
           title={i18n.t('lims.lims_process_page.k2')}
           value={stats.total_samples}
           icon={<ClipboardList size={24} />}
-          gradient={[ct.secondary.main, ct.secondary.dark]}
+          gradient={[theme.palette.secondary.main, theme.palette.secondary.dark]}
           subtitle={`${i18n.t('pages.lims_process_page.k0')}${stats.pending_samples}`}
           trend={stats.pending_samples > 0 ? 'up' : 'neutral'}
         />
@@ -146,7 +146,7 @@ const LimsProcessPage: React.FC = () => {
           title={i18n.t('lims.lims_process_page.k3')}
           value={stats.total_tasks}
           icon={<ClipboardList size={24} />}
-          gradient={[ct.secondary[400], ct.secondary[600]]}
+          gradient={[theme.palette.secondary[400], theme.palette.secondary[600]]}
           subtitle={`${i18n.t('pages.lims_process_page.k1')}${stats.in_progress_tasks}`}
           trend={stats.in_progress_tasks > 0 ? 'up' : 'neutral'}
         />
@@ -154,14 +154,14 @@ const LimsProcessPage: React.FC = () => {
           title={i18n.t('lims.lims_process_page.k4')}
           value={stats.total_processes}
           icon={<FileText size={24} />}
-          gradient={[ct.warning.main, ct.warning.dark]}
+          gradient={[theme.palette.warning.main, theme.palette.warning.dark]}
           trend='neutral'
         />
         <MetricCard
           title={i18n.t('lims.lims_process_page.k5')}
           value={stats.completed_samples}
           icon={<CheckCircle size={24} />}
-          gradient={[ct.success.main, ct.success.dark]}
+          gradient={[theme.palette.success.main, theme.palette.success.dark]}
           trend='up'
         />
       </Box>
@@ -175,7 +175,7 @@ const LimsProcessPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, border.default 100%)`,
           p: 2,
         }}
       >
@@ -200,7 +200,7 @@ const LimsProcessPage: React.FC = () => {
           >
             <ClipboardList
               size={32}
-              color={ct.cyan[600]}
+              color={theme.palette.cyan[600]}
             />
           </Avatar>
           <Typography
@@ -230,7 +230,7 @@ const LimsProcessPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >
       <CrudPage

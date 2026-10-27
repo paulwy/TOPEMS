@@ -1,4 +1,3 @@
-import { designTokens } from '@topems/tokens';
 /**
  * 承运商绩效分析页
  *
@@ -13,7 +12,7 @@ import { tmsAnalyticsApi } from '@/api/tms';
 import type { CarrierPerformanceItem } from '@/api/tms';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, useTheme } from '@mui/material';
 import { Truck, CheckCircle, DollarSign, TrendingUp } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -27,6 +26,7 @@ import {
 } from 'recharts';
 
 export default function CarrierPerformancePage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiData, isLoading } = useQuery({
@@ -143,19 +143,19 @@ export default function CarrierPerformancePage() {
               <Bar
                 dataKey='totalShipments'
                 name={t('tms.carrier_performance_page.k14')}
-                fill={designTokens.colors.primary.main}
+                fill={theme.palette.primary.main}
                 barSize={20}
               />
               <Bar
                 dataKey='completed'
                 name={t('tms.carrier_performance_page.k15')}
-                fill={designTokens.colors.success.dark}
+                fill={theme.palette.success.dark}
                 barSize={20}
               />
               <Bar
                 dataKey='avgFreight'
                 name={t('tms.carrier_performance_page.k16')}
-                fill={designTokens.colors.warning.main}
+                fill={theme.palette.warning.main}
                 barSize={20}
               />
             </BarChart>
@@ -192,7 +192,7 @@ export default function CarrierPerformancePage() {
               <Bar
                 dataKey='completionRate'
                 name={t('tms.carrier_performance_page.k18')}
-                fill={designTokens.colors.success.dark}
+                fill={theme.palette.success.dark}
                 barSize={20}
               />
             </BarChart>

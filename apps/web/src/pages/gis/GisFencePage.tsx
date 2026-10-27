@@ -29,6 +29,7 @@ import {
   CircularProgress,
   Alert,
   InputAdornment,
+  useTheme,
 } from '@mui/material';
 import {
   MapPin,
@@ -52,8 +53,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 
 interface FenceData {
   id: string;
@@ -99,6 +98,7 @@ function pointsToString(points: Array<[number, number]>, max = 6): string {
 }
 
 export const GisFencePage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('gis');
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -247,7 +247,7 @@ export const GisFencePage: React.FC = () => {
     position: parseCoordinates(fence.coordinates),
     radius: fence.radius,
     coordinates: fence.coordinatesArr,
-    color: fence.status === 'active' ? ct.error.main : ct.grey[500],
+    color: fence.status === 'active' ? theme.palette.error.main : theme.palette.grey[500],
     alertOnEnter: fence.alertOnEnter,
     alertOnExit: fence.alertOnExit,
   }));
@@ -263,7 +263,7 @@ export const GisFencePage: React.FC = () => {
               drawMode === 'circle' ? 'circle' : drawMode === 'rectangle' ? 'rectangle' : 'polygon',
             position: drawPoints[0],
             coordinates: drawPoints,
-            color: ct.primary.main,
+            color: theme.palette.primary.main,
             alertOnEnter: false,
             alertOnExit: false,
           },

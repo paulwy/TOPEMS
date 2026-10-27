@@ -3,20 +3,19 @@
  * Basic info tab content: risk badge, category, location, severity/exposure/likelihood tiles, description.
  */
 import React, { useMemo } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { Shield, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
 import { calculateRiskLevel } from '@/components/ehs';
 import type { Hazard } from '@/api/ehs';
 
-const ct = designTokens.colors;
-
 interface EhsHazardBasicInfoSectionProps {
   hazard: Hazard;
 }
 
 const EhsHazardBasicInfoSection: React.FC<EhsHazardBasicInfoSectionProps> = ({ hazard }) => {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const content = useMemo(() => {
@@ -100,10 +99,10 @@ const EhsHazardBasicInfoSection: React.FC<EhsHazardBasicInfoSectionProps> = ({ h
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
-            <Typography sx={{ color: ct.yellow[600], fontSize: 12 }}>
+            <Typography sx={{ color: theme.palette.yellow[600], fontSize: 12 }}>
               {t('ehs.ehshazarddetailpage.exposure_level')}
             </Typography>
-            <Typography sx={{ fontWeight: 500, color: ct.yellow[700], mt: 0.5 }}>
+            <Typography sx={{ fontWeight: 500, color: theme.palette.yellow[700], mt: 0.5 }}>
               {hazard.exposure === 'high'
                 ? t('ehs.ehs_hazard_detail_page.hazard_details')
                 : hazard.exposure === 'medium'

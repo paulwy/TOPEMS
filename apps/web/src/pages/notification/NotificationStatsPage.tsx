@@ -8,14 +8,15 @@ import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+import { useTheme } from '@mui/material';
 
-const ct = designTokens.colors;
 interface ServiceStatus {
   status: string;
   uptime: string;
   dependencies: Array<{ name: string; status: string }>;
 }
 const NotificationStatsPage: React.FC = () => {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const [timeRange, setTimeRange] = useState('week');
   const { data: stats, isPending: statsLoading } = useQuery<NotificationStats>({
@@ -244,14 +245,14 @@ const NotificationStatsPage: React.FC = () => {
                     borderRadius: '50%',
                     marginRight: 12,
                     backgroundColor:
-                      serviceStatus.status === 'healthy' ? ct.success[600] : 'error.700',
+                      serviceStatus.status === 'healthy' ? theme.palette.success[600] : 'error.700',
                   }}
                 />
                 <span
                   style={{
                     fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                     fontWeight: 500,
-                    color: ct.grey[800],
+                    color: theme.palette.grey[800],
                   }}
                 >
                   {i18n.t('pages.notification_stats_page.k0')}

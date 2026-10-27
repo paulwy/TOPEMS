@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, useTheme } from '@mui/material';
 import { FolderKanban, Eye, Edit } from 'lucide-react';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -11,8 +11,6 @@ import type { Project } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const projectApiAdapter: CrudApiAdapter<Project> = {
   list: async (params) => {
     const response = await pmApi.projects.list({
@@ -56,6 +54,7 @@ const projectApiAdapter: CrudApiAdapter<Project> = {
   },
 };
 const PmProjectListPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const customRowActions: RowAction[] = useMemo(
     () => [
@@ -195,7 +194,7 @@ const PmProjectListPage: React.FC = () => {
       subtitle={i18n.t('pm.pm_project_list_page.k21')}
       headerProps={{
         pageIcon: <FolderKanban style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
     >
       <CrudPage

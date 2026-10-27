@@ -1,13 +1,12 @@
 import React from 'react';
-import { Box, Paper, Typography, CardContent, CardHeader } from '@mui/material';
+import { Box, Paper, Typography, CardContent, CardHeader, useTheme } from '@mui/material';
 import { Server, Database, Code } from 'lucide-react';
 import config from '../../config/runtime';
 import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const ConfigDebugPage: React.FC = () => {
+  const theme = useTheme();
   const sections: SettingSection[] = [
     {
       id: 'services',
@@ -81,8 +80,8 @@ const ConfigDebugPage: React.FC = () => {
           <CardContent>
             <pre
               style={{
-                backgroundColor: ct.grey[900],
-                color: ct.grey[200],
+                backgroundColor: theme.palette.grey[900],
+                color: theme.palette.grey[200],
                 padding: 16,
                 borderRadius: 8,
                 overflow: 'auto',
@@ -131,8 +130,8 @@ const ConfigDebugPage: React.FC = () => {
           <CardContent>
             <pre
               style={{
-                backgroundColor: ct.grey[900],
-                color: ct.grey[200],
+                backgroundColor: theme.palette.grey[900],
+                color: theme.palette.grey[200],
                 padding: 16,
                 borderRadius: 8,
                 overflow: 'auto',
@@ -181,8 +180,8 @@ const ConfigDebugPage: React.FC = () => {
           <CardContent>
             <pre
               style={{
-                backgroundColor: ct.grey[900],
-                color: ct.grey[200],
+                backgroundColor: theme.palette.grey[900],
+                color: theme.palette.grey[200],
                 padding: 16,
                 borderRadius: 8,
                 overflow: 'auto',

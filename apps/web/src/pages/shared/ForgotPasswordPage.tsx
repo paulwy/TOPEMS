@@ -17,6 +17,7 @@ import {
   Typography,
   TextField,
   Button,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 
@@ -26,9 +27,6 @@ import { AUTH_PATHS } from '@/routes/auth';
 import { AuthPageTemplate } from '@/components/templates';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const requestResetSchema = z.object({
   email: z.string().email({ message: i18n.t('pages.forgot_password_page.k0') }),
 });
@@ -48,6 +46,7 @@ type RequestResetValues = z.infer<typeof requestResetSchema>;
 type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 const ForgotPasswordPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -162,7 +161,7 @@ const ForgotPasswordPage: React.FC = () => {
 
   return (
     <AuthPageTemplate
-      backgroundGradient={`linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 50%, ${ct.pink[300]} 100%)`}
+      backgroundGradient={`linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.dark} 50%, ${theme.palette.pink[300]} 100%)`}
       maxWidth='100%'
     >
       <Box
@@ -248,7 +247,7 @@ const ForgotPasswordPage: React.FC = () => {
       >
         <Box
           sx={{
-            background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
+            background: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.dark} 100%)`,
             padding: 4,
             textAlign: 'center',
           }}
@@ -322,9 +321,9 @@ const ForgotPasswordPage: React.FC = () => {
                   height: 48,
                   borderRadius: 1.5,
                   fontWeight: 600,
-                  background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
+                  background: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.dark} 100%)`,
                   '&:hover': {
-                    background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
+                    background: `linear-gradient(135deg, ${theme.palette.secondary[600]} 0%, ${theme.palette.secondary[800]} 100%)`,
                   },
                 }}
               >
@@ -349,9 +348,9 @@ const ForgotPasswordPage: React.FC = () => {
                   height: 48,
                   borderRadius: 1.5,
                   fontWeight: 600,
-                  background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
+                  background: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.dark} 100%)`,
                   '&:hover': {
-                    background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
+                    background: `linear-gradient(135deg, ${theme.palette.secondary[600]} 0%, ${theme.palette.secondary[800]} 100%)`,
                   },
                 }}
               >
@@ -406,9 +405,9 @@ const ForgotPasswordPage: React.FC = () => {
                     height: 48,
                     borderRadius: 1.5,
                     fontWeight: 600,
-                    background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
+                    background: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.dark} 100%)`,
                     '&:hover': {
-                      background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
+                      background: `linear-gradient(135deg, ${theme.palette.secondary[600]} 0%, ${theme.palette.secondary[800]} 100%)`,
                     },
                     '&:disabled': {
                       background: 'grey.400',
@@ -518,9 +517,9 @@ const ForgotPasswordPage: React.FC = () => {
                     height: 48,
                     borderRadius: 1.5,
                     fontWeight: 600,
-                    background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
+                    background: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.dark} 100%)`,
                     '&:hover': {
-                      background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
+                      background: `linear-gradient(135deg, ${theme.palette.secondary[600]} 0%, ${theme.palette.secondary[800]} 100%)`,
                     },
                     '&:disabled': {
                       background: 'grey.400',
@@ -542,8 +541,8 @@ const ForgotPasswordPage: React.FC = () => {
               onClick={() => navigate(AUTH_PATHS.login)}
               startIcon={<ArrowLeft size={16} />}
               sx={{
-                color: ct.secondary[400],
-                '&:hover': { color: ct.secondary[600] },
+                color: theme.palette.secondary[400],
+                '&:hover': { color: theme.palette.secondary[600] },
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 background: 'transparent',
                 fontWeight: 500,

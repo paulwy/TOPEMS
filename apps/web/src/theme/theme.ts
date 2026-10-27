@@ -84,14 +84,14 @@ declare module '@mui/material/styles' {
   }
   interface Palette {
     accent?: { main: string; light: string; dark: string };
-    teal?: typeof designTokens.colors.teal;
-    orange?: typeof designTokens.colors.orange;
-    yellow?: typeof designTokens.colors.yellow;
-    blue?: typeof designTokens.colors.blue;
-    cyan?: typeof designTokens.colors.cyan;
-    purple?: typeof designTokens.colors.purple;
-    pink?: typeof designTokens.colors.pink;
-    surface?: typeof designTokens.colors.surface;
+    teal: typeof designTokens.colors.teal;
+    orange: typeof designTokens.colors.orange;
+    yellow: typeof designTokens.colors.yellow;
+    blue: typeof designTokens.colors.blue;
+    cyan: typeof designTokens.colors.cyan;
+    purple: typeof designTokens.colors.purple;
+    pink: typeof designTokens.colors.pink;
+    surface: typeof designTokens.colors.surface;
   }
   interface PaletteOptions {
     accent?: { main?: string; light?: string; dark?: string };
@@ -182,38 +182,9 @@ export const createCustomTheme = (): Theme => {
   const muiLocale = i18n.language === 'en' ? enUS : zhCN;
   return createTheme(
     {
+      // 顶层 palette 只放共享配置（mode-agnostic），light/dark 专属色移到 colorSchemes
       palette: {
-        mode: 'light',
-        primary: {
-          ...designTokens.colors.primary,
-        },
-        secondary: {
-          ...designTokens.colors.secondary,
-        },
-        success: {
-          ...designTokens.colors.success,
-        },
-        warning: {
-          ...designTokens.colors.warning,
-        },
-        error: {
-          ...designTokens.colors.error,
-        },
-        info: {
-          ...designTokens.colors.info,
-        },
-        grey: designTokens.colors.grey,
-        background: {
-          default: designTokens.colors.background.default,
-          paper: designTokens.colors.background.paper,
-        },
-        text: {
-          primary: designTokens.colors.text.primary,
-          secondary: designTokens.colors.text.secondary,
-          muted: designTokens.colors.text.muted,
-        },
-        divider: designTokens.colors.border.default,
-        // 设计令牌扩展色组 — 供 sx prop 通过 token path 引用
+        // 设计令牌扩展色组 — 供 sx prop 通过 token path 引用（light/dark 共用同一组）
         teal: designTokens.colors.teal,
         orange: designTokens.colors.orange,
         yellow: designTokens.colors.yellow,
@@ -232,10 +203,35 @@ export const createCustomTheme = (): Theme => {
         light: {
           palette: {
             mode: 'light',
+            primary: {
+              ...designTokens.colors.primary,
+            },
+            secondary: {
+              ...designTokens.colors.secondary,
+            },
+            success: {
+              ...designTokens.colors.success,
+            },
+            warning: {
+              ...designTokens.colors.warning,
+            },
+            error: {
+              ...designTokens.colors.error,
+            },
+            info: {
+              ...designTokens.colors.info,
+            },
+            grey: designTokens.colors.grey,
             background: {
               default: designTokens.colors.background.default,
               paper: designTokens.colors.background.paper,
             },
+            text: {
+              primary: designTokens.colors.text.primary,
+              secondary: designTokens.colors.text.secondary,
+              muted: designTokens.colors.text.muted,
+            },
+            divider: designTokens.colors.border.default,
           },
         },
         dark: {
@@ -252,6 +248,50 @@ export const createCustomTheme = (): Theme => {
             },
             divider: designTokens.colors.grey[700],
             grey: designTokens.colors.grey,
+            // 暗色下用语义色 light 变体（400 阶），保证深色背景上可读
+            primary: {
+              ...designTokens.colors.primary,
+              main: designTokens.colors.primary[400],
+              light: designTokens.colors.primary[300],
+              dark: designTokens.colors.primary[500],
+              contrastText: '#0f172a',
+            },
+            secondary: {
+              ...designTokens.colors.secondary,
+              main: designTokens.colors.secondary[400],
+              light: designTokens.colors.secondary[300],
+              dark: designTokens.colors.secondary[500],
+              contrastText: '#0f172a',
+            },
+            success: {
+              ...designTokens.colors.success,
+              main: designTokens.colors.success[400],
+              light: designTokens.colors.success[300],
+              dark: designTokens.colors.success[500],
+            },
+            warning: {
+              ...designTokens.colors.warning,
+              main: designTokens.colors.warning[400],
+              light: designTokens.colors.warning[300],
+              dark: designTokens.colors.warning[500],
+            },
+            error: {
+              ...designTokens.colors.error,
+              main: designTokens.colors.error[400],
+              light: designTokens.colors.error[300],
+              dark: designTokens.colors.error[500],
+            },
+            info: {
+              ...designTokens.colors.info,
+              main: designTokens.colors.info[400],
+              light: designTokens.colors.info[300],
+              dark: designTokens.colors.info[500],
+            },
+            action: {
+              selected: 'rgba(148, 163, 184, 0.16)',
+              hover: 'rgba(148, 163, 184, 0.08)',
+              disabled: 'rgba(148, 163, 184, 0.2)',
+            },
           },
         },
         // MUI v5 类型只声明 light/dark，任意字符串键在运行时均支持

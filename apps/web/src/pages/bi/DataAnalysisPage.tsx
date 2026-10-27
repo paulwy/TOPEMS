@@ -18,6 +18,7 @@ import {
   TableRow,
   TableContainer,
   Grid,
+  useTheme,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -28,9 +29,6 @@ import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const filters: FilterConfig[] = [
   {
     id: 'timeRange',
@@ -75,6 +73,7 @@ const filters: FilterConfig[] = [
 ];
 
 const DataAnalysisPage = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const salesLabel = t('bi.data_analysis_page.k32');
@@ -372,7 +371,7 @@ const DataAnalysisPage = () => {
                 ].map((metric, idx) => (
                   <Box
                     key={idx}
-                    sx={{ p: 2, backgroundColor: ct.grey[50], borderRadius: 1 }}
+                    sx={{ p: 2, backgroundColor: theme.palette.grey[50], borderRadius: 1 }}
                   >
                     <Typography
                       variant='caption'
@@ -438,14 +437,14 @@ const DataAnalysisPage = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, backgroundColor: ct.grey[50] }}>
+                  <TableCell sx={{ fontWeight: 600, backgroundColor: theme.palette.grey[50] }}>
                     {t('bi.data_analysis_page.k20')}
                   </TableCell>
                   {statusPivot.months.map((month) => (
                     <TableCell
                       key={month}
                       align='right'
-                      sx={{ fontWeight: 600, backgroundColor: ct.grey[50] }}
+                      sx={{ fontWeight: 600, backgroundColor: theme.palette.grey[50] }}
                     >
                       {month}
                     </TableCell>
@@ -621,7 +620,7 @@ const DataAnalysisPage = () => {
       subtitle={t('bi.data_analysis_page.page_subtitle')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary[400]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary[400]} 100%)`,
       }}
       padding={false}
       maxWidth={false}

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Typography, InputLabel, Chip, Button } from '@mui/material';
+import { Box, Typography, InputLabel, Chip, Button, useTheme } from '@mui/material';
 import { Bell, Clock, MessageSquare, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,9 +12,8 @@ import { designTokens } from '@/theme/tokens';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const NotificationDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
@@ -359,7 +358,7 @@ const NotificationDetailPage: React.FC = () => {
       avatar: (
         <Bell
           size={32}
-          color={ct.primary.dark}
+          color={theme.palette.primary.dark}
         />
       ),
       title: notification?.title,

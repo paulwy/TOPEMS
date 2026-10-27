@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Box, Button } from '@mui/material';
+import { Box, Button, useTheme } from '@mui/material';
 import { ReportViewerTemplate } from '@/components/templates/ReportViewerTemplate';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import type {
@@ -30,10 +30,8 @@ import TemplateFormDialog from './components/TemplateFormDialog';
 import { getModuleFromReportType } from '@/components/report/ReportPageUtils';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const ReportPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { data: _backendData, isLoading: _isBackendLoading } = useQuery({
     queryKey: ['report-dashboard'],
@@ -578,7 +576,7 @@ const ReportPage: React.FC = () => {
         padding: false,
         sx: {
           minHeight: '100vh',
-          background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, border.default 100%)`,
         },
       }}
       filterBar={

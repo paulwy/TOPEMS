@@ -18,6 +18,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import {
@@ -42,8 +43,6 @@ import { extractErrorMessage } from '@/utils/errors';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
 
 interface RateLimitRule {
   requests: number;
@@ -104,6 +103,7 @@ const DEFAULT_ANTI_REPLAY: AntiReplayConfig = {
 };
 
 const RateLimitConfigPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((s) => s.addNotification);
@@ -342,28 +342,28 @@ const RateLimitConfigPage: React.FC = () => {
         key: 'tenant_default' as const,
         title: t('admin.rate_limit_config_page.dimension_tenant'),
         icon: <Server size={18} />,
-        color: ct.primary.dark,
+        color: theme.palette.primary.dark,
         description: t('admin.rate_limit_config_page.dimension_tenant_desc'),
       },
       {
         key: 'user_default' as const,
         title: t('admin.rate_limit_config_page.dimension_user'),
         icon: <Users size={18} />,
-        color: ct.info.dark,
+        color: theme.palette.info.dark,
         description: t('admin.rate_limit_config_page.dimension_user_desc'),
       },
       {
         key: 'ip_default' as const,
         title: t('admin.rate_limit_config_page.dimension_ip'),
         icon: <Globe size={18} />,
-        color: ct.success.dark,
+        color: theme.palette.success.dark,
         description: t('admin.rate_limit_config_page.dimension_ip_desc'),
       },
       {
         key: 'global_default' as const,
         title: t('admin.rate_limit_config_page.dimension_global'),
         icon: <Shield size={18} />,
-        color: ct.warning.dark,
+        color: theme.palette.warning.dark,
         description: t('admin.rate_limit_config_page.dimension_global_desc'),
       },
     ],

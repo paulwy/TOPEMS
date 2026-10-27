@@ -1,4 +1,4 @@
-import { Box, Typography, Chip, Stack } from '@mui/material';
+import { Box, Typography, Chip, Stack, useTheme } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { GitBranch, BarChart3 } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
@@ -16,8 +16,6 @@ import {
 import i18n from '@/i18n';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter<
   ProcessFlow,
   CreateProcessFlowRequest,
@@ -290,13 +288,14 @@ function ProcessFlowDetailContent({ row }: { row: Record<string, unknown> }) {
   );
 }
 function ProcessFlowPage() {
+  const theme = useTheme();
   return (
     <PageContainer
       autoTitle
       autoBreadcrumbs
       headerProps={{
         pageIcon: <GitBranch style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
     >
       <CrudPage

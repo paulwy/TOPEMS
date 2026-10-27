@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { Play, CheckCircle, XCircle } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -12,9 +12,8 @@ import type { ProductionOrder } from '@/api/mes/types';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const ProductionOrderManagementPage: React.FC = () => {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
   const handleStatusChange = useCallback(
@@ -162,7 +161,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       subtitle={i18n.t('mes.production_order_management_page.order_number_1')}
       headerProps={{
         pageIcon: <Play style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <CrudPage
@@ -223,7 +222,7 @@ const ProductionOrderManagementPage: React.FC = () => {
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: ct.secondary[100],
+                  bgcolor: theme.palette.secondary[100],
                   borderRadius: 3,
                 }}
               >

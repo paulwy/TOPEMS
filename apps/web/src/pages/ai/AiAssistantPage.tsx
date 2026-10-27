@@ -40,6 +40,7 @@ import {
   CircularProgress,
   Alert,
   Divider,
+  useTheme,
 } from '@mui/material';
 import { BarChart3, Workflow, BookOpen, Send, Sparkles } from 'lucide-react';
 
@@ -55,15 +56,8 @@ import type {
   KnowledgeAskResponse,
 } from '@/api/ai';
 import { BIChartColors } from '@/components/charts/chartTheme';
-import { designTokens } from '@topems/tokens';
 
 type TabValue = 'report' | 'flow' | 'knowledge';
-
-const DEFAULT_PIE_COLORS = [
-  ...BIChartColors.series,
-  'colors.cyan.500',
-  designTokens.colors.pink.main,
-];
 
 const getSeverityColor = (severity: string) => {
   switch (severity) {
@@ -81,6 +75,12 @@ const getSeverityColor = (severity: string) => {
 const getSeverityLabel = (severity: string) => severity;
 
 const ReportResult: React.FC<{ result: ReportAssistantResponse }> = ({ result }) => {
+  const theme = useTheme();
+  const defaultPieColors = [
+    ...BIChartColors.series,
+    theme.palette.cyan[500],
+    theme.palette.pink.main,
+  ];
   const xKey = result.x_axis || 'name';
   const yKeys: string[] = result.y_axis
     ? Array.isArray(result.y_axis)
@@ -111,7 +111,7 @@ const ReportResult: React.FC<{ result: ReportAssistantResponse }> = ({ result })
                   key={key}
                   type='monotone'
                   dataKey={key}
-                  stroke={DEFAULT_PIE_COLORS[index % DEFAULT_PIE_COLORS.length]}
+                  stroke={defaultPieColors[index % defaultPieColors.length]}
                   strokeWidth={2}
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
@@ -136,7 +136,7 @@ const ReportResult: React.FC<{ result: ReportAssistantResponse }> = ({ result })
                 <Bar
                   key={key}
                   dataKey={key}
-                  fill={DEFAULT_PIE_COLORS[index % DEFAULT_PIE_COLORS.length]}
+                  fill={defaultPieColors[index % defaultPieColors.length]}
                   radius={[4, 4, 0, 0]}
                 />
               ))}
@@ -169,7 +169,7 @@ const ReportResult: React.FC<{ result: ReportAssistantResponse }> = ({ result })
                 {pieData.map((entry, index) => (
                   <Cell
                     key={`cell-${entry.name}`}
-                    fill={DEFAULT_PIE_COLORS[index % DEFAULT_PIE_COLORS.length]}
+                    fill={defaultPieColors[index % defaultPieColors.length]}
                   />
                 ))}
               </Pie>

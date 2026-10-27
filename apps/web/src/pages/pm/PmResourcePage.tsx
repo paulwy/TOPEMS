@@ -1,6 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import {
+  Box,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { CheckCircle2, Clock, Package, Users } from 'lucide-react';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -11,7 +19,6 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
-const ct = designTokens.colors;
 interface StatCardProps {
   label: string;
   value: React.ReactNode;
@@ -62,6 +69,7 @@ const StatCard: React.FC<StatCardProps> = ({
   </Box>
 );
 const PmResourcePage: React.FC = () => {
+  const theme = useTheme();
   const [selectedProject, setSelectedProject] = useState<string>('');
   const projectsQuery = useQuery({
     queryKey: QUERY_KEYS.PM.PROJECTS,
@@ -185,15 +193,15 @@ const PmResourcePage: React.FC = () => {
           valueColor='warning.dark'
           bgColor='warning.light'
           icon={<Users size={24} />}
-          iconColor={ct.yellow[600]}
+          iconColor={theme.palette.yellow[600]}
         />
         <StatCard
           label={i18n.t('pm.pm_resource_page.k7')}
           value={`${totalHours.toFixed(0)}h`}
           valueColor='secondary.dark'
-          bgColor={ct.purple[200]}
+          bgColor={theme.palette.purple[200]}
           icon={<Clock size={24} />}
-          iconColor={ct.purple[700]}
+          iconColor={theme.palette.purple[700]}
         />
       </Box>
     );

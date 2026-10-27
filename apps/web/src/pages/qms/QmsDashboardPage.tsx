@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Skeleton } from '@mui/material';
+import { Box, Typography, Skeleton, useTheme } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import {
   ClipboardCheck,
@@ -28,9 +28,8 @@ import { qmsApi, useQmsMock, type QualityOverview, type QmsMockShape } from '@/a
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
-
-const ct = designTokens.colors;
 const QmsDashboardPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { data: mockData, mockEnabled } = useQmsMock<QmsMockShape>();
   const {
@@ -170,11 +169,11 @@ const QmsDashboardPage: React.FC = () => {
             <Box sx={{ width: '100%', p: 2 }}>
               {effectiveOverview.topIssues.map((item, index) => {
                 const colors = [
-                  ct.secondary[400],
-                  ct.warning.main,
-                  ct.error.main,
-                  ct.success.main,
-                  ct.secondary.main,
+                  theme.palette.secondary[400],
+                  theme.palette.warning.main,
+                  theme.palette.error.main,
+                  theme.palette.success.main,
+                  theme.palette.secondary.main,
                 ];
                 return (
                   <Box
@@ -249,7 +248,7 @@ const QmsDashboardPage: React.FC = () => {
                         cx={x}
                         cy={y}
                         r={4}
-                        fill={ct.secondary[400]}
+                        fill={theme.palette.secondary[400]}
                       />
                       {index < effectiveOverview!.trendData.length - 1 && (
                         <line
@@ -265,7 +264,7 @@ const QmsDashboardPage: React.FC = () => {
                             (effectiveOverview!.trendData[index + 1].passRate / 100) * 180 -
                             10
                           }
-                          stroke={ct.secondary[400]}
+                          stroke={theme.palette.secondary[400]}
                           strokeWidth={2}
                         />
                       )}
@@ -340,7 +339,7 @@ const QmsDashboardPage: React.FC = () => {
       label: i18n.t('qms.qms_dashboard_page.k13'),
       icon: <Plus style={{ width: 20, height: 20 }} />,
       onClick: () => navigate(QMS_PATHS.inspection),
-      color: ct.secondary[400],
+      color: theme.palette.secondary[400],
     },
     {
       id: 'quality-standards',

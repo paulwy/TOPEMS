@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { FlaskConical, AlertTriangle, Package, Clock, FileWarning } from 'lucide-react';
@@ -29,9 +30,6 @@ import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useTranslation } from 'react-i18next';
-
-const ct = designTokens.colors;
-
 // 用于统计计算的字段（原页面使用的字段集合）
 interface HazardousMaterialItem {
   id: string;
@@ -103,6 +101,7 @@ const StatCard: React.FC<{
 );
 
 const EhsHazardousMaterialPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
@@ -217,7 +216,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
         icon={<AlertTriangle />}
         bgColor='background.paper'
         iconBgColor='warning.100'
-        iconColor={ct.yellow[600]}
+        iconColor={theme.palette.yellow[600]}
       />
       <StatCard
         label={t('ehs.ehs_hazardous_material_page.high_hazard')}
@@ -242,7 +241,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <FlaskConical sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error[600]} 100%)`,
       }}
       maxWidth='xl'
     >

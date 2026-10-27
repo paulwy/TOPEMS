@@ -10,6 +10,7 @@ import {
   DialogActions,
   TextField,
   MenuItem,
+  useTheme,
 } from '@mui/material';
 import React, { useMemo, useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -38,10 +39,8 @@ import { useQuery } from '@tanstack/react-query';
 import { formatDate } from '@/utils/date';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const CustomerDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
 
@@ -884,7 +883,7 @@ const CustomerDetailPage: React.FC = () => {
       avatar: (
         <Building2
           size={32}
-          color={ct.primary.dark}
+          color={theme.palette.primary.dark}
         />
       ),
       title: customer?.name,

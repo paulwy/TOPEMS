@@ -10,6 +10,7 @@ import {
   TableRow,
   Paper,
   InputLabel,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -20,8 +21,6 @@ import type { MaterialReturn, MaterialReturnItem } from '@/api/mes';
 import { Undo2, FileText, Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
-
-const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(
   mesApi.materialReturns as unknown as CrudApi<MaterialReturn>,
   {
@@ -29,6 +28,7 @@ const apiAdapter = createCrudPageAdapter(
   }
 );
 const MaterialReturnPage: React.FC = () => {
+  const theme = useTheme();
   const renderDetailContent = (row: Record<string, unknown>) => {
     const ret = row as unknown as MaterialReturn;
     return (
@@ -143,7 +143,7 @@ const MaterialReturnPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Undo2 style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[700]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error[700]} 100%)`,
       }}
     >
       <CrudPage
@@ -186,7 +186,7 @@ const MaterialReturnPage: React.FC = () => {
                   {pending}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
+              <Box sx={{ p: 2, bgcolor: theme.palette.secondary[100], borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 1 }}

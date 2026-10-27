@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { AlertTriangle, XCircle, Clock, CheckCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -14,9 +14,6 @@ import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const safetyIssueApi = {
   list: ehsApi.listSafetyIssues,
   create: ehsApi.createSafetyIssue,
@@ -49,6 +46,7 @@ const safetyIssueAdapter: CrudApiAdapter<SafetyIssue> = {
 };
 
 const EhsHazardPage: React.FC = () => {
+  const theme = useTheme();
   const { data: issuesResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_SAFETYISSUES_STATS_BASE,
     queryFn: async () => ehsApi.listSafetyIssues({ page_size: 500 }),
@@ -168,7 +166,7 @@ const EhsHazardPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Clock sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
+              <Clock sx={{ width: 20, height: 20, color: theme.palette.yellow[600] }} />
             </Box>
             <Box>
               <Typography
@@ -233,7 +231,7 @@ const EhsHazardPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <AlertTriangle sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error[600]} 100%)`,
       }}
       maxWidth='xl'
     >

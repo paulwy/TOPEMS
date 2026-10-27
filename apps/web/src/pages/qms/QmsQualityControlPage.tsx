@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, CheckCircle, FileText } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
@@ -11,7 +11,6 @@ import { designTokens } from '@/theme/tokens';
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 
-const ct = designTokens.colors;
 function extractListData<T>(response: unknown): T[] {
   if (!response || typeof response !== 'object') return [];
   const obj = response as Record<string, unknown>;
@@ -34,6 +33,7 @@ interface QualityControlStats {
   inProgressAudits: number;
 }
 function StatsCards({ stats }: { stats: QualityControlStats }) {
+  const theme = useTheme();
   const cards = [
     {
       icon: <AlertCircle sx={{ width: 20, height: 20, color: 'error.dark' }} />,
@@ -42,7 +42,7 @@ function StatsCards({ stats }: { stats: QualityControlStats }) {
       value: stats.totalNonconformances,
     },
     {
-      icon: <AlertCircle sx={{ width: 20, height: 20, color: ct.warning[600] }} />,
+      icon: <AlertCircle sx={{ width: 20, height: 20, color: theme.palette.warning[600] }} />,
       iconBg: 'warning.100',
       label: i18n.t('qms.qms_quality_control_page.k1'),
       value: stats.openNonconformances,

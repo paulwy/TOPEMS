@@ -9,6 +9,7 @@ import {
   MenuItem,
   Select,
   Typography,
+  useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import {
@@ -51,6 +52,7 @@ const SCHEDULE_PIE = [
 ];
 
 export default function MesCapacityUtilizationPage() {
+  const theme = useTheme();
   const { data: analyticsData } = useAnalyticsData({
     fetcher: () => mesAnalyticsApi.getCapacityUtilization({ days: 7 }),
     deps: [],
@@ -122,12 +124,8 @@ export default function MesCapacityUtilizationPage() {
                   py: 0.5,
                   borderRadius: 1,
                   fontSize: designTokens.typography.fontSize.scale['0.75rem'],
-                  bgcolor: isBottleneck
-                    ? designTokens.colors.error[100]
-                    : designTokens.colors.success[100],
-                  color: isBottleneck
-                    ? designTokens.colors.error[700]
-                    : designTokens.colors.success[700],
+                  bgcolor: isBottleneck ? theme.palette.error[100] : theme.palette.success[100],
+                  color: isBottleneck ? theme.palette.error[700] : theme.palette.success[700],
                 }}
               >
                 {isBottleneck
@@ -210,7 +208,7 @@ export default function MesCapacityUtilizationPage() {
                 <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                 <Scatter
                   data={heatmap}
-                  fill={designTokens.colors.secondary.dark}
+                  fill={theme.palette.secondary.dark}
                 />
               </ScatterChart>
             </ResponsiveContainer>
@@ -252,7 +250,7 @@ export default function MesCapacityUtilizationPage() {
                     <Bar
                       dataKey='value'
                       name={i18n.t('mes.mes_capacity_utilization_page.k28')}
-                      fill={designTokens.colors.warning.main}
+                      fill={theme.palette.warning.main}
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>

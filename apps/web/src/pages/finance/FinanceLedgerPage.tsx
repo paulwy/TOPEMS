@@ -4,7 +4,7 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { ledgerSchema } from '@/schemas/finance';
 import { accountApi } from '@/api/finance';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { FileText, Calculator, Wallet, TrendingUp, TrendingDown } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import type { Account } from '@/types/finance';
@@ -12,9 +12,6 @@ import type { Account } from '@/types/finance';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const ledgerApiAdapter: CrudApiAdapter = {
   list: async (params) => {
     const search = params?.search?.toLowerCase() || '';
@@ -58,6 +55,7 @@ const ledgerApiAdapter: CrudApiAdapter = {
 };
 
 const LedgerStats: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('finance');
   const { data: accounts = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.FINANCE_LEDGER_STATS_BASE,
@@ -88,7 +86,7 @@ const LedgerStats: React.FC = () => {
     {
       label: t('finance.finance_ledger_page.k3'),
       value: stats.total,
-      color: ct.purple[500],
+      color: theme.palette.purple[500],
       bgColor: 'secondary.light',
       icon: <Calculator sx={{ width: 20, height: 20 }} />,
     },

@@ -3,13 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { supplierProductSchema } from '@/schemas/srm';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 import { srmApi } from '@/api/srm';
-
-const ct = designTokens.colors;
 
 interface SupplierProduct {
   id: string;
@@ -178,6 +176,7 @@ const supplierProductApiAdapter: CrudApiAdapter = {
 };
 
 const SupplierProductStats: React.FC<{ rows: SupplierProduct[] }> = ({ rows }) => {
+  const theme = useTheme();
   const stats = React.useMemo(
     () => ({
       total: rows.length,
@@ -192,7 +191,7 @@ const SupplierProductStats: React.FC<{ rows: SupplierProduct[] }> = ({ rows }) =
     {
       label: i18n.t('pages.srm_supplier_product_page.k33'),
       value: stats.total,
-      color: ct.purple[500],
+      color: theme.palette.purple[500],
       bgColor: 'secondary.light',
     },
     {

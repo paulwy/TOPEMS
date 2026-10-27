@@ -15,6 +15,7 @@ import {
   TableRow,
   Paper,
   Button,
+  useTheme,
 } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
 import React, { useEffect } from 'react';
@@ -32,8 +33,6 @@ import { formatDate } from '@/utils/date';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
-
 interface TabConfig {
   id: string;
   label: string;
@@ -43,6 +42,7 @@ interface TabConfig {
 }
 
 const VoucherDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -186,7 +186,7 @@ const VoucherDetailPage: React.FC = () => {
         <Box sx={{ textAlign: 'center' }}>
           <AlertCircle
             size={64}
-            style={{ color: ct.error[700], marginBottom: 16 }}
+            style={{ color: theme.palette.error[700], marginBottom: 16 }}
           />
           <Typography
             variant='h6'
@@ -333,7 +333,7 @@ const VoucherDetailPage: React.FC = () => {
             >
               <User
                 size={20}
-                style={{ color: ct.primary.dark }}
+                style={{ color: theme.palette.primary.dark }}
               />
             </Box>
             <Box>
@@ -362,7 +362,7 @@ const VoucherDetailPage: React.FC = () => {
             >
               <Check
                 size={20}
-                style={{ color: ct.info.dark }}
+                style={{ color: theme.palette.info.dark }}
               />
             </Box>
             <Box>
@@ -391,7 +391,7 @@ const VoucherDetailPage: React.FC = () => {
             >
               <Building2
                 size={20}
-                style={{ color: ct.success[700] }}
+                style={{ color: theme.palette.success[700] }}
               />
             </Box>
             <Box>
@@ -596,7 +596,7 @@ const VoucherDetailPage: React.FC = () => {
             >
               <Calendar
                 size={16}
-                style={{ color: ct.success[700] }}
+                style={{ color: theme.palette.success[700] }}
               />
             </Box>
             <Box sx={{ flex: 1 }}>
@@ -636,7 +636,7 @@ const VoucherDetailPage: React.FC = () => {
               >
                 <Check
                   size={16}
-                  style={{ color: ct.info.dark }}
+                  style={{ color: theme.palette.info.dark }}
                 />
               </Box>
               <Box sx={{ flex: 1 }}>
@@ -677,7 +677,7 @@ const VoucherDetailPage: React.FC = () => {
               >
                 <Building2
                   size={16}
-                  style={{ color: ct.primary.dark }}
+                  style={{ color: theme.palette.primary.dark }}
                 />
               </Box>
               <Box sx={{ flex: 1 }}>

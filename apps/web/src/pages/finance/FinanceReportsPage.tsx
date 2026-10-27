@@ -31,9 +31,6 @@ import type { ChartConfig, DataTable, TableColumn } from '@/components/templates
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
-
-const ct = designTokens.colors;
-
 const FinanceReportsPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -96,21 +93,21 @@ const FinanceReportsPage: React.FC = () => {
         title: t('finance.finance_reports_page.stat_total_assets'),
         value: formatCurrency(businessOverview.total_assets),
         icon: <DollarSign sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
+        gradient: [theme.palette.primary.dark, theme.palette.primary[800]] as [string, string],
       },
       {
         id: 'total-liabilities',
         title: t('finance.finance_reports_page.stat_total_liabilities'),
         value: formatCurrency(businessOverview.total_liabilities),
         icon: <TrendingDown sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.warning.main, ct.warning.dark] as [string, string],
+        gradient: [theme.palette.warning.main, theme.palette.warning.dark] as [string, string],
       },
       {
         id: 'total-revenue',
         title: t('finance.finance_reports_page.stat_total_revenue'),
         value: formatCurrency(businessOverview.total_revenue),
         icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.success.main, ct.success.dark] as [string, string],
+        gradient: [theme.palette.success.main, theme.palette.success.dark] as [string, string],
       },
       {
         id: 'net-profit',
@@ -119,8 +116,8 @@ const FinanceReportsPage: React.FC = () => {
         icon: <Wallet sx={{ width: 24, height: 24 }} />,
         gradient:
           businessOverview.net_profit >= 0
-            ? ([ct.success.main, ct.success.dark] as [string, string])
-            : ([ct.error.main, ct.error[700]] as [string, string]),
+            ? ([theme.palette.success.main, theme.palette.success.dark] as [string, string])
+            : ([theme.palette.error.main, theme.palette.error[700]] as [string, string]),
       },
     ];
   }, [businessOverview, t]);

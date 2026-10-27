@@ -12,9 +12,7 @@ import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
+import { useTheme } from '@mui/material';
 const orderTrendData = [
   { name: i18n.t('scm.scm_overview_page.m2'), value: 32 },
   { name: i18n.t('scm.scm_overview_page.m3'), value: 28 },
@@ -41,6 +39,7 @@ const mrpStatusData = [
 ];
 
 const ScmOverviewPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('scm');
   const navigate = useNavigate();
 
@@ -152,35 +151,35 @@ const ScmOverviewPage: React.FC = () => {
         label: i18n.t('scm.scm_overview_page.k21'),
         icon: <Users size={20} />,
         onClick: () => navigate(SCM_PATHS.suppliers),
-        color: ct.primary.dark,
+        color: theme.palette.primary.dark,
       },
       {
         id: 'purchase-order',
         label: i18n.t('scm.scm_overview_page.k22'),
         icon: <ShoppingCart size={20} />,
         onClick: () => navigate(SCM_PATHS.purchaseOrders),
-        color: ct.secondary[700],
+        color: theme.palette.secondary[700],
       },
       {
         id: 'mrp-plan',
         label: i18n.t('scm.mrp_plan_page.m3'),
         icon: <Calculator size={20} />,
         onClick: () => navigate(SCM_PATHS.mrpPlan),
-        color: ct.success[700],
+        color: theme.palette.success[700],
       },
       {
         id: 'supplier-eval',
         label: i18n.t('scm.scm_overview_page.k23'),
         icon: <Award size={20} />,
         onClick: () => navigate(SCM_PATHS.supplierEvaluation),
-        color: ct.warning[700],
+        color: theme.palette.warning[700],
       },
       {
         id: 'delivery-appointment',
         label: i18n.t('scm.scm_overview_page.k24'),
         icon: <Truck size={20} />,
         onClick: () => navigate(SCM_PATHS.deliveryAppointment),
-        color: ct.teal[700],
+        color: theme.palette.teal[700],
       },
     ],
     [navigate]
@@ -195,7 +194,7 @@ const ScmOverviewPage: React.FC = () => {
         time: '2026-06-29 09:00',
         icon: <ShoppingCart size={18} />,
         status: 'warning',
-        tags: [{ label: i18n.t('scm.scm_overview_page.k26'), color: ct.warning[700] }],
+        tags: [{ label: i18n.t('scm.scm_overview_page.k26'), color: theme.palette.warning[700] }],
         onClick: () => navigate(SCM_PATHS.purchaseOrders),
       },
       {
@@ -214,7 +213,7 @@ const ScmOverviewPage: React.FC = () => {
         time: '2026-06-28 14:00',
         icon: <Calculator size={18} />,
         status: 'info',
-        tags: [{ label: i18n.t('scm.scm_overview_page.k28'), color: ct.primary.dark }],
+        tags: [{ label: i18n.t('scm.scm_overview_page.k28'), color: theme.palette.primary.dark }],
         onClick: () => navigate(SCM_PATHS.mrpPlan),
       },
       {
@@ -224,7 +223,7 @@ const ScmOverviewPage: React.FC = () => {
         time: '2026-06-28 11:20',
         icon: <ShoppingCart size={18} />,
         status: 'success',
-        tags: [{ label: i18n.t('scm.scm_overview_page.k30'), color: ct.success[700] }],
+        tags: [{ label: i18n.t('scm.scm_overview_page.k30'), color: theme.palette.success[700] }],
         onClick: () => navigate(SCM_PATHS.purchaseOrders),
       },
       {
@@ -234,7 +233,7 @@ const ScmOverviewPage: React.FC = () => {
         time: '2026-06-27 10:00',
         icon: <Truck size={18} />,
         status: 'default',
-        tags: [{ label: i18n.t('scm.scm_overview_page.k33'), color: ct.grey[600] }],
+        tags: [{ label: i18n.t('scm.scm_overview_page.k33'), color: theme.palette.grey[600] }],
         onClick: () => navigate(SCM_PATHS.deliveryAppointment),
       },
     ],

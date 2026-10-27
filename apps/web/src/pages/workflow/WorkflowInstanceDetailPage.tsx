@@ -28,7 +28,6 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { getChipStatusColor as getStatusColor } from '@/utils/status';
 
-const ct = designTokens.colors;
 interface InstanceDetails {
   instance: WorkflowInstance;
   approvals: Approval[];
@@ -73,35 +72,35 @@ const FlowInstanceDetailPage: React.FC = () => {
         return (
           <CheckCircle
             size={20}
-            style={{ color: ct.success[600] }}
+            style={{ color: theme.palette.success[600] }}
           />
         );
       case 'rejected':
         return (
           <XCircle
             size={20}
-            style={{ color: ct.error[600] }}
+            style={{ color: theme.palette.error[600] }}
           />
         );
       case 'running':
         return (
           <Play
             size={20}
-            style={{ color: ct.primary[800] }}
+            style={{ color: theme.palette.primary[800] }}
           />
         );
       case 'pending':
         return (
           <Clock
             size={20}
-            style={{ color: ct.warning[600] }}
+            style={{ color: theme.palette.warning[600] }}
           />
         );
       default:
         return (
           <AlertCircle
             size={20}
-            style={{ color: ct.grey[500] }}
+            style={{ color: theme.palette.grey[500] }}
           />
         );
     }
@@ -428,12 +427,12 @@ const FlowInstanceDetailPage: React.FC = () => {
                       {record.action === 'approve' ? (
                         <CheckCircle2
                           size={16}
-                          style={{ color: ct.success[600] }}
+                          style={{ color: theme.palette.success[600] }}
                         />
                       ) : (
                         <XCircle
                           size={16}
-                          style={{ color: ct.error[600] }}
+                          style={{ color: theme.palette.error[600] }}
                         />
                       )}
                       <Typography

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Box, Chip, Typography, InputLabel, Stack } from '@mui/material';
+import { Box, Chip, Typography, InputLabel, Stack, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { Route } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
@@ -14,8 +14,6 @@ import type {
 } from '@/api/mes/process';
 import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 const processRouteAdapter: CrudApiAdapter<ProcessRoute> = {
   list: async (params) => {
     const statusValue = params?.status as string | undefined;
@@ -55,6 +53,7 @@ const processRouteAdapter: CrudApiAdapter<ProcessRoute> = {
   },
 };
 const ProcessRoutePage: React.FC = () => {
+  const theme = useTheme();
   const [routeSteps, setRouteSteps] = useState<ProcessRouteStep[]>([]);
   const loadRouteSteps = useCallback(async (routeId: string) => {
     try {
@@ -232,7 +231,7 @@ const ProcessRoutePage: React.FC = () => {
       subtitle={i18n.t('mes.process_route_page.process_1')}
       headerProps={{
         pageIcon: <Route style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
     >
       <CrudPage

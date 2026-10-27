@@ -34,8 +34,6 @@ interface ProfileSecurityPanelProps {
   navigate: (path: string) => void;
 }
 
-const ct = designTokens.colors;
-
 const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
   user,
   showPasswordDialog,
@@ -138,7 +136,7 @@ const ProfileSecurityPanel: React.FC<ProfileSecurityPanelProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Settings
               size={20}
-              style={{ color: ct.purple[600] }}
+              style={{ color: theme.palette.purple[600] }}
             />
             <Box>
               <Typography

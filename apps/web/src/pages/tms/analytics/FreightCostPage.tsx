@@ -27,7 +27,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
-import { Box, Paper, Typography, CircularProgress, Alert } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, Alert, useTheme } from '@mui/material';
 import { DollarSign, TrendingUp, Package, Layers } from 'lucide-react';
 
 const COST_COLORS: Record<string, string> = {
@@ -61,6 +61,7 @@ const MOCK_COST_DATA = [
 ];
 
 export default function FreightCostPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiData, isLoading } = useQuery({
@@ -195,7 +196,7 @@ export default function FreightCostPage() {
                 {costData.map((entry) => (
                   <Cell
                     key={entry.type}
-                    fill={COST_COLORS[entry.type] ?? designTokens.colors.grey[400]}
+                    fill={COST_COLORS[entry.type] ?? theme.palette.grey[400]}
                   />
                 ))}
               </Pie>
@@ -231,7 +232,7 @@ export default function FreightCostPage() {
               <Bar
                 dataKey='totalFreight'
                 name={t('tms.freight_cost_page.k14')}
-                fill={designTokens.colors.primary.main}
+                fill={theme.palette.primary.main}
                 barSize={20}
               />
             </BarChart>
@@ -265,13 +266,13 @@ export default function FreightCostPage() {
             <Bar
               dataKey='shipmentCount'
               name={t('tms.freight_cost_page.k16')}
-              fill={designTokens.colors.secondary.dark}
+              fill={theme.palette.secondary.dark}
               barSize={20}
             />
             <Bar
               dataKey='avgFreight'
               name={t('tms.freight_cost_page.k17')}
-              fill={designTokens.colors.success.dark}
+              fill={theme.palette.success.dark}
               barSize={20}
             />
           </BarChart>

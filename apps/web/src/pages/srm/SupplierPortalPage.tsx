@@ -16,6 +16,7 @@ import {
   Avatar,
   LinearProgress,
   CircularProgress,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
@@ -42,8 +43,6 @@ import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
-
 interface SupplierPortalAnnouncement {
   id: string;
   type: string;
@@ -67,6 +66,7 @@ interface PortalData {
 }
 
 const SupplierPortalPage: React.FC = () => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const { addNotification } = useNotificationStore();
 
@@ -479,7 +479,7 @@ const SupplierPortalPage: React.FC = () => {
                         />
                         <ChevronRight
                           size={16}
-                          style={{ color: ct.text.muted }}
+                          style={{ color: theme.palette.text.muted }}
                         />
                       </ListItem>
                     </React.Fragment>
@@ -541,7 +541,7 @@ const SupplierPortalPage: React.FC = () => {
                         />
                         <ChevronRight
                           size={16}
-                          style={{ color: ct.text.muted }}
+                          style={{ color: theme.palette.text.muted }}
                         />
                       </ListItem>
                     </React.Fragment>
@@ -575,7 +575,7 @@ const SupplierPortalPage: React.FC = () => {
                         />
                         <ChevronRight
                           size={16}
-                          style={{ color: ct.text.muted }}
+                          style={{ color: theme.palette.text.muted }}
                         />
                       </ListItem>
                     </React.Fragment>

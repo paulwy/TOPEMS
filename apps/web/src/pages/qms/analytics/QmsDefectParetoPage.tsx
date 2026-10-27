@@ -21,6 +21,7 @@ import {
   CircularProgress,
   Box,
   Alert,
+  useTheme,
 } from '@mui/material';
 import {
   ResponsiveContainer,
@@ -35,12 +36,12 @@ import {
   ReferenceLine,
 } from 'recharts';
 import i18n from '@/i18n';
-import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate, type StatCard } from '@/components/templates/StatsPageTemplate';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { qualityDashboardApi, type QualityDefectDistribution } from '@/api/qms/dashboard';
 
 export default function QmsDefectParetoPage() {
+  const theme = useTheme();
   const {
     data: defectData,
     loading,
@@ -194,7 +195,7 @@ export default function QmsDefectParetoPage() {
                     <ReferenceLine
                       yAxisId='right'
                       y={80}
-                      stroke={designTokens.colors.error.main}
+                      stroke={theme.palette.error.main}
                       strokeDasharray='4 4'
                       label={i18n.t('pages.qms_defect_pareto_page.80_0')}
                     />
@@ -202,7 +203,7 @@ export default function QmsDefectParetoPage() {
                       yAxisId='left'
                       dataKey='count'
                       name={i18n.t('pages.qms_defect_pareto_page.k6')}
-                      fill={designTokens.colors.secondary.dark}
+                      fill={theme.palette.secondary.dark}
                       barSize={36}
                     />
                     <Line
@@ -210,7 +211,7 @@ export default function QmsDefectParetoPage() {
                       type='monotone'
                       dataKey='cumulativePct'
                       name={i18n.t('pages.qms_defect_pareto_page.k7')}
-                      stroke={designTokens.colors.error.main}
+                      stroke={theme.palette.error.main}
                       strokeWidth={2}
                       dot={{ r: 3 }}
                     />

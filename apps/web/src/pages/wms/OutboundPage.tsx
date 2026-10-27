@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Typography, Card, CardContent, Stack } from '@mui/material';
+import { Box, Typography, Card, CardContent, Stack, useTheme } from '@mui/material';
 import { Upload, Check, ClipboardList, Truck, Package } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
@@ -15,9 +15,6 @@ import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const outboundCrudApi: CrudOperations<OutboundOrder> = {
   list: (params) =>
     wmsApi.outboundOrders.list(params as PaginationParams) as ReturnType<
@@ -37,6 +34,7 @@ const outboundCrudApi: CrudOperations<OutboundOrder> = {
 };
 
 const OutboundStats: React.FC = () => {
+  const theme = useTheme();
   const { data: orders = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.WMS_OUTBOUND_ORDERS_STATS_BASE,
     queryFn: async () => {
@@ -67,12 +65,12 @@ const OutboundStats: React.FC = () => {
     {
       label: i18n.t('pages.outbound_page.k0'),
       value: stats.total,
-      color: ct.warning.main,
+      color: theme.palette.warning.main,
       bgColor: 'grey.100',
       icon: (
         <Upload
           size={20}
-          color={ct.warning.main}
+          color={theme.palette.warning.main}
         />
       ),
     },

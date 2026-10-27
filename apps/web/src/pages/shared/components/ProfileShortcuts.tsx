@@ -7,12 +7,10 @@
 import React from 'react';
 import { Activity, FileText, GitBranch, Bell, Bot, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Box, Typography, Chip } from '@mui/material';
+import { Box, Typography, Chip, useTheme } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
 import { IM_PATHS } from '@/modules/im/config';
 import type { UseProfileReturn } from '../hooks/useProfile';
-
-const ct = designTokens.colors;
 
 interface ShortcutOption {
   id: string;
@@ -28,6 +26,7 @@ interface ProfileShortcutsProps {
 }
 
 const ProfileShortcuts: React.FC<ProfileShortcutsProps> = ({ profile }) => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { shortcuts, handleShortcutToggle } = profile;
 
@@ -54,7 +53,7 @@ const ProfileShortcuts: React.FC<ProfileShortcutsProps> = ({ profile }) => {
       icon: GitBranch,
       iconName: 'GitBranch',
       path: '/flow/definitions',
-      color: ct.purple[500],
+      color: theme.palette.purple[500],
     },
     {
       id: '4',
@@ -70,7 +69,7 @@ const ProfileShortcuts: React.FC<ProfileShortcutsProps> = ({ profile }) => {
       icon: Bot,
       iconName: 'Bot',
       path: '/ai',
-      color: ct.pink[500],
+      color: theme.palette.pink[500],
     },
     {
       id: '6',

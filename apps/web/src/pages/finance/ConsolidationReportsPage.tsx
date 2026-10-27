@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { designTokens } from '@/theme/tokens';
 import {
   Building2,
   TrendingUp,
@@ -25,6 +24,7 @@ import {
   Select,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import {
   useConsolidationReports,
@@ -47,39 +47,6 @@ import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
-const REPORT_TYPE_CONFIG: Record<
-  ConsolidationReportType,
-  { name: string; icon: React.ElementType; color: string }
-> = {
-  consolidated_balance_sheet: {
-    name: i18n.t('finance.consolidation_reports_page.k0'),
-    icon: Building2,
-    color: ct.primary.dark,
-  },
-  consolidated_income_statement: {
-    name: i18n.t('finance.consolidation_reports_page.k1'),
-    icon: TrendingUp,
-    color: ct.success.main,
-  },
-  consolidated_cash_flow: {
-    name: i18n.t('finance.consolidation_reports_page.k2'),
-    icon: DollarSign,
-    color: 'secondary.main',
-  },
-  consolidated_statement_changes: {
-    name: i18n.t('finance.consolidation_reports_page.k3'),
-    icon: BarChart3,
-    color: 'warning.main',
-  },
-  elimination_work_sheet: {
-    name: i18n.t('finance.consolidation_reports_page.k4'),
-    icon: FileSpreadsheet,
-    color: ct.secondary[400],
-  },
-};
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   draft: { label: i18n.t('finance.consolidation_reports_page.k5'), color: 'grey.500' },
@@ -153,8 +120,40 @@ const tableColumns: TableColumn[] = [
 ];
 
 export default function ConsolidationReportsPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { error: notifyError, success: notifySuccess } = useNotification();
+
+  const reportTypeConfig: Record<
+    ConsolidationReportType,
+    { name: string; icon: React.ElementType; color: string }
+  > = {
+    consolidated_balance_sheet: {
+      name: t('finance.consolidation_reports_page.k0'),
+      icon: Building2,
+      color: theme.palette.primary.dark,
+    },
+    consolidated_income_statement: {
+      name: t('finance.consolidation_reports_page.k1'),
+      icon: TrendingUp,
+      color: theme.palette.success.main,
+    },
+    consolidated_cash_flow: {
+      name: t('finance.consolidation_reports_page.k2'),
+      icon: DollarSign,
+      color: 'secondary.main',
+    },
+    consolidated_statement_changes: {
+      name: t('finance.consolidation_reports_page.k3'),
+      icon: BarChart3,
+      color: 'warning.main',
+    },
+    elimination_work_sheet: {
+      name: t('finance.consolidation_reports_page.k4'),
+      icon: FileSpreadsheet,
+      color: theme.palette.secondary[400],
+    },
+  };
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedScope, setSelectedScope] = useState<string>('');
@@ -235,28 +234,28 @@ export default function ConsolidationReportsPage() {
         title: t('finance.consolidation_reports_page.stat_balance_sheet'),
         value: reports.filter((r) => r.report_type === 'consolidated_balance_sheet').length,
         icon: <Building2 sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
+        gradient: [theme.palette.primary.dark, theme.palette.primary[800]] as [string, string],
       },
       {
         id: 'income-statement',
         title: t('finance.consolidation_reports_page.stat_income_statement'),
         value: reports.filter((r) => r.report_type === 'consolidated_income_statement').length,
         icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.success.main, ct.success.dark] as [string, string],
+        gradient: [theme.palette.success.main, theme.palette.success.dark] as [string, string],
       },
       {
         id: 'cash-flow',
         title: t('finance.consolidation_reports_page.stat_cash_flow_statement'),
         value: reports.filter((r) => r.report_type === 'consolidated_cash_flow').length,
         icon: <DollarSign sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
+        gradient: [theme.palette.secondary.main, theme.palette.secondary.dark] as [string, string],
       },
       {
         id: 'equity-changes',
         title: t('finance.consolidation_reports_page.stat_equity_changes'),
         value: reports.filter((r) => r.report_type === 'consolidated_statement_changes').length,
         icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.warning.main, ct.warning.dark] as [string, string],
+        gradient: [theme.palette.warning.main, theme.palette.warning.dark] as [string, string],
       },
     ],
     [reports, t]
@@ -286,12 +285,12 @@ export default function ConsolidationReportsPage() {
           {
             name: t('finance.consolidation_reports_page.pie_calculating'),
             value: statusDistribution.calculating,
-            color: ct.primary.dark,
+            color: theme.palette.primary.dark,
           },
           {
             name: t('finance.consolidation_reports_page.completed'),
             value: statusDistribution.completed,
-            color: ct.success.main,
+            color: theme.palette.success.main,
           },
           {
             name: t('finance.consolidation_reports_page.pie_published'),
@@ -312,7 +311,7 @@ export default function ConsolidationReportsPage() {
         columns: tableColumns,
         data: reports.map((report) => ({
           report_no: report.report_no,
-          report_type: REPORT_TYPE_CONFIG[report.report_type]?.name || report.report_type,
+          report_type: reportTypeConfig[report.report_type]?.name || report.report_type,
           scope_name: report.scope_name,
           period: report.period,
           company_count: i18n.t('finance.consolidation_reports_page.e1', {
@@ -341,7 +340,7 @@ export default function ConsolidationReportsPage() {
         loading: isLoading,
       },
     ],
-    [reports, isLoading, t]
+    [reports, isLoading, t, reportTypeConfig]
   );
 
   const customToolbar = (
@@ -379,7 +378,7 @@ export default function ConsolidationReportsPage() {
           displayEmpty
         >
           <MenuItem value=''>{t('finance.consolidation_reports_page.k15')}</MenuItem>
-          {Object.entries(REPORT_TYPE_CONFIG).map(([key, config]) => (
+          {Object.entries(reportTypeConfig).map(([key, config]) => (
             <MenuItem
               key={key}
               value={key}
@@ -445,7 +444,7 @@ export default function ConsolidationReportsPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Box>
                 <Typography variant='h6'>
-                  {REPORT_TYPE_CONFIG[selectedReport.report_type]?.name ||
+                  {reportTypeConfig[selectedReport.report_type]?.name ||
                     selectedReport.report_type}
                 </Typography>
                 <Typography
@@ -545,7 +544,7 @@ export default function ConsolidationReportsPage() {
                           textAlign: 'left',
                           padding: 3,
                           fontWeight: 600,
-                          backgroundColor: ct.background.default,
+                          backgroundColor: theme.palette.background.default,
                         }}
                       >
                         {t('finance.consolidation_reports_page.e8')}
@@ -555,7 +554,7 @@ export default function ConsolidationReportsPage() {
                           textAlign: 'right',
                           padding: 3,
                           fontWeight: 600,
-                          backgroundColor: ct.background.default,
+                          backgroundColor: theme.palette.background.default,
                         }}
                       >
                         {t('finance.consolidation_reports_page.e9')}
@@ -565,7 +564,7 @@ export default function ConsolidationReportsPage() {
                           textAlign: 'right',
                           padding: 3,
                           fontWeight: 600,
-                          backgroundColor: ct.background.default,
+                          backgroundColor: theme.palette.background.default,
                         }}
                       >
                         {t('finance.consolidation_reports_page.e10')}
@@ -575,7 +574,7 @@ export default function ConsolidationReportsPage() {
                           textAlign: 'right',
                           padding: 3,
                           fontWeight: 600,
-                          backgroundColor: ct.background.default,
+                          backgroundColor: theme.palette.background.default,
                         }}
                       >
                         {t('finance.consolidation_reports_page.e11')}
@@ -585,7 +584,7 @@ export default function ConsolidationReportsPage() {
                           textAlign: 'right',
                           padding: 3,
                           fontWeight: 600,
-                          backgroundColor: ct.background.default,
+                          backgroundColor: theme.palette.background.default,
                         }}
                       >
                         {t('finance.consolidation_reports_page.e12')}
@@ -729,7 +728,7 @@ export default function ConsolidationReportsPage() {
                 }
               >
                 <MenuItem value=''>{t('finance.consolidation_reports_page.k19')}</MenuItem>
-                {Object.entries(REPORT_TYPE_CONFIG).map(([key, config]) => (
+                {Object.entries(reportTypeConfig).map(([key, config]) => (
                   <MenuItem
                     key={key}
                     value={key}

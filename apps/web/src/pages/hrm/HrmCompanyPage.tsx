@@ -8,6 +8,7 @@ import {
   Avatar,
   Chip,
   Divider,
+  useTheme,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { Building, Folder, Phone, Mail, Globe } from 'lucide-react';
@@ -22,10 +23,8 @@ import { companySchema } from '@/schemas/hrm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const HrmCompanyPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('hrm');
   const { addNotification } = useNotificationStore();
 
@@ -443,7 +442,7 @@ const HrmCompanyPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Building style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.info.main}, ${ct.info.dark})`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
       }}
     >
       <CrudPage

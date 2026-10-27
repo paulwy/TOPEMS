@@ -11,10 +11,10 @@ import {
   Legend,
 } from 'recharts';
 import i18n from '@/i18n';
-import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { getFlowTrend, type FlowTrendData } from '@/api/wms/analytics';
+import { useTheme } from '@mui/material';
 
 const RANGE_OPTIONS = [
   { label: i18n.t('pages.wms_flow_trend_page.7_2'), value: '7d' },
@@ -23,6 +23,7 @@ const RANGE_OPTIONS = [
 ];
 
 export default function WmsFlowTrendPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
   const [range, setRange] = useState<'7d' | '15d' | '30d'>('30d');
   const [groupBy, setGroupBy] = useState<'day' | 'week' | 'month'>('day');
@@ -143,12 +144,12 @@ export default function WmsFlowTrendPage() {
               >
                 <stop
                   offset='5%'
-                  stopColor={designTokens.colors.success.dark}
+                  stopColor={theme.palette.success.dark}
                   stopOpacity={0.6}
                 />
                 <stop
                   offset='95%'
-                  stopColor={designTokens.colors.success.dark}
+                  stopColor={theme.palette.success.dark}
                   stopOpacity={0.05}
                 />
               </linearGradient>
@@ -161,12 +162,12 @@ export default function WmsFlowTrendPage() {
               >
                 <stop
                   offset='5%'
-                  stopColor={designTokens.colors.primary.main}
+                  stopColor={theme.palette.primary.main}
                   stopOpacity={0.6}
                 />
                 <stop
                   offset='95%'
-                  stopColor={designTokens.colors.primary.main}
+                  stopColor={theme.palette.primary.main}
                   stopOpacity={0.05}
                 />
               </linearGradient>
@@ -179,12 +180,12 @@ export default function WmsFlowTrendPage() {
               >
                 <stop
                   offset='5%'
-                  stopColor={designTokens.colors.warning.main}
+                  stopColor={theme.palette.warning.main}
                   stopOpacity={0.5}
                 />
                 <stop
                   offset='95%'
-                  stopColor={designTokens.colors.warning.main}
+                  stopColor={theme.palette.warning.main}
                   stopOpacity={0.05}
                 />
               </linearGradient>
@@ -208,7 +209,7 @@ export default function WmsFlowTrendPage() {
               type='monotone'
               dataKey='inbound_qty'
               name={i18n.t('pages.wms_flow_trend_page.k10')}
-              stroke={designTokens.colors.success.dark}
+              stroke={theme.palette.success.dark}
               fill='url(#inbGrad)'
               strokeWidth={2}
             />
@@ -216,7 +217,7 @@ export default function WmsFlowTrendPage() {
               type='monotone'
               dataKey='outbound_qty'
               name={i18n.t('pages.wms_flow_trend_page.k11')}
-              stroke={designTokens.colors.primary.main}
+              stroke={theme.palette.primary.main}
               fill='url(#outGrad)'
               strokeWidth={2}
             />
@@ -224,7 +225,7 @@ export default function WmsFlowTrendPage() {
               type='monotone'
               dataKey='net'
               name={i18n.t('pages.wms_flow_trend_page.k12')}
-              stroke={designTokens.colors.warning.main}
+              stroke={theme.palette.warning.main}
               fill='url(#netGrad)'
               strokeWidth={2}
             />

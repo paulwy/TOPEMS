@@ -1,5 +1,15 @@
 import React, { useMemo } from 'react';
-import { Box, Card, CardContent, Typography, Chip, Grid, Divider, Avatar } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  Grid,
+  Divider,
+  Avatar,
+  useTheme,
+} from '@mui/material';
 import {
   Package,
   CheckCircle,
@@ -38,9 +48,6 @@ type AssetRow = Asset & {
   purchase_price?: number | string;
   description?: string;
 };
-
-const ct = designTokens.colors;
-
 const baseAdapter = createCrudPageAdapter<Asset>({
   list: assetApi.list,
   create: assetApi.create,
@@ -79,6 +86,7 @@ const formatCurrency = (value: number | string | undefined | null): string => {
 };
 
 export const AssetListPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -569,7 +577,7 @@ export const AssetListPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
       maxWidth='xl'
     >

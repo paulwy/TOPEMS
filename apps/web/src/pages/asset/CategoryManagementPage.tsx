@@ -10,6 +10,7 @@ import {
   Collapse,
   Typography,
   Chip,
+  useTheme,
 } from '@mui/material';
 import { Folder, FolderOpen, ChevronRight, ChevronDown } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -24,9 +25,6 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const baseAdapter = createCrudPageAdapter<AssetCategory, CreateAssetCategoryRequest>({
   list: assetCategoryApi.list,
   create: assetCategoryApi.create,
@@ -203,6 +201,7 @@ const TreeItem: React.FC<{
 };
 
 export const CategoryManagementPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -305,7 +304,7 @@ export const CategoryManagementPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Folder style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
       maxWidth='xl'
     >

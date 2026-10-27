@@ -18,7 +18,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import i18n from '@/i18n';
-import { Stack, Menu, MenuItem, Button } from '@mui/material';
+import { Stack, Menu, MenuItem, Button, useTheme } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
   BarChart,
@@ -48,9 +48,6 @@ import { apiLogger } from '@/utils/logger';
 import { LazyChart } from '@/components/charts';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 type TimeRange = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
@@ -222,6 +219,7 @@ const topWorkflows = [
 ];
 
 export const WorkflowStatisticsPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
@@ -557,7 +555,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
       subtitle={i18n.t('pages.workflow_statistics_page.k73')}
       headerProps={{
         pageIcon: <BarChart3 size={20} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.main} 100%)`,
         backButton: {
           href: WORKFLOW_PATHS.dashboard,
           visible: true,

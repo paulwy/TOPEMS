@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, useTheme } from '@mui/material';
 import { FileCheck, Clock, CheckCircle, XCircle, Target } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
@@ -8,8 +8,6 @@ import { ptPlanApi } from '@/api/lims/proficiencyTesting';
 import type { PtPlan } from '@/api/lims/types';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const ptPlanAdapter = {
   list: async (params?: {
     page?: number;
@@ -78,6 +76,7 @@ const StatCard: React.FC<{
   </Box>
 );
 const LimsProficiencyTestingPage: React.FC = () => {
+  const theme = useTheme();
   const headerContent = (rows: Record<string, unknown>[], total: number) => {
     const plans = rows as unknown as PtPlan[];
     const ongoingCount = plans.filter((p) => p.status === 'ongoing').length;
@@ -96,7 +95,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
           label={i18n.t('lims.lims_proficiency_testing_page.k3')}
           value={total}
           icon={<Target size={18} />}
-          bgColor={ct.secondary[100]}
+          bgColor={theme.palette.secondary[100]}
           iconColor='secondary.700'
         />
         <StatCard
@@ -129,7 +128,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <FileCheck style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <CrudPage

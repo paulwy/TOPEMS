@@ -19,6 +19,7 @@ import {
   Typography,
   TextField,
   Button,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 
@@ -27,9 +28,6 @@ import { designTokens } from '@/theme/tokens';
 import { AuthPageTemplate } from '@/components/templates';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const loginFormSchema = z.object({
   username: z
     .string()
@@ -47,6 +45,7 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({}) => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { login } = useAuth();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -133,7 +132,7 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
 
   return (
     <AuthPageTemplate
-      backgroundGradient={`linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 50%, ${ct.pink[300]} 100%)`}
+      backgroundGradient={`linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.dark} 50%, ${theme.palette.pink[300]} 100%)`}
       maxWidth='100%'
     >
       <Box
@@ -213,7 +212,7 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
       >
         <Box
           sx={{
-            background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
+            background: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.dark} 100%)`,
             padding: 4,
             textAlign: 'center',
           }}
@@ -448,8 +447,8 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
                     type='button'
                     onClick={() => navigate(AUTH_PATHS.forgotPassword)}
                     sx={{
-                      color: ct.secondary[600],
-                      '&:hover': { color: ct.secondary[700] },
+                      color: theme.palette.secondary[600],
+                      '&:hover': { color: theme.palette.secondary[700] },
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       background: 'transparent',
                       fontWeight: 500,
@@ -471,9 +470,9 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
                   height: 48,
                   borderRadius: 1.5,
                   fontWeight: 600,
-                  background: `linear-gradient(135deg, ${ct.secondary[500]} 0%, ${ct.secondary.dark} 100%)`,
+                  background: `linear-gradient(135deg, ${theme.palette.secondary[500]} 0%, ${theme.palette.secondary.dark} 100%)`,
                   '&:hover': {
-                    background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
+                    background: `linear-gradient(135deg, ${theme.palette.secondary[600]} 0%, ${theme.palette.secondary[800]} 100%)`,
                   },
                   '&:disabled': {
                     background: 'grey.400',
@@ -495,8 +494,8 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
               type='button'
               onClick={() => setIsRegister(!isRegister)}
               sx={{
-                color: ct.secondary[600],
-                '&:hover': { color: ct.secondary[700] },
+                color: theme.palette.secondary[600],
+                '&:hover': { color: theme.palette.secondary[700] },
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 background: 'transparent',
                 fontWeight: 500,

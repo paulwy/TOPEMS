@@ -1,4 +1,3 @@
-import { designTokens } from '@topems/tokens';
 /**
  * 司机绩效分析页
  *
@@ -13,7 +12,7 @@ import { tmsAnalyticsApi } from '@/api/tms';
 import type { DriverPerformanceItem } from '@/api/tms';
 import { StatsPageTemplate } from '@/components/templates';
 import type { StatCard } from '@/components/templates/StatsPageTemplate';
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, useTheme } from '@mui/material';
 import { Truck, CheckCircle, User, Award } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -28,6 +27,7 @@ import {
 } from 'recharts';
 
 export default function DriverPerformancePage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiData, isLoading } = useQuery({
@@ -148,14 +148,14 @@ export default function DriverPerformancePage() {
               <Legend />
               <ReferenceLine
                 y={90}
-                stroke={designTokens.colors.success.dark}
+                stroke={theme.palette.success.dark}
                 strokeDasharray='4 4'
                 label={t('tms.driver_performance_page.90_17')}
               />
               <Bar
                 dataKey='completionRate'
                 name={t('tms.driver_performance_page.k18')}
-                fill={designTokens.colors.primary.main}
+                fill={theme.palette.primary.main}
                 barSize={28}
               />
             </BarChart>
@@ -189,13 +189,13 @@ export default function DriverPerformancePage() {
               <Bar
                 dataKey='totalDeliveries'
                 name={t('tms.driver_performance_page.k20')}
-                fill={designTokens.colors.secondary.dark}
+                fill={theme.palette.secondary.dark}
                 barSize={20}
               />
               <Bar
                 dataKey='completed'
                 name={t('tms.driver_performance_page.k21')}
-                fill={designTokens.colors.success.dark}
+                fill={theme.palette.success.dark}
                 barSize={20}
               />
             </BarChart>

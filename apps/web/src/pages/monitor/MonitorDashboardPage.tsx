@@ -53,8 +53,6 @@ import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { monitorApi, type SystemMetrics, type DatabaseMetrics } from '@/api/monitor';
-
-const ct = designTokens.colors;
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
   { value: '1h', label: i18n.t('monitor.monitor_dashboard_page.1_0') },
@@ -132,7 +130,8 @@ const MiniLineChart: React.FC<{
   labels: string[];
   color?: string;
   height?: number;
-}> = ({ data, color = ct.primary.dark, height = 180 }) => {
+}> = ({ data, color = designTokens.colors.primary.dark, height = 180 }) => {
+  const theme = useTheme();
   if (!data || data.length === 0) {
     return <Box sx={{ width: '100%', height }} />;
   }
@@ -169,7 +168,7 @@ const MiniLineChart: React.FC<{
             y1={padding.top + (chartHeight - padding.top - padding.bottom) * ratio}
             x2={width - padding.right}
             y2={padding.top + (chartHeight - padding.top - padding.bottom) * ratio}
-            stroke={ct.grey[200]}
+            stroke={theme.palette.grey[200]}
             strokeWidth='0.3'
             strokeDasharray='2,2'
           />
@@ -191,7 +190,8 @@ const MiniBarChart: React.FC<{
   labels: string[];
   color?: string;
   height?: number;
-}> = ({ data, color = ct.primary.dark, height = 180 }) => {
+}> = ({ data, color = designTokens.colors.primary.dark, height = 180 }) => {
+  const theme = useTheme();
   if (!data || data.length === 0) {
     return <Box sx={{ width: '100%', height }} />;
   }

@@ -1,5 +1,13 @@
 import { useMemo, useCallback, useState, useEffect } from 'react';
-import { Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import {
+  Box,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  useTheme,
+} from '@mui/material';
 import { Database } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -11,9 +19,8 @@ import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
-const ct = designTokens.colors;
-
 export default function PdmBomPage() {
+  const theme = useTheme();
   const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -238,7 +245,7 @@ export default function PdmBomPage() {
     <PageContainer
       headerProps={{
         pageIcon: <Database style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.cyan.main} 0%, ${ct.cyan.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.cyan.main} 0%, ${theme.palette.cyan.dark} 100%)`,
       }}
     >
       <CrudPage

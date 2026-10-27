@@ -8,7 +8,7 @@
  * 数据来自 useQmsMock 的 qualityCosts。
  */
 import { useMemo } from 'react';
-import { Grid, Paper, Typography, Alert } from '@mui/material';
+import { Grid, Paper, Typography, Alert, useTheme } from '@mui/material';
 import {
   ResponsiveContainer,
   PieChart,
@@ -49,6 +49,7 @@ function getCostTypeLabels(): Record<string, string> {
 }
 
 export default function QmsCostAnalysisPage() {
+  const theme = useTheme();
   const { t } = useTranslation('qms');
   const {
     data: qualityCostsData,
@@ -201,7 +202,7 @@ export default function QmsCostAnalysisPage() {
                   {costByType.map((entry) => (
                     <Cell
                       key={entry.type}
-                      fill={COST_TYPE_COLORS[entry.type] ?? designTokens.colors.grey[400]}
+                      fill={COST_TYPE_COLORS[entry.type] ?? theme.palette.grey[400]}
                     />
                   ))}
                 </Pie>
@@ -239,7 +240,7 @@ export default function QmsCostAnalysisPage() {
                 <Bar
                   dataKey='amount'
                   name={t('qms.qms_cost_analysis_page.k11')}
-                  fill={designTokens.colors.secondary.dark}
+                  fill={theme.palette.secondary.dark}
                   barSize={28}
                 />
               </BarChart>

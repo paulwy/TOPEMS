@@ -12,6 +12,7 @@ import {
   Select,
   MenuItem,
   Typography,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
@@ -27,12 +28,11 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import type { Equipment, MaintenanceEquipmentRequest } from '@/api/mes';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
 // 后端列表响应为 { equipments, total }（非默认 items/materials/data），需显式声明 itemsField，
 // 否则 reactQuery 解析后 items 恒为空（S7）。
 const apiAdapter = createCrudPageAdapter(mesApi.equipment, { itemsField: 'equipments' });
 export default function EquipmentManagementPage() {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
   const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false);
@@ -230,7 +230,7 @@ export default function EquipmentManagementPage() {
       subtitle={i18n.t('mes.equipment_management_page.name')}
       headerProps={{
         pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
     >
       <CrudPage

@@ -10,6 +10,7 @@ import {
   TableRow,
   Paper,
   InputLabel,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
@@ -20,12 +21,11 @@ import { mesApi } from '@/api/mes';
 import type { MaterialBom, MaterialBomItem } from '@/api/mes';
 import { Package } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.boms, {
   itemsField: 'boms',
 });
 const MaterialBOMPage: React.FC = () => {
+  const theme = useTheme();
   const renderDetailContent = (row: Record<string, unknown>) => {
     const bom = row as unknown as MaterialBom;
     return (
@@ -157,7 +157,7 @@ const MaterialBOMPage: React.FC = () => {
           mb: 3,
         }}
       >
-        <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
+        <Box sx={{ p: 2, bgcolor: theme.palette.secondary[100], borderRadius: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <Package
               size={18}
@@ -228,7 +228,7 @@ const MaterialBOMPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <CrudPage

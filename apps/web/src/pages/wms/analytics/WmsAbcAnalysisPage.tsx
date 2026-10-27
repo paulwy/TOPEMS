@@ -18,6 +18,7 @@ import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { getAbcAnalysis, type AbcAnalysisData } from '@/api/wms/analytics';
+import { useTheme } from '@mui/material';
 
 const ABC_COLORS: Record<string, string> = {
   A: designTokens.colors.error.main,
@@ -26,6 +27,7 @@ const ABC_COLORS: Record<string, string> = {
 };
 
 export default function WmsAbcAnalysisPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { data: response, loading } = useAnalyticsData({
     fetcher: () => getAbcAnalysis(),
@@ -154,7 +156,7 @@ export default function WmsAbcAnalysisPage() {
                   dataKey='count'
                   name={i18n.t('pages.wms_abc_analysis_page.sku_2')}
                   radius={[6, 6, 0, 0]}
-                  fill={designTokens.colors.primary.main}
+                  fill={theme.palette.primary.main}
                 />
               </BarChart>
             </ResponsiveContainer>

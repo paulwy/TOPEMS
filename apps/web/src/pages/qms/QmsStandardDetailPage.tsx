@@ -12,6 +12,7 @@ import {
   Box,
   Typography,
   Button,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 
@@ -25,10 +26,8 @@ import { useCrudMutations } from '@/hooks';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
-
-const ct = designTokens.colors;
-
 const QmsStandardDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -147,7 +146,7 @@ const QmsStandardDetailPage: React.FC = () => {
           color: item.color.includes('green')
             ? 'success.700'
             : item.color.includes('yellow')
-              ? ct.yellow[700]
+              ? theme.palette.yellow[700]
               : item.color.includes('red')
                 ? 'error.darker'
                 : 'text.secondary',
@@ -252,7 +251,7 @@ const QmsStandardDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, grey.100 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -786,7 +785,7 @@ const QmsStandardDetailPage: React.FC = () => {
             disabled={submitting}
             sx={{
               backgroundColor: 'secondary.dark',
-              '&:hover': { backgroundColor: ct.purple[700] },
+              '&:hover': { backgroundColor: theme.palette.purple[700] },
             }}
           >
             {submitting

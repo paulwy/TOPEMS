@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardCheck, FileText, FileCheck, Eye } from 'lucide-react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates';
@@ -12,8 +12,6 @@ import type { QualityStandard } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import { QMS_PATHS } from '@/modules/qms/config';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const standardAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await qmsApi.listStandards();
@@ -105,6 +103,7 @@ const StatCard: React.FC<{
   </Card>
 );
 const QmsStandardListPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { data: allStandards } = useQuery({
     queryKey: [qualityStandardSchema.entity, 'stats'],
@@ -169,7 +168,7 @@ const QmsStandardListPage: React.FC = () => {
         value={stats.draftStandards}
         icon={<FileText size={20} />}
         iconBgColor='warning.100'
-        iconColor={ct.yellow[600]}
+        iconColor={theme.palette.yellow[600]}
       />
     </Box>
   );
@@ -179,7 +178,7 @@ const QmsStandardListPage: React.FC = () => {
       subtitle='Quality Standards'
       headerProps={{
         pageIcon: <ClipboardCheck style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.main} 100%)`,
       }}
       maxWidth='xl'
     >

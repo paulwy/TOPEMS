@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { useQueryClient } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter, type RowAction } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -11,12 +11,11 @@ import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.workReports, {
   itemsField: 'reports',
 });
 const WorkReportPage: React.FC = () => {
+  const theme = useTheme();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
   const handleApprove = useCallback(
@@ -105,7 +104,7 @@ const WorkReportPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <CrudPage
@@ -184,7 +183,7 @@ const WorkReportPage: React.FC = () => {
                   {approved}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
+              <Box sx={{ p: 2, bgcolor: theme.palette.secondary[100], borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}

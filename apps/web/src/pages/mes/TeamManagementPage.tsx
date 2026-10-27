@@ -9,6 +9,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { useQuery } from '@tanstack/react-query';
@@ -22,8 +23,6 @@ import { mesApi } from '@/api/mes';
 import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest } from '@/api/mes/types';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter<Team, CreateTeamRequest, UpdateTeamRequest>(
   {
     list: mesApi.teams.list,
@@ -228,13 +227,14 @@ function TeamDetailContent({ row }: { row: Record<string, unknown> }) {
   );
 }
 function TeamManagementPage() {
+  const theme = useTheme();
   return (
     <PageContainer
       autoTitle
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Users style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
     >
       <CrudPage
@@ -297,7 +297,7 @@ function TeamManagementPage() {
                   {inactive}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
+              <Box sx={{ p: 2, bgcolor: theme.palette.secondary[100], borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary' }}

@@ -12,6 +12,7 @@ import {
   DialogTitle,
   Stack,
   Typography,
+  useTheme,
 } from '@mui/material';
 import {
   AlertCircle,
@@ -40,8 +41,6 @@ import { ERP_PATHS } from '@/modules/erp/config';
 import { auditApi, type AuditLog } from '@/api/erp/audit';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
-
 interface AuditLogStatsProps {
   stats: {
     total: number;
@@ -52,6 +51,7 @@ interface AuditLogStatsProps {
 }
 
 const AuditLogStats: React.FC<AuditLogStatsProps> = ({ stats }) => {
+  const theme = useTheme();
   const statCards = [
     {
       label: i18n.t('pages.audit_log_page.k11'),
@@ -61,7 +61,7 @@ const AuditLogStats: React.FC<AuditLogStatsProps> = ({ stats }) => {
       icon: (
         <FileText
           size={20}
-          color={ct.primary.main}
+          color={theme.palette.primary.main}
         />
       ),
     },
@@ -73,7 +73,7 @@ const AuditLogStats: React.FC<AuditLogStatsProps> = ({ stats }) => {
       icon: (
         <CheckCircle
           size={20}
-          color={ct.success.main}
+          color={theme.palette.success.main}
         />
       ),
     },
@@ -85,7 +85,7 @@ const AuditLogStats: React.FC<AuditLogStatsProps> = ({ stats }) => {
       icon: (
         <XCircle
           size={20}
-          color={ct.error.main}
+          color={theme.palette.error.main}
         />
       ),
     },
@@ -97,7 +97,7 @@ const AuditLogStats: React.FC<AuditLogStatsProps> = ({ stats }) => {
       icon: (
         <AlertCircle
           size={20}
-          color={ct.warning.main}
+          color={theme.palette.warning.main}
         />
       ),
     },

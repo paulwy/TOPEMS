@@ -16,12 +16,11 @@ import {
   Select,
   MenuItem,
   Button,
+  useTheme,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { designTokens } from '@/theme/tokens';
 import type { ControlFormData } from '../hooks/useEhsHazardDetail';
-
-const ct = designTokens.colors;
 
 interface EhsHazardControlDialogProps {
   open: boolean;
@@ -38,6 +37,7 @@ const EhsHazardControlDialog: React.FC<EhsHazardControlDialogProps> = ({
   onClose,
   onSave,
 }) => {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   return (
@@ -148,7 +148,10 @@ const EhsHazardControlDialog: React.FC<EhsHazardControlDialogProps> = ({
         <Button
           variant='contained'
           onClick={onSave}
-          sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: ct.orange[700] } }}
+          sx={{
+            backgroundColor: 'warning.600',
+            '&:hover': { backgroundColor: theme.palette.orange[700] },
+          }}
         >
           {t('ehs.ehshazarddetailpage.save')}
         </Button>

@@ -461,9 +461,9 @@ const BIModuleDetailPage = () => {
             />
             <XAxis
               dataKey='month'
-              tick={{ fill: ct.text.secondary, fontSize: isMobile ? 10 : 12 }}
+              tick={{ fill: theme.palette.text.secondary, fontSize: isMobile ? 10 : 12 }}
             />
-            <YAxis tick={{ fill: ct.text.secondary, fontSize: isMobile ? 10 : 12 }} />
+            <YAxis tick={{ fill: theme.palette.text.secondary, fontSize: isMobile ? 10 : 12 }} />
             <Tooltip />
             <Line
               type='monotone'

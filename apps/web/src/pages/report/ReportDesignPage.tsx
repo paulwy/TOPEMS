@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Card, CardContent, Button } from '@mui/material';
+import { Box, Typography, Card, CardContent, Button, useTheme } from '@mui/material';
 import {
   PenTool as PenToolIcon,
   Table as TableIcon,
@@ -9,10 +9,8 @@ import {
 import i18n from '@/i18n';
 import { designTokens } from '@/theme/tokens';
 import { DesignerTemplate } from '@/components/templates/DesignerTemplate';
-
-const ct = designTokens.colors;
-
 const ReportDesignPage: React.FC = () => {
+  const theme = useTheme();
   return (
     <DesignerTemplate
       mode='standard'
@@ -32,7 +30,7 @@ const ReportDesignPage: React.FC = () => {
           >
             <PenToolIcon
               size={64}
-              style={{ color: ct.primary.dark }}
+              style={{ color: theme.palette.primary.dark }}
             />
             <Typography
               variant='h5'

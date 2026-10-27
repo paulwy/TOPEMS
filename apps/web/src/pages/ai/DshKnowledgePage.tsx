@@ -22,15 +22,14 @@ import {
   Tabs,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { dshEnhancedApi } from '@/api/ai/dshEnhanced';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
-
 const DshKnowledgePage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const qc = useQueryClient();
   const addNotification = useNotificationStore((s) => s.addNotification);
@@ -159,7 +158,7 @@ const DshKnowledgePage: React.FC = () => {
     },
   });
 
-  const metric = (label: string, value: unknown, color = ct.info[600]) => (
+  const metric = (label: string, value: unknown, color = theme.palette.info[600]) => (
     <Card sx={{ p: 2.5, minWidth: 150, flex: 1 }}>
       <Typography
         variant='body2'
@@ -201,7 +200,7 @@ const DshKnowledgePage: React.FC = () => {
       >
         {metric(t('ai.dshKnowledge.k5'), stats?.total_entities)}
         {metric(t('ai.dshKnowledge.k6'), stats?.total_relations)}
-        {metric(t('ai.dshKnowledge.k7'), stats?.connected_components, ct.warning[600])}
+        {metric(t('ai.dshKnowledge.k7'), stats?.connected_components, theme.palette.warning[600])}
         {metric(t('ai.dshKnowledge.k8'), stats?.graph_density)}
       </Stack>
       <Card>
@@ -477,7 +476,7 @@ const DshKnowledgePage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Network sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.info[500]} 0%, ${ct.info[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.info[500]} 0%, ${theme.palette.info[600]} 100%)`,
       }}
       maxWidth='xl'
     >

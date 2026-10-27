@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Button, useTheme } from '@mui/material';
 import { Plus, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { crmApi, crmAnalyticsApi, type Period, type ForecastSeriesRow } from '@/api/crm';
@@ -18,9 +18,6 @@ import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const tableColumns: TableColumn[] = [
   { id: 'period', label: i18n.t('crm.salesForecast.col_period'), field: 'period' },
   {
@@ -41,6 +38,7 @@ const tableColumns: TableColumn[] = [
 ];
 
 const CRMSalesForecastPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const [timeRange, _setTimeRange] = useState('monthly');
   const [period, setPeriod] = useState<Period>('MTD');
@@ -134,28 +132,28 @@ const CRMSalesForecastPage: React.FC = () => {
         title: t('crm.salesForecast.stat_total_predicted'),
         value: `¥${summary.totalPredicted.toLocaleString()}`,
         icon: <Target sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
+        gradient: [theme.palette.primary.dark, theme.palette.primary[800]] as [string, string],
       },
       {
         id: 'total-actual',
         title: t('crm.salesForecast.stat_total_actual'),
         value: `¥${summary.totalActual.toLocaleString()}`,
         icon: <Calculator sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.success.main, ct.success.dark] as [string, string],
+        gradient: [theme.palette.success.main, theme.palette.success.dark] as [string, string],
       },
       {
         id: 'average-confidence',
         title: t('crm.salesForecast.stat_avg_confidence'),
         value: `${summary.averageConfidence}%`,
         icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
+        gradient: [theme.palette.secondary.main, theme.palette.secondary.dark] as [string, string],
       },
       {
         id: 'completed-count',
         title: t('crm.salesForecast.stat_completed'),
         value: `${summary.completedCount} / ${displayForecasts.length}`,
         icon: <Calendar sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.warning.main, ct.warning.dark] as [string, string],
+        gradient: [theme.palette.warning.main, theme.palette.warning.dark] as [string, string],
       },
     ],
     [summary, displayForecasts.length, t]

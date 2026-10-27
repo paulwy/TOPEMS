@@ -22,13 +22,12 @@ import {
   Tabs,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { disasterRecoveryApi } from '@/api/master/disasterRecovery';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 
 interface ListLike {
   items?: unknown[];
@@ -36,6 +35,7 @@ interface ListLike {
 }
 
 const MasterDisasterRecoveryPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const qc = useQueryClient();
   const addNotification = useNotificationStore((s) => s.addNotification);
@@ -239,7 +239,7 @@ const MasterDisasterRecoveryPage: React.FC = () => {
     </TableRow>
   );
 
-  const metric = (label: string, value: unknown, color = ct.info[600]) => (
+  const metric = (label: string, value: unknown, color = theme.palette.info[600]) => (
     <Card sx={{ p: 2.5, minWidth: 150, flex: 1 }}>
       <Typography
         variant='body2'
@@ -407,11 +407,15 @@ const MasterDisasterRecoveryPage: React.FC = () => {
         sx={{ flexWrap: 'wrap' }}
       >
         {metric(t('master.disasterRecovery.k25'), score?.score)}
-        {metric(t('master.disasterRecovery.k26'), score?.coverage_percentage, ct.warning[600])}
+        {metric(
+          t('master.disasterRecovery.k26'),
+          score?.coverage_percentage,
+          theme.palette.warning[600]
+        )}
         {metric(
           t('master.disasterRecovery.k27'),
           score?.risk_level,
-          score?.risk_level === 'high' ? ct.error[600] : ct.success[600]
+          score?.risk_level === 'high' ? theme.palette.error[600] : theme.palette.success[600]
         )}
       </Stack>
       <Button
@@ -553,7 +557,7 @@ const MasterDisasterRecoveryPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <LifeBuoy sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.info[500]} 0%, ${ct.info[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.info[500]} 0%, ${theme.palette.info[600]} 100%)`,
       }}
       maxWidth='xl'
     >

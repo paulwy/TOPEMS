@@ -14,13 +14,14 @@ import {
   ComposedChart,
 } from 'recharts';
 import i18n from '@/i18n';
-import { designTokens } from '@topems/tokens';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { useAnalyticsData, getDefaultDateRange } from '@/hooks/useAnalyticsData';
 import { wmsAnalyticsApi } from '@/api/wms/analytics';
 import type { WmsOrderFulfillmentData } from '@/api/wms/analytics';
+import { useTheme } from '@mui/material';
 
 export default function WmsOrderFulfillmentPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { startDate, endDate } = getDefaultDateRange();
   const [groupBy, setGroupBy] = useState<'month' | 'week' | 'day'>('month');
@@ -214,8 +215,8 @@ export default function WmsOrderFulfillmentPage() {
                 type='monotone'
                 dataKey='fulfillmentRate'
                 name={t('wms.order_fulfillment.series_fulfillment_rate')}
-                fill={designTokens.colors.success.light}
-                stroke={designTokens.colors.success.dark}
+                fill={theme.palette.success.light}
+                stroke={theme.palette.success.dark}
                 strokeWidth={2}
               />
               <Line
@@ -223,7 +224,7 @@ export default function WmsOrderFulfillmentPage() {
                 type='monotone'
                 dataKey='onTimeRate'
                 name={t('wms.order_fulfillment.series_on_time_rate')}
-                stroke={designTokens.colors.primary.main}
+                stroke={theme.palette.primary.main}
                 strokeWidth={2}
                 dot={{ r: 2 }}
               />
@@ -231,7 +232,7 @@ export default function WmsOrderFulfillmentPage() {
                 yAxisId='right'
                 dataKey='totalOrders'
                 name={t('wms.order_fulfillment.series_order_count')}
-                fill={designTokens.colors.secondary.light}
+                fill={theme.palette.secondary.light}
                 radius={[4, 4, 0, 0]}
               />
             </ComposedChart>
@@ -257,7 +258,7 @@ export default function WmsOrderFulfillmentPage() {
               <Bar
                 dataKey='avgDays'
                 name={t('wms.order_fulfillment.stat_avg_days')}
-                fill={designTokens.colors.primary.main}
+                fill={theme.palette.primary.main}
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>
@@ -285,19 +286,19 @@ export default function WmsOrderFulfillmentPage() {
               <Bar
                 dataKey='totalOrders'
                 name={t('wms.order_fulfillment.series_total_orders')}
-                fill={designTokens.colors.secondary.light}
+                fill={theme.palette.secondary.light}
                 radius={[4, 4, 0, 0]}
               />
               <Bar
                 dataKey='fulfilledOrders'
                 name={t('wms.order_fulfillment.series_fulfilled')}
-                fill={designTokens.colors.success.dark}
+                fill={theme.palette.success.dark}
                 radius={[4, 4, 0, 0]}
               />
               <Bar
                 dataKey='onTimeOrders'
                 name={t('wms.order_fulfillment.series_on_time_fulfilled')}
-                fill={designTokens.colors.primary.main}
+                fill={theme.palette.primary.main}
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>

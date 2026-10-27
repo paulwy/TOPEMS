@@ -21,9 +21,7 @@ import { designTokens } from '@/theme/tokens';
 import { RD_PATHS } from '@/modules/rd/config';
 import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
+import { useTheme } from '@mui/material';
 const projectStatusData = [
   { name: i18n.t('rd.rs_overview_page.k12'), value: 12 },
   { name: i18n.t('rd.rs_overview_page.k13'), value: 8 },
@@ -49,6 +47,7 @@ const moduleCodeData = [
 ];
 
 const RsOverviewPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const loadingQuery = useQuery<boolean>({
     queryKey: QUERY_KEYS.AD_HOC.RD_DASHBOARD_BASE,
@@ -164,42 +163,42 @@ const RsOverviewPage: React.FC = () => {
         label: i18n.t('rd.rs_overview_page.k24'),
         icon: <Plus size={20} />,
         onClick: () => navigate(RD_PATHS.projectCreate),
-        color: ct.primary.dark,
+        color: theme.palette.primary.dark,
       },
       {
         id: 'bug-manage',
         label: i18n.t('rd.rs_overview_page.k25'),
         icon: <Bug size={20} />,
         onClick: () => navigate(RD_PATHS.bug),
-        color: ct.error.dark,
+        color: theme.palette.error.dark,
       },
       {
         id: 'code-manage',
         label: i18n.t('rd.rs_overview_page.k26'),
         icon: <GitBranch size={20} />,
         onClick: () => navigate(RD_PATHS.code),
-        color: ct.secondary.dark,
+        color: theme.palette.secondary.dark,
       },
       {
         id: 'build-manage',
         label: i18n.t('rd.rs_overview_page.k27'),
         icon: <Hammer size={20} />,
         onClick: () => navigate(RD_PATHS.build),
-        color: ct.warning.dark,
+        color: theme.palette.warning.dark,
       },
       {
         id: 'release',
         label: i18n.t('rd.rs_overview_page.k28'),
         icon: <Rocket size={20} />,
         onClick: () => navigate(RD_PATHS.release),
-        color: ct.teal[700],
+        color: theme.palette.teal[700],
       },
       {
         id: 'review',
         label: i18n.t('rd.rs_overview_page.k29'),
         icon: <ShieldCheck size={20} />,
         onClick: () => navigate(RD_PATHS.review),
-        color: ct.success.dark,
+        color: theme.palette.success.dark,
       },
     ],
     [navigate]
@@ -213,7 +212,7 @@ const RsOverviewPage: React.FC = () => {
         time: '2026-06-29 10:15',
         icon: <Bug size={18} />,
         status: 'error',
-        tags: [{ label: i18n.t('rd.rs_overview_page.k31'), color: ct.error.dark }],
+        tags: [{ label: i18n.t('rd.rs_overview_page.k31'), color: theme.palette.error.dark }],
         onClick: () => navigate(RD_PATHS.bug),
       },
       {
@@ -223,7 +222,7 @@ const RsOverviewPage: React.FC = () => {
         time: '2026-06-29 09:30',
         icon: <Bug size={18} />,
         status: 'warning',
-        tags: [{ label: i18n.t('rd.rs_overview_page.k33'), color: ct.warning.dark }],
+        tags: [{ label: i18n.t('rd.rs_overview_page.k33'), color: theme.palette.warning.dark }],
         onClick: () => navigate(RD_PATHS.bug),
       },
       {

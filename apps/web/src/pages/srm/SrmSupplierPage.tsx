@@ -5,13 +5,10 @@ import { supplierSchema } from '@/schemas/srm';
 import { srmApi } from '@/api/srm';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { Users } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 // normalizeListResponse 默认只认 items/materials/data 字段，SRM 后端信封键为
 // suppliers，需显式 itemsField='suppliers'，否则 total=92 有数但列表恒渲染「暂无数据」
 const apiAdapter = createCrudPageAdapter(
@@ -25,6 +22,7 @@ const apiAdapter = createCrudPageAdapter(
 );
 
 const SupplierStats: React.FC = () => {
+  const theme = useTheme();
   const { data: suppliers = [] } = useQuery({
     queryKey: QUERY_KEYS.SRM.SUPPLIERS,
     queryFn: async () => {
@@ -59,7 +57,7 @@ const SupplierStats: React.FC = () => {
     {
       label: i18n.t('pages.srm_supplier_page.k1'),
       value: stats.total,
-      color: ct.purple[500],
+      color: theme.palette.purple[500],
       bgColor: 'secondary.light',
     },
     {

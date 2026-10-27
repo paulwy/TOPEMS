@@ -20,6 +20,7 @@ import {
   ListItemText,
   IconButton,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { FolderKanban, UserPlus, UserMinus, CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -41,9 +42,6 @@ import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const PHASE_COLORS: Record<
   string,
   'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error'
@@ -85,6 +83,7 @@ function getMemberRoleOptions() {
 }
 
 const PdmProjectPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
@@ -535,7 +534,7 @@ const PdmProjectPage: React.FC = () => {
       subtitle={t('pdm.pdm_project_page.k37')}
       headerProps={{
         pageIcon: <FolderKanban style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
     >
       <CrudPage

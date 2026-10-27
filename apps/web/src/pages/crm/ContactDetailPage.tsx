@@ -1,4 +1,4 @@
-import { Chip, Typography, Box, InputLabel } from '@mui/material';
+import { Chip, Typography, Box, InputLabel, useTheme } from '@mui/material';
 import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, Phone, Building2 } from 'lucide-react';
@@ -13,10 +13,8 @@ import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const ContactDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -290,7 +288,7 @@ const ContactDetailPage: React.FC = () => {
       avatar: (
         <User
           size={32}
-          color={ct.primary.dark}
+          color={theme.palette.primary.dark}
         />
       ),
       title: contact

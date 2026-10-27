@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Stack } from '@mui/material';
+import { Box, Typography, Stack, useTheme } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { User, MessageSquare, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import type { Approval } from '@/api/workflow';
@@ -7,39 +7,39 @@ import { designTokens } from '@/theme/tokens';
 import { getChipStatusColor } from '@/utils/status';
 import i18n from '@/i18n';
 
-const ct = designTokens.colors;
 interface ApprovalHeaderProps {
   approval: Approval;
   theme: Theme;
 }
 export const getStatusIcon = (status: string) => {
+  const theme = useTheme();
   switch (status) {
     case 'approved':
       return (
         <CheckCircle
           size={20}
-          style={{ color: ct.success[600] }}
+          style={{ color: theme.palette.success[600] }}
         />
       );
     case 'rejected':
       return (
         <XCircle
           size={20}
-          style={{ color: ct.error[600] }}
+          style={{ color: theme.palette.error[600] }}
         />
       );
     case 'pending':
       return (
         <Clock
           size={20}
-          style={{ color: ct.warning[600] }}
+          style={{ color: theme.palette.warning[600] }}
         />
       );
     default:
       return (
         <AlertCircle
           size={20}
-          style={{ color: ct.grey[500] }}
+          style={{ color: theme.palette.grey[500] }}
         />
       );
   }

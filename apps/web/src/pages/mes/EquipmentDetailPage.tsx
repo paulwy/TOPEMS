@@ -1,4 +1,4 @@
-import { Typography, Box, InputLabel, Chip } from '@mui/material';
+import { Typography, Box, InputLabel, Chip, useTheme } from '@mui/material';
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -15,9 +15,8 @@ import { PageContainer } from '@/components/common';
 import { MES_PATHS } from '@/modules/mes/config';
 import i18n from '@/i18n';
 import { getChipStatusColor as getStatusColor } from '@/utils/status';
-
-const ct = designTokens.colors;
 const EquipmentDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { success, error } = useNotification();
@@ -317,7 +316,7 @@ const EquipmentDetailPage: React.FC = () => {
       avatar: (
         <Wrench
           size={32}
-          color={ct.primary.dark}
+          color={theme.palette.primary.dark}
         />
       ),
       title: equipment?.name,
@@ -342,7 +341,7 @@ const EquipmentDetailPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
     >
       <DetailPageTemplate

@@ -24,6 +24,7 @@ import {
   Snackbar,
   CircularProgress,
   Button,
+  useTheme,
 } from '@mui/material';
 import type {
   DevicePoint,
@@ -35,9 +36,6 @@ import type {
 } from '../../api/gis';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
-
-const ct = designTokens.colors;
-
 type TabType =
   | 'map'
   | 'devicePoints'
@@ -48,6 +46,7 @@ type TabType =
   | 'businessLocations';
 
 const GisContent: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('gis');
   const { state, loadAllData } = useGis();
   const [activeTab, setActiveTab] = useState<TabType>('map');
@@ -644,7 +643,7 @@ const GisContent: React.FC = () => {
       <Box
         sx={{
           minHeight: '100vh',
-          background: `linear-gradient(135deg, ${ct.background.default} 0%, ${ct.cyan[50]} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.cyan[50]} 100%)`,
         }}
       >
         <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3 }, py: 4 }}>
@@ -899,7 +898,7 @@ const GisContent: React.FC = () => {
                 >
                   <Camera
                     size={20}
-                    style={{ color: ct.pink.dark }}
+                    style={{ color: theme.palette.pink.dark }}
                   />
                 </Box>
                 <Box>
@@ -941,7 +940,7 @@ const GisContent: React.FC = () => {
                 >
                   <Map
                     size={20}
-                    style={{ color: ct.purple.dark }}
+                    style={{ color: theme.palette.purple.dark }}
                   />
                 </Box>
                 <Box>
@@ -975,7 +974,7 @@ const GisContent: React.FC = () => {
                     width: 40,
                     height: 40,
                     borderRadius: 2,
-                    bgcolor: ct.teal[100],
+                    bgcolor: theme.palette.teal[100],
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -983,7 +982,7 @@ const GisContent: React.FC = () => {
                 >
                   <Building2
                     size={20}
-                    style={{ color: ct.teal.main }}
+                    style={{ color: theme.palette.teal.main }}
                   />
                 </Box>
                 <Box>

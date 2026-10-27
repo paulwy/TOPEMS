@@ -16,6 +16,7 @@ import {
   Typography,
   MenuItem,
   Button,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 
@@ -41,8 +42,6 @@ import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 
-const ct = designTokens.colors;
-
 interface SampleTestRecord {
   id: string;
   step_name: string;
@@ -64,6 +63,7 @@ interface LimsListResponse<T> {
 }
 
 const LimsSampleDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -341,7 +341,7 @@ const LimsSampleDetailPage: React.FC = () => {
                           : task.status === 'in_progress' ||
                               task.status === i18n.t('pages.lims_sample_detail_page.k42')
                             ? 'primary.dark'
-                            : ct.yellow[600],
+                            : theme.palette.yellow[600],
                     }}
                   />
                 </Box>
@@ -516,14 +516,14 @@ const LimsSampleDetailPage: React.FC = () => {
                 sx={{
                   fontSize: designTokens.typography.fontSize.scale['1.5rem'],
                   fontWeight: 700,
-                  color: ct.yellow[600],
+                  color: theme.palette.yellow[600],
                 }}
               >
                 {stats.pending}
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ color: ct.yellow[600], mt: 0.5 }}
+                sx={{ color: theme.palette.yellow[600], mt: 0.5 }}
               >
                 {i18n.t('pages.lims_sample_detail_page.k13')}
               </Typography>
@@ -562,7 +562,7 @@ const LimsSampleDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, grey.100 100%)`,
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -570,14 +570,16 @@ const LimsSampleDetailPage: React.FC = () => {
             style={{
               width: 48,
               height: 48,
-              border: `4px solid ${ct.purple[200]}`,
-              borderTop: `4px solid ${ct.purple[600]}`,
+              border: `4px solid ${theme.palette.purple[200]}`,
+              borderTop: `4px solid ${theme.palette.purple[600]}`,
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: `0 auto ${designTokens.spacing.md}px auto`,
             }}
           ></div>
-          <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_sample_detail_page.k14')}</p>
+          <p style={{ color: theme.palette.grey[600] }}>
+            {i18n.t('pages.lims_sample_detail_page.k14')}
+          </p>
         </div>
       </div>
     );
@@ -591,7 +593,7 @@ const LimsSampleDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, grey.100 100%)`,
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -603,7 +605,9 @@ const LimsSampleDetailPage: React.FC = () => {
               margin: `0 auto ${designTokens.spacing.md}px auto`,
             }}
           />
-          <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_sample_detail_page.k48')}</p>
+          <p style={{ color: theme.palette.grey[600] }}>
+            {i18n.t('pages.lims_sample_detail_page.k48')}
+          </p>
           <Button
             onClick={() => navigate(LIMS_PATHS.root)}
             sx={{ mt: 2 }}
@@ -621,7 +625,7 @@ const LimsSampleDetailPage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >
       <DetailPageTemplate

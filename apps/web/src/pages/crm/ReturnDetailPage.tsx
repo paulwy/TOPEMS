@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { Typography, Box, InputLabel, Button, Chip } from '@mui/material';
+import { Typography, Box, InputLabel, Button, Chip, useTheme } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RotateCcw, CheckCircle, XCircle, Package, CircleDot, Ban } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -14,9 +14,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useNotificationStore } from '@/store';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const statusLabelMap: Record<ReturnStatus, string> = {
   pending: i18n.t('crm.returnDetail.status_pending'),
   approved: i18n.t('crm.returnDetail.status_approved'),
@@ -54,6 +51,7 @@ const getStatusChip = (status: ReturnStatus) => (
 );
 
 const ReturnDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -187,7 +185,7 @@ const ReturnDetailPage: React.FC = () => {
           <Typography
             sx={{
               fontFamily: 'monospace',
-              color: record.refund_amount ? ct.primary.main : 'inherit',
+              color: record.refund_amount ? theme.palette.primary.main : 'inherit',
               mt: 0.5,
             }}
           >
@@ -242,9 +240,9 @@ const ReturnDetailPage: React.FC = () => {
                   size={16}
                   style={{
                     color: isCompleted
-                      ? ct.success.main
+                      ? theme.palette.success.main
                       : isCurrent
-                        ? ct.primary.main
+                        ? theme.palette.primary.main
                         : 'var(--color-grey-400)',
                   }}
                 />
@@ -253,9 +251,9 @@ const ReturnDetailPage: React.FC = () => {
                   sx={{
                     fontWeight: isCurrent ? 600 : 400,
                     color: isCompleted
-                      ? ct.success.main
+                      ? theme.palette.success.main
                       : isCurrent
-                        ? ct.primary.main
+                        ? theme.palette.primary.main
                         : 'text.secondary',
                   }}
                 >
@@ -267,7 +265,7 @@ const ReturnDetailPage: React.FC = () => {
                   sx={{
                     width: 32,
                     height: 2,
-                    bgcolor: isCompleted ? ct.success.main : 'divider',
+                    bgcolor: isCompleted ? theme.palette.success.main : 'divider',
                     borderRadius: 1,
                   }}
                 />
@@ -303,7 +301,7 @@ const ReturnDetailPage: React.FC = () => {
       <Box sx={{ overflow: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ borderBottom: `1px solid ${designTokens.colors.grey[200]}` }}>
+            <tr style={{ borderBottom: `1px solid ${theme.palette.grey[200]}` }}>
               <th
                 style={{
                   textAlign: 'left',
@@ -350,7 +348,7 @@ const ReturnDetailPage: React.FC = () => {
             {items.map((item) => (
               <tr
                 key={item.id}
-                style={{ borderBottom: `1px solid ${designTokens.colors.grey[200]}` }}
+                style={{ borderBottom: `1px solid ${theme.palette.grey[200]}` }}
               >
                 <td
                   style={{
@@ -384,7 +382,7 @@ const ReturnDetailPage: React.FC = () => {
                     padding: `${designTokens.spacing.sm} 12px`,
                     textAlign: 'right',
                     fontFamily: 'monospace',
-                    color: ct.primary.main,
+                    color: theme.palette.primary.main,
                   }}
                 >
                   {formatCurrency(item.total_amount)}
@@ -408,7 +406,7 @@ const ReturnDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {t('crm.returnDetail.field_refund_amount')}
           </InputLabel>
-          <Typography sx={{ fontFamily: 'monospace', color: ct.primary.main, mt: 0.5 }}>
+          <Typography sx={{ fontFamily: 'monospace', color: theme.palette.primary.main, mt: 0.5 }}>
             {formatCurrency(financeStatus.refund_amount)}
           </Typography>
         </Box>
@@ -627,7 +625,7 @@ const ReturnDetailPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <RotateCcw style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main}, ${ct.primary.dark})`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
       }}
     >
       <>

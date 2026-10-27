@@ -16,6 +16,7 @@ import {
   Tab,
   Button,
   Chip,
+  useTheme,
 } from '@mui/material';
 import { Plus, Users, Edit2, Network, Settings, Trash2 } from 'lucide-react';
 import FolderOpen from '@mui/icons-material/FolderOpen';
@@ -54,6 +55,7 @@ const STATUS_CONFIG: Record<
 };
 
 export default function ConsolidationScopePage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const {
@@ -111,7 +113,7 @@ export default function ConsolidationScopePage() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Network
               size={16}
-              color={designTokens.colors.primary.dark}
+              color={theme.palette.primary.dark}
             />
             <Typography sx={{ fontFamily: 'monospace', fontSize: 14 }}>{row.code}</Typography>
           </Box>

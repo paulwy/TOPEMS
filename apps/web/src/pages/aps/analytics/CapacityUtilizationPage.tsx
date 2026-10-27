@@ -9,7 +9,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, useTheme } from '@mui/material';
 import { Activity, TrendingUp, TrendingDown } from 'lucide-react';
 import { mesAnalyticsApi } from '@/api/mes/analytics';
 import type { CapacityUtilizationResponse } from '@/api/mes/analytics';
@@ -38,6 +38,7 @@ const LINE_COLORS = [
 ];
 
 export default function CapacityUtilizationPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiResponse, isLoading } = useQuery({
@@ -201,7 +202,7 @@ export default function CapacityUtilizationPage() {
               <Legend />
               <ReferenceLine
                 y={85}
-                stroke={designTokens.colors.success.dark}
+                stroke={theme.palette.success.dark}
                 strokeDasharray='4 4'
                 label={t('aps.capacity_utilization_page.85_7')}
               />

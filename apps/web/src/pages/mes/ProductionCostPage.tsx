@@ -13,6 +13,7 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import i18n from '@/i18n';
@@ -29,12 +30,10 @@ import type {
   TimeRangeOption,
 } from '@/components/templates/StatsPageTemplate';
 import { designTokens } from '@topems/tokens';
-
-const ct = designTokens.colors;
-
 type TabValue = 'period' | 'trend' | 'forecast' | 'work-order';
 
 const ProductionCostPage: React.FC = () => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState<TabValue>('period');
   const [periodType, setPeriodType] = useState<'month' | 'quarter' | 'year'>('month');
   const [workOrderId, setWorkOrderId] = useState('');
@@ -96,21 +95,21 @@ const ProductionCostPage: React.FC = () => {
       case 'up':
         return (
           <TrendingUp
-            color={ct.error.main}
+            color={theme.palette.error.main}
             size={20}
           />
         );
       case 'down':
         return (
           <TrendingDown
-            color={ct.success.main}
+            color={theme.palette.success.main}
             size={20}
           />
         );
       default:
         return (
           <Minus
-            color={ct.grey[500]}
+            color={theme.palette.grey[500]}
             size={20}
           />
         );
@@ -194,7 +193,7 @@ const ProductionCostPage: React.FC = () => {
             icon: (
               <DollarSign
                 size={20}
-                color={ct.teal.main}
+                color={theme.palette.teal.main}
               />
             ),
             color: 'primary',
@@ -238,7 +237,7 @@ const ProductionCostPage: React.FC = () => {
             icon: (
               <DollarSign
                 size={20}
-                color={ct.warning.main}
+                color={theme.palette.warning.main}
               />
             ),
             color: 'warning',

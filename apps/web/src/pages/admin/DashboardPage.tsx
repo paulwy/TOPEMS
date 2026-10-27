@@ -11,8 +11,7 @@ import { designTokens } from '@/theme/tokens';
 import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
+import { useTheme } from '@mui/material';
 const iconMap: Record<string, React.ReactNode> = {
   Users: <Users size={24} />,
   Shield: <Shield size={24} />,
@@ -26,6 +25,7 @@ const getGreeting = (): string => {
   return i18n.t('admin.dashboard_page.k6');
 };
 export const DashboardPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const dashboardQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_DASHBOARD_BASE,
@@ -130,7 +130,7 @@ export const DashboardPage: React.FC = () => {
       subtitle={getGreeting()}
       headerProps={{
         pageIcon: <Shield style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.main} 100%)`,
       }}
       padding={false}
       maxWidth={false}

@@ -36,6 +36,7 @@ import {
   FormControlLabel,
   Grid,
   Alert,
+  useTheme,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
@@ -52,9 +53,8 @@ import {
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
 const BiPermissionPage = () => {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'row-level' | 'data'>('row-level');
   const [searchTerm, setSearchTerm] = useState('');
@@ -483,7 +483,7 @@ const BiPermissionPage = () => {
       subtitle={i18n.t('bi.bi_permission_page.page_subtitle')}
       headerProps={{
         pageIcon: <Shield style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error[600]} 100%)`,
       }}
       padding={false}
       maxWidth={false}
@@ -503,7 +503,7 @@ const BiPermissionPage = () => {
                       width: 48,
                       height: 48,
                       borderRadius: 1,
-                      backgroundColor: ct.error[50],
+                      backgroundColor: theme.palette.error[50],
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -579,7 +579,7 @@ const BiPermissionPage = () => {
                       width: 48,
                       height: 48,
                       borderRadius: 1,
-                      backgroundColor: ct.success[100],
+                      backgroundColor: theme.palette.success[100],
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -690,7 +690,7 @@ const BiPermissionPage = () => {
                     startAdornment: (
                       <Search
                         size={18}
-                        style={{ marginRight: 8, color: ct.grey[400] }}
+                        style={{ marginRight: 8, color: theme.palette.grey[400] }}
                       />
                     ),
                   },

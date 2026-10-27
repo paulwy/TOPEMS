@@ -18,7 +18,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import i18n from '@/i18n';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { PageContainer } from '@/components/common';
@@ -32,8 +32,6 @@ import {
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
 export const NotificationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -300,6 +298,7 @@ export const NotificationDashboardPage: React.FC = () => {
   );
 };
 const NotificationTrendChart: React.FC = () => {
+  const theme = useTheme();
   const days = [
     i18n.t('notification.notification_dashboard_page.k40'),
     i18n.t('notification.notification_dashboard_page.k39'),
@@ -360,7 +359,7 @@ const NotificationTrendChart: React.FC = () => {
             y1={`${100 - value}%`}
             x2='100%'
             y2={`${100 - value}%`}
-            stroke={ct.grey[300]}
+            stroke={theme.palette.grey[300]}
             strokeWidth='0.5'
             strokeDasharray='4,4'
           />

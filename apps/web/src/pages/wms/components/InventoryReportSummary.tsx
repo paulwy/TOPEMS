@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Typography, Card, CardContent, Grid } from '@mui/material';
+import { Box, Typography, Card, CardContent, Grid, useTheme } from '@mui/material';
 import {
   BarChart3,
   Package,
@@ -17,8 +17,6 @@ import {
 import { designTokens } from '@/theme/tokens';
 import type { InventoryStatistics } from '@/api/wms';
 
-const ct = designTokens.colors;
-
 interface InventoryReportSummaryProps {
   statistics: InventoryStatistics | undefined;
   formatNumber: (num: number) => string;
@@ -28,6 +26,7 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
   statistics,
   formatNumber,
 }) => {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   return (
@@ -42,7 +41,12 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <WarehouseIcon
-                  style={{ width: 20, height: 20, marginRight: 8, color: ct.secondary[400] }}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    marginRight: 8,
+                    color: theme.palette.secondary[400],
+                  }}
                 />
                 <Typography
                   variant='subtitle2'
@@ -65,7 +69,12 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Package
-                  style={{ width: 20, height: 20, marginRight: 8, color: ct.success.main }}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    marginRight: 8,
+                    color: theme.palette.success.main,
+                  }}
                 />
                 <Typography
                   variant='subtitle2'
@@ -88,7 +97,12 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <TrendingUp
-                  style={{ width: 20, height: 20, marginRight: 8, color: ct.warning.main }}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    marginRight: 8,
+                    color: theme.palette.warning.main,
+                  }}
                 />
                 <Typography
                   variant='subtitle2'
@@ -111,7 +125,12 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <BarChart3
-                  style={{ width: 20, height: 20, marginRight: 8, color: ct.secondary[500] }}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    marginRight: 8,
+                    color: theme.palette.secondary[500],
+                  }}
                 />
                 <Typography
                   variant='subtitle2'
@@ -141,7 +160,7 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <AlertTriangle
-                  style={{ width: 20, height: 20, marginRight: 8, color: ct.error[600] }}
+                  style={{ width: 20, height: 20, marginRight: 8, color: theme.palette.error[600] }}
                 />
                 <Typography
                   variant='subtitle2'
@@ -170,7 +189,12 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <TrendingDown
-                  style={{ width: 20, height: 20, marginRight: 8, color: ct.warning.dark }}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    marginRight: 8,
+                    color: theme.palette.warning.dark,
+                  }}
                 />
                 <Typography
                   variant='subtitle2'
@@ -196,7 +220,9 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
           <Card sx={{ height: '100%', bgcolor: 'info.light' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Clock style={{ width: 20, height: 20, marginRight: 8, color: ct.info.dark }} />
+                <Clock
+                  style={{ width: 20, height: 20, marginRight: 8, color: theme.palette.info.dark }}
+                />
                 <Typography
                   variant='subtitle2'
                   color='info.dark'
@@ -224,7 +250,12 @@ const InventoryReportSummary: React.FC<InventoryReportSummaryProps> = ({
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <TrendingUp
-                  style={{ width: 20, height: 20, marginRight: 8, color: ct.success.dark }}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    marginRight: 8,
+                    color: theme.palette.success.dark,
+                  }}
                 />
                 <Typography
                   variant='subtitle2'

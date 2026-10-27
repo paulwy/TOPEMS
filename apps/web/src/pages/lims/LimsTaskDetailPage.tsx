@@ -36,8 +36,6 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 
-const ct = designTokens.colors;
-
 interface TaskRecord extends InspectionRecord {
   step_name: string;
 }
@@ -243,7 +241,7 @@ const LimsTaskDetailPage: React.FC = () => {
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
-              <span style={{ color: ct.grey[600] }}>
+              <span style={{ color: theme.palette.grey[600] }}>
                 {i18n.t('pages.lims_task_detail_page.k12')}
               </span>
               <span style={{ fontWeight: 500, color: theme.palette.grey[900] }}>
@@ -261,7 +259,7 @@ const LimsTaskDetailPage: React.FC = () => {
               <Box
                 sx={{
                   height: '100%',
-                  background: `linear-gradient(to right, ${ct.purple[500]}, ${ct.pink[500]})`,
+                  background: `linear-gradient(to right, ${theme.palette.purple[500]}, ${theme.palette.pink[500]})`,
                   width: `${progressPercent}%`,
                   transition: 'all 0.3s',
                 }}
@@ -381,7 +379,7 @@ const LimsTaskDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, grey.100 100%)`,
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -389,14 +387,16 @@ const LimsTaskDetailPage: React.FC = () => {
             style={{
               width: 48,
               height: 48,
-              border: `4px solid ${ct.purple[200]}`,
-              borderTop: `4px solid ${ct.purple[600]}`,
+              border: `4px solid ${theme.palette.purple[200]}`,
+              borderTop: `4px solid ${theme.palette.purple[600]}`,
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: `0 auto ${designTokens.spacing.md}px auto`,
             }}
           ></div>
-          <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_task_detail_page.k3')}</p>
+          <p style={{ color: theme.palette.grey[600] }}>
+            {i18n.t('pages.lims_task_detail_page.k3')}
+          </p>
         </div>
       </div>
     );
@@ -410,7 +410,7 @@ const LimsTaskDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, grey.100 100%)`,
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -422,7 +422,9 @@ const LimsTaskDetailPage: React.FC = () => {
               margin: `0 auto ${designTokens.spacing.md}px auto`,
             }}
           />
-          <p style={{ color: ct.grey[600] }}>{i18n.t('pages.lims_task_detail_page.k15')}</p>
+          <p style={{ color: theme.palette.grey[600] }}>
+            {i18n.t('pages.lims_task_detail_page.k15')}
+          </p>
           <Button
             onClick={() => navigate(LIMS_PATHS.root)}
             sx={{ mt: 2 }}
@@ -604,7 +606,7 @@ const LimsTaskDetailPage: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
-                  color: ct.yellow[800],
+                  color: theme.palette.yellow[800],
                 }}
               >
                 <AlertCircle sx={{ width: 20, height: 20 }} />

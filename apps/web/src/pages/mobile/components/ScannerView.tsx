@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Button, Paper, IconButton } from '@mui/material';
+import { Box, Typography, Button, Paper, IconButton, useTheme } from '@mui/material';
 import { Flashlight, Image, Barcode, Package, CheckSquare, ArrowRight } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
 import { designTokens } from '@/theme/tokens';
@@ -7,7 +7,6 @@ import { alpha } from '@mui/material/styles';
 import { sizeTokens } from '@/theme';
 import i18n from '@/i18n';
 
-const ct = designTokens.colors;
 interface ScannerViewProps {
   scanning: boolean;
   scanResult: string | null;
@@ -26,6 +25,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
   onRescan,
   onCopyResult,
 }) => {
+  const theme = useTheme();
   return (
     <Box sx={{ p: 2 }}>
       <Paper
@@ -37,14 +37,14 @@ const ScannerView: React.FC<ScannerViewProps> = ({
           borderRadius: 2,
           overflow: 'hidden',
           mb: 3,
-          backgroundColor: ct.grey[900],
+          backgroundColor: theme.palette.grey[900],
         }}
       >
         <Box
           sx={{
             position: 'absolute',
             inset: 0,
-            background: `linear-gradient(135deg, ${ct.grey[900]} 0%, ${ct.blue[900]} 100%)`,
+            background: `linear-gradient(135deg, ${theme.palette.grey[900]} 0%, ${theme.palette.blue[900]} 100%)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -138,7 +138,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
             sx={{
               position: 'absolute',
               inset: 0,
-              bgcolor: alpha(ct.grey[900], 0.85),
+              bgcolor: alpha(theme.palette.grey[900], 0.85),
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -158,7 +158,9 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                 mb: 2,
               }}
             >
-              <CheckSquare style={{ width: 32, height: 32, color: ct.background.paper }} />
+              <CheckSquare
+                style={{ width: 32, height: 32, color: theme.palette.background.paper }}
+              />
             </Box>
             <Typography
               variant='h6'
@@ -173,7 +175,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
             <Typography
               variant='body2'
               sx={{
-                color: alpha(ct.background.paper, 0.9),
+                color: alpha(theme.palette.background.paper, 0.9),
                 mb: 2,
                 textAlign: 'center',
                 wordBreak: 'break-all',
@@ -189,7 +191,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                 onClick={onRescan}
                 sx={{
                   color: 'common.white',
-                  borderColor: alpha(ct.background.paper, 0.5),
+                  borderColor: alpha(theme.palette.background.paper, 0.5),
                 }}
               >
                 {i18n.t('mobile.scan.action.rescan')}

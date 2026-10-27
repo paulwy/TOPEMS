@@ -7,7 +7,16 @@ import { departmentApi, employeeApi, type Department, type Employee } from '@/ap
 import { designTokens } from '@/theme/tokens';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Box, Typography, Chip, Avatar, Card, CardHeader, CardContent } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Chip,
+  Avatar,
+  Card,
+  CardHeader,
+  CardContent,
+  useTheme,
+} from '@mui/material';
 import { Building2, User } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { departmentSchema } from '@/schemas/hrm';
@@ -16,10 +25,8 @@ import { EmptyState } from '@/components';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const HrmDepartmentPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('hrm');
   const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
@@ -294,7 +301,7 @@ const HrmDepartmentPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Building2 style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main}, ${ct.primary.dark})`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
       }}
     >
       <CrudPage

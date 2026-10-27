@@ -40,8 +40,6 @@ import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
-
 interface DocumentWithFavorite extends FileMetadata {
   is_favorite?: boolean;
   tags?: string[];
@@ -78,7 +76,7 @@ const DocumentCenterPage: React.FC = () => {
       return (
         <File
           size={24}
-          style={{ color: ct.error.dark }}
+          style={{ color: theme.palette.error.dark }}
         />
       );
     }
@@ -86,7 +84,7 @@ const DocumentCenterPage: React.FC = () => {
       return (
         <File
           size={24}
-          style={{ color: ct.primary.dark }}
+          style={{ color: theme.palette.primary.dark }}
         />
       );
     }
@@ -94,14 +92,14 @@ const DocumentCenterPage: React.FC = () => {
       return (
         <File
           size={24}
-          style={{ color: ct.success.dark }}
+          style={{ color: theme.palette.success.dark }}
         />
       );
     }
     return (
       <File
         size={24}
-        style={{ color: ct.grey[500] }}
+        style={{ color: theme.palette.grey[500] }}
       />
     );
   };

@@ -1,15 +1,13 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { Package, AlertTriangle, DollarSign, CheckCircle } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import { inventorySchema } from '@/schemas/erp';
 import { erpApi } from '@/api/erp';
 import type { Inventory } from '@/api/erp';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
-const ct = designTokens.colors;
 const inventoryAdapter = {
   list: async (params?: {
     page?: number;
@@ -67,7 +65,9 @@ const StatCard: React.FC<{
   bgColor: string;
   iconColor: string;
   gradient?: boolean;
-}> = ({ label, value, icon, bgColor, iconColor, gradient }) => (
+}> = ({ label, value, icon, bgColor, iconColor, gradient }) => {
+  const theme = useTheme();
+  return (
   <Box sx={{ p: 2, bgcolor: bgColor, borderRadius: 3 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
       <Box
@@ -76,7 +76,7 @@ const StatCard: React.FC<{
           height: 40,
           bgcolor: gradient ? undefined : iconColor,
           background: gradient
-            ? `linear-gradient(135deg, ${iconColor}, ${ct.primary.dark})`
+            ? `linear-gradient(135deg, ${iconColor}, ${theme.palette.primary.dark})`
             : undefined,
           borderRadius: gradient ? '50%' : 3,
           display: 'flex',
@@ -84,7 +84,7 @@ const StatCard: React.FC<{
           justifyContent: 'center',
         }}
       >
-        <Box sx={{ color: gradient ? ct.background.paper : iconColor, display: 'flex' }}>
+        <Box sx={{ color: gradient ? theme.palette.background.paper : iconColor, display: 'flex' }}>
           {icon}
         </Box>
       </Box>
@@ -102,8 +102,10 @@ const StatCard: React.FC<{
       {value}
     </Typography>
   </Box>
-);
+  );
+};
 const InventoryManagementPage: React.FC = () => {
+  const theme = useTheme();
   const headerContent = (rows: Record<string, unknown>[], total: number) => {
     const items = rows as unknown as Inventory[];
     const totalValue = items.reduce(
@@ -149,7 +151,7 @@ const InventoryManagementPage: React.FC = () => {
           label={i18n.t('erp.inventory_management_page.k6')}
           value={inStock}
           icon={<CheckCircle size={18} />}
-          bgColor={ct.secondary[100]}
+          bgColor={theme.palette.secondary[100]}
           iconColor='secondary.700'
         />
       </Box>

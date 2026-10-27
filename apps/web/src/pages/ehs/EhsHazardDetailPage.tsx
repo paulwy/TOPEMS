@@ -18,6 +18,7 @@ import {
   Select,
   MenuItem,
   Button,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { DataTable } from '@/components/common/DataTable';
@@ -33,8 +34,6 @@ import { designTokens } from '@/theme/tokens';
 import { EHS_PATHS } from '@/modules/ehs/config';
 
 import { useTranslation } from 'react-i18next';
-
-const ct = designTokens.colors;
 
 interface ControlFormData {
   measure_type: 'engineering' | 'administrative' | 'ppe';
@@ -72,13 +71,17 @@ const assessmentColumns: ColumnDef<RiskAssessment>[] = [
     accessorKey: 'risklevel',
     header: i18n.t('ehs.ehs_hazard_detail_page.risk_level'),
     cell: ({ row }) => {
+      const theme = useTheme();
       const riskResult = calculateRiskLevel(
         row.original.severity || 'medium',
         row.original.likelihood || 'medium'
       );
       const colorMap: Record<string, { bg: string; color: string }> = {
         [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.lighter', color: 'error.dark' },
-        [i18n.t('pages.ehs_hazard_detail_page.k1')]: { bg: 'warning.100', color: ct.yellow[600] },
+        [i18n.t('pages.ehs_hazard_detail_page.k1')]: {
+          bg: 'warning.100',
+          color: theme.palette.yellow[600],
+        },
         [i18n.t('pages.ehs_hazard_detail_page.k2')]: {
           bg: 'success.lighter',
           color: 'success.dark',
@@ -106,6 +109,7 @@ const assessmentColumns: ColumnDef<RiskAssessment>[] = [
 ];
 
 const EhsHazardDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
@@ -499,10 +503,10 @@ const EhsHazardDetailPage: React.FC = () => {
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
-            <Typography sx={{ color: ct.yellow[600], fontSize: 12 }}>
+            <Typography sx={{ color: theme.palette.yellow[600], fontSize: 12 }}>
               {t('ehs.ehs_hazard_detail_page.k4')}
             </Typography>
-            <Typography sx={{ fontWeight: 500, color: ct.yellow[700], mt: 0.5 }}>
+            <Typography sx={{ fontWeight: 500, color: theme.palette.yellow[700], mt: 0.5 }}>
               {hazard.exposure === 'high'
                 ? t('ehs.ehs_hazard_detail_page.hazard_details')
                 : hazard.exposure === 'medium'
@@ -680,7 +684,7 @@ const EhsHazardDetailPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <AlertTriangle sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.orange[500]} 0%, ${ct.orange[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.orange[500]} 0%, ${theme.palette.orange[600]} 100%)`,
       }}
       backButton={{ href: EHS_PATHS.hazard }}
       maxWidth='xl'
@@ -912,7 +916,10 @@ const EhsHazardDetailPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleUpdateHazard}
-            sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: ct.orange[700] } }}
+            sx={{
+              backgroundColor: 'warning.600',
+              '&:hover': { backgroundColor: theme.palette.orange[700] },
+            }}
           >
             {i18n.t('pages.ehs_hazard_detail_page.k25')}
           </Button>
@@ -1022,7 +1029,10 @@ const EhsHazardDetailPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleAddControl}
-            sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: ct.orange[700] } }}
+            sx={{
+              backgroundColor: 'warning.600',
+              '&:hover': { backgroundColor: theme.palette.orange[700] },
+            }}
           >
             {i18n.t('pages.ehs_hazard_detail_page.k31')}
           </Button>

@@ -5,7 +5,7 @@
  * 支持列表展示、创建、编辑、删除、筛选，以及余额展示和统计卡片。
  */
 import React, { useMemo, useCallback } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { ColumnDef } from '@/components/templates/list/types';
 import { getAccountSchema } from '@/schemas/admin';
@@ -17,6 +17,7 @@ import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 const AccountManagementPage: React.FC = () => {
+  const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const apiAdapter: CrudApiAdapter = useMemo(
     () => ({
@@ -148,20 +149,20 @@ const AccountManagementPage: React.FC = () => {
             cost: i18n.t('admin.account_management_page.k17'),
           };
           const colors: Record<string, string> = {
-            asset: `var(--color-primary-main, ${designTokens.colors.primary.dark})`,
-            liability: `var(--color-error-main, ${designTokens.colors.error['800']})`,
-            equity: `var(--color-success-main, ${designTokens.colors.success.dark})`,
-            revenue: `var(--color-info-main, ${designTokens.colors.info[600]}`,
-            expense: `var(--color-warning-main, ${designTokens.colors.warning[500]}`,
+            asset: `var(--color-primary-main, ${theme.palette.primary.dark})`,
+            liability: `var(--color-error-main, ${theme.palette.error['800']})`,
+            equity: `var(--color-success-main, ${theme.palette.success.dark})`,
+            revenue: `var(--color-info-main, ${theme.palette.info[600]}`,
+            expense: `var(--color-warning-main, ${theme.palette.warning[500]}`,
             cost: `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
           };
           const bgColors: Record<string, string> = {
-            asset: `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`,
-            liability: `var(--color-error-lighter, ${designTokens.colors.error[50]}`,
-            equity: `var(--color-success-lighter, ${designTokens.colors.success['50']})`,
-            revenue: `var(--color-info-lighter, ${designTokens.colors.info[50]}`,
-            expense: `var(--color-warning-lighter, ${designTokens.colors.warning[50]}`,
-            cost: `var(--color-action-hover, ${designTokens.colors.action.hover}`,
+            asset: `var(--color-primary-lighter, ${theme.palette.primary['50']})`,
+            liability: `var(--color-error-lighter, ${theme.palette.error[50]}`,
+            equity: `var(--color-success-lighter, ${theme.palette.success['50']})`,
+            revenue: `var(--color-info-lighter, ${theme.palette.info[50]}`,
+            expense: `var(--color-warning-lighter, ${theme.palette.warning[50]}`,
+            cost: `var(--color-action-hover, ${theme.palette.action.hover}`,
           };
           const label = labels[type] || type;
           const color = colors[type] || colors.cost;
@@ -197,12 +198,12 @@ const AccountManagementPage: React.FC = () => {
                 : direction;
           const color =
             direction === 'debit'
-              ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
-              : `var(--color-error-main, ${designTokens.colors.error['800']})`;
+              ? `var(--color-primary-main, ${theme.palette.primary.dark})`
+              : `var(--color-error-main, ${theme.palette.error['800']})`;
           const bgColor =
             direction === 'debit'
-              ? `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`
-              : `var(--color-error-lighter, ${designTokens.colors.error[50]}`;
+              ? `var(--color-primary-lighter, ${theme.palette.primary['50']})`
+              : `var(--color-error-lighter, ${theme.palette.error[50]}`;
           return (
             <span
               style={{
@@ -234,12 +235,12 @@ const AccountManagementPage: React.FC = () => {
                 borderRadius: 12,
                 fontSize: 12,
                 fontWeight: 500,
-                border: `1px solid ${isDetail ? `var(--color-primary-main, ${designTokens.colors.primary[700]}` : `var(--color-divider, ${designTokens.colors.action.selected}`}`,
+                border: `1px solid ${isDetail ? `var(--color-primary-main, ${theme.palette.primary[700]}` : `var(--color-divider, ${theme.palette.action.selected}`}`,
                 backgroundColor: isDetail
-                  ? `var(--color-primary-lighter, ${designTokens.colors.primary['50']})`
+                  ? `var(--color-primary-lighter, ${theme.palette.primary['50']})`
                   : 'transparent',
                 color: isDetail
-                  ? `var(--color-primary-main, ${designTokens.colors.primary.dark})`
+                  ? `var(--color-primary-main, ${theme.palette.primary.dark})`
                   : `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`,
               }}
             >
@@ -257,11 +258,11 @@ const AccountManagementPage: React.FC = () => {
         render: (row) => {
           const isActive = row.isactive !== false;
           const color = isActive
-            ? `var(--color-success-main, ${designTokens.colors.success.dark})`
+            ? `var(--color-success-main, ${theme.palette.success.dark})`
             : `var(--color-text-secondary, ${designTokens.colors.cyber.metal.bottomShadow}`;
           const bgColor = isActive
-            ? `var(--color-success-lighter, ${designTokens.colors.success['50']})`
-            : `var(--color-action-hover, ${designTokens.colors.action.hover}`;
+            ? `var(--color-success-lighter, ${theme.palette.success['50']})`
+            : `var(--color-action-hover, ${theme.palette.action.hover}`;
           return (
             <span
               style={{

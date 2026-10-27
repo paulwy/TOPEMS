@@ -18,6 +18,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
@@ -41,9 +42,6 @@ import { AiToolPageTemplate } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { aiApi } from '@/api/ai';
-
-const ct = designTokens.colors;
-
 type CodeTab = 'generate' | 'explain' | 'fix' | 'optimize' | 'review';
 
 const codeTemplateKeys = [
@@ -188,6 +186,7 @@ const reviewIssueKeys = [
 ];
 
 export const AiCodeAssistantPage: React.FC = () => {
+  const theme = useTheme();
   const {} = useQuery({
     queryKey: ['ai', 'codeAssistant'],
     queryFn: async () => {
@@ -351,21 +350,21 @@ export const AiCodeAssistantPage: React.FC = () => {
         return (
           <AlertTriangle
             size={16}
-            style={{ color: ct.error.main }}
+            style={{ color: theme.palette.error.main }}
           />
         );
       case 'warning':
         return (
           <AlertTriangle
             size={16}
-            style={{ color: ct.warning.main }}
+            style={{ color: theme.palette.warning.main }}
           />
         );
       default:
         return (
           <Info
             size={16}
-            style={{ color: ct.primary.main }}
+            style={{ color: theme.palette.primary.main }}
           />
         );
     }
@@ -378,7 +377,7 @@ export const AiCodeAssistantPage: React.FC = () => {
       pageContainerProps={{
         headerProps: {
           pageIcon: <Code2 style={{ width: 20, height: 20 }} />,
-          pageGradient: `linear-gradient(135deg, ${ct.pink[300]} 0%, ${ct.pink[500]} 100%)`,
+          pageGradient: `linear-gradient(135deg, ${theme.palette.pink[300]} 0%, ${theme.palette.pink[500]} 100%)`,
         },
       }}
     >
@@ -743,7 +742,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                 >
                   <Code2
                     size={48}
-                    style={{ color: ct.text.disabled, marginBottom: 12 }}
+                    style={{ color: theme.palette.text.disabled, marginBottom: 12 }}
                   />
                   <Typography
                     variant='body2'
@@ -771,7 +770,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                   <RefreshCw
                     size={32}
                     className='animate-spin'
-                    style={{ color: ct.secondary[400], marginBottom: 12 }}
+                    style={{ color: theme.palette.secondary[400], marginBottom: 12 }}
                   />
                   <Typography variant='body1'>
                     {t('ai.code_assistant.status.ai_processing')}

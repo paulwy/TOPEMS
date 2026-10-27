@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -70,6 +71,7 @@ const strategyInfoMap: Record<Strategy, string> = {
 };
 
 const ApsSchedulingPage: React.FC = () => {
+  const theme = useTheme();
   const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState<TabValue>('schedule');
   const [strategy, setStrategy] = useState<Strategy>('forward');
@@ -324,10 +326,10 @@ const ApsSchedulingPage: React.FC = () => {
               value: Math.min(r.utilization_rate, 100),
               color:
                 r.utilization_rate > 80
-                  ? ct.error.main
+                  ? theme.palette.error.main
                   : r.utilization_rate > 60
-                    ? ct.warning.main
-                    : ct.success.main,
+                    ? theme.palette.warning.main
+                    : theme.palette.success.main,
             })),
         },
       ];
@@ -346,12 +348,12 @@ const ApsSchedulingPage: React.FC = () => {
             {
               name: i18n.t('pages.aps_scheduling_page.k35'),
               value: utilized,
-              color: ct.primary.main,
+              color: theme.palette.primary.main,
             },
             {
               name: i18n.t('pages.aps_scheduling_page.k34'),
               value: Math.max(100 - utilized, 0),
-              color: ct.grey[300],
+              color: theme.palette.grey[300],
             },
           ],
         },
@@ -367,7 +369,8 @@ const ApsSchedulingPage: React.FC = () => {
             .map((r) => ({
               name: r.resource_name,
               value: Math.min(r.utilization_rate, 100),
-              color: r.utilization_rate > 80 ? ct.error.main : ct.primary.main,
+              color:
+                r.utilization_rate > 80 ? theme.palette.error.main : theme.palette.primary.main,
             })),
         },
       ];
@@ -487,7 +490,7 @@ const ApsSchedulingPage: React.FC = () => {
                   size='small'
                   label={riskLabelMap[String(value)] || String(value)}
                   sx={{
-                    bgcolor: riskColorMap[String(value)] || ct.grey[400],
+                    bgcolor: riskColorMap[String(value)] || theme.palette.grey[400],
                     color: ct.common.white,
                     fontWeight: 500,
                   }}
@@ -701,7 +704,7 @@ const ApsSchedulingPage: React.FC = () => {
           >
             <Brain
               size={64}
-              color={ct.grey[300]}
+              color={theme.palette.grey[300]}
               style={{ marginBottom: 16 }}
             />
             <Typography

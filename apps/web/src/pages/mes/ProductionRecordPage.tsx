@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { productionRecordSchema } from '@/schemas/mes';
@@ -8,19 +8,18 @@ import { Activity } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.records, {
   itemsField: 'records',
 });
 const ProductionRecordPage: React.FC = () => {
+  const theme = useTheme();
   return (
     <PageContainer
       autoTitle
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Activity style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
     >
       <CrudPage

@@ -22,7 +22,7 @@ import type {
   FactoryMap,
   BusinessLocation,
 } from '@/api/gis';
-import { Box, Paper, Tabs, Tab, Snackbar, Alert, CircularProgress } from '@mui/material';
+import { Box, Paper, Tabs, Tab, Snackbar, Alert, CircularProgress, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { GisMapTemplate, type MapMarker, type GeoFence } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
@@ -32,9 +32,8 @@ import { StatsSection } from './components/StatsSection';
 import { DataTableSection } from './components/DataTableSection';
 import { EntityFormModal } from './components/EntityFormModal';
 import { ImportModal } from './components/ImportModal';
-
-const ct = designTokens.colors;
 const GisContent: React.FC = () => {
+  const theme = useTheme();
   const {
     state,
     loadAllData,
@@ -704,7 +703,7 @@ const GisContent: React.FC = () => {
       <Box
         sx={{
           minHeight: '100vh',
-          background: `linear-gradient(135deg, ${ct.background.default} 0%, ${ct.cyan[50]} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.cyan[50]} 100%)`,
         }}
       >
         <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3 }, py: 4 }}>

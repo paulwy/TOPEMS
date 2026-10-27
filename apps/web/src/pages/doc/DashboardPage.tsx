@@ -23,9 +23,7 @@ import type { DocDashboardStats } from '@/api/doc';
 import { LazyChart } from '@/components/charts';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
+import { useTheme } from '@mui/material';
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText size={24} />,
   FolderOpen: <FolderOpen size={24} />,
@@ -43,6 +41,7 @@ const getGreeting = (): string => {
 };
 
 const DocumentDashboardPage: React.FC = () => {
+  const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const { data: statsData, isPending: loading } = useQuery<DocDashboardStats | null>({
@@ -219,7 +218,7 @@ const DocumentDashboardPage: React.FC = () => {
       subtitle={`${getGreeting()}，${i18n.t('pages.dashboard_page.k6')}`}
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.cyan.main} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.cyan.main} 100%)`,
       }}
       padding={false}
       maxWidth={false}

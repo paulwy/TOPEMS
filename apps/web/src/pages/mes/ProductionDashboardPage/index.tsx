@@ -375,7 +375,7 @@ export const ProductionDashboardPage: React.FC = () => {
       onRefresh={handleRefresh}
       loading={loading}
     >
-      <Box sx={{ p: { xs: 2, md: 3 }, backgroundColor: 'grey.50', minHeight: '100vh' }}>
+      <Box sx={{ p: { xs: 2, md: 3 }, backgroundColor: 'background.default', minHeight: '100vh' }}>
         <Stack
           direction='row'
           spacing={2}
@@ -386,7 +386,7 @@ export const ProductionDashboardPage: React.FC = () => {
             py: 1,
             backgroundColor: 'background.paper',
             border: '1px solid',
-            borderColor: 'grey.200',
+            borderColor: 'divider',
             borderRadius: 3,
           }}
         >
@@ -549,7 +549,7 @@ export const ProductionDashboardPage: React.FC = () => {
               p: 2.5,
               borderRadius: 3,
               border: '1px solid',
-              borderColor: 'grey.200',
+              borderColor: 'divider',
               height: '100%',
             }}
           >
@@ -600,7 +600,7 @@ export const ProductionDashboardPage: React.FC = () => {
               p: 2.5,
               borderRadius: 3,
               border: '1px solid',
-              borderColor: 'grey.200',
+              borderColor: 'divider',
               height: '100%',
             }}
           >
@@ -678,7 +678,7 @@ export const ProductionDashboardPage: React.FC = () => {
             p: 2.5,
             borderRadius: 3,
             border: '1px solid',
-            borderColor: 'grey.200',
+            borderColor: 'divider',
           }}
         >
           <Stack

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, InputLabel } from '@mui/material';
+import { Box, Typography, InputLabel, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -9,12 +9,11 @@ import type { MaterialRequirement } from '@/api/mes';
 import { Calculator } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(mesApi.materialRequirements, {
   itemsField: 'requirements',
 });
 const MaterialRequirementPage: React.FC = () => {
+  const theme = useTheme();
   const renderDetailContent = (row: Record<string, unknown>) => {
     const req = row as unknown as MaterialRequirement;
     return (
@@ -225,7 +224,7 @@ const MaterialRequirementPage: React.FC = () => {
             {released}
           </Typography>
         </Box>
-        <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
+        <Box sx={{ p: 2, bgcolor: theme.palette.secondary[100], borderRadius: 3 }}>
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary' }}
@@ -248,7 +247,7 @@ const MaterialRequirementPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Calculator style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
     >
       <CrudPage

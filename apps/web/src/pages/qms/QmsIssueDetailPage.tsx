@@ -21,6 +21,7 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { issueApi } from '@/api/qms/issue';
 import { improvementApi } from '@/api/qms/improvement';
@@ -36,8 +37,6 @@ import {
 } from '@/components/templates/DetailPageTemplate';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 
 function getSeverityLabels(): Record<string, string> {
   return {
@@ -71,6 +70,7 @@ function DetailFieldItem({ label, value }: DetailField) {
 }
 
 export default function QmsIssueDetailPage() {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [issue, setIssue] = useState<QualityIssue | null>(null);
@@ -175,14 +175,14 @@ export default function QmsIssueDetailPage() {
                 variant='outlined'
                 sx={{
                   p: 3,
-                  bgcolor: ct.success[50],
-                  borderColor: ct.success[200],
+                  bgcolor: theme.palette.success[50],
+                  borderColor: theme.palette.success[200],
                 }}
               >
-                <InputLabel sx={{ fontSize: 12, color: ct.success[700] }}>
+                <InputLabel sx={{ fontSize: 12, color: theme.palette.success[700] }}>
                   {i18n.t('qms.qms_issue_detail_page.k15')}
                 </InputLabel>
-                <Typography sx={{ mt: 1, color: ct.success[800], lineHeight: 1.6 }}>
+                <Typography sx={{ mt: 1, color: theme.palette.success[800], lineHeight: 1.6 }}>
                   {issue.resolution}
                 </Typography>
               </Paper>

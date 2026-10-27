@@ -25,6 +25,7 @@ import {
   Select,
   CircularProgress,
   Modal,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
@@ -52,10 +53,9 @@ import {
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
 type ViewMode = 'list' | 'editor';
 const DatasetPage = () => {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchTerm, setSearchTerm] = useState('');
@@ -311,7 +311,7 @@ const DatasetPage = () => {
               width: 40,
               height: 40,
               borderRadius: 1,
-              backgroundColor: ct.success[50],
+              backgroundColor: theme.palette.success[50],
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -771,7 +771,7 @@ const DatasetPage = () => {
       subtitle={i18n.t('bi.dataset_page.page_subtitle')}
       headerProps={{
         pageIcon: <Database style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
       padding={false}
       maxWidth={false}

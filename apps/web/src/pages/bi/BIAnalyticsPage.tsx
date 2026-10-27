@@ -26,7 +26,7 @@ import {
 } from 'recharts';
 import { fetchAnalyticsOverview, fetchModuleData } from '@/api/bi';
 import { BIChartColors } from '@/components/charts/chartTheme';
-import { Box, Typography, Skeleton, Alert } from '@mui/material';
+import { Box, Typography, Skeleton, Alert, useTheme } from '@mui/material';
 import {
   DashboardTemplate,
   type StatCard,
@@ -260,6 +260,7 @@ const moduleConfigs: Omit<ModuleInfo, 'stats' | 'trend'>[] = [
 ];
 
 const BIAnalyticsPage = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -574,9 +575,9 @@ const BIAnalyticsPage = () => {
             />
             <XAxis
               dataKey='name'
-              tick={{ fill: ct.text.secondary, fontSize: 12 }}
+              tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
             />
-            <YAxis tick={{ fill: ct.text.secondary, fontSize: 12 }} />
+            <YAxis tick={{ fill: theme.palette.text.secondary, fontSize: 12 }} />
             <Tooltip />
             <Bar
               dataKey='value'

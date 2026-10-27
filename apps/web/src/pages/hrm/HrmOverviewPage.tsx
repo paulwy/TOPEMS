@@ -22,9 +22,7 @@ import { LazyChart } from '@/components/charts';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
+import { useTheme } from '@mui/material';
 const departmentData = [
   { name: i18n.t('hrm.hrm_overview_page.tech_dept'), value: 85 },
   { name: i18n.t('hrm.hrm_overview_page.product'), value: 42 },
@@ -52,6 +50,7 @@ const performanceData = [
 ];
 
 const HrmOverviewPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -172,42 +171,42 @@ const HrmOverviewPage: React.FC = () => {
         label: i18n.t('hrm.hrm_overview_page.employee_management'),
         icon: <Users size={20} />,
         onClick: () => navigate(HRM_PATHS.employees),
-        color: ct.primary.dark,
+        color: theme.palette.primary.dark,
       },
       {
         id: 'attendance-manage',
         label: i18n.t('hrm.hrm_overview_page.attendance_management'),
         icon: <Clock size={20} />,
         onClick: () => navigate(HRM_PATHS.attendance),
-        color: ct.secondary[700],
+        color: theme.palette.secondary[700],
       },
       {
         id: 'leave-manage',
         label: i18n.t('hrm.hrm_overview_page.leave_management'),
         icon: <Calendar size={20} />,
         onClick: () => navigate(HRM_PATHS.leave),
-        color: ct.success[700],
+        color: theme.palette.success[700],
       },
       {
         id: 'salary-manage',
         label: i18n.t('hrm.hrm_overview_page.payroll_management'),
         icon: <DollarSign size={20} />,
         onClick: () => navigate(HRM_PATHS.payroll),
-        color: ct.warning[600],
+        color: theme.palette.warning[600],
       },
       {
         id: 'performance-review',
         label: i18n.t('hrm.hrm_overview_page.performance_review'),
         icon: <Award size={20} />,
         onClick: () => navigate(HRM_PATHS.performance),
-        color: ct.success[700],
+        color: theme.palette.success[700],
       },
       {
         id: 'recruitment',
         label: i18n.t('hrm.hrm_overview_page.recruitment_management'),
         icon: <Briefcase size={20} />,
         onClick: () => navigate(HRM_PATHS.recruitment),
-        color: ct.error[700],
+        color: theme.palette.error[700],
       },
     ],
     [navigate]
@@ -222,7 +221,12 @@ const HrmOverviewPage: React.FC = () => {
         time: '2026-06-29 09:30',
         icon: <Calendar size={18} />,
         status: 'warning',
-        tags: [{ label: i18n.t('hrm.hrm_overview_page.pending_approval'), color: ct.warning[600] }],
+        tags: [
+          {
+            label: i18n.t('hrm.hrm_overview_page.pending_approval'),
+            color: theme.palette.warning[600],
+          },
+        ],
         onClick: () => navigate(HRM_PATHS.leave),
       },
       {
@@ -259,7 +263,9 @@ const HrmOverviewPage: React.FC = () => {
         time: '2026-06-27 15:00',
         icon: <GraduationCap size={18} />,
         status: 'info',
-        tags: [{ label: i18n.t('hrm.hrm_overview_page.in_progress'), color: ct.primary.dark }],
+        tags: [
+          { label: i18n.t('hrm.hrm_overview_page.in_progress'), color: theme.palette.primary.dark },
+        ],
         onClick: () => navigate(HRM_PATHS.training),
       },
     ],

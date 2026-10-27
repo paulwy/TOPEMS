@@ -24,6 +24,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  useTheme,
 } from '@mui/material';
 import {
   Settings,
@@ -52,8 +53,6 @@ import i18n from '@/i18n';
 import { aiApi } from '@/api/ai';
 import { SettingsPageTemplate } from '@/components/templates';
 import type { SettingTab, SettingSection } from '@/components/templates/SettingsPageTemplate';
-
-const ct = designTokens.colors;
 
 interface AIModel {
   id: string;
@@ -211,6 +210,7 @@ const getStatusConfig = (status: AIModel['status']) => {
 };
 
 export const AiModelSettingsPage: React.FC = () => {
+  const theme = useTheme();
   const {} = useQuery({
     queryKey: ['ai', 'modelSettings'],
     queryFn: async () => {
@@ -984,7 +984,7 @@ export const AiModelSettingsPage: React.FC = () => {
                     <ListItemIcon sx={{ minWidth: 32 }}>
                       <AlertCircle
                         size={16}
-                        style={{ color: ct.warning.main }}
+                        style={{ color: theme.palette.warning.main }}
                       />
                     </ListItemIcon>
                     <ListItemText
@@ -999,7 +999,7 @@ export const AiModelSettingsPage: React.FC = () => {
                     <ListItemIcon sx={{ minWidth: 32 }}>
                       <AlertCircle
                         size={16}
-                        style={{ color: ct.warning.main }}
+                        style={{ color: theme.palette.warning.main }}
                       />
                     </ListItemIcon>
                     <ListItemText
@@ -1014,7 +1014,7 @@ export const AiModelSettingsPage: React.FC = () => {
                     <ListItemIcon sx={{ minWidth: 32 }}>
                       <AlertCircle
                         size={16}
-                        style={{ color: ct.warning.main }}
+                        style={{ color: theme.palette.warning.main }}
                       />
                     </ListItemIcon>
                     <ListItemText

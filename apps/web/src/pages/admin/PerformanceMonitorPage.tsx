@@ -23,9 +23,9 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { adminApi } from '@/api/admin';
-
-const ct = designTokens.colors;
+import { useTheme } from '@mui/material';
 const PerformanceMonitorPage: React.FC = () => {
+  const theme = useTheme();
   const {} = useQuery({
     queryKey: ['admin', 'performanceMonitor'],
     queryFn: async () => {
@@ -136,11 +136,11 @@ const PerformanceMonitorPage: React.FC = () => {
           label: i18n.t('admin.performance_monitor_page.column_status'),
           render: (value: unknown) =>
             value === 'success' ? (
-              <span style={{ color: ct.success[500], fontWeight: 500 }}>
+              <span style={{ color: theme.palette.success[500], fontWeight: 500 }}>
                 {i18n.t('admin.performance_monitor_page.status_success')}
               </span>
             ) : (
-              <span style={{ color: ct.error.main, fontWeight: 500 }}>
+              <span style={{ color: theme.palette.error.main, fontWeight: 500 }}>
                 {i18n.t('admin.performance_monitor_page.status_fail')}
               </span>
             ),
@@ -164,7 +164,7 @@ const PerformanceMonitorPage: React.FC = () => {
           onClick: () => navigate(DASHBOARD_PATHS.dashboard),
         },
         pageIcon: <Activity style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]}, ${ct.secondary.main})`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]}, ${theme.palette.secondary.main})`,
         actions: [
           {
             label: i18n.t('admin.performance_monitor_page.action_export'),
@@ -205,7 +205,7 @@ const PerformanceMonitorPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span
               style={{
-                color: ct.grey[500],
+                color: theme.palette.grey[500],
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -216,7 +216,7 @@ const PerformanceMonitorPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span
               style={{
-                color: ct.grey[500],
+                color: theme.palette.grey[500],
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -227,7 +227,7 @@ const PerformanceMonitorPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span
               style={{
-                color: ct.grey[500],
+                color: theme.palette.grey[500],
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -238,7 +238,7 @@ const PerformanceMonitorPage: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span
               style={{
-                color: ct.grey[500],
+                color: theme.palette.grey[500],
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -271,7 +271,7 @@ const PerformanceMonitorPage: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span
               style={{
-                color: ct.grey[500],
+                color: theme.palette.grey[500],
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -286,12 +286,12 @@ const PerformanceMonitorPage: React.FC = () => {
                 padding: 4,
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 borderRadius: 4,
-                border: `1px solid ${ct.grey[300]}`,
+                border: `1px solid ${theme.palette.grey[300]}`,
               }}
             />
             <span
               style={{
-                color: ct.grey[500],
+                color: theme.palette.grey[500],
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
               }}
             >
@@ -302,9 +302,9 @@ const PerformanceMonitorPage: React.FC = () => {
         {slowCalls.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 32 }}>
             <CheckCircle
-              style={{ width: 48, height: 48, color: ct.success[500], marginBottom: 8 }}
+              style={{ width: 48, height: 48, color: theme.palette.success[500], marginBottom: 8 }}
             />
-            <p style={{ color: ct.grey[500] }}>
+            <p style={{ color: theme.palette.grey[500] }}>
               {i18n.t('admin.performance_monitor_page.no_slow_api')}
             </p>
           </div>
@@ -336,7 +336,7 @@ const PerformanceMonitorPage: React.FC = () => {
                   <p
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.75rem'],
-                      color: ct.grey[500],
+                      color: theme.palette.grey[500],
                       margin: `${designTokens.spacing.xs} 0 0`,
                     }}
                   >
@@ -344,7 +344,7 @@ const PerformanceMonitorPage: React.FC = () => {
                   </p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontWeight: 500, color: ct.error.main, margin: 0 }}>
+                  <p style={{ fontWeight: 500, color: theme.palette.error.main, margin: 0 }}>
                     {(call.duration / 1000).toFixed(2)}s
                   </p>
                   <p

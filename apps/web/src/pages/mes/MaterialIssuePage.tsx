@@ -10,6 +10,7 @@ import {
   TableRow,
   Paper,
   InputLabel,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -20,8 +21,6 @@ import type { MaterialIssue, MaterialIssueItem } from '@/api/mes';
 import { PackageOpen, FileText } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
-
-const ct = designTokens.colors;
 const apiAdapter = createCrudPageAdapter(
   mesApi.materialIssues as unknown as CrudApi<MaterialIssue>,
   {
@@ -29,6 +28,7 @@ const apiAdapter = createCrudPageAdapter(
   }
 );
 const MaterialIssuePage: React.FC = () => {
+  const theme = useTheme();
   const renderDetailContent = (row: Record<string, unknown>) => {
     const issue = row as unknown as MaterialIssue;
     return (
@@ -143,7 +143,7 @@ const MaterialIssuePage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <PackageOpen style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
     >
       <CrudPage
@@ -186,7 +186,7 @@ const MaterialIssuePage: React.FC = () => {
                   {pending}
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
+              <Box sx={{ p: 2, bgcolor: theme.palette.secondary[100], borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'text.secondary', mb: 1 }}

@@ -1,17 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, ChevronLeft, Book, Database, Users, Shield, Key, FileText } from 'lucide-react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 import { DashboardTemplate } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import i18n from '@/i18n';
 
-const ct = designTokens.colors;
 interface SystemManagementPageProps {
   onNavigate?: (page: string) => void;
 }
 const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate: _onNavigate }) => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const systemFeatures = [
     {
@@ -79,7 +79,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
       <Box
         sx={{
           minHeight: '100vh',
-          background: `linear-gradient(to bottom right, grey.100, ${ct.background.default})`,
+          background: `linear-gradient(to bottom right, grey.100, ${theme.palette.background.default})`,
         }}
       >
         <Box
@@ -116,7 +116,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                   sx={{
                     width: 40,
                     height: 40,
-                    background: `linear-gradient(to bottom right, ${ct.grey[600]}, ${ct.grey[600]})`,
+                    background: `linear-gradient(to bottom right, ${theme.palette.grey[600]}, ${theme.palette.grey[600]})`,
                     borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',

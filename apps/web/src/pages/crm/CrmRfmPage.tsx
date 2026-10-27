@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Box, Button, Chip, TextField, MenuItem, Tooltip } from '@mui/material';
+import { Box, Button, Chip, TextField, MenuItem, Tooltip, useTheme } from '@mui/material';
 import { Activity, Layers, RefreshCw, TrendingUp, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,27 +15,25 @@ import type {
   TableColumn,
 } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
-import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
-
-// 分群颜色映射
-const SEGMENT_COLORS: Record<RfmSegment, string> = {
-  champion: ct.success.main,
-  loyal: ct.primary.main,
-  potential: ct.info?.main ?? designTokens.colors.info['700'],
-  new: ct.secondary.main,
-  at_risk: ct.warning.main,
-  cannot_lost: ct.error.main,
-  hibernating: 'colors.grey.500',
-  lost: designTokens.colors.grey[600],
-};
-
 const CrmRfmPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
+
+  // 分群颜色映射
+  const segmentColors: Record<RfmSegment, string> = {
+    champion: theme.palette.success.main,
+    loyal: theme.palette.primary.main,
+    potential: theme.palette.info.main,
+    new: theme.palette.secondary.main,
+    at_risk: theme.palette.warning.main,
+    cannot_lost: theme.palette.error.main,
+    hibernating: theme.palette.grey[500],
+    lost: theme.palette.grey[600],
+  };
 
   // RFM 分析配置
   const [periodDays, setPeriodDays] = useState(365);
@@ -123,28 +121,28 @@ const CrmRfmPage: React.FC = () => {
         title: t('crm.rfm.stat_total_customers'),
         value: `${summary.totalCustomers}`,
         icon: <Users sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
+        gradient: [theme.palette.primary.dark, theme.palette.primary[800]] as [string, string],
       },
       {
         id: 'segment-count',
         title: t('crm.rfm.stat_segment_count'),
         value: `${summary.segmentCount}`,
         icon: <Layers sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
+        gradient: [theme.palette.secondary.main, theme.palette.secondary.dark] as [string, string],
       },
       {
         id: 'avg-monetary',
         title: t('crm.rfm.stat_avg_monetary'),
         value: `¥${summary.avgMonetary.toLocaleString()}`,
         icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.success.main, ct.success.dark] as [string, string],
+        gradient: [theme.palette.success.main, theme.palette.success.dark] as [string, string],
       },
       {
         id: 'avg-frequency',
         title: t('crm.rfm.stat_avg_frequency'),
         value: `${summary.avgFrequency}`,
         icon: <Activity sx={{ width: 24, height: 24 }} />,
-        gradient: [ct.warning.main, ct.warning.dark] as [string, string],
+        gradient: [theme.palette.warning.main, theme.palette.warning.dark] as [string, string],
       },
     ],
     [summary, t]
@@ -237,8 +235,8 @@ const CrmRfmPage: React.FC = () => {
               label={s.label}
               size='small'
               sx={{
-                bgcolor: `${SEGMENT_COLORS[s.segment]}20`,
-                color: SEGMENT_COLORS[s.segment],
+                bgcolor: `${segmentColors[s.segment]}20`,
+                color: segmentColors[s.segment],
                 fontWeight: 600,
               }}
             />
@@ -267,8 +265,8 @@ const CrmRfmPage: React.FC = () => {
               size='small'
               variant='outlined'
               sx={{
-                color: SEGMENT_COLORS[r.segment],
-                borderColor: SEGMENT_COLORS[r.segment],
+                color: segmentColors[r.segment],
+                borderColor: segmentColors[r.segment],
               }}
             />
           ),
@@ -277,7 +275,7 @@ const CrmRfmPage: React.FC = () => {
       },
     ],
 
-    [segments, records, segmentsQuery.isLoading, recordsQuery.isLoading, t]
+    [segments, records, segmentsQuery.isLoading, recordsQuery.isLoading, t, segmentColors]
   );
 
   const customToolbar = (

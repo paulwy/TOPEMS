@@ -9,6 +9,7 @@ import {
   MenuItem,
   Select,
   Typography,
+  useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import {
@@ -29,7 +30,6 @@ import {
   Line,
 } from 'recharts';
 import i18n from '@/i18n';
-import { designTokens } from '@topems/tokens';
 import { DashboardTemplate, type StatCardConfig } from '@/components/templates/DashboardTemplate';
 import { Target, Activity, Gauge, CheckCircle } from 'lucide-react';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
@@ -39,6 +39,7 @@ const CHART_HEIGHT_SM = 200;
 const CHART_HEIGHT_LG = 300;
 
 export default function MesOeeDashboardPage() {
+  const theme = useTheme();
   const { data: analyticsData } = useAnalyticsData({
     fetcher: () => mesAnalyticsApi.getOeeDashboard({ days: 7 }),
     deps: [],
@@ -168,7 +169,7 @@ export default function MesOeeDashboardPage() {
                     <RadialBar
                       background
                       dataKey='value'
-                      fill={designTokens.colors.secondary.dark}
+                      fill={theme.palette.secondary.dark}
                     />
                   </RadialBarChart>
                 </ResponsiveContainer>
@@ -202,8 +203,8 @@ export default function MesOeeDashboardPage() {
                     <PolarAngleAxis dataKey='metric' />
                     <Radar
                       dataKey='value'
-                      stroke={designTokens.colors.success.dark}
-                      fill={designTokens.colors.success.dark}
+                      stroke={theme.palette.success.dark}
+                      fill={theme.palette.success.dark}
                       fillOpacity={0.5}
                     />
                   </RadarChart>
@@ -237,7 +238,7 @@ export default function MesOeeDashboardPage() {
                     <Tooltip />
                     <Line
                       dataKey='oee'
-                      stroke={designTokens.colors.warning.main}
+                      stroke={theme.palette.warning.main}
                       strokeWidth={2}
                       dot={false}
                     />
@@ -276,7 +277,7 @@ export default function MesOeeDashboardPage() {
                 <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                 <Scatter
                   data={data.by_equipment}
-                  fill={designTokens.colors.secondary.dark}
+                  fill={theme.palette.secondary.dark}
                 />
               </ScatterChart>
             </ResponsiveContainer>

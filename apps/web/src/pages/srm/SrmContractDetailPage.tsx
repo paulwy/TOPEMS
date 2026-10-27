@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Box, Typography, Chip, Avatar, InputLabel } from '@mui/material';
+import { Box, Typography, Chip, Avatar, InputLabel, useTheme } from '@mui/material';
 import { FileText, Building2, Calendar, DollarSign } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { srmApi, type SupplierContract } from '@/api/srm';
@@ -10,7 +10,6 @@ import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
 
@@ -23,6 +22,7 @@ const statusLabels: Record<string, string> = {
 };
 
 const SrmContractDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
 
   const contractQuery = useQuery<SupplierContract | null>({
@@ -56,7 +56,7 @@ const SrmContractDetailPage: React.FC = () => {
       avatar: (
         <FileText
           size={36}
-          color={designTokens.colors.background.paper}
+          color={theme.palette.background.paper}
         />
       ),
       title: contract?.title || undefined,

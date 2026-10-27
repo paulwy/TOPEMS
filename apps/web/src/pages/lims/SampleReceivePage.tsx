@@ -1,5 +1,15 @@
 import React, { useMemo } from 'react';
-import { Box, Typography, Card, CardContent, Stepper, Step, StepLabel, Chip } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Stepper,
+  Step,
+  StepLabel,
+  Chip,
+  useTheme,
+} from '@mui/material';
 import { TestTube, Package, CheckCircle, Clock } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -10,8 +20,6 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { getStatusColor } from '@/utils/status';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const getWorkflowSteps = () => [
   i18n.t('lims.sample_receive_page.k4'),
   i18n.t('lims.sample_receive_page.k3'),
@@ -34,6 +42,7 @@ const getStageStep = (status: string): number => {
 const getSampleStatusColor = (status: string): string =>
   getStatusColor(status, { category: 'lims', fallback: 'grey.100' }) as string;
 const SampleReceivePage: React.FC = () => {
+  const theme = useTheme();
   const sampleApiAdapter: CrudApiAdapter<Sample> = useMemo(
     () => ({
       list: async (params) => {
@@ -203,7 +212,7 @@ const SampleReceivePage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Clock sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
+                <Clock sx={{ width: 20, height: 20, color: theme.palette.yellow[600] }} />
               </Box>
               <Box>
                 <Typography
@@ -436,7 +445,7 @@ const SampleReceivePage: React.FC = () => {
       subtitle='Sample Receive Management'
       headerProps={{
         pageIcon: <TestTube style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >
       <CrudPage

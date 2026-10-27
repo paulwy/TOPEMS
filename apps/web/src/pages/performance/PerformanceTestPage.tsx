@@ -4,6 +4,7 @@ import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { FormPageTemplate } from '@/components/templates';
+import { useTheme } from '@mui/material';
 
 interface LayoutShift {
   value: number;
@@ -107,6 +108,7 @@ const icons: Record<string, React.ReactNode> = {
 const iconKeys = ['zap', 'timer', 'gauge', 'layers', 'shield', 'globe', 'cpu', 'database'];
 
 const PerformanceTestPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('performance');
   const [loadTime, setLoadTime] = useState<number | null>(null);
   const [renderComplete, setRenderComplete] = useState(false);
@@ -289,9 +291,7 @@ const PerformanceTestPage: React.FC = () => {
       label: t('performance.performance_test_page.k2'),
       value: loadTime ? `${loadTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k1'),
       color:
-        loadTime && loadTime < 100
-          ? `${designTokens.colors.success.dark}`
-          : designTokens.colors.warning.dark,
+        loadTime && loadTime < 100 ? `${theme.palette.success.dark}` : theme.palette.warning.dark,
       bgColor: loadTime && loadTime < 100 ? 'colors.success.100' : 'colors.warning.100',
       description: t('performance.performance_test_page.k3'),
     },
@@ -300,10 +300,10 @@ const PerformanceTestPage: React.FC = () => {
       value: lcpTime ? `${lcpTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k2'),
       color:
         lcpTime && lcpTime < 2500
-          ? `${designTokens.colors.success.dark}`
+          ? `${theme.palette.success.dark}`
           : lcpTime && lcpTime < 4000
-            ? designTokens.colors.warning.dark
-            : designTokens.colors.error.dark,
+            ? theme.palette.warning.dark
+            : theme.palette.error.dark,
       bgColor:
         lcpTime && lcpTime < 2500
           ? 'colors.success.100'
@@ -317,10 +317,10 @@ const PerformanceTestPage: React.FC = () => {
       value: ttiTime ? `${ttiTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k3'),
       color:
         ttiTime && ttiTime < 3800
-          ? `${designTokens.colors.success.dark}`
+          ? `${theme.palette.success.dark}`
           : ttiTime && ttiTime < 7300
-            ? designTokens.colors.warning.dark
-            : designTokens.colors.error.dark,
+            ? theme.palette.warning.dark
+            : theme.palette.error.dark,
       bgColor:
         ttiTime && ttiTime < 3800
           ? 'colors.success.100'
@@ -334,10 +334,10 @@ const PerformanceTestPage: React.FC = () => {
       value: fidTime ? `${fidTime.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k4'),
       color:
         fidTime && fidTime < 100
-          ? `${designTokens.colors.success.dark}`
+          ? `${theme.palette.success.dark}`
           : fidTime && fidTime < 300
-            ? designTokens.colors.warning.dark
-            : designTokens.colors.error.dark,
+            ? theme.palette.warning.dark
+            : theme.palette.error.dark,
       bgColor:
         fidTime && fidTime < 100
           ? 'colors.success.100'
@@ -351,10 +351,10 @@ const PerformanceTestPage: React.FC = () => {
       value: clsScore !== null ? clsScore.toFixed(2) : i18n.t('pages.performance_test_page.k5'),
       color:
         clsScore !== null && clsScore < 0.1
-          ? `${designTokens.colors.success.dark}`
+          ? `${theme.palette.success.dark}`
           : clsScore !== null && clsScore < 0.25
-            ? designTokens.colors.warning.dark
-            : designTokens.colors.error.dark,
+            ? theme.palette.warning.dark
+            : theme.palette.error.dark,
       bgColor:
         clsScore !== null && clsScore < 0.1
           ? 'colors.success.100'
@@ -368,8 +368,8 @@ const PerformanceTestPage: React.FC = () => {
       value: firstPaint ? `${firstPaint.toFixed(2)}ms` : i18n.t('pages.performance_test_page.k6'),
       color:
         firstPaint && firstPaint < 1000
-          ? `${designTokens.colors.success.dark}`
-          : designTokens.colors.warning.dark,
+          ? `${theme.palette.success.dark}`
+          : theme.palette.warning.dark,
       bgColor: firstPaint && firstPaint < 1000 ? 'colors.success.100' : 'colors.warning.100',
       description: 'First Paint (FP)',
     },
@@ -380,8 +380,8 @@ const PerformanceTestPage: React.FC = () => {
         : i18n.t('pages.performance_test_page.k7'),
       color:
         firstContentfulPaint && firstContentfulPaint < 1500
-          ? `${designTokens.colors.success.dark}`
-          : designTokens.colors.warning.dark,
+          ? `${theme.palette.success.dark}`
+          : theme.palette.warning.dark,
       bgColor:
         firstContentfulPaint && firstContentfulPaint < 1500
           ? 'colors.success.100'
@@ -395,8 +395,8 @@ const PerformanceTestPage: React.FC = () => {
         : i18n.t('pages.performance_test_page.k8'),
       color:
         navigationTime && navigationTime < 2000
-          ? `${designTokens.colors.success.dark}`
-          : designTokens.colors.warning.dark,
+          ? `${theme.palette.success.dark}`
+          : theme.palette.warning.dark,
       bgColor:
         navigationTime && navigationTime < 2000 ? 'colors.success.100' : 'colors.warning.100',
       description: t('performance.performance_test_page.k11'),
@@ -413,8 +413,8 @@ const PerformanceTestPage: React.FC = () => {
       value: avgRenderTime ? `${avgRenderTime.toFixed(2)}ms` : 'N/A',
       color:
         avgRenderTime && avgRenderTime < 16
-          ? `${designTokens.colors.success.dark}`
-          : designTokens.colors.warning.dark,
+          ? `${theme.palette.success.dark}`
+          : theme.palette.warning.dark,
       bgColor: avgRenderTime && avgRenderTime < 16 ? 'colors.success.100' : 'colors.warning.100',
       description: t('performance.performance_test_page.k15'),
     },
@@ -425,8 +425,8 @@ const PerformanceTestPage: React.FC = () => {
         : i18n.t('pages.performance_test_page.k11'),
       color:
         domContentLoaded && domContentLoaded < 1000
-          ? `${designTokens.colors.success.dark}`
-          : designTokens.colors.warning.dark,
+          ? `${theme.palette.success.dark}`
+          : theme.palette.warning.dark,
       bgColor:
         domContentLoaded && domContentLoaded < 1000 ? 'colors.success.100' : 'colors.warning.100',
       description: 'DOM Content Loaded',
@@ -471,7 +471,7 @@ const PerformanceTestPage: React.FC = () => {
       <div
         style={{
           minHeight: '100vh',
-          background: `linear-gradient(135deg, ${designTokens.colors.primary[900]} 0%, ${designTokens.colors.primary.main} 50%, ${designTokens.colors.primary['400']} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.primary[900]} 0%, ${theme.palette.primary.main} 50%, ${theme.palette.primary['400']} 100%)`,
           padding: '2rem',
           animation: 'fadeIn 0.5s ease-out',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -572,7 +572,7 @@ const PerformanceTestPage: React.FC = () => {
                   background: 'common.white',
                   backdropFilter: 'blur(20px)',
                   borderRadius: '16px',
-                  boxShadow: `0 10px 40px ${designTokens.colors.action.selected}`,
+                  boxShadow: `0 10px 40px ${theme.palette.action.selected}`,
                   padding: '1.5rem',
                   transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                   animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`,
@@ -580,12 +580,12 @@ const PerformanceTestPage: React.FC = () => {
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
                   (e.currentTarget as HTMLElement).style.boxShadow =
-                    `0 15px 50px ${designTokens.colors.action.selected}`;
+                    `0 15px 50px ${theme.palette.action.selected}`;
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
                   (e.currentTarget as HTMLElement).style.boxShadow =
-                    `0 10px 40px ${designTokens.colors.action.selected}`;
+                    `0 10px 40px ${theme.palette.action.selected}`;
                 }}
               >
                 <div
@@ -658,7 +658,7 @@ const PerformanceTestPage: React.FC = () => {
                 background: 'common.white',
                 backdropFilter: 'blur(20px)',
                 borderRadius: '16px',
-                boxShadow: `0 10px 40px ${designTokens.colors.action.selected}`,
+                boxShadow: `0 10px 40px ${theme.palette.action.selected}`,
                 maxWidth: '600px',
                 margin: '0 auto',
                 padding: '2rem',
@@ -745,7 +745,7 @@ const PerformanceTestPage: React.FC = () => {
                   onClick={() => window.location.reload()}
                   style={{
                     padding: '0.75rem 1.5rem',
-                    background: `linear-gradient(135deg, ${designTokens.colors.primary[900]} 0%, ${designTokens.colors.primary.main} 100%)`,
+                    background: `linear-gradient(135deg, ${theme.palette.primary[900]} 0%, ${theme.palette.primary.main} 100%)`,
                     color: 'common.white',
                     border: 'none',
                     borderRadius: '8px',
@@ -767,7 +767,7 @@ const PerformanceTestPage: React.FC = () => {
                     padding: '0.75rem 1.5rem',
                     background: 'common.white',
                     color: 'primary.500',
-                    border: `1px solid ${designTokens.colors.primary.main}`,
+                    border: `1px solid ${theme.palette.primary.main}`,
                     borderRadius: '8px',
                     fontWeight: 600,
                     cursor: 'pointer',

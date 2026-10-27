@@ -1,4 +1,3 @@
-import { designTokens } from '@topems/tokens';
 /**
  * 车辆利用率分析页
  *
@@ -24,10 +23,11 @@ import {
   Legend,
   ReferenceLine,
 } from 'recharts';
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, useTheme } from '@mui/material';
 import { Gauge, Truck, TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function VehicleUtilizationPage() {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: apiData, isLoading } = useQuery({
@@ -147,14 +147,14 @@ export default function VehicleUtilizationPage() {
               <Legend />
               <ReferenceLine
                 y={80}
-                stroke={designTokens.colors.success.dark}
+                stroke={theme.palette.success.dark}
                 strokeDasharray='4 4'
                 label={t('tms.vehicle_utilization_page.80_7')}
               />
               <Bar
                 dataKey='utilization'
                 name={t('tms.vehicle_utilization_page.k8')}
-                fill={designTokens.colors.primary.main}
+                fill={theme.palette.primary.main}
                 barSize={28}
               />
             </BarChart>
@@ -187,7 +187,7 @@ export default function VehicleUtilizationPage() {
               <Bar
                 dataKey='trips'
                 name={t('tms.vehicle_utilization_page.k10')}
-                fill={designTokens.colors.secondary.dark}
+                fill={theme.palette.secondary.dark}
                 barSize={28}
               />
             </BarChart>

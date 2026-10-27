@@ -1,6 +1,6 @@
 import { designTokens } from '@topems/tokens';
 import React, { useMemo } from 'react';
-import { Box, Button, Typography, Paper } from '@mui/material';
+import { Box, Button, Typography, Paper, useTheme } from '@mui/material';
 import { Home, Search, FileQuestion } from 'lucide-react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { navigationRegistryV2 } from '@/lib/navigation';
@@ -11,6 +11,7 @@ import i18n, { ensureNamespacesLoaded } from '@/i18n';
 import { AuthPageTemplate } from '@/components/templates';
 
 const NotFoundPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
 
   const suggestedModules = useMemo<ModuleCardConfig[]>(() => {
@@ -35,7 +36,7 @@ const NotFoundPage: React.FC = () => {
 
   return (
     <AuthPageTemplate
-      backgroundGradient={designTokens.colors.grey[100]}
+      backgroundGradient={theme.palette.grey[100]}
       maxWidth={640}
     >
       <Box

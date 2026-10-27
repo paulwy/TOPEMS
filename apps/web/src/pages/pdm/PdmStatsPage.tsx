@@ -15,9 +15,7 @@ import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
+import { useTheme } from '@mui/material';
 const adaptProcess = (item: { [key: string]: unknown }) => ({
   ...item,
   status:
@@ -63,6 +61,7 @@ const adaptBatch = (item: { [key: string]: unknown }) => ({
 });
 
 const PdmStatsPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
 
@@ -190,7 +189,7 @@ const PdmStatsPage: React.FC = () => {
       title: t('pdm.pdm_stats_page.k16'),
       value: stats.totalProcesses,
       icon: <Factory sx={{ width: 24, height: 24 }} />,
-      gradient: [ct.teal.main, ct.teal.dark] as [string, string],
+      gradient: [theme.palette.teal.main, theme.palette.teal.dark] as [string, string],
       description: t('pdm.pdm_stats_page.e1', { v1: stats.activeProcesses }),
       trend: { value: 0, direction: 'neutral' as const },
     },
@@ -199,7 +198,7 @@ const PdmStatsPage: React.FC = () => {
       title: t('pdm.pdm_stats_page.k17'),
       value: stats.totalSteps,
       icon: <ClipboardList sx={{ width: 24, height: 24 }} />,
-      gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
+      gradient: [theme.palette.secondary.main, theme.palette.secondary.dark] as [string, string],
       trend: { value: 0, direction: 'neutral' as const },
     },
     {
@@ -207,7 +206,7 @@ const PdmStatsPage: React.FC = () => {
       title: t('pdm.pdm_stats_page.k18'),
       value: stats.totalFormulas,
       icon: <Package sx={{ width: 24, height: 24 }} />,
-      gradient: ['warning.main', ct.warning.dark] as [string, string],
+      gradient: ['warning.main', theme.palette.warning.dark] as [string, string],
       description: t('pdm.pdm_stats_page.e2', { v1: stats.activeFormulas }),
       trend: { value: 0, direction: 'neutral' as const },
     },
@@ -216,7 +215,7 @@ const PdmStatsPage: React.FC = () => {
       title: t('pdm.pdm_stats_page.k19'),
       value: stats.totalBatches,
       icon: <Activity sx={{ width: 24, height: 24 }} />,
-      gradient: [ct.secondary[400], ct.secondary[600]] as [string, string],
+      gradient: [theme.palette.secondary[400], theme.palette.secondary[600]] as [string, string],
       description: t('pdm.pdm_stats_page.e3', { v1: stats.inProgressBatches }),
       trend: { value: 0, direction: 'neutral' as const },
     },
@@ -225,7 +224,7 @@ const PdmStatsPage: React.FC = () => {
       title: t('pdm.pdm_stats_page.k20'),
       value: stats.completedBatches,
       icon: <CheckCircle sx={{ width: 24, height: 24 }} />,
-      gradient: [ct.success.main, ct.success.dark] as [string, string],
+      gradient: [theme.palette.success.main, theme.palette.success.dark] as [string, string],
       trend: { value: 0, direction: 'up' as const },
     },
     {
@@ -233,7 +232,7 @@ const PdmStatsPage: React.FC = () => {
       title: t('pdm.pdm_stats_page.k21'),
       value: stats.planningBatches,
       icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
-      gradient: [ct.pink[500], ct.pink[600]] as [string, string],
+      gradient: [theme.palette.pink[500], theme.palette.pink[600]] as [string, string],
       trend: { value: 0, direction: 'neutral' as const },
     },
   ];
@@ -250,12 +249,12 @@ const PdmStatsPage: React.FC = () => {
         {
           name: t('pdm.pdm_stats_page.k24'),
           value: stats.inProgressBatches,
-          color: ct.secondary[400],
+          color: theme.palette.secondary[400],
         },
         {
           name: t('pdm.pdm_stats_page.k25'),
           value: stats.completedBatches,
-          color: ct.success.main,
+          color: theme.palette.success.main,
         },
         { name: t('pdm.pdm_stats_page.k26'), value: stats.cancelledBatches, color: 'grey.500' },
       ].filter((d) => d.value > 0),
@@ -267,7 +266,11 @@ const PdmStatsPage: React.FC = () => {
       dataKey: 'value',
       nameKey: 'name',
       data: [
-        { name: t('pdm.pdm_stats_page.k28'), value: stats.activeProcesses, color: ct.teal.main },
+        {
+          name: t('pdm.pdm_stats_page.k28'),
+          value: stats.activeProcesses,
+          color: theme.palette.teal.main,
+        },
         { name: t('pdm.pdm_stats_page.k29'), value: stats.activeFormulas, color: 'warning.main' },
         { name: t('pdm.pdm_stats_page.k30'), value: stats.totalSteps, color: 'secondary.main' },
       ].filter((d) => d.value > 0),
@@ -318,7 +321,7 @@ const PdmStatsPage: React.FC = () => {
       padding={false}
       headerProps={{
         pageIcon: <TrendingUp style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
     >
       <StatsPageTemplate

@@ -3,7 +3,7 @@
  * Risk assessments tab content: table of historical risk assessments.
  */
 import React, { useMemo } from 'react';
-import { Box, Typography, Chip } from '@mui/material';
+import { Box, Typography, Chip, useTheme } from '@mui/material';
 import { Users, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -12,8 +12,6 @@ import { calculateRiskLevel } from '@/components/ehs';
 import { designTokens } from '@/theme/tokens';
 import type { RiskAssessment } from '@/api/ehs';
 
-const ct = designTokens.colors;
-
 interface EhsHazardAssessmentsSectionProps {
   assessments: RiskAssessment[];
 }
@@ -21,6 +19,7 @@ interface EhsHazardAssessmentsSectionProps {
 const EhsHazardAssessmentsSection: React.FC<EhsHazardAssessmentsSectionProps> = ({
   assessments,
 }) => {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const columns: ColumnDef<RiskAssessment>[] = useMemo(
@@ -61,7 +60,7 @@ const EhsHazardAssessmentsSection: React.FC<EhsHazardAssessmentsSectionProps> = 
             riskResult.score >= 6 ? 'high' : riskResult.score >= 3 ? 'medium' : 'low';
           const colorMap: Record<string, { bg: string; color: string }> = {
             high: { bg: 'error.lighter', color: 'error.dark' },
-            medium: { bg: 'warning.100', color: ct.yellow[600] },
+            medium: { bg: 'warning.100', color: theme.palette.yellow[600] },
             low: { bg: 'success.lighter', color: 'success.dark' },
           };
           const colors = colorMap[riskLevelKey] || {

@@ -16,6 +16,7 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
+  useTheme,
 } from '@mui/material';
 import {
   FileText,
@@ -46,9 +47,6 @@ import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const baseAdapter = createCrudPageAdapter<Document, CreateDocumentRequest>({
   list: documentApi.list,
   create: documentApi.create,
@@ -97,6 +95,7 @@ function extractListData(response: unknown): Document[] {
 }
 
 export const DocumentPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation('pdm');
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -524,7 +523,7 @@ export const DocumentPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
       maxWidth='xl'
     >

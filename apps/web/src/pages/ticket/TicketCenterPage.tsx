@@ -9,6 +9,7 @@ import {
   TextField,
   Button,
   Paper,
+  useTheme,
 } from '@mui/material';
 import {
   Ticket as TicketIcon,
@@ -37,9 +38,6 @@ import type {
 import { ticketSchema } from '@/schemas/ticket';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const STATUS_COLORS: Record<string, 'error' | 'warning' | 'info' | 'success' | 'default'> = {
   open: 'error',
   in_progress: 'warning',
@@ -99,6 +97,7 @@ function formatDuration(minutes: number | undefined, t: TFunction): string {
 }
 
 const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [commentText, setCommentText] = useState('');
@@ -286,7 +285,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
                 {sla.current_escalation_level > 0 && (
                   <AlertTriangle
                     size={14}
-                    style={{ color: ct.error.main }}
+                    style={{ color: theme.palette.error.main }}
                   />
                 )}
               </Box>
@@ -399,6 +398,7 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
 };
 
 const TicketCenterPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -443,25 +443,35 @@ const TicketCenterPage: React.FC = () => {
   };
 
   const statCards = [
-    { label: t('ticket:stats.all'), value: stats.total, icon: TicketIcon, color: ct.primary[500] },
-    { label: t('ticket:status.open'), value: stats.open, icon: AlertCircle, color: ct.error[500] },
+    {
+      label: t('ticket:stats.all'),
+      value: stats.total,
+      icon: TicketIcon,
+      color: theme.palette.primary[500],
+    },
+    {
+      label: t('ticket:status.open'),
+      value: stats.open,
+      icon: AlertCircle,
+      color: theme.palette.error[500],
+    },
     {
       label: t('ticket:status.in_progress'),
       value: stats.in_progress,
       icon: Clock,
-      color: ct.warning[500],
+      color: theme.palette.warning[500],
     },
     {
       label: t('ticket:status.resolved'),
       value: stats.resolved,
       icon: CheckCircle,
-      color: ct.success[500],
+      color: theme.palette.success[500],
     },
     {
       label: t('ticket:stats.slaTimeout'),
       value: stats.sla_breached,
       icon: AlertTriangle,
-      color: ct.error[700],
+      color: theme.palette.error[700],
     },
   ];
 

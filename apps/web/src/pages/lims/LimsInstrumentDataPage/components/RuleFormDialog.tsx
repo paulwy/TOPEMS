@@ -13,15 +13,13 @@ import {
   Box,
   Typography,
   TextareaAutosize,
-  Button,
-} from '@mui/material';
+  Button, useTheme } from '@mui/material';
 import i18n from '@/i18n';
 import { Grid } from '@/components';
 import type { CreateParseRuleRequest } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
 import { designTokens } from '@/theme/tokens';
 
-const ct = designTokens.colors;
 interface RuleFormDialogProps {
   open: boolean;
   isEditing: boolean;
@@ -40,6 +38,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
   onFormDataChange,
   onSave,
 }) => {
+    const theme = useTheme();
   return (
     <Dialog
       open={open}
@@ -127,7 +126,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
                 padding: 2,
                 fontFamily: 'monospace',
                 fontSize: '12px',
-                border: `1px solid ${ct.grey[300]}`,
+                border: `1px solid ${theme.palette.grey[300]}`,
                 borderRadius: 'xs',
               }}
               value={formatJson(formData.parse_config)}
@@ -154,7 +153,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
                 padding: 2,
                 fontFamily: 'monospace',
                 fontSize: '12px',
-                border: `1px solid ${ct.grey[300]}`,
+                border: `1px solid ${theme.palette.grey[300]}`,
                 borderRadius: 'xs',
               }}
               value={formatJson(formData.quality_rules)}

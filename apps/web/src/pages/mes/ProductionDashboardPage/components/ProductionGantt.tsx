@@ -1,5 +1,14 @@
 import React, { useMemo } from 'react';
-import { Box, CircularProgress, Divider, Paper, Tooltip, Typography, Stack } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+  Divider,
+  Paper,
+  Tooltip,
+  Typography,
+  Stack,
+  useTheme,
+} from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Calendar } from 'lucide-react';
 import type { ProductionSchedule } from '@/api/mes';
@@ -11,6 +20,7 @@ const ProductionGantt: React.FC<{
   schedules: ProductionSchedule[];
   loading?: boolean;
 }> = ({ schedules, loading }) => {
+  const theme = useTheme();
   const windowData = useMemo(() => {
     if (schedules.length === 0) {
       const now = Date.now();
@@ -82,7 +92,7 @@ const ProductionGantt: React.FC<{
         >
           <Calendar
             size={18}
-            color={ct.info.main}
+            color={theme.palette.info.main}
           />
           <Typography
             variant='subtitle1'
@@ -295,11 +305,11 @@ const ProductionGantt: React.FC<{
                           alignItems: 'center',
                           px: 1,
                           cursor: 'pointer',
-                          boxShadow: `0 1px 2px ${designTokens.colors.action.selected}`,
+                          boxShadow: `0 1px 2px ${theme.palette.action.selected}`,
                           transition: 'transform 0.2s, box-shadow 0.2s',
                           '&:hover': {
                             transform: 'translateY(-1px)',
-                            boxShadow: `0 4px 8px ${designTokens.colors.action.selected}`,
+                            boxShadow: `0 4px 8px ${theme.palette.action.selected}`,
                           },
                         }}
                       >

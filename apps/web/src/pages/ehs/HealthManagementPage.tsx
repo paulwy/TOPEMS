@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Card, CardContent, Typography, Chip, Tabs, Tab } from '@mui/material';
+import { Box, Card, CardContent, Typography, Chip, Tabs, Tab, useTheme } from '@mui/material';
 import { Heart, FileText, Users, ClipboardList, CheckSquare, ShieldAlert } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -24,9 +24,6 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const apiAdapter = createCrudPageAdapter<HealthRecord, CreateHealthRecordRequest>({
   list: ehsApi.listHealthRecords,
   create: ehsApi.createHealthRecord,
@@ -61,6 +58,7 @@ const contraindicationAdapter = createCrudPageAdapter<
 });
 
 const HealthManagementPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const [tab, setTab] = useState(0);
 
@@ -295,7 +293,7 @@ const HealthManagementPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Heart sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.pink[500]} 0%, ${ct.pink[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.pink[500]} 0%, ${theme.palette.pink[600]} 100%)`,
       }}
       maxWidth='xl'
     >

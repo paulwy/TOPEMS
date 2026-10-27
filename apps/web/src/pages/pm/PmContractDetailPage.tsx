@@ -12,6 +12,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import type { ContractMilestone, ContractPaymentSchedule } from '@/api/pm';
@@ -22,8 +23,6 @@ import { designTokens } from '@/theme/tokens';
 import { PM_PATHS } from '@/modules/pm/config';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
 const getContractStatusLabels = (): Record<string, string> => ({
   draft: i18n.t('pm.pm_contract_detail_page.k0'),
   pending: i18n.t('pm.pm_contract_detail_page.k1'),
@@ -39,6 +38,7 @@ const getContractTypeLabels = (): Record<string, string> => ({
   sales: i18n.t('pm.pm_contract_detail_page.k9'),
 });
 const PmContractDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -95,22 +95,22 @@ const PmContractDetailPage: React.FC = () => {
   };
   const getMilestoneStatusSx = (status?: string) => {
     if (status === 'completed') {
-      return { bgcolor: 'success.lighter', color: ct.success[800] };
+      return { bgcolor: 'success.lighter', color: theme.palette.success[800] };
     }
     if (status === 'pending') {
-      return { bgcolor: 'warning.100', color: ct.yellow[700] };
+      return { bgcolor: 'warning.100', color: theme.palette.yellow[700] };
     }
     return { bgcolor: 'grey.100', color: 'grey.700' };
   };
   const getPaymentStatusSx = (status?: string) => {
     if (status === 'paid') {
-      return { bgcolor: 'success.lighter', color: ct.success[800] };
+      return { bgcolor: 'success.lighter', color: theme.palette.success[800] };
     }
     if (status === 'pending') {
-      return { bgcolor: 'warning.100', color: ct.yellow[700] };
+      return { bgcolor: 'warning.100', color: theme.palette.yellow[700] };
     }
     if (status === 'overdue') {
-      return { bgcolor: 'error.lighter', color: ct.error[800] };
+      return { bgcolor: 'error.lighter', color: theme.palette.error[800] };
     }
     return { bgcolor: 'grey.100', color: 'grey.700' };
   };
@@ -335,7 +335,7 @@ const PmContractDetailPage: React.FC = () => {
                     borderRadius: 3,
                     p: 2,
                     transition: 'border-color 0.2s',
-                    '&:hover': { borderColor: ct.primary[300] },
+                    '&:hover': { borderColor: theme.palette.primary[300] },
                   }}
                 >
                   <Box

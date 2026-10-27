@@ -12,6 +12,7 @@ import {
   Select,
   MenuItem,
   Chip,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { Play, CheckCircle2, Eye, Trash2, Package, Edit } from 'lucide-react';
@@ -30,10 +31,8 @@ import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const StockTakePage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
@@ -764,7 +763,7 @@ const StockTakePage: React.FC = () => {
       subtitle={t('wms.stocktake_page.stocktake_2')}
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <CrudPage

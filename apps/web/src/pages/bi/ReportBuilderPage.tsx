@@ -16,6 +16,7 @@ import {
   InputLabel,
   Select,
   Grid,
+  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
@@ -30,8 +31,6 @@ import { fetchReports, createReport, updateReport, deleteReport, exportReport } 
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
 type ViewMode = 'list' | 'builder';
 const mockReports: Report[] = [
   {
@@ -88,6 +87,7 @@ const mockReports: Report[] = [
   },
 ];
 const ReportBuilderPage = () => {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [searchTerm, setSearchTerm] = useState('');
@@ -254,7 +254,7 @@ const ReportBuilderPage = () => {
                 width: 40,
                 height: 40,
                 borderRadius: 1,
-                backgroundColor: ct.warning[50],
+                backgroundColor: theme.palette.warning[50],
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -576,7 +576,7 @@ const ReportBuilderPage = () => {
                         <Box
                           sx={{
                             height: 100,
-                            backgroundColor: ct.grey[50],
+                            backgroundColor: theme.palette.grey[50],
                             borderRadius: 1,
                             display: 'flex',
                             alignItems: 'center',
@@ -586,7 +586,7 @@ const ReportBuilderPage = () => {
                         >
                           <FileText
                             size={32}
-                            style={{ color: ct.grey[500] }}
+                            style={{ color: theme.palette.grey[500] }}
                           />
                         </Box>
                         <Typography
@@ -631,7 +631,7 @@ const ReportBuilderPage = () => {
                   <MenuItem value='ds-003'>{i18n.t('bi.report_builder_page.k38')}</MenuItem>
                 </Select>
               </FormControl>
-              <Box sx={{ mt: 3, p: 3, backgroundColor: ct.grey[50], borderRadius: 1 }}>
+              <Box sx={{ mt: 3, p: 3, backgroundColor: theme.palette.grey[50], borderRadius: 1 }}>
                 <Typography
                   variant='body2'
                   color='text.secondary'
@@ -678,7 +678,7 @@ const ReportBuilderPage = () => {
                 placeholder={i18n.t('bi.report_builder_page.email_1')}
                 sx={{ mb: 3 }}
               />
-              <Box sx={{ mt: 3, p: 3, backgroundColor: ct.grey[50], borderRadius: 1 }}>
+              <Box sx={{ mt: 3, p: 3, backgroundColor: theme.palette.grey[50], borderRadius: 1 }}>
                 <Typography
                   variant='body2'
                   color='text.secondary'
@@ -698,7 +698,7 @@ const ReportBuilderPage = () => {
       subtitle={i18n.t('bi.report_builder_page.create_1')}
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
       padding={false}
       maxWidth={false}

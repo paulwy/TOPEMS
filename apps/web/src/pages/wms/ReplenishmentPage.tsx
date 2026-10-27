@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Button, Stack, Typography, useTheme } from '@mui/material';
 import { ShoppingCart, AlertTriangle, RefreshCw, CheckCircle } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
@@ -20,12 +20,10 @@ import { replenishmentSchema } from '@/schemas/wms/replenishment';
 import { suggestionSchema } from '@/schemas/wms/suggestion';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 type TabValue = 'suggestions' | 'orders';
 
 const ReplenishmentPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
@@ -417,7 +415,7 @@ const ReplenishmentPage: React.FC = () => {
       subtitle={t('wms.replenishment_page.auto_replenishment_alert')}
       headerProps={{
         pageIcon: <ShoppingCart style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.warning.main}, ${ct.warning.dark})`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
       }}
     >
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>

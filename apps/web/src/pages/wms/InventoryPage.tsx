@@ -4,16 +4,14 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { inventorySchema } from '@/schemas/wms';
 import { wmsApi } from '@/api/wms';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Typography, Card, CardContent, Stack } from '@mui/material';
+import { Box, Typography, Card, CardContent, Stack, useTheme } from '@mui/material';
 import { Package, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const InventoryStats: React.FC = () => {
+  const theme = useTheme();
   const { data: stats } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.WMS_INVENTORY_ALERT_STATS_BASE,
     queryFn: async () => {
@@ -42,12 +40,12 @@ const InventoryStats: React.FC = () => {
     {
       label: i18n.t('pages.inventory_page.k0'),
       value: stats?.total_alerts || inventory.length,
-      color: ct.info.main,
+      color: theme.palette.info.main,
       bgColor: 'grey.100',
       icon: (
         <Package
           size={20}
-          color={ct.info.main}
+          color={theme.palette.info.main}
         />
       ),
     },
@@ -67,7 +65,7 @@ const InventoryStats: React.FC = () => {
       label: i18n.t('pages.inventory_page.k2'),
       value: stats?.pending_alerts || 0,
       color: 'error.main',
-      bgColor: ct.error[50],
+      bgColor: theme.palette.error[50],
       icon: (
         <XCircle
           size={20}

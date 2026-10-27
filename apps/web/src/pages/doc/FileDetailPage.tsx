@@ -1,4 +1,4 @@
-import { Typography, Box, InputLabel } from '@mui/material';
+import { Typography, Box, InputLabel, useTheme } from '@mui/material';
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FileText } from 'lucide-react';
@@ -14,10 +14,8 @@ import { DOC_PATHS } from '@/modules/doc/config';
 
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const DocsFileDetailPage: React.FC = () => {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { success, error } = useNotification();
@@ -250,7 +248,7 @@ const DocsFileDetailPage: React.FC = () => {
       avatar: (
         <FileText
           size={32}
-          color={ct.primary.dark}
+          color={theme.palette.primary.dark}
         />
       ),
       title: file?.name,

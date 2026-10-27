@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
+import { Box, Card, CardContent, Typography, Chip, useTheme } from '@mui/material';
 import { AlertCircle, FileText, Activity, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
@@ -14,9 +14,6 @@ import { designTokens } from '@/theme/tokens';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 const drillApi = {
   list: ehsApi.listDrills,
   create: ehsApi.createDrill,
@@ -82,6 +79,7 @@ function extractListData(response: unknown): DrillRecord[] {
 }
 
 const EmergencyPage: React.FC = () => {
+  const theme = useTheme();
   const { data: drillsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_EMERGENCY_DRILLS_STATS_BASE,
     queryFn: async () => ehsApi.listDrills({ page_size: 500 }),
@@ -379,7 +377,7 @@ const EmergencyPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <AlertCircle sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
       maxWidth='xl'
     >

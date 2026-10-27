@@ -20,6 +20,7 @@ import {
   ListItemText,
   Avatar,
   Divider,
+  useTheme,
 } from '@mui/material';
 import {
   Building2,
@@ -45,9 +46,6 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 type SyncStatus = 'success' | 'syncing' | 'error' | 'pending';
 
 interface SyncTask {
@@ -157,19 +155,20 @@ const MOCK_SYNC_LOGS: SyncLog[] = [
 ];
 
 const getStatusIcon = (status: SyncStatus) => {
+  const theme = useTheme();
   switch (status) {
     case 'success':
       return (
         <CheckCircle2
           size={16}
-          color={ct.success.main}
+          color={theme.palette.success.main}
         />
       );
     case 'syncing':
       return (
         <RefreshCw
           size={16}
-          color={ct.primary.dark}
+          color={theme.palette.primary.dark}
           className='spin'
         />
       );
@@ -177,14 +176,14 @@ const getStatusIcon = (status: SyncStatus) => {
       return (
         <AlertCircle
           size={16}
-          color={ct.error.main}
+          color={theme.palette.error.main}
         />
       );
     case 'pending':
       return (
         <Clock
           size={16}
-          color={ct.grey[400]}
+          color={theme.palette.grey[400]}
         />
       );
   }

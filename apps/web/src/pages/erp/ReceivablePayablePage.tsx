@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Tabs, Tab } from '@mui/material';
+import { Box, Tabs, Tab, useTheme } from '@mui/material';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -7,9 +7,8 @@ import { receivableSchema, payableSchema } from '@/schemas/finance';
 import { receivableApi, payableApi, type Receivable, type Payable } from '@/api/finance';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
 const ReceivablePayablePage: React.FC = () => {
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
   const receivableAdapter: CrudApiAdapter<Receivable> = useMemo(
     () => ({
@@ -97,7 +96,7 @@ const ReceivablePayablePage: React.FC = () => {
           mb: 3,
         }}
       >
-        <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
+        <Box sx={{ p: 2, bgcolor: theme.palette.secondary[100], borderRadius: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             {activeTab === 0 ? (
               <ArrowUpRight
@@ -155,7 +154,7 @@ const ReceivablePayablePage: React.FC = () => {
           ) : (
             <ArrowDownRight style={{ width: 20, height: 20 }} />
           ),
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >
       <Tabs

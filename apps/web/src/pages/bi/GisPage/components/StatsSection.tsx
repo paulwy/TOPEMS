@@ -5,8 +5,8 @@ import StatsChart from '@/components/bi/StatsChart';
 import { MapPin, ArrowRight, Warehouse, Camera, Map, Building2 } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+import { useTheme } from '@mui/material';
 
-const ct = designTokens.colors;
 interface StatsSectionProps {
   statistics: {
     device_points?: number;
@@ -20,6 +20,7 @@ interface StatsSectionProps {
   } | null;
 }
 export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
+  const theme = useTheme();
   return (
     <>
       <Grid
@@ -32,7 +33,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
             title={i18n.t('bi.gis_page_components__stats_section.equipment')}
             value={statistics?.device_points || 0}
             icon={<MapPin size={24} />}
-            gradient={[ct.success.main, ct.success.dark]}
+            gradient={[theme.palette.success.main, theme.palette.success.dark]}
             subtitle={`${i18n.t('pages.stats_section.k0')}${statistics?.active_devices || 0}`}
           />
         </Grid>
@@ -41,7 +42,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
             title={i18n.t('bi.gis_page_components__stats_section.pipeline_mgmt_card')}
             value={statistics?.pipelines || 0}
             icon={<ArrowRight size={24} />}
-            gradient={[ct.secondary[400], ct.secondary[600]]}
+            gradient={[theme.palette.secondary[400], theme.palette.secondary[600]]}
             subtitle={`${i18n.t('pages.stats_section.k1')}${statistics?.active_pipelines || 0}`}
           />
         </Grid>
@@ -50,7 +51,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
             title={i18n.t('bi.gis_page_components__stats_section.pipeline_mgmt_title')}
             value={statistics?.storage_locations || 0}
             icon={<Warehouse size={24} />}
-            gradient={['warning.main', ct.warning.dark]}
+            gradient={['warning.main', theme.palette.warning.dark]}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
@@ -58,7 +59,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
             title={i18n.t('bi.gis_page_components__stats_section.storage_location_card')}
             value={statistics?.evidence_records || 0}
             icon={<Camera size={24} />}
-            gradient={[ct.pink[500], ct.pink.dark]}
+            gradient={[theme.palette.pink[500], theme.palette.pink.dark]}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
@@ -66,7 +67,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
             title={i18n.t('bi.gis_page_components__stats_section.plant_map_card')}
             value={statistics?.factory_maps || 0}
             icon={<Map size={24} />}
-            gradient={[ct.secondary.main, ct.secondary.dark]}
+            gradient={[theme.palette.secondary.main, theme.palette.secondary.dark]}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
@@ -74,7 +75,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
             title={i18n.t('bi.gis_page_components__stats_section.business_location_card')}
             value={statistics?.business_locations || 0}
             icon={<Building2 size={24} />}
-            gradient={[ct.teal.main, ct.teal.dark]}
+            gradient={[theme.palette.teal.main, theme.palette.teal.dark]}
           />
         </Grid>
       </Grid>
@@ -91,12 +92,12 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
               {
                 name: i18n.t('bi.gis_page_components__stats_section.equipment'),
                 value: statistics?.device_points || 0,
-                color: ct.success.main,
+                color: theme.palette.success.main,
               },
               {
                 name: i18n.t('bi.gis_page_components__stats_section.pipeline_label'),
                 value: statistics?.pipelines || 0,
-                color: ct.secondary[400],
+                color: theme.palette.secondary[400],
               },
               {
                 name: i18n.t('bi.gis_page_components__stats_section.pipeline_mgmt_title'),
@@ -111,7 +112,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
               {
                 name: i18n.t('bi.gis_page_components__stats_section.business_location_card'),
                 value: statistics?.business_locations || 0,
-                color: ct.teal.main,
+                color: theme.palette.teal.main,
               },
             ].filter((d) => d.value > 0)}
             dataKey='value'
@@ -139,7 +140,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
               i18n.t('bi.gis_page_components__stats_section.active_2'),
               i18n.t('bi.gis_page_components__stats_section.disabled_status'),
             ]}
-            colors={[ct.success.main, ct.secondary[400]]}
+            colors={[theme.palette.success.main, theme.palette.secondary[400]]}
           />
         </Grid>
       </Grid>

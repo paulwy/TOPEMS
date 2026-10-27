@@ -16,13 +16,12 @@ import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { BarChart3, TrendingUp, PieChart, FileText } from 'lucide-react';
-
-const ct = designTokens.colors;
-
+import { useTheme } from '@mui/material';
 type TabValue =
   'balanceSheet' | 'incomeStatement' | 'cashFlow' | 'agingAnalysis' | 'budgetAnalysis';
 
 const FinancialAnalysisPage: React.FC = () => {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [activeTab, setActiveTab] = useState<TabValue>('balanceSheet');
@@ -476,17 +475,17 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 name: i18n.t('erp.financial_analysis_page.k0'),
                 value: balanceSheetData.total_assets || 0,
-                color: ct.success.main,
+                color: theme.palette.success.main,
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k1'),
                 value: balanceSheetData.total_liabilities || 0,
-                color: ct.error.main,
+                color: theme.palette.error.main,
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k2'),
                 value: balanceSheetData.total_equity || 0,
-                color: ct.primary.main,
+                color: theme.palette.primary.main,
               },
             ],
           },
@@ -505,17 +504,17 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 name: i18n.t('erp.financial_analysis_page.k3'),
                 value: incomeStatementData.total_revenue || 0,
-                color: ct.success.main,
+                color: theme.palette.success.main,
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k4'),
                 value: incomeStatementData.total_expense || 0,
-                color: ct.error.main,
+                color: theme.palette.error.main,
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k6'),
                 value: incomeStatementData.net_income || 0,
-                color: ct.secondary.main,
+                color: theme.palette.secondary.main,
               },
             ],
           },
@@ -534,17 +533,17 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 name: i18n.t('erp.financial_report.label.total_inflow'),
                 value: cashFlowData.total_inflow || 0,
-                color: ct.success.main,
+                color: theme.palette.success.main,
               },
               {
                 name: i18n.t('erp.financial_report.label.total_outflow'),
                 value: cashFlowData.total_outflow || 0,
-                color: ct.warning.main,
+                color: theme.palette.warning.main,
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k10'),
                 value: cashFlowData.net_change || 0,
-                color: ct.primary.main,
+                color: theme.palette.primary.main,
               },
             ],
           },
@@ -563,22 +562,22 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 name: i18n.t('pages.financial_analysis_page.030_0'),
                 value: agingAnalysisData['0-30'] || 0,
-                color: ct.success.main,
+                color: theme.palette.success.main,
               },
               {
                 name: i18n.t('pages.financial_analysis_page.3160_1'),
                 value: agingAnalysisData['31-60'] || 0,
-                color: ct.warning.main,
+                color: theme.palette.warning.main,
               },
               {
                 name: i18n.t('pages.financial_analysis_page.6190_2'),
                 value: agingAnalysisData['61-90'] || 0,
-                color: ct.error.main,
+                color: theme.palette.error.main,
               },
               {
                 name: i18n.t('pages.financial_analysis_page.90_3'),
                 value: agingAnalysisData['90+'] || 0,
-                color: ct.error.dark,
+                color: theme.palette.error.dark,
               },
             ],
           },
@@ -597,18 +596,18 @@ const FinancialAnalysisPage: React.FC = () => {
               {
                 name: i18n.t('erp.financial_analysis_page.k11'),
                 value: budgetAnalysisData.budget_amount || 0,
-                color: ct.primary.main,
+                color: theme.palette.primary.main,
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k12'),
                 value: budgetAnalysisData.actual_amount || 0,
-                color: ct.success.main,
+                color: theme.palette.success.main,
               },
               {
                 name: i18n.t('erp.financial_analysis_page.k13'),
                 value:
                   (budgetAnalysisData.budget_amount || 0) - (budgetAnalysisData.actual_amount || 0),
-                color: ct.warning.main,
+                color: theme.palette.warning.main,
               },
             ],
           },

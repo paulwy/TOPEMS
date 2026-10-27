@@ -50,9 +50,6 @@ import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
-
-const ct = designTokens.colors;
-
 type PromptCategory = 'all' | 'writing' | 'code' | 'business' | 'analysis' | 'creative';
 
 interface PromptTemplate {
@@ -173,12 +170,13 @@ const getCategoryIcon = (category: string) => {
 };
 
 const getCategoryColor = (category: string) => {
+  const theme = useTheme();
   const map: Record<string, string> = {
     writing: 'primary.main',
     code: 'secondary.main',
     business: 'success.main',
     analysis: 'warning.main',
-    creative: ct.pink[500],
+    creative: theme.palette.pink[500],
   };
   return map[category] || 'grey.500';
 };
@@ -404,7 +402,7 @@ export const AiPromptLibraryPage: React.FC = () => {
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <BookOpen
             size={48}
-            style={{ margin: '0 auto 12px', color: ct.text.disabled }}
+            style={{ margin: '0 auto 12px', color: theme.palette.text.disabled }}
           />
           <Typography
             variant='body1'
@@ -586,7 +584,7 @@ export const AiPromptLibraryPage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.teal[200]} 0%, ${ct.pink[100]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.teal[200]} 0%, ${theme.palette.pink[100]} 100%)`,
       }}
     >
       <Box sx={{ p: 3 }}>
@@ -627,7 +625,10 @@ export const AiPromptLibraryPage: React.FC = () => {
                       <ListItemIcon sx={{ minWidth: 36 }}>
                         <span
                           style={{
-                            color: activeCategory === cat.id ? ct.secondary[400] : ct.grey[500],
+                            color:
+                              activeCategory === cat.id
+                                ? theme.palette.secondary[400]
+                                : theme.palette.grey[500],
                           }}
                         >
                           {cat.icon}
@@ -710,7 +711,7 @@ export const AiPromptLibraryPage: React.FC = () => {
               emptyIcon={
                 <BookOpen
                   size={48}
-                  style={{ color: ct.text.disabled }}
+                  style={{ color: theme.palette.text.disabled }}
                 />
               }
             />
@@ -814,7 +815,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                     className='animate-pulse'
                     style={{
                       margin: `0 auto ${designTokens.spacing.sm}px`,
-                      color: ct.secondary[400],
+                      color: theme.palette.secondary[400],
                     }}
                   />
                   <Typography
@@ -843,7 +844,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                     size={32}
                     style={{
                       margin: `0 auto ${designTokens.spacing.sm}px`,
-                      color: ct.text.disabled,
+                      color: theme.palette.text.disabled,
                     }}
                   />
                   <Typography

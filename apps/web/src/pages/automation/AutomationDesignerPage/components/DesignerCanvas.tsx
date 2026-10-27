@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Chip, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Chip, IconButton, Paper, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 import {
   Network as CanvasModeIcon,
   ZoomIn as ZoomInIcon,
@@ -64,6 +64,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
   onZoomFit,
   onZoomReset,
 }) => {
+  const theme = useTheme();
   const { t } = useTranslation('automation');
   return (
     <Paper
@@ -76,7 +77,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
         height: 600,
         overflow: 'auto',
         bgcolor: 'grey.50',
-        backgroundImage: `radial-gradient(circle, ${designTokens.colors.grey['300']} 1px, transparent 1px)`,
+        backgroundImage: `radial-gradient(circle, ${theme.palette.grey['300']} 1px, transparent 1px)`,
         backgroundSize: `${20 * canvasZoom}px ${20 * canvasZoom}px`,
       }}
     >
@@ -316,7 +317,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                   y1={sy}
                   x2={tx}
                   y2={ty}
-                  stroke={designTokens.colors.grey['400']}
+                  stroke={theme.palette.grey['400']}
                   strokeWidth={6}
                 />
               );
@@ -331,7 +332,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
                   width={NODE_WIDTH}
                   height={NODE_HEIGHT}
                   rx={8}
-                  fill={isSelected ? designTokens.colors.primary.dark : 'colors.grey.500'}
+                  fill={isSelected ? theme.palette.primary.dark : 'colors.grey.500'}
                 />
               );
             })}
@@ -341,7 +342,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
               width={Math.min(CANVAS_WIDTH, viewport.w)}
               height={Math.min(CANVAS_HEIGHT, viewport.h)}
               fill='none'
-              stroke={designTokens.colors.primary.dark}
+              stroke={theme.palette.primary.dark}
               strokeWidth={24}
               strokeDasharray='48 24'
             />

@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Paper, Grid, Typography, Button, Chip, Alert } from '@mui/material';
+import { Box, Paper, Grid, Typography, Button, Chip, Alert, useTheme } from '@mui/material';
 import { designTokens } from '@topems/tokens';
 import { eightDApi } from '@/api/qms/eightD';
 import type { EightDReport } from '@/api/qms/types';
@@ -79,6 +79,7 @@ function getSeverityLabels(): Record<string, string> {
 }
 
 export default function QmsEightDDetailPage() {
+  const theme = useTheme();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [report, setReport] = useState<EightDReport | null>(null);
@@ -238,7 +239,7 @@ export default function QmsEightDDetailPage() {
             m: 0,
             pl: 4,
             borderLeft: 2,
-            borderColor: designTokens.colors.primary[200],
+            borderColor: theme.palette.primary[200],
           }}
         >
           {getSteps().map((step, idx) => {
@@ -246,10 +247,10 @@ export default function QmsEightDDetailPage() {
             const content = report[step.field as keyof typeof report] as string | undefined;
             const isCurrent = report.currentStage === idx + 1;
             const stepColor = isDone
-              ? designTokens.colors.success.main
+              ? theme.palette.success.main
               : isCurrent
-                ? designTokens.colors.primary.main
-                : designTokens.colors.grey[300];
+                ? theme.palette.primary.main
+                : theme.palette.grey[300];
             return (
               <Box
                 component='li'
@@ -280,8 +281,8 @@ export default function QmsEightDDetailPage() {
                   sx={{
                     p: 2,
                     borderRadius: 2,
-                    borderColor: isCurrent ? designTokens.colors.primary.main : undefined,
-                    bgcolor: isCurrent ? designTokens.colors.primary[50] : undefined,
+                    borderColor: isCurrent ? theme.palette.primary.main : undefined,
+                    bgcolor: isCurrent ? theme.palette.primary[50] : undefined,
                   }}
                 >
                   <Box
@@ -309,15 +310,15 @@ export default function QmsEightDDetailPage() {
                       }
                       sx={{
                         bgcolor: isDone
-                          ? designTokens.colors.success[100]
+                          ? theme.palette.success[100]
                           : isCurrent
-                            ? designTokens.colors.primary[100]
-                            : designTokens.colors.grey[100],
+                            ? theme.palette.primary[100]
+                            : theme.palette.grey[100],
                         color: isDone
-                          ? designTokens.colors.success[700]
+                          ? theme.palette.success[700]
                           : isCurrent
-                            ? designTokens.colors.primary[700]
-                            : designTokens.colors.grey[500],
+                            ? theme.palette.primary[700]
+                            : theme.palette.grey[500],
                       }}
                     />
                   </Box>

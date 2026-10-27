@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { GraduationCap, FileText, Award } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
@@ -19,9 +19,6 @@ import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
-
-const ct = designTokens.colors;
-
 const planApi = {
   list: trainingApi.listTrainingPlans,
   create: trainingApi.createTrainingPlan,
@@ -77,6 +74,7 @@ const CertificateList: React.FC = () => {
 };
 
 const TrainingPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: recordsData } = useQuery({
@@ -269,7 +267,7 @@ const TrainingPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <GraduationCap sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary[600]} 100%)`,
       }}
       maxWidth='xl'
     >

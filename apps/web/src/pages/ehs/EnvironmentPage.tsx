@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { Activity, FileText, AlertTriangle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import CrudPage from '@/components/templates/CrudPage';
@@ -17,9 +17,6 @@ import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
-
-const ct = designTokens.colors;
-
 const monitorApi = {
   list: ehsApi.listEnvironmentMonitors,
   create: ehsApi.createEnvironmentMonitor,
@@ -34,6 +31,7 @@ const monitorAdapter = createCrudPageAdapter<
 >(monitorApi);
 
 const EnvironmentPage: React.FC = () => {
+  const theme = useTheme();
   const { t } = useTranslation();
 
   const { data: monitorsData } = useQuery({
@@ -185,7 +183,7 @@ const EnvironmentPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Activity sx={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
       maxWidth='xl'
     >

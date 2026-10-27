@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Database, Play, Settings, Eye, RefreshCw, Edit, Trash2 } from 'lucide-react';
-import { Paper, Tabs, Tab, Snackbar, Alert, Chip, Box, Typography } from '@mui/material';
+import { Paper, Tabs, Tab, Snackbar, Alert, Chip, Box, Typography, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import type { FilterConfig } from '@topems/shared-components';
@@ -36,10 +36,8 @@ import TaskFormDialog from './components/TaskFormDialog';
 import RuleFormDialog from './components/RuleFormDialog';
 import ParseTestDialog from './components/ParseTestDialog';
 import { getStatusColor, getStatusLabel, type ChipColor } from './utils';
-
-const ct = designTokens.colors;
-
 const LimsInstrumentDataPage: React.FC = () => {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
   const [notification, setNotification] = useState<{
@@ -968,7 +966,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         pageIcon: <Database style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >
       <StatisticsCards statistics={statistics} />
