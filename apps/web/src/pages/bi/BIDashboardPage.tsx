@@ -7,11 +7,8 @@ import {
   Copy,
   Eye,
   EyeOff,
-  Grid3X3,
   LayoutDashboard,
   FolderOpen,
-  Filter,
-  SortDesc,
   BarChart3,
 } from 'lucide-react';
 import i18n from '@/i18n';
@@ -19,21 +16,11 @@ import {
   Box,
   Typography,
   Button,
-  Card,
-  CardContent,
-  CardActions,
-  Chip,
-  Divider,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Menu,
-  MenuItem,
-  IconButton,
-  Tooltip,
-  Skeleton,
   Tabs,
   Tab,
 } from '@mui/material';
@@ -54,7 +41,7 @@ import {
   type DashboardConfig,
 } from '@/components/bi/DashboardEditor';
 import { DashboardTemplateManager } from '@/components/bi/DashboardTemplateManager';
-import { DashboardTemplate as DashboardLayout } from '@/components/templates';
+import { CardListTemplate, type CardRenderConfig, type CardAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
@@ -83,8 +70,6 @@ const BIDashboardPage = () => {
     name: '',
     description: '',
   });
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [contextDashboard, setContextDashboard] = useState<Dashboard | null>(null);
   const dashboardsQuery = useQuery<Dashboard[]>({
     queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARDS_BASE,
     queryFn: async () => {
@@ -265,15 +250,7 @@ const BIDashboardPage = () => {
       d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  const handleContextMenu = (event: React.MouseEvent<HTMLElement>, dashboard: Dashboard) => {
-    event.preventDefault();
-    setAnchorEl(event.currentTarget);
-    setContextDashboard(dashboard);
-  };
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-    setContextDashboard(null);
-  };
+
   if (viewMode === 'editor') {
     return (
       <DashboardEditor
@@ -295,6 +272,52 @@ const BIDashboardPage = () => {
       />
     );
   }
+
+  // CardListTemplate 配置
+  const cardConfig: CardRenderConfig = {
+    title: (item) => (item as unknown as Dashboard).name,
+    description: (item) => (item as unknown as Dashboard).description || '',
+    icon: <LayoutDashboard />,
+    iconBgColor: 'indigo.light',
+    meta: [
+      {
+        field: 'created_at',
+        label: '',
+        format: (value) => new Date(value as string).toLocaleDateString(),
+      },
+    ],
+    status: {
+      field: 'is_public',
+      options: {
+        true: { label: i18n.t('bi.bi_dashboard_page.public_badge'), color: 'primary' },
+      },
+    },
+  };
+
+  const cardActions: CardAction[] = [
+    {
+      label: i18n.t('bi.bi_dashboard_page.edit'),
+      icon: <Edit2 />,
+      onClick: (item) => handleOpenEditor(item as unknown as Dashboard),
+    },
+    {
+      label: i18n.t('bi.bi_dashboard_page.clone'),
+      icon: <Copy />,
+      onClick: (item) => handleCloneDashboard((item as unknown as Dashboard).id),
+    },
+    {
+      label: i18n.t('bi.bi_dashboard_page.visibility'),
+      icon: (item) => ((item as unknown as Dashboard).is_public ? <Eye /> : <EyeOff />),
+      onClick: (item) => handleTogglePublic(item as unknown as Dashboard),
+    },
+    {
+      label: i18n.t('bi.bi_dashboard_page.delete'),
+      icon: <Trash2 />,
+      color: 'error',
+      onClick: (item) => handleDeleteDashboard((item as unknown as Dashboard).id),
+    },
+  ];
+
   return (
     <PageContainer
       title={i18n.t('bi.bi_dashboard_page.bi_heading')}
@@ -306,494 +329,209 @@ const BIDashboardPage = () => {
       padding={false}
       maxWidth={false}
     >
-      <DashboardLayout
-        title=''
-        subtitle=''
-        autoTitle={false}
-        breadcrumbs={[
-          { label: i18n.t('bi.bi_dashboard_page.home'), href: '/dashboard' },
-          { label: 'BI' },
-          { label: i18n.t('bi.bi_dashboard_page.bi_heading') },
-        ]}
-      >
-        <Box sx={{ p: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 4,
-            }}
+      <Box sx={{ p: 3 }}>
+        {/* Tab 栏 */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 3,
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(_, newValue) => setActiveTab(newValue)}
+            sx={{ minWidth: 200 }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <Tabs
-                value={activeTab}
-                onChange={(_, newValue) => setActiveTab(newValue)}
-                sx={{ minWidth: 200 }}
-              >
-                <Tab
-                  value='dashboards'
-                  label={i18n.t('bi.bi_dashboard_page.dashboard_tab')}
-                  icon={<LayoutDashboard size={18} />}
-                  iconPosition='start'
-                />
-                <Tab
-                  value='templates'
-                  label={i18n.t('bi.bi_dashboard_page.template_tab')}
-                  icon={<FolderOpen size={18} />}
-                  iconPosition='start'
-                />
-              </Tabs>
-            </Box>
-            {activeTab === 'dashboards' && (
-              <Button
-                variant='contained'
-                startIcon={<Plus />}
-                onClick={() => setCreateDialog({ ...createDialog, open: true })}
-              >
-                {i18n.t('pages.bi_dashboard_page.k0')}
-              </Button>
-            )}
-          </Box>
-          {activeTab === 'templates' ? (
-            <DashboardTemplateManager
-              onDashboardCreated={() => {
-                setActiveTab('dashboards');
-                queryClient.invalidateQueries({
-                  queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARDS_BASE,
-                  exact: false,
-                  refetchType: 'active',
-                });
-              }}
+            <Tab
+              value='dashboards'
+              label={i18n.t('bi.bi_dashboard_page.dashboard_tab')}
+              icon={<LayoutDashboard size={18} />}
+              iconPosition='start'
             />
-          ) : (
-            <>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 4,
-                }}
+            <Tab
+              value='templates'
+              label={i18n.t('bi.bi_dashboard_page.template_tab')}
+              icon={<FolderOpen size={18} />}
+              iconPosition='start'
+            />
+          </Tabs>
+        </Box>
+
+        {activeTab === 'templates' ? (
+          <DashboardTemplateManager
+            onDashboardCreated={() => {
+              setActiveTab('dashboards');
+              queryClient.invalidateQueries({
+                queryKey: QUERY_KEYS.AD_HOC.BI_DASHBOARDS_BASE,
+                exact: false,
+                refetchType: 'active',
+              });
+            }}
+          />
+        ) : (
+          <CardListTemplate
+            title=''
+            subtitle=''
+            data={filteredDashboards as unknown as Record<string, unknown>[]}
+            cardConfig={cardConfig}
+            cardActions={cardActions}
+            loading={loading}
+            search={{
+              value: searchTerm,
+              onChange: setSearchTerm,
+              placeholder: i18n.t('bi.bi_dashboard_page.search'),
+            }}
+            addButton={{
+              text: i18n.t('pages.bi_dashboard_page.k0'),
+              icon: <Plus />,
+              onClick: () => setCreateDialog({ ...createDialog, open: true }),
+            }}
+            emptyState={{
+              title: i18n.t('bi.bi_dashboard_page.k0'),
+              description: i18n.t('bi.bi_dashboard_page.k1'),
+              actionLabel: i18n.t('pages.bi_dashboard_page.k3'),
+              onAction: () => setCreateDialog({ ...createDialog, open: true }),
+            }}
+            onCardClick={(item) => handleOpenEditor(item as unknown as Dashboard)}
+            gridColumns={{ xs: 1, sm: 1, md: 1, lg: 1, xl: 3 }}
+            showStatsOverview={false}
+            showViewToggle={false}
+          />
+        )}
+      </Box>
+
+      {/* 创建 Dialog（保留：含模板单选列表，模板不提供） */}
+      <Dialog
+        open={createDialog.open}
+        onClose={() => setCreateDialog({ ...createDialog, open: false })}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>{i18n.t('bi.bi_dashboard_page.k6')}</DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <TextField
+            label={i18n.t('bi.bi_dashboard_page.name')}
+            fullWidth
+            value={createDialog.name}
+            onChange={(e) => setCreateDialog({ ...createDialog, name: e.target.value })}
+            sx={{ mb: 3 }}
+          />
+          <TextField
+            label={i18n.t('bi.bi_dashboard_page.description')}
+            multiline
+            rows={2}
+            fullWidth
+            value={createDialog.description}
+            onChange={(e) =>
+              setCreateDialog({
+                ...createDialog,
+                description: e.target.value,
+              })
+            }
+            sx={{ mb: 3 }}
+          />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+            <input
+              type='checkbox'
+              checked={createDialog.useTemplate}
+              onChange={(e) =>
+                setCreateDialog({
+                  ...createDialog,
+                  useTemplate: e.target.checked,
+                  selectedTemplateId: null,
+                })
+              }
+            />
+            <Typography variant='body1'>{i18n.t('bi.bi_dashboard_page.k7')}</Typography>
+          </Box>
+          {createDialog.useTemplate && templates.length > 0 && (
+            <Box
+              sx={{
+                border: `1px solid ${designTokens.colors.action.selected}`,
+                borderRadius: 1,
+                p: 2,
+              }}
+            >
+              <Typography
+                variant='body2'
+                sx={{ mb: 2, fontWeight: 500 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <TextField
-                    placeholder={i18n.t('bi.bi_dashboard_page.search')}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    size='small'
-                    sx={{ width: 300 }}
-                  />
-                  <Button
-                    variant='outlined'
-                    size='small'
-                    startIcon={<Filter />}
-                  >
-                    {i18n.t('pages.bi_dashboard_page.k1')}
-                  </Button>
-                  <Button
-                    variant='outlined'
-                    size='small'
-                    startIcon={<SortDesc />}
-                  >
-                    {i18n.t('pages.bi_dashboard_page.k2')}
-                  </Button>
-                </Box>
-              </Box>
-              {loading ? (
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: 3,
-                  }}
-                >
-                  {[1, 2, 3].map((i) => (
-                    <Card key={i}>
-                      <CardContent>
-                        <Skeleton sx={{ width: '60%', mb: 2 }} />
-                        <Skeleton sx={{ width: '100%', height: 120 }} />
-                      </CardContent>
-                    </Card>
-                  ))}
-                </Box>
-              ) : filteredDashboards.length === 0 ? (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    py: 12,
-                    color: 'text.secondary',
-                  }}
-                >
-                  <Grid3X3 sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-                  <Typography variant='h6'>{i18n.t('bi.bi_dashboard_page.k0')}</Typography>
-                  <Typography variant='body2'>{i18n.t('bi.bi_dashboard_page.k1')}</Typography>
-                  <Button
-                    variant='contained'
-                    startIcon={<Plus />}
-                    sx={{ mt: 3 }}
-                    onClick={() => setCreateDialog({ ...createDialog, open: true })}
-                  >
-                    {i18n.t('pages.bi_dashboard_page.k3')}
-                  </Button>
-                </Box>
-              ) : (
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: 3,
-                  }}
-                >
-                  {filteredDashboards.map((dashboard) => (
-                    <Card
-                      key={dashboard.id}
-                      sx={{
-                        position: 'relative',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s',
-                        '&:hover': {
-                          boxShadow: 3,
-                          transform: 'translateY(-2px)',
-                        },
-                      }}
-                      onClick={() => handleOpenEditor(dashboard)}
-                      onContextMenu={(e) => handleContextMenu(e, dashboard)}
-                    >
-                      {dashboard.is_public && (
-                        <Chip
-                          label={i18n.t('bi.bi_dashboard_page.public_badge')}
-                          size='small'
-                          color='primary'
-                          sx={{ position: 'absolute', top: 8, right: 8 }}
-                        />
-                      )}
-                      <CardContent sx={{ pb: 2 }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 2,
-                            mb: 2,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 40,
-                              height: 40,
-                              borderRadius: 1,
-                              backgroundColor: 'indigo.light',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <LayoutDashboard sx={{ color: 'indigo.main' }} />
-                          </Box>
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography
-                              variant='h6'
-                              sx={{
-                                fontWeight: 600,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {dashboard.name}
-                            </Typography>
-                            <Typography
-                              variant='caption'
-                              sx={{ color: 'text.secondary' }}
-                            >
-                              {new Date(dashboard.created_at).toLocaleDateString()}
-                            </Typography>
-                          </Box>
-                        </Box>
-                        {dashboard.description && (
-                          <Typography
-                            variant='body2'
-                            sx={{
-                              color: 'text.secondary',
-                              mb: 2,
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            {dashboard.description}
-                          </Typography>
-                        )}
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip
-                            label={i18n.t('bi.bi_dashboard_page.analysis_tab')}
-                            size='small'
-                            variant='outlined'
-                          />
-                          <Chip
-                            label={i18n.t('bi.bi_dashboard_page.visualization_tab')}
-                            size='small'
-                            variant='outlined'
-                          />
-                        </Box>
-                      </CardContent>
-                      <CardActions sx={{ justifyContent: 'flex-end', gap: 1 }}>
-                        <Tooltip title={i18n.t('bi.bi_dashboard_page.edit')}>
-                          <IconButton
-                            size='small'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenEditor(dashboard);
-                            }}
-                            aria-label={i18n.t('bi.bi_dashboard_page.k2')}
-                          >
-                            <Edit2 sx={{ width: 18, height: 18 }} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={i18n.t('bi.bi_dashboard_page.delete_action')}>
-                          <IconButton
-                            size='small'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCloneDashboard(dashboard.id);
-                            }}
-                            aria-label={i18n.t('bi.bi_dashboard_page.k3')}
-                          >
-                            <Copy sx={{ width: 18, height: 18 }} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip
-                          title={
-                            dashboard.is_public
-                              ? i18n.t('bi.bi_dashboard_page.public_label')
-                              : i18n.t('bi.bi_dashboard_page.private_label')
-                          }
-                        >
-                          <IconButton
-                            size='small'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleTogglePublic(dashboard);
-                            }}
-                            aria-label={i18n.t('bi.bi_dashboard_page.k4')}
-                          >
-                            {dashboard.is_public ? (
-                              <Eye sx={{ width: 18, height: 18 }} />
-                            ) : (
-                              <EyeOff sx={{ width: 18, height: 18 }} />
-                            )}
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={i18n.t('bi.bi_dashboard_page.delete')}>
-                          <IconButton
-                            size='small'
-                            color='error'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteDashboard(dashboard.id);
-                            }}
-                            aria-label={i18n.t('bi.bi_dashboard_page.k5')}
-                          >
-                            <Trash2 sx={{ width: 18, height: 18 }} />
-                          </IconButton>
-                        </Tooltip>
-                      </CardActions>
-                    </Card>
-                  ))}
-                </Box>
-              )}
-              <Dialog
-                open={createDialog.open}
-                onClose={() => setCreateDialog({ ...createDialog, open: false })}
-                maxWidth='sm'
-                fullWidth
-              >
-                <DialogTitle>{i18n.t('bi.bi_dashboard_page.k6')}</DialogTitle>
-                <DialogContent sx={{ mt: 2 }}>
-                  <TextField
-                    label={i18n.t('bi.bi_dashboard_page.name')}
-                    fullWidth
-                    value={createDialog.name}
-                    onChange={(e) => setCreateDialog({ ...createDialog, name: e.target.value })}
-                    sx={{ mb: 3 }}
-                  />
-                  <TextField
-                    label={i18n.t('bi.bi_dashboard_page.description')}
-                    multiline
-                    rows={2}
-                    fullWidth
-                    value={createDialog.description}
-                    onChange={(e) =>
+                {i18n.t('pages.bi_dashboard_page.k4')}
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {templates.map((template) => (
+                  <Box
+                    key={template.id}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      p: 2,
+                      borderRadius: 1,
+                      cursor: 'pointer',
+                      backgroundColor:
+                        createDialog.selectedTemplateId === template.id
+                          ? 'indigo.light'
+                          : 'transparent',
+                      '&:hover': { backgroundColor: 'action.hover' },
+                    }}
+                    onClick={() =>
                       setCreateDialog({
                         ...createDialog,
-                        description: e.target.value,
+                        selectedTemplateId: template.id,
                       })
                     }
-                    sx={{ mb: 3 }}
-                  />
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                  >
                     <input
-                      type='checkbox'
-                      checked={createDialog.useTemplate}
-                      onChange={(e) =>
+                      type='radio'
+                      checked={createDialog.selectedTemplateId === template.id}
+                      onChange={() =>
                         setCreateDialog({
                           ...createDialog,
-                          useTemplate: e.target.checked,
-                          selectedTemplateId: null,
+                          selectedTemplateId: template.id,
                         })
                       }
                     />
-                    <Typography variant='body1'>{i18n.t('bi.bi_dashboard_page.k7')}</Typography>
-                  </Box>
-                  {createDialog.useTemplate && templates.length > 0 && (
-                    <Box
-                      sx={{
-                        border: `1px solid ${designTokens.colors.action.selected}`,
-                        borderRadius: 1,
-                        p: 2,
-                      }}
-                    >
+                    <FolderOpen sx={{ color: 'indigo.main' }} />
+                    <div>
                       <Typography
-                        variant='body2'
-                        sx={{ mb: 2, fontWeight: 500 }}
+                        variant='body1'
+                        sx={{ fontWeight: 500 }}
                       >
-                        {i18n.t('pages.bi_dashboard_page.k4')}
+                        {template.name}
                       </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {templates.map((template) => (
-                          <Box
-                            key={template.id}
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 2,
-                              p: 2,
-                              borderRadius: 1,
-                              cursor: 'pointer',
-                              backgroundColor:
-                                createDialog.selectedTemplateId === template.id
-                                  ? 'indigo.light'
-                                  : 'transparent',
-                              '&:hover': { backgroundColor: 'action.hover' },
-                            }}
-                            onClick={() =>
-                              setCreateDialog({
-                                ...createDialog,
-                                selectedTemplateId: template.id,
-                              })
-                            }
-                          >
-                            <input
-                              type='radio'
-                              checked={createDialog.selectedTemplateId === template.id}
-                              onChange={() =>
-                                setCreateDialog({
-                                  ...createDialog,
-                                  selectedTemplateId: template.id,
-                                })
-                              }
-                            />
-                            <FolderOpen sx={{ color: 'indigo.main' }} />
-                            <div>
-                              <Typography
-                                variant='body1'
-                                sx={{ fontWeight: 500 }}
-                              >
-                                {template.name}
-                              </Typography>
-                              {template.description && (
-                                <Typography
-                                  variant='caption'
-                                  sx={{ color: 'text.secondary' }}
-                                >
-                                  {template.description}
-                                </Typography>
-                              )}
-                            </div>
-                          </Box>
-                        ))}
-                      </Box>
-                    </Box>
-                  )}
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={() => setCreateDialog({ ...createDialog, open: false })}>
-                    {i18n.t('pages.bi_dashboard_page.k5')}
-                  </Button>
-                  <Button
-                    variant='contained'
-                    onClick={handleCreateDashboard}
-                    disabled={
-                      !createDialog.name ||
-                      (createDialog.useTemplate && !createDialog.selectedTemplateId)
-                    }
-                  >
-                    {i18n.t('pages.bi_dashboard_page.k6')}
-                  </Button>
-                </DialogActions>
-              </Dialog>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleCloseMenu}
-              >
-                {contextDashboard && (
-                  <>
-                    <MenuItem
-                      onClick={() => {
-                        handleOpenEditor(contextDashboard);
-                        handleCloseMenu();
-                      }}
-                    >
-                      <Edit2 sx={{ mr: 2 }} />
-                      {i18n.t('pages.bi_dashboard_page.k7')}
-                    </MenuItem>
-                    <MenuItem
-                      onClick={() => {
-                        handleCloneDashboard(contextDashboard.id);
-                        handleCloseMenu();
-                      }}
-                    >
-                      <Copy sx={{ mr: 2 }} />
-                      {i18n.t('pages.bi_dashboard_page.k8')}
-                    </MenuItem>
-                    <MenuItem
-                      onClick={() => {
-                        handleTogglePublic(contextDashboard);
-                        handleCloseMenu();
-                      }}
-                    >
-                      {contextDashboard.is_public ? (
-                        <EyeOff sx={{ mr: 2 }} />
-                      ) : (
-                        <Eye sx={{ mr: 2 }} />
+                      {template.description && (
+                        <Typography
+                          variant='caption'
+                          sx={{ color: 'text.secondary' }}
+                        >
+                          {template.description}
+                        </Typography>
                       )}
-                      {contextDashboard.is_public
-                        ? i18n.t('bi.bi_dashboard_page.public_label')
-                        : i18n.t('bi.bi_dashboard_page.private_label')}
-                    </MenuItem>
-                    <Divider />
-                    <MenuItem
-                      onClick={() => {
-                        handleDeleteDashboard(contextDashboard.id);
-                        handleCloseMenu();
-                      }}
-                      sx={{ color: 'error.main' }}
-                    >
-                      <Trash2 sx={{ mr: 2 }} />
-                      {i18n.t('pages.bi_dashboard_page.k9')}
-                    </MenuItem>
-                  </>
-                )}
-              </Menu>
-            </>
+                    </div>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
           )}
-        </Box>
-      </DashboardLayout>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateDialog({ ...createDialog, open: false })}>
+            {i18n.t('pages.bi_dashboard_page.k5')}
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleCreateDashboard}
+            disabled={
+              !createDialog.name || (createDialog.useTemplate && !createDialog.selectedTemplateId)
+            }
+          >
+            {i18n.t('pages.bi_dashboard_page.k6')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

@@ -1,4 +1,15 @@
-// modules/HeatmapModule/HeatmapLayer.tsx
+/**
+ * GIS 热力图图层（径向渐变点版，模块化 MapView 用）
+ *
+ * 实现方式：每个数据点独立绘制 radial gradient circle（半径随缩放变化），
+ *          叠加为 leaflet Layer。
+ * 使用方：`components/gis/modules/MapModule/MapView.tsx`（新版模块化 MapView）。
+ *
+ * 注意：本文件与 `components/gis/HeatmapLayer.tsx` 是**两种不同算法**，
+ *      不是重复代码（2026-10-27 UI 审计曾误判为重复，diff 后确认算法不同）。
+ *      前者为网格密度版，由旧版 MapView 使用。
+ *      两份均在被活跃引用，请勿合并或删除。
+ */
 import React, { useEffect, useRef, useMemo } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';

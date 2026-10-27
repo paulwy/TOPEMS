@@ -1,3 +1,13 @@
+/**
+ * 主题预设配置（6 套主色方案）
+ *
+ * ⚠️ 当前状态（2026-10-27 UI 审计确认）：
+ *   - 本文件定义的 6 套主色预设（default / emerald / amber / violet / rose / teal）
+ *     当前**没有 UI 入口**暴露给用户。
+ *   - ThemeSelector 仅提供 light / dark / system 三种模式切换。
+ *   - 保留本文件是为了未来 ThemeSelector 扩展主色选择器时使用，请勿删除。
+ *   - TODO: 等待 ThemeSelector 扩展主色选择器 UI 后接入（见 ui-redesign-v3.md Phase 2）。
+ */
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 

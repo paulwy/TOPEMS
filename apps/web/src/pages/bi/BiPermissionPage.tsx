@@ -25,16 +25,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
-  Tooltip,
   Tabs,
   Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableContainer,
   Paper,
   MenuItem,
   FormControl,
@@ -44,10 +36,9 @@ import {
   FormControlLabel,
   Grid,
   Alert,
-  CircularProgress,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { DashboardTemplate } from '@/components/templates';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import {
   listRowLevelPermissions,
   createRowLevelPermission,
@@ -246,6 +237,246 @@ const BiPermissionPage = () => {
     };
     return colors[type] || 'primary';
   };
+
+  // 行级权限表格列配置
+  const rowColumns: ColumnDef<RowLevelPermission>[] = [
+    {
+      id: 'name',
+      label: i18n.t('bi.bi_permission_page.k5'),
+      render: (perm) => (
+        <Box>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 600 }}
+          >
+            {perm.name}
+          </Typography>
+          {perm.description && (
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              {perm.description}
+            </Typography>
+          )}
+        </Box>
+      ),
+    },
+    {
+      id: 'table_name',
+      label: i18n.t('bi.bi_permission_page.k6'),
+      render: (perm) => (
+        <Chip
+          label={perm.table_name}
+          size='small'
+          variant='outlined'
+        />
+      ),
+    },
+    {
+      id: 'condition',
+      label: i18n.t('bi.bi_permission_page.k7'),
+      render: (perm) => (
+        <Paper
+          variant='outlined'
+          sx={{
+            px: 1.5,
+            py: 0.5,
+            fontFamily: 'monospace',
+            fontSize: 12,
+            bgcolor: 'grey.50',
+            maxWidth: 300,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {perm.condition}
+        </Paper>
+      ),
+    },
+    {
+      id: 'roles',
+      label: i18n.t('bi.bi_permission_page.k8'),
+      render: (perm) =>
+        perm.roles.length > 0 ? (
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+            {perm.roles.slice(0, 2).map((role) => (
+              <Chip
+                key={role}
+                label={role}
+                size='small'
+                color='primary'
+                variant='outlined'
+              />
+            ))}
+            {perm.roles.length > 2 && (
+              <Chip
+                label={`+${perm.roles.length - 2}`}
+                size='small'
+                variant='outlined'
+              />
+            )}
+          </Box>
+        ) : (
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
+            -
+          </Typography>
+        ),
+    },
+    {
+      id: 'priority',
+      label: i18n.t('bi.bi_permission_page.k9'),
+      render: (perm) => (
+        <Chip
+          label={`P${perm.priority}`}
+          size='small'
+          color='warning'
+        />
+      ),
+    },
+    {
+      id: 'isEnabled',
+      label: i18n.t('bi.bi_permission_page.k10'),
+      render: (perm) => (
+        <FormControlLabel
+          control={
+            <Switch
+              size='small'
+              checked={perm.isEnabled}
+              onChange={() => handleToggle(perm)}
+            />
+          }
+          label={
+            perm.isEnabled
+              ? i18n.t('bi.bi_permission_page.active')
+              : i18n.t('bi.bi_permission_page.inactive')
+          }
+          sx={{ m: 0 }}
+        />
+      ),
+    },
+  ];
+
+  const rowActions: RowAction<RowLevelPermission>[] = [
+    {
+      key: 'test',
+      label: i18n.t('bi.bi_permission_page.test'),
+      icon: <CheckCircle2 size={16} />,
+      onClick: (perm) => handleTest(perm),
+    },
+    {
+      key: 'edit',
+      label: i18n.t('bi.bi_permission_page.edit'),
+      icon: <Edit2 size={16} />,
+      onClick: (perm) => handleOpenDialog(perm),
+    },
+    {
+      key: 'delete',
+      label: i18n.t('bi.bi_permission_page.delete'),
+      icon: <Trash2 size={16} />,
+      color: 'error',
+      onClick: (perm) => handleDelete(perm.id),
+    },
+  ];
+
+  // 数据权限表格列配置
+  const dataColumns: ColumnDef<DataPermissionRule>[] = [
+    {
+      id: 'name',
+      label: i18n.t('bi.bi_permission_page.k13'),
+      render: (perm) => (
+        <Typography
+          variant='body2'
+          sx={{ fontWeight: 600 }}
+        >
+          {perm.name}
+        </Typography>
+      ),
+    },
+    {
+      id: 'resource_type',
+      label: i18n.t('bi.bi_permission_page.k14'),
+      render: (perm) => (
+        <Chip
+          label={getResourceTypeLabel(perm.resource_type)}
+          size='small'
+          variant='outlined'
+        />
+      ),
+    },
+    {
+      id: 'permission_type',
+      label: i18n.t('bi.bi_permission_page.k15'),
+      render: (perm) => (
+        <Chip
+          label={getPermissionTypeLabel(perm.permission_type)}
+          size='small'
+          color={
+            getPermissionTypeColor(perm.permission_type) as React.ComponentProps<
+              typeof Chip
+            >['color']
+          }
+        />
+      ),
+    },
+    {
+      id: 'role_ids',
+      label: i18n.t('bi.bi_permission_page.k16'),
+      render: (perm) =>
+        perm.role_ids.length > 0 ? (
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+            {perm.role_ids.slice(0, 2).map((role) => (
+              <Chip
+                key={role}
+                label={role}
+                size='small'
+                color='primary'
+                variant='outlined'
+              />
+            ))}
+            {perm.role_ids.length > 2 && (
+              <Chip
+                label={`+${perm.role_ids.length - 2}`}
+                size='small'
+                variant='outlined'
+              />
+            )}
+          </Box>
+        ) : (
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
+            -
+          </Typography>
+        ),
+    },
+    {
+      id: 'user_ids',
+      label: i18n.t('bi.bi_permission_page.k17'),
+      render: (perm) =>
+        perm.user_ids.length > 0 ? (
+          `${perm.user_ids.length}${i18n.t('pages.bi_permission_page.k0')}`
+        ) : (
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
+            -
+          </Typography>
+        ),
+    },
+    {
+      id: 'created_at',
+      label: i18n.t('bi.bi_permission_page.k18'),
+      render: (perm) => new Date(perm.created_at).toLocaleDateString(),
+    },
+  ];
+
   return (
     <PageContainer
       title={i18n.t('bi.bi_permission_page.permission_mgmt_heading')}
@@ -257,739 +488,413 @@ const BiPermissionPage = () => {
       padding={false}
       maxWidth={false}
     >
-      <DashboardTemplate
-        autoTitle={false}
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: i18n.t('bi.bi_permission_page.home'), href: '/dashboard' },
-          { label: 'BI' },
-          { label: i18n.t('bi.bi_permission_page.permission_mgmt_tab') },
-        ]}
-      >
-        <Box sx={{ p: 3 }}>
-          <Grid
-            container
-            spacing={3}
-            sx={{ mb: 4 }}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 1,
-                        backgroundColor: ct.error[50],
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Shield
-                        sx={{ color: 'error.main' }}
-                        size={24}
-                      />
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700 }}
-                      >
-                        {rowPermissions.length}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.bi_permission_page.k0')}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 1,
-                        backgroundColor: 'primary.50',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Database
-                        sx={{ color: 'primary.main' }}
-                        size={24}
-                      />
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700 }}
-                      >
-                        {dataPermissions.length}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.bi_permission_page.k1')}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 1,
-                        backgroundColor: ct.success[100],
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <CheckCircle2
-                        sx={{ color: 'success.main' }}
-                        size={24}
-                      />
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700 }}
-                      >
-                        {rowPermissions.filter((p) => p.isEnabled).length}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.bi_permission_page.k2')}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 1,
-                        backgroundColor: 'warning.100',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Users
-                        sx={{ color: 'warning.dark' }}
-                        size={24}
-                      />
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700 }}
-                      >
-                        8
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {i18n.t('pages.bi_permission_page.k3')}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-          <Paper
-            elevation={0}
-            sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
-          >
-            <Box
-              sx={{
-                p: 2,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-              }}
-            >
-              <Tabs
-                value={activeTab}
-                onChange={(_, v) => setActiveTab(v)}
-              >
-                <Tab
-                  value='row-level'
-                  label={i18n.t('bi.bi_permission_page.row_level_tab')}
-                  icon={<KeyRound size={16} />}
-                  iconPosition='start'
-                />
-                <Tab
-                  value='data'
-                  label={i18n.t('bi.bi_permission_page.data_permission_tab')}
-                  icon={<Database size={16} />}
-                  iconPosition='start'
-                />
-              </Tabs>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  placeholder={i18n.t('bi.bi_permission_page.search')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  size='small'
-                  sx={{ width: 250 }}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <Search
-                          size={18}
-                          style={{ marginRight: 8, color: ct.grey[400] }}
-                        />
-                      ),
-                    },
-                  }}
-                />
-                {activeTab === 'row-level' && (
-                  <Button
-                    variant='contained'
-                    startIcon={<Plus />}
-                    onClick={() => handleOpenDialog()}
-                  >
-                    {i18n.t('pages.bi_permission_page.k4')}
-                  </Button>
-                )}
-              </Box>
-            </Box>
-            <Box sx={{ p: 3 }}>
-              {activeTab === 'row-level' && (
-                <>
-                  {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                      <CircularProgress />
-                    </Box>
-                  ) : filteredRowPermissions.length === 0 ? (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        py: 12,
-                        color: 'text.secondary',
-                      }}
-                    >
-                      <Shield sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-                      <Typography variant='h6'>{i18n.t('bi.bi_permission_page.k3')}</Typography>
-                      <Typography variant='body2'>{i18n.t('bi.bi_permission_page.k4')}</Typography>
-                    </Box>
-                  ) : (
-                    <TableContainer>
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k5')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k6')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k7')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k8')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k9')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k10')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k11')}
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {filteredRowPermissions.map((perm) => (
-                            <TableRow
-                              key={perm.id}
-                              hover
-                            >
-                              <TableCell>
-                                <Box>
-                                  <Typography
-                                    variant='body2'
-                                    sx={{ fontWeight: 600 }}
-                                  >
-                                    {perm.name}
-                                  </Typography>
-                                  {perm.description && (
-                                    <Typography
-                                      variant='caption'
-                                      color='text.secondary'
-                                    >
-                                      {perm.description}
-                                    </Typography>
-                                  )}
-                                </Box>
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  label={perm.table_name}
-                                  size='small'
-                                  variant='outlined'
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Paper
-                                  variant='outlined'
-                                  sx={{
-                                    px: 1.5,
-                                    py: 0.5,
-                                    fontFamily: 'monospace',
-                                    fontSize: 12,
-                                    bgcolor: 'grey.50',
-                                    maxWidth: 300,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                  }}
-                                >
-                                  {perm.condition}
-                                </Paper>
-                              </TableCell>
-                              <TableCell>
-                                {perm.roles.length > 0 ? (
-                                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                                    {perm.roles.slice(0, 2).map((role) => (
-                                      <Chip
-                                        key={role}
-                                        label={role}
-                                        size='small'
-                                        color='primary'
-                                        variant='outlined'
-                                      />
-                                    ))}
-                                    {perm.roles.length > 2 && (
-                                      <Chip
-                                        label={`+${perm.roles.length - 2}`}
-                                        size='small'
-                                        variant='outlined'
-                                      />
-                                    )}
-                                  </Box>
-                                ) : (
-                                  <Typography
-                                    variant='caption'
-                                    color='text.secondary'
-                                  >
-                                    -
-                                  </Typography>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  label={`P${perm.priority}`}
-                                  size='small'
-                                  color='warning'
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormControlLabel
-                                  control={
-                                    <Switch
-                                      size='small'
-                                      checked={perm.isEnabled}
-                                      onChange={() => handleToggle(perm)}
-                                    />
-                                  }
-                                  label={
-                                    perm.isEnabled
-                                      ? i18n.t('bi.bi_permission_page.active')
-                                      : i18n.t('bi.bi_permission_page.inactive')
-                                  }
-                                  sx={{ m: 0 }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Tooltip title={i18n.t('bi.bi_permission_page.test')}>
-                                  <IconButton
-                                    size='small'
-                                    onClick={() => handleTest(perm)}
-                                    aria-label={i18n.t('bi.bi_permission_page.test')}
-                                  >
-                                    <CheckCircle2 size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title={i18n.t('bi.bi_permission_page.edit')}>
-                                  <IconButton
-                                    size='small'
-                                    onClick={() => handleOpenDialog(perm)}
-                                    aria-label={i18n.t('bi.bi_permission_page.edit_1')}
-                                  >
-                                    <Edit2 size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title={i18n.t('bi.bi_permission_page.delete')}>
-                                  <IconButton
-                                    size='small'
-                                    color='error'
-                                    onClick={() => handleDelete(perm.id)}
-                                    aria-label={i18n.t('bi.bi_permission_page.delete_1')}
-                                  >
-                                    <Trash2 size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  )}
-                </>
-              )}
-              {activeTab === 'data' && (
-                <>
-                  {filteredDataPermissions.length === 0 ? (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        py: 12,
-                        color: 'text.secondary',
-                      }}
-                    >
-                      <Database sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-                      <Typography variant='h6'>{i18n.t('bi.bi_permission_page.k12')}</Typography>
-                    </Box>
-                  ) : (
-                    <TableContainer>
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k13')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k14')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k15')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k16')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k17')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k18')}
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>
-                              {i18n.t('bi.bi_permission_page.k19')}
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {filteredDataPermissions.map((perm) => (
-                            <TableRow
-                              key={perm.id}
-                              hover
-                            >
-                              <TableCell>
-                                <Typography
-                                  variant='body2'
-                                  sx={{ fontWeight: 600 }}
-                                >
-                                  {perm.name}
-                                </Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  label={getResourceTypeLabel(perm.resource_type)}
-                                  size='small'
-                                  variant='outlined'
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  label={getPermissionTypeLabel(perm.permission_type)}
-                                  size='small'
-                                  color={
-                                    getPermissionTypeColor(
-                                      perm.permission_type
-                                    ) as React.ComponentProps<typeof Chip>['color']
-                                  }
-                                />
-                              </TableCell>
-                              <TableCell>
-                                {perm.role_ids.length > 0 ? (
-                                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                                    {perm.role_ids.slice(0, 2).map((role) => (
-                                      <Chip
-                                        key={role}
-                                        label={role}
-                                        size='small'
-                                        color='primary'
-                                        variant='outlined'
-                                      />
-                                    ))}
-                                    {perm.role_ids.length > 2 && (
-                                      <Chip
-                                        label={`+${perm.role_ids.length - 2}`}
-                                        size='small'
-                                        variant='outlined'
-                                      />
-                                    )}
-                                  </Box>
-                                ) : (
-                                  <Typography
-                                    variant='caption'
-                                    color='text.secondary'
-                                  >
-                                    -
-                                  </Typography>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {perm.user_ids.length > 0 ? (
-                                  `${perm.user_ids.length}${i18n.t('pages.bi_permission_page.k0')}`
-                                ) : (
-                                  <Typography
-                                    variant='caption'
-                                    color='text.secondary'
-                                  >
-                                    -
-                                  </Typography>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                {new Date(perm.created_at).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <Tooltip title={i18n.t('bi.bi_permission_page.edit')}>
-                                  <IconButton
-                                    size='small'
-                                    aria-label={i18n.t('bi.bi_permission_page.edit_2')}
-                                  >
-                                    <Edit2 size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title={i18n.t('bi.bi_permission_page.delete')}>
-                                  <IconButton
-                                    size='small'
-                                    color='error'
-                                    aria-label={i18n.t('bi.bi_permission_page.delete_2')}
-                                  >
-                                    <Trash2 size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  )}
-                </>
-              )}
-            </Box>
-          </Paper>
-          <Dialog
-            open={dialogOpen}
-            onClose={() => setDialogOpen(false)}
-            maxWidth='md'
-            fullWidth
-          >
-            <DialogTitle>
-              {editingItem
-                ? i18n.t('bi.bi_permission_page.edit_3')
-                : i18n.t('bi.bi_permission_page.new_rule_button')}
-            </DialogTitle>
-            <DialogContent sx={{ mt: 2 }}>
-              <Grid
-                container
-                spacing={3}
-              >
-                <Grid size={{ xs: 12 }}>
-                  <TextField
-                    label={i18n.t('bi.bi_permission_page.name')}
-                    fullWidth
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <TextField
-                    label={i18n.t('bi.bi_permission_page.description')}
-                    multiline
-                    rows={2}
-                    fullWidth
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>{i18n.t('bi.bi_permission_page.k20')}</InputLabel>
-                    <Select
-                      value={formData.data_source_id}
-                      label={i18n.t('bi.bi_permission_page.datasource_resource')}
-                      onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
-                    >
-                      <MenuItem value='ds-001'>{i18n.t('bi.bi_permission_page.k21')}</MenuItem>
-                      <MenuItem value='ds-002'>{i18n.t('pages.bi_permission_page.me_0')}</MenuItem>
-                      <MenuItem value='ds-003'>{i18n.t('pages.bi_permission_page.wm_1')}</MenuItem>
-                      <MenuItem value='ds-004'>{i18n.t('pages.bi_permission_page.k2')}</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    label={i18n.t('bi.bi_permission_page.rule_name_label')}
-                    fullWidth
-                    value={formData.table_name}
-                    onChange={(e) => setFormData({ ...formData, table_name: e.target.value })}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <TextField
-                    label={i18n.t('bi.bi_permission_page.data_table_label')}
-                    multiline
-                    rows={4}
-                    fullWidth
-                    value={formData.condition}
-                    onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+      <Box sx={{ p: 3 }}>
+        <Grid
+          container
+          spacing={3}
+          sx={{ mb: 4 }}
+        >
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
                     sx={{
-                      '& .MuiInputBase-input': {
-                        fontFamily: 'monospace',
-                        fontSize: 14,
-                      },
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1,
+                      backgroundColor: ct.error[50],
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
-                    helperText={i18n.t('bi.bi_permission_page.sql_condition_hint')}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    label={i18n.t('bi.bi_permission_page.applicable_roles_label')}
-                    fullWidth
-                    value={(formData.roles || []).join(', ')}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        roles: e.target.value
-                          .split(',')
-                          .map((r) => r.trim())
-                          .filter(Boolean),
-                      })
-                    }
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    label={i18n.t('bi.bi_permission_page.user_label')}
-                    fullWidth
-                    value={(formData.users || []).join(', ')}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        users: e.target.value
-                          .split(',')
-                          .map((u) => u.trim())
-                          .filter(Boolean),
-                      })
-                    }
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    type='number'
-                    label={i18n.t('bi.bi_permission_page.priority_label')}
-                    fullWidth
-                    value={formData.priority}
-                    onChange={(e) =>
-                      setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })
-                    }
-                    helperText={i18n.t('bi.bi_permission_page.priority_hint')}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.isEnabled}
-                        onChange={(e) => setFormData({ ...formData, isEnabled: e.target.checked })}
-                      />
-                    }
-                    label={i18n.t('bi.bi_permission_page.active_1')}
-                    sx={{ mt: 2 }}
-                  />
-                </Grid>
-              </Grid>
-              {testResult && (
-                <Box sx={{ mt: 3 }}>
-                  <Alert
-                    severity={testResult.success ? 'success' : 'error'}
-                    icon={testResult.success ? <CheckCircle2 /> : <AlertTriangle />}
                   >
-                    {testResult.message}
-                  </Alert>
+                    <Shield
+                      sx={{ color: 'error.main' }}
+                      size={24}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant='h5'
+                      sx={{ fontWeight: 700 }}
+                    >
+                      {rowPermissions.length}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('pages.bi_permission_page.k0')}
+                    </Typography>
+                  </Box>
                 </Box>
-              )}
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setDialogOpen(false)}>
-                {i18n.t('bi.bi_permission_page.k22')}
-              </Button>
-              {editingItem && (
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1,
+                      backgroundColor: 'primary.50',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Database
+                      sx={{ color: 'primary.main' }}
+                      size={24}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant='h5'
+                      sx={{ fontWeight: 700 }}
+                    >
+                      {dataPermissions.length}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('pages.bi_permission_page.k1')}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1,
+                      backgroundColor: ct.success[100],
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <CheckCircle2
+                      sx={{ color: 'success.main' }}
+                      size={24}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant='h5'
+                      sx={{ fontWeight: 700 }}
+                    >
+                      {rowPermissions.filter((p) => p.isEnabled).length}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('pages.bi_permission_page.k2')}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Card>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1,
+                      backgroundColor: 'warning.100',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Users
+                      sx={{ color: 'warning.dark' }}
+                      size={24}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant='h5'
+                      sx={{ fontWeight: 700 }}
+                    >
+                      8
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('pages.bi_permission_page.k3')}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+        <Paper
+          elevation={0}
+          sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+        >
+          <Box
+            sx={{
+              p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <Tabs
+              value={activeTab}
+              onChange={(_, v) => setActiveTab(v)}
+            >
+              <Tab
+                value='row-level'
+                label={i18n.t('bi.bi_permission_page.row_level_tab')}
+                icon={<KeyRound size={16} />}
+                iconPosition='start'
+              />
+              <Tab
+                value='data'
+                label={i18n.t('bi.bi_permission_page.data_permission_tab')}
+                icon={<Database size={16} />}
+                iconPosition='start'
+              />
+            </Tabs>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                placeholder={i18n.t('bi.bi_permission_page.search')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                size='small'
+                sx={{ width: 250 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <Search
+                        size={18}
+                        style={{ marginRight: 8, color: ct.grey[400] }}
+                      />
+                    ),
+                  },
+                }}
+              />
+              {activeTab === 'row-level' && (
                 <Button
-                  variant='outlined'
-                  onClick={() => handleTest(editingItem)}
+                  variant='contained'
+                  startIcon={<Plus />}
+                  onClick={() => handleOpenDialog()}
                 >
-                  {i18n.t('pages.bi_permission_page.k5')}
+                  {i18n.t('pages.bi_permission_page.k4')}
                 </Button>
               )}
+            </Box>
+          </Box>
+          <Box sx={{ p: 3 }}>
+            {activeTab === 'row-level' && (
+              <ListPageTemplate
+                columns={rowColumns}
+                data={filteredRowPermissions}
+                loading={loading}
+                getRowId={(row) => row.id}
+                rowActions={rowActions}
+                emptyMessage={i18n.t('bi.bi_permission_page.k3')}
+                emptyIcon={<Shield sx={{ width: 64, height: 64, opacity: 0.5 }} />}
+              />
+            )}
+            {activeTab === 'data' && (
+              <ListPageTemplate
+                columns={dataColumns}
+                data={filteredDataPermissions}
+                loading={false}
+                getRowId={(row) => row.id}
+                emptyMessage={i18n.t('bi.bi_permission_page.k12')}
+                emptyIcon={<Database sx={{ width: 64, height: 64, opacity: 0.5 }} />}
+              />
+            )}
+          </Box>
+        </Paper>
+        <Dialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          maxWidth='md'
+          fullWidth
+        >
+          <DialogTitle>
+            {editingItem
+              ? i18n.t('bi.bi_permission_page.edit_3')
+              : i18n.t('bi.bi_permission_page.new_rule_button')}
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            <Grid
+              container
+              spacing={3}
+            >
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  label={i18n.t('bi.bi_permission_page.name')}
+                  fullWidth
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  label={i18n.t('bi.bi_permission_page.description')}
+                  multiline
+                  rows={2}
+                  fullWidth
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth>
+                  <InputLabel>{i18n.t('bi.bi_permission_page.k20')}</InputLabel>
+                  <Select
+                    value={formData.data_source_id}
+                    label={i18n.t('bi.bi_permission_page.datasource_resource')}
+                    onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
+                  >
+                    <MenuItem value='ds-001'>{i18n.t('bi.bi_permission_page.k21')}</MenuItem>
+                    <MenuItem value='ds-002'>{i18n.t('pages.bi_permission_page.me_0')}</MenuItem>
+                    <MenuItem value='ds-003'>{i18n.t('pages.bi_permission_page.wm_1')}</MenuItem>
+                    <MenuItem value='ds-004'>{i18n.t('pages.bi_permission_page.k2')}</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label={i18n.t('bi.bi_permission_page.rule_name_label')}
+                  fullWidth
+                  value={formData.table_name}
+                  onChange={(e) => setFormData({ ...formData, table_name: e.target.value })}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  label={i18n.t('bi.bi_permission_page.data_table_label')}
+                  multiline
+                  rows={4}
+                  fullWidth
+                  value={formData.condition}
+                  onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+                  sx={{
+                    '& .MuiInputBase-input': {
+                      fontFamily: 'monospace',
+                      fontSize: 14,
+                    },
+                  }}
+                  helperText={i18n.t('bi.bi_permission_page.sql_condition_hint')}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label={i18n.t('bi.bi_permission_page.applicable_roles_label')}
+                  fullWidth
+                  value={(formData.roles || []).join(', ')}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      roles: e.target.value
+                        .split(',')
+                        .map((r) => r.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  label={i18n.t('bi.bi_permission_page.user_label')}
+                  fullWidth
+                  value={(formData.users || []).join(', ')}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      users: e.target.value
+                        .split(',')
+                        .map((u) => u.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  type='number'
+                  label={i18n.t('bi.bi_permission_page.priority_label')}
+                  fullWidth
+                  value={formData.priority}
+                  onChange={(e) =>
+                    setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })
+                  }
+                  helperText={i18n.t('bi.bi_permission_page.priority_hint')}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.isEnabled}
+                      onChange={(e) => setFormData({ ...formData, isEnabled: e.target.checked })}
+                    />
+                  }
+                  label={i18n.t('bi.bi_permission_page.active_1')}
+                  sx={{ mt: 2 }}
+                />
+              </Grid>
+            </Grid>
+            {testResult && (
+              <Box sx={{ mt: 3 }}>
+                <Alert
+                  severity={testResult.success ? 'success' : 'error'}
+                  icon={testResult.success ? <CheckCircle2 /> : <AlertTriangle />}
+                >
+                  {testResult.message}
+                </Alert>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDialogOpen(false)}>
+              {i18n.t('bi.bi_permission_page.k22')}
+            </Button>
+            {editingItem && (
               <Button
-                variant='contained'
-                onClick={handleSave}
-                disabled={!formData.name || !formData.condition}
+                variant='outlined'
+                onClick={() => handleTest(editingItem)}
               >
-                {i18n.t('pages.bi_permission_page.k6')}
+                {i18n.t('pages.bi_permission_page.k5')}
               </Button>
-            </DialogActions>
-          </Dialog>
-        </Box>
-      </DashboardTemplate>
+            )}
+            <Button
+              variant='contained'
+              onClick={handleSave}
+              disabled={!formData.name || !formData.condition}
+            >
+              {i18n.t('pages.bi_permission_page.k6')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
     </PageContainer>
   );
 };

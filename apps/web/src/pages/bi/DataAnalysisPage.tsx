@@ -20,7 +20,7 @@ import {
   Grid,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { DashboardTemplate } from '@/components/templates';
+import { DashboardTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ChartComponent } from '@/components/bi/ChartLibrary';
 import { FilterBar } from '@/components/bi/FilterBar';
 import type { FilterConfig } from '@/api/bi';
@@ -499,121 +499,121 @@ const DataAnalysisPage = () => {
     </Box>
   );
 
-  const renderDataTable = () => (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography
-          variant='subtitle1'
-          sx={{ fontWeight: 600 }}
-        >
-          {t('bi.data_analysis_page.k45')}
-        </Typography>
-        <Button
-          size='small'
-          variant='outlined'
-          startIcon={<Download size={16} />}
-        >
-          {t('bi.data_analysis_page.k40')}
-        </Button>
-      </Box>
+  const renderDataTable = () => {
+    const rows = [
+      {
+        id: 'SO-20260628-001',
+        date: '2026-06-28',
+        order: 'SO-20260628-001',
+        customer: t('bi.data_analysis_page.customer_zhangsan'),
+        product: t('bi.data_analysis_page.product_electronics'),
+        qty: 2,
+        amount: 12800,
+        status: t('bi.data_analysis_page.completed'),
+      },
+      {
+        id: 'SO-20260628-002',
+        date: '2026-06-28',
+        order: 'SO-20260628-002',
+        customer: t('bi.data_analysis_page.customer_lisi'),
+        product: t('bi.data_analysis_page.product_clothing'),
+        qty: 5,
+        amount: 1950,
+        status: t('bi.data_analysis_page.completed'),
+      },
+      {
+        id: 'SO-20260627-001',
+        date: '2026-06-27',
+        order: 'SO-20260627-001',
+        customer: t('bi.data_analysis_page.customer_wangwu'),
+        product: t('bi.data_analysis_page.product_home_goods'),
+        qty: 1,
+        amount: 2299,
+        status: t('bi.data_analysis_page.status_completed'),
+      },
+      {
+        id: 'SO-20260627-002',
+        date: '2026-06-27',
+        order: 'SO-20260627-002',
+        customer: t('bi.data_analysis_page.customer_zhaoliu'),
+        product: t('bi.data_analysis_page.product_food'),
+        qty: 3,
+        amount: 8997,
+        status: t('bi.data_analysis_page.completed'),
+      },
+      {
+        id: 'SO-20260626-001',
+        date: '2026-06-26',
+        order: 'SO-20260626-001',
+        customer: t('bi.data_analysis_page.customer_qianqi'),
+        product: t('bi.data_analysis_page.product_other'),
+        qty: 4,
+        amount: 1196,
+        status: t('bi.data_analysis_page.completed'),
+      },
+    ];
+    const columns: ColumnDef<(typeof rows)[number]>[] = [
+      { id: 'date', label: t('bi.data_analysis_page.k25'), render: (r) => r.date },
+      {
+        id: 'order',
+        label: t('bi.data_analysis_page.k26'),
+        render: (r) => <Box sx={{ fontFamily: 'monospace' }}>{r.order}</Box>,
+      },
+      { id: 'customer', label: t('bi.data_analysis_page.k27'), render: (r) => r.customer },
+      { id: 'product', label: t('bi.data_analysis_page.k28'), render: (r) => r.product },
+      { id: 'qty', label: t('bi.data_analysis_page.k29'), render: (r) => r.qty },
+      {
+        id: 'amount',
+        label: t('bi.data_analysis_page.k30'),
+        align: 'right',
+        render: (r) => `¥${r.amount.toLocaleString()}`,
+      },
+      {
+        id: 'status',
+        label: t('bi.data_analysis_page.k31'),
+        render: (r) => (
+          <Chip
+            label={r.status}
+            size='small'
+            color={r.status === t('bi.data_analysis_page.completed') ? 'success' : 'warning'}
+            variant='outlined'
+          />
+        ),
+      },
+    ];
+    return (
+      <Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600 }}
+          >
+            {t('bi.data_analysis_page.k45')}
+          </Typography>
+          <Button
+            size='small'
+            variant='outlined'
+            startIcon={<Download size={16} />}
+          >
+            {t('bi.data_analysis_page.k40')}
+          </Button>
+        </Box>
 
-      <Card
-        elevation={0}
-        sx={{ border: '1px solid', borderColor: 'divider' }}
-      >
-        <CardContent>
-          <TableContainer>
-            <Table size='small'>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('bi.data_analysis_page.k25')}</TableCell>
-                  <TableCell>{t('bi.data_analysis_page.k26')}</TableCell>
-                  <TableCell>{t('bi.data_analysis_page.k27')}</TableCell>
-                  <TableCell>{t('bi.data_analysis_page.k28')}</TableCell>
-                  <TableCell>{t('bi.data_analysis_page.k29')}</TableCell>
-                  <TableCell align='right'>{t('bi.data_analysis_page.k30')}</TableCell>
-                  <TableCell>{t('bi.data_analysis_page.k31')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {[
-                  {
-                    date: '2026-06-28',
-                    order: 'SO-20260628-001',
-                    customer: t('bi.data_analysis_page.customer_zhangsan'),
-                    product: t('bi.data_analysis_page.product_electronics'),
-                    qty: 2,
-                    amount: 12800,
-                    status: t('bi.data_analysis_page.completed'),
-                  },
-                  {
-                    date: '2026-06-28',
-                    order: 'SO-20260628-002',
-                    customer: t('bi.data_analysis_page.customer_lisi'),
-                    product: t('bi.data_analysis_page.product_clothing'),
-                    qty: 5,
-                    amount: 1950,
-                    status: t('bi.data_analysis_page.completed'),
-                  },
-                  {
-                    date: '2026-06-27',
-                    order: 'SO-20260627-001',
-                    customer: t('bi.data_analysis_page.customer_wangwu'),
-                    product: t('bi.data_analysis_page.product_home_goods'),
-                    qty: 1,
-                    amount: 2299,
-                    status: t('bi.data_analysis_page.status_completed'),
-                  },
-                  {
-                    date: '2026-06-27',
-                    order: 'SO-20260627-002',
-                    customer: t('bi.data_analysis_page.customer_zhaoliu'),
-                    product: t('bi.data_analysis_page.product_food'),
-                    qty: 3,
-                    amount: 8997,
-                    status: t('bi.data_analysis_page.completed'),
-                  },
-                  {
-                    date: '2026-06-26',
-                    order: 'SO-20260626-001',
-                    customer: t('bi.data_analysis_page.customer_qianqi'),
-                    product: t('bi.data_analysis_page.product_other'),
-                    qty: 4,
-                    amount: 1196,
-                    status: t('bi.data_analysis_page.completed'),
-                  },
-                ].map((row, idx) => (
-                  <TableRow
-                    key={idx}
-                    hover
-                  >
-                    <TableCell>{row.date}</TableCell>
-                    <TableCell sx={{ fontFamily: 'monospace' }}>{row.order}</TableCell>
-                    <TableCell>{row.customer}</TableCell>
-                    <TableCell>{row.product}</TableCell>
-                    <TableCell>{row.qty}</TableCell>
-                    <TableCell align='right'>¥{row.amount.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={row.status}
-                        size='small'
-                        color={
-                          row.status === t('bi.data_analysis_page.completed')
-                            ? 'success'
-                            : 'warning'
-                        }
-                        variant='outlined'
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-    </Box>
-  );
+        <Card
+          elevation={0}
+          sx={{ border: '1px solid', borderColor: 'divider' }}
+        >
+          <CardContent>
+            <ListPageTemplate
+              columns={columns}
+              data={rows}
+              getRowId={(row) => row.id}
+            />
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  };
 
   return (
     <PageContainer

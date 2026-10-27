@@ -872,7 +872,7 @@ const WmsOutboundOrderPage: React.FC = () => {
                 style={sectionTitle}
               >
                 {t('wms.outbound_order_page.field_customer')}{' '}
-                <span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>
+                <span style={{ color: 'var(--text-error)' }}>*</span>
               </label>
               <Select
                 id='field-1'

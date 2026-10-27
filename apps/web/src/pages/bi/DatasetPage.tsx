@@ -28,7 +28,12 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
-import { DashboardTemplate } from '@/components/templates';
+import {
+  DashboardTemplate,
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from '@/components/templates';
 import { useCrudOperations } from '@/hooks/useCrudQueries';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -293,6 +298,102 @@ const DatasetPage = () => {
   };
   const actionLoading =
     loading || publishMutation.isPending || refreshMutation.isPending || testSqlMutation.isPending;
+
+  // 列表表格列配置
+  const datasetColumns: ColumnDef<Dataset>[] = [
+    {
+      id: 'name',
+      label: i18n.t('bi.dataset_page.k2'),
+      render: (dataset) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 1,
+              backgroundColor: ct.success[50],
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Database sx={{ color: 'success.main', fontSize: 20 }} />
+          </Box>
+          <Box>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 600 }}
+            >
+              {dataset.name}
+            </Typography>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              {dataset.description}
+            </Typography>
+          </Box>
+        </Box>
+      ),
+    },
+    {
+      id: 'data_source_name',
+      label: i18n.t('bi.dataset_page.k3'),
+      render: (dataset) => dataset.data_source_name || '-',
+    },
+    {
+      id: 'status',
+      label: i18n.t('bi.dataset_page.k4'),
+      render: (dataset) => getStatusChip(dataset.status),
+    },
+    {
+      id: 'row_count',
+      label: i18n.t('bi.dataset_page.k5'),
+      render: (dataset) => dataset.row_count?.toLocaleString() || '-',
+    },
+    {
+      id: 'updated_at',
+      label: i18n.t('bi.dataset_page.k6'),
+      render: (dataset) =>
+        dataset.updated_at ? new Date(dataset.updated_at).toLocaleDateString() : '-',
+    },
+  ];
+
+  const datasetRowActions: RowAction<Dataset>[] = [
+    {
+      key: 'edit',
+      label: i18n.t('bi.dataset_page.edit'),
+      icon: <Edit2 size={16} />,
+      onClick: (dataset) => handleEdit(dataset),
+    },
+    {
+      key: 'view',
+      label: i18n.t('bi.dataset_page.view'),
+      icon: <Eye size={16} />,
+      onClick: (dataset) => handleView(dataset),
+    },
+    {
+      key: 'publish',
+      label: i18n.t('bi.dataset_page.publish_action'),
+      icon: <FileText size={16} />,
+      show: (dataset) => dataset.status === 'draft',
+      onClick: (dataset) => handlePublish(dataset.id),
+    },
+    {
+      key: 'refresh',
+      label: i18n.t('bi.dataset_page.refresh'),
+      icon: <RefreshCw size={16} />,
+      show: (dataset) => dataset.status === 'published',
+      onClick: (dataset) => handleRefreshDataset(dataset.id),
+    },
+    {
+      key: 'delete',
+      label: i18n.t('bi.dataset_page.delete'),
+      icon: <Trash2 size={16} />,
+      color: 'error',
+      onClick: (dataset) => handleDelete(dataset.id),
+    },
+  ];
   const renderListView = () => (
     <Box sx={{ p: 3 }}>
       <Box
@@ -334,150 +435,20 @@ const DatasetPage = () => {
           {i18n.t('pages.dataset_page.k2')}
         </Button>
       </Box>
-      {actionLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : filteredDatasets.length === 0 ? (
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            py: 12,
-            color: 'text.secondary',
-          }}
-        >
-          <Database sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-          <Typography variant='h6'>{i18n.t('bi.dataset_page.k0')}</Typography>
-          <Typography variant='body2'>{i18n.t('bi.dataset_page.k1')}</Typography>
-          <Button
-            variant='contained'
-            startIcon={<Plus />}
-            sx={{ mt: 3 }}
-            onClick={handleCreate}
-          >
-            {i18n.t('pages.dataset_page.k3')}
-          </Button>
-        </Box>
-      ) : (
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{ border: '1px solid', borderColor: 'divider' }}
-        >
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>{i18n.t('bi.dataset_page.k2')}</TableCell>
-                <TableCell>{i18n.t('bi.dataset_page.k3')}</TableCell>
-                <TableCell>{i18n.t('bi.dataset_page.k4')}</TableCell>
-                <TableCell>{i18n.t('bi.dataset_page.k5')}</TableCell>
-                <TableCell>{i18n.t('bi.dataset_page.k6')}</TableCell>
-                <TableCell align='right'>{i18n.t('bi.dataset_page.k7')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredDatasets.map((dataset) => (
-                <TableRow
-                  key={dataset.id}
-                  hover
-                >
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 1,
-                          backgroundColor: ct.success[50],
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Database sx={{ color: 'success.main', fontSize: 20 }} />
-                      </Box>
-                      <Box>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {dataset.name}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {dataset.description}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>{dataset.data_source_name || '-'}</TableCell>
-                  <TableCell>{getStatusChip(dataset.status)}</TableCell>
-                  <TableCell>{dataset.row_count?.toLocaleString() || '-'}</TableCell>
-                  <TableCell>
-                    {dataset.updated_at ? new Date(dataset.updated_at).toLocaleDateString() : '-'}
-                  </TableCell>
-                  <TableCell align='right'>
-                    <Tooltip title={i18n.t('bi.dataset_page.edit')}>
-                      <IconButton
-                        size='small'
-                        onClick={() => handleEdit(dataset)}
-                        aria-label={i18n.t('bi.dataset_page.edit_1')}
-                      >
-                        <Edit2 size={16} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title={i18n.t('bi.dataset_page.view')}>
-                      <IconButton
-                        size='small'
-                        onClick={() => handleView(dataset)}
-                        aria-label={i18n.t('bi.dataset_page.view_1')}
-                      >
-                        <Eye size={16} />
-                      </IconButton>
-                    </Tooltip>
-                    {dataset.status === 'draft' && (
-                      <Tooltip title={i18n.t('bi.dataset_page.publish_tooltip')}>
-                        <IconButton
-                          size='small'
-                          onClick={() => handlePublish(dataset.id)}
-                          aria-label={i18n.t('bi.dataset_page.publish_action')}
-                        >
-                          <FileText size={16} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {dataset.status === 'published' && (
-                      <Tooltip title={i18n.t('bi.dataset_page.refresh')}>
-                        <IconButton
-                          size='small'
-                          onClick={() => handleRefreshDataset(dataset.id)}
-                          aria-label={i18n.t('bi.dataset_page.refresh_1')}
-                        >
-                          <RefreshCw size={16} />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    <Tooltip title={i18n.t('bi.dataset_page.delete')}>
-                      <IconButton
-                        size='small'
-                        onClick={() => handleDelete(dataset.id)}
-                        aria-label={i18n.t('bi.dataset_page.delete_1')}
-                      >
-                        <Trash2 size={16} />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+      <ListPageTemplate
+        columns={datasetColumns}
+        data={filteredDatasets}
+        loading={actionLoading}
+        getRowId={(row) => row.id}
+        rowActions={datasetRowActions}
+        emptyMessage={i18n.t('bi.dataset_page.k1')}
+        emptyIcon={<Database sx={{ width: 64, height: 64, opacity: 0.5 }} />}
+        emptyActionButton={{
+          label: i18n.t('pages.dataset_page.k3'),
+          icon: <Plus />,
+          onClick: handleCreate,
+        }}
+      />
     </Box>
   );
   const renderEditorView = () => (

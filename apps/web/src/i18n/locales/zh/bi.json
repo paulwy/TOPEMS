@@ -1698,5 +1698,19 @@
   "dashboard.dash_rd_desc": "研发项目与文档管理",
   "dashboard.dash_rd_name": "研发管理",
   "dashboard.dash_srm_desc": "供应商关系管理系统",
-  "dashboard.dash_srm_name": "SRM 供应商管理"
+  "dashboard.dash_srm_name": "SRM 供应商管理",
+  "bi.bi_dashboard_page.bi_heading": "BI 仪表盘",
+  "bi.bi_dashboard_page.subtitle": "管理和创建您的个性化数据仪表盘",
+  "bi.bi_dashboard_page.dashboard_tab": "仪表盘",
+  "bi.bi_dashboard_page.template_tab": "模板",
+  "bi.bi_dashboard_page.search": "搜索仪表盘...",
+  "bi.bi_dashboard_page.clone": "克隆",
+  "bi.bi_dashboard_page.visibility": "可见性",
+  "bi.bi_dashboard_page.public_badge": "公开",
+  "bi.bi_dashboard_page.public_label": "设为公开",
+  "bi.bi_dashboard_page.private_label": "设为私有",
+  "bi.bi_dashboard_page.name_label": "名称",
+  "bi.bi_dashboard_page.name": "仪表盘名称",
+  "bi.bi_dashboard_page.description": "描述",
+  "bi.bi_dashboard_page.confirm": "确定要删除这个仪表盘吗？"
 }

@@ -166,6 +166,8 @@ export interface CardListTemplateProps {
   cardActions?: CardAction[];
   /** 卡片点击回调 */
   onCardClick?: (item: unknown) => void;
+  /** 卡片右键回调（上下文菜单）。提供时卡片会绑定 onContextMenu 事件。 */
+  onContextMenu?: (event: React.MouseEvent, item: unknown) => void;
   /** 是否显示统计概览 */
   showStatsOverview?: boolean;
   /** 统计概览展开状态 */
@@ -178,6 +180,7 @@ export interface CardListTemplateProps {
     sm?: number;
     md?: number;
     lg?: number;
+    xl?: number;
   };
   /** 是否显示视图切换 */
   showViewToggle?: boolean;
@@ -219,6 +222,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
   pagination,
   cardActions = [],
   onCardClick,
+  onContextMenu,
   showStatsOverview = true,
   statsOverviewExpanded = true,
   onStatsOverviewToggle,
@@ -557,6 +561,14 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
           flexDirection: 'column',
         }}
         onClick={() => onCardClick?.(item)}
+        onContextMenu={
+          onContextMenu
+            ? (e) => {
+                e.preventDefault();
+                onContextMenu(e, item);
+              }
+            : undefined
+        }
       >
         <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
           {/* 卡片头部 */}
@@ -923,6 +935,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                     sm: `repeat(${gridColumns.sm || 2}, 1fr)`,
                     md: `repeat(${gridColumns.md || 3}, 1fr)`,
                     lg: `repeat(${gridColumns.lg || 4}, 1fr)`,
+                    xl: `repeat(${gridColumns.xl || gridColumns.lg || 4}, 1fr)`,
                   },
                   gap: 2,
                   p: 2,
@@ -956,6 +969,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                       sm: `repeat(${gridColumns.sm || 2}, 1fr)`,
                       md: `repeat(${gridColumns.md || 3}, 1fr)`,
                       lg: `repeat(${gridColumns.lg || 4}, 1fr)`,
+                      xl: `repeat(${gridColumns.xl || gridColumns.lg || 4}, 1fr)`,
                     },
                     gap: 2,
                     p: 2,

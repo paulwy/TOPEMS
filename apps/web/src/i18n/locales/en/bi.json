@@ -6613,5 +6613,19 @@
   "bi.nav.bi-data-analysis_desc": "Sales Analysis",
   "bi.nav.bi-module-detail_desc": "Detail",
   "bi.dataset_page.loading": "Loading data sources...",
-  "bi.dataset_page.no_data_sources": "No data sources yet (create one in Data Source Management first)"
+  "bi.dataset_page.no_data_sources": "No data sources yet (create one in Data Source Management first)",
+  "bi.bi_dashboard_page.bi_heading": "BI Dashboards",
+  "bi.bi_dashboard_page.subtitle": "Manage and create your personalized dashboards",
+  "bi.bi_dashboard_page.dashboard_tab": "Dashboards",
+  "bi.bi_dashboard_page.template_tab": "Templates",
+  "bi.bi_dashboard_page.search": "Search dashboards...",
+  "bi.bi_dashboard_page.clone": "Clone",
+  "bi.bi_dashboard_page.visibility": "Visibility",
+  "bi.bi_dashboard_page.public_badge": "Public",
+  "bi.bi_dashboard_page.public_label": "Make Public",
+  "bi.bi_dashboard_page.private_label": "Make Private",
+  "bi.bi_dashboard_page.name_label": "Name",
+  "bi.bi_dashboard_page.name": "Dashboard Name",
+  "bi.bi_dashboard_page.description": "Description",
+  "bi.bi_dashboard_page.confirm": "Are you sure you want to delete this dashboard?"
 }

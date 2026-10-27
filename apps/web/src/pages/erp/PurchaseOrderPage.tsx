@@ -814,7 +814,7 @@ const PurchaseOrderPage: React.FC = () => {
                 style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
               >
                 {t('erp.purchase_order.form.supplier')}{' '}
-                <span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>
+                <span style={{ color: 'var(--text-error)' }}>*</span>
               </label>
               <Select
                 id='po-supplier'

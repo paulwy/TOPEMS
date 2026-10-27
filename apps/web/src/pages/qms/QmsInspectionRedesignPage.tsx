@@ -900,7 +900,7 @@ const QmsInspectionPage: React.FC = () => {
               style={sectionTitle}
             >
               {t('qms.inspection_redesign.field_title_label')}{' '}
-              <span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>
+              <span style={{ color: 'var(--text-error)' }}>*</span>
             </label>
             <Input
               id='field-1'
@@ -932,7 +932,7 @@ const QmsInspectionPage: React.FC = () => {
                 style={sectionTitle}
               >
                 {t('qms.inspection_redesign.field_product_label')}{' '}
-                <span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>
+                <span style={{ color: 'var(--text-error)' }}>*</span>
               </label>
               <Input
                 id='field-3'
@@ -959,7 +959,7 @@ const QmsInspectionPage: React.FC = () => {
                 style={sectionTitle}
               >
                 {t('qms.inspection_redesign.field_quantity_label')}{' '}
-                <span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>
+                <span style={{ color: 'var(--text-error)' }}>*</span>
               </label>
               <Input
                 id='field-5'

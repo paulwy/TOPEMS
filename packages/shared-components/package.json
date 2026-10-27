@@ -2,6 +2,10 @@
   "name": "@topems/shared-components",
   "version": "5.14.0",
   "type": "module",
+  "scripts": {
+    "test": "echo '[@topems/shared-components] tests are run via apps/web vitest project `component`;' && echo 'Run: cd apps/web && pnpm test --project component ../../packages/shared-components/src/__tests__/'",
+    "test:run": "cd ../../apps/web && ./node_modules/.bin/vitest run --project component ../../packages/shared-components/src/__tests__/"
+  },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

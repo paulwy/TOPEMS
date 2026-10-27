@@ -9,27 +9,22 @@ import {
   CardContent,
   Chip,
   TextField,
-  IconButton,
-  Tooltip,
   Tabs,
   Tab,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableContainer,
-  Paper,
   MenuItem,
   FormControl,
   InputLabel,
   Select,
-  CircularProgress,
   Grid,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
-import { DashboardTemplate } from '@/components/templates';
+import {
+  DashboardTemplate,
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from '@/components/templates';
 import { type Report } from '@/api/bi';
 import { fetchReports, createReport, updateReport, deleteReport, exportReport } from '@/api/report';
 import { logger } from '@/utils/logger';
@@ -247,187 +242,155 @@ const ReportBuilderPage = () => {
     };
     return types[type] || type;
   };
-  const renderListView = () => (
-    <Box sx={{ p: 3 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 4,
-        }}
-      >
-        <Typography
-          variant='h4'
-          sx={{ fontWeight: 700 }}
-        >
-          {i18n.t('pages.report_builder_page.k0')}
-        </Typography>
-        <Button
-          variant='contained'
-          startIcon={<Plus />}
-          onClick={handleCreate}
-        >
-          {i18n.t('pages.report_builder_page.k1')}
-        </Button>
-      </Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <TextField
-          placeholder={i18n.t('bi.report_builder_page.search')}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          size='small'
-          sx={{ width: 300 }}
-        />
-        <Button
-          variant='outlined'
-          size='small'
-          startIcon={<RefreshCw size={16} />}
-          onClick={() => reportsQuery.refetch()}
-        >
-          {i18n.t('pages.report_builder_page.k2')}
-        </Button>
-      </Box>
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : filteredReports.length === 0 ? (
+  const renderListView = () => {
+    const reportColumns: ColumnDef<Report>[] = [
+      {
+        id: 'name',
+        label: i18n.t('bi.report_builder_page.k16'),
+        render: (report) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 1,
+                backgroundColor: ct.warning[50],
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <FileText sx={{ color: 'warning.main', fontSize: 20 }} />
+            </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 600 }}
+              >
+                {report.name}
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {report.description}
+              </Typography>
+            </Box>
+          </Box>
+        ),
+      },
+      {
+        id: 'type',
+        label: i18n.t('bi.report_builder_page.k17'),
+        render: (report) => getTypeLabel(report.type || ''),
+      },
+      {
+        id: 'format',
+        label: i18n.t('bi.report_builder_page.k18'),
+        render: (report) => (
+          <Chip
+            label={report.format?.toUpperCase()}
+            size='small'
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'status',
+        label: i18n.t('bi.report_builder_page.k19'),
+        render: (report) => getStatusChip(report.status || 'draft'),
+      },
+      {
+        id: 'created_by',
+        label: i18n.t('bi.report_builder_page.k20'),
+        render: (report) => report.created_by || '-',
+      },
+      {
+        id: 'updated_at',
+        label: i18n.t('bi.report_builder_page.k21'),
+        render: (report) =>
+          report.updated_at ? new Date(report.updated_at).toLocaleDateString() : '-',
+      },
+    ];
+    const reportRowActions: RowAction<Report>[] = [
+      {
+        key: 'edit',
+        label: i18n.t('bi.report_builder_page.edit'),
+        icon: <Edit2 size={16} />,
+        onClick: (report) => handleEdit(report),
+      },
+      {
+        key: 'export',
+        label: i18n.t('bi.report_builder_page.export'),
+        icon: <Download size={16} />,
+        onClick: (report) => handleExport(report.id, report.format as 'excel' | 'pdf'),
+      },
+      {
+        key: 'delete',
+        label: i18n.t('bi.report_builder_page.delete'),
+        icon: <Trash2 size={16} />,
+        color: 'error',
+        onClick: (report) => handleDelete(report.id),
+      },
+    ];
+    return (
+      <Box sx={{ p: 3 }}>
         <Box
           sx={{
             display: 'flex',
-            flexDirection: 'column',
+            justifyContent: 'space-between',
             alignItems: 'center',
-            justifyContent: 'center',
-            py: 12,
-            color: 'text.secondary',
+            mb: 4,
           }}
         >
-          <FileText sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-          <Typography variant='h6'>{i18n.t('bi.report_builder_page.k14')}</Typography>
-          <Typography variant='body2'>{i18n.t('bi.report_builder_page.k15')}</Typography>
+          <Typography
+            variant='h4'
+            sx={{ fontWeight: 700 }}
+          >
+            {i18n.t('pages.report_builder_page.k0')}
+          </Typography>
           <Button
             variant='contained'
             startIcon={<Plus />}
-            sx={{ mt: 3 }}
             onClick={handleCreate}
           >
-            {i18n.t('pages.report_builder_page.k3')}
+            {i18n.t('pages.report_builder_page.k1')}
           </Button>
         </Box>
-      ) : (
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{ border: '1px solid', borderColor: 'divider' }}
-        >
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>{i18n.t('bi.report_builder_page.k16')}</TableCell>
-                <TableCell>{i18n.t('bi.report_builder_page.k17')}</TableCell>
-                <TableCell>{i18n.t('bi.report_builder_page.k18')}</TableCell>
-                <TableCell>{i18n.t('bi.report_builder_page.k19')}</TableCell>
-                <TableCell>{i18n.t('bi.report_builder_page.k20')}</TableCell>
-                <TableCell>{i18n.t('bi.report_builder_page.k21')}</TableCell>
-                <TableCell align='right'>{i18n.t('bi.report_builder_page.k22')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredReports.map((report) => (
-                <TableRow
-                  key={report.id}
-                  hover
-                >
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 1,
-                          backgroundColor: ct.warning[50],
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <FileText sx={{ color: 'warning.main', fontSize: 20 }} />
-                      </Box>
-                      <Box>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {report.name}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {report.description}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>{getTypeLabel(report.type || '')}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={report.format?.toUpperCase()}
-                      size='small'
-                      variant='outlined'
-                    />
-                  </TableCell>
-                  <TableCell>{getStatusChip(report.status || 'draft')}</TableCell>
-                  <TableCell>{report.created_by || '-'}</TableCell>
-                  <TableCell>
-                    {report.updated_at ? new Date(report.updated_at).toLocaleDateString() : '-'}
-                  </TableCell>
-                  <TableCell align='right'>
-                    <Tooltip title={i18n.t('bi.report_builder_page.edit')}>
-                      <IconButton
-                        size='small'
-                        onClick={() => handleEdit(report)}
-                        aria-label={i18n.t('bi.report_builder_page.edit_1')}
-                      >
-                        <Edit2 size={16} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title={i18n.t('bi.report_builder_page.view')}>
-                      <IconButton
-                        size='small'
-                        aria-label={i18n.t('bi.report_builder_page.view_1')}
-                      >
-                        <Eye size={16} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title={i18n.t('bi.report_builder_page.export')}>
-                      <IconButton
-                        size='small'
-                        onClick={() => handleExport(report.id, report.format as 'excel' | 'pdf')}
-                        aria-label={i18n.t('bi.report_builder_page.export_1')}
-                      >
-                        <Download size={16} />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title={i18n.t('bi.report_builder_page.delete')}>
-                      <IconButton
-                        size='small'
-                        onClick={() => handleDelete(report.id)}
-                        aria-label={i18n.t('bi.report_builder_page.delete_1')}
-                      >
-                        <Trash2 size={16} />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </Box>
-  );
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+          <TextField
+            placeholder={i18n.t('bi.report_builder_page.search')}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            size='small'
+            sx={{ width: 300 }}
+          />
+          <Button
+            variant='outlined'
+            size='small'
+            startIcon={<RefreshCw size={16} />}
+            onClick={() => reportsQuery.refetch()}
+          >
+            {i18n.t('pages.report_builder_page.k2')}
+          </Button>
+        </Box>
+        <ListPageTemplate
+          columns={reportColumns}
+          data={filteredReports}
+          loading={loading}
+          getRowId={(row) => row.id}
+          rowActions={reportRowActions}
+          emptyMessage={i18n.t('bi.report_builder_page.k15')}
+          emptyIcon={<FileText sx={{ width: 64, height: 64, opacity: 0.5 }} />}
+          emptyActionButton={{
+            label: i18n.t('pages.report_builder_page.k3'),
+            icon: <Plus />,
+            onClick: handleCreate,
+          }}
+        />
+      </Box>
+    );
+  };
   const renderBuilderView = () => (
     <Box sx={{ p: 3 }}>
       <Box

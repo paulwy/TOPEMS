@@ -18,6 +18,7 @@ import {
   Box as BoxIcon,
   Save,
   Play,
+  RefreshCw,
 } from 'lucide-react';
 import i18n from '@/i18n';
 import {
@@ -26,7 +27,6 @@ import {
   CardHeader,
   TextField,
   Box,
-  Skeleton,
   Typography,
   IconButton,
   FormControl,
@@ -37,8 +37,7 @@ import {
   Divider,
   Button,
 } from '@mui/material';
-import { DashboardTemplate, type StatCard } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { DesignerTemplate } from '@/components/templates';
 import { fetchWidgets, createWidget, deleteWidget, type Widget } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import { QUERY_KEYS } from '@/lib/reactQuery';
@@ -133,7 +132,7 @@ const BIVisualizationPage = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [canvasComponents, setCanvasComponents] = useState<CanvasComponent[]>([]);
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
-  const [, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [, setIsDragging] = useState(false);
   const widgetsQuery = useQuery<CanvasComponent[]>({
     queryKey: QUERY_KEYS.AD_HOC.BI_WIDGETS_BASE,
@@ -231,531 +230,499 @@ const BIVisualizationPage = () => {
     const comp = componentList.find((c) => c.type === type);
     return comp?.icon || <BoxIcon size={20} />;
   };
-  // 构建统计数据卡片
-  const statsCards: StatCard[] = [
-    {
-      id: 'total-components',
-      title: i18n.t('bi.bi_visualization_page.total_components'),
-      value: canvasComponents.length,
-      icon: <BoxIcon size={24} />,
-      color: 'primary',
-    },
-    {
-      id: 'component-types',
-      title: i18n.t('bi.bi_visualization_page.type'),
-      value: new Set(canvasComponents.map((c) => c.type)).size,
-      icon: <Settings size={24} />,
-      color: 'info',
-    },
-  ];
-  if (loading) {
-    return (
-      <PageContainer
-        title={i18n.t('bi.bi_visualization_page.edit')}
-        subtitle={i18n.t('bi.bi_visualization_page.create')}
-        padding={false}
-        maxWidth={false}
-      >
-        <DashboardTemplate
-          autoTitle={false}
-          title=''
-          subtitle=''
-          breadcrumbs={[
-            { label: i18n.t('bi.bi_visualization_page.home'), href: '/dashboard' },
-            { label: 'BI' },
-            { label: i18n.t('bi.bi_visualization_page.edit_1') },
-          ]}
-          loading={true}
-        >
-          <Box
-            sx={{
-              minHeight: '100vh',
-              bgcolor: 'grey.50',
-              p: 3,
-              display: 'flex',
-              gap: 3,
-            }}
-          >
-            <Box sx={{ width: 280 }}>
-              <Skeleton
-                variant='rounded'
-                width='100%'
-                height={400}
-              />
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Skeleton
-                variant='rounded'
-                width='100%'
-                height={600}
-              />
-            </Box>
-            <Box sx={{ width: 300 }}>
-              <Skeleton
-                variant='rounded'
-                width='100%'
-                height={400}
-              />
-            </Box>
-          </Box>
-        </DashboardTemplate>
-      </PageContainer>
-    );
-  }
-  return (
-    <PageContainer
-      title={i18n.t('bi.bi_visualization_page.edit')}
-      subtitle={i18n.t('bi.bi_visualization_page.create')}
-      padding={false}
-      maxWidth={false}
+
+  // 左侧组件库面板
+  const palettePanel = (
+    <Card
+      sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+      variant='outlined'
     >
-      <DashboardTemplate
-        autoTitle={false}
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: i18n.t('bi.bi_visualization_page.home'), href: '/dashboard' },
-          { label: 'BI' },
-          { label: i18n.t('bi.bi_visualization_page.edit_1') },
-        ]}
-        stats={statsCards}
-        loading={loading}
-        onRefresh={handleRefresh}
-      >
-        <Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 280px)' }}>
-          <Card sx={{ width: 280, display: 'flex', flexDirection: 'column' }}>
-            <CardHeader
-              title={i18n.t('bi.bi_visualization_page.list')}
-              avatar={<Settings size={20} />}
-              action={
-                <Box sx={{ display: 'flex', gap: 0.5, pr: 1 }}>
-                  <Tooltip title={i18n.t('bi.bi_visualization_page.preview_tooltip')}>
-                    <IconButton
-                      size='small'
-                      onClick={() => setViewMode('grid')}
-                      color={viewMode === 'grid' ? 'primary' : 'default'}
-                      aria-label={i18n.t('bi.bi_visualization_page.k16')}
-                    >
-                      <Grid3X3 size={16} />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title={i18n.t('bi.bi_visualization_page.list_1')}>
-                    <IconButton
-                      size='small'
-                      onClick={() => setViewMode('list')}
-                      color={viewMode === 'list' ? 'primary' : 'default'}
-                      aria-label={i18n.t('bi.bi_visualization_page.k17')}
-                    >
-                      <List size={16} />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              }
-            />
-            <CardContent sx={{ flex: 1, overflow: 'auto' }}>
-              <TextField
-                placeholder={i18n.t('bi.bi_visualization_page.search')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+      <CardHeader
+        title={i18n.t('bi.bi_visualization_page.list')}
+        avatar={<Settings size={20} />}
+        action={
+          <Box sx={{ display: 'flex', gap: 0.5, pr: 1 }}>
+            <Tooltip title={i18n.t('bi.bi_visualization_page.preview_tooltip')}>
+              <IconButton
                 size='small'
-                fullWidth
-                sx={{ mb: 2 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        size={16}
-                        color='grey.400'
-                        sx={{ mr: 1 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-              <FormControl
+                onClick={() => setViewMode('grid')}
+                color={viewMode === 'grid' ? 'primary' : 'default'}
+                aria-label={i18n.t('bi.bi_visualization_page.k16')}
+              >
+                <Grid3X3 size={16} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={i18n.t('bi.bi_visualization_page.list_1')}>
+              <IconButton
                 size='small'
-                fullWidth
-                sx={{ mb: 2 }}
+                onClick={() => setViewMode('list')}
+                color={viewMode === 'list' ? 'primary' : 'default'}
+                aria-label={i18n.t('bi.bi_visualization_page.k17')}
               >
-                <InputLabel>{i18n.t('bi.bi_visualization_page.k18')}</InputLabel>
-                <Select
-                  value={filterType}
-                  label={i18n.t('bi.bi_visualization_page.type')}
-                  onChange={(e) => setFilterType(e.target.value)}
-                >
-                  <MenuItem value='all'>{i18n.t('bi.bi_visualization_page.k19')}</MenuItem>
-                  <MenuItem value='bar'>{i18n.t('bi.bi_visualization_page.k20')}</MenuItem>
-                  <MenuItem value='line'>{i18n.t('bi.bi_visualization_page.k21')}</MenuItem>
-                  <MenuItem value='pie'>{i18n.t('bi.bi_visualization_page.k22')}</MenuItem>
-                  <MenuItem value='gauge'>{i18n.t('bi.bi_visualization_page.k23')}</MenuItem>
-                  <MenuItem value='table'>{i18n.t('bi.bi_visualization_page.k24')}</MenuItem>
-                  <MenuItem value='text'>{i18n.t('bi.bi_visualization_page.k25')}</MenuItem>
-                  <MenuItem value='metric'>{i18n.t('bi.bi_visualization_page.k26')}</MenuItem>
-                </Select>
-              </FormControl>
-              <Divider sx={{ my: 2 }} />
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                sx={{ mb: 1, display: 'block' }}
-              >
-                {i18n.t('pages.bi_visualization_page.k0')}
-              </Typography>
-              <Box
-                sx={{
-                  display: viewMode === 'grid' ? 'grid' : 'flex',
-                  flexDirection: 'column',
-                  gap: 1,
-                  gridTemplateColumns: viewMode === 'grid' ? 'repeat(2, 1fr)' : undefined,
-                }}
-              >
-                {filteredComponents.map((comp) => (
-                  <Box
-                    key={comp.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, comp)}
-                    onDragEnd={handleDragEnd}
-                    sx={{
-                      p: 1.5,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      cursor: 'grab',
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        bgcolor: 'primary.50',
-                      },
-                      '&:active': {
-                        cursor: 'grabbing',
-                      },
-                    }}
-                  >
-                    {viewMode === 'list' ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box sx={{ color: 'primary.main' }}>{comp.icon}</Box>
-                        <Box>
-                          <Typography
-                            variant='body2'
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {comp.name}
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {comp.description}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    ) : (
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Box sx={{ color: 'primary.main', mb: 0.5 }}>{comp.icon}</Box>
-                        <Typography variant='caption'>{comp.name}</Typography>
-                      </Box>
-                    )}
-                  </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-          <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <CardHeader
-              title={i18n.t('bi.bi_visualization_page.edit_component_title')}
-              subheader={i18n.t('bi.bi_visualization_page.edit_2')}
-              action={
-                <Box sx={{ display: 'flex', gap: 1, pr: 2 }}>
-                  <Button
-                    variant='outlined'
-                    size='small'
-                    startIcon={<Play size={16} />}
-                  >
-                    {i18n.t('pages.bi_visualization_page.k1')}
-                  </Button>
-                  <Button
-                    variant='contained'
-                    size='small'
-                    startIcon={<Save size={16} />}
-                  >
-                    {i18n.t('pages.bi_visualization_page.k2')}
-                  </Button>
-                </Box>
-              }
-            />
-            <CardContent
+                <List size={16} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        }
+      />
+      <CardContent sx={{ flex: 1, overflow: 'auto' }}>
+        <TextField
+          placeholder={i18n.t('bi.bi_visualization_page.search')}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          size='small'
+          fullWidth
+          sx={{ mb: 2 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <Search
+                  size={16}
+                  color='grey.400'
+                  sx={{ mr: 1 }}
+                />
+              ),
+            },
+          }}
+        />
+        <FormControl
+          size='small'
+          fullWidth
+          sx={{ mb: 2 }}
+        >
+          <InputLabel>{i18n.t('bi.bi_visualization_page.k18')}</InputLabel>
+          <Select
+            value={filterType}
+            label={i18n.t('bi.bi_visualization_page.type')}
+            onChange={(e) => setFilterType(e.target.value)}
+          >
+            <MenuItem value='all'>{i18n.t('bi.bi_visualization_page.k19')}</MenuItem>
+            <MenuItem value='bar'>{i18n.t('bi.bi_visualization_page.k20')}</MenuItem>
+            <MenuItem value='line'>{i18n.t('bi.bi_visualization_page.k21')}</MenuItem>
+            <MenuItem value='pie'>{i18n.t('bi.bi_visualization_page.k22')}</MenuItem>
+            <MenuItem value='gauge'>{i18n.t('bi.bi_visualization_page.k23')}</MenuItem>
+            <MenuItem value='table'>{i18n.t('bi.bi_visualization_page.k24')}</MenuItem>
+            <MenuItem value='text'>{i18n.t('bi.bi_visualization_page.k25')}</MenuItem>
+            <MenuItem value='metric'>{i18n.t('bi.bi_visualization_page.k26')}</MenuItem>
+          </Select>
+        </FormControl>
+        <Divider sx={{ my: 2 }} />
+        <Typography
+          variant='caption'
+          color='text.secondary'
+          sx={{ mb: 1, display: 'block' }}
+        >
+          {i18n.t('pages.bi_visualization_page.k0')}
+        </Typography>
+        <Box
+          sx={{
+            display: viewMode === 'grid' ? 'grid' : 'flex',
+            flexDirection: 'column',
+            gap: 1,
+            gridTemplateColumns: viewMode === 'grid' ? 'repeat(2, 1fr)' : undefined,
+          }}
+        >
+          {filteredComponents.map((comp) => (
+            <Box
+              key={comp.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, comp)}
+              onDragEnd={handleDragEnd}
               sx={{
-                flex: 1,
-                bgcolor: 'common.white',
+                p: 1.5,
+                border: '1px solid',
+                borderColor: 'divider',
                 borderRadius: 1,
-                m: 1,
-                overflow: 'auto',
-                position: 'relative',
-                minHeight: 400,
+                cursor: 'grab',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  bgcolor: 'primary.50',
+                },
+                '&:active': {
+                  cursor: 'grabbing',
+                },
               }}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
             >
-              {canvasComponents.length === 0 ? (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'text.secondary',
-                  }}
-                >
-                  <MousePointer
-                    size={48}
-                    sx={{ mb: 2, opacity: 0.5 }}
-                  />
-                  <Typography variant='body1'>{i18n.t('bi.bi_visualization_page.k27')}</Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {i18n.t('pages.bi_visualization_page.k3')}
-                  </Typography>
+              {viewMode === 'list' ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box sx={{ color: 'primary.main' }}>{comp.icon}</Box>
+                  <Box>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {comp.name}
+                    </Typography>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      {comp.description}
+                    </Typography>
+                  </Box>
                 </Box>
               ) : (
-                <Box sx={{ position: 'relative', minHeight: '100%' }}>
-                  {canvasComponents.map((comp) => (
+                <Box sx={{ textAlign: 'center' }}>
+                  <Box sx={{ color: 'primary.main', mb: 0.5 }}>{comp.icon}</Box>
+                  <Typography variant='caption'>{comp.name}</Typography>
+                </Box>
+              )}
+            </Box>
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  // 右侧属性面板
+  const propsPanel = (
+    <Card
+      sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+      variant='outlined'
+    >
+      <CardHeader title={i18n.t('bi.bi_visualization_page.component_props_panel')} />
+      <CardContent sx={{ flex: 1, overflow: 'auto' }}>
+        {selectedComponent ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {(() => {
+              const comp = canvasComponents.find((c) => c.id === selectedComponent);
+              if (!comp) return null;
+              return (
+                <>
+                  <Box>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      {i18n.t('pages.bi_visualization_page.k4')}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {componentList.find((c) => c.type === comp.type)?.name || comp.type}
+                    </Typography>
+                  </Box>
+                  <TextField
+                    label={i18n.t('bi.bi_visualization_page.title')}
+                    size='small'
+                    fullWidth
+                    value={comp.config.title || ''}
+                    onChange={(e) => {
+                      setCanvasComponents(
+                        canvasComponents.map((c) =>
+                          c.id === selectedComponent
+                            ? {
+                                ...c,
+                                config: {
+                                  ...c.config,
+                                  title: e.target.value,
+                                },
+                              }
+                            : c
+                        )
+                      );
+                    }}
+                  />
+                  <Divider />
+                  <Box>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                      sx={{ mb: 1, display: 'block' }}
+                    >
+                      {i18n.t('pages.bi_visualization_page.k5')}
+                    </Typography>
                     <Box
-                      key={comp.id}
-                      onClick={() => setSelectedComponent(comp.id)}
                       sx={{
-                        position: 'absolute',
-                        left: comp.x,
-                        top: comp.y,
-                        width: comp.width,
-                        height: comp.height,
-                        border: '2px solid',
-                        borderColor: selectedComponent === comp.id ? 'primary.main' : 'transparent',
-                        borderRadius: 1,
-                        bgcolor: 'grey.50',
-                        cursor: 'move',
-                        transition: 'border-color 0.2s',
-                        '&:hover': {
-                          borderColor: selectedComponent === comp.id ? 'primary.main' : 'grey.300',
-                        },
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 1,
                       }}
                     >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          p: 1,
-                          borderBottom: '1px solid',
-                          borderColor: 'divider',
-                          bgcolor: 'background.paper',
-                          borderRadius: '2px 2px 0 0',
+                      <TextField
+                        label='X'
+                        size='small'
+                        type='number'
+                        value={comp.x}
+                        onChange={(e) => {
+                          setCanvasComponents(
+                            canvasComponents.map((c) =>
+                              c.id === selectedComponent ? { ...c, x: Number(e.target.value) } : c
+                            )
+                          );
                         }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          {getComponentIcon(comp.type)}
-                          <Typography variant='caption'>
-                            {(comp.config.title as string) || comp.type}
-                          </Typography>
-                        </Box>
-                        <IconButton
-                          size='small'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteComponent(comp.id);
-                          }}
-                          aria-label={i18n.t('bi.bi_visualization_page.k28')}
-                        >
-                          <Trash2 size={14} />
-                        </IconButton>
-                      </Box>
-                      <Box
-                        sx={{
-                          p: 2,
-                          height: 'calc(100% - 40px)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                      />
+                      <TextField
+                        label='Y'
+                        size='small'
+                        type='number'
+                        value={comp.y}
+                        onChange={(e) => {
+                          setCanvasComponents(
+                            canvasComponents.map((c) =>
+                              c.id === selectedComponent ? { ...c, y: Number(e.target.value) } : c
+                            )
+                          );
                         }}
-                      >
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {comp.type === 'bar' && i18n.t('bi.bi_visualization_page.chart_type_bar')}
-                          {comp.type === 'line' &&
-                            i18n.t('bi.bi_visualization_page.chart_type_line')}
-                          {comp.type === 'pie' && i18n.t('bi.bi_visualization_page.chart_type_pie')}
-                          {comp.type === 'gauge' &&
-                            i18n.t('bi.bi_visualization_page.chart_type_dashboard')}
-                          {comp.type === 'table' &&
-                            i18n.t('bi.bi_visualization_page.chart_type_table')}
-                          {comp.type === 'text' && i18n.t('bi.bi_visualization_page.content')}
-                          {comp.type === 'image' &&
-                            i18n.t('bi.bi_visualization_page.chart_type_image')}
-                          {comp.type === 'metric' &&
-                            `${i18n.t('pages.bi_visualization_page.k0')}${comp.config.value || 0}`}
-                        </Typography>
-                      </Box>
+                      />
+                      <TextField
+                        label={i18n.t('bi.bi_visualization_page.width_label')}
+                        size='small'
+                        type='number'
+                        value={comp.width}
+                        onChange={(e) => {
+                          setCanvasComponents(
+                            canvasComponents.map((c) =>
+                              c.id === selectedComponent
+                                ? { ...c, width: Number(e.target.value) }
+                                : c
+                            )
+                          );
+                        }}
+                      />
+                      <TextField
+                        label={i18n.t('bi.bi_visualization_page.height_label')}
+                        size='small'
+                        type='number'
+                        value={comp.height}
+                        onChange={(e) => {
+                          setCanvasComponents(
+                            canvasComponents.map((c) =>
+                              c.id === selectedComponent
+                                ? { ...c, height: Number(e.target.value) }
+                                : c
+                            )
+                          );
+                        }}
+                      />
                     </Box>
-                  ))}
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-          <Card sx={{ width: 300, display: 'flex', flexDirection: 'column' }}>
-            <CardHeader title={i18n.t('bi.bi_visualization_page.component_props_panel')} />
-            <CardContent sx={{ flex: 1, overflow: 'auto' }}>
-              {selectedComponent ? (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {(() => {
-                    const comp = canvasComponents.find((c) => c.id === selectedComponent);
-                    if (!comp) return null;
-                    return (
-                      <>
-                        <Box>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {i18n.t('pages.bi_visualization_page.k4')}
-                          </Typography>
-                          <Typography
-                            variant='body2'
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {componentList.find((c) => c.type === comp.type)?.name || comp.type}
-                          </Typography>
-                        </Box>
-                        <TextField
-                          label={i18n.t('bi.bi_visualization_page.title')}
-                          size='small'
-                          fullWidth
-                          value={comp.config.title || ''}
-                          onChange={(e) => {
-                            setCanvasComponents(
-                              canvasComponents.map((c) =>
-                                c.id === selectedComponent
-                                  ? {
-                                      ...c,
-                                      config: {
-                                        ...c.config,
-                                        title: e.target.value,
-                                      },
-                                    }
-                                  : c
-                              )
-                            );
-                          }}
-                        />
-                        <Divider />
-                        <Box>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                            sx={{ mb: 1, display: 'block' }}
-                          >
-                            {i18n.t('pages.bi_visualization_page.k5')}
-                          </Typography>
-                          <Box
-                            sx={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr 1fr',
-                              gap: 1,
-                            }}
-                          >
-                            <TextField
-                              label='X'
-                              size='small'
-                              type='number'
-                              value={comp.x}
-                              onChange={(e) => {
-                                setCanvasComponents(
-                                  canvasComponents.map((c) =>
-                                    c.id === selectedComponent
-                                      ? { ...c, x: Number(e.target.value) }
-                                      : c
-                                  )
-                                );
-                              }}
-                            />
-                            <TextField
-                              label='Y'
-                              size='small'
-                              type='number'
-                              value={comp.y}
-                              onChange={(e) => {
-                                setCanvasComponents(
-                                  canvasComponents.map((c) =>
-                                    c.id === selectedComponent
-                                      ? { ...c, y: Number(e.target.value) }
-                                      : c
-                                  )
-                                );
-                              }}
-                            />
-                            <TextField
-                              label={i18n.t('bi.bi_visualization_page.width_label')}
-                              size='small'
-                              type='number'
-                              value={comp.width}
-                              onChange={(e) => {
-                                setCanvasComponents(
-                                  canvasComponents.map((c) =>
-                                    c.id === selectedComponent
-                                      ? { ...c, width: Number(e.target.value) }
-                                      : c
-                                  )
-                                );
-                              }}
-                            />
-                            <TextField
-                              label={i18n.t('bi.bi_visualization_page.height_label')}
-                              size='small'
-                              type='number'
-                              value={comp.height}
-                              onChange={(e) => {
-                                setCanvasComponents(
-                                  canvasComponents.map((c) =>
-                                    c.id === selectedComponent
-                                      ? { ...c, height: Number(e.target.value) }
-                                      : c
-                                  )
-                                );
-                              }}
-                            />
-                          </Box>
-                        </Box>
-                      </>
-                    );
-                  })()}
-                </Box>
-              ) : (
+                  </Box>
+                </>
+              );
+            })()}
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              color: 'text.secondary',
+            }}
+          >
+            <Settings
+              size={32}
+              sx={{ mb: 1, opacity: 0.5 }}
+            />
+            <Typography variant='body2'>{i18n.t('bi.bi_visualization_page.k29')}</Typography>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <DesignerTemplate
+      mode='fullscreen'
+      title={i18n.t('bi.bi_visualization_page.edit')}
+      subtitle={i18n.t('bi.bi_visualization_page.create')}
+      loading={loading}
+      error={error}
+      leftPanelWidth={280}
+      rightPanelWidth={300}
+      leftPanel={palettePanel}
+      rightPanel={propsPanel}
+      toolbar={
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 3,
+            pb: 1,
+          }}
+        >
+          <Typography variant='body2'>
+            {i18n.t('bi.bi_visualization_page.total_components')}:{' '}
+            <Box
+              component='span'
+              sx={{ fontWeight: 600 }}
+            >
+              {canvasComponents.length}
+            </Box>
+          </Typography>
+          <Typography variant='body2'>
+            {i18n.t('bi.bi_visualization_page.type')}:{' '}
+            <Box
+              component='span'
+              sx={{ fontWeight: 600 }}
+            >
+              {new Set(canvasComponents.map((c) => c.type)).size}
+            </Box>
+          </Typography>
+          <Box sx={{ flex: 1 }} />
+          <Tooltip title={i18n.t('bi.bi_visualization_page.list_1')}>
+            <IconButton
+              size='small'
+              onClick={handleRefresh}
+              aria-label={i18n.t('bi.bi_visualization_page.edit')}
+            >
+              <RefreshCw size={16} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      }
+    >
+      <Card
+        sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}
+        variant='outlined'
+      >
+        <CardHeader
+          title={i18n.t('bi.bi_visualization_page.edit_component_title')}
+          subheader={i18n.t('bi.bi_visualization_page.edit_2')}
+          action={
+            <Box sx={{ display: 'flex', gap: 1, pr: 2 }}>
+              <Button
+                variant='outlined'
+                size='small'
+                startIcon={<Play size={16} />}
+              >
+                {i18n.t('pages.bi_visualization_page.k1')}
+              </Button>
+              <Button
+                variant='contained'
+                size='small'
+                startIcon={<Save size={16} />}
+              >
+                {i18n.t('pages.bi_visualization_page.k2')}
+              </Button>
+            </Box>
+          }
+        />
+        <CardContent
+          sx={{
+            flex: 1,
+            bgcolor: 'common.white',
+            borderRadius: 1,
+            m: 1,
+            overflow: 'auto',
+            position: 'relative',
+            minHeight: 400,
+          }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+        >
+          {canvasComponents.length === 0 ? (
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'text.secondary',
+              }}
+            >
+              <MousePointer
+                size={48}
+                sx={{ mb: 2, opacity: 0.5 }}
+              />
+              <Typography variant='body1'>{i18n.t('bi.bi_visualization_page.k27')}</Typography>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                {i18n.t('pages.bi_visualization_page.k3')}
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ position: 'relative', minHeight: '100%' }}>
+              {canvasComponents.map((comp) => (
                 <Box
+                  key={comp.id}
+                  onClick={() => setSelectedComponent(comp.id)}
                   sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
-                    color: 'text.secondary',
+                    position: 'absolute',
+                    left: comp.x,
+                    top: comp.y,
+                    width: comp.width,
+                    height: comp.height,
+                    border: '2px solid',
+                    borderColor: selectedComponent === comp.id ? 'primary.main' : 'transparent',
+                    borderRadius: 1,
+                    bgcolor: 'grey.50',
+                    cursor: 'move',
+                    transition: 'border-color 0.2s',
+                    '&:hover': {
+                      borderColor: selectedComponent === comp.id ? 'primary.main' : 'grey.300',
+                    },
                   }}
                 >
-                  <Settings
-                    size={32}
-                    sx={{ mb: 1, opacity: 0.5 }}
-                  />
-                  <Typography variant='body2'>{i18n.t('bi.bi_visualization_page.k29')}</Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      p: 1,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                      bgcolor: 'background.paper',
+                      borderRadius: '2px 2px 0 0',
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {getComponentIcon(comp.type)}
+                      <Typography variant='caption'>
+                        {(comp.config.title as string) || comp.type}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      size='small'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteComponent(comp.id);
+                      }}
+                      aria-label={i18n.t('bi.bi_visualization_page.k28')}
+                    >
+                      <Trash2 size={14} />
+                    </IconButton>
+                  </Box>
+                  <Box
+                    sx={{
+                      p: 2,
+                      height: 'calc(100% - 40px)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      {comp.type === 'bar' && i18n.t('bi.bi_visualization_page.chart_type_bar')}
+                      {comp.type === 'line' && i18n.t('bi.bi_visualization_page.chart_type_line')}
+                      {comp.type === 'pie' && i18n.t('bi.bi_visualization_page.chart_type_pie')}
+                      {comp.type === 'gauge' &&
+                        i18n.t('bi.bi_visualization_page.chart_type_dashboard')}
+                      {comp.type === 'table' && i18n.t('bi.bi_visualization_page.chart_type_table')}
+                      {comp.type === 'text' && i18n.t('bi.bi_visualization_page.content')}
+                      {comp.type === 'image' && i18n.t('bi.bi_visualization_page.chart_type_image')}
+                      {comp.type === 'metric' &&
+                        `${i18n.t('pages.bi_visualization_page.k0')}${comp.config.value || 0}`}
+                    </Typography>
+                  </Box>
                 </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Box>
-      </DashboardTemplate>
-    </PageContainer>
+              ))}
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    </DesignerTemplate>
   );
 };
 export default BIVisualizationPage;

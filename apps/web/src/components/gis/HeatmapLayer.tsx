@@ -1,3 +1,16 @@
+/**
+ * GIS 热力图图层（网格密度版）
+ *
+ * 实现方式：将坐标点投影到容器像素，按 10px 网格累加高斯权重，
+ *          再用 canvas 按 grid 绘制热力渐变。
+ * 使用方：`components/gis/MapView/index.tsx`（旧版 MapView）。
+ *
+ * 注意：本文件与 `modules/HeatmapModule/HeatmapLayer.tsx` 是**两种不同算法**，
+ *      不是重复代码（2026-10-27 UI 审计曾误判为重复，diff 后确认算法不同）。
+ *      后者为径向渐变点版（每个点画 radial gradient circle），
+ *      由新版模块化 MapView（modules/MapModule/MapView.tsx）使用。
+ *      两份均在被活跃引用，请勿合并或删除。
+ */
 import React, { useEffect, useRef, useMemo } from 'react';
 import L from 'leaflet';
 import { useMap } from 'react-leaflet';
