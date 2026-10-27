@@ -105,7 +105,7 @@ where
     #[serde(untagged)]
     enum PermissionsWire {
         Seq(Vec<ManifestPermission>),
-        Map(serde_yml::Mapping),
+        Map(serde_yaml_ng::Mapping),
         Null,
     }
     match Option::<PermissionsWire>::deserialize(deserializer)? {
@@ -145,7 +145,7 @@ impl PluginManifest {
                 e
             )
         })?;
-        serde_yml::from_str::<Self>(&content).map_err(|e| {
+        serde_yaml_ng::from_str::<Self>(&content).map_err(|e| {
             format!(
                 "Failed to parse plugin manifest at {:?}: {}",
                 path.as_ref(),
@@ -680,7 +680,7 @@ permissions:
     resource_type: data
     action: read
 "#;
-        let manifest: PluginManifest = serde_yml::from_str(yaml).unwrap();
+        let manifest: PluginManifest = serde_yaml_ng::from_str(yaml).unwrap();
         assert_eq!(manifest.code, "my-plugin");
         assert_eq!(manifest.name, "我的插件");
         assert_eq!(manifest.version, "2.0.0");
@@ -699,7 +699,7 @@ code: minimal
 name: 最小
 version: "1.0"
 "#;
-        let manifest: PluginManifest = serde_yml::from_str(yaml).unwrap();
+        let manifest: PluginManifest = serde_yaml_ng::from_str(yaml).unwrap();
         assert_eq!(manifest.code, "minimal");
         assert!(manifest.auth_required, "省略 auth_required 应默认 true");
         assert!(manifest.dependencies.is_empty());
@@ -716,7 +716,7 @@ name: EHS
 version: 1.0.0
 permissions: {}
 "#;
-        let manifest: PluginManifest = serde_yml::from_str(yaml).unwrap();
+        let manifest: PluginManifest = serde_yaml_ng::from_str(yaml).unwrap();
         assert!(
             manifest.permissions.is_empty(),
             "permissions: {{}} 应解析为空 Vec"
@@ -737,7 +737,7 @@ permissions:
     description: 查看工单
     tier: L2
 "#;
-        let manifest: PluginManifest = serde_yml::from_str(yaml).unwrap();
+        let manifest: PluginManifest = serde_yaml_ng::from_str(yaml).unwrap();
         assert_eq!(manifest.icon.as_deref(), Some("precision_manufacturing"));
         assert_eq!(manifest.permissions.len(), 1);
         let p = &manifest.permissions[0];

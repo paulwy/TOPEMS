@@ -786,8 +786,8 @@ mod tests {
             test_interval: None,
             enable_connection_reuse: None,
         };
-        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
-        let back: DatabaseConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yaml_ng::to_string(&c).expect("serialize yaml");
+        let back: DatabaseConfig = serde_yaml_ng::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.url, c.url);
         assert_eq!(back.max_connections, c.max_connections);
         assert_eq!(back.min_connections, None);
@@ -920,8 +920,8 @@ mod tests {
     #[test]
     fn service_config_serde_yaml_roundtrip() {
         let c = ServiceConfig::default();
-        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
-        let back: ServiceConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yaml_ng::to_string(&c).expect("serialize yaml");
+        let back: ServiceConfig = serde_yaml_ng::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.name, c.name);
         assert_eq!(back.port, c.port);
         assert_eq!(back.log_level, c.log_level);

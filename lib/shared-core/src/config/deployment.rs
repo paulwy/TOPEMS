@@ -253,8 +253,8 @@ mod tests {
     #[test]
     fn deployment_mode_serde_yaml_roundtrip() {
         for mode in [DeploymentMode::SaaS, DeploymentMode::OnPremise] {
-            let yaml = serde_yml::to_string(&mode).expect("serialize yaml");
-            let back: DeploymentMode = serde_yml::from_str(&yaml).expect("deserialize yaml");
+            let yaml = serde_yaml_ng::to_string(&mode).expect("serialize yaml");
+            let back: DeploymentMode = serde_yaml_ng::from_str(&yaml).expect("deserialize yaml");
             assert_eq!(back, mode);
         }
     }
@@ -339,8 +339,8 @@ mod tests {
             two_factor_required: false,
             ip_whitelist_enabled: true,
         };
-        let yaml = serde_yml::to_string(&f).expect("serialize yaml");
-        let back: FeatureFlags = serde_yml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yaml_ng::to_string(&f).expect("serialize yaml");
+        let back: FeatureFlags = serde_yaml_ng::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.quota_enabled, f.quota_enabled);
         assert_eq!(back.billing_enabled, f.billing_enabled);
         assert_eq!(back.sso_enabled, f.sso_enabled);
@@ -408,8 +408,8 @@ mod tests {
     #[test]
     fn deployment_config_serde_yaml_roundtrip() {
         let c = DeploymentConfig::default();
-        let yaml = serde_yml::to_string(&c).expect("serialize yaml");
-        let back: DeploymentConfig = serde_yml::from_str(&yaml).expect("deserialize yaml");
+        let yaml = serde_yaml_ng::to_string(&c).expect("serialize yaml");
+        let back: DeploymentConfig = serde_yaml_ng::from_str(&yaml).expect("deserialize yaml");
         assert_eq!(back.mode, c.mode);
         assert_eq!(back.multi_tenant_enabled, c.multi_tenant_enabled);
         assert_eq!(back.default_tenant_id, c.default_tenant_id);

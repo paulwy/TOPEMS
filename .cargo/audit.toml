@@ -18,5 +18,15 @@
 # RUSTSEC-2026-0253（lru 0.16.4，informational unsound）
 # 忽略理由：经 async-graphql 传递锁定本版；触发需 catch_unwind + panic 落在 Drop 路径，
 # 本仓无此用法（2026-10-07 快照比对确认仅 1 条 informational）；随 async-graphql 升级滚动消除。
+#
+# RUSTSEC-2026-0387（crypto-bigint 0.5.5，常数时间操作计时差异）
+# 忽略理由：
+#   1. 引入链 jsonwebtoken → p256/ecdsa/elliptic-curve → crypto-bigint 0.5，修复需
+#      jsonwebtoken 11.x 大版本升级（10→11 有 API breaking）；
+#   2. 本项目 JWT 仅用 RS256（rsa，已 vendor 补丁）/ HS256（HMAC）/ None 算法，
+#      ES256/ES384（p256/p384 路径）零调用——该链仅作为 rust_crypto feature 编译依赖
+#      存在，运行时不被触达，实际利用面为空；
+#   3. 2026-10-28 复核：lib/shared-auth/src/auth.rs 无任何 ES 算法使用。
+#      待未来启用 ES 算法或 jsonwebtoken 生态滚动升级时消除。
 [advisories]
-ignore = ["RUSTSEC-2023-0071", "RUSTSEC-2026-0253"]
+ignore = ["RUSTSEC-2023-0071", "RUSTSEC-2026-0253", "RUSTSEC-2026-0387"]

@@ -377,7 +377,7 @@ impl ConfigCenter {
             TopemsError::FileOperation(format!("读取 services.yaml 失败: {}: {}", yaml_path, e))
         })?;
 
-        let parsed: ServicesYaml = serde_yml::from_str(&content)
+        let parsed: ServicesYaml = serde_yaml_ng::from_str(&content)
             .map_err(|e| TopemsError::ConfigLoad(format!("解析 services.yaml 失败: {}", e)))?;
 
         // 注册 service_groups 下的服务
