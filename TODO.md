@@ -5190,3 +5190,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **踩坑记录**：首版按 `SHA384(version.to_be_bytes||description||content)` 假设重建 → `sqlx migrate info` 报 2 条 different checksum；实验对拍确认 **sqlx-cli 0.9 为纯文件内容 SHA-384**，重算重建后归零（此结论与 2026-10-17 "按文件实内容重算 SHA-384" 的历史经验一致）。
 - **验证闭环**：`sqlx migrate info --source database/migrations` → 487 全 installed、**0 different checksum / 0 pending / 0 error**；`sqlx migrate run` 干跑 0 pending 无 DDL 执行（exit=0）→ 存量库启动校验不再失败，新迁移正常走 sqlx 流程。
 - **产物**：仅 DB 账本变更 + 备份表（无仓库文件改动）；本机迁移规程不变（PGOPTIONS search_path=public）。
+
+## 第四十八轮（2026-10-27）：P3 mes processes 契约字段双兼容 ✅
+- **第四十六轮记录项收口**：创建请求必填 `name`（非 `process_name`），旧名调用方会 422。核查结论：后端 `CreateProcessRequest.name: String`、前端 `CreateProductionProcessRequest.name: string` 契约已对齐；全仓无旧字段名现役调用方，422 仅来自旧文档/脚本载荷。
+- **对齐方向（沿用"后端宽容、双兼容"惯例）**：`CreateProcessRequest` / `UpdateProcessRequest` 的 `name` 加 `#[serde(alias = "process_name")]`，新旧字段名均可解析，前端零改动。
+- **回归测试**：新增 2 条 serde 解析用例（create/update 的 name 与 process_name alias），lib 368→370 全绿；clippy deny 过（测试模块加 unwrap_used/expect_used allow）。
+- **顺手修复**：`work_order_e2e` 3 条 FAIL 根因——setup_schema 未建 `mes.production_orders`，而 list_work_orders 的 tenant 隔离 EXISTS 子查询依赖它（P1-8 引入的测试环境缺口）；补表后 3 条恢复通过。
+- **验证**：cargo check 0 error、`cargo test -p topems-mes` 全绿（370 lib + 集成）、clippy 0 warning、cargo fmt 通过。
