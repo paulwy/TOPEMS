@@ -5132,3 +5132,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **plugins（误报澄清）**：深查 svc/server 发现 **plugin-registry 已完整嵌入**（`plugin_registry_real_module.rs` + feature `module-plugin-registry` 默认启用 + Cargo 依赖已声明）。此前 `/api/plugins/plugins` 404 为**测试路径笔误**（复数 /api/plugins vs 实际单数 /api/plugin/*）。实测正确路径 **200**：`/api/plugin/marketplace/list`（4 个插件：ehs 等）、`/api/plugin/marketplace`（total_plugins=4）、`/api/plugin/plugins/{code}`。
 - **提交推送**：feat(subscription) 已 push（门禁全过）。P2 遗留至此全部关闭（列表误报撤销 / iam 自愈 / plugins 误报澄清 / subscription 实现）。
 - **剩余待处理**：API 列表字段契约统一（P3）；iam 超管自动种子 + must_change_password 强制逻辑（P3 记录项）。
+
+## 第四十三轮（2026-10-27）：iam 超管自动种子补齐（P3 记录项）✅ 已提交推送
+- **背景**：既有 admin 种子（ADMIN_INITIAL_PASSWORD 环境变量，默认 admin123，must_change_password=true）仅插 iam.users；core_users（租户关联/授权表）与默认租户 core_tenants 缺失 → 空库首启 admin 无租户关联。
+- **修复**（iam/mod.rs init_database）：① core_users 同步播种 admin（同密码同邮箱，仅插骨架列，schema_defense 补全）；② core_tenants 骨架 CREATE + 默认租户 INSERT（幂等）。
+- **验证**：空库 fresh4/fresh5 实测 iam.users=1 + core_users=1 + admin/admin123 登录 200；core_tenants/core_tenant_users 手动插入关联验证通过（逻辑 OK）。临时库已清理，主实例已切回 topems_test。
+- **提交推送**：9b8432d69，origin/main 一致。
+- **剩余待处理**：must_change_password 强制逻辑（P3 记录项，列已存在+种子已标记 true，仅登录后未强制改密拦截）；API 列表字段契约统一（P3）。
