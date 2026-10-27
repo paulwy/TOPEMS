@@ -5182,3 +5182,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - ② `fix(analytics) 80d29810f`：analytics 60 处 `unwrap_or_else(Utc::now)` 移除 + 全仓 E0308 漂移收口（mes 10 文件 80+ 处：report_date NaiveDate→DateTime 绑定、standard_time i32→f64、big_decimal Option 化、Option<Uuid> Display、match 臂类型统一；wms `as_deref()`；unified-core Uuid 直传）。验证链：在线 `cargo sqlx prepare --workspace` 0 error（缓存重生成）→ 离线 `cargo check --workspace` 0 warning → `clippy --workspace --all-targets` 0 → mes/analytics/wms/unified-core 测试全绿（唯一失败 `test_create_production_order_crud` 为测试自身按 BigDecimal 解码 INT8 列，已改 `i64`）；
   - ③ `feat(db) 8303c703d`：新迁移 `20261027110000_mes_quality_standard_values_work_reports_tenant_id.sql`（幂等补列 + NULL 回填系统租户 + 索引 + 两表 FORCE RLS 双策略，替换被架空的开放策略）；本地 apply + 幂等复跑 + verify 通过，pre-commit `sqlx-cache-freshness`/`migration-validate` 通过；
   - 门禁补提交 `chore a8b042e05`（cargo fmt 修正 standard.rs + 新迁移 checksum 同步）；e2e 测试报告入库 `docs ddb1583e9`（5 总报告 + modules 22 明细 → `docs/reports/e2e/`）。
+
+## 第四十七轮（2026-10-27）：存量库迁移基线 rebaseline ✅
+- **背景**（用户点名"方案由你定"遗留）：仓库迁移链已演进（如 075 改过 checksum、旧 000002 由 020 替代），本机主库 topems `public._sqlx_migrations` 账本停滞（331 条、最迟版本 20261008000000），仓库 487 文件（最新 20261027110000）→ 存量库启动 sqlx 校验必然失败。
+- **现状核查**：账本 checksum 真实（96-hex SHA-384）、无重复版本；缺失段 = 20261010000000 之后全部（0 条）。
+- **方案与执行**：① 备份账本 `_sqlx_migrations_backup_20261027`（CREATE TABLE AS，保留可回滚）；② 事务内 TRUNCATE + 按仓库 487 文件重建（version=文件数字前缀、description=文件名、success=true、checksum=**sqlx-cli 0.9 算法 SHA384(文件内容)**、execution_time=0）。
+- **踩坑记录**：首版按 `SHA384(version.to_be_bytes||description||content)` 假设重建 → `sqlx migrate info` 报 2 条 different checksum；实验对拍确认 **sqlx-cli 0.9 为纯文件内容 SHA-384**，重算重建后归零（此结论与 2026-10-17 "按文件实内容重算 SHA-384" 的历史经验一致）。
+- **验证闭环**：`sqlx migrate info --source database/migrations` → 487 全 installed、**0 different checksum / 0 pending / 0 error**；`sqlx migrate run` 干跑 0 pending 无 DDL 执行（exit=0）→ 存量库启动校验不再失败，新迁移正常走 sqlx 流程。
+- **产物**：仅 DB 账本变更 + 备份表（无仓库文件改动）；本机迁移规程不变（PGOPTIONS search_path=public）。
