@@ -1,3 +1,14 @@
+## e2e 17 域扩展 · 批 B（R5-R7）实机验证 + mes 读回缺口修复（2026-10-27）✅ 已完成
+
+> 用户拍板「推进批 B（R5 供应链 8 域 + R6 负例 + R7 隔离回归）」后执行：R5/R6/R7 全量实测 + 修复实机复现的 P2 缺口（mes 工单读回）+ 文档修订 + 本登记。
+
+- **R5（S18-S24）**：scm/srm/tms/ticket/integration/automation/monitor 全部 200；**plugins 已挂载结论修正**（正确前缀**单数 /api/plugin/\***，marketplace/plugins/installed 均 200；复数 /api/plugins 404 属路径误测）；subscriptions 无独立 crate/路由，前端顶层调用契约待拍板（记录项）；integration/connectors 404（记录项）。
+- **R6（S25-S28）**：S25 错误口令 HTTP200+envelope 401（语义应 4xx，未改）；S26 重复发票真实路由 /api/finance/sales-invoices → 409 幂等 ✅（invoice_type CHECK 限 tax|普通发票|专用发票，非法值 500 不走 422——记录项）；S27 软删：单查过滤 deleted_at **已修复**（软删后 404 + 列表 0）；S28 分页 total=9/rows=1 ✅。
+- **R7（S29）**：erp/crm/lims/hrm/wms/qms 读回全部正常（wms total=7、qms /api/qms/checks total=2——原"读回 0"结论撤销）；租户隔离架构确认。
+- **代码修复（P2 → 闭环）**：**mes.work_orders 读回缺口**——原无 tenant_id 列，租户过滤依赖 order_id→production_orders 关联，独立工单不可见。修复：迁移 `20261027180000_mes_work_orders_tenant_id`（ADD COLUMN + 存量归零租户）；work_order.rs 10 处 EXISTS 关联改 wo.tenant_id 直连 + INSERT 写 tenant_id；创建函数 query! 改非宏 query（规避 sqlx 离线缓存缺失；prepare 连库曾误删根 .sqlx 228 缓存文件已 git checkout 全恢复）。**实机闭环：创建 200 → 单查 200 → 列表 total=1**（WO-R7-TEST4）。
+- **产物更新**：`docs/reports/e2e/modules/R5_S18-S24_供应链与平台域.md`、`R6_R7_S25-S29_负例与回归.md` 实测修订；`批A_R0-R4_实机验证小结_20261027.md` 补「七、批 B 执行记录」。
+- **遗留（已登记，不属批 B 阻塞）**：subscriptions 顶层契约拍板；S25 HTTP 4xx 语义改造；invoice_type 非法值 422 化；三套迁移台账（public 491/iam 49/mes 292）治理；S11 tenant API 404 / S13 通知契约 / must_change_password 强制改密等既有未决；批 C 是否推进待拍板。
+
 ## 门禁清零 + monolith 挂载缺口修复 + 全量推送（2026-10-27）✅ 已完成
 
 > 用户拍板「先修 monolith 挂载缺口（search 订阅者 + master-data schema_defense）+ DB 侧补 flow 表 deleted_at + 存量库 156 迁移全量补跑 + 先修 mobile 挂载缺口」后，门禁 FAIL 从 229→85→67→16→8→0 递减清零，全部改动 commit 并推送。
