@@ -82,6 +82,11 @@ impl<T> ApiResponse<T> {
         Self::error(409, message)
     }
 
+    /// 422 语义错误/请求体合法但参数值无法处理（枚举非法值等）
+    pub fn unprocessable(message: &str) -> Self {
+        Self::error(422, message)
+    }
+
     /// 500 服务器内部错误（`internal` 名已由 ErrorPayload 占用，此处用 server_error）
     pub fn server_error(message: &str) -> Self {
         Self::error(500, message)

@@ -1,3 +1,15 @@
+## S26 invoice_type 非法值 422 化（2026-10-28）✅ 已完成
+
+> 用户点名「invoice_type 非法值 500→422 化」后闭环：非法发票类型从 DB CHECK 兜底 500 改为 handler 显式校验 422。
+
+- **背景**：R6 记录——POST /api/finance/sales-invoices 传非法 invoice_type（如 sales）→ DB CHECK 违反 → envelope 500；语义应 422（参数值无法处理）。
+- **落地**：
+  - `lib/shared-core/src/response.rs` 新增 `ApiResponse::unprocessable`（422 语义构造器，F10 收敛风格）；
+  - `svc/finance/src/modules/sales_invoice.rs` 新增 `validate_invoice_type`（合法值 tax/普通发票/专用发票，与 DB CHECK 一致），create/update 两 handler 显式校验，非法 → 422；
+  - create/update 返回类型 `Json<ApiResponse<T>>` 改为裸 `ApiResponse<T>`（IntoResponse 用 envelope code 作 HTTP 状态）——409/404/500 的 HTTP 语义随之一并对齐（重复发票号 → HTTP 409）。
+- **实机验证**：create sales → 422+HTTP 422；create 重复号 → 409+HTTP 409；update sales → 422+HTTP 422；update 普通发票 → 200 读回正确；smoke 4105/4105 PASS。
+- **过程插曲**：链接失败系磁盘满（errno=28，target/debug/incremental 93G）——清理增量缓存后 94Gi 可用，重链通过。测试发票 T-INV-OK-1/2/3 留库。
+
 ## S25 HTTP 4xx 语义（2026-10-28）✅ 已完成
 
 > 用户点名「S25 HTTP 4xx 语义」后闭环：登录失败从 HTTP 200 + envelope 401 改为标准 HTTP 4xx 语义。

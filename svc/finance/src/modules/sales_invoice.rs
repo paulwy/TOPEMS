@@ -413,16 +413,26 @@ pub async fn get_sales_invoice(
     }
 }
 
+/// 发票类型合法值（与 DB CHECK 约束一致）：tax / 普通发票 / 专用发票
+fn validate_invoice_type(v: &str) -> bool {
+    matches!(v, "tax" | "普通发票" | "专用发票")
+}
+
 /// POST /sales-invoices
 pub async fn create_sales_invoice(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<InvoiceCreatePayload>,
-) -> Json<ApiResponse<SalesInvoiceOut>> {
+) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let inv_type = if payload.invoice_type.is_empty() {
         "tax".to_string()
     } else {
+        if !validate_invoice_type(&payload.invoice_type) {
+            return ApiResponse::<SalesInvoiceOut>::unprocessable(
+                "invoice_type 仅支持 tax/普通发票/专用发票",
+            );
+        }
         payload.invoice_type.clone()
     };
     let total = if payload.total_amount > Decimal::ZERO {
@@ -456,19 +466,15 @@ pub async fn create_sales_invoice(
         Ok(row) => {
             let id: Uuid = row.get("id");
             match fetch_invoice(&state.pool, Some(tenant_id), id).await {
-                Ok(Some(inv)) => Json(ApiResponse::success(inv, "Created")),
-                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error(
-                    "创建后读取失败",
-                )),
+                Ok(Some(inv)) => ApiResponse::success(inv, "Created"),
+                _ => ApiResponse::<SalesInvoiceOut>::server_error("创建后读取失败"),
             }
         }
         Err(e) => {
             if e.as_database_error().and_then(|db| db.code()).as_deref() == Some("23505") {
-                return Json(ApiResponse::<SalesInvoiceOut>::conflict(
-                    "发票编号已存在，请勿重复创建",
-                ));
+                return ApiResponse::<SalesInvoiceOut>::conflict("发票编号已存在，请勿重复创建");
             }
-            Json(crate::shared::err_resp(e))
+            crate::shared::err_resp(e)
         }
     }
 }
@@ -479,8 +485,15 @@ pub async fn update_sales_invoice(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<InvoiceUpdatePayload>,
-) -> Json<ApiResponse<SalesInvoiceOut>> {
+) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    if let Some(t) = &payload.invoice_type {
+        if !validate_invoice_type(t) {
+            return ApiResponse::<SalesInvoiceOut>::unprocessable(
+                "invoice_type 仅支持 tax/普通发票/专用发票",
+            );
+        }
+    }
     match sqlx::query(
         "UPDATE finance.sales_invoices SET
             customer_name = COALESCE($3, customer_name),
@@ -506,16 +519,12 @@ pub async fn update_sales_invoice(
         Ok(Some(row)) => {
             let id: Uuid = row.get("id");
             match fetch_invoice(&state.pool, Some(tenant_id), id).await {
-                Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
-                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error(
-                    "更新后读取失败",
-                )),
+                Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
+                _ => ApiResponse::<SalesInvoiceOut>::server_error("更新后读取失败"),
             }
         }
-        Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::conflict(
-            "仅草稿可编辑或发票不存在",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(None) => ApiResponse::<SalesInvoiceOut>::conflict("仅草稿可编辑或发票不存在"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
