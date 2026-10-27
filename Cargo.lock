@@ -6143,6 +6143,7 @@ dependencies = [
  "tokio",
  "topems-shared-auth",
  "topems-shared-bootstrap",
+ "topems-shared-boundary",
  "topems-shared-core",
  "topems-shared-event",
  "topems-shared-mcp",
