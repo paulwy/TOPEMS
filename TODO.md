@@ -5177,3 +5177,8 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   | P3 | mes processes | 创建请求必填字段为 `name`（非 process_name），422 为 API 契约字段名差异 | 记录 |
 - **环境处置**：`cargo sqlx prepare --workspace` 因 analytics/wms/mes 预先漂移失败（且破坏 .sqlx 缓存）→ 已 `git checkout .sqlx/` 恢复 362 条缓存，`cargo build --bin topems-server` 通过（44s），工作区与 origin 一致（无代码改动待提交）。
 - **遗留待下批**：① production_record operator NOT NULL 缺陷（代码已备好）；② analytics 6 处 unwrap_or_else + 51 处 E0308 类型漂移；③ quality_standard_values/work_reports 的 tenant_id 迁移文件入库（DB 已改）。
+- **✅ 遗留三项已闭环（2026-10-27，4 提交已推送 origin/main `65d8d33d8..a8b042e05`）**：
+  - ① `fix(mes) 76d8af142`：production_record operator 绑 `req.operator_id` 字符串、缺省回退 `claims.username`，占位符重排 $1-$10；
+  - ② `fix(analytics) 80d29810f`：analytics 60 处 `unwrap_or_else(Utc::now)` 移除 + 全仓 E0308 漂移收口（mes 10 文件 80+ 处：report_date NaiveDate→DateTime 绑定、standard_time i32→f64、big_decimal Option 化、Option<Uuid> Display、match 臂类型统一；wms `as_deref()`；unified-core Uuid 直传）。验证链：在线 `cargo sqlx prepare --workspace` 0 error（缓存重生成）→ 离线 `cargo check --workspace` 0 warning → `clippy --workspace --all-targets` 0 → mes/analytics/wms/unified-core 测试全绿（唯一失败 `test_create_production_order_crud` 为测试自身按 BigDecimal 解码 INT8 列，已改 `i64`）；
+  - ③ `feat(db) 8303c703d`：新迁移 `20261027110000_mes_quality_standard_values_work_reports_tenant_id.sql`（幂等补列 + NULL 回填系统租户 + 索引 + 两表 FORCE RLS 双策略，替换被架空的开放策略）；本地 apply + 幂等复跑 + verify 通过，pre-commit `sqlx-cache-freshness`/`migration-validate` 通过；
+  - 门禁补提交 `chore a8b042e05`（cargo fmt 修正 standard.rs + 新迁移 checksum 同步）；e2e 测试报告入库 `docs ddb1583e9`（5 总报告 + modules 22 明细 → `docs/reports/e2e/`）。
