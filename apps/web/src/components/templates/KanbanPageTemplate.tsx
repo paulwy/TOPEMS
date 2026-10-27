@@ -551,7 +551,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                   sx={{ p: 0 }}
                   aria-label={i18n.t('components.kanban_page_template.k9')}
                 >
-                  <Edit style={{ width: 14, height: 14 }} />
+                  <Edit size={14} />
                 </IconButton>
               </Badge>
             )}
@@ -565,7 +565,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                   sx={{ p: 0 }}
                   aria-label={i18n.t('components.kanban_page_template.k10')}
                 >
-                  <Archive style={{ width: 14, height: 14 }} />
+                  <Archive size={14} />
                 </IconButton>
               </Badge>
             )}
@@ -751,7 +751,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 variant='outlined'
                 size='small'
                 onClick={column.onAddCard}
-                startIcon={<Plus style={{ width: 14, height: 14 }} />}
+                startIcon={<Plus size={14} />}
               >
                 {i18n.t('components.kanban_page_template.k8')}
               </Button>

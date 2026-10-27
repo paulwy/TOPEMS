@@ -70,7 +70,7 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
             }}
             aria-label={i18n.t('shared.help_button.k2')}
           >
-            {icon || <HelpCircle style={{ width: 20, height: 20 }} />}
+            {icon || <HelpCircle size={20} />}
           </IconButton>
         </span>
       </Tooltip>
@@ -113,7 +113,7 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
               },
             }}
           >
-            <X style={{ width: 20, height: 20 }} />
+            <X size={20} />
           </MuiIconButton>
         </DialogTitle>
         <DialogContent dividers>

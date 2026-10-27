@@ -1,62 +1,142 @@
 file,module,line,column,type,label,value,context
-apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx,ai,648,56,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
-apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx,ai,701,54,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
+apps/web/src/pages/RedesignDemo.tsx,RedesignDemo.tsx,230,23,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--accent-primary) 8%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--accent-primary) 8%, transparent)',"
+apps/web/src/pages/RedesignDemo.tsx,RedesignDemo.tsx,334,21,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/RedesignDemo.tsx,RedesignDemo.tsx,513,19,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--accent-primary) 8%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--accent-primary) 8%, transparent)',"
+apps/web/src/pages/RedesignDemo.tsx,RedesignDemo.tsx,785,35,px_spacing,px 间距/尺寸,160px,<div style={{ width: '160px' }}>
+apps/web/src/pages/RedesignDemo.tsx,RedesignDemo.tsx,793,35,px_spacing,px 间距/尺寸,140px,<div style={{ width: '140px' }}>
+apps/web/src/pages/RedesignDemo.tsx,RedesignDemo.tsx,801,35,px_spacing,px 间距/尺寸,260px,<div style={{ width: '260px' }}>
+apps/web/src/pages/admin/SystemSettingsPage.tsx,admin,513,7,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx,ai,648,52,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
+apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx,ai,701,50,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
 apps/web/src/pages/ai/AiPromptLibraryPage.tsx,ai,407,38,px_spacing,px 间距/尺寸,12px,"style={{ margin: '0 auto 12px', color: ct.text.disabled }}"
-apps/web/src/pages/bi/BIVisualizationPage.tsx,bi,359,67,px_spacing,px 间距/尺寸,280px,"<Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 280px)' }}>"
-apps/web/src/pages/bi/BiPermissionPage.tsx,bi,433,28,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}"
-apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,279,24,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
-apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,341,28,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider', height: '100%' }}"
-apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,365,28,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider', height: '100%' }}"
-apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,462,24,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
-apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,557,24,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
-apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,696,28,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider', mb: 3 }}"
-apps/web/src/pages/bi/DatasetPage.tsx,bi,318,26,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
-apps/web/src/pages/bi/DatasetPage.tsx,bi,474,24,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
-apps/web/src/pages/bi/ReportBuilderPage.tsx,bi,331,26,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
-apps/web/src/pages/bi/ReportBuilderPage.tsx,bi,490,24,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
-apps/web/src/pages/crm/CRMBillingPage.tsx,crm,164,42,px_spacing,px 间距/尺寸,200px,"sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}"
-apps/web/src/pages/crm/CRMBillingPage.tsx,crm,172,42,px_spacing,px 间距/尺寸,200px,"sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}"
-apps/web/src/pages/crm/ReturnDetailPage.tsx,crm,359,41,px_spacing,px 间距/尺寸,1px,<tr style={{ borderBottom: `1px solid ${designTokens.colors.grey[200]}` }}>
-apps/web/src/pages/crm/ReturnDetailPage.tsx,crm,406,41,px_spacing,px 间距/尺寸,1px,style={{ borderBottom: `1px solid ${designTokens.colors.grey[200]}` }}
+apps/web/src/pages/ai/BusinessCopilotPage.tsx,ai,520,37,px_spacing,px 间距/尺寸,600px,"<Paper sx={{ height: '600px', display: 'flex', flexDirection: 'column' }}>"
+apps/web/src/pages/bi/BIVisualizationPage.tsx,bi,325,67,px_spacing,px 间距/尺寸,280px,"<Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 280px)' }}>"
+apps/web/src/pages/bi/BiPermissionPage.tsx,bi,431,28,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}"
+apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,251,24,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
+apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,313,28,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider', height: '100%' }}"
+apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,337,28,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider', height: '100%' }}"
+apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,434,24,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
+apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,522,24,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
+apps/web/src/pages/bi/DataAnalysisPage.tsx,bi,662,28,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider', mb: 3 }}"
+apps/web/src/pages/bi/DatasetPage.tsx,bi,368,26,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
+apps/web/src/pages/bi/DatasetPage.tsx,bi,525,24,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
+apps/web/src/pages/bi/ReportBuilderPage.tsx,bi,322,26,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
+apps/web/src/pages/bi/ReportBuilderPage.tsx,bi,481,24,px_spacing,px 间距/尺寸,1px,"sx={{ border: '1px solid', borderColor: 'divider' }}"
+apps/web/src/pages/crm/CRMBillingPage.tsx,crm,170,42,px_spacing,px 间距/尺寸,200px,"sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}"
+apps/web/src/pages/crm/CRMBillingPage.tsx,crm,178,42,px_spacing,px 间距/尺寸,200px,"sx={{ p: 2, flex: '1 1 200px', minWidth: 200 }}"
+apps/web/src/pages/crm/CrmContractRedesignPage.tsx,crm,567,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/crm/CrmCustomerRedesignPage.tsx,crm,595,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/crm/CrmOpportunityRedesignPage.tsx,crm,593,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/crm/ReturnDetailPage.tsx,crm,306,41,px_spacing,px 间距/尺寸,1px,<tr style={{ borderBottom: `1px solid ${designTokens.colors.grey[200]}` }}>
+apps/web/src/pages/crm/ReturnDetailPage.tsx,crm,353,41,px_spacing,px 间距/尺寸,1px,style={{ borderBottom: `1px solid ${designTokens.colors.grey[200]}` }}
 apps/web/src/pages/erp/DictManagementPage.tsx,erp,290,68,px_spacing,px 间距/尺寸,200px,"<Box sx={{ display: 'flex', gap: 2, minHeight: 'calc(100vh - 200px)' }}>"
+apps/web/src/pages/erp/ErpInventoryRedesignPage.tsx,erp,382,15,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/erp/ErpInventoryRedesignPage.tsx,erp,648,21,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/erp/ErpSalesOrderRedesignPage.tsx,erp,581,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/erp/PurchaseOrderPage.tsx,erp,49,3,background_color,backgroundColor 硬编码,backgroundColor: 'var(--accent-primary)',"backgroundColor: 'var(--accent-primary)',"
+apps/web/src/pages/erp/PurchaseOrderPage.tsx,erp,817,58,hex_color,十六进制颜色,#e5484d,"<span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>"
+apps/web/src/pages/erp/PurchaseOrderPage.tsx,erp,925,17,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-1)',"backgroundColor: 'var(--surface-1)',"
 apps/web/src/pages/finance/OpeningBalancePage.tsx,finance,212,67,rem_font_size,rem 字号（疑似硬编码）,0.875rem,"<Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>"
-apps/web/src/pages/gis/index.tsx,gis,434,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
-apps/web/src/pages/gis/index.tsx,gis,456,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
-apps/web/src/pages/gis/index.tsx,gis,493,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
-apps/web/src/pages/gis/index.tsx,gis,515,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
-apps/web/src/pages/gis/index.tsx,gis,531,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
-apps/web/src/pages/gis/index.tsx,gis,545,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
-apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,456,69,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,515,69,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,525,59,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>"
-apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,541,59,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>"
-apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,557,59,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>"
-apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,573,59,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>"
-apps/web/src/pages/integration/IntegrationSettingsPage.tsx,integration,473,77,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/integration/IntegrationSettingsPage.tsx,integration,491,77,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/integration/IntegrationSettingsPage.tsx,integration,515,76,px_spacing,px 间距/尺寸,12px,"<Box sx={{ flex: 1, minWidth: { xs: '50%', md: 'calc(25% - 12px)' } }}>"
-apps/web/src/pages/integration/IntegrationSettingsPage.tsx,integration,533,76,px_spacing,px 间距/尺寸,12px,"<Box sx={{ flex: 1, minWidth: { xs: '50%', md: 'calc(25% - 12px)' } }}>"
-apps/web/src/pages/mes/ProductionOrderDetailPage.tsx,mes,287,54,px_spacing,px 间距/尺寸,1px,"<Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>"
-apps/web/src/pages/mes/ProductionOrderDetailPage.tsx,mes,403,54,px_spacing,px 间距/尺寸,1px,"<Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>"
-apps/web/src/pages/mes/TraceabilityDetailPage.tsx,mes,454,54,px_spacing,px 间距/尺寸,1px,"<Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>"
-apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,282,82,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>"
-apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,325,82,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>"
-apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,368,82,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>"
-apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,411,82,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>"
-apps/web/src/pages/performance/PerformanceTestPage.tsx,performance,497,32,px_spacing,px 间距/尺寸,1200px,"<div style={{ maxWidth: '1200px', margin: '0 auto' }}>"
-apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,170,33,px_spacing,px 间距/尺寸,250px,<Box sx={{ flex: '1 1 250px' }}>
-apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,201,33,px_spacing,px 间距/尺寸,250px,<Box sx={{ flex: '1 1 250px' }}>
-apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,235,33,px_spacing,px 间距/尺寸,250px,<Box sx={{ flex: '1 1 250px' }}>
-apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,266,33,px_spacing,px 间距/尺寸,250px,<Box sx={{ flex: '1 1 250px' }}>
+apps/web/src/pages/gis/index.tsx,gis,419,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
+apps/web/src/pages/gis/index.tsx,gis,451,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
+apps/web/src/pages/gis/index.tsx,gis,496,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
+apps/web/src/pages/gis/index.tsx,gis,528,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
+apps/web/src/pages/gis/index.tsx,gis,556,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
+apps/web/src/pages/gis/index.tsx,gis,584,40,px_spacing,px 间距/尺寸,1px,style={{ borderTop: '1px solid grey.200' }}
+apps/web/src/pages/hrm/HrmAttendanceRedesignPage.tsx,hrm,539,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/hrm/HrmEmployeeRedesignPage.tsx,hrm,599,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/hrm/HrmPerformanceRedesignPage.tsx,hrm,592,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/hrm/setup/HrmSetupWizardPage.tsx,hrm,546,34,px_spacing,px 间距/尺寸,160px,sx={{ flex: '2 1 160px' }}
+apps/web/src/pages/hrm/setup/HrmSetupWizardPage.tsx,hrm,552,34,px_spacing,px 间距/尺寸,120px,sx={{ flex: '1 1 120px' }}
+apps/web/src/pages/hrm/setup/HrmSetupWizardPage.tsx,hrm,557,47,px_spacing,px 间距/尺寸,160px,<FormControl sx={{ flex: '1.4 1 160px' }}>
+apps/web/src/pages/hrm/setup/HrmSetupWizardPage.tsx,hrm,576,36,px_spacing,px 间距/尺寸,180px,sx={{ flex: '1.5 1 180px' }}
+apps/web/src/pages/hrm/setup/HrmSetupWizardPage.tsx,hrm,629,34,px_spacing,px 间距/尺寸,160px,sx={{ flex: '2 1 160px' }}
+apps/web/src/pages/hrm/setup/HrmSetupWizardPage.tsx,hrm,635,34,px_spacing,px 间距/尺寸,120px,sx={{ flex: '1 1 120px' }}
+apps/web/src/pages/hrm/setup/HrmSetupWizardPage.tsx,hrm,640,47,px_spacing,px 间距/尺寸,160px,<FormControl sx={{ flex: '1.4 1 160px' }}>
+apps/web/src/pages/hrm/setup/HrmSetupWizardPage.tsx,hrm,660,34,px_spacing,px 间距/尺寸,110px,sx={{ flex: '1 1 110px' }}
+apps/web/src/pages/hrm/setup/HrmSetupWizardPage.tsx,hrm,666,36,px_spacing,px 间距/尺寸,180px,sx={{ flex: '1.5 1 180px' }}
+apps/web/src/pages/hrm/setup/HrmSetupWizardPage.tsx,hrm,916,38,px_spacing,px 间距/尺寸,16px,style={{ margin: '0 auto 16px' }}
+apps/web/src/pages/iam/RoleManagementPage.tsx,iam,299,31,px_spacing,px 间距/尺寸,260px,<div style={{ width: '260px' }}>
+apps/web/src/pages/iam/RoleManagementPage.tsx,iam,562,17,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/iam/UserManagementPage.tsx,iam,249,31,px_spacing,px 间距/尺寸,260px,<div style={{ width: '260px' }}>
+apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,443,69,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
+apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,502,69,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
+apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,512,59,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>"
+apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,528,59,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>"
+apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,544,59,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>"
+apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,560,59,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>"
+apps/web/src/pages/integration/IntegrationSettingsPage.tsx,integration,461,77,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
+apps/web/src/pages/integration/IntegrationSettingsPage.tsx,integration,479,77,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
+apps/web/src/pages/integration/IntegrationSettingsPage.tsx,integration,503,76,px_spacing,px 间距/尺寸,12px,"<Box sx={{ flex: 1, minWidth: { xs: '50%', md: 'calc(25% - 12px)' } }}>"
+apps/web/src/pages/integration/IntegrationSettingsPage.tsx,integration,521,76,px_spacing,px 间距/尺寸,12px,"<Box sx={{ flex: 1, minWidth: { xs: '50%', md: 'calc(25% - 12px)' } }}>"
+apps/web/src/pages/master/DataAssetCatalogPage.tsx,master,236,31,px_spacing,px 间距/尺寸,200px,"<Box sx={{ flex: '1 1 200px', minWidth: 200 }}>"
+apps/web/src/pages/master/DataAssetCatalogPage.tsx,master,261,31,px_spacing,px 间距/尺寸,200px,"<Box sx={{ flex: '1 1 200px', minWidth: 200 }}>"
+apps/web/src/pages/master/DataAssetCatalogPage.tsx,master,286,31,px_spacing,px 间距/尺寸,200px,"<Box sx={{ flex: '1 1 200px', minWidth: 200 }}>"
+apps/web/src/pages/master/DataAssetCatalogPage.tsx,master,310,31,px_spacing,px 间距/尺寸,200px,"<Box sx={{ flex: '1 1 200px', minWidth: 200 }}>"
+apps/web/src/pages/mes/MesWorkOrderPage.tsx,mes,369,15,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--accent-primary) 12%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--accent-primary) 12%, transparent)',"
+apps/web/src/pages/mes/MesWorkOrderPage.tsx,mes,397,15,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/mes/MesWorkOrderPage.tsx,mes,468,15,background_color,backgroundColor 硬编码,backgroundColor: 'var(--accent-primary)',"backgroundColor: 'var(--accent-primary)',"
+apps/web/src/pages/mes/MesWorkOrderPage.tsx,mes,737,21,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/mes/MesWorkOrderPage.tsx,mes,1025,17,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-1)',"backgroundColor: 'var(--surface-1)',"
+apps/web/src/pages/mes/ProductionOrderDetailPage.tsx,mes,283,54,px_spacing,px 间距/尺寸,1px,"<Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>"
+apps/web/src/pages/mes/ProductionOrderDetailPage.tsx,mes,399,54,px_spacing,px 间距/尺寸,1px,"<Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>"
+apps/web/src/pages/notification/NotificationCenter.tsx,notification,357,17,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/notification/NotificationCenter.tsx,notification,458,29,background_color,backgroundColor 硬编码,backgroundColor: 'var(--accent-primary)',"backgroundColor: 'var(--accent-primary)',"
+apps/web/src/pages/notification/NotificationCenter.tsx,notification,556,15,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/notification/NotificationCenter.tsx,notification,584,15,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/notification/NotificationCenter.tsx,notification,618,15,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,264,82,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>"
+apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,307,82,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>"
+apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,350,82,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>"
+apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,393,82,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>"
+apps/web/src/pages/oa/AnnouncementPage.tsx,oa,524,17,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/oa/AnnouncementPage.tsx,oa,703,17,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-1)',"backgroundColor: 'var(--surface-1)',"
+apps/web/src/pages/performance/PerformanceTestPage.tsx,performance,494,34,px_spacing,px 间距/尺寸,1200px,"<div style={{ maxWidth: '1200px', margin: '0 auto' }}>"
+apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,158,33,px_spacing,px 间距/尺寸,250px,<Box sx={{ flex: '1 1 250px' }}>
+apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,189,33,px_spacing,px 间距/尺寸,250px,<Box sx={{ flex: '1 1 250px' }}>
+apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,223,33,px_spacing,px 间距/尺寸,250px,<Box sx={{ flex: '1 1 250px' }}>
+apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,254,33,px_spacing,px 间距/尺寸,250px,<Box sx={{ flex: '1 1 250px' }}>
+apps/web/src/pages/qms/QmsAuditRedesignPage.tsx,qms,565,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/qms/QmsEightDRedesignPage.tsx,qms,518,17,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-3)',"backgroundColor: 'var(--surface-3)',"
+apps/web/src/pages/qms/QmsEightDRedesignPage.tsx,qms,625,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/qms/QmsInspectionRedesignPage.tsx,qms,596,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/qms/QmsInspectionRedesignPage.tsx,qms,903,56,hex_color,十六进制颜色,#e5484d,"<span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>"
+apps/web/src/pages/qms/QmsInspectionRedesignPage.tsx,qms,935,58,hex_color,十六进制颜色,#e5484d,"<span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>"
+apps/web/src/pages/qms/QmsInspectionRedesignPage.tsx,qms,962,58,hex_color,十六进制颜色,#e5484d,"<span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>"
+apps/web/src/pages/qms/QmsNonconformanceRedesignPage.tsx,qms,669,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/qms/QmsNonconformanceRedesignPage.tsx,qms,1068,17,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-1)',"backgroundColor: 'var(--surface-1)',"
 apps/web/src/pages/scm/MrpPlanPage.tsx,scm,157,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
-apps/web/src/pages/scm/MrpPlanPage.tsx,scm,165,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
-apps/web/src/pages/scm/MrpPlanPage.tsx,scm,173,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
-apps/web/src/pages/scm/MrpPlanPage.tsx,scm,181,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
-apps/web/src/pages/shared/LoginPage.tsx,shared,509,50,px_spacing,px 间距/尺寸,1px,"<Box sx={{ mt: 3, pt: 3, borderTop: '1px solid grey.200' }}>"
+apps/web/src/pages/scm/MrpPlanPage.tsx,scm,175,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
+apps/web/src/pages/scm/MrpPlanPage.tsx,scm,193,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
+apps/web/src/pages/scm/MrpPlanPage.tsx,scm,212,43,px_spacing,px 间距/尺寸,1px,"<Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>"
+apps/web/src/pages/shared/DashboardPage.tsx,shared,465,23,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/shared/DashboardPage.tsx,shared,478,25,background_color,backgroundColor 硬编码,backgroundColor: 'var(--accent-primary)',"backgroundColor: 'var(--accent-primary)',"
+apps/web/src/pages/shared/DashboardPage.tsx,shared,584,21,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/shared/DashboardPage.tsx,shared,714,19,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/shared/DashboardPage.tsx,shared,734,23,background_color,backgroundColor 硬编码,backgroundColor: 'var(--accent-primary)',"backgroundColor: 'var(--accent-primary)',"
+apps/web/src/pages/shared/DashboardPage.tsx,shared,998,7,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-2)',"backgroundColor: 'var(--surface-2)',"
+apps/web/src/pages/shared/LoginPage.tsx,shared,510,50,px_spacing,px 间距/尺寸,1px,"<Box sx={{ mt: 3, pt: 3, borderTop: '1px solid grey.200' }}>"
 apps/web/src/pages/shared/V4DemoPage.tsx,shared,163,75,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(33.333% - 8px)' } }}>"
 apps/web/src/pages/shared/V4DemoPage.tsx,shared,188,75,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(66.666% - 8px)' } }}>"
 apps/web/src/pages/shared/V4DemoPage.tsx,shared,389,71,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
 apps/web/src/pages/shared/V4DemoPage.tsx,shared,429,71,px_spacing,px 间距/尺寸,8px,"<Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>"
 apps/web/src/pages/shared/V4DemoPage.tsx,shared,533,87,px_spacing,px 间距/尺寸,8px,"sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}"
-apps/web/src/pages/system/BackupPage.tsx,system,647,51,px_spacing,px 间距/尺寸,8px,"<Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>"
-apps/web/src/pages/ticket/TicketCenterPage.tsx,ticket,462,30,px_spacing,px 间距/尺寸,160px,"sx={{ flex: '1 1 160px', minWidth: 140, p: 1.5, borderRadius: 2 }}"
+apps/web/src/pages/system/MenuManagementPage/index.tsx,system,304,35,px_spacing,px 间距/尺寸,320px,"<Paper sx={{ flex: '1 1 320px', p: 2 }}>"
+apps/web/src/pages/system/MenuManagementPage/index.tsx,system,393,35,px_spacing,px 间距/尺寸,480px,"<Paper sx={{ flex: '2 1 480px', p: 2 }}>"
+apps/web/src/pages/ticket/TicketCenterPage.tsx,ticket,474,30,px_spacing,px 间距/尺寸,160px,"sx={{ flex: '1 1 160px', minWidth: 140, p: 1.5, borderRadius: 2 }}"
+apps/web/src/pages/wms/WmsInboundOrderPage.tsx,wms,567,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/wms/WmsInboundOrderPage.tsx,wms,883,58,hex_color,十六进制颜色,#e5484d,"<span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>"
+apps/web/src/pages/wms/WmsInboundOrderPage.tsx,wms,976,17,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-1)',"backgroundColor: 'var(--surface-1)',"
+apps/web/src/pages/wms/WmsLocationPage.tsx,wms,498,19,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-3)',"backgroundColor: 'var(--surface-3)',"
+apps/web/src/pages/wms/WmsLocationPage.tsx,wms,592,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/wms/WmsLocationPage.tsx,wms,812,21,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-3)',"backgroundColor: 'var(--surface-3)',"
+apps/web/src/pages/wms/WmsOutboundOrderPage.tsx,wms,569,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/wms/WmsOutboundOrderPage.tsx,wms,875,58,hex_color,十六进制颜色,#e5484d,"<span style={{ color: 'var(--text-error, #e5484d)' }}>*</span>"
+apps/web/src/pages/wms/WmsOutboundOrderPage.tsx,wms,958,17,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-1)',"backgroundColor: 'var(--surface-1)',"
+apps/web/src/pages/wms/WmsStocktakePage.tsx,wms,520,19,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-3)',"backgroundColor: 'var(--surface-3)',"
+apps/web/src/pages/wms/WmsStocktakePage.tsx,wms,530,21,background_color,backgroundColor 硬编码,backgroundColor: 'var(--accent-primary)',"backgroundColor: 'var(--accent-primary)',"
+apps/web/src/pages/wms/WmsStocktakePage.tsx,wms,625,13,background_color,backgroundColor 硬编码,"backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)'","backgroundColor: 'color-mix(in srgb, var(--warning-500) 10%, transparent)',"
+apps/web/src/pages/wms/WmsStocktakePage.tsx,wms,842,21,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-3)',"backgroundColor: 'var(--surface-3)',"
+apps/web/src/pages/wms/WmsStocktakePage.tsx,wms,855,23,background_color,backgroundColor 硬编码,backgroundColor: 'var(--accent-primary)',"backgroundColor: 'var(--accent-primary)',"
+apps/web/src/pages/workflow/WorkflowApprovalsPage.tsx,workflow,360,15,background_color,backgroundColor 硬编码,backgroundColor: 'var(--accent-primary)',"backgroundColor: 'var(--accent-primary)',"
+apps/web/src/pages/workflow/WorkflowApprovalsPage.tsx,workflow,751,15,background_color,backgroundColor 硬编码,backgroundColor: 'var(--surface-1)',"backgroundColor: 'var(--surface-1)',"

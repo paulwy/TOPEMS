@@ -38,37 +38,37 @@ type Story = StoryObj<typeof meta>;
 const mockItems = [
   {
     id: '1',
-    icon: <FileText style={{ width: 20, height: 20 }} />,
+    icon: <FileText size={20} />,
     primary: '工单 #WO-2024-0891',
     secondary: '生产中 | 预计完成: 18:00',
   },
   {
     id: '2',
-    icon: <Clock style={{ width: 20, height: 20 }} />,
+    icon: <Clock size={20} />,
     primary: '工单 #WO-2024-0890',
     secondary: '等待中 | 预计开始: 14:30',
   },
   {
     id: '3',
-    icon: <CheckCircle style={{ width: 20, height: 20 }} />,
+    icon: <CheckCircle size={20} />,
     primary: '工单 #WO-2024-0889',
     secondary: '已完成 | 完成时间: 今日 11:20',
   },
   {
     id: '4',
-    icon: <FileText style={{ width: 20, height: 20 }} />,
+    icon: <FileText size={20} />,
     primary: '工单 #WO-2024-0888',
     secondary: '生产中 | 预计完成: 17:00',
   },
   {
     id: '5',
-    icon: <Clock style={{ width: 20, height: 20 }} />,
+    icon: <Clock size={20} />,
     primary: '工单 #WO-2024-0887',
     secondary: '等待中 | 预计开始: 15:00',
   },
   {
     id: '6',
-    icon: <CheckCircle style={{ width: 20, height: 20 }} />,
+    icon: <CheckCircle size={20} />,
     primary: '工单 #WO-2024-0886',
     secondary: '已完成 | 完成时间: 今日 10:45',
   },

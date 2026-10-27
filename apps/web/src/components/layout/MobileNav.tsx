@@ -41,10 +41,10 @@ function getNavigablePath(path: string): string | null {
 }
 
 const getIcon = (iconName?: string): React.ReactNode => {
-  if (!iconName) return <Home style={{ width: 20, height: 20 }} />;
+  if (!iconName) return <Home size={20} />;
   const Icon = lucideIcons[iconName];
-  if (!Icon) return <Home style={{ width: 20, height: 20 }} />;
-  return <Icon style={{ width: 20, height: 20 }} />;
+  if (!Icon) return <Home size={20} />;
+  return <Icon size={20} />;
 };
 
 interface MobileNavProps {
@@ -172,7 +172,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                   color: 'text.secondary',
                 }}
               >
-                <ChevronRight style={{ width: 18, height: 18 }} />
+                <ChevronRight size={18} />
               </Box>
             )}
           </ListItemButton>
@@ -206,7 +206,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
         }}
         aria-label={i18n.t('components.mobile_nav.k0')}
       >
-        <Menu style={{ width: 24, height: 24 }} />
+        <Menu size={24} />
       </IconButton>
 
       <Drawer
@@ -264,7 +264,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             sx={{ color: 'common.white' }}
             aria-label={i18n.t('components.mobile_nav.k1')}
           >
-            <X style={{ width: 20, height: 20 }} />
+            <X size={20} />
           </IconButton>
         </Box>
 
@@ -302,7 +302,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 sx={{ p: 0, color: 'text.secondary' }}
                 aria-label={i18n.t('components.mobile_nav.k2')}
               >
-                <X style={{ width: 14, height: 14 }} />
+                <X size={14} />
               </IconButton>
             )}
           </Box>
@@ -353,7 +353,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                           : 'text.secondary',
                     }}
                   >
-                    <Home style={{ width: 18, height: 18 }} />
+                    <Home size={18} />
                   </Box>
                 </ListItemIcon>
                 <Typography
@@ -393,7 +393,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
               }}
               aria-label={i18n.t('components.mobile_nav.k3')}
             >
-              <Bell style={{ width: 20, height: 20 }} />
+              <Bell size={20} />
             </IconButton>
             <IconButton
               size='small'
@@ -408,7 +408,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
               }}
               aria-label={i18n.t('components.mobile_nav.k4')}
             >
-              <Lightbulb style={{ width: 20, height: 20 }} />
+              <Lightbulb size={20} />
             </IconButton>
             <IconButton
               size='small'
@@ -418,7 +418,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
               }}
               aria-label={i18n.t('components.mobile_nav.k5')}
             >
-              <HelpCircle style={{ width: 20, height: 20 }} />
+              <HelpCircle size={20} />
             </IconButton>
           </Box>
         </Box>

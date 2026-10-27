@@ -26,14 +26,14 @@ type Story = StoryObj<typeof meta>;
 const deleteAndEditActions: SwipeActionItem[] = [
   {
     id: 'edit',
-    icon: <Edit2 style={{ width: 18, height: 18 }} />,
+    icon: <Edit2 size={18} />,
     label: '编辑',
     color: designTokens.colors.primary[700],
     onClick: () => {},
   },
   {
     id: 'delete',
-    icon: <Trash2 style={{ width: 18, height: 18 }} />,
+    icon: <Trash2 size={18} />,
     label: '删除',
     color: '#d32f2f',
     onClick: () => {},
@@ -43,14 +43,14 @@ const deleteAndEditActions: SwipeActionItem[] = [
 const archiveAndStarActions: SwipeActionItem[] = [
   {
     id: 'archive',
-    icon: <Archive style={{ width: 18, height: 18 }} />,
+    icon: <Archive size={18} />,
     label: '归档',
     color: designTokens.colors.secondary[700],
     onClick: () => {},
   },
   {
     id: 'star',
-    icon: <Star style={{ width: 18, height: 18 }} />,
+    icon: <Star size={18} />,
     label: '收藏',
     color: '#f57c00',
     onClick: () => {},
@@ -174,7 +174,7 @@ export const StaticPreview: Story = {
               color: 'white',
             }}
           >
-            <Edit2 style={{ width: 18, height: 18 }} />
+            <Edit2 size={18} />
             <Typography
               variant='caption'
               sx={{ color: 'white', mt: 0.5 }}
@@ -193,7 +193,7 @@ export const StaticPreview: Story = {
               color: 'white',
             }}
           >
-            <Trash2 style={{ width: 18, height: 18 }} />
+            <Trash2 size={18} />
             <Typography
               variant='caption'
               sx={{ color: 'white', mt: 0.5 }}

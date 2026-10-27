@@ -5320,3 +5320,138 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **回归测试**：新增 2 条 serde 解析用例（create/update 的 name 与 process_name alias），lib 368→370 全绿；clippy deny 过（测试模块加 unwrap_used/expect_used allow）。
 - **顺手修复**：`work_order_e2e` 3 条 FAIL 根因——setup_schema 未建 `mes.production_orders`，而 list_work_orders 的 tenant 隔离 EXISTS 子查询依赖它（P1-8 引入的测试环境缺口）；补表后 3 条恢复通过。
 - **验证**：cargo check 0 error、`cargo test -p topems-mes` 全绿（370 lib + 集成）、clippy 0 warning、cargo fmt 通过。
+
+---
+
+# TOPEMS UI 优化 TODO（2026-10-27）
+
+## 已完成（15 个 commit，bundle -4.3MB）
+
+| Commit | 内容 |
+|---|---|
+| `7bcd00b505` | Quick Win + bi 模板迁移 |
+| `991ba0babd` | P1 试点（暗色 + shared Badge） |
+| `d6fab0c2cd` | dark palette + 221 文件批量迁移 |
+| `eed3b106b9` | 8 个僵尸组件清理 |
+| `eb23014095` | 评论头像懒加载 |
+| `43d066e051` | token CI 白名单 |
+| `e4b062f856` | 硬编码颜色全清零（184→0） |
+| `b24539c655` | a11y 警告全清零（82→0） |
+| `0e4a59a1e8` | PrismLight 初步优化 |
+| `6fa703e2fc` | zh i18n 压缩 + HeaderNotifications lazy |
+| `86abe2325c` | en + 54 ns i18n 压缩（-2.3MB） |
+| `aaa3b2c9d6` | Prism 从 markdown-vendor 拆出 |
+| `da2bb03a3b` | 换 prismjs 直接用（-1.54MB） |
+| `4cd4588a18` | exceljs → xlsx（-487KB） |
+| `e28807cc8b` | DataTable 虚拟滚动默认开启（运行时 +5-10x） |
+
+---
+
+## P0（本周必做）
+
+- [ ] **1. 浏览器回归测试**（2h）
+  - 验证暗色主题切换（7 个模块）
+  - 验证 DataTable 虚拟滚动（61 个列表页）
+  - 验证 bi/dashboard 模板切换
+  - 验证 Excel 导出功能
+  - 风险：低
+
+- [ ] **2. E2E 测试跑通**（4h）
+  - 前提：后端 release server 启动
+  - 跑 bi-dashboard.spec.ts（3 个测试）
+  - 跑 datatable-virtual.spec.ts（2 个测试）
+  - 风险：低
+
+- [ ] **3. ListPageTemplate 拆分**（3-4d）
+  - 3979 行 → 5-8 个子模块
+  - useListPageState（~800 行）
+  - ListPageHeader（~400 行）
+  - ListPageToolbar（~500 行）
+  - ListPageTable（~600 行）
+  - ListPagePagination（~300 行）
+  - ListPageBatchActionBar（~400 行）
+  - 预期收益：运行时渲染性能 +20%，可维护性提升
+  - 风险：中（所有列表页依赖）
+
+---
+
+## P1（下周）
+
+- [ ] **4. 10 个巨型组件拆分**（10d）
+  - AIOpsPanel.tsx（2487 行）
+  - v53-platform-console.tsx（2290 行）
+  - V55AutomationPanel.tsx（2223 行）
+  - RuntimeDashboard.tsx（1889 行）
+  - v56-ops-panel.tsx（1610 行）
+  - FormPageTemplate.tsx（1584 行）
+  - devtools-panel.tsx（1532 行）
+  - TemplateDemoPage.tsx（1436 行）
+  - ObservabilityDashboard.tsx（1370 行）
+
+- [ ] **5. mui-x 拆分**（1d）
+  - date-pickers vs tree-view 拆成两个 chunk
+  - 预期收益：-50KB gzip
+
+- [ ] **6. 首屏 API 并行化**（4h）
+  - 用户信息 + 权限请求并行
+  - 预期收益：-100ms TTFB
+
+---
+
+## P2（2-4 周后）
+
+- [ ] **7. SSR / SSG**（5d）— LCP -1s，SEO
+- [ ] **8. WCAG 2.1 AA 合规**（5d）— 可访问性达标
+- [ ] **9. 移动端响应式优化**（3d）— 移动端体验
+
+---
+
+**当前进度**：P0 进行中，下一步 P0-1 浏览器回归测试
+**阻塞**：后端 release server 未启动（E2E 测试跑不通）
+
+---
+
+## ListPageTemplate 拆分排期（专门排期）
+
+### 拆分设计（1d）
+- [ ] 写拆分设计文档
+- [ ] 确定子模块边界（5-8 个）
+- [ ] 确定 props 传递方案
+- [ ] 写 typecheck + 回归测试计划
+
+### 逐步拆分（2-3d）
+- [ ] Step 1: 抽 ListPageHeader（标题 + 操作按钮）
+- [ ] Step 2: 抽 ListPageToolbar（搜索 + 筛选）
+- [ ] Step 3: 抽 ListPageTable（DataTable 配置）
+- [ ] Step 4: 抽 ListPagePagination（分页栏）
+- [ ] Step 5: 抽 ListPageBatchActionBar（批量操作栏）
+
+### 回归测试（1d）
+- [ ] typecheck 0 错误
+- [ ] 61 个列表页浏览器回归
+- [ ] E2E 测试通过
+
+**总工作量：3-4d**
+**风险：中**（所有列表页依赖）
+**预期收益：运行时渲染性能 +20%，可维护性提升**
+
+---
+
+## 内联样式迁移排期（专门排期）
+
+### 目标
+将 882 处内联样式（style={{}}）迁移到 sx prop 或 MUI 组件。
+
+### 拆分策略
+- [ ] Step 1: lucide 图标 size prop 迁移（~200 处）
+- [ ] Step 2: MUI 组件内联样式 -> sx prop（~300 处）
+- [ ] Step 3: 普通 div -> Box 组件（~300 处）
+- [ ] Step 4: 验证 + typecheck
+
+### 工作量
+- 总工作量：5d
+- 风险：低（样式不改变）
+- 预期收益：代码可维护性提升
+
+### 优先级
+P2（2-4 周后）

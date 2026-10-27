@@ -53,7 +53,7 @@ const LanguageSelector: React.FC = () => {
         aria-expanded={Boolean(anchorEl)}
         sx={{ minWidth: 32, width: 32, height: 32, p: 0 }}
       >
-        <Globe style={{ width: 20, height: 20 }} />
+        <Globe size={20} />
       </Button>
       <Menu
         anchorEl={anchorEl}

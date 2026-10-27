@@ -112,8 +112,8 @@ const AdvancedFilterPanel = <T extends Record<string, unknown>>({
       <Button
         variant='outlined'
         onClick={(e) => setAnchorEl(e.currentTarget)}
-        startIcon={<Filter style={{ width: 16, height: 16 }} />}
-        endIcon={<Plus style={{ width: 16, height: 16 }} />}
+        startIcon={<Filter size={16} />}
+        endIcon={<Plus size={16} />}
         sx={{ gap: 1 }}
       >
         {i18n.t('components.advanced_filter.k0')}
@@ -144,7 +144,7 @@ const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                 variant='text'
                 size='small'
                 onClick={resetFilters}
-                startIcon={<X style={{ width: 16, height: 16 }} />}
+                startIcon={<X size={16} />}
               >
                 {i18n.t('components.advanced_filter.k1')}
               </Button>
@@ -303,7 +303,7 @@ const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                       onClick={() => removeCondition(index)}
                       sx={{ minWidth: 32, p: 0.5 }}
                     >
-                      <X style={{ width: 16, height: 16 }} />
+                      <X size={16} />
                     </Button>
                   </Box>
                 );
@@ -326,7 +326,7 @@ const AdvancedFilterPanel = <T extends Record<string, unknown>>({
               variant='outlined'
               size='small'
               onClick={addCondition}
-              startIcon={<Plus style={{ width: 16, height: 16 }} />}
+              startIcon={<Plus size={16} />}
               sx={{ gap: 0.5 }}
             >
               {i18n.t('components.advanced_filter.k4')}
@@ -378,7 +378,7 @@ const AdvancedFilterPanel = <T extends Record<string, unknown>>({
                   setConditions(newConditions);
                   onFilterChange(newConditions);
                 }}
-                deleteIcon={<X style={{ width: 14, height: 14 }} />}
+                deleteIcon={<X size={14} />}
                 sx={{ gap: 0.5 }}
               />
             );

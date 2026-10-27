@@ -151,7 +151,7 @@ export const HeaderBreadcrumbs: React.FC<HeaderBreadcrumbsProps> = ({ checkPermi
       }}
     >
       <Breadcrumbs
-        separator={<ChevronRight style={{ width: 14, height: 14 }} />}
+        separator={<ChevronRight size={14} />}
         aria-label={i18n.t('shared.header_breadcrumbs.k0')}
         sx={{
           '& .MuiBreadcrumbs-ol': {
@@ -175,7 +175,7 @@ export const HeaderBreadcrumbs: React.FC<HeaderBreadcrumbsProps> = ({ checkPermi
           }}
           onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
         >
-          <Home style={{ width: 14, height: 14 }} />
+          <Home size={14} />
           {i18n.t('components.header_breadcrumbs.k0')}
         </Link>
         {breadcrumbItems.map((item, index) =>

@@ -291,7 +291,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               gap: 4,
             }}
           >
-            <Filter style={{ width: 16, height: 16 }} />
+            <Filter size={16} />
             <span style={{ fontSize: 12 }}>{i18n.t('components.pivot_table.k6')}</span>
           </button>
           <select
@@ -335,7 +335,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               }}
               title={i18n.t('components.pivot_table.k7')}
             >
-              <RefreshCw style={{ width: 16, height: 16 }} />
+              <RefreshCw size={16} />
             </button>
           )}
           {onExport && (
@@ -351,7 +351,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               }}
               title={i18n.t('components.pivot_table.k8')}
             >
-              <Download style={{ width: 16, height: 16 }} />
+              <Download size={16} />
             </button>
           )}
         </div>

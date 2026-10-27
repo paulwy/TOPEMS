@@ -75,7 +75,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             }}
             aria-label={i18n.t('shared.mobile_header.k0')}
           >
-            <ArrowLeft style={{ width: 22, height: 22 }} />
+            <ArrowLeft size={22} />
           </IconButton>
         ) : showMenu ? (
           <IconButton
@@ -87,7 +87,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             }}
             aria-label={i18n.t('shared.mobile_header.k1')}
           >
-            <Menu style={{ width: 22, height: 22 }} />
+            <Menu size={22} />
           </IconButton>
         ) : (
           <Box sx={{ width: 44 }} />
@@ -122,7 +122,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               }}
               aria-label={i18n.t('shared.mobile_header.k2')}
             >
-              <Search style={{ width: 22, height: 22 }} />
+              <Search size={22} />
             </IconButton>
           )}
 
@@ -148,7 +148,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   },
                 }}
               >
-                <Bell style={{ width: 22, height: 22 }} />
+                <Bell size={22} />
               </Badge>
             </IconButton>
           )}
@@ -163,7 +163,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               }}
               aria-label={i18n.t('shared.mobile_header.k4')}
             >
-              <MoreVertical style={{ width: 22, height: 22 }} />
+              <MoreVertical size={22} />
             </IconButton>
           )}
 

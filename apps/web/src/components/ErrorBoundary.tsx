@@ -479,7 +479,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                         marginBottom: 3,
                       }}
                     >
-                      <Code2 style={{ width: 16, height: 16 }} />
+                      <Code2 size={16} />
                       <span style={{ fontWeight: 600, fontSize: '14px' }}>
                         {i18n.t('components.error_boundary.k14')}
                       </span>

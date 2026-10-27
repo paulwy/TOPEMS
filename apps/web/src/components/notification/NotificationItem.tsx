@@ -404,7 +404,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               }}
               title={i18n.t('shared.notification_item.k5')}
             >
-              <Check style={{ width: 16, height: 16 }} />
+              <Check size={16} />
             </button>
           )}
           <button
@@ -420,7 +420,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             }}
             title={i18n.t('shared.notification_item.k6')}
           >
-            <Trash2 style={{ width: 16, height: 16 }} />
+            <Trash2 size={16} />
           </button>
           {!!getLink(notification) && (
             <button
@@ -439,7 +439,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               }}
               title={i18n.t('shared.notification_item.k7')}
             >
-              <ExternalLink style={{ width: 16, height: 16 }} />
+              <ExternalLink size={16} />
             </button>
           )}
         </div>

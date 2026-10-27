@@ -32,7 +32,7 @@ export const HeaderLogo: React.FC<HeaderLogoProps> = ({
           sx={{ display: { sm: 'none' } }}
           aria-label={i18n.t('shared.header_logo.k0')}
         >
-          <MenuIcon style={{ width: 20, height: 20 }} />
+          <MenuIcon size={20} />
         </IconButton>
       )}
 
@@ -91,7 +91,7 @@ export const HeaderLogo: React.FC<HeaderLogoProps> = ({
             '&:hover': { bgcolor: 'action.hover' },
           }}
         >
-          <MenuIcon style={{ width: 20, height: 20 }} />
+          <MenuIcon size={20} />
         </IconButton>
       )}
     </Box>

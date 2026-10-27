@@ -410,7 +410,7 @@ export function MasterDetailPageTemplate<T>({
                   }}
                   aria-label={i18n.t('templates.master_detail_page_template.k8')}
                 >
-                  <X style={{ width: 14, height: 14 }} />
+                  <X size={14} />
                 </IconButton>
               </InputAdornment>
             ) : null,
@@ -536,7 +536,7 @@ export function MasterDetailPageTemplate<T>({
                         }}
                         aria-label={i18n.t('templates.master_detail_page_template.k9')}
                       >
-                        {action.icon || <ChevronsRight style={{ width: 14, height: 14 }} />}
+                        {action.icon || <ChevronsRight size={14} />}
                       </IconButton>
                     </Tooltip>
                   );

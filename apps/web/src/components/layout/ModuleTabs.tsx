@@ -75,7 +75,7 @@ const SimpleTabBar: React.FC<{
       list.push({
         label: i18n.t('shared.module_tabs.k0'),
         path: '/dashboard',
-        icon: <Home style={{ width: 16, height: 16 }} />,
+        icon: <Home size={16} />,
       });
     }
     list.push(...items);
@@ -408,7 +408,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
             }}
             aria-label={i18n.t('shared.module_tabs.k1')}
           >
-            <X style={{ width: 12, height: 12 }} />
+            <X size={12} />
           </IconButton>
         )}
       </Box>
@@ -448,7 +448,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
             }}
             aria-label={i18n.t('shared.module_tabs.k2')}
           >
-            <ChevronLeft style={{ width: 16, height: 16 }} />
+            <ChevronLeft size={16} />
           </IconButton>
           <IconButton
             size='small'
@@ -464,7 +464,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
             }}
             aria-label={i18n.t('shared.module_tabs.k3')}
           >
-            <ChevronRight style={{ width: 16, height: 16 }} />
+            <ChevronRight size={16} />
           </IconButton>
         </>
       )}
@@ -499,9 +499,9 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
         <MenuItem onClick={() => contextMenu && handleTogglePin(contextMenu.tab)}>
           <ListItemIcon>
             {contextMenu?.tab.pinned ? (
-              <PinOff style={{ width: 18, height: 18 }} />
+              <PinOff size={18} />
             ) : (
-              <Pin style={{ width: 18, height: 18 }} />
+              <Pin size={18} />
             )}
           </ListItemIcon>
           <ListItemText>
@@ -513,7 +513,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
         {contextMenu?.tab.closable !== false && (
           <MenuItem onClick={() => contextMenu && handleCloseTab(contextMenu.tab)}>
             <ListItemIcon>
-              <X style={{ width: 18, height: 18 }} />
+              <X size={18} />
             </ListItemIcon>
             <ListItemText>{i18n.t('shared.module_tabs.k6')}</ListItemText>
           </MenuItem>

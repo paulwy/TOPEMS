@@ -1,4 +1,5 @@
 file,module,templateType,templateComponents,templateImports,commonComponents,usesPageContainer,usesDataTable,usesDataTableDirect,usesCrudPage,hasTemplate,commonComponentCount
+apps/web/src/pages/RedesignDemo.tsx,RedesignDemo.tsx,unknown / custom,,none,none,no,no,no,no,no,0
 apps/web/src/pages/admin/AccountManagementPage.tsx,admin,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/admin/AuditLogPage.tsx,admin,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/admin/BankAccountManagementPage.tsx,admin,crud,CrudPage,none,none,no,yes,no,yes,yes,0
@@ -14,11 +15,10 @@ apps/web/src/pages/admin/PermissionAuditPage.tsx,admin,list,ListPageTemplate,Lis
 apps/web/src/pages/admin/PluginManagementPage.tsx,admin,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/admin/RateLimitConfigPage.tsx,admin,settings,SettingsPageTemplate,SettingsPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/admin/SystemManagementPage.tsx,admin,dashboard,DashboardTemplate,DashboardTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/admin/SystemSettingsPage.tsx,admin,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/admin/SystemSettingsPage.tsx,admin,form,FormPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/admin/TenantBillingPage.tsx,admin,crud,CrudPage,CrudPage,PageContainer; Grid,yes,yes,no,yes,yes,2
 apps/web/src/pages/admin/TenantDetailPage.tsx,admin,crud; detail,CrudPage; DetailPageTemplate,DetailPageTemplate; CrudPage,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2
-apps/web/src/pages/admin/TenantManagementPage.tsx,admin,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/admin/TenantOnboardingWizardPage.tsx,admin,wizard,WizardPageTemplate,WizardPageTemplate; WizardStep,none,no,no,no,no,yes,0
+apps/web/src/pages/admin/TenantManagementPage.tsx,admin,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/admin/TenantSettingsPage.tsx,admin,settings,SettingsPageTemplate,SettingsPageTemplate,Grid,no,no,no,no,yes,1
 apps/web/src/pages/ai/AiAssistantPage.tsx,ai,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/ai/AiChatPage.tsx,ai,chat,ChatPageTemplate,ChatPageTemplate,none,no,no,no,no,yes,0
@@ -28,7 +28,11 @@ apps/web/src/pages/ai/AiDocumentAnalysisPage.tsx,ai,ai-tool,AiToolPageTemplate,A
 apps/web/src/pages/ai/AiKnowledgeBasePage.tsx,ai,ai-tool,AiToolPageTemplate,AiToolPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/ai/AiModelSettingsPage.tsx,ai,settings,SettingsPageTemplate,SettingsPageTemplate,Grid,no,no,no,no,yes,1
 apps/web/src/pages/ai/AiPromptLibraryPage.tsx,ai,list,ListPageTemplate,ListPageTemplate,PageContainer; Grid,yes,no,no,no,yes,2
+apps/web/src/pages/ai/BusinessCopilotPage.tsx,ai,unknown / custom,,none,Grid,no,no,no,no,no,1
 apps/web/src/pages/ai/DifyChatPage.tsx,ai,chat,ChatPageTemplate,ChatPageTemplate,none,no,no,no,no,yes,0
+apps/web/src/pages/ai/DshKnowledgePage.tsx,ai,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/ai/DshRagPage.tsx,ai,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/ai/GovernanceDashboardPage.tsx,ai,unknown / custom,,none,Grid,no,no,no,no,no,1
 apps/web/src/pages/aps/ApsDashboardPage.tsx,aps,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/aps/CapacityDetailPage.tsx,aps,detail,DetailPageTemplate,DetailPageTemplate; SectionConfig,none,no,no,no,no,yes,0
 apps/web/src/pages/aps/CapacityManagementPage.tsx,aps,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
@@ -53,7 +57,7 @@ apps/web/src/pages/asset/DashboardPage.tsx,asset,dashboard,DashboardTemplate,Das
 apps/web/src/pages/asset/DepreciationPage.tsx,asset,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/asset/TransferPage.tsx,asset,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/automation/AutomationDashboardPage.tsx,automation,stats,StatsPageTemplate,StatsPageTemplate; StatCard; DataTable,none,no,no,no,no,yes,0
-apps/web/src/pages/automation/AutomationDesignerPage/index.tsx,automation,report-designer; designer,"ReportDesignerTemplate, DesignerTemplate; DesignerTemplate",DesignerTemplate,none,no,no,no,no,yes,0
+apps/web/src/pages/automation/AutomationDesignerPage/index.tsx,automation,report-designer; designer,"ReportDesignerTemplate, DesignerTemplate; DesignerTemplate",DesignerTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/automation/AutomationRulesPage.tsx,automation,list,ListPageTemplate,ListPageTemplate,ConfirmDialog,no,no,no,no,yes,1
 apps/web/src/pages/automation/AutomationRunsPage.tsx,automation,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/automation/AutomationVariablesPage.tsx,automation,list,ListPageTemplate,ListPageTemplate,ConfirmDialog,no,no,no,no,yes,1
@@ -78,19 +82,20 @@ apps/web/src/pages/crm/CRMSalesForecastPage.tsx,crm,stats,StatsPageTemplate,Stat
 apps/web/src/pages/crm/CRMSalesFunnelPage.tsx,crm,stats,StatsPageTemplate,StatsPageTemplate; StatsStatCard,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/crm/ContactDetailPage.tsx,crm,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,ConfirmDialog; PageContainer,yes,no,no,no,yes,2
 apps/web/src/pages/crm/ContactManagementPage.tsx,crm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
+apps/web/src/pages/crm/CrmContractRedesignPage.tsx,crm,list,ListPageTemplate,none,none,no,no,no,no,yes,0
+apps/web/src/pages/crm/CrmCustomerRedesignPage.tsx,crm,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/crm/CrmDashboardPage.tsx,crm,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/crm/CrmForecastAlgorithmPage.tsx,crm,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
+apps/web/src/pages/crm/CrmOpportunityRedesignPage.tsx,crm,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/crm/CrmRfmPage.tsx,crm,stats,StatsPageTemplate,StatsPageTemplate,PageContainer,yes,yes,yes,no,yes,1
 apps/web/src/pages/crm/CustomerCreatePage.tsx,crm,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/crm/CustomerDetailPage.tsx,crm,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/crm/CustomerEditPage.tsx,crm,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/crm/CustomerManagementPage.tsx,crm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
-apps/web/src/pages/crm/DashboardPage.tsx,crm,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/crm/InteractionManagementPage.tsx,crm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/crm/OpportunityDetailPage.tsx,crm,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,ConfirmDialog; PageContainer,yes,no,no,no,yes,2
-apps/web/src/pages/crm/OpportunityManagementPage.tsx,crm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/crm/ReturnDetailPage.tsx,crm,detail,DetailPageTemplate,DetailPageTemplate; SectionConfig,PageContainer; ConfirmDialog,yes,no,no,no,yes,2
 apps/web/src/pages/crm/ReturnListPage.tsx,crm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
+apps/web/src/pages/crm/TagPage.tsx,crm,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/desktop/AuditLogPage.tsx,desktop,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/desktop/DesktopMonitorPage.tsx,desktop,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/doc/DashboardPage.tsx,doc,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
@@ -104,7 +109,7 @@ apps/web/src/pages/ehs/EhsAccidentPage.tsx,ehs,crud,CrudPage,CrudPage,none,no,ye
 apps/web/src/pages/ehs/EhsCheckPage.tsx,ehs,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/ehs/EhsDashboardPage.tsx,ehs,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/ehs/EhsDrillPage.tsx,ehs,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/ehs/EhsHazardDetailPage.tsx,ehs,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,DataTable; ConfirmDialog; PageContainer,yes,yes,yes,no,yes,3
+apps/web/src/pages/ehs/EhsHazardDetailPage.tsx,ehs,detail,DetailPageTemplate,DetailPageTemplate; TabConfig,DataTable; ConfirmDialog; PageContainer,yes,yes,yes,no,yes,3
 apps/web/src/pages/ehs/EhsHazardPage.tsx,ehs,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/ehs/EhsHazardousMaterialPage.tsx,ehs,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/ehs/EhsIncidentReportPage.tsx,ehs,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
@@ -112,7 +117,6 @@ apps/web/src/pages/ehs/EhsOccupationalDiseasePage.tsx,ehs,crud,CrudPage,CrudPage
 apps/web/src/pages/ehs/EhsPlanPage.tsx,ehs,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/ehs/EmergencyPage.tsx,ehs,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/ehs/EnvironmentPage.tsx,ehs,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/ehs/HazardPage.tsx,ehs,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/ehs/HealthManagementPage.tsx,ehs,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/ehs/TrainingPage.tsx,ehs,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/erp/AccountingManagementPage.tsx,erp,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
@@ -125,15 +129,17 @@ apps/web/src/pages/erp/CustomerManagementPage.tsx,erp,crud,CrudPage,CrudPage,non
 apps/web/src/pages/erp/DashboardPage.tsx,erp,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/erp/DatabaseManagementPage.tsx,erp,list,ListPageTemplate,ListPageTemplate,StatusBadge; ConfirmDialog,no,no,no,no,yes,2
 apps/web/src/pages/erp/DictManagementPage.tsx,erp,crud,CrudPage,none,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2
+apps/web/src/pages/erp/DictionaryPage.tsx,erp,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/erp/ErpInventoryRedesignPage.tsx,erp,list,ListPageTemplate,none,none,no,no,no,no,yes,0
+apps/web/src/pages/erp/ErpSalesOrderRedesignPage.tsx,erp,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/erp/FinancialAnalysisPage.tsx,erp,stats,StatsPageTemplate,StatsPageTemplate,none,no,yes,yes,no,yes,0
 apps/web/src/pages/erp/FinancialReportPage.tsx,erp,stats,StatsPageTemplate,StatsPageTemplate,none,no,yes,yes,no,yes,0
 apps/web/src/pages/erp/InventoryManagementPage.tsx,erp,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/erp/MaterialManagementPage.tsx,erp,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/erp/MeetingRoomPage.tsx,erp,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/erp/OfficeSuppliesPage.tsx,erp,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
-apps/web/src/pages/erp/PurchaseOrderPage.tsx,erp,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
+apps/web/src/pages/erp/PurchaseOrderPage.tsx,erp,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/erp/ReceivablePayablePage.tsx,erp,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/erp/SalesOrderPage.tsx,erp,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/erp/SupplierManagementPage.tsx,erp,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/erp/VehiclePage.tsx,erp,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/erp/VehicleRequestPage.tsx,erp,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
@@ -143,15 +149,16 @@ apps/web/src/pages/finance/ConsolidationReportsPage.tsx,finance,stats,StatsPageT
 apps/web/src/pages/finance/ConsolidationScopePage/index.tsx,finance,list,ListPageTemplate,ListPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/finance/FinanceApprovalConfigPage.tsx,finance,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/finance/FinanceAssetPage.tsx,finance,crud,CrudPage,none,ConfirmDialog; BackButton; PageContainer,yes,yes,no,yes,yes,3
-apps/web/src/pages/finance/FinanceBudgetDetailPage.tsx,finance,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/finance/FinanceBudgetPage.tsx,finance,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
+apps/web/src/pages/finance/FinanceBudgetDetailPage.tsx,finance,detail,DetailPageTemplate,DetailPageTemplate; TabConfig,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/finance/FinanceCostPage.tsx,finance,crud,CrudPage,none,BackButton; PageContainer,yes,yes,no,yes,yes,2
+apps/web/src/pages/finance/FinanceCurrencyPage.tsx,finance,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/finance/FinanceDashboardPage.tsx,finance,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/finance/FinanceExpenseApprovalPage.tsx,finance,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/finance/FinanceExpensePage.tsx,finance,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/finance/FinanceInvoicePage.tsx,finance,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/finance/FinanceLedgerPage.tsx,finance,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/finance/FinancePaymentPage.tsx,finance,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
+apps/web/src/pages/finance/FinancePeriodPage.tsx,finance,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/finance/FinanceReceiptPage.tsx,finance,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/finance/FinanceReceivablePayablePage.tsx,finance,crud,CrudPage,CrudPage,PageContainer; StatCardGroup,yes,yes,no,yes,yes,2
 apps/web/src/pages/finance/FinanceReportsPage.tsx,finance,stats,StatsPageTemplate,StatsPageTemplate,PageContainer,yes,yes,yes,no,yes,1
@@ -161,6 +168,7 @@ apps/web/src/pages/finance/OpeningBalancePage.tsx,finance,list,ListPageTemplate,
 apps/web/src/pages/finance/VoucherCreatePage.tsx,finance,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/finance/VoucherDetailPage.tsx,finance,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/gis/DashboardPage.tsx,gis,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/gis/DevicePage.tsx,gis,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/gis/GisFencePage.tsx,gis,gis-map,GisMapTemplate,GisMapTemplate; MapMarker; GeoFence,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/gis/GisTrackingPage.tsx,gis,gis-map,GisMapTemplate,GisMapTemplate; MapMarker; TrackPoint,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/gis/index.tsx,gis,gis-map,GisMapTemplate,GisMapTemplate; MapMarker; GeoFence,PageContainer,yes,no,no,no,yes,1
@@ -168,46 +176,48 @@ apps/web/src/pages/help/FaqPage.tsx,help,list,ListPageTemplate,ListPageTemplate,
 apps/web/src/pages/help/GuidePage.tsx,help,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/help/HelpCenterPage.tsx,help,card-list,CardListTemplate,CardListTemplate; CardRenderConfig,none,no,no,no,no,yes,0
 apps/web/src/pages/hrm/DashboardPage.tsx,hrm,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/hrm/HrmAttendancePage.tsx,hrm,crud,CrudPage,CrudPage,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2
+apps/web/src/pages/hrm/HrmAttendanceRedesignPage.tsx,hrm,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/hrm/HrmCompanyPage.tsx,hrm,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/hrm/HrmContractDetailPage.tsx,hrm,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/hrm/HrmContractDetailPage.tsx,hrm,detail,DetailPageTemplate,DetailPageTemplate; TabConfig,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/hrm/HrmContractPage.tsx,hrm,crud,CrudPage,CrudPage,Dialog; FormSelect; FormField,no,yes,no,yes,yes,3
-apps/web/src/pages/hrm/HrmDashboardPage.tsx,hrm,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/hrm/HrmDepartmentPage.tsx,hrm,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/hrm/HrmEmployeeCreatePage.tsx,hrm,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/hrm/HrmEmployeeDetailPage.tsx,hrm,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,StatusBadge; Dialog; PageContainer,yes,no,no,no,yes,3
+apps/web/src/pages/hrm/HrmEmployeeDetailPage.tsx,hrm,detail,DetailPageTemplate,DetailPageTemplate; TabConfig,StatusBadge; Dialog; PageContainer,yes,no,no,no,yes,3
 apps/web/src/pages/hrm/HrmEmployeeEditPage.tsx,hrm,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/hrm/HrmEmployeePage/index.tsx,hrm,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
+apps/web/src/pages/hrm/HrmEmployeeRedesignPage.tsx,hrm,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/hrm/HrmLeavePage.tsx,hrm,crud,CrudPage,CrudPage,none,yes,yes,no,yes,yes,0
 apps/web/src/pages/hrm/HrmOrganizationPage.tsx,hrm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/hrm/HrmOverviewPage.tsx,hrm,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/hrm/HrmPayrollPage.tsx,hrm,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/hrm/HrmPerformancePage.tsx,hrm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
+apps/web/src/pages/hrm/HrmPerformanceRedesignPage.tsx,hrm,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/hrm/HrmPositionPage.tsx,hrm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/hrm/HrmRecruitmentPage.tsx,hrm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/hrm/HrmReportsPage.tsx,hrm,stats,StatsPageTemplate,StatsPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/hrm/HrmSalaryAdjustmentPage.tsx,hrm,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/hrm/HrmTrainingPage.tsx,hrm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
-apps/web/src/pages/hrm/setting/AttendanceRulePage.tsx,hrm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/hrm/setting/PayrollTemplatePage.tsx,hrm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/hrm/setting/RecruitmentFlowPage.tsx,hrm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/hrm/setting/TrainingPlanPage.tsx,hrm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/hrm/setting/AttendanceRulePage.tsx,hrm,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/hrm/setting/PayrollTemplatePage.tsx,hrm,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/hrm/setting/RecruitmentFlowPage.tsx,hrm,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/hrm/setting/TrainingPlanPage.tsx,hrm,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/hrm/setup/HrmSetupWizardPage.tsx,hrm,wizard,WizardPageTemplate,WizardPageTemplate; WizardStep,none,no,no,no,no,yes,0
+apps/web/src/pages/hrm/setup/InitChecklistPanel.tsx,hrm,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/hrm/setup/SetupReminderBanner.tsx,hrm,unknown / custom,,none,AlertCard,no,no,no,no,no,1
 apps/web/src/pages/iam/CompanyStructurePage.tsx,iam,list,ListPageTemplate,ListPageTemplate,PageContainer; ConfirmDialog,yes,no,no,no,yes,2
 apps/web/src/pages/iam/PermissionManagementPage.tsx,iam,crud,CrudPage,none,none,no,yes,no,yes,yes,0
-apps/web/src/pages/iam/RoleManagementPage.tsx,iam,crud,CrudPage,none,none,no,yes,no,yes,yes,0
-apps/web/src/pages/iam/UserManagementPage.tsx,iam,crud,CrudPage,none,none,no,yes,no,yes,yes,0
+apps/web/src/pages/iam/RoleManagementPage.tsx,iam,list,ListPageTemplate,none,none,no,no,no,no,yes,0
+apps/web/src/pages/iam/UserManagementPage.tsx,iam,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/im/DashboardPage.tsx,im,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/im/MailPage/index.tsx,im,master-detail,MasterDetailPageTemplate,MasterDetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/integration/IntegrationConnectionsPage.tsx,integration,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/integration/IntegrationDashboardPage.tsx,integration,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction; RecentItem,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/integration/IntegrationErpOverviewPage.tsx,integration,dashboard,DashboardTemplate,DashboardTemplate; StatCard; QuickAction; RecentItem,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/integration/IntegrationEventsPage.tsx,integration,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/integration/IntegrationExternalErpOverviewPage.tsx,integration,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/integration/IntegrationLimsQmsPage.tsx,integration,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/integration/IntegrationMappingsPage.tsx,integration,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/integration/IntegrationMesErpPage.tsx,integration,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/integration/IntegrationSettingsPage.tsx,integration,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/integration/IntegrationSettingsPage.tsx,integration,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/integration/IntegrationWmsScmPage.tsx,integration,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
+apps/web/src/pages/lims/AnalytePage.tsx,lims,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/lims/BarcodePage.tsx,lims,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/lims/InspectionResultPage.tsx,lims,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/lims/InspectionTaskPage.tsx,lims,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
@@ -218,27 +228,30 @@ apps/web/src/pages/lims/LimsInstrumentMaintenancePage.tsx,lims,crud,CrudPage,Cru
 apps/web/src/pages/lims/LimsInstrumentPage.tsx,lims,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/lims/LimsProcessPage.tsx,lims,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/lims/LimsProficiencyTestingPage.tsx,lims,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/lims/LimsSampleDetailPage.tsx,lims,detail,DetailPageTemplate,DetailPageTemplate; ListColumnDef; SectionConfig,DataTable; PageContainer,yes,yes,yes,no,yes,2
+apps/web/src/pages/lims/LimsSampleDetailPage.tsx,lims,detail,DetailPageTemplate,DetailPageTemplate; SectionConfig,DataTable; PageContainer,yes,yes,yes,no,yes,2
 apps/web/src/pages/lims/LimsSamplePage.tsx,lims,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/lims/LimsTaskDetailPage.tsx,lims,detail,DetailPageTemplate,DetailPageTemplate; SectionConfig,DataTable; PageContainer,yes,yes,yes,no,yes,2
 apps/web/src/pages/lims/LimsTaskPage.tsx,lims,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/lims/LimsTestMethodPage.tsx,lims,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/lims/LimsUncertaintyPage.tsx,lims,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
+apps/web/src/pages/lims/MethodCategoryPage.tsx,lims,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/lims/ReagentPage.tsx,lims,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/lims/SampleReceivePage.tsx,lims,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/lowcode/AppListPage.tsx,lowcode,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/lowcode/AppManagementPage.tsx,lowcode,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/lowcode/DashboardPage.tsx,lowcode,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/lowcode/DataModelListPage.tsx,lowcode,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/lowcode/DataSourcePage.tsx,lowcode,list,ListPageTemplate,ListPageTemplate,ConfirmDialog,no,no,no,no,yes,1
-apps/web/src/pages/lowcode/FormDesignPage.tsx,lowcode,report-designer; designer,"ReportDesignerTemplate, DesignerTemplate; DesignerTemplate",DesignerTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/lowcode/FormListPage.tsx,lowcode,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/lowcode/LowCodeHomePage.tsx,lowcode,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/lowcode/PageDesignPage.tsx,lowcode,report-designer; designer,"ReportDesignerTemplate, DesignerTemplate; DesignerTemplate",DesignerTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/lowcode/PageListPage.tsx,lowcode,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/lowcode/WorkflowConfigPage.tsx,lowcode,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
+apps/web/src/pages/master/AiGovernancePage.tsx,master,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/master/CommercialConsolePage.tsx,master,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/master/DataAssetCatalogPage.tsx,master,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/master/LineageAnalyticsPage.tsx,master,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/master/MasterDisasterRecoveryPage.tsx,master,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/master/MasterGovernancePage.tsx,master,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/master/MasterKnowledgeGraphPage.tsx,master,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/master/MasterQualityPage.tsx,master,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/master/MasterSemanticSearchPage.tsx,master,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/master/MasterVersioningPage.tsx,master,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
+apps/web/src/pages/master/PublicMasterDataPage.tsx,master,unknown / custom,,none,none,no,no,no,no,no,0
+apps/web/src/pages/master/SchemaRegistryPage.tsx,master,unknown / custom,,none,none,no,no,no,no,no,0
 apps/web/src/pages/mes/AnomalyDetectionPage.tsx,mes,stats,StatsPageTemplate,StatsPageTemplate,none,no,yes,yes,no,yes,0
 apps/web/src/pages/mes/ApsSchedulingPage.tsx,mes,stats,StatsPageTemplate,StatsPageTemplate,none,no,yes,yes,no,yes,0
+apps/web/src/pages/mes/CapacityPage.tsx,mes,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/mes/EnergyManagementPage.tsx,mes,stats,StatsPageTemplate,StatsPageTemplate,none,no,yes,yes,no,yes,0
 apps/web/src/pages/mes/EquipmentDetailPage.tsx,mes,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,ConfirmDialog; PageContainer,yes,no,no,no,yes,2
 apps/web/src/pages/mes/EquipmentManagementPage.tsx,mes,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
@@ -247,9 +260,9 @@ apps/web/src/pages/mes/MaterialBOMPage.tsx,mes,crud,CrudPage,none,PageContainer,
 apps/web/src/pages/mes/MaterialIssuePage.tsx,mes,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/mes/MaterialRequirementPage.tsx,mes,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/mes/MaterialReturnPage.tsx,mes,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/mes/MesEquipmentPage.tsx,mes,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
+apps/web/src/pages/mes/MesMasterDataPage.tsx,mes,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/mes/MesQualityPage.tsx,mes,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
-apps/web/src/pages/mes/MesWorkOrderPage.tsx,mes,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
+apps/web/src/pages/mes/MesWorkOrderPage.tsx,mes,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/mes/ProcessFlowPage.tsx,mes,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/mes/ProcessRoutePage.tsx,mes,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/mes/ProductionCostPage.tsx,mes,stats,StatsPageTemplate,StatsPageTemplate,none,no,yes,yes,no,yes,0
@@ -263,7 +276,6 @@ apps/web/src/pages/mes/ProductionSchedulePage.tsx,mes,crud,CrudPage,none,PageCon
 apps/web/src/pages/mes/QualityInspectionPage.tsx,mes,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/mes/QualityTraceabilityPage.tsx,mes,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/mes/TeamManagementPage.tsx,mes,crud,CrudPage,CrudPage,LoadingSpinner; PageContainer,yes,yes,no,yes,yes,2
-apps/web/src/pages/mes/TraceabilityDetailPage.tsx,mes,detail,DetailPageTemplate,DetailPageTemplate; TabConfig,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/mes/WIPPage.tsx,mes,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/mes/WorkOrderPage.tsx,mes,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/mes/WorkReportPage.tsx,mes,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
@@ -290,27 +302,22 @@ apps/web/src/pages/mobile/MobileScanPage.tsx,mobile,mobile,MobilePageTemplate,Mo
 apps/web/src/pages/mobile/MobileSettingsPage.tsx,mobile,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection; SettingValueType,none,no,no,no,no,yes,0
 apps/web/src/pages/mobile/MobileTaskListPage.tsx,mobile,mobile,MobilePageTemplate,MobilePageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/mobile/MobileWorkbenchPage.tsx,mobile,mobile,MobilePageTemplate,MobilePageTemplate,Grid,no,no,no,no,yes,1
-apps/web/src/pages/mobile/NotificationSettingsPage.tsx,mobile,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection; SettingValueType,none,no,no,no,no,yes,0
-apps/web/src/pages/mobile/PushNotificationPage.tsx,mobile,mobile,MobilePageTemplate,MobilePageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/monitor/MetricsDashboardPage.tsx,monitor,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/monitor/MonitorAlertHistoryPage.tsx,monitor,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/monitor/MonitorAlertRulesPage.tsx,monitor,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/monitor/MonitorAlertsPage.tsx,monitor,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/monitor/MonitorDashboardPage.tsx,monitor,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction; RecentItem,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/monitor/MonitorLogsPage.tsx,monitor,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/monitor/MonitorMetricsPage.tsx,monitor,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/monitor/MonitorNotificationPage.tsx,monitor,crud,CrudPage,none,LoadingSpinner; PageContainer,yes,yes,no,yes,yes,2
 apps/web/src/pages/monitor/MonitorSettingsPage.tsx,monitor,settings,SettingsPageTemplate,SettingsPageTemplate; SettingTab; SettingValueType,none,no,no,no,no,yes,0
-apps/web/src/pages/monitor/SLOStatusPage.tsx,monitor,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard,PageContainer; ConfirmDialog,yes,no,no,no,yes,2
 apps/web/src/pages/notification/NotificationArchivePage.tsx,notification,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/notification/NotificationCenter.tsx,notification,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
+apps/web/src/pages/notification/NotificationCenter.tsx,notification,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/notification/NotificationDashboardPage.tsx,notification,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction; RecentItem,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/notification/NotificationDetailPage.tsx,notification,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/notification/NotificationDetailPage.tsx,notification,detail,DetailPageTemplate,DetailPageTemplate; TabConfig,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/notification/NotificationListPage.tsx,notification,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/notification/NotificationSettingsPage.tsx,notification,settings,SettingsPageTemplate,SettingsPageTemplate; SettingTab; SettingValueType,none,no,no,no,no,yes,0
 apps/web/src/pages/notification/NotificationStatsPage.tsx,notification,stats,StatsPageTemplate,StatsPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/notification/NotificationTemplatesPage.tsx,notification,crud,CrudPage,none,ConfirmDialog,no,yes,no,yes,yes,1
-apps/web/src/pages/oa/AnnouncementPage.tsx,oa,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
+apps/web/src/pages/oa/AnnouncementPage.tsx,oa,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/oa/DashboardPage.tsx,oa,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/oa/DocumentManagementPage.tsx,oa,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/oa/MeetingManagementPage.tsx,oa,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
@@ -322,6 +329,7 @@ apps/web/src/pages/pdm/MaterialPage.tsx,pdm,crud,CrudPage,CrudPage; CrudApiAdapt
 apps/web/src/pages/pdm/PdmBatchPage.tsx,pdm,crud,CrudPage,CrudPage; CrudApiAdapter,none,no,yes,no,yes,yes,0
 apps/web/src/pages/pdm/PdmBomPage.tsx,pdm,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/pdm/PdmDashboardPage.tsx,pdm,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/pdm/PdmDrawingPage.tsx,pdm,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/pdm/PdmFormulaPage.tsx,pdm,crud,CrudPage,CrudPage; CrudApiAdapter,none,no,yes,no,yes,yes,0
 apps/web/src/pages/pdm/PdmProcessPage.tsx,pdm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/pdm/PdmProductCategoryPage.tsx,pdm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
@@ -346,7 +354,9 @@ apps/web/src/pages/pm/PmContractDetailPage.tsx,pm,detail,DetailPageTemplate,Deta
 apps/web/src/pages/pm/PmContractListPage.tsx,pm,crud,CrudPage,CrudPage; CrudApiAdapter,none,no,yes,no,yes,yes,0
 apps/web/src/pages/pm/PmProjectCreatePage.tsx,pm,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/pm/PmProjectDetailPage.tsx,pm,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; SectionConfig,ActionButton; StatusBadge; PageContainer,yes,no,no,no,yes,3
+apps/web/src/pages/pm/PmProjectEditPage.tsx,pm,form,FormPageTemplate,FormPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/pm/PmProjectListPage.tsx,pm,crud,CrudPage,CrudPage; CrudApiAdapter,DataExport; PageContainer,yes,yes,no,yes,yes,2
+apps/web/src/pages/pm/PmProjectTypeConfigPage.tsx,pm,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/pm/PmReportPage.tsx,pm,stats,StatsPageTemplate,StatsPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/pm/PmResourcePage.tsx,pm,crud,CrudPage,CrudPage; CrudApiAdapter,none,no,yes,no,yes,yes,0
 apps/web/src/pages/pm/PmTemplatePage.tsx,pm,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
@@ -354,19 +364,23 @@ apps/web/src/pages/pm/ProjectCreateWizardPage.tsx,pm,wizard,WizardPageTemplate,W
 apps/web/src/pages/pm/ProjectMasterDetailPage.tsx,pm,master-detail,MasterDetailPageTemplate,MasterDetailPageTemplate; MasterColumn,none,no,no,no,no,yes,0
 apps/web/src/pages/pm/ProjectTaskKanbanPage.tsx,pm,kanban,KanbanPageTemplate,KanbanPageTemplate; KanbanColumn,none,no,no,no,no,yes,0
 apps/web/src/pages/pm/ProjectTimelinePage.tsx,pm,timeline,TimelinePageTemplate,TimelinePageTemplate; TimelineGroup,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/qms/InspectionStandardPage.tsx,qms,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/qms/QmsApqpPage.tsx,qms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/qms/QmsApqpProjectDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsAuditManagementPage.tsx,qms,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/qms/QmsAuditPlanDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; DetailField,none,no,no,no,no,yes,0
+apps/web/src/pages/qms/QmsAuditRedesignPage.tsx,qms,list,ListPageTemplate,none,none,no,no,no,no,yes,0
+apps/web/src/pages/qms/QmsCorrectiveActionPage.tsx,qms,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/qms/QmsDashboardPage.tsx,qms,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction; RecentItem,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/qms/QmsEightDDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsEightDPage.tsx,qms,crud,CrudPage,TreeBuilder; TreeNode,none,no,yes,no,yes,yes,0
+apps/web/src/pages/qms/QmsEightDRedesignPage.tsx,qms,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsFmeaDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsFmeaPage.tsx,qms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/qms/QmsInspectionDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/qms/QmsInspectionPage.tsx,qms,crud,CrudPage,none,none,no,yes,no,yes,yes,0
+apps/web/src/pages/qms/QmsInspectionRedesignPage.tsx,qms,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsIssueDetailPage.tsx,qms,detail,DetailPageTemplate,DetailPageTemplate; TabConfig; DetailField,none,no,no,no,no,yes,0
-apps/web/src/pages/qms/QmsNonconformancePage.tsx,qms,crud,CrudPage,none,none,no,yes,no,yes,yes,0
+apps/web/src/pages/qms/QmsNonconformanceRedesignPage.tsx,qms,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/qms/QmsQualityControlPage.tsx,qms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/qms/QmsQualityCostPage.tsx,qms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/qms/QmsSpcPage.tsx,qms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
@@ -385,7 +399,7 @@ apps/web/src/pages/rd/RsCodePage.tsx,rd,crud,CrudPage,CrudPage; CrudApiAdapter,n
 apps/web/src/pages/rd/RsDeployPage.tsx,rd,crud,CrudPage,CrudPage; CrudApiAdapter,none,no,yes,no,yes,yes,0
 apps/web/src/pages/rd/RsDocPage.tsx,rd,crud,CrudPage,CrudPage; CrudApiAdapter,none,no,yes,no,yes,yes,0
 apps/web/src/pages/rd/RsExperimentCreatePage.tsx,rd,form,FormPageTemplate,FormPageTemplate; FormSection,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/rd/RsExperimentDetailPage.tsx,rd,detail,DetailPageTemplate,DetailPageTemplate; TabConfig,LoadingSpinner; PageContainer,yes,no,no,no,yes,2
+apps/web/src/pages/rd/RsExperimentDetailPage.tsx,rd,unknown / custom,,none,LoadingSpinner; PageContainer,yes,no,no,no,no,2
 apps/web/src/pages/rd/RsExperimentListPage.tsx,rd,crud,CrudPage,CrudPage; CrudApiAdapter,none,no,yes,no,yes,yes,0
 apps/web/src/pages/rd/RsFormulaCreatePage.tsx,rd,form,FormPageTemplate,FormPageTemplate; FormSection,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/rd/RsFormulaDetailPage.tsx,rd,detail,DetailPageTemplate,DetailPageTemplate; SectionConfig; PageAction,PageContainer,yes,no,no,no,yes,1
@@ -401,11 +415,11 @@ apps/web/src/pages/rd/RsReportPage.tsx,rd,stats,StatsPageTemplate,StatsPageTempl
 apps/web/src/pages/rd/RsReviewPage.tsx,rd,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/rd/RsSettingsPage.tsx,rd,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
 apps/web/src/pages/rd/RsTestPage.tsx,rd,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
-apps/web/src/pages/report/ReportBuilder.tsx,report,report-designer; designer,"ReportDesignerTemplate, DesignerTemplate; DesignerTemplate",DesignerTemplate,PageContainer,no,no,no,no,yes,1
+apps/web/src/pages/report/ReportBuilder.tsx,report,report-designer; designer,"ReportDesignerTemplate, DesignerTemplate; DesignerTemplate",DesignerTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/report/ReportBuilderPage.tsx,report,report-designer; designer,"ReportDesignerTemplate, DesignerTemplate; DesignerTemplate",DesignerTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/report/ReportDesignPage.tsx,report,report-designer; designer,"ReportDesignerTemplate, DesignerTemplate; DesignerTemplate",DesignerTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/report/ReportListPage.tsx,report,crud,CrudPage,CrudPage; CrudApiAdapter,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/report/ReportPage/index.tsx,report,report-viewer,ReportViewerTemplate,ReportViewerTemplate,PageContainer,no,no,no,no,yes,1
+apps/web/src/pages/report/ReportPage/index.tsx,report,report-viewer,ReportViewerTemplate,ReportViewerTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/report/ReportPage.tsx,report,report-viewer,ReportViewerTemplate,ReportViewerTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/report/ReportSchedulePage.tsx,report,list,ListPageTemplate,ListPageTemplate,ConfirmDialog,no,no,no,no,yes,1
 apps/web/src/pages/report/ReportSubscriptionPage.tsx,report,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
@@ -418,6 +432,8 @@ apps/web/src/pages/scm/PurchaseContractPage.tsx,scm,crud,CrudPage,CrudPage,none,
 apps/web/src/pages/scm/PurchaseRequisitionPage.tsx,scm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/scm/ScmDeliveryAppointmentPage.tsx,scm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/scm/ScmEvaluationPage.tsx,scm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
+apps/web/src/pages/scm/ScmIncomingInspectionPage.tsx,scm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
+apps/web/src/pages/scm/ScmIncomingNoticePage.tsx,scm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/scm/ScmInventoryTurnoverPage.tsx,scm,crud,CrudPage,none,none,no,yes,no,yes,yes,0
 apps/web/src/pages/scm/ScmOverviewPage.tsx,scm,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/scm/ScmPriceComparisonPage.tsx,scm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
@@ -426,18 +442,16 @@ apps/web/src/pages/scm/ScmPurchaseItemPage.tsx,scm,crud,CrudPage,CrudPage,none,n
 apps/web/src/pages/scm/ScmPurchaseOrderPage.tsx,scm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/scm/ScmSupplierPage.tsx,scm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/scm/SupplierAdmissionPage.tsx,scm,crud,CrudPage,CrudPage,ConfirmDialog,no,yes,no,yes,yes,1
-apps/web/src/pages/scm/setting/PurchaseThresholdPage.tsx,scm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/scm/setting/QuotaTemplatePage.tsx,scm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/scm/setting/SourcingStrategyPage.tsx,scm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/scm/setting/SupplierTierPage.tsx,scm,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/scm/setting/PurchaseThresholdPage.tsx,scm,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/scm/setting/QuotaTemplatePage.tsx,scm,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/scm/setting/SourcingStrategyPage.tsx,scm,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/scm/setting/SupplierTierPage.tsx,scm,settings,SettingsPageTemplate,SettingsPageTemplate; SettingSection,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/shared/AttachmentsPage.tsx,shared,list,ListPageTemplate,ListPageTemplate,ConfirmDialog,no,no,no,no,yes,1
 apps/web/src/pages/shared/CommentsPage.tsx,shared,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/shared/DashboardPage.tsx,shared,dashboard,DashboardTemplate,DashboardTemplate; StatCardConfig,EmptyState,no,no,no,no,yes,1
-apps/web/src/pages/shared/ErrorPage.tsx,shared,auth,AuthPageTemplate,AuthPageTemplate,BackButton,no,no,no,no,yes,1
+apps/web/src/pages/shared/DashboardPage.tsx,shared,unknown / custom,,none,PageContainer,yes,no,no,no,no,1
 apps/web/src/pages/shared/FavoritesPage.tsx,shared,list,ListPageTemplate,ListPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/shared/ForgotPasswordPage.tsx,shared,auth,AuthPageTemplate,AuthPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/shared/HybridHomePage.tsx,shared,dashboard,DashboardTemplate,DashboardTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/shared/Impage.tsx,shared,chat,ChatPageTemplate,ChatPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/shared/LoginPage.tsx,shared,auth,AuthPageTemplate,AuthPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/shared/ModulesOverviewPage.tsx,shared,dashboard,DashboardTemplate,DashboardTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/shared/NotFoundPage.tsx,shared,auth,AuthPageTemplate,AuthPageTemplate,none,no,no,no,no,yes,0
@@ -460,8 +474,8 @@ apps/web/src/pages/srm/SrmSupplierPage.tsx,srm,crud,CrudPage,CrudPage,none,no,ye
 apps/web/src/pages/srm/SrmSupplierProductPage.tsx,srm,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/srm/SupplierPortalPage.tsx,srm,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/system/AuditLogPage/index.tsx,system,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
-apps/web/src/pages/system/BackupPage.tsx,system,list,ListPageTemplate,ListPageTemplate,ConfirmDialog,no,no,no,no,yes,1
 apps/web/src/pages/system/FeatureFlagPage/index.tsx,system,list,ListPageTemplate,ListPageTemplate,none,no,no,no,no,yes,0
+apps/web/src/pages/system/MenuManagementPage/index.tsx,system,unknown / custom,,none,ConfirmDialog; PageContainer,yes,no,no,no,no,2
 apps/web/src/pages/system/SystemParamsPage/index.tsx,system,settings,SettingsPageTemplate,SettingsPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/ticket/DashboardPage.tsx,ticket,dashboard,DashboardTemplate,DashboardTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/ticket/TicketCenterPage.tsx,ticket,crud,CrudPage,CrudPage; CrudApiAdapter,PageContainer,yes,yes,no,yes,yes,1
@@ -484,7 +498,7 @@ apps/web/src/pages/tms/analytics/RouteEfficiencyPage.tsx,tms,stats,StatsPageTemp
 apps/web/src/pages/tms/analytics/ShipmentTrendPage.tsx,tms,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/tms/analytics/VehicleUtilizationPage.tsx,tms,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
 apps/web/src/pages/wms/BatchManagementPage.tsx,wms,crud,CrudPage,CrudPage,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/wms/DashboardPage.tsx,wms,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction,QuickSearch; PageContainer,yes,no,no,no,yes,2
+apps/web/src/pages/wms/DashboardPage.tsx,wms,dashboard,DashboardTemplate,DashboardTemplate; StatCard; ChartCard; QuickAction,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/wms/InboundOrderPage.tsx,wms,list,ListPageTemplate,ListPageTemplate; SchemaForm,none,no,no,no,no,yes,0
 apps/web/src/pages/wms/InboundPage.tsx,wms,list,ListPageTemplate,ListPageTemplate,FormBuilder,no,no,no,no,yes,1
 apps/web/src/pages/wms/InventoryPage.tsx,wms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
@@ -501,9 +515,13 @@ apps/web/src/pages/wms/TransferPage.tsx,wms,crud,CrudPage,CrudPage; RowAction,no
 apps/web/src/pages/wms/WarehouseManagementPage.tsx,wms,list,ListPageTemplate,ListPageTemplate; SchemaForm,none,no,no,no,no,yes,0
 apps/web/src/pages/wms/WmsAreaPage.tsx,wms,crud,CrudPage,CrudPage,none,no,yes,no,yes,yes,0
 apps/web/src/pages/wms/WmsInboundDetailPage.tsx,wms,detail,DetailPageTemplate,DetailPageTemplate,DataTable; PageContainer,yes,yes,yes,no,yes,2
+apps/web/src/pages/wms/WmsInboundOrderPage.tsx,wms,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/wms/WmsInventoryMovementDetailPage.tsx,wms,detail,DetailPageTemplate,DetailPageTemplate,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/wms/WmsLocationPage.tsx,wms,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/wms/WmsOutboundDetailPage.tsx,wms,detail,DetailPageTemplate,DetailPageTemplate,PageContainer,yes,no,no,no,yes,1
+apps/web/src/pages/wms/WmsOutboundOrderPage.tsx,wms,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/wms/WmsStockTakeDetailPage.tsx,wms,detail,DetailPageTemplate,DetailPageTemplate,DataTable; PageContainer,yes,yes,yes,no,yes,2
+apps/web/src/pages/wms/WmsStocktakePage.tsx,wms,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/wms/WmsTransferDetailPage.tsx,wms,detail,DetailPageTemplate,DetailPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/wms/WmsWavePickDetailPage.tsx,wms,detail,DetailPageTemplate,DetailPageTemplate,DataTable; PageContainer,yes,yes,yes,no,yes,2
 apps/web/src/pages/wms/analytics/WmsAbcAnalysisPage.tsx,wms,stats,StatsPageTemplate,StatsPageTemplate,none,no,no,no,no,yes,0
@@ -517,10 +535,10 @@ apps/web/src/pages/wms/setting/InventoryCyclePage.tsx,wms,settings,SettingsPageT
 apps/web/src/pages/wms/setting/InventoryThresholdPage.tsx,wms,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/wms/setting/LocationRulePage.tsx,wms,settings,SettingsPageTemplate,SettingsPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/workflow/WorkflowApprovalDetailPage/index.tsx,workflow,detail,DetailPageTemplate,DetailPageTemplate,PageContainer,yes,no,no,no,yes,1
-apps/web/src/pages/workflow/WorkflowApprovalsPage.tsx,workflow,crud,CrudPage,none,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2
+apps/web/src/pages/workflow/WorkflowApprovalsPage.tsx,workflow,list,ListPageTemplate,none,none,no,no,no,no,yes,0
 apps/web/src/pages/workflow/WorkflowDashboardPage.tsx,workflow,dashboard,DashboardTemplate,DashboardTemplate; StatCard; QuickAction,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/workflow/WorkflowDefinitionsPage.tsx,workflow,crud,CrudPage,none,PageContainer,yes,yes,no,yes,yes,1
-apps/web/src/pages/workflow/WorkflowDesignerPage.tsx,workflow,report-designer; designer,"ReportDesignerTemplate, DesignerTemplate; DesignerTemplate",DesignerTemplate,none,no,no,no,no,yes,0
+apps/web/src/pages/workflow/WorkflowDesignerPage.tsx,workflow,report-designer; designer,"ReportDesignerTemplate, DesignerTemplate; DesignerTemplate",DesignerTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/workflow/WorkflowInstanceDetailPage.tsx,workflow,detail,DetailPageTemplate,DetailPageTemplate,PageContainer,yes,no,no,no,yes,1
 apps/web/src/pages/workflow/WorkflowInstancesPage.tsx,workflow,crud,CrudPage,none,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2
 apps/web/src/pages/workflow/WorkflowMonitorPage.tsx,workflow,crud,CrudPage,StatCardComponent,PageContainer; ConfirmDialog,yes,yes,no,yes,yes,2

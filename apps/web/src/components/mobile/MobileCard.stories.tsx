@@ -45,21 +45,21 @@ export const Default: Story = {
       <MobileCard
         title='消息通知'
         subtitle='您有 3 条未读消息'
-        leftIcon={<Bell style={{ width: 20, height: 20 }} />}
+        leftIcon={<Bell size={20} />}
         showArrow
         divider
       />
       <MobileCard
         title='审批中心'
         subtitle='待审批工单 5 件'
-        leftIcon={<FileText style={{ width: 20, height: 20 }} />}
+        leftIcon={<FileText size={20} />}
         showArrow
         divider
       />
       <MobileCard
         title='系统设置'
         subtitle='账户与偏好'
-        leftIcon={<Settings style={{ width: 20, height: 20 }} />}
+        leftIcon={<Settings size={20} />}
         showArrow
       />
     </Box>

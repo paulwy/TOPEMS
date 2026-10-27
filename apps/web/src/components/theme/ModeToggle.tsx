@@ -14,11 +14,11 @@ export function ModeToggle() {
   const getIcon = () => {
     switch (theme) {
       case 'dark':
-        return <Moon style={{ width: 18, height: 18 }} />;
+        return <Moon size={18} />;
       case 'light':
-        return <Sun style={{ width: 18, height: 18 }} />;
+        return <Sun size={18} />;
       default:
-        return <Monitor style={{ width: 18, height: 18 }} />;
+        return <Monitor size={18} />;
     }
   };
 

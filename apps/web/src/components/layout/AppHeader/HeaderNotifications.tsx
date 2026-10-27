@@ -133,7 +133,7 @@ export const HeaderNotifications: React.FC = () => {
               },
             }}
           >
-            <Bell style={{ width: 18, height: 18 }} />
+            <Bell size={18} />
           </Badge>
         </IconButton>
       </Tooltip>
@@ -189,7 +189,7 @@ export const HeaderNotifications: React.FC = () => {
                 onClick={handleMarkAllAsRead}
                 disabled={notificationsLoading || unreadCount === 0}
               >
-                <CheckCheck style={{ width: 16, height: 16 }} />
+                <CheckCheck size={16} />
               </IconButton>
             </Tooltip>
             <Tooltip title={i18n.t('shared.header_notifications.k4')}>
@@ -202,7 +202,7 @@ export const HeaderNotifications: React.FC = () => {
                   handleNotificationClose();
                 }}
               >
-                <Settings style={{ width: 16, height: 16 }} />
+                <Settings size={16} />
               </IconButton>
             </Tooltip>
           </Box>
@@ -309,7 +309,7 @@ export const HeaderNotifications: React.FC = () => {
                       handleDeleteOne(notification.id, read);
                     }}
                   >
-                    <Trash2 style={{ width: 14, height: 14 }} />
+                    <Trash2 size={14} />
                   </IconButton>
                 </Box>
               );

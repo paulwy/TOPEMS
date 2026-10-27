@@ -194,7 +194,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             }}
             title={i18n.t('shared.notification_panel.k3')}
           >
-            <Settings style={{ width: 20, height: 20 }} />
+            <Settings size={20} />
           </button>
           <button
             onClick={fetchNotifications}
@@ -209,7 +209,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             }}
             title={i18n.t('shared.notification_panel.k4')}
           >
-            <RefreshCw style={{ width: 20, height: 20 }} />
+            <RefreshCw size={20} />
           </button>
           <button
             onClick={onClose}
@@ -318,7 +318,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               cursor: 'pointer',
             }}
           >
-            <Check style={{ width: 16, height: 16 }} />
+            <Check size={16} />
             {i18n.t('components.notification_panel.k3')}
           </button>
         </div>

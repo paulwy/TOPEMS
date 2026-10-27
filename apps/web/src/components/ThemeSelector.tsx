@@ -22,9 +22,9 @@ import { Sun, Moon, Monitor, Check } from 'lucide-react';
 import { useThemeStore, getThemeList, type Theme, THEME_ICON_KEYS } from '@/store';
 
 const THEME_ICON_COMPONENTS: Record<Theme, React.ReactNode> = {
-  light: <Sun style={{ width: 18, height: 18 }} />,
-  dark: <Moon style={{ width: 18, height: 18 }} />,
-  system: <Monitor style={{ width: 18, height: 18 }} />,
+  light: <Sun size={18} />,
+  dark: <Moon size={18} />,
+  system: <Monitor size={18} />,
 };
 
 /**

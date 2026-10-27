@@ -21,28 +21,28 @@ const defaultTabs: TabItem[] = [
   {
     id: 'home',
     label: i18n.t('shared.bottom_tab_bar.k0'),
-    icon: <Home style={{ width: 22, height: 22 }} />,
+    icon: <Home size={22} />,
   },
   {
     id: 'tasks',
     label: i18n.t('shared.bottom_tab_bar.k1'),
-    icon: <ListTodo style={{ width: 22, height: 22 }} />,
+    icon: <ListTodo size={22} />,
   },
   {
     id: 'scan',
     label: i18n.t('shared.bottom_tab_bar.k2'),
-    icon: <ScanLine style={{ width: 22, height: 22 }} />,
+    icon: <ScanLine size={22} />,
   },
   {
     id: 'approval',
     label: i18n.t('shared.bottom_tab_bar.k3'),
-    icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+    icon: <CheckSquare size={22} />,
     badge: 3,
   },
   {
     id: 'profile',
     label: i18n.t('shared.bottom_tab_bar.k4'),
-    icon: <User style={{ width: 22, height: 22 }} />,
+    icon: <User size={22} />,
   },
 ];
 
