@@ -732,11 +732,14 @@ pub async fn refresh_token(
     tracing::info!("IAM auth refresh_token called");
 
     if refresh_token.is_empty() {
-        return Json(topems_shared_core::response::error_value(
-            400,
-            "refresh_token 不能为空",
-        ))
-        .into_response();
+        return (
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(topems_shared_core::response::error_value(
+                400,
+                "refresh_token 不能为空",
+            )),
+        )
+            .into_response();
     }
 
     let refresh_token_hash = hash_token(&refresh_token);
@@ -748,11 +751,14 @@ pub async fn refresh_token(
             Ok(tx) => tx,
             Err(e) => {
                 tracing::error!("开启事务失败: {}", e);
-                return Json(topems_shared_core::response::error_value(
-                    500,
-                    "内部服务器错误",
-                ))
-                .into_response();
+                return (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(topems_shared_core::response::error_value(
+                        500,
+                        "内部服务器错误",
+                    )),
+                )
+                    .into_response();
             }
         };
         if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -762,11 +768,14 @@ pub async fn refresh_token(
         {
             tracing::error!("设置租户上下文失败: {}", e);
             let _ = ctx_tx.rollback().await;
-            return Json(topems_shared_core::response::error_value(
-                500,
-                "内部服务器错误",
-            ))
-            .into_response();
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    "内部服务器错误",
+                )),
+            )
+                .into_response();
         }
         let r = sqlx::query(
             "SELECT rt.user_id, u.username, u.is_superuser, u.email,
@@ -798,19 +807,25 @@ pub async fn refresh_token(
         Ok(Some(r)) => r,
         Ok(None) => {
             tracing::warn!("Refresh token 无效或已过期或已吊销");
-            return Json(topems_shared_core::response::error_value(
-                401,
-                "Refresh token 无效或已过期",
-            ))
-            .into_response();
+            return (
+                axum::http::StatusCode::UNAUTHORIZED,
+                Json(topems_shared_core::response::error_value(
+                    401,
+                    "Refresh token 无效或已过期",
+                )),
+            )
+                .into_response();
         }
         Err(e) => {
             tracing::error!("查询 refresh token 失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                "内部服务器错误",
-            ))
-            .into_response();
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    "内部服务器错误",
+                )),
+            )
+                .into_response();
         }
     };
 
@@ -822,11 +837,14 @@ pub async fn refresh_token(
     let must_change_password: bool = row.get("must_change_password");
 
     if !is_active {
-        return Json(topems_shared_core::response::error_value(
-            401,
-            "用户账号已被禁用",
-        ))
-        .into_response();
+        return (
+            axum::http::StatusCode::UNAUTHORIZED,
+            Json(topems_shared_core::response::error_value(
+                401,
+                "用户账号已被禁用",
+            )),
+        )
+            .into_response();
     }
 
     // 生成新的 access_token
@@ -893,11 +911,14 @@ pub async fn refresh_token(
         Ok(token) => token,
         Err(e) => {
             tracing::error!("JWT 编码失败: {:?}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                "Token 生成失败",
-            ))
-            .into_response();
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    "Token 生成失败",
+                )),
+            )
+                .into_response();
         }
     };
 
@@ -917,11 +938,14 @@ pub async fn refresh_token(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                "内部服务器错误",
-            ))
-            .into_response();
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    "内部服务器错误",
+                )),
+            )
+                .into_response();
         }
     };
 
@@ -933,11 +957,14 @@ pub async fn refresh_token(
     {
         tracing::error!("设置租户上下文失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(topems_shared_core::response::error_value(
-            500,
-            "内部服务器错误",
-        ))
-        .into_response();
+        return (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            )),
+        )
+            .into_response();
     }
 
     let revoke_result = sqlx::query(
@@ -952,11 +979,14 @@ pub async fn refresh_token(
     if let Err(e) = revoke_result {
         tracing::error!("吊销旧 refresh token 失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(topems_shared_core::response::error_value(
-            500,
-            "内部服务器错误",
-        ))
-        .into_response();
+        return (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            )),
+        )
+            .into_response();
     }
 
     let insert_result = sqlx::query(
@@ -973,11 +1003,14 @@ pub async fn refresh_token(
     if let Err(e) = insert_result {
         tracing::error!("插入新 refresh token 失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(topems_shared_core::response::error_value(
-            500,
-            "内部服务器错误",
-        ))
-        .into_response();
+        return (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            )),
+        )
+            .into_response();
     }
 
     let session_result = sqlx::query(
@@ -994,11 +1027,14 @@ pub async fn refresh_token(
     if let Err(e) = session_result {
         tracing::error!("插入新 session 失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(topems_shared_core::response::error_value(
-            500,
-            "内部服务器错误",
-        ))
-        .into_response();
+        return (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            )),
+        )
+            .into_response();
     }
 
     match tx.commit().await {
@@ -1007,11 +1043,14 @@ pub async fn refresh_token(
         }
         Err(e) => {
             tracing::error!("提交事务失败: {}", e);
-            return Json(topems_shared_core::response::error_value(
-                500,
-                "内部服务器错误",
-            ))
-            .into_response();
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    "内部服务器错误",
+                )),
+            )
+                .into_response();
         }
     }
 
@@ -1040,6 +1079,7 @@ pub async fn refresh_token(
         })),
     )
         .into_response()
+        .into_response()
 }
 
 /// 用户登出接口
@@ -1056,11 +1096,14 @@ pub async fn logout(
     let refresh_token = match refresh_token.as_str() {
         t if !t.is_empty() => t.to_string(),
         _ => {
-            return Json(topems_shared_core::response::error_value(
-                400,
-                "缺少 refresh_token",
-            ))
-            .into_response();
+            return (
+                axum::http::StatusCode::BAD_REQUEST,
+                Json(topems_shared_core::response::error_value(
+                    400,
+                    "缺少 refresh_token",
+                )),
+            )
+                .into_response();
         }
     };
 
@@ -1077,7 +1120,10 @@ pub async fn logout(
             Ok(tx) => tx,
             Err(e) => {
                 tracing::error!("开启事务失败: {}", e);
-                return Json(topems_shared_core::response::error_value(500, "登出失败"))
+                return (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(topems_shared_core::response::error_value(500, "登出失败")),
+                )
                     .into_response();
             }
         };
@@ -1088,7 +1134,10 @@ pub async fn logout(
         {
             tracing::error!("设置租户上下文失败: {}", e);
             let _ = ctx_tx.rollback().await;
-            return Json(topems_shared_core::response::error_value(500, "登出失败"))
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(500, "登出失败")),
+            )
                 .into_response();
         }
         let r = sqlx::query_scalar(
@@ -1110,7 +1159,10 @@ pub async fn logout(
         Ok(uid) => uid,
         Err(e) => {
             tracing::error!("查询 refresh_token 失败: {}", e);
-            return Json(topems_shared_core::response::error_value(500, "登出失败"))
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(500, "登出失败")),
+            )
                 .into_response();
         }
     };
@@ -1132,7 +1184,8 @@ pub async fn logout(
                     "message": "登出成功",
                     "data": null,
                     "code": 0
-                })),
+                }))
+                .into_response(),
             )
                 .into_response();
         }
@@ -1162,7 +1215,10 @@ pub async fn logout(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            return Json(topems_shared_core::response::error_value(500, "登出失败"))
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(500, "登出失败")),
+            )
                 .into_response();
         }
     };
@@ -1174,7 +1230,11 @@ pub async fn logout(
     {
         tracing::error!("设置租户上下文失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(topems_shared_core::response::error_value(500, "登出失败")).into_response();
+        return (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(500, "登出失败")),
+        )
+            .into_response();
     }
 
     let delete_sessions = sqlx::query("DELETE FROM public.core_sessions WHERE user_id = $1")
@@ -1185,7 +1245,11 @@ pub async fn logout(
     if let Err(e) = delete_sessions {
         tracing::error!("删除会话失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(topems_shared_core::response::error_value(500, "登出失败")).into_response();
+        return (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(500, "登出失败")),
+        )
+            .into_response();
     }
 
     let revoke_refresh = sqlx::query(
@@ -1199,7 +1263,11 @@ pub async fn logout(
     if let Err(e) = revoke_refresh {
         tracing::error!("吊销 refresh token 失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(topems_shared_core::response::error_value(500, "登出失败")).into_response();
+        return (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(topems_shared_core::response::error_value(500, "登出失败")),
+        )
+            .into_response();
     }
 
     match tx.commit().await {

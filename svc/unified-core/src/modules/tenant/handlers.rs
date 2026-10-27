@@ -149,7 +149,7 @@ pub async fn get_tenant(
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant: {}", id);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, status FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -651,7 +651,7 @@ pub async fn get_tenant_quota(
 ) -> Json<CoreResponse<TenantQuotaResponse>> {
     tracing::info!("[Tenant] Getting quota for tenant: {}", id);
 
-    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, status FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT id, name, code, tenant_type, plan, license_type, license_expires_at, database_host, database_port, database_name, quota_users, quota_storage_gb, quota_api_calls, quota_plugins, features, status, trial_expires_at, created_at, updated_at, activated_at, suspended_at FROM core_tenants WHERE deleted_at IS NULL AND id = $1")
         .bind(id)
         .fetch_optional(&state.pool)
         .await
