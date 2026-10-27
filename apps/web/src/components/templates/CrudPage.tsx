@@ -18,6 +18,7 @@
  */
 
 import React, { useCallback, useMemo, useState, useRef } from 'react';
+import { useCrudPagination } from './useCrudPagination';
 import {
   Dialog,
   DialogTitle,
@@ -225,9 +226,17 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   const effectiveTreeAdapter = hasTree ? treeDataAdapter : undefined;
 
   // ── 状态 ──
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(schema.list?.pageSize ?? 10);
-  const [search, setSearch] = useState('');
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    search,
+    setSearch,
+    handlePageChange,
+    handlePageSizeChange,
+    handleSearchChange,
+  } = useCrudPagination({ defaultPageSize: schema.list?.pageSize ?? 10 });
   const [viewMode, setViewMode] = useState<'list' | 'tree'>(hasTree ? 'tree' : 'list');
   const [filterValues, setFilterValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
