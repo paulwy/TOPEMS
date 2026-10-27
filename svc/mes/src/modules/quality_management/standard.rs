@@ -231,10 +231,8 @@ pub async fn list_standards(
         if let Ok(value_rows) = values_result {
             for v in value_rows {
                 let sid = v.standard_id;
-                values_map
-                    .entry(sid.unwrap_or_default())
-                    .or_default()
-                    .push(StandardValueResponse {
+                values_map.entry(sid.unwrap_or_default()).or_default().push(
+                    StandardValueResponse {
                         id: v.id.to_string(),
                         standard_id: sid.map(|u| u.to_string()).unwrap_or_default(),
                         item_name: v.item_name.unwrap_or_default(),
@@ -243,7 +241,8 @@ pub async fn list_standards(
                         unit: v.unit,
                         inspection_method: v.inspection_method,
                         remark: v.remark,
-                    });
+                    },
+                );
             }
         }
     }
