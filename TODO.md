@@ -1,3 +1,12 @@
+## core tenant 设置读写收敛 public 权威表（2026-10-27）✅ 已完成
+
+> 「继续」轮：修复持续隐患（批 A 起日志反复 core_tenant_settings FK 违规刷屏）。commit `222c9ea2f` 已 push。
+
+- **根因（比预想深）**：core_tenants/core_tenant_settings 因 schema_defense 在 **4 个 schema（public/iam/mes/flow）各建一份**；BFF search_path=**iam 首位**导致所有裸表读写打到 **iam 空壳表（0 行）**，权威数据在 **public.core_tenants（223 行）**。**租户设置写入从未成功过**（4 schema 全部 0 行），假/真实租户均触发 FK 违规刷屏。
+- **修复**：`ensure_tenant_exists` 显式校验 public.core_tenants；tenant 写读（coll_write/setting_put/domain 内联）与 settings/api_keys.rs 全部显式 `public.core_tenant_settings`；add/remove domain 内联 INSERT 收敛复用 tenant_coll_write（消除重复代码）。
+- **实机验证**：假 uuid → success=false「租户不存在」（FK 刷屏归零）；真实租户 ip-whitelist 写 200 + 落库 + revoke-all 读回 count=0；测试数据已清理。
+- **关联记录**：unified-core schema_defense 多 schema 复制是既有设计隐患（tenant/mod.rs 118 行建表走 search_path），四份副本治理并入「三套迁移台账」类待排期项。
+
 ## e2e 17 域扩展 · 批 B（R5-R7）实机验证 + mes 读回缺口修复（2026-10-27）✅ 已完成
 
 > 用户拍板「推进批 B（R5 供应链 8 域 + R6 负例 + R7 隔离回归）」后执行：R5/R6/R7 全量实测 + 修复实机复现的 P2 缺口（mes 工单读回）+ 文档修订 + 本登记。
