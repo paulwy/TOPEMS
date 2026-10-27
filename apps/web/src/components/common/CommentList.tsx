@@ -54,6 +54,7 @@ const CommentItem: React.FC<{
             <img
               src={comment.author.avatar}
               alt=''
+              loading='lazy'
             />
           ) : (
             <User size={20} />
