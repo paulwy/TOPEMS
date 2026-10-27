@@ -6,8 +6,6 @@
   "store.theme_store.k1": "Bright and clear, suitable for daytime use",
   "store.theme_store.k2": "Dark",
   "store.theme_store.k3": "Dark background, comfortable for eyes",
-  "store.theme_store.k4": "Cyberpunk",
-  "store.theme_store.k5": "Neon tech style, deep space background",
   "store.theme_store.k6": "Follow System",
   "store.theme_store.k7": "Automatically follow system preference",
   "store": {
@@ -23,8 +21,6 @@
       "k1": "Bright and clear, suitable for daytime use",
       "k2": "Dark",
       "k3": "Dark background, comfortable for eyes",
-      "k4": "Cyberpunk",
-      "k5": "Neon tech style, deep space background",
       "k6": "Follow System",
       "k7": "Automatically follow system preference"
     }

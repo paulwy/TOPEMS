@@ -1,8 +1,7 @@
 {
   "devtools": {
     "common": {
-      "loaded": "✅ 已加载",
-      "modules": "模块"
+      "loaded": "✅ 已加载"
     },
     "panels": {
       "registry": {
@@ -90,11 +89,6 @@
             "status": "✅ 已加载 (智能监控 + 根因分析 + 自动修复工作流)"
           }
         }
-      },
-      "v51Design": {
-        "tooltip": "V51.0 设计系统",
-        "label": "V51 设计",
-        "sublabel": "设计体系"
       },
       "v51DevEx": {
         "tooltip": "V51.0 DevEx 开发体验",

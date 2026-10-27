@@ -112,7 +112,6 @@
   "schemas.logs.k6": "服务名",
   "schemas.logs.k7": "耗时",
   "schemas.logs.k8": "日志内容",
-  "schemas.notification_channel.k0": "上次测试",
   "schemas.experiment.k0": "小试",
   "schemas.experiment.k1": "中试",
   "schemas.experiment.k2": "放大",
@@ -137,10 +136,5 @@
   "schemas.finance.k14": "有效",
   "schemas.finance.k15": "已过期",
   "schemas.finance.k16": "草稿",
-  "schemas.finance.k17": "已终止",
-  "schemas.approval.k0": "采购管理",
-  "schemas.approval.k1": "人事管理",
-  "schemas.approval.k2": "财务管理",
-  "schemas.approval.k3": "法务管理",
-  "schemas.approval.k4": "IT管理"
+  "schemas.finance.k17": "已终止"
 }

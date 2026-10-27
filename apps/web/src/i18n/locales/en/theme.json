@@ -11,14 +11,6 @@
   "theme.presets.k9": "Red tone theme, suitable for safety and quality control business",
   "theme.presets.k10": "Teal",
   "theme.presets.k11": "Cyan primary color, suitable for marine and port related business",
-  "theme.cyberpunk.css.k0": "Cyberpunk theme — glassmorphism utility classes",
-  "theme.cyberpunk.css.k1": "Cyberpunk theme — neon glow effect",
-  "theme.cyberpunk.css.k2": "Cyberpunk theme — animations",
-  "theme.cyberpunk.css.k3": "Note: the animation name used in Mui Skeleton is cyber-skeleton,",
-  "theme.cyberpunk.css.k4": "two names are defined here to be compatible with custom class and MUI built-in skeleton */",
-  "theme.cyberpunk.css.k5": "respond to prefers-reduced-motion",
-  "theme.cyberpunk.css.mui_6": "Cyberpunk theme — MUI component-level style overrides",
-  "theme.cyberpunk.css.k7": "Only effective under .cyberpunk-mode",
   "theme.pagination.go_to_page": "Go to page {{page}}",
   "theme.pagination.go_to_page_current": "Go to page {{page}} (current)",
   "theme.pagination.ellipsis": "More pages",
@@ -42,18 +34,6 @@
       "k9": "Red tone theme, suitable for safety and quality control business",
       "k10": "Teal",
       "k11": "Cyan primary color, suitable for marine and port related business"
-    },
-    "cyberpunk": {
-      "css": {
-        "k0": "Cyberpunk theme — glassmorphism utility classes",
-        "k1": "Cyberpunk theme — neon glow effect",
-        "k2": "Cyberpunk theme — animations",
-        "k3": "Note: the animation name used in Mui Skeleton is cyber-skeleton,",
-        "k4": "two names are defined here to be compatible with custom class and MUI built-in skeleton */",
-        "k5": "respond to prefers-reduced-motion",
-        "mui_6": "Cyberpunk theme — MUI component-level style overrides",
-        "k7": "Only effective under .cyberpunk-mode"
-      }
     }
   },
   "module_themes": {

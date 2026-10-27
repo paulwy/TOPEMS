@@ -112,7 +112,6 @@
   "schemas.logs.k6": "Service Name",
   "schemas.logs.k7": "Duration",
   "schemas.logs.k8": "Log Content",
-  "schemas.notification_channel.k0": "Last Test",
   "schemas.experiment.k0": "Lab Test",
   "schemas.experiment.k1": "Pilot Test",
   "schemas.experiment.k2": "Scale-up",
@@ -138,11 +137,6 @@
   "schemas.finance.k15": "Expired",
   "schemas.finance.k16": "Draft",
   "schemas.finance.k17": "Terminated",
-  "schemas.approval.k0": "Procurement Management",
-  "schemas.approval.k1": "HR Management",
-  "schemas.approval.k2": "Financial Management",
-  "schemas.approval.k3": "Legal Management",
-  "schemas.approval.k4": "IT Management",
   "schemas": {
     "accident": {
       "k0": "Under Investigation",
@@ -281,9 +275,6 @@
       "k7": "Duration",
       "k8": "Log Content"
     },
-    "notification_channel": {
-      "k0": "Last Test"
-    },
     "experiment": {
       "k0": "Lab Test",
       "k1": "Pilot Test",
@@ -312,13 +303,6 @@
       "k15": "Expired",
       "k16": "Draft",
       "k17": "Terminated"
-    },
-    "approval": {
-      "k0": "Procurement Management",
-      "k1": "HR Management",
-      "k2": "Financial Management",
-      "k3": "Legal Management",
-      "k4": "IT Management"
     }
   }
 }

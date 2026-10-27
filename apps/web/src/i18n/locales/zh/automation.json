@@ -214,7 +214,6 @@
   "automation.automation_designer_page_shared.e9": "成功钩子",
   "automation.automation_designer_page_shared.e10": "失败钩子",
   "automation.automation_designer_page_use_automation_designer.e1": "加载规则列表失败",
-  "automation.automation_designer_page_use_automation_designer.e2": "加载画布失败",
   "automation.automation_designer_page_use_automation_designer.e3": "保存画布失败",
   "automation.automation_designer_page_use_automation_designer.e4": "校验画布失败",
   "automation.automation_designer_page_use_automation_designer.e5": "同步到规则失败",

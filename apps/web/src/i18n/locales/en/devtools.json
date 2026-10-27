@@ -90,11 +90,6 @@
           }
         }
       },
-      "v51Design": {
-        "tooltip": "V51.0 Design System",
-        "label": "V51.x",
-        "sublabel": "Design system"
-      },
       "v51DevEx": {
         "tooltip": "V51.0 Dev Ex Developer Experience",
         "label": "Developer Experience",
@@ -183,7 +178,6 @@
     }
   },
   "devtools.common.loaded": "✅ Loaded",
-  "devtools.common.modules": "modules",
   "devtools.panels.registry.tooltip": "Module Registry",
   "devtools.panels.registry.title": "Module Registry",
   "devtools.panels.registry.label": "Registry",
@@ -236,9 +230,6 @@
   "devtools.panels.v47Integration.cards.aiOpsV2.title": "V50.0 AI Ops V2",
   "devtools.panels.v47Integration.cards.aiOpsV2.subtitle": "Intelligent monitor / root cause analyzer / auto remediation",
   "devtools.panels.v47Integration.cards.aiOpsV2.status": "✅ Loaded (Smart monitoring + root cause analysis + auto-remediation workflow)",
-  "devtools.panels.v51Design.tooltip": "V51.0 Design System",
-  "devtools.panels.v51Design.label": "V51.x",
-  "devtools.panels.v51Design.sublabel": "Design system",
   "devtools.panels.v51DevEx.tooltip": "V51.0 Dev Ex Developer Experience",
   "devtools.panels.v51DevEx.label": "Developer Experience",
   "devtools.panels.v51DevEx.sublabel": "Debug + Performance",

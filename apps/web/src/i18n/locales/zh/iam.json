@@ -144,9 +144,6 @@
     }
   },
   "iam": {
-    "companystructure": {
-      "v0_subsidiary_v1_associate_v2_joint_vent": "= {{v0}}, subsidiary: {{v1}}, associate: {{v2}}, joint_venture: {{v3}}, branch: {{v4}}, inactive: {{v5}}, }; // const TreeNodeComponent: React.FC"
-    },
     "permissionmanagement": {},
     "rolemanagement": {},
     "usermanagement": {}
@@ -263,19 +260,9 @@
   "iam.role_management_page.k3": "删除角色失败",
   "iam.role_management_page.k4": "加载权限失败",
   "iam.role_management_page.k5": "加载角色权限失败",
-  "iam.role_management_page.k6": "添加权限失败",
   "iam.role_management_page.k7": "成功",
-  "iam.role_management_page.k8": "权限添加成功",
-  "iam.role_management_page.k9": "失败",
-  "iam.role_management_page.k10": "添加权限失败",
-  "iam.role_management_page.k11": "移除权限失败",
   "iam.role_management_page.k12": "成功",
-  "iam.role_management_page.k13": "权限移除成功",
-  "iam.role_management_page.k14": "失败",
-  "iam.role_management_page.k15": "移除权限失败",
   "iam.role_management_page.k16": "角色管理",
-  "iam.role_management_page.k17": "管理权限",
-  "iam.role_management_page.k18": "关闭",
   "iam.role_management_page.k19": "角色名称",
   "iam.role_management_page.k20": "描述",
   "iam.role_management_page.k21": "创建时间",
@@ -289,7 +276,6 @@
   "iam.role_management_page.k29": "暂无角色",
   "iam.role_management_page.k30": "当前没有角色数据",
   "iam.role_management_page.k31": "删除角色",
-  "iam.role_management_page.k32": "确定要删除角色",
   "iam.role_management_page.k33": "取消",
   "iam.role_management_page.k34": "删除",
   "iam.role_management_page.k35": "编辑角色",
@@ -324,7 +310,6 @@
   "iam.user_management_page.k15": "管理平台用户账号、角色与访问权限",
   "iam.user_management_page.k16": "暂无用户",
   "iam.user_management_page.k17": "点击「新增用户」创建第一个用户账号",
-  "iam.companystructure.v0_subsidiary_v1_associate_v2_joint_vent": "= {{v0}}, subsidiary: {{v1}}, associate: {{v2}}, joint_venture: {{v3}}, branch: {{v4}}, inactive: {{v5}}, }; // const TreeNodeComponent: React.FC",
   "iam.nav.module_name": "身份管理",
   "iam.nav.module_name_desc": "身份管理",
   "iam.nav.iam-dashboard": "身份概览",
@@ -338,7 +323,6 @@
   "iam.nav.iam-company-structure": "组织架构",
   "iam.nav.iam-company-structure_desc": "组织架构",
   "iam.user_management_page.k18": "删除用户",
-  "iam.user_management_page.k19": "确定要删除用户",
   "iam.user_management_page.k20": "取消",
   "iam.user_management_page.k21": "删除",
   "iam.user_management_page.k22": "编辑用户",

@@ -265,9 +265,6 @@
   "plugin.dashboard_page.k0": "Plugin Marketplace Overview",
   "plugin.dashboard_page.k1": "Plugin Marketplace Data Overview",
   "plugin.dashboard_page.k2": "Quick Actions",
-  "plugin.plugin_detail_page.k0": "Plugin Detail Page under development",
-  "plugin.plugin_marketplace_page.k0": "Plugin Marketplace Page under development",
-  "plugin.plugin_upload_page.k0": "Plugin Upload Page under development",
   "plugin.message.plugin_code_empty": "Plugin code cannot be empty",
   "plugin.message.plugin_not_exist": "Plugin does not exist",
   "plugin.message.review_success_title": "Review Submitted",
@@ -433,31 +430,11 @@
   "plugin.action.back": "Previous",
   "plugin.action.next": "Next",
   "plugin.action.submit": "Submit for Review",
-  "plugin.marketplace_page.log.load_reviews_failed": "Failed to load reviews",
-  "plugin.marketplace_page.log.submit_review_failed": "Failed to submit review",
-  "plugin.detail_page.log.load_detail_failed": "Failed to load detail",
-  "plugin.detail_page.log.load_versions_failed": "Failed to load versions",
-  "plugin.detail_page.log.load_reviews_failed": "Failed to load reviews",
-  "plugin.detail_page.log.load_health_failed": "Failed to load health check",
-  "plugin.detail_page.log.submit_review_failed": "Failed to submit review",
-  "plugin.marketplace_page.log.load_plugins_failed": "Failed to load plugin list",
-  "plugin.marketplace_page.log.load_health_failed": "Failed to load health check",
-  "plugin.plugin_type.enterprise": "Enterprise",
-  "plugin.plugin_type.standard": "Standard",
   "plugin": {
     "dashboard_page": {
       "k0": "Plugin Marketplace Overview",
       "k1": "Plugin Marketplace Data Overview",
       "k2": "Quick Actions"
-    },
-    "plugin_detail_page": {
-      "k0": "Plugin Detail Page under development"
-    },
-    "plugin_marketplace_page": {
-      "k0": "Plugin Marketplace Page under development"
-    },
-    "plugin_upload_page": {
-      "k0": "Plugin Upload Page under development"
     },
     "message": {
       "plugin_code_empty": "Plugin code cannot be empty",
@@ -508,13 +485,6 @@
       },
       "pricing": {
         "permanent_usage": "One-time purchase, permanent use"
-      },
-      "log": {
-        "load_detail_failed": "Failed to load detail",
-        "load_versions_failed": "Failed to load versions",
-        "load_reviews_failed": "Failed to load reviews",
-        "load_health_failed": "Failed to load health check",
-        "submit_review_failed": "Failed to submit review"
       }
     },
     "title": "Plugin Management",
@@ -565,9 +535,7 @@
     },
     "plugin_type": {
       "core": "Core Plugin",
-      "business": "Business Plugin",
-      "enterprise": "Enterprise",
-      "standard": "Standard"
+      "business": "Business Plugin"
     },
     "marketplace_page": {
       "install_success_message": "Plugin {name} installed successfully",
@@ -590,13 +558,7 @@
       "all_plugins": "All Plugins",
       "plugin_count": "{{count}} plugins total",
       "empty_title": "No plugins found",
-      "empty_hint": "Try adjusting your search or filters",
-      "log": {
-        "load_reviews_failed": "Failed to load reviews",
-        "submit_review_failed": "Failed to submit review",
-        "load_plugins_failed": "Failed to load plugin list",
-        "load_health_failed": "Failed to load health check"
-      }
+      "empty_hint": "Try adjusting your search or filters"
     },
     "action": {
       "close": "Close",
@@ -705,6 +667,5 @@
   "plugin.nav.module_name_desc": "Plugins",
   "plugin.nav.plugin-dashboard_desc": "Plugin Overview",
   "plugin.nav.plugin-marketplace_desc": "Marketplace",
-  "plugin.nav.plugin-upload_desc": "Upload",
-  "plugin.nav.plugin-detail_desc": "Marketplace Detail"
+  "plugin.nav.plugin-upload_desc": "Upload"
 }
