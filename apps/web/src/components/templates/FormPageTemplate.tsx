@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useFormSections } from './useFormSections';
 import { useFormDynamicFields } from './useFormDynamicFields';
+import { useFormMisc } from './useFormMisc';
 import { iconSm, iconMd, iconLg } from '../sharedStyles';
 import type { BoxProps } from '@mui/material';
 import {
@@ -454,18 +455,22 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     setDynamicEditable,
   } = useFormDynamicFields({ sections });
 
-  // 验证提示状态
-  const [validationHint, setValidationHint] = useState<ValidationToast | null>(null);
-  const [showHint, setShowHint] = useState(false);
-
-  // 草稿状态
-  const [drafts, setDrafts] = useState<Array<{ data: Record<string, unknown>; timestamp: number }>>(
-    []
-  );
-  const [showDraftDialog, setShowDraftDialog] = useState(false);
-
-  // 当前分组标签
-  const [currentGroup, setCurrentGroup] = useState<string>('all');
+  const {
+    validationHint,
+    setValidationHint,
+    showHint,
+    setShowHint,
+    showValidationHint,
+    drafts,
+    setDrafts,
+    showDraftDialog,
+    setShowDraftDialog,
+    saveDraft,
+    loadDraft,
+    deleteDraft,
+    currentGroup,
+    setCurrentGroup,
+  } = useFormMisc();
 
   // 表单初始化
   const resolver: Resolver | undefined = schema
