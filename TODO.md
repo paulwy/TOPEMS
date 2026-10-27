@@ -5126,3 +5126,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **空库验证**（topems_s0_fresh2 独立空库）：iam.users 18 列 / core_users 14 列（schema_defense 补全 full_name/phone/avatar_url/status/last_login_at/deleted_at）自愈完整；插入超管后登录 **200"登录成功"**（不再 500）。临时库已 DROP，主实例已切回 topems_test（health 200 / 登录 200）。
 - **提交推送**：aaaf6ed8a，7 项门禁全过（cargo-check/clippy/fmt/test + config-consistency/domain-probe/shellcheck），origin/main 一致。
 - **剩余待处理**：plugins/subscriptions 架构级缺口（独立批次）；API 列表字段契约统一（P3）；iam 超管自动种子 + must_change_password 强制逻辑（P3 记录项）。
+
+## 第四十二轮（2026-10-27）：subscription API 实现 + plugins 挂载澄清 ✅ 已提交推送
+- **subscription（真实缺口，已修复）**：模块此前为纯类型框架（PlanTier/功能矩阵无路由）→ 新增 `routes/subscription.rs`：GET `/api/core/subscriptions/plans` 返回 free/basic/advanced 三层计划及模块覆盖（基于 TierFeatureMatrix，静态配置无 DB 依赖），`subscription:read` 权限门控，routes/mod.rs 挂载。实测：登录后 **200**（free=5 模块 / basic=16 / advanced 全量）。
+- **plugins（误报澄清）**：深查 svc/server 发现 **plugin-registry 已完整嵌入**（`plugin_registry_real_module.rs` + feature `module-plugin-registry` 默认启用 + Cargo 依赖已声明）。此前 `/api/plugins/plugins` 404 为**测试路径笔误**（复数 /api/plugins vs 实际单数 /api/plugin/*）。实测正确路径 **200**：`/api/plugin/marketplace/list`（4 个插件：ehs 等）、`/api/plugin/marketplace`（total_plugins=4）、`/api/plugin/plugins/{code}`。
+- **提交推送**：feat(subscription) 已 push（门禁全过）。P2 遗留至此全部关闭（列表误报撤销 / iam 自愈 / plugins 误报澄清 / subscription 实现）。
+- **剩余待处理**：API 列表字段契约统一（P3）；iam 超管自动种子 + must_change_password 强制逻辑（P3 记录项）。
