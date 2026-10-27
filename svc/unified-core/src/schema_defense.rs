@@ -14,29 +14,11 @@ use sqlx::PgPool;
 pub const SERVICE_SCHEMA: &str = "public";
 pub const SERVICE_TAG: &str = "unified-core";
 
-/// unified-core 29 张表的列定义单一事实源。
+/// unified-core 28 张表的列定义单一事实源。
 /// 标准 `id UUID PRIMARY KEY` 的表不含 id 列（verify 阶段自动拼 "id"）。
 /// 复合主键表（core_user_roles / core_role_permissions）含全部列。
 /// `core_master_data_refs` 主键为 master_data_id TEXT，已显式包含。
 pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
-    (
-        "core_users",
-        &[
-            ("username", "VARCHAR(64) NOT NULL UNIQUE"),
-            ("email", "VARCHAR(255) NOT NULL UNIQUE"),
-            ("password_hash", "VARCHAR(255) NOT NULL"),
-            ("full_name", "VARCHAR(128)"),
-            ("phone", "VARCHAR(32)"),
-            ("avatar_url", "VARCHAR(512)"),
-            ("status", "VARCHAR(32) DEFAULT 'active'"),
-            ("is_superuser", "BOOLEAN DEFAULT FALSE"),
-            ("tenant_id", "UUID"),
-            ("created_at", "TIMESTAMP DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMP DEFAULT NOW()"),
-            ("last_login_at", "TIMESTAMP"),
-            ("deleted_at", "TIMESTAMP"),
-        ],
-    ),
     (
         "core_roles",
         &[

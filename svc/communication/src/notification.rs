@@ -2288,7 +2288,8 @@ pub async fn delete_template(
 async fn send_notification_email(pool: &PgPool, req: &SendNotificationRequest) -> Result<(), ()> {
     let email: Option<String> = sqlx::query_scalar(only_own_schema_query!(
         "public",
-        "SELECT email FROM core_users WHERE id = $1"
+        "SELECT email FROM iam.users WHERE id = $1",
+        "iam"
     ))
     .bind(req.user_id)
     .fetch_optional(pool)

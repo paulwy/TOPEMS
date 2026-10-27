@@ -1,3 +1,14 @@
+## iam.users / core_users 双身份表收敛（2026-10-28）✅ 已完成
+
+> 用户点名「双身份表收敛」后闭环：认证身份权威从割裂双表收敛为单一 `iam.users`，core_users 废弃删除，僵尸会话表一并清理。
+
+- **背景（决策依据）**：登录/注册/JWT/会话全走 `iam.users`（auth.rs login 只查 iam.users）；`core_users` 仅 1 行测试数据（test_admin=e91e2228），实际业务只被 communication/search 用于取 email——与 iam.users 割裂导致这些功能的 email/用户查询对真实用户永远查空（S13 同类根因）；注释「core_users 权威」为历史意图残留（注册实际写 iam.users）。
+- **落地**：
+  - 迁移 `20261028040000_identity_tables_converge.sql`（已应用 + 台账补录，499=499）：DROP 僵尸会话表 ×3（iam.sessions / iam.refresh_tokens / public.refresh_tokens，均 0 行无引用）→ core_user_roles 用户 FK 重指 `iam.users(id)`（角色系统 core_roles 不受影响）→ DROP core_users；
+  - 代码跟随：communication（notification.rs 1 处 + mail.rs 4 处查询 + 2 处 JOIN 改查 `iam.users`，`only_own_schema_query!` 宏加 `"iam"` 共享只读白名单）、search/handlers.rs（FROM core_users→iam.users + 注释更新）、unified-core auth.rs 注释修正、iam/mod.rs 清理（core_users 兜底建表/ALTER/索引/播种 6 段 + core_tenant_users 播种改查 iam.users）、schema_defense.rs 白名单移除 core_users 条目（29→28 表）；
+  - 实测：BFF 重启 schema_defense 115 表校验通过；登录 200；`/api/search?keyword=admin` 200 命中真实用户（test_admin=c31c393a）；email 查询 iam.users 取到 test_admin/admin 邮箱；FK 重指验证 core_user_roles_user_id_fkey→iam.users。
+- **边界**：角色系统权威 `core_roles`（19 行）/ `core_user_roles` 表保留，不在收敛范围。
+
 ## 未决项逐项闭环 · 批 C 后（2026-10-28）✅ 已完成
 
 > 批 C 快验后按未决记录项顺序逐个闭环，本批 5 项。

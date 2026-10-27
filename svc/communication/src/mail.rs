@@ -213,11 +213,12 @@ pub async fn list_emails(
         r#"
         SELECT id, from_email, to_email, subject, sent_at, is_read
         FROM core_emails
-        WHERE to_email IN (SELECT email FROM core_users WHERE id = $1)
-           OR from_email IN (SELECT email FROM core_users WHERE id = $1)
+        WHERE to_email IN (SELECT email FROM iam.users WHERE id = $1)
+           OR from_email IN (SELECT email FROM iam.users WHERE id = $1)
         ORDER BY sent_at DESC
         LIMIT 50
-        "#
+        "#,
+        "iam"
     ))
     .bind(user_id)
     .fetch_all(&pool)
@@ -298,7 +299,8 @@ pub async fn send_email(
 
     let sender_email = match sqlx::query_scalar(only_own_schema_query!(
         "public",
-        "SELECT email FROM core_users WHERE id = $1"
+        "SELECT email FROM iam.users WHERE id = $1",
+        "iam"
     ))
     .bind(Uuid::parse_str(&claims.sub).unwrap_or_default())
     .fetch_optional(&pool)
@@ -426,11 +428,12 @@ pub async fn get_email(
         SELECT e.id, e.from_email, e.to_email, e.subject, e.body, e.html_body, e.sent_at, e.is_read,
                u_from.email as from_user_email, u_to.email as to_user_email
         FROM core_emails e
-        LEFT JOIN core_users u_from ON e.from_email = u_from.email
-        LEFT JOIN core_users u_to ON e.to_email = u_to.email
+        LEFT JOIN iam.users u_from ON e.from_email = u_from.email
+        LEFT JOIN iam.users u_to ON e.to_email = u_to.email
         WHERE e.id = $1
           AND (u_from.id = $2 OR u_to.id = $2)
-        "#
+        "#,
+        "iam"
     ))
     .bind(email_id)
     .bind(user_id)
@@ -524,11 +527,12 @@ pub async fn delete_email(
             r#"
             SELECT EXISTS(
                 SELECT 1 FROM core_emails e
-                LEFT JOIN core_users u_from ON e.from_email = u_from.email
-                LEFT JOIN core_users u_to ON e.to_email = u_to.email
+                LEFT JOIN iam.users u_from ON e.from_email = u_from.email
+                LEFT JOIN iam.users u_to ON e.to_email = u_to.email
                 WHERE e.id = $1 AND (u_from.id = $2 OR u_to.id = $2)
             )
-            "#
+            "#,
+            "iam"
         ))
         .bind(email_id)
         .bind(user_id)

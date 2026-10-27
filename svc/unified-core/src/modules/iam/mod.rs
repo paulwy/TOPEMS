@@ -55,25 +55,6 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    // core_users 兜底：schema_defense 在 init_database 之后执行，
-    // 此处先建骨架避免 ALTER/INDEX/FK 依赖失败（后续 run_schema_defense 补全列）
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS public.core_users (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            username VARCHAR(64) NOT NULL UNIQUE,
-            email VARCHAR(255) NOT NULL UNIQUE,
-            password_hash VARCHAR(255) NOT NULL,
-            tenant_id UUID,
-            is_superuser BOOLEAN DEFAULT FALSE,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
     // Create roles table
     sqlx::query(
         r#"
@@ -112,7 +93,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS public.core_user_roles (
-            user_id UUID NOT NULL REFERENCES core_users(id),
+            user_id UUID NOT NULL REFERENCES iam.users(id),
             role_id UUID NOT NULL REFERENCES core_roles(id),
             created_at TIMESTAMP DEFAULT NOW(),
             PRIMARY KEY (user_id, role_id)
@@ -136,18 +117,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    // Add is_superuser column if not exists
-    sqlx::query("ALTER TABLE IF EXISTS core_users ADD COLUMN IF NOT EXISTS is_superuser BOOLEAN DEFAULT FALSE")
-        .execute(pool)
-        .await?;
-
     // Create indexes
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_users_username ON core_users(username)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_users_email ON core_users(email)")
-        .execute(pool)
-        .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_roles_name ON core_roles(name)")
         .execute(pool)
         .await?;
@@ -498,19 +468,6 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    // core_users（租户关联/授权表）同步播种 admin，与 iam.users 同密码同邮箱。
-    // 只插骨架现有列（status/full_name 由 schema_defense 后续补列带默认值）。
-    sqlx::query(
-        r#"
-        INSERT INTO core_users (username, email, password_hash, is_superuser)
-        VALUES ('admin', 'admin@topems.com', $1, true)
-        ON CONFLICT (username) DO NOTHING
-        "#,
-    )
-    .bind(admin_password_hash.clone())
-    .execute(pool)
-    .await?;
-
     // Assign superadmin role to admin user
     sqlx::query(
         r#"
@@ -524,7 +481,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // ---- iam schema 保留（RBAC 功能表：positions/user_positions/position_permissions/position_roles/resource_permissions，由 position 模块 + migration 管理） ----
-    // 认证数据（core_users/core_sessions/core_refresh_tokens 等）已统一在 public schema；
+    // 认证数据（core_sessions/core_refresh_tokens 等）已统一在 public schema；core_users 已于 2026-10-28 收敛废弃（身份权威 = iam.users）；
     // 历史兼容副本 iam.users 已于 2026-09-03 移除（无代码读取，死表）。
     sqlx::query("CREATE SCHEMA IF NOT EXISTS iam")
         .execute(pool)
@@ -592,7 +549,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         INSERT INTO core_tenant_users (tenant_id, user_id, email, role, status)
         SELECT t.id, u.id, u.email, 'owner', 'active'
-        FROM core_tenants t, core_users u
+        FROM core_tenants t, iam.users u
         WHERE t.code = 'default' AND u.username = 'admin'
         ON CONFLICT DO NOTHING
         "#,

@@ -677,7 +677,7 @@ pub async fn register(
         }
     };
 
-    // 创建用户：统一写 core_users（唯一权威源，auth/权限/租户全走此表）
+    // 创建用户：统一写 iam.users（身份权威表；2026-10-28 收敛后 core_users 已废弃）
     let user_id = Uuid::new_v4();
     let write_core = sqlx::query(
         r#"

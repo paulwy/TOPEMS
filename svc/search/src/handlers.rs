@@ -8,6 +8,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 
@@ -99,16 +100,18 @@ async fn search_users(
 ) -> Vec<SearchResult> {
     let keyword_like = format!("%{}%", keyword);
 
-    // 表归属（DB 分片侦察）：unqualified `core_users` 命中 public.core_users，
-    // gis.core_users 不存在。该表为跨租户共享的全局身份目录（sessions/refresh_tokens
-    // 均 FK 引用 public.core_users），按设计全局检索，不做 tenant 过滤——避免"假过滤"。
-    let rows: Vec<UserSearchRow> = match sqlx::query_as(
+    // 表归属（DB 分片侦察）：unqualified `iam.users` 命中 iam.users（认证身份权威表，
+    // 2026-10-28 双身份表收敛后 core_users 已废弃）。全局身份目录按设计全局检索，
+    // 不做 tenant 过滤——避免"假过滤"。
+    let rows: Vec<UserSearchRow> = match sqlx::query_as(only_own_schema_query!(
+        "public",
         r#"SELECT id, username, email, full_name, status
-           FROM core_users
+           FROM iam.users
            WHERE username ILIKE $1 OR email ILIKE $1 OR full_name ILIKE $1
            ORDER BY created_at DESC
            LIMIT $2"#,
-    )
+        "iam"
+    ))
     .bind(keyword_like)
     .bind(limit)
     .fetch_all(&mut *conn)
