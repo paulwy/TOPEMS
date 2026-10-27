@@ -78,7 +78,7 @@ pub async fn list_api_keys(
     let pattern = format!("{}%", API_KEY_PREFIX);
 
     let result = sqlx::query(
-        "SELECT setting_key, setting_value, updated_at FROM core_tenant_settings WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND setting_key LIKE $2 ORDER BY updated_at DESC",
+        "SELECT setting_key, setting_value, updated_at FROM public.core_tenant_settings WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND setting_key LIKE $2 ORDER BY updated_at DESC",
     )
     .bind(tenant_id)
     .bind(&pattern)
@@ -170,7 +170,7 @@ pub async fn create_api_key(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
+        INSERT INTO public.core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
         VALUES ($1, $2, $3, FALSE)
         "#,
     )
@@ -205,7 +205,7 @@ pub async fn delete_api_key(
     let key = setting_key(&id);
 
     let result =
-        sqlx::query("UPDATE core_tenant_settings SET deleted_at = NOW() WHERE tenant_id = $1 AND setting_key = $2")
+        sqlx::query("UPDATE public.core_tenant_settings SET deleted_at = NOW() WHERE tenant_id = $1 AND setting_key = $2")
             .bind(tenant_id)
             .bind(&key)
             .execute(&state.pool)
@@ -237,7 +237,7 @@ pub async fn get_api_key(
     let key = setting_key(&id);
 
     let result = sqlx::query(
-        "SELECT setting_key, setting_value, updated_at FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
+        "SELECT setting_key, setting_value, updated_at FROM public.core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(&key)
@@ -296,7 +296,7 @@ pub async fn update_api_key(
     let key = setting_key(&id);
 
     let existing = sqlx::query(
-        "SELECT setting_key, setting_value, updated_at FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
+        "SELECT setting_key, setting_value, updated_at FROM public.core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(&key)

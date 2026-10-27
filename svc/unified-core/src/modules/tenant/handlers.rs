@@ -316,7 +316,7 @@ async fn seed_tenant_defaults(
     //    module to pick up when it provisions the org tree).
     sqlx::query(
         r#"
-        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
+        INSERT INTO public.core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
         VALUES
             ($1, 'default_department_name', $2, FALSE),
             ($1, 'default_department_description', $3, FALSE)
@@ -1447,7 +1447,7 @@ async fn tenant_setting_get(
 ) -> Result<serde_json::Value, TopemsError> {
     let key = format!("{}{}", prefix, tenant_id);
     let row = sqlx::query(
-        "SELECT setting_value FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
+        "SELECT setting_value FROM public.core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(&key)
@@ -1470,12 +1470,13 @@ async fn tenant_setting_put(
     prefix: &str,
     value: &serde_json::Value,
 ) -> Result<(), TopemsError> {
+    ensure_tenant_exists(state, tenant_id).await?;
     let key = format!("{}{}", prefix, tenant_id);
     let serialized =
         serde_json::to_string(value).map_err(|e| TopemsError::internal("序列化租户配置失败", e))?;
     sqlx::query(
         r#"
-        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
+        INSERT INTO public.core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
         VALUES ($1, $2, $3, FALSE)
         ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW(), deleted_at = NULL
         "#,
@@ -1699,7 +1700,7 @@ async fn tenant_setting_array(
 ) -> Result<Vec<serde_json::Value>, TopemsError> {
     let key = format!("{}{}", prefix, tenant_id);
     let row = sqlx::query(
-        "SELECT setting_value FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
+        "SELECT setting_value FROM public.core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(&key)
@@ -1766,29 +1767,7 @@ pub async fn add_tenant_domain(
         "created_at": chrono::Utc::now().to_rfc3339(),
     });
     arr.push(entry.clone());
-    let key = format!("{}{}", TENANT_DOMAINS_PREFIX, tenant_id);
-    let serialized = serde_json::to_string(&serde_json::Value::Array(arr))
-        .map_err(|e| TopemsError::internal("序列化租户域名失败", e));
-    let serialized = match serialized {
-        Ok(s) => s,
-        Err(e) => {
-            tracing::error!("[Tenant] add domain serialize failed: {}", e);
-            return Json(CoreResponse::error("写入租户域名失败"));
-        }
-    };
-    if let Err(e) = sqlx::query(
-        r#"
-        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
-        VALUES ($1, $2, $3, FALSE)
-        ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW(), deleted_at = NULL
-        "#,
-    )
-    .bind(tenant_id)
-    .bind(&key)
-    .bind(&serialized)
-    .execute(&state.pool)
-    .await
-    {
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_DOMAINS_PREFIX, &arr).await {
         tracing::error!("[Tenant] add domain write failed: {}", e);
         return Json(CoreResponse::error("写入租户域名失败"));
     }
@@ -1809,27 +1788,7 @@ pub async fn remove_tenant_domain(
         }
     };
     arr.retain(|d| d.get("domain").and_then(|v| v.as_str()) != Some(domain.as_str()));
-    let key = format!("{}{}", TENANT_DOMAINS_PREFIX, tenant_id);
-    let serialized = match serde_json::to_string(&serde_json::Value::Array(arr)) {
-        Ok(s) => s,
-        Err(e) => {
-            tracing::error!("[Tenant] remove domain serialize failed: {}", e);
-            return Json(CoreResponse::error("写入租户域名失败"));
-        }
-    };
-    if let Err(e) = sqlx::query(
-        r#"
-        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
-        VALUES ($1, $2, $3, FALSE)
-        ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW(), deleted_at = NULL
-        "#,
-    )
-    .bind(tenant_id)
-    .bind(&key)
-    .bind(&serialized)
-    .execute(&state.pool)
-    .await
-    {
+    if let Err(e) = tenant_coll_write(&state, &tenant_id, TENANT_DOMAINS_PREFIX, &arr).await {
         tracing::error!("[Tenant] remove domain write failed: {}", e);
         return Json(CoreResponse::error("写入租户域名失败"));
     }
@@ -1874,18 +1833,39 @@ pub async fn update_tenant_email_config(
 const TENANT_INTEGRATIONS_PREFIX: &str = "tenant_integrations_";
 const TENANT_WEBHOOKS_PREFIX: &str = "tenant_webhooks_";
 
+/// 写租户设置前先校验租户存在（防御：假 uuid 直写会触发 core_tenant_settings FK 违规）
+async fn ensure_tenant_exists(state: &AppState, tenant_id: &Uuid) -> Result<(), TopemsError> {
+    let found: Option<Uuid> = sqlx::query_scalar(
+        r#"
+        SELECT id FROM public.core_tenants WHERE id = $1 AND deleted_at IS NULL
+        "#,
+    )
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| TopemsError::DatabaseQuery(format!("查询租户失败: {}", e)))?;
+    if found.is_none() {
+        return Err(TopemsError::DatabaseRecordNotFound(format!(
+            "租户不存在: {}",
+            tenant_id
+        )));
+    }
+    Ok(())
+}
+
 async fn tenant_coll_write(
     state: &AppState,
     tenant_id: &Uuid,
     prefix: &str,
     arr: &[serde_json::Value],
 ) -> Result<(), TopemsError> {
+    ensure_tenant_exists(state, tenant_id).await?;
     let key = format!("{}{}", prefix, tenant_id);
     let serialized = serde_json::to_string(&serde_json::Value::Array(arr.to_vec()))
         .map_err(|e| TopemsError::internal("序列化失败", e))?;
     sqlx::query(
         r#"
-        INSERT INTO core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
+        INSERT INTO public.core_tenant_settings (tenant_id, setting_key, setting_value, is_public)
         VALUES ($1, $2, $3, FALSE)
         ON CONFLICT (tenant_id, setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW(), deleted_at = NULL
         "#,
