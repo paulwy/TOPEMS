@@ -1,3 +1,14 @@
+## 门禁清零 + monolith 挂载缺口修复 + 全量推送（2026-10-27）✅ 已完成
+
+> 用户拍板「先修 monolith 挂载缺口（search 订阅者 + master-data schema_defense）+ DB 侧补 flow 表 deleted_at + 存量库 156 迁移全量补跑 + 先修 mobile 挂载缺口」后，门禁 FAIL 从 229→85→67→16→8→0 递减清零，全部改动 commit 并推送。
+
+- **monolith 挂载**（4 文件）：search_real_module 追加投影表初始化+订阅者+回填；master-data lib.rs 挂 schema_defense；master_data_real_module 挂迁移门控（7 表/70 列 hash=235ba02d5f16）；search projection 心跳 3s→30s 降噪。重编译重启后 S8 闭环：`search-group` 存活、`/api/search?keyword=SO08` hits=1。
+- **迁移台账治理**：存量库 public._sqlx_migrations 331 vs 目录 487，156 迁移从未入库 → 用户拍板全量补跑（**必须用无 search_path URL**，sqlx 会误读 iam 台账）；特殊处置：删台账 0/2 遗留、清空 core_sessions/refresh_tokens（迁移语义）、手工跳 20261021000005；终态 491 条，备份 `/tmp/_sqlx_migrations_backup_20261027.sql`。
+- **mobile 接线**：7 客户端端口→8099 + .env 35 URL + .env.example 9 URL；approvals/production/inventory/attendance/quality 手动全 200。
+- **8 项 FAIL 逐一清零**：ehs 补列（safety_hazards 12 列/health_records/safety_checks/training 两表 21 列，5 个新迁移 130000-170000）；mdm-v55 8 表 id→uuid + 5 时间列→timestamptz；ehs FK 23503→404（整改/验收/更新 3 处）；ai tools 空指标 200 兜底；bi report_status 枚举缺失→新迁移建枚举 + COALESCE cast text；mes/lims/mdm COALESCE/比较类型 cast（int4/uuid）；copilot DELETE 幂等 200；v55 租户 COALESCE::uuid + upgrade SELECT id::uuid。
+- **门禁终态**：web-contract-smoke PASS（4152 端点，已知双前缀 39 项豁免）；commit `014e3c263`（契约修复）+ `0ff406f9c`（checksums 同步）；**push 成功 `6e33a9d43..0ff406f9c`**。
+- **遗留观察**：tenant revoke-all/ip-whitelist 的 core_tenant_settings FK 写入错误仍在日志（不在 smoke FAIL 集）；三套迁移台账（public 491/iam 49/mes 292）一致性治理未排期；S11 tenant API 404、S13 通知契约、must_change_password 强制改密等既有未决不变。
+
 ## e2e 批 A 收尾 · 批 B 前置（DB 侧三处补齐 + 复验）完成（2026-10-27）✅ 已完成
 
 > 按用户拍板"批 B 前置（DB 侧，无需改代码）"执行：补表/列按原迁移 DDL 幂等落地并逐一复验。
