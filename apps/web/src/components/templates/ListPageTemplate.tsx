@@ -1,5 +1,6 @@
 import { iconSm, iconMd, iconLg } from '../sharedStyles';
 import { ListPageHeader } from './ListPageHeader';
+import { useListPageForm } from './useListPageForm';
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
@@ -802,59 +803,25 @@ export function ListPageTemplate<
     }
   }, [crudResult.data, crudResult.loading, crudResult.pagination.total, crud]);
   // ============ CRUD 表单状态 ============
-  const [formOpen, setFormOpen] = useState(false);
-  const [formMode, setFormMode] = useState<'create' | 'edit' | 'view'>('create');
-  const [currentRecord, setCurrentRecord] = useState<T | null>(null);
-  const [formSubmitting, setFormSubmitting] = useState(false);
-  const [formData, setFormData] = useState<Record<string, unknown>>({});
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  // 从 formFields 构建初始表单数据
-  const buildInitialFormData = useCallback(
-    (mode: 'create' | 'edit' | 'view', record?: T): Record<string, unknown> => {
-      if (!crud?.formFields) return {};
-      const data: Record<string, unknown> = {};
-      const recordData = record as Record<string, unknown> | undefined;
-      crud.formFields.forEach((field) => {
-        if (mode === 'create' && field.hideInCreate) return;
-        if (mode === 'edit' && field.hideInEdit) return;
-        if (mode === 'view' && field.hideInView) return;
-        if (recordData && recordData[field.key] !== undefined) {
-          data[field.key] = recordData[field.key];
-        } else {
-          data[field.key] = field.defaultValue ?? (field.type === 'switch' ? false : '');
-        }
-      });
-      return data;
-    },
-    [crud]
-  );
-  const openCreateForm = useCallback(() => {
-    setCurrentRecord(null);
-    setFormMode('create');
-    setFormData(buildInitialFormData('create'));
-    setFormErrors({});
-    setFormOpen(true);
-  }, [buildInitialFormData]);
-  const openEditForm = useCallback(
-    (record: T) => {
-      setCurrentRecord(record);
-      setFormMode('edit');
-      setFormData(buildInitialFormData('edit', record));
-      setFormErrors({});
-      setFormOpen(true);
-    },
-    [buildInitialFormData]
-  );
-  const openViewForm = useCallback(
-    (record: T) => {
-      setCurrentRecord(record);
-      setFormMode('view');
-      setFormData(buildInitialFormData('view', record));
-      setFormErrors({});
-      setFormOpen(true);
-    },
-    [buildInitialFormData]
-  );
+  const {
+    formOpen,
+    formMode,
+    currentRecord,
+    formSubmitting,
+    formData,
+    formErrors,
+    setFormOpen,
+    setFormSubmitting,
+    setFormData,
+    setFormErrors,
+    openCreateForm,
+    openEditForm,
+    openViewForm,
+    closeForm,
+    buildInitialFormData,
+  } = useListPageForm<T>({
+    formFields: crud?.formFields,
+  });
   const handleDelete = useCallback(
     async (record: T): Promise<boolean> => {
       if (!crud) return false;
@@ -870,9 +837,6 @@ export function ListPageTemplate<
     },
     [crud, crudResult, getRowId]
   );
-  const closeForm = useCallback(() => {
-    setFormOpen(false);
-  }, []);
   const handleFormSubmit = useCallback(
     async (data: Record<string, unknown>): Promise<boolean> => {
       if (!crud) return false;

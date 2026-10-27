@@ -7,7 +7,9 @@ export interface UseListPageFormOptions<T> {
     key: string;
     hideInCreate?: boolean;
     hideInEdit?: boolean;
+    hideInView?: boolean;
     defaultValue?: unknown;
+    type?: string;
   }>;
 }
 
@@ -35,8 +37,12 @@ export function useListPageForm<T>(options: UseListPageFormOptions<T> = {}) {
       formFields.forEach((field) => {
         if (mode === 'create' && field.hideInCreate) return;
         if (mode === 'edit' && field.hideInEdit) return;
-        if (mode === 'view' && field.hideInEdit) return;
-        data[field.key] = recordData?.[field.key] ?? field.defaultValue ?? '';
+        if (mode === 'view' && field.hideInView) return;
+        if (recordData && recordData[field.key] !== undefined) {
+          data[field.key] = recordData[field.key];
+        } else {
+          data[field.key] = field.defaultValue ?? (field.type === 'switch' ? false : '');
+        }
       });
       return data;
     },
@@ -45,8 +51,8 @@ export function useListPageForm<T>(options: UseListPageFormOptions<T> = {}) {
 
   // 打开创建表单
   const openCreateForm = useCallback(() => {
-    setFormMode('create');
     setCurrentRecord(null);
+    setFormMode('create');
     setFormData(buildInitialFormData('create'));
     setFormErrors({});
     setFormOpen(true);
@@ -55,9 +61,21 @@ export function useListPageForm<T>(options: UseListPageFormOptions<T> = {}) {
   // 打开编辑表单
   const openEditForm = useCallback(
     (record: T) => {
-      setFormMode('edit');
       setCurrentRecord(record);
+      setFormMode('edit');
       setFormData(buildInitialFormData('edit', record));
+      setFormErrors({});
+      setFormOpen(true);
+    },
+    [buildInitialFormData]
+  );
+
+  // 打开查看表单
+  const openViewForm = useCallback(
+    (record: T) => {
+      setCurrentRecord(record);
+      setFormMode('view');
+      setFormData(buildInitialFormData('view', record));
       setFormErrors({});
       setFormOpen(true);
     },
@@ -67,21 +85,6 @@ export function useListPageForm<T>(options: UseListPageFormOptions<T> = {}) {
   // 关闭表单
   const closeForm = useCallback(() => {
     setFormOpen(false);
-    setCurrentRecord(null);
-    setFormData({});
-    setFormErrors({});
-    setFormSubmitting(false);
-  }, []);
-
-  // 更新表单字段
-  const updateFormField = useCallback((key: string, value: unknown) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-    setFormErrors((prev) => {
-      if (!prev[key]) return prev;
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
   }, []);
 
   return {
@@ -102,8 +105,8 @@ export function useListPageForm<T>(options: UseListPageFormOptions<T> = {}) {
     // 动作
     openCreateForm,
     openEditForm,
+    openViewForm,
     closeForm,
-    updateFormField,
     buildInitialFormData,
   };
 }
