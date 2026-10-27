@@ -130,7 +130,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
             }}
             aria-label={i18n.t('components.gantt_chart.k0')}
           >
-            <ChevronLeft style={{ width: 16, height: 16 }} />
+            <ChevronLeft size={16} />
           </IconButton>
           <IconButton
             onClick={() => scroll('right')}
@@ -141,7 +141,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
             }}
             aria-label={i18n.t('components.gantt_chart.k1')}
           >
-            <ChevronRight style={{ width: 16, height: 16 }} />
+            <ChevronRight size={16} />
           </IconButton>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -155,7 +155,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
             aria-label={i18n.t('components.gantt_chart.k2')}
             title={i18n.t('components.gantt_chart.k3')}
           >
-            <ZoomOut style={{ width: 16, height: 16 }} />
+            <ZoomOut size={16} />
           </IconButton>
           <Typography
             sx={{
@@ -175,7 +175,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
             aria-label={i18n.t('components.gantt_chart.k4')}
             title={i18n.t('components.gantt_chart.k5')}
           >
-            <ZoomIn style={{ width: 16, height: 16 }} />
+            <ZoomIn size={16} />
           </IconButton>
         </Box>
       </Box>
