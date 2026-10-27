@@ -56,7 +56,7 @@ expires_at, now,
                                 share_url: format!("/dashboard/share/{}", row.id),
                                 permission: row.permission,
                                 expires_at: row.expires_at,
-        created_at: row.created_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -168,7 +168,7 @@ pub async fn list_share_links(
             share_url: format!("/dashboard/share/{}", row.id),
             permission: row.permission,
             expires_at: row.expires_at,
-            created_at: row.created_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at,
         })
         .collect();
 

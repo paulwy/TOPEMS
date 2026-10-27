@@ -201,8 +201,8 @@ pub async fn list_comparisons(
             status: row.status,
             last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
             created_by: row.created_by,
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -282,8 +282,8 @@ pub async fn get_comparison(
                                 status: row.status,
         last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
                                 created_by: row.created_by,
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -351,8 +351,8 @@ pub async fn create_comparison(
                                 status: row.status,
         last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
                                 created_by: row.created_by,
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -435,8 +435,8 @@ pub async fn update_comparison(
                                 status: row.status,
         last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
                                 created_by: row.created_by,
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(

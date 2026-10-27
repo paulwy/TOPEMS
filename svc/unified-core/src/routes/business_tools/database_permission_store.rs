@@ -12,7 +12,6 @@ use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use serde::Serialize;
-use sqlx::types::Uuid;
 use sqlx::PgPool;
 use tokio::sync::RwLock;
 
@@ -213,7 +212,7 @@ impl DatabasePermissionStore {
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
-            Uuid::parse_str(&permission.tenant_id).unwrap_or_default(),
+            permission.tenant_id,
             permission.user_id,
             permission.role.as_str(),
             permission.active,
@@ -277,7 +276,7 @@ impl DatabasePermissionStore {
             FROM tenant_permissions
             WHERE tenant_id = $1 AND user_id = $2 AND deleted_at IS NULL
             "#,
-            Uuid::parse_str(tenant_id).unwrap_or_default(),
+            tenant_id,
             user_id,
         )
         .fetch_optional(self.pool.as_ref())
@@ -331,7 +330,7 @@ impl DatabasePermissionStore {
             SET deleted_at = NOW(), active = FALSE
             WHERE tenant_id = $1 AND user_id = $2 AND deleted_at IS NULL
             "#,
-            Uuid::parse_str(tenant_id).unwrap_or_default(),
+            tenant_id,
             user_id,
         )
         .execute(self.pool.as_ref())
@@ -359,7 +358,7 @@ impl DatabasePermissionStore {
             WHERE tenant_id = $1 AND deleted_at IS NULL
             ORDER BY created_at DESC
             "#,
-            Uuid::parse_str(tenant_id).unwrap_or_default(),
+            tenant_id,
         )
         .fetch_all(self.pool.as_ref())
         .await?;
@@ -472,7 +471,7 @@ impl PermissionStore for DatabasePermissionStore {
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
-            Uuid::parse_str(&permission.tenant_id).unwrap_or_default(),
+            permission.tenant_id,
             permission.user_id,
             permission.role.as_str(),
             permission.active,
@@ -570,7 +569,7 @@ impl PermissionStore for DatabasePermissionStore {
             "#,
             permission.role.as_str(),
             permission.active,
-            Uuid::parse_str(&permission.tenant_id).unwrap_or_default(),
+            permission.tenant_id,
             permission.user_id,
         )
         .fetch_optional(&mut *tx)

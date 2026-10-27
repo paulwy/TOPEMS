@@ -130,8 +130,8 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
             config: row.config,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -209,8 +209,8 @@ now,
                                 config: row.config,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -270,8 +270,8 @@ pub async fn get_report(
                                 config: row.config,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -352,8 +352,8 @@ now,
                                 config: row.config,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(

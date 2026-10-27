@@ -187,8 +187,8 @@ pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_
             user_ids: row.user_ids,
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -274,8 +274,8 @@ pub async fn create_permission_rule(
                                 user_ids: row.user_ids,
                                 is_active: row.is_active.unwrap_or(true),
                                 created_by: row.created_by,
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -344,8 +344,8 @@ pub async fn get_permission_rule(
                                 user_ids: row.user_ids,
                                 is_active: row.is_active.unwrap_or(true),
                                 created_by: row.created_by,
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -427,8 +427,8 @@ pub async fn update_permission_rule(
                                 user_ids: row.user_ids,
                                 is_active: row.is_active.unwrap_or(true),
                                 created_by: row.created_by,
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -665,8 +665,8 @@ pub async fn get_user_permissions(
             user_ids: row.user_ids,
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 

@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -41,7 +41,7 @@
       {
         "ordinal": 7,
         "name": "owner_id",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 8,
@@ -61,7 +61,7 @@
     ],
     "parameters": {
       "Left": [
-        "Varchar",
+        "Text",
         "Text",
         "Uuid",
         "Jsonb",
@@ -82,8 +82,8 @@
       true,
       false,
       true,
-      true,
-      true
+      false,
+      false
     ]
   },
   "hash": "70eb65f9a52f4eacecb7878552f3472e4cc1afcf070cbd2d714af6e21eeb4c2f"

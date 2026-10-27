@@ -120,8 +120,8 @@ pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_j
             levels: row.levels.unwrap_or(serde_json::json!([])),
             measures: row.measures.unwrap_or(serde_json::json!([])),
             owner_id: row.owner_id,
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -186,8 +186,8 @@ now,
                                 levels: row.levels.unwrap_or(serde_json::json!([])),
                                 measures: row.measures.unwrap_or(serde_json::json!([])),
                                 owner_id: row.owner_id,
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -240,8 +240,8 @@ pub async fn get_drilldown_path(
                                 levels: row.levels.unwrap_or(serde_json::json!([])),
                                 measures: row.measures.unwrap_or(serde_json::json!([])),
                                 owner_id: row.owner_id,
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -301,8 +301,8 @@ now,
                                 levels: row.levels.unwrap_or(serde_json::json!([])),
                                 measures: row.measures.unwrap_or(serde_json::json!([])),
                                 owner_id: row.owner_id,
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -592,7 +592,7 @@ pub async fn get_drilldown_history(
             drill_dimension: row.drill_dimension,
             drill_value: row.drill_value,
             filters: row.filters,
-            created_at: row.created_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at,
         })
         .collect();
 

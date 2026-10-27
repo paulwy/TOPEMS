@@ -516,8 +516,8 @@ pub async fn create_production_order(
         req.product_name,
         req.product_code,
         req.quantity as i32,
-req.planned_start_date.map(|d| d.date_naive()),
-req.planned_end_date.map(|d| d.date_naive()),
+req.planned_start_date,
+req.planned_end_date,
         req.workshop_id,
         req.notes,
         now,
@@ -683,8 +683,8 @@ pub async fn create_order_from_erp(
         req.erp_order.quantity as i32,
         req.erp_order.order_id,
         req.erp_order.order_number,
-planned_start.date_naive(),
-planned_end.date_naive(),
+planned_start,
+planned_end,
         req.workshop_id,
         req.notes,
         now,
@@ -872,8 +872,8 @@ pub async fn update_production_order(
         req.product_name,
         req.product_code,
         req.quantity.map(|q| q as i64),
-        req.planned_start_date.map(|d| d.date_naive()),
-        req.planned_end_date.map(|d| d.date_naive()),
+        req.planned_start_date,
+        req.planned_end_date,
         req.workshop_id,
         req.notes,
         Utc::now(),
@@ -1017,7 +1017,7 @@ pub async fn start_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.date_naive(),
+        now,
         now,
     )
     .fetch_optional(&state.pool)
@@ -1107,7 +1107,7 @@ pub async fn complete_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.date_naive(),
+        now,
         now,
     )
     .fetch_optional(&state.pool)

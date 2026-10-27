@@ -58,8 +58,8 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
             layout: row.layout,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -195,8 +195,8 @@ pub async fn get_dashboard(
                                 layout: row.layout,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -268,8 +268,8 @@ pub async fn update_dashboard(
                                 layout: row.layout,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -372,8 +372,8 @@ pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_
             layout: row.layout,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -432,8 +432,8 @@ pub async fn get_user_dashboards(
             layout: row.layout,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -517,8 +517,8 @@ now,
                                                         layout: new_row.layout,
                                                         owner_id: new_row.owner_id,
                                                         is_public: new_row.is_public.unwrap_or(false),
-                created_at: new_row.created_at.unwrap_or_else(Utc::now),
-                updated_at: new_row.updated_at.unwrap_or_else(Utc::now),
+                created_at: new_row.created_at,
+                updated_at: new_row.updated_at,
                                                     }
                                                 })),
                 Err(e) => Json(topems_shared_core::response::error_value(
@@ -581,8 +581,8 @@ now,
                                 layout: row.layout,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(

@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "result",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 9,
@@ -73,7 +73,7 @@
       "Left": [
         "Uuid",
         "Varchar",
-        "Varchar",
+        "Text",
         "Timestamptz"
       ]
     },

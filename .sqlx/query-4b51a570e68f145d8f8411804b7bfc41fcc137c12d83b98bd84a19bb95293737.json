@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "tenant_id",
-        "type_info": "Uuid"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 2,
@@ -41,7 +41,7 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid",
+        "Text",
         "Text"
       ]
     },

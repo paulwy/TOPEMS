@@ -13,7 +13,7 @@
       "Left": [
         "Varchar",
         "Bool",
-        "Uuid",
+        "Text",
         "Text"
       ]
     },

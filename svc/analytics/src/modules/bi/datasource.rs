@@ -127,8 +127,8 @@ fn row_to_response(
     sync_frequency: Option<String>,
     description: Option<String>,
     is_enabled: Option<bool>,
-    created_at: Option<DateTime<Utc>>,
-    updated_at: Option<DateTime<Utc>>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 ) -> DatasourceResponse {
     DatasourceResponse {
         id,
@@ -145,8 +145,8 @@ fn row_to_response(
         sync_frequency,
         description,
         is_enabled: is_enabled.unwrap_or(true),
-        created_at: created_at.unwrap_or_else(Utc::now),
-        updated_at: updated_at.unwrap_or_else(Utc::now),
+        created_at,
+        updated_at,
     }
 }
 

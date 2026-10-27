@@ -31,7 +31,7 @@
       {
         "ordinal": 5,
         "name": "total_suggested_quantity",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       }
     ],
     "parameters": {

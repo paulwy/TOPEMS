@@ -51,7 +51,7 @@
       {
         "ordinal": 9,
         "name": "report_date",
-        "type_info": "Date"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 10,
@@ -118,14 +118,6 @@
     },
     "nullable": [
       false,
-      false,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      false,
       true,
       true,
       true,
@@ -136,8 +128,16 @@
       true,
       true,
       true,
-      false,
-      false
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
     ]
   },
   "hash": "a7ec1336bb9da444a9b1253f2e364515988f2cbffcb9f1892fa3659d21e2abd1"

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO mes.production_records (\n            order_id, process_id, work_station_id,\n            operator_id, operator, start_time, end_time,\n            completed_quantity, status, notes,\n            created_at, updated_at, tenant_id\n        ) VALUES ($1, $2, $3, $4, NULL, $5, NULL, $6, 'in_progress', $7, $8, $8, $9)\n        RETURNING\n            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,\n            operator_id, operator, start_time, end_time,\n            completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,\n            created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO mes.production_records (\n            order_id, process_id, work_station_id,\n            operator_id, operator, start_time, end_time,\n            completed_quantity, status, notes,\n            created_at, updated_at, tenant_id\n        ) VALUES ($1, $2, $3, $4, $5, $6, NULL, $7, 'in_progress', $8, $9, $9, $10)\n        RETURNING\n            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,\n            operator_id, operator, start_time, end_time,\n            completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,\n            created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -85,6 +85,7 @@
         "Uuid",
         "Uuid",
         "Uuid",
+        "Varchar",
         "Timestamptz",
         "Numeric",
         "Text",
@@ -110,5 +111,5 @@
       false
     ]
   },
-  "hash": "e4a5f76da8f5ae10e59774573620fd59254c0f68e71319bef38f8e5a19fb916c"
+  "hash": "f3799bed4fe9a06f2cdee1c47142c1aed3123064cb69e3038e1511984990db6e"
 }

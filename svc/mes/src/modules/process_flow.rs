@@ -696,9 +696,9 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
-                    process_code: s.process_code.unwrap_or_default(),
+                    process_code: s.process_code,
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
@@ -814,16 +814,16 @@ pub async fn add_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, None),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code: process_code.unwrap_or_default(),
+                    process_code,
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
@@ -942,7 +942,7 @@ pub async fn update_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, None),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
@@ -951,7 +951,7 @@ pub async fn update_flow_step(
                     flow_id: s.flow_id.to_string(),
                     process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code: process_code.unwrap_or_default(),
+                    process_code,
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
@@ -1112,9 +1112,9 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
-                    process_code: s.process_code.unwrap_or_default(),
+                    process_code: s.process_code,
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
@@ -1220,7 +1220,10 @@ pub async fn analyze_capacity(
         }
     };
 
-    let total_time: f64 = steps.iter().map(|s| s.standard_time.unwrap_or(0.0)).sum();
+    let total_time: f64 = steps
+        .iter()
+        .map(|s| f64::from(s.standard_time.unwrap_or(0)))
+        .sum();
 
     let flow_capacity = flow.capacity.unwrap_or_default();
     let theoretical_capacity = if total_time > 0.0 {
@@ -1244,7 +1247,7 @@ pub async fn analyze_capacity(
     let mut max_utilization = 0.0;
 
     for step in &steps {
-        let step_time = step.standard_time.unwrap_or(0.0);
+        let step_time = f64::from(step.standard_time.unwrap_or(0));
         let step_capacity = if step_time > 0.0 {
             480.0 / step_time
         } else {

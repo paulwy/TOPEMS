@@ -52,8 +52,8 @@ pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<ser
             category: row.category,
             tags: row.tags,
             is_active: row.is_active.unwrap_or(true),
-            created_at: row.created_at.unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.unwrap_or_else(Utc::now),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -123,8 +123,8 @@ now,
                                 category: row.category,
                                 tags: row.tags,
                                 is_active: row.is_active.unwrap_or(true),
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -177,8 +177,8 @@ pub async fn get_dashboard_template(
                                 category: row.category,
                                 tags: row.tags,
                                 is_active: row.is_active.unwrap_or(true),
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -250,8 +250,8 @@ now,
                                 category: row.category,
                                 tags: row.tags,
                                 is_active: row.is_active.unwrap_or(true),
-        created_at: row.created_at.unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.unwrap_or_else(Utc::now),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -381,8 +381,8 @@ now,
                                                         layout: new_row.layout,
                                                         owner_id: new_row.owner_id,
                                                         is_public: new_row.is_public.unwrap_or(false),
-                created_at: new_row.created_at.unwrap_or_else(Utc::now),
-                updated_at: new_row.updated_at.unwrap_or_else(Utc::now),
+                created_at: new_row.created_at,
+                updated_at: new_row.updated_at,
                                                     }
                                                 })),
                 Err(e) => Json(topems_shared_core::response::error_value(

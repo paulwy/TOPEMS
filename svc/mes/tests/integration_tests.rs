@@ -221,7 +221,7 @@ mod tests {
         assert_eq!(updated_order.get::<String, _>("status"), "released");
         assert_eq!(
             updated_order
-                .get::<BigDecimal, _>("completed_quantity")
+                .get::<i64, _>("completed_quantity")
                 .to_string(),
             "500"
         );

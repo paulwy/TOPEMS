@@ -36,17 +36,17 @@
       {
         "ordinal": 6,
         "name": "standard_time",
-        "type_info": "Float8"
+        "type_info": "Int4"
       },
       {
         "ordinal": 7,
         "name": "wait_time",
-        "type_info": "Numeric"
+        "type_info": "Int4"
       },
       {
         "ordinal": 8,
         "name": "transfer_time",
-        "type_info": "Numeric"
+        "type_info": "Int4"
       },
       {
         "ordinal": 9,
@@ -71,9 +71,9 @@
         "Int4",
         "Uuid",
         "UuidArray",
-        "Float8",
-        "Numeric",
-        "Numeric",
+        "Int4",
+        "Int4",
+        "Int4",
         "Bool",
         "Text",
         "Uuid"
@@ -82,7 +82,7 @@
     "nullable": [
       false,
       false,
-      false,
+      true,
       false,
       true,
       true,
