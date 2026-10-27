@@ -1,3 +1,14 @@
+## unified-core 四 schema 副本治理（2026-10-27）✅ 已完成
+
+> 用户拍板「unified-core 四 schema 副本治理」后执行：iam/mes/flow/communication 四 schema 的 core_* 影子副本全量收敛到 public 权威。commit `cd7b0f7e7`（代码 + 迁移，门禁全过）。
+
+- **副本盘点（治理前）**：104 张影子副本表（iam 36 / mes 36 / flow 28 / communication 4），全部 0 行或测试垃圾；public 权威 71 张（tenants 223 / menus 368 / permissions 980 / users 1）；iam 特有业务表 9 张保留。
+- **代码收敛**（32 处建表 + 2 处引用）：`CREATE TABLE IF NOT EXISTS core_*` 全量显式 `public.`；`iam.core_tenant_users` → `public.core_tenant_users`。flow 业务表（workflows/instances/tasks/versions/flow_*/mdm_*/master_data_*）DDL 补 tenant_id 及缺失列（change_description/created_by/published_at，对齐备份权威结构）——**历史残缺 DDL 导致 workflow 500 的根因已修**。
+- **search_path 对齐**：unified_core_real_module 固化 `SEARCH_PATH=public`（unified-core 权威表统一 public）；flow 模块 handler 裸引用收敛 public（**schema-boundary 门禁要求 unified-core 不得跨 schema 引用 flow**，曾尝试 flow. 显式前缀被门禁拦截后回退）。
+- **DB 清理（迁移 20261027200000 幂等入库）**：DROP 104 张副本表（备份 /tmp/dup_backup_{iam,mes,flow,communication}.sql schema-only）；修正 iam.refresh_tokens/sessions FK → `public.core_users`（原误指向 mes.core_users 副本）；public 权威表补 tenant_id 等列（12 张 ALTER ADD COLUMN IF NOT EXISTS）。
+- **实机验证**：重启后副本不再重建（真副本 0）；登录/菜单/租户/工作流（200）/master 全链路正常；web-contract-smoke **4105/4105 PASS**；门禁 boundary-gate/migration-validate/sqlx-cache-freshness 全过。
+- **教训登记**：① 副本判定必须「public 同名交集」而非「同名前缀」——flow 的 workflow 业务表与 public 同名但结构不同（tenant_id），曾误删导致 500，已收敛 public 版补列；② 迁移 DROP 清单严格用交集清单，勿手写扩展（曾误含 iam/mes.core_email_templates 业务表已剔除）；③ 门禁不允许 unified-core 显式引用 flow schema——收敛方向必须是 public。
+
 ## core tenant 设置读写收敛 public 权威表（2026-10-27）✅ 已完成
 
 > 「继续」轮：修复持续隐患（批 A 起日志反复 core_tenant_settings FK 违规刷屏）。commit `222c9ea2f` 已 push。
