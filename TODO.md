@@ -61,7 +61,7 @@
 - **落地**：`svc/unified-core/src/modules/iam/auth.rs` 登录链 5 处错误应答改为显式状态码——错误口令/用户不存在/账号禁用 → `HTTP 401`（`StatusCode::UNAUTHORIZED`）、空参数 → `HTTP 400`（`BAD_REQUEST`）、查询异常 → `HTTP 500`（`INTERNAL_SERVER_ERROR`）；envelope code 与 HTTP 状态严格对齐。
 - **前端无改动**：client.ts 401 拦截器已豁免登录/注册等 public API（注释明确"密码错误是正常业务失败，不应清除 token 或触发登出"）；登录页错误提示读 body.message，不受 HTTP 状态影响。
 - **实机验证**：错误口令 → 401、不存在用户 → 401（安全设计不区分用户存在与否）、空参 → 400、正确登录 → 200；web-contract-smoke 4105/4105 PASS。
-- **遗留同类项**：refresh 链（refresh token 无效 401/查询异常 500）与 logout 链（4 处 500）仍是 envelope 码 + HTTP 200 错位，登记待后续同类治理（涉及前端登出/刷新处理需联动评估）。
+- **遗留同类项（2026-10-28 复验已闭环）**：refresh 链（refresh token 无效 401/查询异常 500）与 logout 链（缺 token 400/事务查询异常 500/幂等成功 200）均已显式 StatusCode，envelope code 与 HTTP 对齐；实机复验 logout 空参 400 / refresh 无效 401 / 正确 logout 200；前端 logout 已 try/catch + finally 本地清理（400/500 不阻断登出），联动无缺口 ✅
 
 ## subscriptions 顶层契约落地（2026-10-28）✅ 已完成
 
@@ -112,7 +112,7 @@
 - **mobile 接线**：7 客户端端口→8099 + .env 35 URL + .env.example 9 URL；approvals/production/inventory/attendance/quality 手动全 200。
 - **8 项 FAIL 逐一清零**：ehs 补列（safety_hazards 12 列/health_records/safety_checks/training 两表 21 列，5 个新迁移 130000-170000）；mdm-v55 8 表 id→uuid + 5 时间列→timestamptz；ehs FK 23503→404（整改/验收/更新 3 处）；ai tools 空指标 200 兜底；bi report_status 枚举缺失→新迁移建枚举 + COALESCE cast text；mes/lims/mdm COALESCE/比较类型 cast（int4/uuid）；copilot DELETE 幂等 200；v55 租户 COALESCE::uuid + upgrade SELECT id::uuid。
 - **门禁终态**：web-contract-smoke PASS（4152 端点，已知双前缀 39 项豁免）；commit `014e3c263`（契约修复）+ `0ff406f9c`（checksums 同步）；**push 成功 `6e33a9d43..0ff406f9c`**。
-- **遗留观察**：tenant revoke-all/ip-whitelist 的 core_tenant_settings FK 写入错误仍在日志（不在 smoke FAIL 集）；三套迁移台账（public 491/iam 49/mes 292）一致性治理未排期；S11 tenant API 404、S13 通知契约、must_change_password 强制改密等既有未决不变。
+- **遗留观察（2026-10-28 复验）**：tenant revoke-all/ip-whitelist 的 core_tenant_settings FK 写入已有 `ensure_tenant_exists` 防御（handlers.rs:1836 写前校验租户存在，假 uuid 不再触发 FK 违规）✅；三套迁移台账（public 491/iam 49/mes 292）已治理（仅 public 单一台账 496=496）✅；S11/S13/must_change_password 均已闭环 ✅。
 
 ## e2e 批 A 收尾 · 批 B 前置（DB 侧三处补齐 + 复验）完成（2026-10-27）✅ 已完成
 
