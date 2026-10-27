@@ -23,6 +23,7 @@ import {
   DialogActions,
   Tabs,
   Tab,
+  useTheme,
 } from '@mui/material';
 import {
   fetchDashboards,
@@ -44,10 +45,8 @@ import { DashboardTemplateManager } from '@/components/bi/DashboardTemplateManag
 import { CardListTemplate, type CardRenderConfig, type CardAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
-import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
-const ct = designTokens.colors;
 type ViewMode = 'list' | 'editor';
 type TabType = 'dashboards' | 'templates';
 interface CreateDialogState {
@@ -58,6 +57,7 @@ interface CreateDialogState {
   description: string;
 }
 const BIDashboardPage = () => {
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [activeTab, setActiveTab] = useState<TabType>('dashboards');
@@ -324,7 +324,7 @@ const BIDashboardPage = () => {
       subtitle={i18n.t('bi.bi_dashboard_page.subtitle')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary[600]} 100%)`,
       }}
       padding={false}
       maxWidth={false}
@@ -449,7 +449,7 @@ const BIDashboardPage = () => {
           {createDialog.useTemplate && templates.length > 0 && (
             <Box
               sx={{
-                border: `1px solid ${designTokens.colors.action.selected}`,
+                border: `1px solid ${theme.palette.action.selected}`,
                 borderRadius: 1,
                 p: 2,
               }}

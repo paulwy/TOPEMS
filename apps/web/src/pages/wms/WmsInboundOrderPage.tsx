@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 
 import {
-  Badge,
   Button,
   Card,
   Drawer,
@@ -31,6 +30,7 @@ import {
   ToastContainer,
 } from '@/components/redesign';
 import type { DataTableColumn, Toast } from '@/components/redesign';
+import { StatusBadge } from '@topems/shared-components';
 import { WMS_PATHS } from '@/modules/wms/config';
 import { inboundOrderApi } from '@/api/wms/inbound';
 import type {
@@ -511,7 +511,13 @@ const WmsInboundOrderPage: React.FC = () => {
         align: 'center',
         render: (row) => {
           const config = statusConfig[row.status] || statusConfig.pending;
-          return <Badge variant={config.variant}>{config.label}</Badge>;
+          return (
+            <StatusBadge
+              status={row.status}
+              label={config.label}
+              color={config.variant}
+            />
+          );
         },
       },
       {
@@ -752,10 +758,14 @@ const WmsInboundOrderPage: React.FC = () => {
                     {selectedOrder.order_no}
                   </div>
                 </div>
-                <Badge variant={statusConfig[selectedOrder.status]?.variant || 'default'}>
-                  {statusConfig[selectedOrder.status]?.label ||
-                    t('wms.inbound_order_page.status_unknown')}
-                </Badge>
+                <StatusBadge
+                  status={selectedOrder.status}
+                  label={
+                    statusConfig[selectedOrder.status]?.label ||
+                    t('wms.inbound_order_page.status_unknown')
+                  }
+                  color={statusConfig[selectedOrder.status]?.variant || 'default'}
+                />
               </div>
             </Card>
 
