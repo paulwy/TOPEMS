@@ -207,11 +207,11 @@ const DataExport: React.FC<DataExportProps> = ({
   };
 
   /**
-   * 导出为 Excel
+   * 导出为 Excel（用 xlsx 替代 exceljs，减少 924KB bundle）
    */
   const exportToExcel = useCallback(
     async (exportData: Record<string, unknown>[], name: string) => {
-      const ExcelJS = await import('exceljs');
+      const XLSX = await import('xlsx');
       const selectedKeys = selectedFields.filter((f) => f.selected).map((f) => f.key);
       const filteredData = exportData.map((row) => {
         const newRow: Record<string, unknown> = {};
@@ -221,26 +221,16 @@ const DataExport: React.FC<DataExportProps> = ({
         return newRow;
       });
 
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Sheet1');
-      worksheet.addRows(filteredData);
+      const worksheet = XLSX.utils.json_to_sheet(filteredData);
 
       // 设置列宽
-      worksheet.columns = selectedFields
+      worksheet['!cols'] = selectedFields
         .filter((f) => f.selected)
-        .map((f) => ({ width: f.width || 20 }));
+        .map((f) => ({ wch: f.width || 20 }));
 
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `${name}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+      XLSX.writeFile(workbook, `${name}.xlsx`);
     },
     [selectedFields]
   );
