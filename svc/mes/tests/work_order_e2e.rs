@@ -65,6 +65,17 @@ async fn setup_schema(pool: &sqlx::PgPool) {
     .execute(pool)
     .await
     .unwrap();
+    // list_work_orders 的 tenant 隔离 EXISTS 子查询依赖 production_orders（P1-8 起）
+    sqlx::query(
+        r#"CREATE TABLE IF NOT EXISTS mes.production_orders (
+            id UUID PRIMARY KEY,
+            order_number VARCHAR(64),
+            tenant_id UUID
+        )"#,
+    )
+    .execute(pool)
+    .await
+    .unwrap();
 }
 
 async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {

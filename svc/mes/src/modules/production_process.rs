@@ -41,6 +41,7 @@ pub struct ListProcessesQuery {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateProcessRequest {
+    #[serde(alias = "process_name")]
     pub name: String,
     pub description: Option<String>,
     pub version: Option<String>,
@@ -54,6 +55,7 @@ pub struct CreateProcessRequest {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateProcessRequest {
+    #[serde(alias = "process_name")]
     pub name: Option<String>,
     pub description: Option<String>,
     pub version: Option<String>,
@@ -564,5 +566,36 @@ pub async fn deactivate_process(
             Json(ApiResponse::success(process, "生产工序停用成功"))
         }
         None => Json(ApiResponse::not_found("生产工序不存在或状态不允许停用")),
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn create_request_accepts_name_and_process_name_alias() {
+        // 新契约字段名 name
+        let by_name: CreateProcessRequest =
+            serde_json::from_value(json!({"name": "冲压工序"})).expect("name 应可解析");
+        assert_eq!(by_name.name, "冲压工序");
+        // 旧字段名 process_name（第四十六轮 P3：旧调用方 422 的兼容收口）
+        let by_alias: CreateProcessRequest =
+            serde_json::from_value(json!({"process_name": "冲压工序"}))
+                .expect("process_name alias 应可解析");
+        assert_eq!(by_alias.name, "冲压工序");
+    }
+
+    #[test]
+    fn update_request_accepts_both_field_names() {
+        let by_name: UpdateProcessRequest =
+            serde_json::from_value(json!({"name": "装配工序"})).expect("name 应可解析");
+        assert_eq!(by_name.name.as_deref(), Some("装配工序"));
+        let by_alias: UpdateProcessRequest =
+            serde_json::from_value(json!({"process_name": "装配工序"}))
+                .expect("process_name alias 应可解析");
+        assert_eq!(by_alias.name.as_deref(), Some("装配工序"));
     }
 }
