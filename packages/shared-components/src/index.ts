@@ -1,4 +1,5 @@
-export { OrgTree } from './components/OrgTree';
+// 0-ref 僵尸组件（2026-10 审计确认）：暂不导出，保留源码以便未来恢复
+// export { OrgTree } from './components/OrgTree';
 export { UserSelect, type UserSelectProps } from './components/UserSelect';
 export { NumberField, type NumberFieldProps } from './components/NumberField';
 export { CurrencyField, type CurrencyFieldProps } from './components/CurrencyField';
@@ -10,10 +11,10 @@ export { EmptyState, ListEmptyState, SearchEmptyState, PermissionEmptyState, Err
 export { ActionButton, type ActionButtonProps, type ActionButtonVariant, type ActionButtonSize } from './components/ActionButton';
 export { FormField, type FormFieldProps } from './components/FormField';
 export { FormSelect, type FormSelectProps, type FormSelectOption } from './components/FormSelect';
-export { FormCheckbox, FormCheckboxGroup, type FormCheckboxProps, type FormCheckboxGroupProps } from './components/FormCheckbox';
-export { FormSwitch, type FormSwitchProps } from './components/FormSwitch';
+// export { FormCheckbox, FormCheckboxGroup, type FormCheckboxProps, type FormCheckboxGroupProps } from './components/FormCheckbox';
+// export { FormSwitch, type FormSwitchProps } from './components/FormSwitch';
 export { DatePicker, type DatePickerProps } from './components/DatePicker';
-export { Cascader, type CascaderProps, type CascaderOption, type CascaderLocale } from './components/Cascader';
+// export { Cascader, type CascaderProps, type CascaderOption, type CascaderLocale } from './components/Cascader';
 export { DateRangePicker, type DateRangePickerProps, type DateRange, type DateRangePickerLocale } from './components/DateRangePicker';
 export { FileUpload, type FileUploadProps, type UploadFile, type FileUploadLocale } from './components/FileUpload';
 export { FilterBar, type FilterBarProps, type FilterConfig, type FilterOption, type FilterValue } from './components/FilterBar';
@@ -41,28 +42,29 @@ export { CommandPalette, type CommandItem, type CommandGroup, type CommandPalett
 
 export { LazyImage, type LazyImageProps } from './components/LazyImage';
 
-export {
-  InteractiveCard,
-  type InteractiveCardProps,
-  type InteractiveCardVariant,
-  type InteractiveCardSize,
-} from './components/InteractiveCard';
-
-export {
-  InteractiveTabs,
-  type InteractiveTabItem,
-  type InteractiveTabsProps,
-} from './components/InteractiveTabs';
-
-export {
-  SidebarItem,
-  type SidebarItemProps,
-} from './components/SidebarItem';
-
-export {
-  GradientBadge,
-  type GradientBadgeProps,
-} from './components/GradientBadge';
+// 0-ref 僵尸组件（2026-10 审计确认）：暂不导出，保留源码以便未来恢复
+// export {
+//   InteractiveCard,
+//   type InteractiveCardProps,
+//   type InteractiveCardVariant,
+//   type InteractiveCardSize,
+// } from './components/InteractiveCard';
+//
+// export {
+//   InteractiveTabs,
+//   type InteractiveTabItem,
+//   type InteractiveTabsProps,
+// } from './components/InteractiveTabs';
+//
+// export {
+//   SidebarItem,
+//   type SidebarItemProps,
+// } from './components/SidebarItem';
+//
+// export {
+//   GradientBadge,
+//   type GradientBadgeProps,
+// } from './components/GradientBadge';
 
 export {
   Responsive,
