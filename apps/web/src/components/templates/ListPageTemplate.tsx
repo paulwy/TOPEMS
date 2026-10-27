@@ -1,4 +1,5 @@
 import { iconSm, iconMd, iconLg } from '../sharedStyles';
+import { ListPageHeader } from './ListPageHeader';
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
@@ -3282,38 +3283,7 @@ export function ListPageTemplate<
               gap: 2,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              {/* 返回按钮 */}
-              {backButton && (
-                <BackButton
-                  onClick={backButton.onClick}
-                  href={backButton.href}
-                  size='small'
-                  sx={{ bgcolor: 'action.hover' }}
-                />
-              )}
-
-              {/* 标题和副标题 */}
-              <Box>
-                {title && (
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 600, color: 'text.primary' }}
-                  >
-                    {title}
-                  </Typography>
-                )}
-                {subtitle && (
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    sx={{ mt: 0.25 }}
-                  >
-                    {subtitle}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
+            <ListPageHeader backButton={backButton} title={title} subtitle={subtitle} />
 
             {/* 操作按钮 */}
             {(primaryActionButton ||
