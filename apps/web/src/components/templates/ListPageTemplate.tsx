@@ -3,6 +3,7 @@ import { ListPageHeader } from './ListPageHeader';
 import { useListPageForm } from './useListPageForm';
 import { useListPageSortSearch } from './useListPageSortSearch';
 import { useListPageSelection } from './useListPageSelection';
+import { useListPageMisc } from './useListPageMisc';
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
@@ -1541,14 +1542,16 @@ export function ListPageTemplate<
     filterStorageKey,
     persistSelection: persistColumnConfig, // 复用 persistColumnConfig 作为选中持久化开关
   });
-  // 批量操作确认对话框
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<{
-    onClick: (selectedRows: T[]) => void;
-    label: string;
-  } | null>(null);
-  // 行展开状态
-  const [expandedIds, setExpandedIds] = useState<(string | number)[]>(defaultExpandedIds);
+  const {
+    confirmDialogOpen,
+    setConfirmDialogOpen,
+    pendingAction,
+    setPendingAction,
+    expandedIds,
+    setExpandedIds,
+  } = useListPageMisc<T>({
+    defaultExpandedIds,
+  });
   // 内部 columnConfig 状态（延迟初始化，首次渲染后根据 resolvedColumns 同步）
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>([]);
   // 初始化 columnConfig（使用 resolvedColumns，支持 crud 自动生成的列）

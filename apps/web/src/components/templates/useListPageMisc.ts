@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-export interface PendingAction {
-  onClick: (selectedRows: unknown[]) => void;
+export interface PendingAction<T = unknown> {
+  onClick: (selectedRows: T[]) => void;
   label: string;
 }
 
@@ -16,7 +16,7 @@ export interface UseListPageMiscOptions {
  * ListPage 其他状态管理 hook（展开 / 列配置 / 确认对话框）
  * 从 ListPageTemplate 抽出，保持 API 兼容
  */
-export function useListPageMisc(options: UseListPageMiscOptions = {}) {
+export function useListPageMisc<T = unknown>(options: UseListPageMiscOptions = {}) {
   const {
     defaultExpandedIds = [],
     columnConfigStorageKey = 'default',
@@ -26,7 +26,7 @@ export function useListPageMisc(options: UseListPageMiscOptions = {}) {
 
   // ============ 确认对话框 ============
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction<T> | null>(null);
 
   // ============ 展开状态 ============
   const [expandedIds, setExpandedIds] = useState<Array<string | number>>(defaultExpandedIds);
@@ -64,7 +64,7 @@ export function useListPageMisc(options: UseListPageMiscOptions = {}) {
   }, [columnConfigurable, resolvedColumns, columnConfigStorageKey]);
 
   // ============ 动作 ============
-  const openConfirmDialog = useCallback((action: PendingAction) => {
+  const openConfirmDialog = useCallback((action: PendingAction<T>) => {
     setPendingAction(action);
     setConfirmDialogOpen(true);
   }, []);
