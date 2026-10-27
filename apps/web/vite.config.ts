@@ -573,8 +573,15 @@ function topemsRechartsSplitPlugin(): Plugin {
         { test: /[\\/]node_modules[\\/](exceljs|exceljs-dist)[\\/]/, name: 'exceljs-vendor' },
         { test: /[\\/]node_modules[\\/](xlsx|docx-preview)[\\/]/, name: 'office-vendor' },
         {
-          test: /[\\/]node_modules[\\/](react-markdown|react-syntax-highlighter|remark-gfm)[\\/]/,
+          test: /[\\/]node_modules[\\/](react-markdown|remark-gfm)[\\/]/,
           name: 'markdown-vendor',
+        },
+        // Prism syntax highlighter split from markdown-vendor; only loaded
+        // when markdown content actually contains code blocks (~150KB saving
+        // on the initial markdown chunk)
+        {
+          test: /[\\/]node_modules[\\/]react-syntax-highlighter[\\/]/,
+          name: 'prism-vendor',
         },
         {
           test: /[\\/]node_modules[\\/](zustand|@tanstack[\\/](react-query|react-table)|zod)[\\/]/,

@@ -1,38 +1,58 @@
 /**
  * Heavy markdown renderer. Kept in a separate module so that
- * react-markdown / remark-gfm / react-syntax-highlighter land in a
- * standalone lazy chunk and never enter the login first-paint chain.
+ * react-markdown / remark-gfm land in a standalone lazy chunk and never
+ * enter the login first-paint chain.
+ *
+ * Prism syntax highlighter is dynamically imported only when code blocks
+ * are present, splitting ~150KB of highlighting code into its own chunk.
  */
 import { useTheme } from '@mui/material';
 import { designTokens } from '@topems/tokens';
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-// 按需注册常用语言（全量 Prism 包含 200+ 种语言，556KB；只保留 10 种常用语言，~150KB）
-import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
-import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
-import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
-import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
-import python from 'react-syntax-highlighter/dist/esm/languages/prism/python';
-import java from 'react-syntax-highlighter/dist/esm/languages/prism/java';
-import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
-import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
-import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql';
-import css from 'react-syntax-highlighter/dist/esm/languages/prism/css';
-
-SyntaxHighlighter.registerLanguage('javascript', javascript);
-SyntaxHighlighter.registerLanguage('typescript', typescript);
-SyntaxHighlighter.registerLanguage('jsx', jsx);
-SyntaxHighlighter.registerLanguage('tsx', tsx);
-SyntaxHighlighter.registerLanguage('python', python);
-SyntaxHighlighter.registerLanguage('java', java);
-SyntaxHighlighter.registerLanguage('json', json);
-SyntaxHighlighter.registerLanguage('bash', bash);
-SyntaxHighlighter.registerLanguage('sql', sql);
-SyntaxHighlighter.registerLanguage('css', css);
+// Dynamically import SyntaxHighlighter only when code blocks are rendered.
+// This splits react-syntax-highlighter (~150KB) into a separate chunk.
+const SyntaxHighlighter = lazy(() =>
+  import('react-syntax-highlighter').then(async (mod) => {
+    const { PrismLight } = mod;
+    const vscDarkPlus = (await import('react-syntax-highlighter/dist/esm/styles/prism')).vscDarkPlus;
+    const [javascript, typescript, jsx, tsx, python, java, json, bash, sql, css] = await Promise.all([
+      import('react-syntax-highlighter/dist/esm/languages/prism/javascript'),
+      import('react-syntax-highlighter/dist/esm/languages/prism/typescript'),
+      import('react-syntax-highlighter/dist/esm/languages/prism/jsx'),
+      import('react-syntax-highlighter/dist/esm/languages/prism/tsx'),
+      import('react-syntax-highlighter/dist/esm/languages/prism/python'),
+      import('react-syntax-highlighter/dist/esm/languages/prism/java'),
+      import('react-syntax-highlighter/dist/esm/languages/prism/json'),
+      import('react-syntax-highlighter/dist/esm/languages/prism/bash'),
+      import('react-syntax-highlighter/dist/esm/languages/prism/sql'),
+      import('react-syntax-highlighter/dist/esm/languages/prism/css'),
+    ]);
+    PrismLight.registerLanguage('javascript', javascript.default);
+    PrismLight.registerLanguage('typescript', typescript.default);
+    PrismLight.registerLanguage('jsx', jsx.default);
+    PrismLight.registerLanguage('tsx', tsx.default);
+    PrismLight.registerLanguage('python', python.default);
+    PrismLight.registerLanguage('java', java.default);
+    PrismLight.registerLanguage('json', json.default);
+    PrismLight.registerLanguage('bash', bash.default);
+    PrismLight.registerLanguage('sql', sql.default);
+    PrismLight.registerLanguage('css', css.default);
+    return {
+      default: ({ children, ...rest }: { children?: React.ReactNode } & Record<string, unknown>) => (
+        <PrismLight
+          {...rest}
+          style={vscDarkPlus as { [key: string]: React.CSSProperties }}
+          PreTag='div'
+        >
+          {String(children ?? '').replace(/\n$/, '')}
+        </PrismLight>
+      ),
+    };
+  }),
+);
 
 export interface MarkdownPreviewProps {
   content: string;
@@ -54,13 +74,11 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
             const match = /language-(\w+)/.exec(className || '');
             const isInline = (props as unknown as Record<string, unknown>).inline;
             return !isInline && match ? (
-              <SyntaxHighlighter
-                style={vscDarkPlus as { [key: string]: React.CSSProperties }}
-                language={match[1]}
-                PreTag='div'
-              >
-                {String(children).replace(/\n$/, '')}
-              </SyntaxHighlighter>
+              <Suspense fallback={<code className={className}>{children}</code>}>
+                <SyntaxHighlighter language={match[1]}>
+                  {String(children).replace(/\n$/, '')}
+                </SyntaxHighlighter>
+              </Suspense>
             ) : (
               <code
                 {...(props as React.HTMLAttributes<HTMLElement>)}
