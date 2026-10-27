@@ -558,7 +558,8 @@ function topemsRechartsSplitPlugin(): Plugin {
           name: 'mui-core-vendor',
         },
         { test: /[\\/]node_modules[\\/]@mui[\\/]icons-material[\\/]/, name: 'mui-icons' },
-        { test: /[\\/]node_modules[\\/]@mui[\\/]x-(date-pickers|tree-view)[\\/]/, name: 'mui-x' },
+        { test: /[\\/]node_modules[\\/]@mui[\\/]x-date-pickers[\\/]/, name: 'mui-x-date-pickers' },
+        { test: /[\\/]node_modules[\\/]@mui[\\/]x-tree-view[\\/]/, name: 'mui-x-tree-view' },
         {
           test: /[\\/]node_modules[\\/](@react-three[\\/](fiber|drei|postprocessing)|three)[\\/]/,
           name: 'r3f-vendor',
@@ -1373,7 +1374,7 @@ minify: 'esbuild',
           if (name.startsWith('config-')) return false;
           // 非登录首屏大 vendor / 业务页面 chunk（业务页面按需消费）
           if (
-            /^(markdown-vendor|exceljs-vendor|office-vendor|mui-x|recharts-|r3f-vendor|leaflet-vendor|amap-vendor|dev-tools|admin-|hrm-|finance-)/.test(
+            /^(markdown-vendor|exceljs-vendor|office-vendor|mui-x-date-pickers|mui-x-tree-view|recharts-|r3f-vendor|leaflet-vendor|amap-vendor|dev-tools|admin-|hrm-|finance-)/.test(
               name
             )
           ) {
