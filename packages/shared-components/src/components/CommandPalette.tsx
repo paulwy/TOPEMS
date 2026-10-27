@@ -21,6 +21,7 @@ import {
   Divider,
   Chip,
   InputAdornment,
+  useTheme,
 } from '@mui/material';
 import {
   Search,
@@ -99,6 +100,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const theme = useTheme();
 
   const allItems = useMemo(() => {
     if (groups.length > 0) {
@@ -194,7 +196,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             boxShadow: 24,
           },
         },
-        backdrop: { style: { backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' } },
+        backdrop: { style: { backgroundColor: theme.palette.action.disabled, backdropFilter: 'blur(4px)' } },
       }}
     >
       {/* Search input */}

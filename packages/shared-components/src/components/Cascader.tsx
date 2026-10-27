@@ -10,6 +10,7 @@ import {
   Typography,
   Divider,
   Chip,
+  useTheme,
 } from '@mui/material';
 import { ChevronRight, ChevronLeft, Check, X } from 'lucide-react';
 import i18next from 'i18next';
@@ -57,6 +58,7 @@ const Cascader: React.FC<CascaderProps> = ({
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [selectedPath, setSelectedPath] = useState<CascaderOption[]>([]);
   const [currentLevel, setCurrentLevel] = useState<CascaderOption[]>(options);
+  const theme = useTheme();
 
   const open = Boolean(anchorEl);
 
@@ -170,7 +172,7 @@ const Cascader: React.FC<CascaderProps> = ({
         }}
       >
         <Box sx={{ display: 'flex', height: '100%' }}>
-          <Box sx={{ width: 240, overflowY: 'auto', borderRight: '1px solid rgba(0,0,0,0.1)' }}>
+          <Box sx={{ width: 240, overflowY: 'auto', borderRight: `1px solid ${theme.palette.divider}` }}>
             <List>
               {currentLevel.map((option) => (
                 <ListItemButton
@@ -178,7 +180,7 @@ const Cascader: React.FC<CascaderProps> = ({
                   disabled={option.disabled}
                   onClick={() => handleSelect(option)}
                   sx={{
-                    '&:hover': { backgroundColor: 'rgba(0,0,0,0.04)' },
+                    '&:hover': { backgroundColor: theme.palette.action.hover },
                     '&.Mui-disabled': { opacity: 0.5 },
                   }}
                 >
@@ -199,7 +201,7 @@ const Cascader: React.FC<CascaderProps> = ({
           </Box>
 
           {selectedPath.length > 0 && (
-            <Box sx={{ width: 120, overflowY: 'auto', backgroundColor: 'rgba(0,0,0,0.02)' }}>
+            <Box sx={{ width: 120, overflowY: 'auto', backgroundColor: theme.palette.action.selected }}>
               <List>
                 {selectedPath.map((option, index) => (
                   <React.Fragment key={option.value}>
@@ -215,7 +217,7 @@ const Cascader: React.FC<CascaderProps> = ({
                         setCurrentLevel(parentOptions);
                       }}
                       sx={{
-                        '&:hover': { backgroundColor: 'rgba(0,0,0,0.04)' },
+                        '&:hover': { backgroundColor: theme.palette.action.hover },
                       }}
                     >
                       <ListItemText
@@ -231,11 +233,11 @@ const Cascader: React.FC<CascaderProps> = ({
                 ))}
               </List>
 
-              <Box sx={{ p: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+              <Box sx={{ p: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
                 <ListItemButton
                   onClick={handleBack}
                   sx={{
-                    '&:hover': { backgroundColor: 'rgba(0,0,0,0.04)' },
+                    '&:hover': { backgroundColor: theme.palette.action.hover },
                   }}
                 >
                   <ListItemIcon>

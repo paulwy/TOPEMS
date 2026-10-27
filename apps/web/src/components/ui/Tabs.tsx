@@ -116,7 +116,7 @@ export const TabGroup: React.FC<TabGroupProps> = ({
             borderRadius: 1,
             cursor: item.disabled ? 'not-allowed' : 'pointer',
             fontFamily: 'inherit',
-            fontSize: '0.875rem',
+            fontSize: tabTheme.typography.body2.fontSize ?? '0.875rem',
             fontWeight: 500,
             whiteSpace: 'nowrap',
             color: active ? 'primary.main' : 'text.secondary',

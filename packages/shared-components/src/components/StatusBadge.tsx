@@ -621,7 +621,7 @@ const VARIANT_STYLES: Record<StatusVariant, unknown> = {
   filled: (color: StatusColor) => ({
     sx: {
       bgcolor: color === 'default' ? 'grey.400' : `${color}.main`,
-      color: color === 'default' ? 'var(--color-primary-foreground, var(--color-primary-foreground, #ffffff))' : 'var(--color-primary-foreground, var(--color-primary-foreground, #ffffff))',
+      color: 'common.white',
     },
   }),
   outlined: {

@@ -40,6 +40,7 @@ function escapeHtml(value: unknown): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+    // &#039; is an HTML entity for apostrophe (XSS prevention), NOT a hardcoded color
     .replace(/'/g, '&#039;');
 }
 

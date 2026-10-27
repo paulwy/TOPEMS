@@ -16,6 +16,8 @@ import {
   Button,
   Typography,
   Divider,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
@@ -581,6 +583,7 @@ export function GisMapTemplate({
   children,
   ...props
 }: GisMapTemplateProps) {
+  const theme = useTheme();
   const mapRef = useRef<L.Map | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showLayers, setShowLayers] = useState(false);
@@ -695,7 +698,7 @@ export function GisMapTemplate({
     const color = colors[type] || colors.custom;
     return L.divIcon({
       className: 'custom-marker',
-      html: `<div style="width: 24px; height: 24px; background: ${color}; border-radius: 50%; border: 3px solid var(--color-primary-foreground); box-shadow: var(--shadow-custom, 0 2px 8px rgba(0,0,0,0.3));"></div>`,
+      html: `<div style="width: 24px; height: 24px; background: ${color}; border-radius: 50%; border: 3px solid var(--color-primary-foreground); box-shadow: var(--shadow-custom, 0 2px 8px ${alpha(theme.palette.common.black, 0.3)});"></div>`,
       iconSize: [24, 24],
       iconAnchor: [12, 12],
     });
@@ -780,7 +783,7 @@ export function GisMapTemplate({
             position={trackPoints[currentTrackIndex].position}
             icon={L.divIcon({
               className: 'track-marker',
-              html: `<div style="width: 30px; height: 30px; background: ${designTokens.colors.primary.dark}; border-radius: 50%; border: 4px solid var(--color-primary-foreground); box-shadow: var(--shadow-custom, 0 0 10px rgba(25,118,210,0.5)); animation: pulse 1s infinite;"></div>`,
+              html: `<div style="width: 30px; height: 30px; background: ${designTokens.colors.primary.dark}; border-radius: 50%; border: 4px solid var(--color-primary-foreground); box-shadow: var(--shadow-custom, 0 0 10px ${alpha(theme.palette.primary.main, 0.5)}); animation: pulse 1s infinite;"></div>`,
               iconSize: [30, 30],
               iconAnchor: [15, 15],
             })}

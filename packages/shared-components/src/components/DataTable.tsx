@@ -1371,7 +1371,7 @@ export function DataTable<TData, TValue>({
                   whiteSpace: 'nowrap',
                   fontSize: 14,
                   ...(compact && { py: 1 }),
-                  ...(isEditing && { backgroundColor: 'rgba(255, 235, 59, 0.12)' }),
+                  ...(isEditing && { backgroundColor: theme.palette.warning.light }),
                 }}
               >
                 {isEditable && isEditing ? (

@@ -8,6 +8,7 @@ import {
   IconButton,
   Typography,
   Chip,
+  useTheme,
 } from '@mui/material';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -53,6 +54,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 }) => {
   const finalPlaceholder = placeholder ?? locale?.placeholder ?? i18n.t('shared.date_range_picker.placeholder');
   const weekdays = locale?.weekdays ?? DEFAULT_WEEKDAYS;
+  const theme = useTheme();
   const presets = presetsProp ?? locale?.presets ?? [
     { label: i18n.t('shared.date_range_picker.today'), days: 0 },
     { label: i18n.t('shared.date_range_picker.yesterday'), days: 1 },
@@ -285,7 +287,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     padding: 0,
                     borderRadius: start || end ? '50%' : 0,
                     backgroundColor: start ? 'primary.main' : end ? 'primary.main' : inRange ? 'primary.light' : 'transparent',
-                    color: start || end ? 'var(--color-primary-foreground, var(--color-primary-foreground, #ffffff))' : inRange ? 'primary.contrastText' : today ? 'primary.main' : 'inherit',
+                    color: start || end ? `var(--color-primary-foreground, var(--color-primary-foreground, ${theme.palette.common.white}))` : inRange ? 'primary.contrastText' : today ? 'primary.main' : 'inherit',
                     '&:hover': {
                       backgroundColor: 'primary.light',
                     },

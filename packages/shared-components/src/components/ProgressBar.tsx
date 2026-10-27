@@ -1,14 +1,5 @@
 import { designTokens } from '@topems/tokens';
-import { Box, Typography, LinearProgress, keyframes, useTheme } from '@mui/material';
-
-// 渐变颜色配置
-const GRADIENT_COLORS = {
-  primary: 'linear-gradient(90deg, primary.main, primary.dark)',
-  success: 'linear-gradient(90deg, var(--color-success, var(--color-success, var(--color-success, #22c55e))), var(--color-success-hover, var(--color-success-hover, var(--color-success-hover, #16a34a))))',
-  warning: 'linear-gradient(90deg, warning.main, warning.dark)',
-  error: 'linear-gradient(90deg, error.main, error.dark)',
-  gradient: 'linear-gradient(90deg, primary.main, secondary.main, var(--color-fallback-accent-pink, var(--color-fallback-accent-pink, #ec4899)))',
-};
+import { Box, Typography, LinearProgress, keyframes, useTheme, alpha } from '@mui/material';
 
 // 尺寸配置
 const SIZE_CONFIG = {
@@ -76,6 +67,15 @@ export default function ProgressBar({
 }: ProgressBarProps) {
   const theme = useTheme();
 
+  // 渐变颜色配置（主题感知）
+  const GRADIENT_COLORS = {
+    primary: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+    success: `linear-gradient(90deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
+    warning: `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
+    error: `linear-gradient(90deg, ${theme.palette.error.main}, ${theme.palette.error.dark})`,
+    gradient: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.secondary.light})`,
+  };
+
   // 计算百分比
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
   const displayValue = Math.round(percentage);
@@ -130,11 +130,11 @@ export default function ProgressBar({
               ...(striped && {
                 backgroundImage: `linear-gradient(
                   45deg,
-                  rgba(255, 255, 255, 0.15) 25%,
+                  ${alpha(theme.palette.common.white, 0.15)} 25%,
                   transparent 25%,
                   transparent 50%,
-                  rgba(255, 255, 255, 0.15) 50%,
-                  rgba(255, 255, 255, 0.15) 75%,
+                  ${alpha(theme.palette.common.white, 0.15)} 50%,
+                  ${alpha(theme.palette.common.white, 0.15)} 75%,
                   transparent 75%,
                   transparent
                 )`,
@@ -218,7 +218,7 @@ export default function ProgressBar({
                     />
                     <stop
                       offset='100%'
-                      stopColor='var(--color-fallback-accent-pink, var(--color-fallback-accent-pink, #ec4899))'
+                      stopColor={theme.palette.secondary.light}
                     />
                   </>
                 ) : (

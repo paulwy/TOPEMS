@@ -209,7 +209,7 @@ export default function OpeningBalancePage() {
               size={16}
               color='text.disabled'
             />
-            <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+            <Typography sx={{ fontFamily: 'monospace', fontSize: theme.typography.body2.fontSize }}>
               {row.code}
             </Typography>
           </Box>
@@ -566,7 +566,7 @@ export default function OpeningBalancePage() {
                     style={{
                       margin: `${designTokens.spacing.sm} 0 0 0`,
                       paddingLeft: 16,
-                      fontSize: '0.875rem',
+                      fontSize: theme.typography.body2.fontSize,
                       color: theme.palette.warning.dark,
                     }}
                   >

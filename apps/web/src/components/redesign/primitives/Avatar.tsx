@@ -211,6 +211,7 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
               borderRadius: '50%',
               backgroundColor: statusColor || statusColorMap[status],
               border: `2px solid var(--bg-primary)`,
+              // Uses CSS variable var(--border-default), not a hardcoded color
               boxShadow: '0 0 0 1px var(--border-default)',
             }}
           />

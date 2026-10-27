@@ -54,6 +54,16 @@ const IGNORED_PATH_PARTS = [
   '/theme/redesign-global.',
   '/theme/generated-tokens.',
   'packages/shared-components/src/theme/',
+  // 非违规：图表色板 / 热力图渐变 / 全局 CSS 变量
+  '/charts/chartPalette.',
+  '/gis/HeatmapLayer.',
+  '/gis/modules/HeatmapModule/',
+  '/index.css',
+  // 扫描器误报：&#039; HTML 实体（XSS 防护）被 regex 当成 #039 颜色
+  '/common/DataExport.',
+  '/microfrontend/runtime/cross-framework.',
+  // boxShadow 用了 CSS 变量 var(--border-default)，不是硬编码
+  '/redesign/primitives/Avatar.',
 ];
 
 const PATTERNS = [
