@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { useFormSections } from './useFormSections';
 import { iconSm, iconMd, iconLg } from '../sharedStyles';
 import type { BoxProps } from '@mui/material';
 import {
@@ -430,9 +431,14 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   detailItemName,
   ...props
 }) => {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(sections.filter((s) => s.defaultExpanded !== false).map((s) => s.id))
-  );
+  const {
+    expandedSections,
+    setExpandedSections,
+    toggleSection,
+    expandAll,
+    collapseAll,
+    isExpanded,
+  } = useFormSections({ sections });
 
   // 字段可见性状态
   const [fieldVisibility, setFieldVisibility] = useState<Record<string, boolean>>(() => {
@@ -763,18 +769,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     [reset, displayValidationHint]
   );
 
-  // 切换区块展开
-  const toggleSection = useCallback((sectionId: string) => {
-    setExpandedSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(sectionId)) {
-        next.delete(sectionId);
-      } else {
-        next.add(sectionId);
-      }
-      return next;
-    });
-  }, []);
+  // 切换区块展开已移至 useFormSections hook
 
   // 获取字段验证错误消息
   const getErrorMessage = (fieldName: string, _field: FormField): string => {
