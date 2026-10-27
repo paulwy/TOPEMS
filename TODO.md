@@ -1,3 +1,15 @@
+## 三套迁移台账治理（2026-10-28）✅ 已完成
+
+> 用户点名「三套迁移台账治理」后闭环：public/iam/mes 三套 _sqlx_migrations 收敛为单一 public 台账，文件与台账完全对齐。
+
+- **背景**：迁移体系曾按 schema 分裂为三套台账——public 493（至 10-27）/ iam 49（停更 10-05）/ mes 292（停更 10-03）。iam/mes 为历史遗留（旧迁移目录已归并 database/migrations，新迁移全走 public；代码与部署脚本均无引用，仅 gen-orphan-tables-migration.py 与 setup-db.sh 注释提及）。
+- **落地**：
+  - 补录 2 个手动应用未入台账的迁移（20261027200000 副本治理、20261028000000 订阅表——checksum=sha384(文件内容)，已验证算法与台账一致）；
+  - 迁移文件与台账完全对齐（496 .sql = 496 条）；
+  - DROP iam/mes 僵尸台账（备份 /tmp/ledger_backup_iam_mes.sql，450 行；代码/脚本无实质引用）；
+  - 新增迁移 `20261028010000_remove_legacy_ledger_tables.sql`（幂等 DROP TABLE IF EXISTS）固化治理，供其他环境（云 VM 等）重放；本库已重放 + 补录，终态单一 public 台账。
+- **验证**：台账 496 = 迁移文件 496；服务健康 31 模块；登录链 200 正常。
+
 ## S26 invoice_type 非法值 422 化（2026-10-28）✅ 已完成
 
 > 用户点名「invoice_type 非法值 500→422 化」后闭环：非法发票类型从 DB CHECK 兜底 500 改为 handler 显式校验 422。
