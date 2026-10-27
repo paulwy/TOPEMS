@@ -1,3 +1,13 @@
+## 批 C · 轻量回归快验（2026-10-28）✅ 已完成
+
+> 用户拍板「按轻量回归快验推进」后闭环：对近期 4 个已闭环行为变更项做独立回归快验。报告 `docs/reports/e2e/modules/批C_轻量回归快验_20261028.md`。
+
+- **C1 S25 登录 401**：错误口令/不存在用户 → HTTP 401；空参 → 400；正确 → 200 ✅
+- **C2 S26 发票 422**：非法 invoice_type → 422；重复号 → 409 ✅
+- **C3 subscriptions**：current free → upsert basic → cancel → 降级 free ✅
+- **C4 台账治理**：public 496 = 文件 496，仅 public 单一台账 ✅
+- smoke 4105/4105 PASS。批 C 收尾；后续记录项逐个闭环后再评估全量回归。
+
 ## 三套迁移台账治理（2026-10-28）✅ 已完成
 
 > 用户点名「三套迁移台账治理」后闭环：public/iam/mes 三套 _sqlx_migrations 收敛为单一 public 台账，文件与台账完全对齐。
