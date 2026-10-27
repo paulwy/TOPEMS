@@ -1,5 +1,6 @@
 // modules/MapModule/MapView.tsx
 import React, { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react';
+import { useMapMeasure } from './useMapMeasure';
 import { useTheme } from '@mui/material';
 import {
   MapContainer,
@@ -389,12 +390,19 @@ const MapView: React.FC<MapViewProps> = ({
     storage: true,
   });
   const [toolMode, setToolMode] = useState<ToolMode>('select');
-  const [measurePoints, setMeasurePoints] = useState<[number, number][]>([]);
-  const [measureResult, setMeasureResult] = useState<string>('');
+  const {
+    measurePoints,
+    setMeasurePoints,
+    measureResult,
+    setMeasureResult,
+    showMeasureTooltip,
+    setShowMeasureTooltip,
+    tooltipPosition,
+    setTooltipPosition,
+    clearMeasure,
+  } = useMapMeasure();
   const [drawFeatures, setDrawFeatures] = useState<DrawFeature[]>([]);
   const [currentDrawing, setCurrentDrawing] = useState<DrawFeature | null>(null);
-  const [showMeasureTooltip, setShowMeasureTooltip] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<[number, number]>([0, 0]);
   const [showTrackPanel, setShowTrackPanel] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [heatmapMode, setHeatmapMode] = useState<'density' | 'status'>('density');
@@ -414,11 +422,7 @@ const MapView: React.FC<MapViewProps> = ({
       setCurrentDrawing(null);
     }
   }, []);
-  const clearMeasure = useCallback(() => {
-    setMeasurePoints([]);
-    setMeasureResult('');
-    setShowMeasureTooltip(false);
-  }, []);
+  // clearMeasure 已移至 useMapMeasure hook
   const clearDrawings = useCallback(() => {
     setDrawFeatures([]);
     setCurrentDrawing(null);
