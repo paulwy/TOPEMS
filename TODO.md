@@ -17,7 +17,7 @@
 - **S13 通知字段契约**：channels 404 系方案勘误（实际路径 notifications）；content 后端可空 vs 前端 string 必选——notification.rs 8 处 COALESCE（unwrap_or_default），实测 NULL→`""` ✅
 - **refresh/logout HTTP 语义（S25 同类）**：auth.rs refresh 13 处 + logout 8 处错误应答统一为显式 StatusCode（400/401/500 与 envelope code 对齐）；连带修复 login 事务 abort 根因 = core_sessions/core_refresh_tokens 缺 tenant_id 列（INSERT 引用但表缺失，refresh token 从未落库）——新增迁移 20261028020000/20261028030000 补列 + RLS 策略；实测 refresh 空 token 400 / 无效 401 / 正确 200 旋转 / logout 正确 200 吊销 ✅
 - **must_change_password 排期**：后端已闭环（JWT claim + PUT /iam/users/change-password 端点存在）；前端强制改密流程未实施——待排期（业务拍板后实施）📋
-- **pm response_time degraded 监控项**：根因查清 = svc/monitor /health 为静态 mock（16 服务硬编码数据，150.3ms 系占位非真实探活）；非真实故障；真实探活改造待排期 📋
+- **pm response_time degraded 监控项（monitor 真实探活）**：根因查清 = svc/monitor /health 为静态 mock（16 服务硬编码数据，150.3ms 系占位非真实探活）；已改造为真实探活（2026-10-28）——`/api/monitor/health` 实时 HTTP 请求 BFF `/api/server/health` 取真实模块注册清单（31 模块）+ 实测延迟 + 真实进程 uptime + 稳定 UUID（确定性 hash）；BFF 不可达/异常时返回 bff-gateway down/degraded 条目如实标记；探活目标可经 `MONITOR_BFF_URL` 配置；standalone（8095）与 embedded（8099）两构造点同步 ✅
 
 ## 批 C · 轻量回归快验（2026-10-28）✅ 已完成
 
