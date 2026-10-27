@@ -1,3 +1,12 @@
+## subscriptions 顶层契约落地（2026-10-28）✅ 已完成
+
+> 用户点名「subscriptions 顶层契约」后闭环：启用 module-subscription feature，/api/subscriptions 三端点契约完整落地。commit `c05880aa1`（+ checksums 同步）。
+
+- **现状（拍板前）**：subscriptions 有 3 层——① `/api/subscriptions/*`（BFF 订阅管理：current/upsert/cancel，feature `module-subscription` 门控**未启用 → 404**）；② `/api/core/subscriptions/plans`（unified-core 计划列表，已 200）；③ `/api/portal/realtime-processing/subscriptions`（portal 数据订阅，已 200，语义独立）。权限（subscription:read/admin）与 public.subscriptions 表已存在，前端无调用。
+- **落地**：server 默认 features 启用 `module-subscription`；修复模块历史编译问题（query_as 缺类型参数 → `::<_, Subscription>`；Result 别名 1 泛型与 std Result 2 泛型冲突 → 显式 `std::result::Result`）；迁移 `20261028000000` 幂等补齐存量 stub 表（public.subscriptions 原仅 id+deleted_at → +7 列：tenant_id/tier/status/started_at/expires_at/created_at/updated_at）。
+- **实机闭环**：GET current 空态 free → POST upsert（tier=advanced）200 → GET 读回 advanced/active → POST cancel 200 → GET effective 自动降级 free；Tier 枚举 free/basic/advanced，非法值（如 pro）400 为正常校验；web-contract-smoke 4105/4105 PASS。
+- **契约定位**：`/api/subscriptions/*` = 商业化订阅管理（feature 已启用，权限分层 read/admin）；`/api/core/subscriptions/plans` = 订阅计划查询（只读）；`/api/portal/realtime-processing/subscriptions` = 实时处理持久化订阅（独立域）。前端顶层订阅管理对接 `/api/subscriptions/*`。
+
 ## unified-core 四 schema 副本治理（2026-10-27）✅ 已完成
 
 > 用户拍板「unified-core 四 schema 副本治理」后执行：iam/mes/flow/communication 四 schema 的 core_* 影子副本全量收敛到 public 权威。commit `cd7b0f7e7`（代码 + 迁移，门禁全过）。
