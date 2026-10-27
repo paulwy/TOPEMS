@@ -5308,7 +5308,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   | P1 | mes work_reports | 同上缺 `tenant_id` 列 | **DB 已 ALTER 加列** |
   | P2 | analytics bi comparison_analysis/widget | `DateTime.unwrap_or_else(Utc::now)` 编译错（6 处，E0599） | 已修代码；因缓存门禁 checkout 还原待下批 |
   | P2 | analytics datasource 等 / wms | `sqlx prepare` 连库后 query! Row 与代码期望类型漂移（E0308 51 处，row_to_response 参数错） | 预先漂移（DB↔缓存↔代码三方契约），需独立批次 |
-  | P3 | mes processes | 创建请求必填字段为 `name`（非 process_name），422 为 API 契约字段名差异 | 记录 |
+  | P3 | mes processes | 创建请求必填字段为 `name`（非 process_name），422 为 API 契约字段名差异 | 已完成（第四十八轮 alias 双兼容 + 本轮复验实机闭环） |
 - **环境处置**：`cargo sqlx prepare --workspace` 因 analytics/wms/mes 预先漂移失败（且破坏 .sqlx 缓存）→ 已 `git checkout .sqlx/` 恢复 362 条缓存，`cargo build --bin topems-server` 通过（44s），工作区与 origin 一致（无代码改动待提交）。
 - **遗留待下批**：① production_record operator NOT NULL 缺陷（代码已备好）；② analytics 6 处 unwrap_or_else + 51 处 E0308 类型漂移；③ quality_standard_values/work_reports 的 tenant_id 迁移文件入库（DB 已改）。
 - **✅ 遗留三项已闭环（2026-10-27，4 提交已推送 origin/main `65d8d33d8..a8b042e05`）**：
@@ -5326,6 +5326,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **产物**：仅 DB 账本变更 + 备份表（无仓库文件改动）；本机迁移规程不变（PGOPTIONS search_path=public）。
 
 ## 第四十八轮（2026-10-27）：P3 mes processes 契约字段双兼容 ✅
+## 第四十九轮（2026-10-28）：P3 复验实机闭环 + create_process INSERT 类型修复 ✅
+- **P3 契约对齐实机确认**：POST `/api/mes/processes` 只发 `name` → 200 + process_no；只发 `process_name`（alias 旧契约）→ 200 + process_no；列表读回（`data.processes`）与 psql 落库核对 tenant_id=0001 一致；探针行已清理。
+- **复验暴露并修复真实 bug**：create_process INSERT 的 `work_station_id` 绑 `Option<&str>` 到 uuid 列且无 CAST，PG 报 `column "work_station_id" is of type uuid but expression is of type text` → 创建接口此前**全部 500**（envelope code 500 + HTTP 200 错位同现）。修复：`NULLIF($8, '')::uuid`（与 update 路径 `NULLIF($9,'')::uuid` 风格一致）；增量重编译 + 实机创建/读回/清理全闭环；svc/mes lib 370 测试全绿、clippy deny 过。
+- **新登记（待业务拍板）**：① `mes.production_processes.process_name` 无唯一约束——修复后重复名可创建两行，是否需业务级唯一（409）待定；② create_process 错误应答仍是 envelope code + HTTP 200 错位（S25 同类，svc/mes 模块未纳入上一批语义治理），登记待批量治理。
 - **第四十六轮记录项收口**：创建请求必填 `name`（非 `process_name`），旧名调用方会 422。核查结论：后端 `CreateProcessRequest.name: String`、前端 `CreateProductionProcessRequest.name: string` 契约已对齐；全仓无旧字段名现役调用方，422 仅来自旧文档/脚本载荷。
 - **对齐方向（沿用"后端宽容、双兼容"惯例）**：`CreateProcessRequest` / `UpdateProcessRequest` 的 `name` 加 `#[serde(alias = "process_name")]`，新旧字段名均可解析，前端零改动。
 - **回归测试**：新增 2 条 serde 解析用例（create/update 的 name 与 process_name alias），lib 368→370 全绿；clippy deny 过（测试模块加 unwrap_used/expect_used allow）。
