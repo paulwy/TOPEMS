@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useFormSections } from './useFormSections';
+import { useFormDynamicFields } from './useFormDynamicFields';
 import { iconSm, iconMd, iconLg } from '../sharedStyles';
 import type { BoxProps } from '@mui/material';
 import {
@@ -440,68 +441,18 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     isExpanded,
   } = useFormSections({ sections });
 
-  // 字段可见性状态
-  const [fieldVisibility, setFieldVisibility] = useState<Record<string, boolean>>(() => {
-    const visibility: Record<string, boolean> = {};
-    sections.forEach((section) => {
-      section.fields.forEach((field) => {
-        visibility[field.name] = true;
-      });
-    });
-    return visibility;
-  });
-
-  // 动态选项状态
-  const [dynamicOptions, setDynamicOptions] = useState<
-    Record<string, Array<{ label: string; value: unknown }>>
-  >(() => {
-    const options: Record<string, Array<{ label: string; value: unknown }>> = {};
-    sections.forEach((section) => {
-      section.fields.forEach((field) => {
-        if (field.options) {
-          options[field.name] = field.options;
-        }
-      });
-    });
-    return options;
-  });
-
-  // 动态必填状态
-  const [dynamicRequired, setDynamicRequired] = useState<Record<string, boolean>>(() => {
-    const required: Record<string, boolean> = {};
-    sections.forEach((section) => {
-      section.fields.forEach((field) => {
-        if (field.required) {
-          required[field.name] = field.required;
-        }
-      });
-    });
-    return required;
-  });
-
-  // 动态禁用状态
-  const [dynamicDisabled, setDynamicDisabled] = useState<Record<string, boolean>>(() => {
-    const disabled: Record<string, boolean> = {};
-    sections.forEach((section) => {
-      section.fields.forEach((field) => {
-        if (field.disabled) {
-          disabled[field.name] = field.disabled;
-        }
-      });
-    });
-    return disabled;
-  });
-
-  // 动态可编辑状态
-  const [dynamicEditable, setDynamicEditable] = useState<Record<string, boolean>>(() => {
-    const editable: Record<string, boolean> = {};
-    sections.forEach((section) => {
-      section.fields.forEach((field) => {
-        editable[field.name] = field.editable !== false;
-      });
-    });
-    return editable;
-  });
+  const {
+    fieldVisibility,
+    setFieldVisibility,
+    dynamicOptions,
+    setDynamicOptions,
+    dynamicRequired,
+    setDynamicRequired,
+    dynamicDisabled,
+    setDynamicDisabled,
+    dynamicEditable,
+    setDynamicEditable,
+  } = useFormDynamicFields({ sections });
 
   // 验证提示状态
   const [validationHint, setValidationHint] = useState<ValidationToast | null>(null);
