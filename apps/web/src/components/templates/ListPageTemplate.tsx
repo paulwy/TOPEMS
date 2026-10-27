@@ -2,6 +2,7 @@ import { iconSm, iconMd, iconLg } from '../sharedStyles';
 import { ListPageHeader } from './ListPageHeader';
 import { useListPageForm } from './useListPageForm';
 import { useListPageSortSearch } from './useListPageSortSearch';
+import { useListPageSelection } from './useListPageSelection';
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
@@ -1526,37 +1527,20 @@ export function ListPageTemplate<
     filterStorageKey,
     internalSearchQuery: internalListStateResult?.searchQuery,
   });
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedRow, setSelectedRow] = useState<T | null>(null);
-  // 批量选择状态 - 从 localStorage 恢复
-  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(() => {
-    const key = filterStorageKey || window.location.pathname;
-    try {
-      const stored = localStorage.getItem(`listpage:selectedIds:${key}`);
-      if (stored) {
-        return new Set(JSON.parse(stored));
-      }
-    } catch {
-      // ignore
-    }
-    return new Set();
+  const {
+    anchorEl,
+    selectedRow,
+    setAnchorEl,
+    setSelectedRow,
+    selectedIds,
+    setSelectedIds,
+    batchOperationState,
+    setBatchOperationState,
+    batchAbortController,
+  } = useListPageSelection<T>({
+    filterStorageKey,
+    persistSelection: persistColumnConfig, // 复用 persistColumnConfig 作为选中持久化开关
   });
-  // 批量操作状态
-  const [batchOperationState, setBatchOperationState] = useState<{
-    isProcessing: boolean;
-    processed: number;
-    total: number;
-    actionLabel: string;
-    isCancelled: boolean;
-  }>({
-    isProcessing: false,
-    processed: 0,
-    total: 0,
-    actionLabel: '',
-    isCancelled: false,
-  });
-  // 批量操作取消控制器
-  const batchAbortController = useRef<AbortController | null>(null);
   // 批量操作确认对话框
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<{
