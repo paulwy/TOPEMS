@@ -9,7 +9,10 @@ export interface UseListPageMiscOptions {
   defaultExpandedIds?: Array<string | number>;
   columnConfigStorageKey?: string;
   columnConfigurable?: boolean;
-  resolvedColumns?: Array<{ id: string; label?: string; visible?: boolean }>;
+  resolvedColumns?: Array<{ id: string; visible?: boolean; order?: number }>;
+  defaultColumnConfig?: Array<{ id: string; visible: boolean; order?: number; label?: string }>;
+  persistColumnConfig?: boolean;
+  loadColumnConfig?: (key: string) => Array<{ id: string; visible: boolean; order?: number; label?: string }>;
 }
 
 /**
@@ -22,7 +25,48 @@ export function useListPageMisc<T = unknown>(options: UseListPageMiscOptions = {
     columnConfigStorageKey = 'default',
     columnConfigurable = false,
     resolvedColumns = [],
+    defaultColumnConfig = [],
+    persistColumnConfig = false,
+    loadColumnConfig,
   } = options;
+
+  // ============ 列配置状态 ============
+  const [columnConfig, setColumnConfig] = useState<Array<{ id: string; visible: boolean; label?: string; order?: number }>>([]);
+  const columnConfigInitialized = useRef(false);
+
+  // 初始化 columnConfig（使用 resolvedColumns，支持 crud 自动生成的列）
+  useEffect(() => {
+    if (columnConfigInitialized.current) return;
+    if (!columnConfigurable) return;
+
+    // 1. defaultColumnConfig 优先
+    if (defaultColumnConfig.length > 0) {
+      setColumnConfig(defaultColumnConfig);
+      columnConfigInitialized.current = true;
+      return;
+    }
+
+    // 2. 从 localStorage 加载
+    if (persistColumnConfig && loadColumnConfig) {
+      const stored = loadColumnConfig(columnConfigStorageKey);
+      if (stored.length > 0) {
+        setColumnConfig(stored);
+        columnConfigInitialized.current = true;
+        return;
+      }
+    }
+
+    // 3. 用 resolvedColumns 初始化
+    const cols = resolvedColumns || [];
+    setColumnConfig(
+      cols.map((col, index) => ({
+        id: col.id,
+        visible: true,
+        order: col.order ?? index,
+      }))
+    );
+    columnConfigInitialized.current = true;
+  }, [columnConfigurable, defaultColumnConfig, persistColumnConfig, loadColumnConfig, columnConfigStorageKey, resolvedColumns]);
 
   // ============ 确认对话框 ============
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -30,38 +74,6 @@ export function useListPageMisc<T = unknown>(options: UseListPageMiscOptions = {
 
   // ============ 展开状态 ============
   const [expandedIds, setExpandedIds] = useState<Array<string | number>>(defaultExpandedIds);
-
-  // ============ 列配置状态 ============
-  const [columnConfig, setColumnConfig] = useState<Array<{ id: string; visible: boolean; label?: string; order?: number }>>([]);
-  const columnConfigInitialized = useRef(false);
-
-  // 初始化 columnConfig
-  useEffect(() => {
-    if (columnConfigInitialized.current) return;
-    if (!columnConfigurable || resolvedColumns.length === 0) return;
-
-    // 从 localStorage 加载
-    try {
-      const stored = localStorage.getItem(`listpage:columnConfig:${columnConfigStorageKey}`);
-      if (stored) {
-        setColumnConfig(JSON.parse(stored));
-        columnConfigInitialized.current = true;
-        return;
-      }
-    } catch {
-      // ignore
-    }
-
-    // 用 resolvedColumns 初始化
-    setColumnConfig(
-      resolvedColumns.map((col) => ({
-        id: col.id,
-        visible: col.visible !== false,
-        label: col.label,
-      }))
-    );
-    columnConfigInitialized.current = true;
-  }, [columnConfigurable, resolvedColumns, columnConfigStorageKey]);
 
   // ============ 动作 ============
   const openConfirmDialog = useCallback((action: PendingAction<T>) => {

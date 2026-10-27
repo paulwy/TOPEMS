@@ -1561,34 +1561,13 @@ export function ListPageTemplate<
     setMobileMenuEl,
   } = useListPageMisc<T>({
     defaultExpandedIds,
+    columnConfigStorageKey,
+    columnConfigurable,
+    resolvedColumns,
+    defaultColumnConfig,
+    persistColumnConfig,
+    loadColumnConfig,
   });
-  // 初始化 columnConfig（使用 resolvedColumns，支持 crud 自动生成的列）
-  const columnConfigInitialized = useRef(false);
-  useEffect(() => {
-    if (columnConfigInitialized.current) return;
-    if (defaultColumnConfig.length > 0) {
-      setColumnConfig(defaultColumnConfig);
-      columnConfigInitialized.current = true;
-      return;
-    }
-    if (persistColumnConfig) {
-      const stored = loadColumnConfig(columnConfigStorageKey);
-      if (stored.length > 0) {
-        setColumnConfig(stored);
-        columnConfigInitialized.current = true;
-        return;
-      }
-    }
-    const cols = resolvedColumns || [];
-    setColumnConfig(
-      cols.map((col, index) => ({
-        id: col.id,
-        visible: true,
-        order: col.order ?? index,
-      }))
-    );
-    columnConfigInitialized.current = true;
-  }, [resolvedColumns, defaultColumnConfig, persistColumnConfig, columnConfigStorageKey]);
   // 列配置 Popover 状态
   const [columnConfigAnchor, setColumnConfigAnchor] = useState<HTMLElement | null>(null);
   // URL 同步列配置（当 columnConfig prop 启用时）
