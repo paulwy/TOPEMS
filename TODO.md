@@ -1451,6 +1451,18 @@
 - **遗留未做**：WIP 目录清理（.stash-backup/.backups/tmp/logs）待授权另批；主审计报告 §7 已补"P2 执行结果"小节。
 - **长尾不排硬期**：NEW-P2-3（F10 ApiResponse::error 生产 3497 处宏收敛）。NEW-P2-4（F11 裸 Client::new）已在本批闭环（见下）；NEW-P2-5（F7 etcd/consul/dns 2243 行未启用）已物理删除（见下）。
 
+### P2-6 前端占位字段收敛执行（2026-10-28 拍板，方案 B）✅ 已推送
+
+> 范围：Budget 7 个后端 null 字段（code/name/period/start_date/end_date/project_id/items）与 DataAsset v66（status/sensitivity/display_name/owner_team 无后端数据源）的消费侧收敛——只渲染实有字段、零造假（BE-09 撒谎面纪律）。
+
+- **提交（3 个，均随合并链 efa827602f 推送）**：
+  - `65eb1e84cd` fix(i18n): glossary 标准译法对齐 7 处（ehs×4 + master×3）——与并行线 `85fd5d9ebc` **独立撞车、逐字相同**，git 自动去重合入
+  - `14cd6969eb` fix(P2-6): 收敛预算详情页（+12/−207）——移除前端伪造 code（BUD-{fiscal_year}-{id后缀}）、移除由科目余额接口伪装的 items 区块（消除 budget.items 为 null 时 .length 崩溃面）、头部统计改后端真实 used_amount/remaining_amount/usage_rate，不再余额求和伪造；name 改 fiscal_year+budget_type 真实字段派生显示标签
+  - `c682505133` fix(P2-6): 收敛数据资产目录页（+3/−87）——移除 display_name 列/status/sensitivity 假徽章列与详情块（colSpan 9→6），type 列保留（object_type 真映射）
+- **门禁**：整树 `pnpm typecheck` 0 错误；vitest 涉及区域 6/6 通过（全量 45 失败均为并行线 designTokens WIP 引入、与本次无关）；eslint/prettier 0；lefthook 26 钩子三批全过；glossary --strict PASS。
+- **集成**：推送窗口内并行线 3 波新提交（badcd8848d→038c3aad9b→21d804b1c4），经 3 次合并（23b1e5f9d8/a177eb28dc/efa827602f）0 冲突合入；工作树并行线 181+ 文件 designTokens WIP 原样未动（唯一 tsc 断点 ApprovalHeader.tsx:40 已按同型模式补 `var(--mui-palette-grey-500)` 一行，**留在工作树未暂存未提交**，待并行线随其批次提交）。
+- **记账注**：本记账块经选择性暂存提交，**未混入**并行线 TODO.md 未提交的 +23 行 topems.sh 排期节。
+
 ### P2-5 · F7 三套未启用服务发现物理删除（2026-10-20，用户拍板删除）✅
 
 - **决策**：用户选定物理删除（非归档/flag）。删除前复核：三实现零外部引用，不在 `DiscoveryMode{Static,Env,K8s}` match 分支，仅 `shared/mod.rs` 的 `pub mod` 声明；`lib/shared-event` 的 EtcdClient/ConsulClient 是独立 crate，与本模块同名不同物，不动。
