@@ -80,7 +80,7 @@ pub async fn get_current_subscription(
         .and_then(|t| Uuid::parse_str(t).ok())
         .unwrap_or_else(Uuid::nil);
 
-    let sub: Result<Option<Subscription>, sqlx::Error> = sqlx::query_as(&format!(
+    let sub: std::result::Result<Option<Subscription>, sqlx::Error> = sqlx::query_as::<_, Subscription>(&format!(
         "SELECT {SUB_RETURN} FROM public.subscriptions WHERE tenant_id = $1 ORDER BY updated_at DESC LIMIT 1"
     ))
     .bind(tenant_id)
@@ -142,8 +142,9 @@ pub async fn upsert_subscription(
         .unwrap_or_else(Uuid::nil);
     let now = Utc::now();
 
-    let result: Result<Subscription, sqlx::Error> = sqlx::query_as(&format!(
-        r#"INSERT INTO public.subscriptions
+    let result: std::result::Result<Subscription, sqlx::Error> =
+        sqlx::query_as::<_, Subscription>(&format!(
+            r#"INSERT INTO public.subscriptions
         (id, tenant_id, tier, status, started_at, expires_at, created_at, updated_at)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$7)
         ON CONFLICT (tenant_id) DO UPDATE SET
@@ -152,16 +153,16 @@ pub async fn upsert_subscription(
           expires_at = EXCLUDED.expires_at,
           updated_at = EXCLUDED.updated_at
         RETURNING {SUB_RETURN}"#
-    ))
-    .bind(Uuid::new_v4())
-    .bind(tenant_id)
-    .bind(&req.tier)
-    .bind(&status)
-    .bind(Some(now))
-    .bind(req.expires_at)
-    .bind(now)
-    .fetch_one(&state.pool)
-    .await;
+        ))
+        .bind(Uuid::new_v4())
+        .bind(tenant_id)
+        .bind(&req.tier)
+        .bind(&status)
+        .bind(Some(now))
+        .bind(req.expires_at)
+        .bind(now)
+        .fetch_one(&state.pool)
+        .await;
 
     match result {
         Ok(s) => Json(ApiResponse::success(s, "订阅已保存")),
@@ -181,15 +182,16 @@ pub async fn cancel_subscription(
         .and_then(|t| Uuid::parse_str(t).ok())
         .unwrap_or_else(Uuid::nil);
     let now = Utc::now();
-    let result: Result<Option<Subscription>, sqlx::Error> = sqlx::query_as(&format!(
-        "UPDATE public.subscriptions SET status = 'canceled', updated_at = $3
+    let result: std::result::Result<Option<Subscription>, sqlx::Error> =
+        sqlx::query_as::<_, Subscription>(&format!(
+            "UPDATE public.subscriptions SET status = 'canceled', updated_at = $3
          WHERE id = $1 AND tenant_id = $2 RETURNING {SUB_RETURN}"
-    ))
-    .bind(id)
-    .bind(tenant_id)
-    .bind(now)
-    .fetch_optional(&state.pool)
-    .await;
+        ))
+        .bind(id)
+        .bind(tenant_id)
+        .bind(now)
+        .fetch_optional(&state.pool)
+        .await;
 
     match result {
         Ok(Some(s)) => Json(ApiResponse::success(s, "订阅已取消")),
