@@ -1,3 +1,13 @@
+## e2e 17 域扩展 · 批 A（R0–R4）实机验证完成（2026-10-27）✅ 批 A 完成，待确认后进批 B
+
+> 用户拍板"分两批推进 + test_admin 授超管"后执行批 A = R0 系统初始化 + R1 核心业务主链 + R2 专项生态 + R3 服务知识域 + R4 四新域（S1–S17）。
+
+- **通过**：17 场景 100% 闭环；16 张业务表落库核验（sc_s*_r1_* 各 1 行）；RBAC 越权负例 403 ✓；预置 S12 部门 500 未复现（已修好）；BI dataset 依赖种子 datasource（bbe039ab-…）创建成功 + test-sql 校验成功。
+- **契约勘误（实测 vs 文档）**：master-data 双段路径、mes /orders、portal /todos、search keyword、lims data 数组、gis factory-maps 必填、communication 需 /notification 嵌套前缀、BI test-sql 字段 data_source_id、rd 枚举 R_D。
+- **环境缺口（恢复库缺表类，待补）**：master_data.uoms（已手工补表，根因=monolith 未调 schema_defense，代码根治待排期）；public.search_entity_projections（S8 空结果根因）；core_notification_subscriptions（S13 订阅报错根因）；rd audit_logs.entity_ids 列（审计落库失败）；qms.quality_inspections/inspection_items、ehs.safety_incidents 空壳表（真实表为 qa_*，观察项）；must_change_password 登录不强制（P1 待排期）；tenant API 全 404（待业务确认设计意图）；S13 通知创建字段契约待查。
+- **产物**：`docs/reports/e2e/批A_R0-R4_实机验证小结_20261027.md`（通过/勘误/缺口/修复建议/批 B 前置清单）。
+- **下一步（批 B = R5 供应链平台 8 域 + R6 负例 + R7 隔离回归）前置**：DB 侧补 3 处表/列 → 复验 S8/S13/S6 → 待业务确认 tenant 路由意图与 S13 通知契约。
+
 ## xingzhai 运维闭环：观测清单入库版 + runbook §11 追加（2026-10-26）✅ 已完成
 
 > 承接 A2/A3 收口后「交给 xingzhai 侧」落地：候选清单 artifacts/ 不入库 → xingzhai 拿不到，故产出入库版闭环。
