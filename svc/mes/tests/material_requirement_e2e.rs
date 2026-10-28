@@ -54,8 +54,7 @@ async fn body_of(pool: sqlx::PgPool) -> Value {
     let q: ListMaterialRequirementsQuery = serde_json::from_value(json!({})).unwrap();
     let resp = list_material_requirements(State(state), Extension(claims), Query(q)).await;
     serde_json::to_value(
-        resp
-            .data
+        resp.data
             .unwrap_or_else(|| panic!("handler error: {:?}", resp.message)),
     )
     .unwrap()

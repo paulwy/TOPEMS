@@ -50,8 +50,7 @@ async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
         .await
         .expect("handler error");
     serde_json::to_value(
-        resp
-            .data
+        resp.data
             .unwrap_or_else(|| panic!("handler error: {:?}", resp.message)),
     )
     .unwrap()
