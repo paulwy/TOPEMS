@@ -5341,6 +5341,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ## 第四十九轮（2026-10-28）：P3 复验实机闭环 + create_process INSERT 类型修复 ✅
 ## 第五十轮（2026-10-28）：process_name 租户维度唯一索引 + 409 语义 ✅
 ## 第五十一轮（2026-10-28）：iam 台账残留治理 → public 单一台账 ✅
+## 第五十二轮（2026-10-28）：空库重建一致性验证（v69 删 organization_id vs 代码 INSERT）✅
+- **问题**：v69_unify_organization_id Part C 在空库全量重放时 DROP 有 tenant_id 表的 organization_id（含 mes.production_processes）→ 代码 create_process INSERT 此前写 organization_id 列 → 空库重建后创建工序必 500。
+- **修复**：① 代码 INSERT 去掉 organization_id 列（tenant_id 承担租户隔离，bind 不变：$9 由双用变单用）；② 迁移 `20261028060000_mes_production_processes_org_id_nullable.sql` 存量库 organization_id 改可空（DO 块条件：空库列不存在时跳过，幂等）——保证存量库（可空）与空库（无列）双路径 INSERT 均成功。
+- **双路径实机验证**：① 存量库（organization_id 可空）：创建工序 → 200 + process_no（INSERT 无该列）；② 空库模拟（事务内 DROP organization_id 后跑代码同款 INSERT SQL）→ INSERT 0 1 成功 → ROLLBACK 还原列；探针行已清理；validate.sh Errors 0（checksums 重生成）；svc/mes lib 370 全绿、clippy deny 过。
+
 - **治理**：`DROP TABLE iam._sqlx_migrations`（47 条残留 = 14 数字版 0-13 + 33 日期版，全部与 public 对应版本重复、0 缺失——纯冗余）。核对前置：public 台账 500 = 迁移文件 500（数字文件 000-013 全覆盖 + 日期版 SHA-384 一致）；DROP 后 pg_tables 仅剩 public._sqlx_migrations 单一台账。
 - **根因链**：search_path=iam,mes,public,analytics（iam 优先）→ sqlx CLI 固定读 `_sqlx_migrations`（无指定迁移表能力）→ iam 台账缺日期版 → 500 文件全 pending → `sqlx migrate run` 误重放历史（第五十轮误删 organization_id 即此链条）。
 - **留痕**：一次性脚本 `scripts/migration/legacy-ledger-cleanup.sql`（含前置核对 + DROP + sqlx CLI 行为说明），其他环境存量库可复现。
