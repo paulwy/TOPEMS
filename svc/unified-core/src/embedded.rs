@@ -79,8 +79,8 @@ async fn build_router_inner(
     {
         match f().await {
             Ok(()) => tracing::info!("init_database {}: ok", name),
-            Err(e) => tracing::warn!(
-                "init_database {}: skipped due to error (database may already be initialized): {}",
+            Err(e) => panic!(
+                "init_database {} failed: {} (自建 DDL 执行失败必须显式暴露，禁止静默跳过——失败可能表示库结构异常)",
                 name,
                 e
             ),

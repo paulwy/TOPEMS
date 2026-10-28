@@ -6,9 +6,10 @@
 CREATE SCHEMA IF NOT EXISTS ai;
 
 -- 建 ai.vectors（结构与 hrm.vectors 一致：key 主键 + pgvector vector 类型）
+-- [2026-10-29] embedding 类型用 public.vector（扩展装于 public；ai.vector 迁移顺序中不存在）
 CREATE TABLE IF NOT EXISTS ai.vectors (
     key TEXT PRIMARY KEY,
-    embedding ai.vector,
+    embedding public.vector,
     metadata JSONB,
     deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()

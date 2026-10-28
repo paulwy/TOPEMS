@@ -17,7 +17,7 @@ ALTER TABLE "ai"."document_chunks" ADD COLUMN IF NOT EXISTS "content_hash" chara
 ALTER TABLE "ai"."document_chunks" ADD COLUMN IF NOT EXISTS "created_at" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP;
 ALTER TABLE "ai"."document_chunks" ADD COLUMN IF NOT EXISTS "created_by" uuid;
 ALTER TABLE "ai"."document_chunks" ADD COLUMN IF NOT EXISTS "document_id" uuid NOT NULL;
-ALTER TABLE "ai"."document_chunks" ADD COLUMN IF NOT EXISTS "embedding" ai.vector(1536) NOT NULL;
+ALTER TABLE "ai"."document_chunks" ADD COLUMN IF NOT EXISTS "embedding" public.vector(1536) NOT NULL;
 ALTER TABLE "ai"."document_chunks" ADD COLUMN IF NOT EXISTS "embedding_model" character varying(255);
 ALTER TABLE "ai"."document_chunks" ADD COLUMN IF NOT EXISTS "embedding_status" character varying(50) DEFAULT 'pending'::character varying;
 ALTER TABLE "ai"."document_chunks" ADD COLUMN IF NOT EXISTS "knowledge_base_id" uuid;

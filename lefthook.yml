@@ -360,6 +360,14 @@ pre-push:
       tags: config
       run: python3 scripts/dev/check-config-consistency.py
 
+    # [2026-10-29 NEW Gate] 初始化路径防复发（B 类清单更正整改）：
+    # 自建 DDL（unified-core init_database）与迁移 DDL 列级对齐校验——任何一侧
+    # 改列未同步即阻断（schema_defense/try_init 缺列静默失败的历史根因）。
+    # 秒级成本；迁移权威 DDL 为唯一信源（database/migrations + svc/*/migrations）。
+    schema-defense-check:
+      tags: database migrations
+      run: node scripts/migration/check-schema-defense.mjs
+
     # [NEW] cargo check workspace — 确保代码编译通过（DB schema 和代码同步）
     # V300: SQLX_OFFLINE=false（在线）→ true（离线）。pre-push 是缓存完整性的最后本地防线：
     #       根 .sqlx 缺任何宏查询，离线编译必然失败，push 被阻断，杜绝"本地能过、CI/新环境必炸"。

@@ -3,7 +3,8 @@
 -- 全部幂等：索引 IF NOT EXISTS、函数 OR REPLACE、触发器存在性检查后创建。
 
 -- 0. knowledge_chunks.embedding 对齐 vector 类型（建表时误用 jsonb，与 document_chunks 不一致；空表无迁移负担）
-ALTER TABLE core.knowledge_chunks ALTER COLUMN embedding TYPE ai.vector(1536) USING embedding::text::ai.vector(1536);
+--    [2026-10-29] 类型用 public.vector（扩展装于 public；ai.vector 迁移顺序中不存在）
+ALTER TABLE core.knowledge_chunks ALTER COLUMN embedding TYPE public.vector(1536) USING embedding::text::public.vector(1536);
 
 -- 1. 向量索引 idx_kc_embedding（IVFFlat，语义检索专用）
 CREATE INDEX IF NOT EXISTS idx_kc_embedding
