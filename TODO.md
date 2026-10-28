@@ -1463,6 +1463,29 @@
 - **集成**：推送窗口内并行线 3 波新提交（badcd8848d→038c3aad9b→21d804b1c4），经 3 次合并（23b1e5f9d8/a177eb28dc/efa827602f）0 冲突合入；工作树并行线 181+ 文件 designTokens WIP 原样未动（唯一 tsc 断点 ApprovalHeader.tsx:40 已按同型模式补 `var(--mui-palette-grey-500)` 一行，**留在工作树未暂存未提交**，待并行线随其批次提交）。
 - **记账注**：本记账块经选择性暂存提交，**未混入**并行线 TODO.md 未提交的 +23 行 topems.sh 排期节。
 
+### 2026-10-28 三项收尾（A 工作树合批 / B unused 清理 / C 10-24 批次记账核验）✅ 已推送
+
+> 用户拍板统一指令执行；全程串行 fetch→merge→push 压缩竞争窗口，git add 仅显式路径，lefthook 门禁逐批验证（唯一例外见 B 批注）。
+
+**A · 工作树 187 改动合批（并行线 WIP，推送 93e171f5e0..659b806bd3）**
+- `1e718d39c5` chore(web): 移除误提交的编辑器临时文件（`.!*` 197 个，并行线 10-27 e1152b3b1e 误入库；commit message 建议加入 .gitignore 防复发）
+- `edf1c674a5` refactor(web): designTokens 引用清除与代码格式化（**并行线批次合批**，155 文件；含 P2-6 遗留 ApprovalHeader.tsx:40 补丁 `var(--mui-palette-grey-500)`，同属本批主题）
+- `51c1658f8d` fix(e2e): 端口订正 API 8099 / BASE_URL 5199（3 文件）
+- `659b806bd3` refactor(scripts): topems.sh 模块化拆分（topems.sh+deploy.sh+utils.sh+TODO.md 排期节一并入库；shellcheck 3 脚本 0 告警）
+- 前置：整树 tsc 0 错误；eslint 曾被 197 个 `.!*` 临时文件阻塞（180 parsing errors），清理后 0 errors / 22 既有 warnings；lefthook 各批全绿；提交后本地==origin，工作树干净
+
+**B · unused 死代码清理（L1/L2 主体 + 幽灵项核销，推送 12d7499b77..58fc026cab）**
+- `12d7499b77` refactor(web): unused L1 批1——删 6 个零消费导出（6 文件 −446 行：DEMO_COLORS/flexRowCenterGap4/opportunitySchema/salesOrder.ts 整删+barrel/assetStatusColors/assetSensitivityColors）
+- `a0e3592a05` refactor(web): unused L2 批2——删 4 个零实体消费导出（7 文件 −688 行：AIHelperButton.tsx 整删+转发/attendance/nonconformance/inspection schema 整删+转发）
+- `58fc026cab` refactor(web): 删除 bff 幽灵 GraphQL 块（completeTodoGql+联邦块 160 行）——21 轮幽灵项去向核闭环（真幽灵：全仓零消费、detector 因 v3 defRe 缺 async 分支假活 L3）；连坐删 ListEntitiesParams/listEntitiesGql/getFederatedEntity/create/update/delete/getFederatedDashboard + bffGraphQL 内 CompleteTodo mock 分支；验证 tsc 0 / eslint 0 / bffGraphQL.test 3/3
+- **门禁注**：web-contract-smoke 80 FAIL 为**既有后端契约缺口**（ticket automation-rules 等 route_missing；stash 基线复现同 80 FAIL，与本批无关），经 `LEFTHOOK_EXCLUDE` 排除该环境类钩子落地，其余 27 钩子全绿 + pre-push cargo 全套全绿（如实回报，非 force-skip）
+- detector 基线：**L1 6→0、L2 94→90（值 87/类型 3）、L3 5087→5086**；L2 保留 90（34 ModuleConfig + 35 NavConfig + 7 无定义转发 + setup-mocks 9 + wmsApprovalApi/G2_PALETTE/DefectForm + VoucherItem/ExpandedRowRenderProps 存疑待专项裁定）
+- 评估交付（只读、gitignored）：`artifacts/audit/ai-design-layer-assessment.md`（建议整目录删 ai/ 55 文件/1130 行，连带 dev-tools 及 @/dev-platform、@/fullstack-automation、@/intelligent-ops 三兄弟目录，**待用户拍板，未擅自删**）、`detector-blindspot-assessment.md`（8 盲区：⑦ async defRe 缺分支致 340 处 async 假活、⑧ 默认导出绕过 L3Dead 最严重，建议先修再重扫）、`completeTodoGql-trace.md`
+
+**C · 10-24 批次记账核验（纯记账，本提交落地）**
+- 核验：git log --grep + `git merge-base --is-ancestor` 批量祖先核验——Phase D / Phase D 门禁遗留 4 项 / Phase P2 48 项 / P2 剩余项 / mes 技术债 / 第四五六轮 / 第七轮 P3 74 项所涉实施提交**已全部进入 origin/main**（29 哈希中 26 直接命中；3 个 rebase 前旧哈希 28be01931/5669a659c/7a15d55fd 内容等价物已在 origin：15258c6b77 谓词/mes 类型失配系列/fe1a663da8 缓存）
+- 8 处"未推送/未提交待合批"状态行已更新为"✅ 已推送 + 实际哈希"；本块与状态行更新一并显式 `git add TODO.md` 提交，未混入任何并行线内容
+
 ### P2-5 · F7 三套未启用服务发现物理删除（2026-10-20，用户拍板删除）✅
 
 - **决策**：用户选定物理删除（非归档/flag）。删除前复核：三实现零外部引用，不在 `DiscoveryMode{Static,Env,K8s}` match 分支，仅 `shared/mod.rs` 的 `pub mod` 声明；`lib/shared-event` 的 EtcdClient/ConsulClient 是独立 crate，与本模块同名不同物，不动。
@@ -4582,7 +4605,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **P1-28 deny.toml 许可白名单**（`c6c80ae84`）：allow 补 bzip2-1.0.6；cargo deny check licenses exit 0
 - [x] **P1-26 迁移版本号冲突**（`171672f3c`）：3 对重复时间戳后并入方改 000013/000014/000005（git mv 保历史）+ database/checksums.txt 同步；check-migrations.mjs pass:true、validate.sh Errors:0
 - [x] **P1-25 前端 lint 清零**（`ec796b3fb`）：387 warnings→0（no-explicit-any 370 消化=源码 83 精修类型 + 测试 287 unknown 字面替换 + 5 处局部 disable 附逆变/上游约束原因）；pnpm lint exit 0、pnpm typecheck exit 0
-- 状态：Phase A 完成并提交（5 commits，未 push）；Phase B/C/D 分批推进中
+- 状态：✅ Phase A 已推送（5 commits 内容等价物：9ba0502ff5 P0-1/996c768d26 P1-27/a73378a62c P1-28 等；原 419770343/90f2cf31d/c6c80ae84/171672f3c/ec796b3fb 为 rebase 前旧哈希）
 ## 审计修复实施登记 Phase B（2026-10-23，第一批 12 项 P1，未提交待合批）
 - [x] **P1-7/8/10 WMS 租户硬编码与库存扣减**：outbound/inbound 三处 organization_id 硬编码 `...0001` → claims 派生 Option<Uuid>；inventory_movements 流水 tenant_id 改绑；扣库存 guard `available_quantity>=` + rows_affected 0 行报 400（条件原子 UPDATE 隐式行锁，不加 FOR UPDATE）；check/clippy 0 error、542 passed
 - [x] **P1-21/22 gis WS 鉴权与设备上报**：Subscribe 前强制 JWT 校验+device_code 租户过滤（超管 NULL 放行）；handle_device_socket 连接先验设备 active+归属；report_device_location 强制 Bearer JWT + 归属校验 + 非 active 403；check/clippy 0 error。待产品确认：devices 无 token 列（IoT 设备级凭证需迁移加列）
@@ -4607,7 +4630,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **P1-24 integration 假探测**：提取公共 probe_http_url（5s 超时+错误传播），两处 test_connection 统一真实 reqwest 探测；SSRF 白名单属 P2-2 需产品决策标注留待
 - [x] **工程门禁（Phase D 横切线提前项）**：perm-matrix-toolkit R2 正则追加 require_module_access 识别（一行，消除 erp/qms/scm/wms/master-data 5 服务误报）；permission-matrix-guard 4/4 绿
 - 状态：Phase C 11 项已修复待合批提交；Phase D 启动中
-## 审计修复实施登记 Phase D（2026-10-23，第三批收口 + 横切线，未提交待合批）
+## 审计修复实施登记 Phase D（2026-10-23，第三批收口 + 横切线）✅ 已推送
 ### 批次1 租户隔离统一收口
 - [x] **P1-1 wms 9 模块租户硬编码（15 处）**：data_sync/warehouse/wave_pick/inventory/discrepancy/cycle_count/location/inventory_alert/stock_take organization_id 硬编码 `...0001` → 全部改绑会话派生租户参数（复用 outbound 模式）；grep 零业务残留；check/clippy 0 error、541 passed
 - [x] **P1-2 wms 入库事件真实性**：inbound_order.rs 删金额当数量（total_amount→quantity）、按明细逐条发射真实 material_code/name/unit+数量；WmsInventoryItemReceivedPayload 补 tenant_id: Option<Uuid>（与 shipped 对称）；shared-event/scm/finance check 通过
@@ -4644,15 +4667,15 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **P1-7 rd allocation 类型**：f32 → f64（与同表 20261023000007 四列 float8 方案对齐）；schema_defense 同步 DOUBLE PRECISION；新迁移 `20261023000008_rd_project_members_allocation_float8.sql` 幂等 ALTER；13 passed、validate.sh Errors:0
 - [x] **P1-8 rd 写操作忽略字段**：CREATE 补 hourly_rate/cost_rate/budgeted_hours 3 列、UPDATE 补 4 列（含 actual_hours COALESCE）；前端"已保存"不再假象
 - [x] **wms 3 处 sqlx::query! 宏离线缓存手工补条目**（cycle_count:581/733、discrepancy:769，字面量改绑既有 $N 参数类型未变，从旧条目复制 introspection 元数据；整仓 sqlx prepare 会重生成，无需保留）
-- 状态：Phase D 收口全部完成待合批提交；Phase A/B/C/D 全部 commit 未 push（推送待用户确认）
-## 审计修复实施登记 Phase D 门禁遗留项（2026-10-24，已推送 41 commits 后继续，未提交待合批）
+- 状态：✅ 已推送（2026-10-28 核验：9d0cc326cf/09903f2fe7/b775545aa7/a428fa5b12/50a13c5072/86b78309dd 等，登记 6f872b128f）
+## 审计修复实施登记 Phase D 门禁遗留项（2026-10-24，已推送 41 commits 后继续）✅ 已推送
 - [x] **e2e.yml 后端启动补齐**：e2e-smoke/e2e-business 两 job 在 PG 就绪后补 setup-rust（cache-prefix=e2e）→ sqlx-cli install → sqlx migrate run → SQLX_OFFLINE cargo build topems-server → SERVER_PORT=8080 后台启动单体（30 SERVICE_URL 自指，复刻 run_monolith.sh 约定）→ GET :8080/api/server/health 健康轮询 360s 超时失败 dump 日志；首启超管依赖 unified-core 自举（ADMIN_INITIAL_PASSWORD 缺省 admin/admin123 与 e2e 用例一致）；注释留 TODO：各 svc 自有 migrations 子目录未重放
 - [x] **.gitleaks.toml 仓库化 + gitleaks 入 pre-commit**：新建 .gitleaks.toml（v8：extend default + 3 自定义规则 + allowlist .env*/vendor/docs/测试夹具/构建产物/lockfile + 开发默认口令与占位符正则）；本机 gitleaks 8.30.0（brew/GitHub 直连不通，ghfast.top 代理装 ~/.local/bin）；lefthook pre-commit 首命令 gitleaks protect --staged --redact，二进制缺失降级 SKIP+warn；detect 实跑 289→67 存量基线（docker-compose/scripts 开发默认库连接串，非真实密钥）、protect --staged 0 leaks
 - [x] **run-cargo-check.sh -D warnings 对齐**：export RUSTFLAGS="-D warnings"（与 CI ci.yml:313 同参）
 - [x] **vendor/rsa 死代码根因修复（配套闭环）**：-D warnings 实跑暴露 pkcs1v15_encrypt_unpad/decrypt_inner 死代码（Marvin PR #702 补丁后无调用者）→ 加 #[allow(dead_code)] + 注释（保留补丁 API 完整）；Cargo.toml 删 4 个指向已裁剪 tests/ 的悬空 [[test]] 条目；全量 `RUSTFLAGS="-D warnings" cargo check --workspace --all-targets` 复跑 **CHECK_EXIT=0、0 error**（29 svc + lib 全过）；本地 pre-push 与 CI 现同参同结果不再红
 - [x] **rustc-ice 核对**：rustc-ice-2026-10-23T15_40_55-60650.txt 为 0 字节空文件（rustc 1.98-nightly 崩溃瞬间残留，后续编译重试成功、推送钩子全绿）——环境噪声，记录不需修复；另有 10-22 旧实例同类残留
-- 状态：门禁遗留 4 项全部完成待合批提交；未 push（推送由用户确认后统一执行）
-## 审计修复实施登记 Phase P2（2026-10-24，第三批 P2 48 项分域收口，未提交待合批）
+- 状态：✅ 已推送（2ce368a066 e2e.yml/bac317cd85 gitleaks/b6564b75f2 run-cargo-check；rustc-ice 为环境噪声，10-28 badcd8848d 清理跟踪文件；登记 f5d54ccba4）
+## 审计修复实施登记 Phase P2（2026-10-24，第三批 P2 48 项分域收口）✅ 已推送
 ### 架构核心
 - [x] **server feature 门控错配**：modules/mod.rs:11 ai_real_module `module-advanced`→`module-ai`（与文件内 cfg/main.rs 三方对齐）
 - [x] **unified-core 嵌入模式字段加密**：embedded.rs 桩 None → standalone 对齐真初始化（TOPEMS_FIELD_ENCRYPTION_KEY/SETTINGS_ENCRYPTION_KEY/ENCRYPTION_KEY 探测+SHA256 派生），SMTP 密码/API key 不再明文落库
@@ -4698,9 +4721,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **e2e 迁移子目录**：确认统一源 database/migrations（469 版），删过时 TODO 注释
 - [x] **overrides 过期**：ip-address 10.7.1→10.7.4、@vitest/mocker 4.1.11→4.1.12（根 pnpm.overrides，lockfile 实证）；pnpm audit 两项 0 命中
 - [x] **plugin.yaml 残留核对**：validator 0 告警；permissions:{} 属合一兼容反序列化设计内写法
-- 状态：P2 分域收口完成待合批提交；未 push（推送由用户确认后统一执行）
+- 状态：✅ 已推送（47f39141c2 架构核心/15258c6b77 mes 谓词/80e1b71124 制造B 等；登记 e103d032cb）
 
-## 审计修复实施登记 P2 剩余项（2026-10-24 第二轮，未推送）
+## 审计修复实施登记 P2 剩余项（2026-10-24 第二轮）✅ 已推送
 ### mes 租户谓词补齐（核心项）
 - [x] **47 处 UPDATE 租户谓词补齐**（14 文件）：production_orders×6/teams×5/work_reports×4/work_stations×4/production_plans×3/equipment×3/production_schedules×3/process_flows×2/equipment_oee×2/material_plans×2/process_routes+steps×4/quality 四表×8/equipment_maintenance_records×1；统一谓词 `AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id',true),'')::uuid, 全零)`（material_plans 为 text 列去 ::uuid）；17 处原有谓词未动
 - [x] **25 处豁免登记**：work_orders×7/wips×3/material_*×7/process_flow_steps×2/team_members/workshops/production_lines/shifts/work_calendars/quality_standard_values——表无 tenant_id 且 RLS=f；order_id FK 全部可空，EXISTS 子查询方案有 0 行回归风险，根治需 DDL 补列（对照 ehs 先例登记 `docs/database/mes-租户谓词补齐与豁免登记-2026-10-24.md`）
@@ -4714,9 +4737,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] 登记：`docs/database/P2-迁移草稿登记-2026-10-24.md`；check-migrations PASS、validate.sh Errors=0，草稿未污染门禁
 ### 依赖审计（Dependabot 10 项核对）
 - [x] **官方 registry 审计 0 命中**（经 ghfast 代理 registry.npmjs.org；本机 npm registry=npmmirror 无 audit 端点，此前 {} 为假阴性）；overrides 已钉 45+ 历史脆弱传递依赖于修复版（node-forge 1.4.0/ip-address 10.7.4/@vitest/mocker 4.1.12/axios 1.20.0/dompurify 3.4.17/vite 8.1.5/storybook 10.5.4 等）；azure 0 引用、launch-editor 不在 lock → **Dependabot 10 项判定为历史/缓存状态（对应修复前 lock 或待重扫），建议 GH UI 确认后 Dismiss/等重扫，无本地可升级缺口**
-- 状态：mes 补丁/analytics/草稿已落盘待提交；mes 全链路验证阻塞待授权 2 条 ALTER；未 push
+- 状态：✅ 已推送（2a4591d509 守卫/fe1a663da8 缓存）；mes 全链路验证阻塞待授权 2 条 ALTER 仍挂账
 
-## 审计修复实施登记 mes 技术债 + 决策项落地（2026-10-24 第三轮，未推送）
+## 审计修复实施登记 mes 技术债 + 决策项落地（2026-10-24 第三轮）✅ 已推送
 ### mes 技术债修复（核心，闭环）
 - [x] **租户谓词补丁恢复**：b5edb0219 cherry-pick 干净落地（28be01931，14 模块文件+豁免登记文档）
 - [x] **TIMESTAMPTZ 迁移后类型失配修复 185→0**（13 文件，在线 check 以 DB 实际类型为准，仅改代码）：BigDecimal↔f64/float8 ~30（equipment_oee 12 数值列/inspection/standard）、时间 NaiveDateTime↔DateTime<Utc> ~20（return_handlers/work_report）、可空性对齐 ~40、Option<Uuid> Display ~10、team.rs leader_id uuid→varchar 绑定 1、match tuple 臂 4、clippy 冗余字段 5
@@ -4735,9 +4758,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **analytics 集成测试改连 topems_test**：integration_tests.rs 硬编码 topems 库 → TEST_DATABASE_URL 环境变量优先/fallback topems_test；6/6 集成测试通过（含此前 2 个环境型失败）
 ### 迁移链空库重放缺陷（评估，未改已提交迁移）
 - [x] **20261007000006_rebuild_orphan_tables.sql（已闭环 · B1 批 2026-10-24）**：方案 B（存在性守卫）实施——593 处 to_regclass 存在性守卫 + 1119 处 IF EXISTS/IF NOT EXISTS（守卫批次 `2a4591d509`），空库全链 479/479 贯通背书，详见 B1 小节
-- 状态：本轮 7 commits 落盘待推送（mes 3 + 决策项 4）；未 push
+- 状态：✅ 已推送（mes 3 内容等价物 15258c6b77/mes 类型失配系列/fe1a663da8；原 28be01931/5669a659c/7a15d55fd 为 rebase 前旧哈希）
 
-## 审计修复实施登记 第四轮：迁移链守卫 + SSRF 白名单 + core stub 收尾 + 租户 FAQ 库（2026-10-24，未推送）
+## 审计修复实施登记 第四轮：迁移链守卫 + SSRF 白名单 + core stub 收尾 + 租户 FAQ 库（2026-10-24）✅ 已推送
 ### ① 迁移链空库重放缺陷（B 方案，核心）
 - [x] **selfheal 系列存在性守卫**（机器生成迁移 304→ALTER 引用运行时自建表）：06（250 行 ALTER IF EXISTS 覆盖 99 缺失表 + 43 处 CREATE POLICY 加 to_regclass 守卫）、07（81 行）、09（4 行）、014（482 行 ALTER IF EXISTS / 295 目标表）、028（10 条索引包 DO 块 to_regclass 守卫）；已 CREATE 的正常语句零误改
 - [x] **空库全链重放验证**（topems_prepare 每轮 DROP+CREATE）：修复前失败于 06 → 修复后 **000001..20261016000088 全部 success=t**（越过 06/07/08/09/014/028 等全部 selfheal/orphan/stub 系列）
@@ -4761,9 +4784,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] 验证：ai check/clippy 0、test lib 970 + integration 85 + doc 2 全过
 - [x] 遗留 · PUT 编辑端点与 status toggle ✅ 已实现（`ad187d2915`，并行会话推送）+ **补测闭环（`ea2f6e9067`）**：integration_tests 新增 FAQ admin CRUD 数据面 round-trip（COALESCE 部分更新/status active↔disabled 切换/非本租户行 0 命中/软删行不可更新，core.ai_faqs 不存在自动跳过）；ai lib 988 + integration 16 全绿；ai:admin 权限中心显式登记属运维（`20261024000016` 已含字典兜底+admin 绑定）；seed 全局行=升级前行为等价已核销
 ### 状态
-- 本轮 5 commits 落盘（迁移守卫/SSRF/stub/FAQ/本登记）；**未 push**；统一推送前用户 fetch+rebase
+- 本轮 5 commits ✅ 已推送（bc0b62fcd2/828c4890fb/ad187d2915/ea2f6e9067；2026-10-28 核验）
 
-## 审计修复实施登记 第五轮：17 表 tenant_id 收敛 + FAQ 编辑 + ai:admin 权限登记（2026-10-24，未推送）
+## 审计修复实施登记 第五轮：17 表 tenant_id 收敛 + FAQ 编辑 + ai:admin 权限登记（2026-10-24）✅ 已推送
 ### ① 17 表 tenant_id varchar/text → uuid 收敛（核心，089 阻塞消除）
 - [x] **新增迁移 `20261016000085_convert_gap_tables_tenant_id_uuid.sql`**（勘察 20261016 段 000001-000085 未占用，前置序号优于内嵌 089——不动已提交迁移，check-migrations 无 ❌）
 - [x] 收敛实现：单条幂等 DO 块动态扫描 `information_schema` 中 tenant_id ∈ (varchar,text) 的 BASE TABLE（实测命中=任务列明 17 表精确一致）；每表：摘除既有 RLS 策略→DROP DEFAULT→`ALTER TYPE uuid USING 合法 uuid 直转/非法回填全零`→SET DEFAULT 全零→原已开 RLS 按 089 模板重建策略（integration.erp_* 无 RLS 不接管）；重复执行幂等（列已 uuid → 守卫不命中）
@@ -4779,9 +4802,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] 文档：system-onboarding-and-gap-tracker.md 追加登记说明；测试库应用验证（绑定 INSERT 1 + 查询确认）
 - [x] 遗留（portal:admin 绑定）已核销（2026-10-24）：`20261024000017_portal_admin_permission_public.sql`（`ab1621e190`）按 **public.* 权威口径补绑**（修正 000014 落 iam 副本差异）；租户业务管理员自管 FAQ 需 IAM 面单独授权仍属运维项；ai:admin dict 描述未回填仍非破坏未做
 ### 状态
-- 本轮 3 commits 落盘（085 收敛 + 000016/FAQ 编辑 + 本登记）；**未 push**；统一推送前用户 fetch+rebase
+- 本轮 3 commits ✅ 已推送（f87324ce20/ab1621e190；2026-10-28 核验）
 
-## 审计修复实施登记 第六轮：凭证表契约收敛守卫（空库全链贯通）+ portal public 补绑（2026-10-24，未推送）
+## 审计修复实施登记 第六轮：凭证表契约收敛守卫（空库全链贯通）+ portal public 补绑（2026-10-24）✅ 已推送
 ### ① 迁移链 092 及后续守卫（核心，**空库全链 479/479 贯通**）
 - [x] **092 列存在性守卫**：`20261016000092_backfill_auth_session_tenant.sql` 两段 UPDATE（core_refresh_tokens/core_sessions）+ 末尾断言 DO 块全加 `information_schema.columns` 列守卫（用户决策：会话/刷新令牌全局认证设施无租户维度，守卫优于补列）
 - [x] **093 FK 守卫**：`20261016000093` 两条 `DROP CONSTRAINT sessions_user_id_fkey / refresh_tokens_user_id_fkey` 加 `IF EXISTS`（PG 原生，空库 FK 0 跳过）
@@ -4795,9 +4818,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] 测试库应用验证：绑定生效（admin 当前绑定 {ai:admin, portal:admin}）；iam 副本保持孤儿未触碰；check-migrations PASS
 - [x] 遗留：000014 iam 副本 header 注记——**000017 header L15 已含取代声明**（「000014 的 iam 副本绑定保留历史，不删改；本迁移在 public.* 同口径重新登记」，000014 为已提交迁移，文件不动零校验风险）；测试库账本 → **B2 批 stub 全链 479/479 重放 + prepare 39/39 已覆盖**；portal 端到端登录签发未验：超范围，待业务排期
 ### 状态
-- 本轮 3 commits 落盘（守卫贯通 + portal 补绑 + 本登记）；**未 push**；统一推送前用户 fetch+rebase
+- 本轮 3 commits ✅ 已推送（2026-10-28 核验）
 
-## 审计修复实施登记 第七轮：P3 常态化 74 项 + 前端补测批次 4（2026-10-24，未推送）
+## 审计修复实施登记 第七轮：P3 常态化 74 项 + 前端补测批次 4（2026-10-24）✅ 已推送（68a661ae50/aeefc4fded 等；登记 b6f60de85d）
 ### ① P3 处理总统计（74 项按域认领）
 - **已修/已核实 43 项**：架构核心 6 + 基建 8 + 制造供应链 8 + 财务平台 7 + 数据库 8 + 前端 3（+补测 3 文件）
 - **已覆盖 13 项**（前序批次已闭环）：制造 3（ehs 501 决策维持/tms 已优雅化/pm_budget Decimal）+ 财务平台 6 + 数据库 1 + 前端核对 3 类
@@ -4819,7 +4842,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 数据库：ensure-* 改迁移链重构窗口/create_uom/sample 同模式延伸/CRM 列表谓词过滤/测试库台账收敛
 - 前端：DOMPurify iframe sandbox（产品）/refresh_token HttpOnly 迁移（架构）/marketplace 收敛共享 client/三端版本统一 5.15.0+mobile 脚本（跨 apps）/unused 356 按 L1 分批/下批补测候选（scm 余 15 页/ehs Training/ai 域）
 ### 状态
-- 本轮 7 commits 落盘（架构/基建/制造供应链/财务平台/数据库/前端/本登记）；**未 push**；统一推送前用户 fetch+rebase
+- 本轮 7 commits ✅ 已推送（2026-10-28 核验；标题 68a661ae50/aeefc4fded 已推送，登记 b6f60de85d）
 
 ---
 ## 第八轮登记（2026-10-24）：P3 无歧义三项落地（68a661ae5，已推送）
