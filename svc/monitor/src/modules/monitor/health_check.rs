@@ -1,5 +1,6 @@
 use axum::{extract::State, routing::get, Router};
 use serde::Serialize;
+use std::sync::OnceLock;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -68,6 +69,91 @@ pub fn stable_service_id(name: &str) -> Uuid {
 /// 将天/时/分格式化为运行时长字符串，如 "2d 5h 30m"。
 pub fn format_uptime(days: u64, hours: u64, minutes: u64) -> String {
     format!("{}d {}h {}m", days, hours, minutes)
+}
+
+// ==================== 事件总线探活（Redis Stream） ====================
+
+/// 进程级 Redis Client 缓存：避免每次健康检查重复解析 URL / 建连。
+static REDIS_CLIENT: OnceLock<Option<redis::Client>> = OnceLock::new();
+
+fn redis_client() -> Option<&'static redis::Client> {
+    REDIS_CLIENT
+        .get_or_init(|| {
+            std::env::var("REDIS_URL")
+                .ok()
+                .and_then(|url| redis::Client::open(url).ok())
+        })
+        .as_ref()
+}
+
+/// 真实探活事件总线：PING + SCAN `topems:stream:events:*` 统计事件流数量。
+/// 返回 (status, value, detail)。
+async fn probe_redis_streams() -> (String, String, String) {
+    let Some(client) = redis_client() else {
+        return (
+            "error".to_string(),
+            "不可用".to_string(),
+            "未配置 REDIS_URL，无法探活事件总线".to_string(),
+        );
+    };
+
+    let started = std::time::Instant::now();
+    let probe = async {
+        let mut conn = client.get_multiplexed_async_connection().await.ok()?;
+        let pong: String = redis::cmd("PING").query_async(&mut conn).await.ok()?;
+
+        let mut cursor: u64 = 0;
+        let mut stream_count: usize = 0;
+        for _ in 0..20 {
+            let (next, keys): (u64, Vec<String>) = redis::cmd("SCAN")
+                .arg(cursor)
+                .arg("MATCH")
+                .arg("topems:stream:events:*")
+                .arg("COUNT")
+                .arg(200)
+                .query_async(&mut conn)
+                .await
+                .ok()?;
+            stream_count += keys.len();
+            cursor = next;
+            if cursor == 0 {
+                break;
+            }
+        }
+
+        Some((pong, stream_count))
+    };
+
+    match tokio::time::timeout(std::time::Duration::from_millis(1500), probe).await {
+        Ok(Some((pong, stream_count))) => {
+            let elapsed_ms = started.elapsed().as_millis();
+            let status = if pong.eq_ignore_ascii_case("PONG") {
+                "healthy"
+            } else {
+                "error"
+            };
+            let detail = if stream_count == 0 {
+                "PING 通过 · 事件总线空闲（暂无事件流）".to_string()
+            } else {
+                format!("PING {} · SCAN 命中 {} 个事件流", pong, stream_count)
+            };
+            (
+                status.to_string(),
+                format!("Redis Stream · {} 个事件流 · {}ms", stream_count, elapsed_ms),
+                detail,
+            )
+        }
+        Ok(None) => (
+            "error".to_string(),
+            format!("不可用 · {}ms", started.elapsed().as_millis()),
+            "Redis 连接或 PING/SCAN 命令执行失败".to_string(),
+        ),
+        Err(_) => (
+            "error".to_string(),
+            "超时 · 1500ms".to_string(),
+            "Redis 探活超时（1500ms）".to_string(),
+        ),
+    }
 }
 
 pub fn create_routes() -> Router<AppState> {
@@ -314,7 +400,7 @@ pub struct InfrastructureHealth {
 
 /// 基础架构健康四格：API 网关 / 消息队列 / 数据库 / 缓存。
 /// - api_gateway：模块化单体网关进程（本服务），uptime 实测
-/// - message_queue：项目未部署消息队列组件（Kafka/RabbitMQ 等），如实标记 absent
+/// - message_queue：事件总线为 Redis Stream，PING + SCAN 实测事件流数量
 /// - database：PostgreSQL SELECT 1 实测（响应耗时）
 /// - cache：进程内缓存（portal 聚合 / GraphQL 查询缓存），未启用 Redis
 #[utoipa::path(
@@ -346,6 +432,9 @@ pub async fn get_infrastructure_health(
         (uptime.as_secs() % 3600) / 60,
     );
 
+    // 事件总线探活（Redis PING + SCAN，真实执行）
+    let (mq_status, mq_value, mq_detail) = probe_redis_streams().await;
+
     let items = vec![
         InfrastructureHealth {
             component: "api_gateway".to_string(),
@@ -355,9 +444,9 @@ pub async fn get_infrastructure_health(
         },
         InfrastructureHealth {
             component: "message_queue".to_string(),
-            status: "absent".to_string(),
-            value: "未部署".to_string(),
-            detail: "项目未部署消息队列组件（Kafka/RabbitMQ 等）".to_string(),
+            status: mq_status,
+            value: mq_value,
+            detail: mq_detail,
         },
         InfrastructureHealth {
             component: "database".to_string(),

@@ -15,6 +15,7 @@ uuid.workspace = true
 chrono.workspace = true
 tracing.workspace = true
 sqlx.workspace = true
+redis = { workspace = true, features = ["tokio-comp"] }
 topems-shared-bootstrap = { workspace = true }
 topems-shared-core = { workspace = true }
 reqwest.workspace = true
