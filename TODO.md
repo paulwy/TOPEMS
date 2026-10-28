@@ -5417,6 +5417,16 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **顺手修复**：`work_order_e2e` 3 条 FAIL 根因——setup_schema 未建 `mes.production_orders`，而 list_work_orders 的 tenant 隔离 EXISTS 子查询依赖它（P1-8 引入的测试环境缺口）；补表后 3 条恢复通过。
 - **验证**：cargo check 0 error、`cargo test -p topems-mes` 全绿（370 lib + 集成）、clippy 0 warning、cargo fmt 通过。
 
+### 2026-10-29 detector 盲区⑦⑧ 修复恢复入库 + 校准重扫 ✅ 已推送
+
+- **背景**：修复提交（原 `e0b597ebbd`）此前为组织者未推送的游离提交，检出同步时被 `checkout -B main origin/main` 甩出分支；内容无损（对象库可寻），本次 **cherry-pick 恢复为 `386bca4a75`**。
+- **修复内容（v9）**：⑦ same-file defRe 补 `(?:declare/abstract/async)?` 前缀（export async function X 此前 defs=0 被误抬 L3 假活）；⑧ isOrphanFile 默认导出分支 + fileRefs 路径引用索引（纯默认导出 + 零路径引用 → 判孤儿，当前仓无触发场景）。
+- **校准基线（当前 HEAD 重扫，generatedAt 2026-10-28T21:56Z）**：L1=**136**（values 134/types 2）、L2=**159**（158/1）、L3=**4781**（dead 0）、filesScanned 2160、totalNamedExports 7249。与修复时点（L1=144/L2=158/L3=4782）自洽：L1 −8 = 本批已删真死项。
+- **本提交内含清理**：非 api 真死 8 项（−115 行：measureApiCall、routes/v2 4 项、syncSingleRecord、collectSSRStream、measurePerformanceAsync）；登记保留 api/* 133 项（web-contract-smoke 契约面）+ api/ai 17 项（用户禁令）。
+- **随批入库（组织者续批，非本次新启）**：`0b8228f1d3`（V3 侧边栏）、`8aae4c7b5d`（monitor Redis 探活）、`ed99790c65`（web-contract-smoke 收口——原"在途 6 文件"内容：document.rs tenant_id 自愈等）。
+- **`a67dcdb5c0`**：cargo fmt 修正 S25 语义治理批遗留测试格式（master-data/wms e2e 14 文件）+ monitor 探活文件格式化（pre-push fmt 门禁必需）。
+- **验证**：cherry-pick 后门禁通过、重扫校准数字如上、推送 pre-push 全绿；本地==origin==`a67dcdb5c0`，工作树干净。
+
 ---
 
 # TOPEMS UI 优化 TODO（2026-10-27）
