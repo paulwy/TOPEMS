@@ -96,7 +96,7 @@ pub async fn list_inspections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListInspectionsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -155,7 +155,7 @@ pub async fn list_inspections(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality inspections: {}", e);
-            return Json(ApiResponse::server_error("获取检验记录列表失败"));
+            return ApiResponse::server_error("获取检验记录列表失败");
         }
     };
 
@@ -188,7 +188,7 @@ pub async fn list_inspections(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality inspections: {}", e);
-            return Json(ApiResponse::server_error("获取检验记录列表失败"));
+            return ApiResponse::server_error("获取检验记录列表失败");
         }
     };
 
@@ -270,7 +270,7 @@ pub async fn list_inspections(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "inspections": inspections,
             "items": inspections,
@@ -279,7 +279,7 @@ pub async fn list_inspections(
             "page_size": page_size,
         }),
         "获取检验记录列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -299,7 +299,7 @@ pub async fn get_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<InspectionResponse>> {
+) -> ApiResponse<InspectionResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -308,7 +308,7 @@ pub async fn get_inspection(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的检验记录ID"));
+            return ApiResponse::bad_request("无效的检验记录ID");
         }
     };
 
@@ -330,7 +330,7 @@ pub async fn get_inspection(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
                 inspection_no: r.inspection_no,
@@ -354,11 +354,11 @@ pub async fn get_inspection(
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "获取检验记录成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("检验记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("检验记录不存在"),
         Err(e) => {
             tracing::error!("Failed to get quality inspection: {}", e);
-            Json(ApiResponse::server_error("获取检验记录失败"))
+            ApiResponse::server_error("获取检验记录失败")
         }
     }
 }
@@ -367,7 +367,7 @@ pub async fn create_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<CreateInspectionRequest>,
-) -> Json<ApiResponse<InspectionResponse>> {
+) -> ApiResponse<InspectionResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -450,7 +450,7 @@ pub async fn create_inspection(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
                 inspection_no: r.inspection_no,
@@ -474,10 +474,10 @@ pub async fn create_inspection(
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "创建检验记录成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create quality inspection: {}", e);
-            Json(ApiResponse::server_error("创建检验记录失败"))
+            ApiResponse::server_error("创建检验记录失败")
         }
     }
 }
@@ -487,7 +487,7 @@ pub async fn update_inspection(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<UpdateInspectionRequest>,
-) -> Json<ApiResponse<InspectionResponse>> {
+) -> ApiResponse<InspectionResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -497,7 +497,7 @@ pub async fn update_inspection(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的检验记录ID"));
+            return ApiResponse::bad_request("无效的检验记录ID");
         }
     };
 
@@ -545,7 +545,7 @@ pub async fn update_inspection(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
                 inspection_no: r.inspection_no,
@@ -569,11 +569,11 @@ pub async fn update_inspection(
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "更新检验记录成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("检验记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("检验记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update quality inspection: {}", e);
-            Json(ApiResponse::server_error("更新检验记录失败"))
+            ApiResponse::server_error("更新检验记录失败")
         }
     }
 }
@@ -582,7 +582,7 @@ pub async fn delete_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -592,7 +592,7 @@ pub async fn delete_inspection(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的检验记录ID"));
+            return ApiResponse::bad_request("无效的检验记录ID");
         }
     };
 
@@ -606,10 +606,10 @@ pub async fn delete_inspection(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(id, "删除检验记录成功")),
+        Ok(_) => ApiResponse::success(id, "删除检验记录成功"),
         Err(e) => {
             tracing::error!("Failed to delete quality inspection: {}", e);
-            Json(ApiResponse::server_error("删除检验记录失败"))
+            ApiResponse::server_error("删除检验记录失败")
         }
     }
 }
@@ -651,7 +651,7 @@ pub async fn start_concession_approval(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ConcessionApprovalStartRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -664,7 +664,7 @@ pub async fn start_concession_approval(
     // 校验当前 status=failed，创建 approval 记录并写入 audit log
     let approver_id = match claims.user_id() {
         Ok(uid) => uid,
-        Err(_) => return Json(ApiResponse::unauthorized("无效的用户身份")),
+        Err(_) => return ApiResponse::unauthorized("无效的用户身份"),
     };
     let record_id = Uuid::parse_str(&id).unwrap_or_default();
     let approval_id = match create_approval_and_log(
@@ -680,13 +680,10 @@ pub async fn start_concession_approval(
         Ok(aid) => aid,
         Err(e) => {
             tracing::error!("发起让步审批失败: {}", e);
-            return Json(ApiResponse::server_error("发起审批失败"));
+            return ApiResponse::server_error("发起审批失败");
         }
     };
-    Json(ApiResponse::success(
-        build_start_response(approval_id),
-        "让步审批已发起",
-    ))
+    ApiResponse::success(build_start_response(approval_id), "让步审批已发起")
 }
 
 /// 让步审批通过
@@ -709,7 +706,7 @@ pub async fn approve_concession(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ConcessionApprovalDecisionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -733,12 +730,9 @@ pub async fn approve_concession(
     .await
     {
         tracing::error!("让步审批通过失败: {}", e);
-        return Json(ApiResponse::server_error("审批通过失败"));
+        return ApiResponse::server_error("审批通过失败");
     }
-    Json(ApiResponse::success(
-        build_approve_response(req.approval_id),
-        "让步审批通过成功",
-    ))
+    ApiResponse::success(build_approve_response(req.approval_id), "让步审批通过成功")
 }
 
 /// 让步审批驳回
@@ -761,7 +755,7 @@ pub async fn reject_concession(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ConcessionApprovalDecisionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -783,10 +777,7 @@ pub async fn reject_concession(
     .await
     {
         tracing::error!("让步审批驳回失败: {}", e);
-        return Json(ApiResponse::server_error("审批驳回失败"));
+        return ApiResponse::server_error("审批驳回失败");
     }
-    Json(ApiResponse::success(
-        build_reject_response(req.approval_id),
-        "让步审批驳回成功",
-    ))
+    ApiResponse::success(build_reject_response(req.approval_id), "让步审批驳回成功")
 }

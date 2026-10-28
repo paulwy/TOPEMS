@@ -429,7 +429,7 @@ pub async fn calculate_work_order_cost(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkOrderCostResult>> {
+) -> ApiResponse<WorkOrderCostResult> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionCostRead).await
     {
@@ -437,17 +437,14 @@ pub async fn calculate_work_order_cost(
     }
 
     match calculate_work_order_cost_detail_db(&state.pool, id, get_tenant_id(&claims)).await {
-        Ok((result, _)) => Json(ApiResponse::success(result, "工单成本计算成功")),
+        Ok((result, _)) => ApiResponse::success(result, "工单成本计算成功"),
         Err(err) => {
             tracing::error!("计算工单成本失败: {}", err);
             // ResourceNotFound 应返回 HTTP200+内层404，而非包装为 500
             if matches!(err, TopemsError::ResourceNotFound(_)) {
-                return Json(ApiResponse::not_found("工单不存在"));
+                return ApiResponse::not_found("工单不存在");
             }
-            Json(ApiResponse::from(TopemsError::internal(
-                "计算工单成本失败",
-                err,
-            )))
+            ApiResponse::from(TopemsError::internal("计算工单成本失败", err))
         }
     }
 }
@@ -469,7 +466,7 @@ pub async fn get_work_order_cost_detail(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkOrderCostResult>> {
+) -> ApiResponse<WorkOrderCostResult> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionCostRead).await
     {
@@ -477,16 +474,13 @@ pub async fn get_work_order_cost_detail(
     }
 
     match calculate_work_order_cost_detail_db(&state.pool, id, get_tenant_id(&claims)).await {
-        Ok((result, _)) => Json(ApiResponse::success(result, "获取工单成本详情成功")),
+        Ok((result, _)) => ApiResponse::success(result, "获取工单成本详情成功"),
         Err(err) => {
             tracing::error!("获取工单成本详情失败: {}", err);
             if matches!(err, TopemsError::ResourceNotFound(_)) {
-                return Json(ApiResponse::not_found("工单不存在"));
+                return ApiResponse::not_found("工单不存在");
             }
-            Json(ApiResponse::from(TopemsError::internal(
-                "获取工单成本详情失败",
-                err,
-            )))
+            ApiResponse::from(TopemsError::internal("获取工单成本详情失败", err))
         }
     }
 }
@@ -508,7 +502,7 @@ pub async fn calculate_production_order_cost(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProductionOrderCostResult>> {
+) -> ApiResponse<ProductionOrderCostResult> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionCostRead).await
     {
@@ -533,11 +527,11 @@ pub async fn calculate_production_order_cost(
     let order = match order {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::not_found("生产订单不存在"));
+            return ApiResponse::not_found("生产订单不存在");
         }
         Err(e) => {
             tracing::error!("查询生产订单失败: {}", e);
-            return Json(ApiResponse::server_error("查询生产订单失败"));
+            return ApiResponse::server_error("查询生产订单失败");
         }
     };
 
@@ -583,7 +577,7 @@ pub async fn calculate_production_order_cost(
     let total_cost = total_material + total_labor + total_overhead;
     let actual_qty = quantity.max(1.0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ProductionOrderCostResult {
             production_order_id: order_id,
             production_order_no: order_no,
@@ -617,7 +611,7 @@ pub async fn calculate_production_order_cost(
             },
         },
         "生产订单成本计算成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -634,7 +628,7 @@ pub async fn get_period_cost_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PeriodQuery>,
-) -> Json<ApiResponse<PeriodCostReport>> {
+) -> ApiResponse<PeriodCostReport> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionCostRead).await
     {
@@ -761,7 +755,7 @@ pub async fn get_period_cost_report(
         });
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PeriodCostReport {
             period_start: start_date,
             period_end: end_date,
@@ -774,7 +768,7 @@ pub async fn get_period_cost_report(
             cost_by_month: monthly_costs,
         },
         "获取周期成本报告成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -792,7 +786,7 @@ pub async fn get_cost_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<PeriodQuery>,
-) -> Json<ApiResponse<CostTrendData>> {
+) -> ApiResponse<CostTrendData> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionCostRead).await
     {
@@ -847,7 +841,7 @@ pub async fn get_cost_trend(
         unit_costs.push(100.0 + (i as f64 * 5.0));
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         CostTrendData {
             period: "weekly".to_string(),
             labels,
@@ -858,7 +852,7 @@ pub async fn get_cost_trend(
             avg_unit_cost: unit_costs,
         },
         "获取成本趋势成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -876,7 +870,7 @@ pub async fn get_cost_comparison(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CostComparisonRequest>,
-) -> Json<ApiResponse<CostComparisonResult>> {
+) -> ApiResponse<CostComparisonResult> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionCostRead).await
     {
@@ -913,14 +907,14 @@ pub async fn get_cost_comparison(
         });
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         CostComparisonResult {
             items,
             base_item: req.items.first().map(|i| i.id.clone()),
             comparison_type: format!("{:?}", req.compare_type).to_lowercase(),
         },
         "获取成本对比成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -938,7 +932,7 @@ pub async fn get_cost_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<PeriodQuery>,
-) -> Json<ApiResponse<CostForecastResult>> {
+) -> ApiResponse<CostForecastResult> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionCostRead).await
     {
@@ -972,7 +966,7 @@ pub async fn get_cost_forecast(
 
     let forecast_total: f64 = forecast_data.iter().map(|d| d.total_cost).sum();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         CostForecastResult {
             forecast_period: "30d".to_string(),
             forecast_start,
@@ -988,7 +982,7 @@ pub async fn get_cost_forecast(
             forecast_data,
         },
         "获取成本预测成功",
-    ))
+    )
 }
 
 #[cfg(test)]

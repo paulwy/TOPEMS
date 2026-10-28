@@ -282,7 +282,7 @@ pub async fn list_work_orders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListWorkOrdersQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -344,7 +344,7 @@ pub async fn list_work_orders(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count work orders: {}", e);
-            return Json(ApiResponse::server_error("获取工单列表失败"));
+            return ApiResponse::server_error("获取工单列表失败");
         }
     };
 
@@ -384,7 +384,7 @@ pub async fn list_work_orders(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch work orders: {}", e);
-            return Json(ApiResponse::server_error("获取工单列表失败"));
+            return ApiResponse::server_error("获取工单列表失败");
         }
     };
 
@@ -476,7 +476,7 @@ pub async fn list_work_orders(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "work_orders": orders,
             "total": total.unwrap_or(0),
@@ -484,7 +484,7 @@ pub async fn list_work_orders(
             "page_size": page_size,
         }),
         "获取工单列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -504,7 +504,7 @@ pub async fn get_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<WorkOrderResponse>> {
+) -> ApiResponse<WorkOrderResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -513,7 +513,7 @@ pub async fn get_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工单ID"));
+            return ApiResponse::bad_request("无效的工单ID");
         }
     };
 
@@ -543,11 +543,11 @@ pub async fn get_work_order(
     .await;
 
     match result {
-        Ok(Some(r)) => Json(ApiResponse::success(row_to_work_order(&r), "获取工单成功")),
-        Ok(None) => Json(ApiResponse::not_found("工单不存在")),
+        Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "获取工单成功"),
+        Ok(None) => ApiResponse::not_found("工单不存在"),
         Err(e) => {
             tracing::error!("Failed to get work order: {}", e);
-            Json(ApiResponse::server_error("获取工单失败"))
+            ApiResponse::server_error("获取工单失败")
         }
     }
 }
@@ -567,7 +567,7 @@ pub async fn create_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<CreateWorkOrderRequest>,
-) -> Json<ApiResponse<WorkOrderResponse>> {
+) -> ApiResponse<WorkOrderResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -653,7 +653,7 @@ pub async fn create_work_order(
             let remark: Option<String> = r.get("remark");
             let created_at: Option<DateTime<Utc>> = r.get("created_at");
             let updated_at: Option<DateTime<Utc>> = r.get("updated_at");
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 WorkOrderResponse {
                     id: id.to_string(),
                     work_order_no,
@@ -681,16 +681,16 @@ pub async fn create_work_order(
                     updated_at: updated_at.unwrap_or_else(Utc::now),
                 },
                 "创建工单成功",
-            ))
+            )
         }
         Err(e) => {
             if let Some(db_err) = e.as_database_error() {
                 if db_err.is_unique_violation() {
-                    return Json(ApiResponse::conflict("工单号已存在"));
+                    return ApiResponse::conflict("工单号已存在");
                 }
             }
             tracing::error!("Failed to create work order: {}", e);
-            Json(ApiResponse::server_error("创建工单失败"))
+            ApiResponse::server_error("创建工单失败")
         }
     }
 }
@@ -714,7 +714,7 @@ pub async fn update_work_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<UpdateWorkOrderRequest>,
-) -> Json<ApiResponse<WorkOrderResponse>> {
+) -> ApiResponse<WorkOrderResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -724,7 +724,7 @@ pub async fn update_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工单ID"));
+            return ApiResponse::bad_request("无效的工单ID");
         }
     };
 
@@ -794,16 +794,16 @@ pub async fn update_work_order(
     .await;
 
     match result {
-        Ok(Some(r)) => Json(ApiResponse::success(row_to_work_order(&r), "更新工单成功")),
-        Ok(None) => Json(ApiResponse::not_found("工单不存在")),
+        Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "更新工单成功"),
+        Ok(None) => ApiResponse::not_found("工单不存在"),
         Err(e) => {
             if let Some(db_err) = e.as_database_error() {
                 if db_err.is_unique_violation() {
-                    return Json(ApiResponse::conflict("工单号已存在"));
+                    return ApiResponse::conflict("工单号已存在");
                 }
             }
             tracing::error!("Failed to update work order: {}", e);
-            Json(ApiResponse::server_error("更新工单失败"))
+            ApiResponse::server_error("更新工单失败")
         }
     }
 }
@@ -825,7 +825,7 @@ pub async fn delete_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -835,7 +835,7 @@ pub async fn delete_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工单ID"));
+            return ApiResponse::bad_request("无效的工单ID");
         }
     };
 
@@ -857,14 +857,14 @@ pub async fn delete_work_order(
     match result {
         Ok(r) => {
             if r.rows_affected() > 0 {
-                Json(ApiResponse::success(id, "删除工单成功"))
+                ApiResponse::success(id, "删除工单成功")
             } else {
-                Json(ApiResponse::not_found("工单不存在或状态不允许删除"))
+                ApiResponse::not_found("工单不存在或状态不允许删除")
             }
         }
         Err(e) => {
             tracing::error!("Failed to delete work order: {}", e);
-            Json(ApiResponse::server_error("删除工单失败"))
+            ApiResponse::server_error("删除工单失败")
         }
     }
 }
@@ -886,7 +886,7 @@ pub async fn start_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<WorkOrderResponse>> {
+) -> ApiResponse<WorkOrderResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -896,7 +896,7 @@ pub async fn start_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工单ID"));
+            return ApiResponse::bad_request("无效的工单ID");
         }
     };
 
@@ -927,13 +927,11 @@ pub async fn start_work_order(
     .await;
 
     match result {
-        Ok(Some(r)) => Json(ApiResponse::success(row_to_work_order(&r), "开始工单成功")),
-        Ok(None) => Json(ApiResponse::not_found(
-            "工单不存在或状态不允许开始（仅 pending 状态可开始）",
-        )),
+        Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "开始工单成功"),
+        Ok(None) => ApiResponse::not_found("工单不存在或状态不允许开始（仅 pending 状态可开始）"),
         Err(e) => {
             tracing::error!("Failed to start work order: {}", e);
-            Json(ApiResponse::server_error("开始工单失败"))
+            ApiResponse::server_error("开始工单失败")
         }
     }
 }
@@ -955,7 +953,7 @@ pub async fn complete_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<WorkOrderResponse>> {
+) -> ApiResponse<WorkOrderResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -965,7 +963,7 @@ pub async fn complete_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工单ID"));
+            return ApiResponse::bad_request("无效的工单ID");
         }
     };
 
@@ -996,13 +994,13 @@ pub async fn complete_work_order(
     .await;
 
     match result {
-        Ok(Some(r)) => Json(ApiResponse::success(row_to_work_order(&r), "完成工单成功")),
-        Ok(None) => Json(ApiResponse::not_found(
-            "工单不存在或状态不允许完成（仅 in_progress 状态可完成）",
-        )),
+        Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "完成工单成功"),
+        Ok(None) => {
+            ApiResponse::not_found("工单不存在或状态不允许完成（仅 in_progress 状态可完成）")
+        }
         Err(e) => {
             tracing::error!("Failed to complete work order: {}", e);
-            Json(ApiResponse::server_error("完成工单失败"))
+            ApiResponse::server_error("完成工单失败")
         }
     }
 }
@@ -1024,7 +1022,7 @@ pub async fn cancel_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<WorkOrderResponse>> {
+) -> ApiResponse<WorkOrderResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -1034,7 +1032,7 @@ pub async fn cancel_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工单ID"));
+            return ApiResponse::bad_request("无效的工单ID");
         }
     };
 
@@ -1065,13 +1063,13 @@ pub async fn cancel_work_order(
     .await;
 
     match result {
-        Ok(Some(r)) => Json(ApiResponse::success(row_to_work_order(&r), "取消工单成功")),
-        Ok(None) => Json(ApiResponse::not_found(
-            "工单不存在或状态不允许取消（已完成/已取消的工单不可取消）",
-        )),
+        Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "取消工单成功"),
+        Ok(None) => {
+            ApiResponse::not_found("工单不存在或状态不允许取消（已完成/已取消的工单不可取消）")
+        }
         Err(e) => {
             tracing::error!("Failed to cancel work order: {}", e);
-            Json(ApiResponse::server_error("取消工单失败"))
+            ApiResponse::server_error("取消工单失败")
         }
     }
 }
@@ -1093,7 +1091,7 @@ pub async fn pause_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<WorkOrderResponse>> {
+) -> ApiResponse<WorkOrderResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -1103,7 +1101,7 @@ pub async fn pause_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工单ID"));
+            return ApiResponse::bad_request("无效的工单ID");
         }
     };
 
@@ -1134,13 +1132,13 @@ pub async fn pause_work_order(
     .await;
 
     match result {
-        Ok(Some(r)) => Json(ApiResponse::success(row_to_work_order(&r), "暂停工单成功")),
-        Ok(None) => Json(ApiResponse::not_found(
-            "工单不存在或状态不允许暂停（仅 in_progress 状态可暂停）",
-        )),
+        Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "暂停工单成功"),
+        Ok(None) => {
+            ApiResponse::not_found("工单不存在或状态不允许暂停（仅 in_progress 状态可暂停）")
+        }
         Err(e) => {
             tracing::error!("Failed to pause work order: {}", e);
-            Json(ApiResponse::server_error("暂停工单失败"))
+            ApiResponse::server_error("暂停工单失败")
         }
     }
 }
@@ -1162,7 +1160,7 @@ pub async fn resume_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<WorkOrderResponse>> {
+) -> ApiResponse<WorkOrderResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -1172,7 +1170,7 @@ pub async fn resume_work_order(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工单ID"));
+            return ApiResponse::bad_request("无效的工单ID");
         }
     };
 
@@ -1203,13 +1201,11 @@ pub async fn resume_work_order(
     .await;
 
     match result {
-        Ok(Some(r)) => Json(ApiResponse::success(row_to_work_order(&r), "恢复工单成功")),
-        Ok(None) => Json(ApiResponse::not_found(
-            "工单不存在或状态不允许恢复（仅 paused 状态可恢复）",
-        )),
+        Ok(Some(r)) => ApiResponse::success(row_to_work_order(&r), "恢复工单成功"),
+        Ok(None) => ApiResponse::not_found("工单不存在或状态不允许恢复（仅 paused 状态可恢复）"),
         Err(e) => {
             tracing::error!("Failed to resume work order: {}", e);
-            Json(ApiResponse::server_error("恢复工单失败"))
+            ApiResponse::server_error("恢复工单失败")
         }
     }
 }

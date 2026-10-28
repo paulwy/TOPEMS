@@ -169,7 +169,7 @@ pub async fn list_forecasts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListForecastsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -226,7 +226,7 @@ pub async fn list_forecasts(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "forecasts": forecasts,
                     "total": total,
@@ -234,11 +234,11 @@ pub async fn list_forecasts(
                     "page_size": page_size
                 }),
                 "获取需求预测列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取需求预测列表失败: {}", e);
-            Json(ApiResponse::server_error("获取需求预测列表失败"))
+            ApiResponse::server_error("获取需求预测列表失败")
         }
     }
 }
@@ -260,7 +260,7 @@ pub async fn get_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<DemandForecast>> {
+) -> ApiResponse<DemandForecast> {
     let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query_as::<_, DemandForecast>(
@@ -278,11 +278,11 @@ pub async fn get_forecast(
     .await;
 
     match result {
-        Ok(Some(fc)) => Json(ApiResponse::success(fc, "获取需求预测详情成功")),
-        Ok(None) => Json(ApiResponse::not_found("需求预测不存在")),
+        Ok(Some(fc)) => ApiResponse::success(fc, "获取需求预测详情成功"),
+        Ok(None) => ApiResponse::not_found("需求预测不存在"),
         Err(e) => {
             tracing::error!("获取需求预测详情失败: {}", e);
-            Json(ApiResponse::server_error("获取需求预测详情失败"))
+            ApiResponse::server_error("获取需求预测详情失败")
         }
     }
 }
@@ -291,7 +291,7 @@ pub async fn create_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateForecastRequest>,
-) -> Json<ApiResponse<DemandForecast>> {
+) -> ApiResponse<DemandForecast> {
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims);
@@ -328,10 +328,10 @@ pub async fn create_forecast(
     .await;
 
     match result {
-        Ok(fc) => Json(ApiResponse::success(fc, "需求预测创建成功")),
+        Ok(fc) => ApiResponse::success(fc, "需求预测创建成功"),
         Err(e) => {
             tracing::error!("创建需求预测失败: {}", e);
-            Json(ApiResponse::server_error("创建需求预测失败"))
+            ApiResponse::server_error("创建需求预测失败")
         }
     }
 }
@@ -341,7 +341,7 @@ pub async fn update_forecast(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateForecastRequest>,
-) -> Json<ApiResponse<DemandForecast>> {
+) -> ApiResponse<DemandForecast> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = sqlx::query_as::<_, DemandForecast>(
@@ -354,8 +354,8 @@ pub async fn update_forecast(
 
     let existing = match existing {
         Ok(Some(f)) => f,
-        Ok(None) => return Json(ApiResponse::not_found("需求预测不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("需求预测不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     let product_name = req.product_name.or(existing.product_name);
@@ -399,10 +399,10 @@ pub async fn update_forecast(
     .await;
 
     match result {
-        Ok(fc) => Json(ApiResponse::success(fc, "需求预测更新成功")),
+        Ok(fc) => ApiResponse::success(fc, "需求预测更新成功"),
         Err(e) => {
             tracing::error!("更新需求预测失败: {}", e);
-            Json(ApiResponse::server_error("更新需求预测失败"))
+            ApiResponse::server_error("更新需求预测失败")
         }
     }
 }
@@ -411,7 +411,7 @@ pub async fn delete_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query("DELETE FROM demand_forecasts WHERE id = $1 AND tenant_id = $2")
@@ -421,14 +421,13 @@ pub async fn delete_forecast(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "需求预测删除成功",
-        )),
-        Ok(_) => Json(ApiResponse::not_found("需求预测不存在")),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id}), "需求预测删除成功")
+        }
+        Ok(_) => ApiResponse::not_found("需求预测不存在"),
         Err(e) => {
             tracing::error!("删除需求预测失败: {}", e);
-            Json(ApiResponse::server_error("删除需求预测失败"))
+            ApiResponse::server_error("删除需求预测失败")
         }
     }
 }
@@ -452,7 +451,7 @@ pub async fn calculate_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<DemandForecast>> {
+) -> ApiResponse<DemandForecast> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
@@ -464,15 +463,12 @@ pub async fn calculate_forecast(
     .await
     {
         Ok(Some(f)) => f,
-        Ok(None) => return Json(ApiResponse::not_found("需求预测不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("需求预测不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     if !can_transition(&existing.status, "calculated") {
-        return Json(ApiResponse::bad_request(&format!(
-            "当前状态 {} 不允许计算预测",
-            existing.status
-        )));
+        return ApiResponse::bad_request(&format!("当前状态 {} 不允许计算预测", existing.status));
     }
 
     // 简单计算：如果没有预测数量，基于历史数据生成（此处简化为保持原值）
@@ -499,10 +495,10 @@ pub async fn calculate_forecast(
     .await;
 
     match result {
-        Ok(fc) => Json(ApiResponse::success(fc, "需求预测计算完成")),
+        Ok(fc) => ApiResponse::success(fc, "需求预测计算完成"),
         Err(e) => {
             tracing::error!("计算需求预测失败: {}", e);
-            Json(ApiResponse::server_error("计算需求预测失败"))
+            ApiResponse::server_error("计算需求预测失败")
         }
     }
 }
@@ -524,7 +520,7 @@ pub async fn validate_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<DemandForecast>> {
+) -> ApiResponse<DemandForecast> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
@@ -536,20 +532,17 @@ pub async fn validate_forecast(
     .await
     {
         Ok(Some(f)) => f,
-        Ok(None) => return Json(ApiResponse::not_found("需求预测不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("需求预测不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     if !can_transition(&existing.status, "validated") {
-        return Json(ApiResponse::bad_request(&format!(
-            "当前状态 {} 不允许验证预测",
-            existing.status
-        )));
+        return ApiResponse::bad_request(&format!("当前状态 {} 不允许验证预测", existing.status));
     }
 
     // 验证：检查预测数量是否合理（>0）
     if existing.forecast_quantity.unwrap_or(0.0) <= 0.0 {
-        return Json(ApiResponse::bad_request("预测数量必须大于0，无法验证"));
+        return ApiResponse::bad_request("预测数量必须大于0，无法验证");
     }
 
     let now = Utc::now();
@@ -569,10 +562,10 @@ pub async fn validate_forecast(
     .await;
 
     match result {
-        Ok(fc) => Json(ApiResponse::success(fc, "需求预测验证通过")),
+        Ok(fc) => ApiResponse::success(fc, "需求预测验证通过"),
         Err(e) => {
             tracing::error!("验证需求预测失败: {}", e);
-            Json(ApiResponse::server_error("验证需求预测失败"))
+            ApiResponse::server_error("验证需求预测失败")
         }
     }
 }
@@ -594,7 +587,7 @@ pub async fn adopt_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<DemandForecast>> {
+) -> ApiResponse<DemandForecast> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
@@ -606,15 +599,12 @@ pub async fn adopt_forecast(
     .await
     {
         Ok(Some(f)) => f,
-        Ok(None) => return Json(ApiResponse::not_found("需求预测不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("需求预测不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     if !can_transition(&existing.status, "adopted") {
-        return Json(ApiResponse::bad_request(&format!(
-            "当前状态 {} 不允许采纳预测",
-            existing.status
-        )));
+        return ApiResponse::bad_request(&format!("当前状态 {} 不允许采纳预测", existing.status));
     }
 
     let now = Utc::now();
@@ -634,10 +624,10 @@ pub async fn adopt_forecast(
     .await;
 
     match result {
-        Ok(fc) => Json(ApiResponse::success(fc, "需求预测已采纳")),
+        Ok(fc) => ApiResponse::success(fc, "需求预测已采纳"),
         Err(e) => {
             tracing::error!("采纳需求预测失败: {}", e);
-            Json(ApiResponse::server_error("采纳需求预测失败"))
+            ApiResponse::server_error("采纳需求预测失败")
         }
     }
 }

@@ -155,7 +155,7 @@ pub async fn list_anomaly_alerts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnomalyQueryParams>,
-) -> Json<ApiResponse<Vec<AnomalyAlert>>> {
+) -> ApiResponse<Vec<AnomalyAlert>> {
     let mut alerts = Vec::new();
     let tenant_id = get_tenant_id(&claims);
 
@@ -206,7 +206,7 @@ pub async fn list_anomaly_alerts(
         })
         .collect();
 
-    Json(ApiResponse::success(filtered, "异常预警列表获取成功"))
+    ApiResponse::success(filtered, "异常预警列表获取成功")
 }
 
 /// 获取异常预警汇总
@@ -223,7 +223,7 @@ pub async fn list_anomaly_alerts(
 pub async fn get_anomaly_summary(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<AnomalySummary>> {
+) -> ApiResponse<AnomalySummary> {
     let tenant_id = get_tenant_id(&claims);
     let all_alerts = collect_all_alerts(&state.pool, tenant_id).await;
 
@@ -277,7 +277,7 @@ pub async fn get_anomaly_summary(
         recent_trend,
     };
 
-    Json(ApiResponse::success(summary, "异常预警汇总获取成功"))
+    ApiResponse::success(summary, "异常预警汇总获取成功")
 }
 
 /// 获取指定设备的异常预警
@@ -298,14 +298,14 @@ pub async fn get_equipment_anomalies(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(equipment_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<AnomalyAlert>>> {
+) -> ApiResponse<Vec<AnomalyAlert>> {
     let all_alerts = collect_all_alerts(&state.pool, get_tenant_id(&claims)).await;
     let filtered: Vec<AnomalyAlert> = all_alerts
         .into_iter()
         .filter(|a| a.source_id == equipment_id)
         .collect();
 
-    Json(ApiResponse::success(filtered, "设备异常预警获取成功"))
+    ApiResponse::success(filtered, "设备异常预警获取成功")
 }
 
 /// 获取异常预警规则列表
@@ -322,9 +322,9 @@ pub async fn get_equipment_anomalies(
 pub async fn list_anomaly_rules(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<AnomalyRule>>> {
+) -> ApiResponse<Vec<AnomalyRule>> {
     let rules = default_rules();
-    Json(ApiResponse::success(rules, "预警规则列表获取成功"))
+    ApiResponse::success(rules, "预警规则列表获取成功")
 }
 
 /// 获取单个预警规则
@@ -345,15 +345,12 @@ pub async fn get_anomaly_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Path(rule_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<AnomalyRule>> {
+) -> ApiResponse<AnomalyRule> {
     let rules = default_rules();
     if let Some(rule) = rules.into_iter().find(|r| r.id == rule_id) {
-        Json(ApiResponse::success(rule, "预警规则获取成功"))
+        ApiResponse::success(rule, "预警规则获取成功")
     } else {
-        Json(ApiResponse::not_found(&format!(
-            "预警规则 {} 不存在",
-            rule_id
-        )))
+        ApiResponse::not_found(&format!("预警规则 {} 不存在", rule_id))
     }
 }
 
@@ -362,7 +359,7 @@ pub async fn update_anomaly_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<UpdateRuleRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 实际项目中应持久化到数据库
     let mut updated_fields = serde_json::Map::new();
     if let Some(v) = req.warning_threshold {
@@ -377,13 +374,13 @@ pub async fn update_anomaly_rule(
 
     tracing::info!("预警规则更新: {:?}", updated_fields);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "updated": true,
             "fields": updated_fields,
         }),
         "预警规则更新成功",
-    ))
+    )
 }
 
 /// 手动触发异常扫描
@@ -400,7 +397,7 @@ pub async fn update_anomaly_rule(
 pub async fn trigger_anomaly_scan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims);
     let equipment_alerts = detect_equipment_anomalies(&state.pool, tenant_id).await;
     let quality_alerts = detect_quality_anomalies(&state.pool, tenant_id).await;
@@ -408,7 +405,7 @@ pub async fn trigger_anomaly_scan(
 
     let total = equipment_alerts.len() + quality_alerts.len() + production_alerts.len();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "scan_completed": true,
             "scanned_at": Utc::now(),
@@ -418,7 +415,7 @@ pub async fn trigger_anomaly_scan(
             "production_alerts": production_alerts.len(),
         }),
         "异常扫描完成",
-    ))
+    )
 }
 
 /// 获取异常趋势
@@ -441,7 +438,7 @@ pub async fn get_anomaly_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnomalyQueryParams>,
-) -> Json<ApiResponse<Vec<DailyAnomalyCount>>> {
+) -> ApiResponse<Vec<DailyAnomalyCount>> {
     let days = if let Some(ref start) = params.start_date {
         if let Some(ref end) = params.end_date {
             if let (Ok(s), Ok(e)) = (
@@ -461,7 +458,7 @@ pub async fn get_anomaly_trend(
 
     let trend =
         get_recent_anomaly_trend_days(&state.pool, get_tenant_id(&claims), days.min(90)).await;
-    Json(ApiResponse::success(trend, "异常趋势获取成功"))
+    ApiResponse::success(trend, "异常趋势获取成功")
 }
 
 // ==================== Detection Logic ====================
@@ -1298,7 +1295,7 @@ pub async fn start_anomaly_handling_approval(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<AnomalyHandlingApprovalStartRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MesAnomalyApprove).await
     {
@@ -1307,7 +1304,7 @@ pub async fn start_anomaly_handling_approval(
     // 校验当前 status=acknowledged，创建 approval 记录并写入 audit log
     let approver_id = match claims.user_id() {
         Ok(uid) => uid,
-        Err(_) => return Json(ApiResponse::unauthorized("无效的用户身份")),
+        Err(_) => return ApiResponse::unauthorized("无效的用户身份"),
     };
     let record_id = uuid::Uuid::parse_str(&id).unwrap_or_default();
     let approval_id = match create_approval_and_log(
@@ -1323,13 +1320,10 @@ pub async fn start_anomaly_handling_approval(
         Ok(aid) => aid,
         Err(e) => {
             tracing::error!("发起异常处置审批失败: {}", e);
-            return Json(ApiResponse::server_error("发起审批失败"));
+            return ApiResponse::server_error("发起审批失败");
         }
     };
-    Json(ApiResponse::success(
-        build_start_response(approval_id),
-        "异常处置审批已发起",
-    ))
+    ApiResponse::success(build_start_response(approval_id), "异常处置审批已发起")
 }
 
 /// 异常处置审批通过
@@ -1352,7 +1346,7 @@ pub async fn approve_anomaly_handling(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<AnomalyHandlingApprovalDecisionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MesAnomalyApprove).await
     {
@@ -1372,12 +1366,12 @@ pub async fn approve_anomaly_handling(
     .await
     {
         tracing::error!("异常处置审批通过失败: {}", e);
-        return Json(ApiResponse::server_error("审批通过失败"));
+        return ApiResponse::server_error("审批通过失败");
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         build_approve_response(req.approval_id),
         "异常处置审批通过成功",
-    ))
+    )
 }
 
 /// 异常处置审批驳回
@@ -1400,7 +1394,7 @@ pub async fn reject_anomaly_handling(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<AnomalyHandlingApprovalDecisionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MesAnomalyApprove).await
     {
@@ -1418,12 +1412,12 @@ pub async fn reject_anomaly_handling(
     .await
     {
         tracing::error!("异常处置审批驳回失败: {}", e);
-        return Json(ApiResponse::server_error("审批驳回失败"));
+        return ApiResponse::server_error("审批驳回失败");
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         build_reject_response(req.approval_id),
         "异常处置审批驳回成功",
-    ))
+    )
 }
 
 #[cfg(test)]

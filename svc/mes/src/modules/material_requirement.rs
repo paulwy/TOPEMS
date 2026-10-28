@@ -129,7 +129,7 @@ pub async fn list_material_requirements(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListMaterialRequirementsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -173,7 +173,7 @@ pub async fn list_material_requirements(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count material requirements: {}", e);
-            return Json(ApiResponse::server_error("获取物料需求列表失败"));
+            return ApiResponse::server_error("获取物料需求列表失败");
         }
     };
 
@@ -205,7 +205,7 @@ pub async fn list_material_requirements(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch material requirements: {}", e);
-            return Json(ApiResponse::server_error("获取物料需求列表失败"));
+            return ApiResponse::server_error("获取物料需求列表失败");
         }
     };
 
@@ -269,7 +269,7 @@ pub async fn list_material_requirements(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "requirements": requirements,
             "total": total.unwrap_or(0),
@@ -277,7 +277,7 @@ pub async fn list_material_requirements(
             "page_size": page_size,
         }),
         "获取物料需求列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -297,7 +297,7 @@ pub async fn get_material_requirement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<MaterialRequirementResponse>> {
+) -> ApiResponse<MaterialRequirementResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -306,7 +306,7 @@ pub async fn get_material_requirement(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的物料需求ID"));
+            return ApiResponse::bad_request("无效的物料需求ID");
         }
     };
 
@@ -326,7 +326,7 @@ pub async fn get_material_requirement(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
                 mrp_no: r.mrp_no,
@@ -354,11 +354,11 @@ pub async fn get_material_requirement(
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "获取物料需求成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("物料需求不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("物料需求不存在"),
         Err(e) => {
             tracing::error!("Failed to get material requirement: {}", e);
-            Json(ApiResponse::server_error("获取物料需求失败"))
+            ApiResponse::server_error("获取物料需求失败")
         }
     }
 }
@@ -367,7 +367,7 @@ pub async fn create_material_requirement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<CreateMaterialRequirementRequest>,
-) -> Json<ApiResponse<MaterialRequirementResponse>> {
+) -> ApiResponse<MaterialRequirementResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -426,7 +426,7 @@ pub async fn create_material_requirement(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
                 mrp_no: r.mrp_no,
@@ -454,10 +454,10 @@ pub async fn create_material_requirement(
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "创建物料需求成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create material requirement: {}", e);
-            Json(ApiResponse::server_error("创建物料需求失败"))
+            ApiResponse::server_error("创建物料需求失败")
         }
     }
 }
@@ -467,7 +467,7 @@ pub async fn update_material_requirement(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<UpdateMaterialRequirementRequest>,
-) -> Json<ApiResponse<MaterialRequirementResponse>> {
+) -> ApiResponse<MaterialRequirementResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -477,7 +477,7 @@ pub async fn update_material_requirement(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的物料需求ID"));
+            return ApiResponse::bad_request("无效的物料需求ID");
         }
     };
 
@@ -515,7 +515,7 @@ pub async fn update_material_requirement(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
                 mrp_no: r.mrp_no,
@@ -543,11 +543,11 @@ pub async fn update_material_requirement(
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "更新物料需求成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("物料需求不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("物料需求不存在"),
         Err(e) => {
             tracing::error!("Failed to update material requirement: {}", e);
-            Json(ApiResponse::server_error("更新物料需求失败"))
+            ApiResponse::server_error("更新物料需求失败")
         }
     }
 }
@@ -556,7 +556,7 @@ pub async fn delete_material_requirement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -566,7 +566,7 @@ pub async fn delete_material_requirement(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的物料需求ID"));
+            return ApiResponse::bad_request("无效的物料需求ID");
         }
     };
 
@@ -580,10 +580,10 @@ pub async fn delete_material_requirement(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(id, "删除物料需求成功")),
+        Ok(_) => ApiResponse::success(id, "删除物料需求成功"),
         Err(e) => {
             tracing::error!("Failed to delete material requirement: {}", e);
-            Json(ApiResponse::server_error("删除物料需求失败"))
+            ApiResponse::server_error("删除物料需求失败")
         }
     }
 }
@@ -607,7 +607,7 @@ pub async fn calculate_requirements(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<CalculateRequirementsRequest>,
-) -> Json<ApiResponse<Vec<MaterialRequirementResponse>>> {
+) -> ApiResponse<Vec<MaterialRequirementResponse>> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -617,7 +617,7 @@ pub async fn calculate_requirements(
     let order_uuid = match Uuid::parse_str(&body.order_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的订单ID"));
+            return ApiResponse::bad_request("无效的订单ID");
         }
     };
 
@@ -635,11 +635,11 @@ pub async fn calculate_requirements(
     let order = match order_result {
         Ok(o) => o,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::not_found("生产订单不存在"));
+            return ApiResponse::not_found("生产订单不存在");
         }
         Err(e) => {
             tracing::error!("Failed to get production order: {}", e);
-            return Json(ApiResponse::server_error("获取生产订单失败"));
+            return ApiResponse::server_error("获取生产订单失败");
         }
     };
 
@@ -723,7 +723,7 @@ pub async fn calculate_requirements(
         }
     }
 
-    Json(ApiResponse::success(requirements, "物料需求计算成功"))
+    ApiResponse::success(requirements, "物料需求计算成功")
 }
 
 #[utoipa::path(
@@ -743,7 +743,7 @@ pub async fn confirm_requirement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<MaterialRequirementResponse>> {
+) -> ApiResponse<MaterialRequirementResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -753,7 +753,7 @@ pub async fn confirm_requirement(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的物料需求ID"));
+            return ApiResponse::bad_request("无效的物料需求ID");
         }
     };
 
@@ -770,7 +770,7 @@ pub async fn confirm_requirement(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
                 mrp_no: r.mrp_no,
@@ -798,11 +798,11 @@ pub async fn confirm_requirement(
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "确认物料需求成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("物料需求不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("物料需求不存在"),
         Err(e) => {
             tracing::error!("Failed to confirm material requirement: {}", e);
-            Json(ApiResponse::server_error("确认物料需求失败"))
+            ApiResponse::server_error("确认物料需求失败")
         }
     }
 }
@@ -824,7 +824,7 @@ pub async fn release_requirement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<MaterialRequirementResponse>> {
+) -> ApiResponse<MaterialRequirementResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -834,7 +834,7 @@ pub async fn release_requirement(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的物料需求ID"));
+            return ApiResponse::bad_request("无效的物料需求ID");
         }
     };
 
@@ -851,7 +851,7 @@ pub async fn release_requirement(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
                 mrp_no: r.mrp_no,
@@ -879,11 +879,11 @@ pub async fn release_requirement(
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "下发物料需求成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("物料需求不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("物料需求不存在"),
         Err(e) => {
             tracing::error!("Failed to release material requirement: {}", e);
-            Json(ApiResponse::server_error("下发物料需求失败"))
+            ApiResponse::server_error("下发物料需求失败")
         }
     }
 }

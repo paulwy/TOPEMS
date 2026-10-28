@@ -133,7 +133,7 @@ pub async fn list_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListRecordsQuery>,
-) -> Json<ApiResponse<ListRecordsResponse>> {
+) -> ApiResponse<ListRecordsResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordRead).await {
         return e;
     }
@@ -194,7 +194,7 @@ pub async fn list_records(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count records: {}", e);
-            return Json(ApiResponse::server_error("获取生产记录列表失败"));
+            return ApiResponse::server_error("获取生产记录列表失败");
         }
     };
 
@@ -228,7 +228,7 @@ pub async fn list_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch records: {}", e);
-            return Json(ApiResponse::server_error("获取生产记录列表失败"));
+            return ApiResponse::server_error("获取生产记录列表失败");
         }
     };
 
@@ -284,7 +284,7 @@ pub async fn list_records(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListRecordsResponse {
             records: records_list,
             total: total.unwrap_or(0),
@@ -292,7 +292,7 @@ pub async fn list_records(
             page_size,
         },
         "获取生产记录列表成功",
-    ))
+    )
 }
 
 #[allow(clippy::as_conversions)]
@@ -300,7 +300,7 @@ pub async fn create_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRecordRequest>,
-) -> Json<ApiResponse<ProductionRecordResponse>> {
+) -> ApiResponse<ProductionRecordResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
@@ -346,7 +346,7 @@ pub async fn create_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create record: {}", e);
-            return Json(ApiResponse::server_error("创建生产记录失败"));
+            return ApiResponse::server_error("创建生产记录失败");
         }
     };
 
@@ -371,7 +371,7 @@ pub async fn create_record(
         updated_at: result.updated_at,
     };
 
-    Json(ApiResponse::success(record, "生产记录创建成功"))
+    ApiResponse::success(record, "生产记录创建成功")
 }
 
 #[utoipa::path(
@@ -392,7 +392,7 @@ pub async fn get_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProductionRecordResponse>> {
+) -> ApiResponse<ProductionRecordResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordRead).await {
         return e;
     }
@@ -418,7 +418,7 @@ pub async fn get_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch record: {}", e);
-            return Json(ApiResponse::server_error("获取生产记录失败"));
+            return ApiResponse::server_error("获取生产记录失败");
         }
     };
 
@@ -441,9 +441,9 @@ pub async fn get_record(
                 created_at: r.created_at,
                 updated_at: r.updated_at,
             };
-            Json(ApiResponse::success(record, "获取生产记录成功"))
+            ApiResponse::success(record, "获取生产记录成功")
         }
-        None => Json(ApiResponse::not_found("生产记录不存在")),
+        None => ApiResponse::not_found("生产记录不存在"),
     }
 }
 
@@ -453,7 +453,7 @@ pub async fn update_record(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateRecordRequest>,
-) -> Json<ApiResponse<ProductionRecordResponse>> {
+) -> ApiResponse<ProductionRecordResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
@@ -500,7 +500,7 @@ pub async fn update_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update record: {}", e);
-            return Json(ApiResponse::server_error("更新生产记录失败"));
+            return ApiResponse::server_error("更新生产记录失败");
         }
     };
 
@@ -523,9 +523,9 @@ pub async fn update_record(
                 created_at: r.created_at,
                 updated_at: r.updated_at,
             };
-            Json(ApiResponse::success(record, "生产记录更新成功"))
+            ApiResponse::success(record, "生产记录更新成功")
         }
-        None => Json(ApiResponse::not_found("生产记录不存在")),
+        None => ApiResponse::not_found("生产记录不存在"),
     }
 }
 
@@ -533,7 +533,7 @@ pub async fn delete_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
@@ -552,14 +552,14 @@ pub async fn delete_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete record: {}", e);
-            return Json(ApiResponse::server_error("删除生产记录失败"));
+            return ApiResponse::server_error("删除生产记录失败");
         }
     };
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "生产记录删除成功"))
+        ApiResponse::success("".to_string(), "生产记录删除成功")
     } else {
-        Json(ApiResponse::not_found("生产记录不存在"))
+        ApiResponse::not_found("生产记录不存在")
     }
 }
 
@@ -581,7 +581,7 @@ pub async fn complete_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProductionRecordResponse>> {
+) -> ApiResponse<ProductionRecordResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
@@ -611,7 +611,7 @@ pub async fn complete_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to complete record: {}", e);
-            return Json(ApiResponse::server_error("完成生产记录失败"));
+            return ApiResponse::server_error("完成生产记录失败");
         }
     };
 
@@ -634,9 +634,9 @@ pub async fn complete_record(
                 created_at: r.created_at,
                 updated_at: r.updated_at,
             };
-            Json(ApiResponse::success(record, "生产记录完成成功"))
+            ApiResponse::success(record, "生产记录完成成功")
         }
-        None => Json(ApiResponse::not_found("生产记录不存在或状态不允许完成")),
+        None => ApiResponse::not_found("生产记录不存在或状态不允许完成"),
     }
 }
 

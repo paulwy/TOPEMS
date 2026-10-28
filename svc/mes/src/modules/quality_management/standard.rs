@@ -112,7 +112,7 @@ pub async fn list_standards(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListStandardsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -171,7 +171,7 @@ pub async fn list_standards(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality standards: {}", e);
-            return Json(ApiResponse::server_error("获取质量标准列表失败"));
+            return ApiResponse::server_error("获取质量标准列表失败");
         }
     };
 
@@ -202,7 +202,7 @@ pub async fn list_standards(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality standards: {}", e);
-            return Json(ApiResponse::server_error("获取质量标准列表失败"));
+            return ApiResponse::server_error("获取质量标准列表失败");
         }
     };
 
@@ -293,7 +293,7 @@ pub async fn list_standards(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "standards": standards,
             "total": total.unwrap_or(0),
@@ -301,7 +301,7 @@ pub async fn list_standards(
             "page_size": page_size,
         }),
         "获取质量标准列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -321,7 +321,7 @@ pub async fn get_standard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<StandardResponse>> {
+) -> ApiResponse<StandardResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -330,7 +330,7 @@ pub async fn get_standard(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的质量标准ID"));
+            return ApiResponse::bad_request("无效的质量标准ID");
         }
     };
 
@@ -352,11 +352,11 @@ pub async fn get_standard(
     let standard = match standard_result {
         Ok(r) => r,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::not_found("质量标准不存在"));
+            return ApiResponse::not_found("质量标准不存在");
         }
         Err(e) => {
             tracing::error!("Failed to get quality standard: {}", e);
-            return Json(ApiResponse::server_error("获取质量标准失败"));
+            return ApiResponse::server_error("获取质量标准失败");
         }
     };
 
@@ -393,7 +393,7 @@ pub async fn get_standard(
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
             code: standard.code.unwrap_or_default(),
@@ -410,14 +410,14 @@ pub async fn get_standard(
             updated_at: standard.updated_at.unwrap_or_else(Utc::now),
         },
         "获取质量标准成功",
-    ))
+    )
 }
 
 pub async fn create_standard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<CreateStandardRequest>,
-) -> Json<ApiResponse<StandardResponse>> {
+) -> ApiResponse<StandardResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -428,7 +428,7 @@ pub async fn create_standard(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::server_error("创建质量标准失败"));
+            return ApiResponse::server_error("创建质量标准失败");
         }
     };
 
@@ -479,7 +479,7 @@ pub async fn create_standard(
         Err(e) => {
             tracing::error!("Failed to create quality standard: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::server_error("创建质量标准失败"));
+            return ApiResponse::server_error("创建质量标准失败");
         }
     };
 
@@ -532,7 +532,7 @@ pub async fn create_standard(
                 Err(e) => {
                     tracing::error!("Failed to insert standard value: {}", e);
                     let _ = tx.rollback().await;
-                    return Json(ApiResponse::server_error("创建质量标准值失败"));
+                    return ApiResponse::server_error("创建质量标准值失败");
                 }
             }
         }
@@ -540,10 +540,10 @@ pub async fn create_standard(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::server_error("创建质量标准失败"));
+        return ApiResponse::server_error("创建质量标准失败");
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
             code: standard.code.unwrap_or_default(),
@@ -560,7 +560,7 @@ pub async fn create_standard(
             updated_at: standard.updated_at.unwrap_or_else(Utc::now),
         },
         "创建质量标准成功",
-    ))
+    )
 }
 
 pub async fn update_standard(
@@ -568,7 +568,7 @@ pub async fn update_standard(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<UpdateStandardRequest>,
-) -> Json<ApiResponse<StandardResponse>> {
+) -> ApiResponse<StandardResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -578,7 +578,7 @@ pub async fn update_standard(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的质量标准ID"));
+            return ApiResponse::bad_request("无效的质量标准ID");
         }
     };
     let tenant_id = get_tenant_id(&claims);
@@ -587,7 +587,7 @@ pub async fn update_standard(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::server_error("更新质量标准失败"));
+            return ApiResponse::server_error("更新质量标准失败");
         }
     };
 
@@ -630,12 +630,12 @@ pub async fn update_standard(
         Ok(r) => r,
         Err(sqlx::Error::RowNotFound) => {
             let _ = tx.rollback().await;
-            return Json(ApiResponse::not_found("质量标准不存在"));
+            return ApiResponse::not_found("质量标准不存在");
         }
         Err(e) => {
             tracing::error!("Failed to update quality standard: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::server_error("更新质量标准失败"));
+            return ApiResponse::server_error("更新质量标准失败");
         }
     };
 
@@ -654,7 +654,7 @@ pub async fn update_standard(
         if let Err(e) = delete_result {
             tracing::error!("Failed to clear standard values: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::server_error("更新质量标准值失败"));
+            return ApiResponse::server_error("更新质量标准值失败");
         }
 
         for v in standard_values {
@@ -703,7 +703,7 @@ pub async fn update_standard(
                 Err(e) => {
                     tracing::error!("Failed to insert standard value: {}", e);
                     let _ = tx.rollback().await;
-                    return Json(ApiResponse::server_error("更新质量标准值失败"));
+                    return ApiResponse::server_error("更新质量标准值失败");
                 }
             }
         }
@@ -739,10 +739,10 @@ pub async fn update_standard(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::server_error("更新质量标准失败"));
+        return ApiResponse::server_error("更新质量标准失败");
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
             code: standard.code.unwrap_or_default(),
@@ -759,14 +759,14 @@ pub async fn update_standard(
             updated_at: standard.updated_at.unwrap_or_else(Utc::now),
         },
         "更新质量标准成功",
-    ))
+    )
 }
 
 pub async fn delete_standard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -776,7 +776,7 @@ pub async fn delete_standard(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的质量标准ID"));
+            return ApiResponse::bad_request("无效的质量标准ID");
         }
     };
 
@@ -790,10 +790,10 @@ pub async fn delete_standard(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(id, "删除质量标准成功")),
+        Ok(_) => ApiResponse::success(id, "删除质量标准成功"),
         Err(e) => {
             tracing::error!("Failed to delete quality standard: {}", e);
-            Json(ApiResponse::server_error("删除质量标准失败"))
+            ApiResponse::server_error("删除质量标准失败")
         }
     }
 }

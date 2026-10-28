@@ -7,7 +7,7 @@ use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::get,
-    Json, Router,
+    Router,
 };
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
@@ -75,7 +75,7 @@ async fn list_audit_logs(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListAuditLogsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match check_permission(&state.pool, &claims, &MesPermission::All).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -140,7 +140,7 @@ async fn list_audit_logs(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": logs,
                     "total": total,
@@ -148,13 +148,11 @@ async fn list_audit_logs(
                     "page_size": page_size
                 }),
                 "获取审计日志成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取审计日志失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取审计日志失败".to_string()))
         }
     }
 }
@@ -176,7 +174,7 @@ async fn get_audit_log(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match check_permission(&state.pool, &claims, &MesPermission::All).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -200,16 +198,12 @@ async fn get_audit_log(
     match result {
         Ok(Some(log)) => {
             let v = serde_json::to_value(&log).unwrap_or(serde_json::json!({}));
-            Json(ApiResponse::success(v, "获取审计日志成功"))
+            ApiResponse::success(v, "获取审计日志成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "审计日志不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("审计日志不存在".to_string())),
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取审计日志失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取审计日志失败".to_string()))
         }
     }
 }

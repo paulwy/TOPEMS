@@ -205,7 +205,7 @@ pub async fn list_production_schedules(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListProductionSchedulesQuery>,
-) -> Json<ApiResponse<ListProductionSchedulesResponse>> {
+) -> ApiResponse<ListProductionSchedulesResponse> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -274,7 +274,7 @@ pub async fn list_production_schedules(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count production schedules: {}", e);
-            return Json(ApiResponse::server_error("获取生产排产列表失败"));
+            return ApiResponse::server_error("获取生产排产列表失败");
         }
     };
 
@@ -317,7 +317,7 @@ pub async fn list_production_schedules(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to fetch production schedules: {}", e);
-            return Json(ApiResponse::server_error("获取生产排产列表失败"));
+            return ApiResponse::server_error("获取生产排产列表失败");
         }
     };
 
@@ -403,7 +403,7 @@ pub async fn list_production_schedules(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListProductionSchedulesResponse {
             schedules: schedules_list,
             total: total.unwrap_or(0),
@@ -411,7 +411,7 @@ pub async fn list_production_schedules(
             page_size,
         },
         "获取生产排产列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -429,7 +429,7 @@ pub async fn create_production_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateProductionScheduleRequest>,
-) -> Json<ApiResponse<ProductionScheduleResponse>> {
+) -> ApiResponse<ProductionScheduleResponse> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -506,7 +506,7 @@ Utc::now(),
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create production schedule: {}", e);
-            return Json(ApiResponse::server_error("创建生产排产失败"));
+            return ApiResponse::server_error("创建生产排产失败");
         }
     };
 
@@ -537,7 +537,7 @@ Utc::now(),
         updated_at: result.updated_at.unwrap_or_else(Utc::now),
     };
 
-    Json(ApiResponse::success(schedule, "生产排产创建成功"))
+    ApiResponse::success(schedule, "生产排产创建成功")
 }
 
 #[utoipa::path(
@@ -557,7 +557,7 @@ pub async fn get_production_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProductionScheduleResponse>> {
+) -> ApiResponse<ProductionScheduleResponse> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -603,7 +603,7 @@ pub async fn get_production_schedule(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch production schedule: {}", e);
-            return Json(ApiResponse::server_error("获取生产排产失败"));
+            return ApiResponse::server_error("获取生产排产失败");
         }
     };
 
@@ -635,9 +635,9 @@ pub async fn get_production_schedule(
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
-            Json(ApiResponse::success(schedule, "获取生产排产成功"))
+            ApiResponse::success(schedule, "获取生产排产成功")
         }
-        None => Json(ApiResponse::not_found("生产排产不存在")),
+        None => ApiResponse::not_found("生产排产不存在"),
     }
 }
 
@@ -660,7 +660,7 @@ pub async fn update_production_schedule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProductionScheduleRequest>,
-) -> Json<ApiResponse<ProductionScheduleResponse>> {
+) -> ApiResponse<ProductionScheduleResponse> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -713,7 +713,7 @@ pub async fn update_production_schedule(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update production schedule: {}", e);
-            return Json(ApiResponse::server_error("更新生产排产失败"));
+            return ApiResponse::server_error("更新生产排产失败");
         }
     };
 
@@ -745,9 +745,9 @@ pub async fn update_production_schedule(
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
-            Json(ApiResponse::success(schedule, "生产排产更新成功"))
+            ApiResponse::success(schedule, "生产排产更新成功")
         }
-        None => Json(ApiResponse::not_found("生产排产不存在")),
+        None => ApiResponse::not_found("生产排产不存在"),
     }
 }
 
@@ -768,7 +768,7 @@ pub async fn delete_production_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -793,14 +793,14 @@ pub async fn delete_production_schedule(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete production schedule: {}", e);
-            return Json(ApiResponse::server_error("删除生产排产失败"));
+            return ApiResponse::server_error("删除生产排产失败");
         }
     };
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "生产排产删除成功"))
+        ApiResponse::success("".to_string(), "生产排产删除成功")
     } else {
-        Json(ApiResponse::not_found("生产排产不存在或状态不允许删除"))
+        ApiResponse::not_found("生产排产不存在或状态不允许删除")
     }
 }
 
@@ -823,7 +823,7 @@ pub async fn adjust_schedule(
     Extension(claims): Extension<Claims>,
     Path(_id): Path<String>,
     Json(req): Json<AdjustScheduleRequest>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -855,11 +855,11 @@ pub async fn adjust_schedule(
 
         if let Err(e) = result {
             tracing::error!("Failed to adjust schedule {}: {}", schedule_id, e);
-            return Json(ApiResponse::server_error("调整生产排产失败"));
+            return ApiResponse::server_error("调整生产排产失败");
         }
     }
 
-    Json(ApiResponse::success("".to_string(), "生产排产调整成功"))
+    ApiResponse::success("".to_string(), "生产排产调整成功")
 }
 
 #[utoipa::path(
@@ -875,7 +875,7 @@ pub async fn adjust_schedule(
 pub async fn get_gantt_data(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<GanttDataResponse>> {
+) -> ApiResponse<GanttDataResponse> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -913,7 +913,7 @@ pub async fn get_gantt_data(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to fetch gantt data: {}", e);
-            return Json(ApiResponse::server_error("获取甘特图数据失败"));
+            return ApiResponse::server_error("获取甘特图数据失败");
         }
     };
 
@@ -969,14 +969,14 @@ pub async fn get_gantt_data(
             end: max_end.map(|d| d.to_rfc3339()).unwrap_or_default(),
         }
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         GanttDataResponse {
             tasks,
             resources,
             date_range,
         },
         "获取甘特图数据成功",
-    ))
+    )
 }
 
 #[cfg(test)]
@@ -1060,7 +1060,7 @@ async fn transition_schedule(
     id: Uuid,
     to_status: &str,
     comment: Option<String>,
-) -> Json<ApiResponse<ScheduleActionResponse>> {
+) -> ApiResponse<ScheduleActionResponse> {
     if let Err(e) = check_permission(
         &state.pool,
         claims,
@@ -1085,19 +1085,19 @@ async fn transition_schedule(
         Ok(None) => None,
         Err(e) => {
             tracing::error!("查询排产单状态失败: {}", e);
-            return Json(ApiResponse::server_error("查询排产单状态失败"));
+            return ApiResponse::server_error("查询排产单状态失败");
         }
     };
 
     let Some((current_status,)) = existing else {
-        return Json(ApiResponse::not_found("排产单不存在"));
+        return ApiResponse::not_found("排产单不存在");
     };
 
     if let Err(_e) = schedule_can_transition(&current_status, to_status) {
-        return Json(ApiResponse::conflict(&format!(
+        return ApiResponse::conflict(&format!(
             "当前状态 {} 不允许切换到 {}",
             current_status, to_status
-        )));
+        ));
     }
 
     let now = Utc::now();
@@ -1113,18 +1113,18 @@ async fn transition_schedule(
     .await;
 
     match updated {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(
             ScheduleActionResponse {
                 success: true,
                 message: format!("排产单已{}", to_status),
                 id: Some(id),
             },
             "操作成功",
-        )),
-        Ok(_) => Json(ApiResponse::not_found("排产单不存在")),
+        ),
+        Ok(_) => ApiResponse::not_found("排产单不存在"),
         Err(e) => {
             tracing::error!("更新排产单状态失败: {}", e);
-            Json(ApiResponse::server_error("更新排产单状态失败"))
+            ApiResponse::server_error("更新排产单状态失败")
         }
     }
 }
@@ -1156,7 +1156,7 @@ pub async fn submit_schedule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
-) -> Json<ApiResponse<ScheduleActionResponse>> {
+) -> ApiResponse<ScheduleActionResponse> {
     transition_schedule(&state, &claims, id, "released", req.comment).await
 }
 
@@ -1178,7 +1178,7 @@ pub async fn release_schedule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
-) -> Json<ApiResponse<ScheduleActionResponse>> {
+) -> ApiResponse<ScheduleActionResponse> {
     transition_schedule(&state, &claims, id, "released", req.comment).await
 }
 
@@ -1200,7 +1200,7 @@ pub async fn hold_schedule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
-) -> Json<ApiResponse<ScheduleActionResponse>> {
+) -> ApiResponse<ScheduleActionResponse> {
     transition_schedule(&state, &claims, id, "pending", req.comment).await
 }
 
@@ -1222,7 +1222,7 @@ pub async fn start_schedule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
-) -> Json<ApiResponse<ScheduleActionResponse>> {
+) -> ApiResponse<ScheduleActionResponse> {
     transition_schedule(&state, &claims, id, "running", req.comment).await
 }
 
@@ -1244,7 +1244,7 @@ pub async fn complete_schedule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
-) -> Json<ApiResponse<ScheduleActionResponse>> {
+) -> ApiResponse<ScheduleActionResponse> {
     transition_schedule(&state, &claims, id, "completed", req.comment).await
 }
 
@@ -1266,6 +1266,6 @@ pub async fn cancel_schedule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ScheduleActionRequest>,
-) -> Json<ApiResponse<ScheduleActionResponse>> {
+) -> ApiResponse<ScheduleActionResponse> {
     transition_schedule(&state, &claims, id, "cancelled", req.comment).await
 }

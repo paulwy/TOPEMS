@@ -28,7 +28,7 @@ pub async fn list_material_boms(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListMaterialBomsQuery>,
-) -> Json<ApiResponse<ListMaterialBomsResponse>> {
+) -> ApiResponse<ListMaterialBomsResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await
     {
         return e;
@@ -79,7 +79,7 @@ pub async fn list_material_boms(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count material BOMs: {}", e);
-            return Json(ApiResponse::server_error("获取物料BOM列表失败"));
+            return ApiResponse::server_error("获取物料BOM列表失败");
         }
     };
 
@@ -109,7 +109,7 @@ pub async fn list_material_boms(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch material BOMs: {}", e);
-            return Json(ApiResponse::server_error("获取物料BOM列表失败"));
+            return ApiResponse::server_error("获取物料BOM列表失败");
         }
     };
 
@@ -149,7 +149,7 @@ pub async fn list_material_boms(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListMaterialBomsResponse {
             boms: boms_list,
             total: total.unwrap_or(0),
@@ -157,7 +157,7 @@ pub async fn list_material_boms(
             page_size,
         },
         "获取物料BOM列表成功",
-    ))
+    )
 }
 
 #[allow(
@@ -169,7 +169,7 @@ pub async fn create_material_bom(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaterialBomRequest>,
-) -> Json<ApiResponse<BomDetailResponse>> {
+) -> ApiResponse<BomDetailResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MaterialBomWrite).await
     {
@@ -187,7 +187,7 @@ pub async fn create_material_bom(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::server_error("创建物料BOM失败"));
+            return ApiResponse::server_error("创建物料BOM失败");
         }
     };
 
@@ -217,7 +217,7 @@ pub async fn create_material_bom(
         Err(e) => {
             tracing::error!("Failed to create material BOM: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::server_error("创建物料BOM失败"));
+            return ApiResponse::server_error("创建物料BOM失败");
         }
     };
 
@@ -275,14 +275,14 @@ pub async fn create_material_bom(
             Err(e) => {
                 tracing::error!("Failed to create BOM item: {}", e);
                 let _ = tx.rollback().await;
-                return Json(ApiResponse::server_error("创建BOM明细失败"));
+                return ApiResponse::server_error("创建BOM明细失败");
             }
         }
     }
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::server_error("创建物料BOM失败"));
+        return ApiResponse::server_error("创建物料BOM失败");
     }
 
     let bom_response = MaterialBomResponse {
@@ -298,13 +298,13 @@ pub async fn create_material_bom(
         updated_at: bom.updated_at.unwrap_or_else(Utc::now),
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         BomDetailResponse {
             bom: bom_response,
             items: item_responses,
         },
         "物料BOM创建成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -324,7 +324,7 @@ pub async fn get_material_bom(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<BomDetailResponse>> {
+) -> ApiResponse<BomDetailResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await
     {
         return e;
@@ -345,10 +345,10 @@ pub async fn get_material_bom(
 
     let bom = match bom_result {
         Ok(Some(b)) => b,
-        Ok(None) => return Json(ApiResponse::not_found("物料BOM不存在")),
+        Ok(None) => return ApiResponse::not_found("物料BOM不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch material BOM: {}", e);
-            return Json(ApiResponse::server_error("获取物料BOM失败"));
+            return ApiResponse::server_error("获取物料BOM失败");
         }
     };
 
@@ -370,7 +370,7 @@ pub async fn get_material_bom(
         Ok(i) => i,
         Err(e) => {
             tracing::error!("Failed to fetch BOM items: {}", e);
-            return Json(ApiResponse::server_error("获取BOM明细失败"));
+            return ApiResponse::server_error("获取BOM明细失败");
         }
     };
 
@@ -404,13 +404,13 @@ pub async fn get_material_bom(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         BomDetailResponse {
             bom: bom_response,
             items: item_responses,
         },
         "获取物料BOM成功",
-    ))
+    )
 }
 
 #[allow(
@@ -423,7 +423,7 @@ pub async fn update_material_bom(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialBomRequest>,
-) -> Json<ApiResponse<BomDetailResponse>> {
+) -> ApiResponse<BomDetailResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MaterialBomWrite).await
     {
@@ -436,7 +436,7 @@ pub async fn update_material_bom(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::server_error("更新物料BOM失败"));
+            return ApiResponse::server_error("更新物料BOM失败");
         }
     };
 
@@ -465,12 +465,12 @@ pub async fn update_material_bom(
         Ok(Some(b)) => b,
         Ok(None) => {
             let _ = tx.rollback().await;
-            return Json(ApiResponse::not_found("物料BOM不存在"));
+            return ApiResponse::not_found("物料BOM不存在");
         }
         Err(e) => {
             tracing::error!("Failed to update material BOM: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::server_error("更新物料BOM失败"));
+            return ApiResponse::server_error("更新物料BOM失败");
         }
     };
 
@@ -514,7 +514,7 @@ pub async fn update_material_bom(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::server_error("更新物料BOM失败"));
+        return ApiResponse::server_error("更新物料BOM失败");
     }
 
     get_material_bom(
@@ -536,7 +536,7 @@ pub async fn delete_material_bom(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MaterialBomWrite).await
     {
@@ -557,13 +557,13 @@ pub async fn delete_material_bom(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete material BOM: {}", e);
-            return Json(ApiResponse::server_error("删除物料BOM失败"));
+            return ApiResponse::server_error("删除物料BOM失败");
         }
     };
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "物料BOM删除成功"))
+        ApiResponse::success("".to_string(), "物料BOM删除成功")
     } else {
-        Json(ApiResponse::not_found("物料BOM不存在或状态不允许删除"))
+        ApiResponse::not_found("物料BOM不存在或状态不允许删除")
     }
 }

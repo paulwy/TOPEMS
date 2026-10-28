@@ -193,9 +193,11 @@ pub async fn check_permission<T>(
     db: &PgPool,
     claims: &Claims,
     permission: &MesPermission,
-) -> Result<(), axum::Json<ApiResponse<T>>> {
+) -> Result<(), ApiResponse<T>> {
     let shared_perm = permission.to_shared();
-    check_module_permission(db, claims, &shared_perm).await
+    check_module_permission(db, claims, &shared_perm)
+        .await
+        .map_err(|e| e.0)
 }
 
 #[cfg(test)]

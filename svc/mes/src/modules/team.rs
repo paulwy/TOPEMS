@@ -160,7 +160,7 @@ pub async fn list_teams(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListTeamsQuery>,
-) -> Json<ApiResponse<ListTeamsResponse>> {
+) -> ApiResponse<ListTeamsResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -219,7 +219,7 @@ pub async fn list_teams(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count teams: {}", e);
-            return Json(ApiResponse::server_error("获取班组列表失败"));
+            return ApiResponse::server_error("获取班组列表失败");
         }
     };
 
@@ -253,7 +253,7 @@ pub async fn list_teams(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to fetch teams: {}", e);
-            return Json(ApiResponse::server_error("获取班组列表失败"));
+            return ApiResponse::server_error("获取班组列表失败");
         }
     };
 
@@ -309,7 +309,7 @@ pub async fn list_teams(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListTeamsResponse {
             teams,
             total: total.unwrap_or(0),
@@ -317,7 +317,7 @@ pub async fn list_teams(
             page_size: page_size as i32,
         },
         "获取班组列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -337,7 +337,7 @@ pub async fn get_team(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<TeamResponse>> {
+) -> ApiResponse<TeamResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -363,7 +363,7 @@ pub async fn get_team(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch team: {}", e);
-            return Json(ApiResponse::server_error("获取班组失败"));
+            return ApiResponse::server_error("获取班组失败");
         }
     };
 
@@ -384,9 +384,9 @@ pub async fn get_team(
                 created_at: r.created_at,
                 updated_at: r.updated_at,
             };
-            Json(ApiResponse::success(team, "获取班组成功"))
+            ApiResponse::success(team, "获取班组成功")
         }
-        None => Json(ApiResponse::not_found("班组不存在")),
+        None => ApiResponse::not_found("班组不存在"),
     }
 }
 
@@ -394,7 +394,7 @@ pub async fn create_team(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTeamRequest>,
-) -> Json<ApiResponse<TeamResponse>> {
+) -> ApiResponse<TeamResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -437,7 +437,7 @@ pub async fn create_team(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create team: {}", e);
-            return Json(ApiResponse::server_error("创建班组失败"));
+            return ApiResponse::server_error("创建班组失败");
         }
     };
 
@@ -491,7 +491,7 @@ pub async fn create_team(
         updated_at: result.updated_at,
     };
 
-    Json(ApiResponse::success(team, "班组创建成功"))
+    ApiResponse::success(team, "班组创建成功")
 }
 
 pub async fn update_team(
@@ -499,7 +499,7 @@ pub async fn update_team(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTeamRequest>,
-) -> Json<ApiResponse<TeamResponse>> {
+) -> ApiResponse<TeamResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -547,7 +547,7 @@ pub async fn update_team(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update team: {}", e);
-            return Json(ApiResponse::server_error("更新班组失败"));
+            return ApiResponse::server_error("更新班组失败");
         }
     };
 
@@ -568,9 +568,9 @@ pub async fn update_team(
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
-            Json(ApiResponse::success(team, "班组更新成功"))
+            ApiResponse::success(team, "班组更新成功")
         }
-        None => Json(ApiResponse::not_found("班组不存在")),
+        None => ApiResponse::not_found("班组不存在"),
     }
 }
 
@@ -578,7 +578,7 @@ pub async fn delete_team(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -599,14 +599,14 @@ pub async fn delete_team(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete team: {}", e);
-            return Json(ApiResponse::server_error("删除班组失败"));
+            return ApiResponse::server_error("删除班组失败");
         }
     };
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "班组删除成功"))
+        ApiResponse::success("".to_string(), "班组删除成功")
     } else {
-        Json(ApiResponse::not_found("班组不存在"))
+        ApiResponse::not_found("班组不存在")
     }
 }
 
@@ -627,7 +627,7 @@ pub async fn get_team_members(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ListTeamMembersResponse>> {
+) -> ApiResponse<ListTeamMembersResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -651,7 +651,7 @@ pub async fn get_team_members(
         Ok(m) => m,
         Err(e) => {
             tracing::error!("Failed to fetch team members: {}", e);
-            return Json(ApiResponse::server_error("获取班组成员失败"));
+            return ApiResponse::server_error("获取班组成员失败");
         }
     };
 
@@ -669,10 +669,7 @@ pub async fn get_team_members(
         })
         .collect();
 
-    Json(ApiResponse::success(
-        ListTeamMembersResponse { members },
-        "获取班组成员成功",
-    ))
+    ApiResponse::success(ListTeamMembersResponse { members }, "获取班组成员成功")
 }
 
 pub async fn add_team_member(
@@ -680,7 +677,7 @@ pub async fn add_team_member(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<TeamMemberCreateRequest>,
-) -> Json<ApiResponse<TeamMemberResponse>> {
+) -> ApiResponse<TeamMemberResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -715,7 +712,7 @@ pub async fn add_team_member(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to add team member: {}", e);
-            return Json(ApiResponse::server_error("添加班组成员失败"));
+            return ApiResponse::server_error("添加班组成员失败");
         }
     };
 
@@ -742,7 +739,7 @@ pub async fn add_team_member(
         status: result.status.unwrap_or_else(|| "active".to_string()),
     };
 
-    Json(ApiResponse::success(member, "班组成员添加成功"))
+    ApiResponse::success(member, "班组成员添加成功")
 }
 
 #[utoipa::path(
@@ -763,7 +760,7 @@ pub async fn remove_team_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((id, member_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -785,7 +782,7 @@ pub async fn remove_team_member(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to remove team member: {}", e);
-            return Json(ApiResponse::server_error("移除班组成员失败"));
+            return ApiResponse::server_error("移除班组成员失败");
         }
     };
 
@@ -802,9 +799,9 @@ pub async fn remove_team_member(
         .execute(&state.pool)
         .await;
 
-        Json(ApiResponse::success("".to_string(), "班组成员移除成功"))
+        ApiResponse::success("".to_string(), "班组成员移除成功")
     } else {
-        Json(ApiResponse::not_found("班组成员不存在"))
+        ApiResponse::not_found("班组成员不存在")
     }
 }
 

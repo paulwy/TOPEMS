@@ -83,10 +83,10 @@ pub struct SubmitMaterialPlanRequest {
     pub comment: Option<String>,
 }
 
-fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
+fn internal_error(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::server_error(msg)),
+        ApiResponse::server_error(msg),
     )
 }
 
@@ -123,8 +123,7 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 pub async fn list_material_plans(
     State(state): State<AppState>,
     Query(params): Query<ListMaterialPlansQuery>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -171,10 +170,10 @@ pub async fn list_material_plans(
     match rows {
         Ok(rows) => {
             let items: Vec<serde_json::Value> = rows.iter().map(row_to_json).collect();
-            Ok(Json(ApiResponse::success(
+            Ok(ApiResponse::success(
                 serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
                 "获取材料计划列表成功",
-            )))
+            ))
         }
         Err(e) => {
             tracing::error!("查询材料计划失败: {}", e);
@@ -199,8 +198,7 @@ pub async fn list_material_plans(
 pub async fn get_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let row = sqlx::query(
         "SELECT id, plan_no, plan_id, material_id, material_code, material_name, \
                 required_quantity, available_quantity, shortfall_quantity, required_date, \
@@ -212,13 +210,10 @@ pub async fn get_material_plan(
     .await;
 
     match row {
-        Ok(Some(row)) => Ok(Json(ApiResponse::success(
-            row_to_json(&row),
-            "获取材料计划成功",
-        ))),
+        Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "获取材料计划成功")),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("材料计划不存在")),
+            ApiResponse::not_found("材料计划不存在"),
         )),
         Err(e) => {
             tracing::error!("查询材料计划失败: {}", e);
@@ -230,8 +225,7 @@ pub async fn get_material_plan(
 pub async fn create_material_plan(
     State(state): State<AppState>,
     Json(req): Json<CreateMaterialPlanRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let required_qty = req.required_quantity.unwrap_or(0.0);
     let available_qty = req.available_quantity.unwrap_or(0.0);
     let shortfall = (required_qty - available_qty).max(0.0);
@@ -264,10 +258,7 @@ pub async fn create_material_plan(
     .await;
 
     match row {
-        Ok(row) => Ok(Json(ApiResponse::success(
-            row_to_json(&row),
-            "创建材料计划成功",
-        ))),
+        Ok(row) => Ok(ApiResponse::success(row_to_json(&row), "创建材料计划成功")),
         Err(e) => {
             tracing::error!("创建材料计划失败: {}", e);
             Err(internal_error("创建材料计划失败"))
@@ -279,8 +270,7 @@ pub async fn update_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialPlanRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let required_date = parse_datetime(&req.required_date);
 
     let row = sqlx::query(
@@ -315,13 +305,10 @@ pub async fn update_material_plan(
     .await;
 
     match row {
-        Ok(Some(row)) => Ok(Json(ApiResponse::success(
-            row_to_json(&row),
-            "更新材料计划成功",
-        ))),
+        Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "更新材料计划成功")),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("材料计划不存在")),
+            ApiResponse::not_found("材料计划不存在"),
         )),
         Err(e) => {
             tracing::error!("更新材料计划失败: {}", e);
@@ -333,8 +320,7 @@ pub async fn update_material_plan(
 pub async fn delete_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let result = sqlx::query("DELETE FROM mes.material_plans WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
@@ -345,13 +331,13 @@ pub async fn delete_material_plan(
             if res.rows_affected() == 0 {
                 return Err((
                     StatusCode::NOT_FOUND,
-                    Json(ApiResponse::not_found("材料计划不存在")),
+                    ApiResponse::not_found("材料计划不存在"),
                 ));
             }
-            Ok(Json(ApiResponse::success(
+            Ok(ApiResponse::success(
                 serde_json::json!({ "deleted": true, "id": id.to_string() }),
                 "删除材料计划成功",
-            )))
+            ))
         }
         Err(e) => {
             tracing::error!("删除材料计划失败: {}", e);
@@ -394,17 +380,13 @@ async fn transition_status(
 pub async fn submit_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let row = transition_status(&state, id, "requisitioned").await;
     match row {
-        Ok(Some(row)) => Ok(Json(ApiResponse::success(
-            row_to_json(&row),
-            "材料计划已提交",
-        ))),
+        Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "材料计划已提交")),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("材料计划不存在")),
+            ApiResponse::not_found("材料计划不存在"),
         )),
         Err(e) => {
             tracing::error!("提交材料计划失败: {}", e);
@@ -429,17 +411,13 @@ pub async fn submit_material_plan(
 pub async fn requisition_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let row = transition_status(&state, id, "sourced").await;
     match row {
-        Ok(Some(row)) => Ok(Json(ApiResponse::success(
-            row_to_json(&row),
-            "材料计划已请购",
-        ))),
+        Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "材料计划已请购")),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("材料计划不存在")),
+            ApiResponse::not_found("材料计划不存在"),
         )),
         Err(e) => {
             tracing::error!("请购材料计划失败: {}", e);
@@ -464,17 +442,13 @@ pub async fn requisition_material_plan(
 pub async fn cancel_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let row = transition_status(&state, id, "cancelled").await;
     match row {
-        Ok(Some(row)) => Ok(Json(ApiResponse::success(
-            row_to_json(&row),
-            "材料计划已取消",
-        ))),
+        Ok(Some(row)) => Ok(ApiResponse::success(row_to_json(&row), "材料计划已取消")),
         Ok(None) => Err((
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("材料计划不存在")),
+            ApiResponse::not_found("材料计划不存在"),
         )),
         Err(e) => {
             tracing::error!("取消材料计划失败: {}", e);

@@ -82,7 +82,7 @@ pub async fn list_patrols(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListPatrolsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -131,7 +131,7 @@ pub async fn list_patrols(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality patrols: {}", e);
-            return Json(ApiResponse::server_error("获取巡检记录列表失败"));
+            return ApiResponse::server_error("获取巡检记录列表失败");
         }
     };
 
@@ -162,7 +162,7 @@ pub async fn list_patrols(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality patrols: {}", e);
-            return Json(ApiResponse::server_error("获取巡检记录列表失败"));
+            return ApiResponse::server_error("获取巡检记录列表失败");
         }
     };
 
@@ -211,7 +211,7 @@ pub async fn list_patrols(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "patrols": patrols,
             "total": total.unwrap_or(0),
@@ -219,7 +219,7 @@ pub async fn list_patrols(
             "page_size": page_size,
         }),
         "获取巡检记录列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -239,7 +239,7 @@ pub async fn get_patrol(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<PatrolResponse>> {
+) -> ApiResponse<PatrolResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -248,7 +248,7 @@ pub async fn get_patrol(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的巡检记录ID"));
+            return ApiResponse::bad_request("无效的巡检记录ID");
         }
     };
 
@@ -268,7 +268,7 @@ pub async fn get_patrol(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             PatrolResponse {
                 id: r.id.to_string(),
                 patrol_no: r.patrol_no,
@@ -285,11 +285,11 @@ pub async fn get_patrol(
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "获取巡检记录成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("巡检记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("巡检记录不存在"),
         Err(e) => {
             tracing::error!("Failed to get quality patrol: {}", e);
-            Json(ApiResponse::server_error("获取巡检记录失败"))
+            ApiResponse::server_error("获取巡检记录失败")
         }
     }
 }
@@ -298,7 +298,7 @@ pub async fn create_patrol(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<CreatePatrolRequest>,
-) -> Json<ApiResponse<PatrolResponse>> {
+) -> ApiResponse<PatrolResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -359,7 +359,7 @@ pub async fn create_patrol(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             PatrolResponse {
                 id: r.id.to_string(),
                 patrol_no: r.patrol_no,
@@ -376,10 +376,10 @@ pub async fn create_patrol(
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "创建巡检记录成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create quality patrol: {}", e);
-            Json(ApiResponse::server_error("创建巡检记录失败"))
+            ApiResponse::server_error("创建巡检记录失败")
         }
     }
 }
@@ -389,7 +389,7 @@ pub async fn update_patrol(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<UpdatePatrolRequest>,
-) -> Json<ApiResponse<PatrolResponse>> {
+) -> ApiResponse<PatrolResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -399,7 +399,7 @@ pub async fn update_patrol(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的巡检记录ID"));
+            return ApiResponse::bad_request("无效的巡检记录ID");
         }
     };
 
@@ -443,7 +443,7 @@ pub async fn update_patrol(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             PatrolResponse {
                 id: r.id.to_string(),
                 patrol_no: r.patrol_no,
@@ -460,11 +460,11 @@ pub async fn update_patrol(
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "更新巡检记录成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("巡检记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("巡检记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update quality patrol: {}", e);
-            Json(ApiResponse::server_error("更新巡检记录失败"))
+            ApiResponse::server_error("更新巡检记录失败")
         }
     }
 }
@@ -473,7 +473,7 @@ pub async fn delete_patrol(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -483,7 +483,7 @@ pub async fn delete_patrol(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的巡检记录ID"));
+            return ApiResponse::bad_request("无效的巡检记录ID");
         }
     };
 
@@ -497,10 +497,10 @@ pub async fn delete_patrol(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(id, "删除巡检记录成功")),
+        Ok(_) => ApiResponse::success(id, "删除巡检记录成功"),
         Err(e) => {
             tracing::error!("Failed to delete quality patrol: {}", e);
-            Json(ApiResponse::server_error("删除巡检记录失败"))
+            ApiResponse::server_error("删除巡检记录失败")
         }
     }
 }
@@ -542,7 +542,7 @@ pub async fn list_patrol_items(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(patrol_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -551,7 +551,7 @@ pub async fn list_patrol_items(
     let patrol_uuid = match Uuid::parse_str(&patrol_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的巡检记录ID"));
+            return ApiResponse::bad_request("无效的巡检记录ID");
         }
     };
 
@@ -584,14 +584,14 @@ pub async fn list_patrol_items(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "items": items }),
                 "获取巡检项目列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to list patrol items: {}", e);
-            Json(ApiResponse::server_error("获取巡检项目列表失败"))
+            ApiResponse::server_error("获取巡检项目列表失败")
         }
     }
 }
@@ -601,7 +601,7 @@ pub async fn add_patrol_item(
     Extension(claims): Extension<Claims>,
     Path(patrol_id): Path<String>,
     Json(body): Json<AddPatrolItemRequest>,
-) -> Json<ApiResponse<PatrolItemResponse>> {
+) -> ApiResponse<PatrolItemResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -611,7 +611,7 @@ pub async fn add_patrol_item(
     let patrol_uuid = match Uuid::parse_str(&patrol_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的巡检记录ID"));
+            return ApiResponse::bad_request("无效的巡检记录ID");
         }
     };
     let tenant_id = get_tenant_id(&claims);
@@ -636,7 +636,7 @@ pub async fn add_patrol_item(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
                 patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
@@ -647,10 +647,10 @@ pub async fn add_patrol_item(
                 remark: r.remark,
             },
             "添加巡检项目成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to add patrol item: {}", e);
-            Json(ApiResponse::server_error("添加巡检项目失败"))
+            ApiResponse::server_error("添加巡检项目失败")
         }
     }
 }
@@ -682,7 +682,7 @@ pub async fn update_patrol_item(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<UpdatePatrolItemRequest>,
-) -> Json<ApiResponse<PatrolItemResponse>> {
+) -> ApiResponse<PatrolItemResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -692,7 +692,7 @@ pub async fn update_patrol_item(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的巡检项目ID"));
+            return ApiResponse::bad_request("无效的巡检项目ID");
         }
     };
 
@@ -719,7 +719,7 @@ pub async fn update_patrol_item(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
                 patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
@@ -730,11 +730,11 @@ pub async fn update_patrol_item(
                 remark: r.remark,
             },
             "更新巡检项目成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("巡检项目不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("巡检项目不存在"),
         Err(e) => {
             tracing::error!("Failed to update patrol item: {}", e);
-            Json(ApiResponse::server_error("更新巡检项目失败"))
+            ApiResponse::server_error("更新巡检项目失败")
         }
     }
 }
@@ -743,7 +743,7 @@ pub async fn delete_patrol_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -753,7 +753,7 @@ pub async fn delete_patrol_item(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的巡检项目ID"));
+            return ApiResponse::bad_request("无效的巡检项目ID");
         }
     };
 
@@ -767,10 +767,10 @@ pub async fn delete_patrol_item(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(id, "删除巡检项目成功")),
+        Ok(_) => ApiResponse::success(id, "删除巡检项目成功"),
         Err(e) => {
             tracing::error!("Failed to delete patrol item: {}", e);
-            Json(ApiResponse::server_error("删除巡检项目失败"))
+            ApiResponse::server_error("删除巡检项目失败")
         }
     }
 }

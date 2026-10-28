@@ -153,7 +153,7 @@ pub async fn list_plans(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListPlansQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -199,7 +199,7 @@ pub async fn list_plans(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "plans": plans,
                     "total": total,
@@ -207,11 +207,11 @@ pub async fn list_plans(
                     "page_size": page_size
                 }),
                 "获取生产计划列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取生产计划列表失败: {}", e);
-            Json(ApiResponse::server_error("获取生产计划列表失败"))
+            ApiResponse::server_error("获取生产计划列表失败")
         }
     }
 }
@@ -233,7 +233,7 @@ pub async fn get_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProductionPlan>> {
+) -> ApiResponse<ProductionPlan> {
     let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query_as::<_, ProductionPlan>(
@@ -250,11 +250,11 @@ pub async fn get_plan(
     .await;
 
     match result {
-        Ok(Some(plan)) => Json(ApiResponse::success(plan, "获取生产计划成功")),
-        Ok(None) => Json(ApiResponse::not_found("生产计划不存在")),
+        Ok(Some(plan)) => ApiResponse::success(plan, "获取生产计划成功"),
+        Ok(None) => ApiResponse::not_found("生产计划不存在"),
         Err(e) => {
             tracing::error!("获取生产计划失败: {}", e);
-            Json(ApiResponse::server_error("获取生产计划失败"))
+            ApiResponse::server_error("获取生产计划失败")
         }
     }
 }
@@ -263,7 +263,7 @@ pub async fn create_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePlanRequest>,
-) -> Json<ApiResponse<ProductionPlan>> {
+) -> ApiResponse<ProductionPlan> {
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims);
@@ -295,10 +295,10 @@ pub async fn create_plan(
     .await;
 
     match result {
-        Ok(plan) => Json(ApiResponse::success(plan, "生产计划创建成功")),
+        Ok(plan) => ApiResponse::success(plan, "生产计划创建成功"),
         Err(e) => {
             tracing::error!("创建生产计划失败: {}", e);
-            Json(ApiResponse::server_error("创建生产计划失败"))
+            ApiResponse::server_error("创建生产计划失败")
         }
     }
 }
@@ -308,7 +308,7 @@ pub async fn update_plan(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdatePlanRequest>,
-) -> Json<ApiResponse<ProductionPlan>> {
+) -> ApiResponse<ProductionPlan> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = sqlx::query_as::<_, ProductionPlan>(
@@ -326,13 +326,8 @@ pub async fn update_plan(
 
     let existing = match existing {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::not_found("生产计划不存在")),
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询生产计划失败",
-                e,
-            )))
-        }
+        Ok(None) => return ApiResponse::not_found("生产计划不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询生产计划失败", e)),
     };
 
     let plan_name = req.plan_name.unwrap_or(existing.plan_name);
@@ -373,10 +368,10 @@ pub async fn update_plan(
     .await;
 
     match result {
-        Ok(plan) => Json(ApiResponse::success(plan, "生产计划更新成功")),
+        Ok(plan) => ApiResponse::success(plan, "生产计划更新成功"),
         Err(e) => {
             tracing::error!("更新生产计划失败: {}", e);
-            Json(ApiResponse::server_error("更新生产计划失败"))
+            ApiResponse::server_error("更新生产计划失败")
         }
     }
 }
@@ -385,7 +380,7 @@ pub async fn delete_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query("DELETE FROM production_plans WHERE id = $1 AND tenant_id = $2")
@@ -395,14 +390,13 @@ pub async fn delete_plan(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "生产计划删除成功",
-        )),
-        Ok(_) => Json(ApiResponse::not_found("生产计划不存在")),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id}), "生产计划删除成功")
+        }
+        Ok(_) => ApiResponse::not_found("生产计划不存在"),
         Err(e) => {
             tracing::error!("删除生产计划失败: {}", e);
-            Json(ApiResponse::server_error("删除生产计划失败"))
+            ApiResponse::server_error("删除生产计划失败")
         }
     }
 }
@@ -426,7 +420,7 @@ pub async fn submit_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProductionPlan>> {
+) -> ApiResponse<ProductionPlan> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
@@ -438,15 +432,12 @@ pub async fn submit_plan(
     .await
     {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::not_found("生产计划不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("生产计划不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     if !can_transition(&existing.status, "pending_approval") {
-        return Json(ApiResponse::bad_request(&format!(
-            "当前状态 {} 不允许提交审批",
-            existing.status
-        )));
+        return ApiResponse::bad_request(&format!("当前状态 {} 不允许提交审批", existing.status));
     }
 
     let now = Utc::now();
@@ -459,10 +450,10 @@ pub async fn submit_plan(
     .await;
 
     match result {
-        Ok(plan) => Json(ApiResponse::success(plan, "生产计划提交成功")),
+        Ok(plan) => ApiResponse::success(plan, "生产计划提交成功"),
         Err(e) => {
             tracing::error!("提交生产计划失败: {}", e);
-            Json(ApiResponse::server_error("提交生产计划失败"))
+            ApiResponse::server_error("提交生产计划失败")
         }
     }
 }
@@ -485,7 +476,7 @@ pub async fn approve_plan(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(_req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<ProductionPlan>> {
+) -> ApiResponse<ProductionPlan> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
@@ -497,15 +488,12 @@ pub async fn approve_plan(
     .await
     {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::not_found("生产计划不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("生产计划不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     if !can_transition(&existing.status, "approved") {
-        return Json(ApiResponse::bad_request(&format!(
-            "当前状态 {} 不允许审批通过",
-            existing.status
-        )));
+        return ApiResponse::bad_request(&format!("当前状态 {} 不允许审批通过", existing.status));
     }
 
     let now = Utc::now();
@@ -518,10 +506,10 @@ pub async fn approve_plan(
     .await;
 
     match result {
-        Ok(plan) => Json(ApiResponse::success(plan, "生产计划审批通过")),
+        Ok(plan) => ApiResponse::success(plan, "生产计划审批通过"),
         Err(e) => {
             tracing::error!("审批生产计划失败: {}", e);
-            Json(ApiResponse::server_error("审批生产计划失败"))
+            ApiResponse::server_error("审批生产计划失败")
         }
     }
 }
@@ -544,7 +532,7 @@ pub async fn reject_plan(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(_req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<ProductionPlan>> {
+) -> ApiResponse<ProductionPlan> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
@@ -556,15 +544,12 @@ pub async fn reject_plan(
     .await
     {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::not_found("生产计划不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("生产计划不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     if !can_transition(&existing.status, "draft") {
-        return Json(ApiResponse::bad_request(&format!(
-            "当前状态 {} 不允许驳回",
-            existing.status
-        )));
+        return ApiResponse::bad_request(&format!("当前状态 {} 不允许驳回", existing.status));
     }
 
     let now = Utc::now();
@@ -577,10 +562,10 @@ pub async fn reject_plan(
     .await;
 
     match result {
-        Ok(plan) => Json(ApiResponse::success(plan, "生产计划已驳回")),
+        Ok(plan) => ApiResponse::success(plan, "生产计划已驳回"),
         Err(e) => {
             tracing::error!("驳回生产计划失败: {}", e);
-            Json(ApiResponse::server_error("驳回生产计划失败"))
+            ApiResponse::server_error("驳回生产计划失败")
         }
     }
 }

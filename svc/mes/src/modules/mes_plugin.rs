@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::extract::State;
 use serde::{Deserialize, Serialize};
 
 use crate::AppState;
@@ -39,7 +39,7 @@ fn get_runtime_url() -> String {
     tag = "mes_plugin"
 )]
 
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url = get_runtime_url();
     let info = PluginInfo {
         code: "mes".to_string(),
@@ -136,7 +136,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         ])),
         category: Some("manufacturing".to_string()),
     };
-    Json(ApiResponse::success(info, "Plugin info"))
+    ApiResponse::success(info, "Plugin info")
 }
 #[utoipa::path(
     get,
@@ -146,13 +146,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     tag = "mes_plugin"
 )]
 
-pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<()>> {
+pub async fn plugin_health_check(State(state): State<AppState>) -> ApiResponse<()> {
     match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
-        Ok(_) => Json(ApiResponse::success((), "Healthy")),
-        Err(e) => Json(ApiResponse::from({
+        Ok(_) => ApiResponse::success((), "Healthy"),
+        Err(e) => ApiResponse::from({
             tracing::warn!("Database error: {}", e);
             TopemsError::ServiceUnavailable("Database error".to_string())
-        })),
+        }),
     }
 }
 

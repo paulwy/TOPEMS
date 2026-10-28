@@ -16,7 +16,7 @@ pub async fn create_material_return(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaterialReturnRequest>,
-) -> Json<ApiResponse<MaterialReturnResponse>> {
+) -> ApiResponse<MaterialReturnResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MaterialBomReturn).await
     {
@@ -48,7 +48,7 @@ pub async fn create_material_return(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::server_error("创建物料退库单失败"));
+            return ApiResponse::server_error("创建物料退库单失败");
         }
     };
 
@@ -81,7 +81,7 @@ pub async fn create_material_return(
         Err(e) => {
             tracing::error!("Failed to create material return: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::server_error("创建物料退库单失败"));
+            return ApiResponse::server_error("创建物料退库单失败");
         }
     };
 
@@ -113,7 +113,7 @@ pub async fn create_material_return(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::server_error("创建物料退库单失败"));
+        return ApiResponse::server_error("创建物料退库单失败");
     }
 
     let response = MaterialReturnResponse {
@@ -132,7 +132,7 @@ pub async fn create_material_return(
         updated_at: return_record.updated_at.unwrap_or_else(Utc::now),
     };
 
-    Json(ApiResponse::success(response, "物料退库单创建成功"))
+    ApiResponse::success(response, "物料退库单创建成功")
 }
 
 #[utoipa::path(
@@ -150,7 +150,7 @@ pub async fn list_material_returns(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListMaterialReturnsQuery>,
-) -> Json<ApiResponse<ListMaterialReturnsResponse>> {
+) -> ApiResponse<ListMaterialReturnsResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await
     {
         return e;
@@ -198,7 +198,7 @@ pub async fn list_material_returns(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count material returns: {}", e);
-            return Json(ApiResponse::server_error("获取物料退库单列表失败"));
+            return ApiResponse::server_error("获取物料退库单列表失败");
         }
     };
 
@@ -229,7 +229,7 @@ pub async fn list_material_returns(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch material returns: {}", e);
-            return Json(ApiResponse::server_error("获取物料退库单列表失败"));
+            return ApiResponse::server_error("获取物料退库单列表失败");
         }
     };
 
@@ -278,7 +278,7 @@ pub async fn list_material_returns(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListMaterialReturnsResponse {
             returns: return_list,
             total: total.unwrap_or(0),
@@ -286,7 +286,7 @@ pub async fn list_material_returns(
             page_size,
         },
         "获取物料退库单列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -306,7 +306,7 @@ pub async fn get_material_return(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await
     {
         return e;
@@ -327,10 +327,10 @@ pub async fn get_material_return(
 
     let return_record = match return_result {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("物料退库单不存在")),
+        Ok(None) => return ApiResponse::not_found("物料退库单不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch material return: {}", e);
-            return Json(ApiResponse::server_error("获取物料退库单失败"));
+            return ApiResponse::server_error("获取物料退库单失败");
         }
     };
 
@@ -351,7 +351,7 @@ pub async fn get_material_return(
         Ok(i) => i,
         Err(e) => {
             tracing::error!("Failed to fetch return items: {}", e);
-            return Json(ApiResponse::server_error("获取退库单明细失败"));
+            return ApiResponse::server_error("获取退库单明细失败");
         }
     };
 
@@ -381,7 +381,7 @@ pub async fn get_material_return(
         })).collect::<Vec<_>>(),
     });
 
-    Json(ApiResponse::success(return_json, "获取物料退库单成功"))
+    ApiResponse::success(return_json, "获取物料退库单成功")
 }
 
 pub async fn update_material_return(
@@ -389,7 +389,7 @@ pub async fn update_material_return(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialReturnRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MaterialBomReturn).await
     {
@@ -424,10 +424,10 @@ now,
 
     let return_record = match result {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("物料退库单不存在")),
+        Ok(None) => return ApiResponse::not_found("物料退库单不存在"),
         Err(e) => {
             tracing::error!("Failed to update material return: {}", e);
-            return Json(ApiResponse::server_error("更新物料退库单失败"));
+            return ApiResponse::server_error("更新物料退库单失败");
         }
     };
 
@@ -445,14 +445,14 @@ now,
         "updated_at": return_record.updated_at.unwrap_or_else(Utc::now),
     });
 
-    Json(ApiResponse::success(return_json, "物料退库单更新成功"))
+    ApiResponse::success(return_json, "物料退库单更新成功")
 }
 
 pub async fn delete_material_return(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MaterialBomReturn).await
     {
@@ -463,7 +463,7 @@ pub async fn delete_material_return(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::server_error("删除物料退库单失败"));
+            return ApiResponse::server_error("删除物料退库单失败");
         }
     };
 
@@ -483,18 +483,18 @@ pub async fn delete_material_return(
         Err(e) => {
             let _ = tx.rollback().await;
             tracing::error!("Failed to delete material return: {}", e);
-            return Json(ApiResponse::server_error("删除物料退库单失败"));
+            return ApiResponse::server_error("删除物料退库单失败");
         }
     };
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::server_error("删除物料退库单失败"));
+        return ApiResponse::server_error("删除物料退库单失败");
     }
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "物料退库单删除成功"))
+        ApiResponse::success("".to_string(), "物料退库单删除成功")
     } else {
-        Json(ApiResponse::not_found("物料退库单不存在或状态不允许删除"))
+        ApiResponse::not_found("物料退库单不存在或状态不允许删除")
     }
 }

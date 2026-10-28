@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, Query, State},
     routing::get,
-    Extension, Json, Router,
+    Extension, Router,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -29,13 +29,13 @@ use topems_shared_core::response::ApiResponse;
 /// 无数据源时的统一 501 响应构造。
 ///
 /// `endpoint` 用于在错误消息里指明是哪个接口未接入数据源。
-fn energy_source_unavailable<T>(endpoint: &str) -> Json<ApiResponse<T>> {
-    Json(ApiResponse::not_implemented(
+fn energy_source_unavailable<T>(endpoint: &str) -> ApiResponse<T> {
+    ApiResponse::not_implemented(
         &format!(
             "能耗数据源未接入（degraded）：{} 暂无真实采集表/采集系统，返回合成值已被禁用。请等待能耗采集表落地后重试。",
             endpoint
         ),
-    ))
+    )
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -184,7 +184,7 @@ pub struct ForecastParams {
 async fn get_real_time_consumption(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<RealTimeConsumption>>> {
+) -> ApiResponse<Vec<RealTimeConsumption>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
@@ -206,7 +206,7 @@ async fn get_consumption_history(
     State(state): State<AppState>,
     Query(_params): Query<QueryParams>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<EnergyConsumptionRecord>>> {
+) -> ApiResponse<Vec<EnergyConsumptionRecord>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
@@ -228,7 +228,7 @@ async fn get_energy_report(
     State(state): State<AppState>,
     Query(_params): Query<ReportParams>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<EnergyReportResponse>> {
+) -> ApiResponse<EnergyReportResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
@@ -250,7 +250,7 @@ async fn get_energy_forecast(
     State(state): State<AppState>,
     Query(_params): Query<ForecastParams>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<EnergyForecastResponse>> {
+) -> ApiResponse<EnergyForecastResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
@@ -272,7 +272,7 @@ async fn get_energy_alerts(
     State(state): State<AppState>,
     Query(_params): Query<QueryParams>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<EnergyAlertsResponse>> {
+) -> ApiResponse<EnergyAlertsResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
@@ -298,7 +298,7 @@ async fn get_equipment_consumption(
     Path(_equipment_id): Path<Uuid>,
     Query(_params): Query<QueryParams>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<EnergyConsumptionRecord>>> {
+) -> ApiResponse<Vec<EnergyConsumptionRecord>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
@@ -320,7 +320,7 @@ async fn export_energy_report(
     State(state): State<AppState>,
     Query(_params): Query<ReportParams>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }

@@ -146,7 +146,7 @@ pub async fn list_processes(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Query(query): Query<ListProcessesQuery>,
-) -> Json<ApiResponse<ListProcessesResponse>> {
+) -> ApiResponse<ListProcessesResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessRead).await {
         return e;
     }
@@ -193,7 +193,7 @@ pub async fn list_processes(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count processes: {}", e);
-            return Json(ApiResponse::server_error("获取生产工序列表失败"));
+            return ApiResponse::server_error("获取生产工序列表失败");
         }
     };
 
@@ -224,7 +224,7 @@ pub async fn list_processes(
         Ok(p) => p,
         Err(e) => {
             tracing::error!("Failed to fetch processes: {}", e);
-            return Json(ApiResponse::server_error("获取生产工序列表失败"));
+            return ApiResponse::server_error("获取生产工序列表失败");
         }
     };
 
@@ -273,7 +273,7 @@ pub async fn list_processes(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListProcessesResponse {
             processes: processes_list,
             total: total.unwrap_or(0),
@@ -281,7 +281,7 @@ pub async fn list_processes(
             page_size,
         },
         "获取生产工序列表成功",
-    ))
+    )
 }
 
 pub async fn create_process(
@@ -346,28 +346,23 @@ pub async fn create_process(
                 if db_err.is_unique_violation() {
                     return (
                         StatusCode::CONFLICT,
-                        Json(ApiResponse::<ProductionProcessResponse>::conflict(
+                        ApiResponse::<ProductionProcessResponse>::conflict(
                             "生产工序名称已存在（同租户内唯一）",
-                        )),
+                        ),
                     )
                         .into_response();
                 }
             }
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ProductionProcessResponse>::server_error(
-                    "创建生产工序失败",
-                )),
+                ApiResponse::<ProductionProcessResponse>::server_error("创建生产工序失败"),
             )
                 .into_response();
         }
     };
 
-    Json(ApiResponse::success(
-        ProductionProcessResponse::from(result),
-        "生产工序创建成功",
-    ))
-    .into_response()
+    ApiResponse::success(ProductionProcessResponse::from(result), "生产工序创建成功")
+        .into_response()
 }
 
 #[utoipa::path(
@@ -388,7 +383,7 @@ pub async fn get_process(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProductionProcessResponse>> {
+) -> ApiResponse<ProductionProcessResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessRead).await {
         return e;
     }
@@ -416,16 +411,13 @@ pub async fn get_process(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch process: {}", e);
-            return Json(ApiResponse::server_error("获取生产工序失败"));
+            return ApiResponse::server_error("获取生产工序失败");
         }
     };
 
     match result {
-        Some(r) => Json(ApiResponse::success(
-            ProductionProcessResponse::from(r),
-            "获取生产工序成功",
-        )),
-        None => Json(ApiResponse::not_found("生产工序不存在")),
+        Some(r) => ApiResponse::success(ProductionProcessResponse::from(r), "获取生产工序成功"),
+        None => ApiResponse::not_found("生产工序不存在"),
     }
 }
 
@@ -489,33 +481,28 @@ pub async fn update_process(
                 if db_err.is_unique_violation() {
                     return (
                         StatusCode::CONFLICT,
-                        Json(ApiResponse::<ProductionProcessResponse>::conflict(
+                        ApiResponse::<ProductionProcessResponse>::conflict(
                             "生产工序名称已存在（同租户内唯一）",
-                        )),
+                        ),
                     )
                         .into_response();
                 }
             }
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ProductionProcessResponse>::server_error(
-                    "更新生产工序失败",
-                )),
+                ApiResponse::<ProductionProcessResponse>::server_error("更新生产工序失败"),
             )
                 .into_response();
         }
     };
 
     match result {
-        Some(r) => Json(ApiResponse::success(
-            ProductionProcessResponse::from(r),
-            "生产工序更新成功",
-        ))
-        .into_response(),
-        None => Json(ApiResponse::<ProductionProcessResponse>::not_found(
-            "生产工序不存在或状态不允许修改",
-        ))
-        .into_response(),
+        Some(r) => ApiResponse::success(ProductionProcessResponse::from(r), "生产工序更新成功")
+            .into_response(),
+        None => {
+            ApiResponse::<ProductionProcessResponse>::not_found("生产工序不存在或状态不允许修改")
+                .into_response()
+        }
     }
 }
 
@@ -523,7 +510,7 @@ pub async fn delete_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessWrite).await {
         return e;
     }
@@ -542,14 +529,14 @@ pub async fn delete_process(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete process: {}", e);
-            return Json(ApiResponse::server_error("删除生产工序失败"));
+            return ApiResponse::server_error("删除生产工序失败");
         }
     };
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "生产工序删除成功"))
+        ApiResponse::success("".to_string(), "生产工序删除成功")
     } else {
-        Json(ApiResponse::not_found("生产工序不存在"))
+        ApiResponse::not_found("生产工序不存在")
     }
 }
 
@@ -570,7 +557,7 @@ pub async fn deactivate_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProductionProcessResponse>> {
+) -> ApiResponse<ProductionProcessResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessWrite).await {
         return e;
     }
@@ -596,7 +583,7 @@ pub async fn deactivate_process(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to deactivate process: {}", e);
-            return Json(ApiResponse::server_error("停用生产工序失败"));
+            return ApiResponse::server_error("停用生产工序失败");
         }
     };
 
@@ -615,9 +602,9 @@ pub async fn deactivate_process(
                 created_at: r.created_at,
                 updated_at: r.updated_at,
             };
-            Json(ApiResponse::success(process, "生产工序停用成功"))
+            ApiResponse::success(process, "生产工序停用成功")
         }
-        None => Json(ApiResponse::not_found("生产工序不存在或状态不允许停用")),
+        None => ApiResponse::not_found("生产工序不存在或状态不允许停用"),
     }
 }
 

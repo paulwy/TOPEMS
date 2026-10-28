@@ -216,7 +216,7 @@ pub async fn list_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListEquipmentQuery>,
-) -> Json<ApiResponse<ListEquipmentResponse>> {
+) -> ApiResponse<ListEquipmentResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
@@ -277,7 +277,7 @@ pub async fn list_equipment(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count equipment: {}", e);
-            return Json(ApiResponse::server_error("获取设备列表失败"));
+            return ApiResponse::server_error("获取设备列表失败");
         }
     };
 
@@ -310,14 +310,14 @@ pub async fn list_equipment(
         Ok(e) => e,
         Err(e) => {
             tracing::error!("Failed to fetch equipment: {}", e);
-            return Json(ApiResponse::server_error("获取设备列表失败"));
+            return ApiResponse::server_error("获取设备列表失败");
         }
     };
 
     let equipment_list: Vec<EquipmentResponse> =
         equipment.iter().map(row_to_equipment_response).collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListEquipmentResponse {
             equipments: equipment_list,
             total: total.unwrap_or(0),
@@ -325,7 +325,7 @@ pub async fn list_equipment(
             page_size: page_size as i32,
         },
         "获取设备列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -344,7 +344,7 @@ pub async fn create_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateEquipmentRequest>,
-) -> Json<ApiResponse<EquipmentResponse>> {
+) -> ApiResponse<EquipmentResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
     {
         return e;
@@ -400,14 +400,11 @@ pub async fn create_equipment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create equipment: {}", e);
-            return Json(ApiResponse::server_error("创建设备失败"));
+            return ApiResponse::server_error("创建设备失败");
         }
     };
 
-    Json(ApiResponse::success(
-        row_to_equipment_response(&row),
-        "设备创建成功",
-    ))
+    ApiResponse::success(row_to_equipment_response(&row), "设备创建成功")
 }
 
 #[utoipa::path(
@@ -427,7 +424,7 @@ pub async fn get_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<EquipmentResponse>> {
+) -> ApiResponse<EquipmentResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
@@ -451,16 +448,13 @@ pub async fn get_equipment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch equipment: {}", e);
-            return Json(ApiResponse::server_error("获取设备失败"));
+            return ApiResponse::server_error("获取设备失败");
         }
     };
 
     match result {
-        Some(row) => Json(ApiResponse::success(
-            row_to_equipment_response(&row),
-            "获取设备成功",
-        )),
-        None => Json(ApiResponse::not_found("设备不存在")),
+        Some(row) => ApiResponse::success(row_to_equipment_response(&row), "获取设备成功"),
+        None => ApiResponse::not_found("设备不存在"),
     }
 }
 
@@ -483,7 +477,7 @@ pub async fn update_equipment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateEquipmentRequest>,
-) -> Json<ApiResponse<EquipmentResponse>> {
+) -> ApiResponse<EquipmentResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
     {
         return e;
@@ -532,16 +526,13 @@ pub async fn update_equipment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update equipment: {}", e);
-            return Json(ApiResponse::server_error("更新设备失败"));
+            return ApiResponse::server_error("更新设备失败");
         }
     };
 
     match result {
-        Some(row) => Json(ApiResponse::success(
-            row_to_equipment_response(&row),
-            "设备更新成功",
-        )),
-        None => Json(ApiResponse::not_found("设备不存在")),
+        Some(row) => ApiResponse::success(row_to_equipment_response(&row), "设备更新成功"),
+        None => ApiResponse::not_found("设备不存在"),
     }
 }
 
@@ -562,7 +553,7 @@ pub async fn delete_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
     {
         return e;
@@ -582,14 +573,14 @@ pub async fn delete_equipment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete equipment: {}", e);
-            return Json(ApiResponse::server_error("删除设备失败"));
+            return ApiResponse::server_error("删除设备失败");
         }
     };
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "设备删除成功"))
+        ApiResponse::success("".to_string(), "设备删除成功")
     } else {
-        Json(ApiResponse::not_found("设备不存在"))
+        ApiResponse::not_found("设备不存在")
     }
 }
 
@@ -610,7 +601,7 @@ pub async fn maintenance_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<EquipmentResponse>> {
+) -> ApiResponse<EquipmentResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
     {
         return e;
@@ -647,16 +638,13 @@ pub async fn maintenance_equipment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to maintain equipment: {}", e);
-            return Json(ApiResponse::server_error("设备维护失败"));
+            return ApiResponse::server_error("设备维护失败");
         }
     };
 
     match result {
-        Some(row) => Json(ApiResponse::success(
-            row_to_equipment_response(&row),
-            "设备维护成功",
-        )),
-        None => Json(ApiResponse::not_found("设备不存在")),
+        Some(row) => ApiResponse::success(row_to_equipment_response(&row), "设备维护成功"),
+        None => ApiResponse::not_found("设备不存在"),
     }
 }
 
@@ -673,7 +661,7 @@ pub async fn maintenance_equipment(
 pub async fn get_equipment_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
@@ -696,11 +684,11 @@ pub async fn get_equipment_statistics(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to get equipment statistics: {}", e);
-            return Json(ApiResponse::server_error("获取设备统计失败"));
+            return ApiResponse::server_error("获取设备统计失败");
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total": stats.total_count.unwrap_or(0),
             "in_use": stats.normal_count.unwrap_or(0),
@@ -713,7 +701,7 @@ pub async fn get_equipment_statistics(
             "pending_repairs": stats.pending_maintenance_count.unwrap_or(0),
         }),
         "获取设备统计成功",
-    ))
+    )
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
@@ -781,7 +769,7 @@ pub async fn list_maintenances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListMaintenancesParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
@@ -814,7 +802,7 @@ pub async fn list_maintenances(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch maintenances: {}", e);
-            return Json(ApiResponse::server_error("获取维护记录列表失败"));
+            return ApiResponse::server_error("获取维护记录列表失败");
         }
     };
 
@@ -851,7 +839,7 @@ pub async fn list_maintenances(
 
     let total = total_result.unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": maintenance_records,
             "total": total,
@@ -859,7 +847,7 @@ pub async fn list_maintenances(
             "page_size": page_size,
         }),
         "获取维护记录列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -877,7 +865,7 @@ pub async fn create_maintenance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaintenanceRecord>,
-) -> Json<ApiResponse<MaintenanceRecord>> {
+) -> ApiResponse<MaintenanceRecord> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
     {
         return e;
@@ -925,7 +913,7 @@ pub async fn create_maintenance(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create maintenance: {}", e);
-            return Json(ApiResponse::server_error("创建维护记录失败"));
+            return ApiResponse::server_error("创建维护记录失败");
         }
     };
 
@@ -961,7 +949,7 @@ pub async fn create_maintenance(
     .ok()
     .flatten();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         MaintenanceRecord {
             id,
             equipment_id,
@@ -980,7 +968,7 @@ pub async fn create_maintenance(
             updated_at,
         },
         "维护记录创建成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1002,7 +990,7 @@ pub async fn update_maintenance_status(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaintenanceStatus>,
-) -> Json<ApiResponse<MaintenanceRecord>> {
+) -> ApiResponse<MaintenanceRecord> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
     {
         return e;
@@ -1031,10 +1019,10 @@ pub async fn update_maintenance_status(
 
     let result = match result {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("维护记录不存在")),
+        Ok(None) => return ApiResponse::not_found("维护记录不存在"),
         Err(e) => {
             tracing::warn!("Failed to update maintenance status: {}", e);
-            return Json(ApiResponse::server_error("更新维护状态失败"));
+            return ApiResponse::server_error("更新维护状态失败");
         }
     };
 
@@ -1068,7 +1056,7 @@ pub async fn update_maintenance_status(
     .ok()
     .flatten();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         MaintenanceRecord {
             id,
             equipment_id,
@@ -1087,7 +1075,7 @@ pub async fn update_maintenance_status(
             updated_at,
         },
         "维护状态更新成功",
-    ))
+    )
 }
 
 // ==================== Equipment Inspection Handlers ====================
@@ -1153,7 +1141,7 @@ pub async fn list_inspections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListInspectionsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
@@ -1187,7 +1175,7 @@ pub async fn list_inspections(
         Ok(c) => c.unwrap_or(0),
         Err(e) => {
             tracing::error!("Failed to count inspections: {}", e);
-            return Json(ApiResponse::server_error("获取点检记录列表失败"));
+            return ApiResponse::server_error("获取点检记录列表失败");
         }
     };
 
@@ -1248,7 +1236,7 @@ pub async fn list_inspections(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "records": inspections,
                     "total": total,
@@ -1256,11 +1244,11 @@ pub async fn list_inspections(
                     "page_size": page_size,
                 }),
                 "获取点检记录列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to fetch inspections: {}", e);
-            Json(ApiResponse::server_error("获取点检记录列表失败"))
+            ApiResponse::server_error("获取点检记录列表失败")
         }
     }
 }
@@ -1280,7 +1268,7 @@ pub async fn create_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<CreateInspectionRequest>,
-) -> Json<ApiResponse<InspectionResponse>> {
+) -> ApiResponse<InspectionResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
     {
         return e;
@@ -1291,7 +1279,7 @@ pub async fn create_inspection(
     let equipment_uuid = match Uuid::parse_str(&body.equipment_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的设备ID"));
+            return ApiResponse::bad_request("无效的设备ID");
         }
     };
 
@@ -1351,7 +1339,7 @@ pub async fn create_inspection(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
                 equipment_id: r.equipment_id.to_string(),
@@ -1380,10 +1368,10 @@ pub async fn create_inspection(
                 created_at: r.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
             },
             "创建点检记录成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create inspection: {}", e);
-            Json(ApiResponse::server_error("创建点检记录失败"))
+            ApiResponse::server_error("创建点检记录失败")
         }
     }
 }

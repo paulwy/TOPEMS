@@ -50,7 +50,7 @@ async fn stub_wip_transfer_detail(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipRead).await {
         return e;
     }
@@ -80,10 +80,10 @@ async fn stub_wip_transfer_detail(
                 "transfer_type": r.get::<String, _>("transfer_type"),
                 "notes": r.get::<Option<String>, _>("notes"),
             });
-            Json(ApiResponse::success(vec![record], "调拨记录查询成功"))
+            ApiResponse::success(vec![record], "调拨记录查询成功")
         }
-        Ok(None) => Json(ApiResponse::success(vec![], "调拨单不存在")),
-        Err(e) => Json(ApiResponse::server_error(&format!("查询失败: {e}"))),
+        Ok(None) => ApiResponse::success(vec![], "调拨单不存在"),
+        Err(e) => ApiResponse::server_error(&format!("查询失败: {e}")),
     }
 }
 
@@ -238,7 +238,7 @@ pub async fn list_wips(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListWipsQuery>,
-) -> Json<ApiResponse<ListWipResponse>> {
+) -> ApiResponse<ListWipResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipRead).await {
         return e;
     }
@@ -284,7 +284,7 @@ pub async fn list_wips(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count WIPs: {}", e);
-            return Json(ApiResponse::server_error("获取WIP列表失败"));
+            return ApiResponse::server_error("获取WIP列表失败");
         }
     };
 
@@ -321,7 +321,7 @@ pub async fn list_wips(
         Ok(w) => w,
         Err(e) => {
             tracing::error!("Failed to fetch WIP list: {}", e);
-            return Json(ApiResponse::server_error("获取WIP列表失败"));
+            return ApiResponse::server_error("获取WIP列表失败");
         }
     };
 
@@ -387,7 +387,7 @@ pub async fn list_wips(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListWipResponse {
             wips: wip_list,
             total: total.unwrap_or(0),
@@ -395,7 +395,7 @@ pub async fn list_wips(
             page_size,
         },
         "获取WIP列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -413,7 +413,7 @@ pub async fn create_wip(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateWipRequest>,
-) -> Json<ApiResponse<WipResponse>> {
+) -> ApiResponse<WipResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipWrite).await {
         return e;
     }
@@ -477,7 +477,7 @@ Utc::now(),
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create WIP: {}", e);
-            return Json(ApiResponse::server_error("创建WIP失败"));
+            return ApiResponse::server_error("创建WIP失败");
         }
     };
 
@@ -504,7 +504,7 @@ Utc::now(),
         updated_at: result.updated_at.unwrap_or_else(Utc::now),
     };
 
-    Json(ApiResponse::success(wip, "WIP创建成功"))
+    ApiResponse::success(wip, "WIP创建成功")
 }
 
 #[utoipa::path(
@@ -524,7 +524,7 @@ pub async fn get_wip(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WipResponse>> {
+) -> ApiResponse<WipResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipRead).await {
         return e;
     }
@@ -553,7 +553,7 @@ pub async fn get_wip(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch WIP: {}", e);
-            return Json(ApiResponse::server_error("获取WIP失败"));
+            return ApiResponse::server_error("获取WIP失败");
         }
     };
 
@@ -581,9 +581,9 @@ pub async fn get_wip(
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
-            Json(ApiResponse::success(wip, "获取WIP成功"))
+            ApiResponse::success(wip, "获取WIP成功")
         }
-        None => Json(ApiResponse::not_found("WIP不存在")),
+        None => ApiResponse::not_found("WIP不存在"),
     }
 }
 
@@ -606,7 +606,7 @@ pub async fn update_wip(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWipRequest>,
-) -> Json<ApiResponse<WipResponse>> {
+) -> ApiResponse<WipResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipWrite).await {
         return e;
     }
@@ -641,7 +641,7 @@ pub async fn update_wip(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update WIP: {}", e);
-            return Json(ApiResponse::server_error("更新WIP失败"));
+            return ApiResponse::server_error("更新WIP失败");
         }
     };
 
@@ -669,9 +669,9 @@ pub async fn update_wip(
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
-            Json(ApiResponse::success(wip, "WIP更新成功"))
+            ApiResponse::success(wip, "WIP更新成功")
         }
-        None => Json(ApiResponse::not_found("WIP不存在")),
+        None => ApiResponse::not_found("WIP不存在"),
     }
 }
 
@@ -692,7 +692,7 @@ pub async fn delete_wip(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipWrite).await {
         return e;
     }
@@ -711,14 +711,14 @@ pub async fn delete_wip(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete WIP: {}", e);
-            return Json(ApiResponse::server_error("删除WIP失败"));
+            return ApiResponse::server_error("删除WIP失败");
         }
     };
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "WIP删除成功"))
+        ApiResponse::success("".to_string(), "WIP删除成功")
     } else {
-        Json(ApiResponse::not_found("WIP不存在或状态不允许删除"))
+        ApiResponse::not_found("WIP不存在或状态不允许删除")
     }
 }
 
@@ -737,7 +737,7 @@ pub async fn transfer_wip(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateWipTransferRequest>,
-) -> Json<ApiResponse<WipTransferResponse>> {
+) -> ApiResponse<WipTransferResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipTransfer).await {
         return e;
     }
@@ -753,7 +753,7 @@ pub async fn transfer_wip(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::server_error("WIP转移失败"));
+            return ApiResponse::server_error("WIP转移失败");
         }
     };
 
@@ -768,19 +768,19 @@ pub async fn transfer_wip(
         Ok(Some(w)) => w,
         Ok(None) => {
             let _ = tx.rollback().await;
-            return Json(ApiResponse::not_found("WIP不存在"));
+            return ApiResponse::not_found("WIP不存在");
         }
         Err(e) => {
             tracing::error!("Failed to fetch WIP: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::server_error("WIP转移失败"));
+            return ApiResponse::server_error("WIP转移失败");
         }
     };
 
     let current_qty = big_decimal_to_f64(Some(wip.quantity));
     if req.quantity > current_qty {
         let _ = tx.rollback().await;
-        return Json(ApiResponse::bad_request("转移数量不能大于当前WIP数量"));
+        return ApiResponse::bad_request("转移数量不能大于当前WIP数量");
     }
 
     let transfer_result = sqlx::query!(
@@ -819,7 +819,7 @@ pub async fn transfer_wip(
         Err(e) => {
             tracing::error!("Failed to create WIP transfer: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::server_error("WIP转移失败"));
+            return ApiResponse::server_error("WIP转移失败");
         }
     };
 
@@ -842,7 +842,7 @@ pub async fn transfer_wip(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::server_error("WIP转移失败"));
+        return ApiResponse::server_error("WIP转移失败");
     }
 
     let from_process_name = if let Some(pid) = req.from_process_id {
@@ -922,7 +922,7 @@ pub async fn transfer_wip(
         notes: transfer.notes,
     };
 
-    Json(ApiResponse::success(response, "WIP转移成功"))
+    ApiResponse::success(response, "WIP转移成功")
 }
 
 #[utoipa::path(
@@ -942,7 +942,7 @@ pub async fn list_wip_transfers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(wip_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<WipTransferResponse>>> {
+) -> ApiResponse<Vec<WipTransferResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipRead).await {
         return e;
     }
@@ -975,7 +975,7 @@ pub async fn list_wip_transfers(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to fetch WIP transfers: {}", e);
-            return Json(ApiResponse::server_error("获取WIP转移记录失败"));
+            return ApiResponse::server_error("获取WIP转移记录失败");
         }
     };
 
@@ -1003,7 +1003,7 @@ pub async fn list_wip_transfers(
         })
         .collect();
 
-    Json(ApiResponse::success(transfer_list, "获取WIP转移记录成功"))
+    ApiResponse::success(transfer_list, "获取WIP转移记录成功")
 }
 
 #[utoipa::path(
@@ -1019,7 +1019,7 @@ pub async fn list_wip_transfers(
 pub async fn get_wip_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<WipStatisticsResponse>> {
+) -> ApiResponse<WipStatisticsResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipRead).await {
         return e;
     }
@@ -1045,7 +1045,7 @@ pub async fn get_wip_statistics(
         }
         Err(e) => {
             tracing::error!("Failed to fetch WIP statistics: {}", e);
-            return Json(ApiResponse::server_error("获取WIP统计失败"));
+            return ApiResponse::server_error("获取WIP统计失败");
         }
     };
 
@@ -1077,7 +1077,7 @@ pub async fn get_wip_statistics(
             .collect(),
         Err(e) => {
             tracing::error!("Failed to fetch WIP status stats: {}", e);
-            return Json(ApiResponse::server_error("获取WIP统计失败"));
+            return ApiResponse::server_error("获取WIP统计失败");
         }
     };
 
@@ -1113,11 +1113,11 @@ pub async fn get_wip_statistics(
             .collect(),
         Err(e) => {
             tracing::error!("Failed to fetch WIP process stats: {}", e);
-            return Json(ApiResponse::server_error("获取WIP统计失败"));
+            return ApiResponse::server_error("获取WIP统计失败");
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         WipStatisticsResponse {
             total_wip,
             total_quantity,
@@ -1125,7 +1125,7 @@ pub async fn get_wip_statistics(
             by_process,
         },
         "获取WIP统计成功",
-    ))
+    )
 }
 
 #[cfg(test)]

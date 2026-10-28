@@ -16,7 +16,7 @@ pub async fn create_material_issue(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaterialIssueRequest>,
-) -> Json<ApiResponse<MaterialIssueResponse>> {
+) -> ApiResponse<MaterialIssueResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MaterialBomIssue).await
     {
@@ -48,7 +48,7 @@ pub async fn create_material_issue(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::server_error("创建物料领用单失败"));
+            return ApiResponse::server_error("创建物料领用单失败");
         }
     };
 
@@ -82,7 +82,7 @@ pub async fn create_material_issue(
         Err(e) => {
             tracing::error!("Failed to create material issue: {}", e);
             let _ = tx.rollback().await;
-            return Json(ApiResponse::server_error("创建物料领用单失败"));
+            return ApiResponse::server_error("创建物料领用单失败");
         }
     };
 
@@ -118,7 +118,7 @@ pub async fn create_material_issue(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::server_error("创建物料领用单失败"));
+        return ApiResponse::server_error("创建物料领用单失败");
     }
 
     let response = MaterialIssueResponse {
@@ -136,7 +136,7 @@ pub async fn create_material_issue(
         updated_at: issue.updated_at.unwrap_or_else(Utc::now),
     };
 
-    Json(ApiResponse::success(response, "物料领用单创建成功"))
+    ApiResponse::success(response, "物料领用单创建成功")
 }
 
 #[utoipa::path(
@@ -154,7 +154,7 @@ pub async fn list_material_issues(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListMaterialIssuesQuery>,
-) -> Json<ApiResponse<ListMaterialIssuesResponse>> {
+) -> ApiResponse<ListMaterialIssuesResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await
     {
         return e;
@@ -202,7 +202,7 @@ pub async fn list_material_issues(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count material issues: {}", e);
-            return Json(ApiResponse::server_error("获取物料领用单列表失败"));
+            return ApiResponse::server_error("获取物料领用单列表失败");
         }
     };
 
@@ -233,7 +233,7 @@ pub async fn list_material_issues(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch material issues: {}", e);
-            return Json(ApiResponse::server_error("获取物料领用单列表失败"));
+            return ApiResponse::server_error("获取物料领用单列表失败");
         }
     };
 
@@ -286,7 +286,7 @@ pub async fn list_material_issues(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListMaterialIssuesResponse {
             issues: issue_list,
             total: total.unwrap_or(0),
@@ -294,7 +294,7 @@ pub async fn list_material_issues(
             page_size,
         },
         "获取物料领用单列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -314,7 +314,7 @@ pub async fn get_material_issue(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await
     {
         return e;
@@ -335,10 +335,10 @@ pub async fn get_material_issue(
 
     let issue = match issue_result {
         Ok(Some(i)) => i,
-        Ok(None) => return Json(ApiResponse::not_found("物料领用单不存在")),
+        Ok(None) => return ApiResponse::not_found("物料领用单不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch material issue: {}", e);
-            return Json(ApiResponse::server_error("获取物料领用单失败"));
+            return ApiResponse::server_error("获取物料领用单失败");
         }
     };
 
@@ -359,7 +359,7 @@ pub async fn get_material_issue(
         Ok(i) => i,
         Err(e) => {
             tracing::error!("Failed to fetch issue items: {}", e);
-            return Json(ApiResponse::server_error("获取领用单明细失败"));
+            return ApiResponse::server_error("获取领用单明细失败");
         }
     };
 
@@ -390,7 +390,7 @@ pub async fn get_material_issue(
         })).collect::<Vec<_>>(),
     });
 
-    Json(ApiResponse::success(issue_json, "获取物料领用单成功"))
+    ApiResponse::success(issue_json, "获取物料领用单成功")
 }
 
 pub async fn update_material_issue(
@@ -398,7 +398,7 @@ pub async fn update_material_issue(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialIssueRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MaterialBomIssue).await
     {
@@ -433,10 +433,10 @@ now,
 
     let issue = match result {
         Ok(Some(i)) => i,
-        Ok(None) => return Json(ApiResponse::not_found("物料领用单不存在")),
+        Ok(None) => return ApiResponse::not_found("物料领用单不存在"),
         Err(e) => {
             tracing::error!("Failed to update material issue: {}", e);
-            return Json(ApiResponse::server_error("更新物料领用单失败"));
+            return ApiResponse::server_error("更新物料领用单失败");
         }
     };
 
@@ -455,14 +455,14 @@ now,
         "updated_at": issue.updated_at.unwrap_or_else(Utc::now),
     });
 
-    Json(ApiResponse::success(issue_json, "物料领用单更新成功"))
+    ApiResponse::success(issue_json, "物料领用单更新成功")
 }
 
 pub async fn delete_material_issue(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MaterialBomIssue).await
     {
@@ -473,7 +473,7 @@ pub async fn delete_material_issue(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::server_error("删除物料领用单失败"));
+            return ApiResponse::server_error("删除物料领用单失败");
         }
     };
 
@@ -493,18 +493,18 @@ pub async fn delete_material_issue(
         Err(e) => {
             let _ = tx.rollback().await;
             tracing::error!("Failed to delete material issue: {}", e);
-            return Json(ApiResponse::server_error("删除物料领用单失败"));
+            return ApiResponse::server_error("删除物料领用单失败");
         }
     };
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::server_error("删除物料领用单失败"));
+        return ApiResponse::server_error("删除物料领用单失败");
     }
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "物料领用单删除成功"))
+        ApiResponse::success("".to_string(), "物料领用单删除成功")
     } else {
-        Json(ApiResponse::not_found("物料领用单不存在或状态不允许删除"))
+        ApiResponse::not_found("物料领用单不存在或状态不允许删除")
     }
 }

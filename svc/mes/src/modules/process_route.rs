@@ -155,7 +155,7 @@ pub async fn list_process_routes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListProcessRoutesQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -191,7 +191,7 @@ pub async fn list_process_routes(
             cache_key = %cache_key,
             "工艺路线列表缓存命中"
         );
-        return Json(ApiResponse::success(cached, "获取工艺路线列表成功"));
+        return ApiResponse::success(cached, "获取工艺路线列表成功");
     }
 
     // 缓存未命中，记录指标
@@ -249,7 +249,7 @@ pub async fn list_process_routes(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count process routes: {}", e);
-            return Json(ApiResponse::server_error("获取工艺路线列表失败"));
+            return ApiResponse::server_error("获取工艺路线列表失败");
         }
     };
 
@@ -281,7 +281,7 @@ pub async fn list_process_routes(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch process routes: {}", e);
-            return Json(ApiResponse::server_error("获取工艺路线列表失败"));
+            return ApiResponse::server_error("获取工艺路线列表失败");
         }
     };
 
@@ -337,7 +337,7 @@ pub async fn list_process_routes(
         "工艺路线列表缓存写入"
     );
 
-    Json(ApiResponse::success(response_data, "获取工艺路线列表成功"))
+    ApiResponse::success(response_data, "获取工艺路线列表成功")
 }
 
 #[utoipa::path(
@@ -357,7 +357,7 @@ pub async fn get_process_route(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ProcessRouteResponse>> {
+) -> ApiResponse<ProcessRouteResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -366,7 +366,7 @@ pub async fn get_process_route(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
+            return ApiResponse::bad_request("无效的工艺路线ID");
         }
     };
 
@@ -410,7 +410,7 @@ pub async fn get_process_route(
                 Err(_) => (None, None),
             };
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
                     code: r.code,
@@ -426,12 +426,12 @@ pub async fn get_process_route(
                     updated_at: r.updated_at,
                 },
                 "获取工艺路线成功",
-            ))
+            )
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工艺路线不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工艺路线不存在"),
         Err(e) => {
             tracing::error!("Failed to get process route: {}", e);
-            Json(ApiResponse::server_error("获取工艺路线失败"))
+            ApiResponse::server_error("获取工艺路线失败")
         }
     }
 }
@@ -440,7 +440,7 @@ pub async fn create_process_route(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<CreateProcessRouteRequest>,
-) -> Json<ApiResponse<ProcessRouteResponse>> {
+) -> ApiResponse<ProcessRouteResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -485,7 +485,7 @@ pub async fn create_process_route(
                 });
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
                     code: r.code,
@@ -500,11 +500,11 @@ pub async fn create_process_route(
                     updated_at: r.updated_at,
                 },
                 "创建工艺路线成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to create process route: {}", e);
-            Json(ApiResponse::server_error("创建工艺路线失败"))
+            ApiResponse::server_error("创建工艺路线失败")
         }
     }
 }
@@ -514,7 +514,7 @@ pub async fn update_process_route(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<UpdateProcessRouteRequest>,
-) -> Json<ApiResponse<ProcessRouteResponse>> {
+) -> ApiResponse<ProcessRouteResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -524,7 +524,7 @@ pub async fn update_process_route(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
+            return ApiResponse::bad_request("无效的工艺路线ID");
         }
     };
 
@@ -570,7 +570,7 @@ pub async fn update_process_route(
                 });
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
                     code: r.code,
@@ -585,12 +585,12 @@ pub async fn update_process_route(
                     updated_at: r.updated_at,
                 },
                 "更新工艺路线成功",
-            ))
+            )
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工艺路线不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工艺路线不存在"),
         Err(e) => {
             tracing::error!("Failed to update process route: {}", e);
-            Json(ApiResponse::server_error("更新工艺路线失败"))
+            ApiResponse::server_error("更新工艺路线失败")
         }
     }
 }
@@ -599,7 +599,7 @@ pub async fn delete_process_route(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -609,7 +609,7 @@ pub async fn delete_process_route(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
+            return ApiResponse::bad_request("无效的工艺路线ID");
         }
     };
 
@@ -644,11 +644,11 @@ pub async fn delete_process_route(
                 });
             }
 
-            Json(ApiResponse::success(id, "删除工艺路线成功"))
+            ApiResponse::success(id, "删除工艺路线成功")
         }
         Err(e) => {
             tracing::error!("Failed to delete process route: {}", e);
-            Json(ApiResponse::server_error("删除工艺路线失败"))
+            ApiResponse::server_error("删除工艺路线失败")
         }
     }
 }
@@ -670,7 +670,7 @@ pub async fn get_route_steps(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -679,7 +679,7 @@ pub async fn get_route_steps(
     let route_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
+            return ApiResponse::bad_request("无效的工艺路线ID");
         }
     };
 
@@ -723,14 +723,14 @@ pub async fn get_route_steps(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "steps": step_responses }),
                 "获取工艺路线步骤成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to get route steps: {}", e);
-            Json(ApiResponse::server_error("获取工艺路线步骤失败"))
+            ApiResponse::server_error("获取工艺路线步骤失败")
         }
     }
 }
@@ -740,7 +740,7 @@ pub async fn add_route_step(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<AddProcessRouteStepRequest>,
-) -> Json<ApiResponse<ProcessRouteStepResponse>> {
+) -> ApiResponse<ProcessRouteStepResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -750,14 +750,14 @@ pub async fn add_route_step(
     let route_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
+            return ApiResponse::bad_request("无效的工艺路线ID");
         }
     };
 
     let process_uuid = match Uuid::parse_str(&body.process_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工序ID"));
+            return ApiResponse::bad_request("无效的工序ID");
         }
     };
 
@@ -806,7 +806,7 @@ pub async fn add_route_step(
                 Err(_) => (None, String::new()),
             };
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
                     route_id: s.route_id.to_string(),
@@ -823,11 +823,11 @@ pub async fn add_route_step(
                     created_at: s.created_at,
                 },
                 "添加工艺路线步骤成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to add route step: {}", e);
-            Json(ApiResponse::server_error("添加工艺路线步骤失败"))
+            ApiResponse::server_error("添加工艺路线步骤失败")
         }
     }
 }
@@ -851,7 +851,7 @@ pub async fn update_route_step(
     Extension(claims): Extension<Claims>,
     Path((_id, step_id)): Path<(String, String)>,
     Json(body): Json<UpdateProcessRouteStepRequest>,
-) -> Json<ApiResponse<ProcessRouteStepResponse>> {
+) -> ApiResponse<ProcessRouteStepResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -861,7 +861,7 @@ pub async fn update_route_step(
     let step_uuid = match Uuid::parse_str(&step_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的步骤ID"));
+            return ApiResponse::bad_request("无效的步骤ID");
         }
     };
 
@@ -907,7 +907,7 @@ pub async fn update_route_step(
                 Err(_) => (None, String::new()),
             };
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
                     route_id: s.route_id.to_string(),
@@ -924,12 +924,12 @@ pub async fn update_route_step(
                     created_at: s.created_at,
                 },
                 "更新工艺路线步骤成功",
-            ))
+            )
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工艺路线步骤不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工艺路线步骤不存在"),
         Err(e) => {
             tracing::error!("Failed to update route step: {}", e);
-            Json(ApiResponse::server_error("更新工艺路线步骤失败"))
+            ApiResponse::server_error("更新工艺路线步骤失败")
         }
     }
 }
@@ -938,7 +938,7 @@ pub async fn remove_route_step(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((_id, step_id)): Path<(String, String)>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -948,7 +948,7 @@ pub async fn remove_route_step(
     let step_uuid = match Uuid::parse_str(&step_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的步骤ID"));
+            return ApiResponse::bad_request("无效的步骤ID");
         }
     };
 
@@ -962,10 +962,10 @@ pub async fn remove_route_step(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(step_id, "删除工艺路线步骤成功")),
+        Ok(_) => ApiResponse::success(step_id, "删除工艺路线步骤成功"),
         Err(e) => {
             tracing::error!("Failed to remove route step: {}", e);
-            Json(ApiResponse::server_error("删除工艺路线步骤失败"))
+            ApiResponse::server_error("删除工艺路线步骤失败")
         }
     }
 }
@@ -993,7 +993,7 @@ pub async fn reorder_route_steps(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<ReorderStepsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -1003,7 +1003,7 @@ pub async fn reorder_route_steps(
     let route_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工艺路线ID"));
+            return ApiResponse::bad_request("无效的工艺路线ID");
         }
     };
 
@@ -1011,7 +1011,7 @@ pub async fn reorder_route_steps(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin transaction: {}", e);
-            return Json(ApiResponse::server_error("重排序工艺路线步骤失败"));
+            return ApiResponse::server_error("重排序工艺路线步骤失败");
         }
     };
 
@@ -1019,7 +1019,7 @@ pub async fn reorder_route_steps(
         let step_uuid = match Uuid::parse_str(step_id) {
             Ok(u) => u,
             Err(_) => {
-                return Json(ApiResponse::bad_request("无效的步骤ID"));
+                return ApiResponse::bad_request("无效的步骤ID");
             }
         };
 
@@ -1037,13 +1037,13 @@ pub async fn reorder_route_steps(
         .await
         {
             tracing::error!("Failed to reorder step: {}", e);
-            return Json(ApiResponse::server_error("重排序工艺路线步骤失败"));
+            return ApiResponse::server_error("重排序工艺路线步骤失败");
         }
     }
 
     if let Err(e) = tx.commit().await {
         tracing::error!("Failed to commit transaction: {}", e);
-        return Json(ApiResponse::server_error("重排序工艺路线步骤失败"));
+        return ApiResponse::server_error("重排序工艺路线步骤失败");
     }
 
     let result = sqlx::query!(
@@ -1086,14 +1086,14 @@ pub async fn reorder_route_steps(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "steps": step_responses }),
                 "重排序工艺路线步骤成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to fetch reordered steps: {}", e);
-            Json(ApiResponse::server_error("获取重排序后的步骤失败"))
+            ApiResponse::server_error("获取重排序后的步骤失败")
         }
     }
 }

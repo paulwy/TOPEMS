@@ -146,7 +146,7 @@ pub async fn list_capacities(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListCapacitiesQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -177,7 +177,7 @@ pub async fn list_capacities(
             cache_key = %cache_key,
             "产能列表缓存命中"
         );
-        return Json(ApiResponse::success(cached, "获取产能列表成功"));
+        return ApiResponse::success(cached, "获取产能列表成功");
     }
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
@@ -248,11 +248,11 @@ pub async fn list_capacities(
                 "产能列表缓存写入"
             );
 
-            Json(ApiResponse::success(response_data, "获取产能列表成功"))
+            ApiResponse::success(response_data, "获取产能列表成功")
         }
         Err(e) => {
             tracing::error!("获取产能列表失败: {}", e);
-            Json(ApiResponse::server_error("获取产能列表失败"))
+            ApiResponse::server_error("获取产能列表失败")
         }
     }
 }
@@ -274,7 +274,7 @@ pub async fn get_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Capacity>> {
+) -> ApiResponse<Capacity> {
     let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query_as::<_, Capacity>(
@@ -292,11 +292,11 @@ pub async fn get_capacity(
     .await;
 
     match result {
-        Ok(Some(cap)) => Json(ApiResponse::success(cap, "获取产能详情成功")),
-        Ok(None) => Json(ApiResponse::not_found("产能记录不存在")),
+        Ok(Some(cap)) => ApiResponse::success(cap, "获取产能详情成功"),
+        Ok(None) => ApiResponse::not_found("产能记录不存在"),
         Err(e) => {
             tracing::error!("获取产能详情失败: {}", e);
-            Json(ApiResponse::server_error("获取产能详情失败"))
+            ApiResponse::server_error("获取产能详情失败")
         }
     }
 }
@@ -305,7 +305,7 @@ pub async fn create_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateCapacityRequest>,
-) -> Json<ApiResponse<Capacity>> {
+) -> ApiResponse<Capacity> {
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims);
@@ -360,11 +360,11 @@ pub async fn create_capacity(
                 });
             }
 
-            Json(ApiResponse::success(cap, "产能记录创建成功"))
+            ApiResponse::success(cap, "产能记录创建成功")
         }
         Err(e) => {
             tracing::error!("创建产能记录失败: {}", e);
-            Json(ApiResponse::server_error("创建产能记录失败"))
+            ApiResponse::server_error("创建产能记录失败")
         }
     }
 }
@@ -374,7 +374,7 @@ pub async fn update_capacity(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateCapacityRequest>,
-) -> Json<ApiResponse<Capacity>> {
+) -> ApiResponse<Capacity> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing =
@@ -386,8 +386,8 @@ pub async fn update_capacity(
 
     let existing = match existing {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::not_found("产能记录不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("产能记录不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     let work_center_name = req.work_center_name.or(existing.work_center_name);
@@ -443,11 +443,11 @@ pub async fn update_capacity(
                 });
             }
 
-            Json(ApiResponse::success(cap, "产能记录更新成功"))
+            ApiResponse::success(cap, "产能记录更新成功")
         }
         Err(e) => {
             tracing::error!("更新产能记录失败: {}", e);
-            Json(ApiResponse::server_error("更新产能记录失败"))
+            ApiResponse::server_error("更新产能记录失败")
         }
     }
 }
@@ -456,7 +456,7 @@ pub async fn delete_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query("DELETE FROM capacities WHERE id = $1 AND tenant_id = $2")
@@ -487,15 +487,12 @@ pub async fn delete_capacity(
                 });
             }
 
-            Json(ApiResponse::success(
-                serde_json::json!({"id": id}),
-                "产能记录删除成功",
-            ))
+            ApiResponse::success(serde_json::json!({"id": id}), "产能记录删除成功")
         }
-        Ok(_) => Json(ApiResponse::not_found("产能记录不存在")),
+        Ok(_) => ApiResponse::not_found("产能记录不存在"),
         Err(e) => {
             tracing::error!("删除产能记录失败: {}", e);
-            Json(ApiResponse::server_error("删除产能记录失败"))
+            ApiResponse::server_error("删除产能记录失败")
         }
     }
 }
@@ -520,7 +517,7 @@ pub async fn allocate_capacity(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AllocateRequest>,
-) -> Json<ApiResponse<Capacity>> {
+) -> ApiResponse<Capacity> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, Capacity>(
@@ -532,15 +529,12 @@ pub async fn allocate_capacity(
     .await
     {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::not_found("产能记录不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("产能记录不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     if !can_transition(&existing.status, "allocated") {
-        return Json(ApiResponse::bad_request(&format!(
-            "当前状态 {} 不允许分配产能",
-            existing.status
-        )));
+        return ApiResponse::bad_request(&format!("当前状态 {} 不允许分配产能", existing.status));
     }
 
     let available = existing.available_hours.unwrap_or(0.0);
@@ -548,10 +542,10 @@ pub async fn allocate_capacity(
     let new_used = current_used + req.hours.unwrap_or(0.0);
 
     if new_used > available {
-        return Json(ApiResponse::bad_request(&format!(
+        return ApiResponse::bad_request(&format!(
             "分配工时 {} 超过可用工时 {}（当前已用 {}）",
             new_used, available, current_used
-        )));
+        ));
     }
 
     let utilization_rate = calc_utilization(Some(available), Some(new_used));
@@ -576,10 +570,10 @@ pub async fn allocate_capacity(
     .await;
 
     match result {
-        Ok(cap) => Json(ApiResponse::success(cap, "产能分配成功")),
+        Ok(cap) => ApiResponse::success(cap, "产能分配成功"),
         Err(e) => {
             tracing::error!("分配产能失败: {}", e);
-            Json(ApiResponse::server_error("分配产能失败"))
+            ApiResponse::server_error("分配产能失败")
         }
     }
 }
@@ -602,7 +596,7 @@ pub async fn release_capacity(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AllocateRequest>,
-) -> Json<ApiResponse<Capacity>> {
+) -> ApiResponse<Capacity> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, Capacity>(
@@ -614,15 +608,12 @@ pub async fn release_capacity(
     .await
     {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::not_found("产能记录不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("产能记录不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     if !can_transition(&existing.status, "released") {
-        return Json(ApiResponse::bad_request(&format!(
-            "当前状态 {} 不允许释放产能",
-            existing.status
-        )));
+        return ApiResponse::bad_request(&format!("当前状态 {} 不允许释放产能", existing.status));
     }
 
     let available = existing.available_hours.unwrap_or(0.0);
@@ -650,10 +641,10 @@ pub async fn release_capacity(
     .await;
 
     match result {
-        Ok(cap) => Json(ApiResponse::success(cap, "产能释放成功")),
+        Ok(cap) => ApiResponse::success(cap, "产能释放成功"),
         Err(e) => {
             tracing::error!("释放产能失败: {}", e);
-            Json(ApiResponse::server_error("释放产能失败"))
+            ApiResponse::server_error("释放产能失败")
         }
     }
 }
@@ -675,7 +666,7 @@ pub async fn maintenance_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Capacity>> {
+) -> ApiResponse<Capacity> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, Capacity>(
@@ -687,8 +678,8 @@ pub async fn maintenance_capacity(
     .await
     {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::not_found("产能记录不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("产能记录不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     let target_status = if existing.status == "maintenance" {
@@ -698,10 +689,10 @@ pub async fn maintenance_capacity(
     };
 
     if !can_transition(&existing.status, target_status) {
-        return Json(ApiResponse::bad_request(&format!(
+        return ApiResponse::bad_request(&format!(
             "当前状态 {} 不允许切换到 {}",
             existing.status, target_status
-        )));
+        ));
     }
 
     let now = Utc::now();
@@ -728,11 +719,11 @@ pub async fn maintenance_capacity(
             } else {
                 "产能已从维护恢复"
             };
-            Json(ApiResponse::success(cap, msg))
+            ApiResponse::success(cap, msg)
         }
         Err(e) => {
             tracing::error!("切换产能维护状态失败: {}", e);
-            Json(ApiResponse::server_error("切换产能维护状态失败"))
+            ApiResponse::server_error("切换产能维护状态失败")
         }
     }
 }
@@ -796,7 +787,7 @@ pub async fn submit_capacity(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(_req): Json<SubmitCapacityRequest>,
-) -> Json<ApiResponse<Capacity>> {
+) -> ApiResponse<Capacity> {
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, Capacity>(
@@ -808,15 +799,12 @@ pub async fn submit_capacity(
     .await
     {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::not_found("产能记录不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("产能记录不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     if !can_transition(&existing.status, "allocated") {
-        return Json(ApiResponse::conflict(&format!(
-            "当前状态 {} 不允许提交产能",
-            existing.status
-        )));
+        return ApiResponse::conflict(&format!("当前状态 {} 不允许提交产能", existing.status));
     }
 
     let now = Utc::now();
@@ -837,10 +825,10 @@ pub async fn submit_capacity(
     .await;
 
     match result {
-        Ok(cap) => Json(ApiResponse::success(cap, "产能提交成功")),
+        Ok(cap) => ApiResponse::success(cap, "产能提交成功"),
         Err(e) => {
             tracing::error!("提交产能失败: {}", e);
-            Json(ApiResponse::server_error("提交产能失败"))
+            ApiResponse::server_error("提交产能失败")
         }
     }
 }

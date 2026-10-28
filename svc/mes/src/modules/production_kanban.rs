@@ -2,7 +2,7 @@
 //!
 //! 生产看板只读接口：提供看板总览、订单进度、工位状态、质量趋势、设备状态等聚合查询。
 
-use axum::{extract::Extension, extract::State, routing::get, Json, Router};
+use axum::{extract::Extension, extract::State, routing::get, Router};
 use chrono::NaiveDate;
 use serde::Serialize;
 use sqlx::types::BigDecimal;
@@ -120,7 +120,7 @@ pub struct EquipmentStatusResponse {
 pub async fn get_dashboard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<DashboardResponse>> {
+) -> ApiResponse<DashboardResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -148,7 +148,7 @@ pub async fn get_dashboard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch order stats: {}", e);
-            return Json(ApiResponse::server_error("获取看板总览失败"));
+            return ApiResponse::server_error("获取看板总览失败");
         }
     };
 
@@ -203,7 +203,7 @@ pub async fn get_dashboard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality stats: {}", e);
-            return Json(ApiResponse::server_error("获取看板总览失败"));
+            return ApiResponse::server_error("获取看板总览失败");
         }
     };
 
@@ -527,7 +527,7 @@ pub async fn get_dashboard(
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         DashboardResponse {
             summary,
             order_progress,
@@ -536,7 +536,7 @@ pub async fn get_dashboard(
             equipment_status,
         },
         "获取看板总览成功",
-    ))
+    )
 }
 
 /// GET /api/mes/kanban/order-progress
@@ -556,7 +556,7 @@ pub async fn get_dashboard(
 pub async fn get_order_progress(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<OrderProgressResponse>>> {
+) -> ApiResponse<Vec<OrderProgressResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -581,7 +581,7 @@ pub async fn get_order_progress(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch order progress: {}", e);
-            return Json(ApiResponse::server_error("获取订单进度失败"));
+            return ApiResponse::server_error("获取订单进度失败");
         }
     };
 
@@ -619,7 +619,7 @@ pub async fn get_order_progress(
         })
         .collect();
 
-    Json(ApiResponse::success(list, "获取订单进度成功"))
+    ApiResponse::success(list, "获取订单进度成功")
 }
 
 /// GET /api/mes/kanban/workstation-status
@@ -638,7 +638,7 @@ pub async fn get_order_progress(
 pub async fn get_workstation_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<WorkstationStatusResponse>>> {
+) -> ApiResponse<Vec<WorkstationStatusResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -686,7 +686,7 @@ pub async fn get_workstation_status(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch workstation status: {}", e);
-            return Json(ApiResponse::server_error("获取工位状态失败"));
+            return ApiResponse::server_error("获取工位状态失败");
         }
     };
 
@@ -726,7 +726,7 @@ pub async fn get_workstation_status(
         })
         .collect();
 
-    Json(ApiResponse::success(list, "获取工位状态成功"))
+    ApiResponse::success(list, "获取工位状态成功")
 }
 
 /// GET /api/mes/kanban/quality-trend
@@ -745,7 +745,7 @@ pub async fn get_workstation_status(
 pub async fn get_quality_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<QualityTrendResponse>>> {
+) -> ApiResponse<Vec<QualityTrendResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -778,7 +778,7 @@ pub async fn get_quality_trend(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality trend: {}", e);
-            return Json(ApiResponse::server_error("获取质量趋势失败"));
+            return ApiResponse::server_error("获取质量趋势失败");
         }
     };
 
@@ -815,7 +815,7 @@ pub async fn get_quality_trend(
         })
         .collect();
 
-    Json(ApiResponse::success(list, "获取质量趋势成功"))
+    ApiResponse::success(list, "获取质量趋势成功")
 }
 
 /// GET /api/mes/kanban/equipment-status
@@ -834,7 +834,7 @@ pub async fn get_quality_trend(
 pub async fn get_equipment_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<EquipmentStatusResponse>>> {
+) -> ApiResponse<Vec<EquipmentStatusResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -871,7 +871,7 @@ pub async fn get_equipment_status(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch equipment status: {}", e);
-            return Json(ApiResponse::server_error("获取设备状态失败"));
+            return ApiResponse::server_error("获取设备状态失败");
         }
     };
 
@@ -898,5 +898,5 @@ pub async fn get_equipment_status(
         })
         .collect();
 
-    Json(ApiResponse::success(list, "获取设备状态成功"))
+    ApiResponse::success(list, "获取设备状态成功")
 }

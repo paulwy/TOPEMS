@@ -56,7 +56,7 @@ async fn stub_efficiency_detail(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((equipment_id, _rid)): Path<(String, String)>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
     {
@@ -65,7 +65,7 @@ async fn stub_efficiency_detail(
 
     let equipment_uuid = match Uuid::parse_str(&equipment_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的设备ID")),
+        Err(_) => return ApiResponse::bad_request("无效的设备ID"),
     };
 
     let tenant_id = get_tenant_id(&claims);
@@ -99,9 +99,9 @@ async fn stub_efficiency_detail(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(records, "设备效率详情查询成功"))
+            ApiResponse::success(records, "设备效率详情查询成功")
         }
-        Err(e) => Json(ApiResponse::server_error(&format!("查询失败: {e}"))),
+        Err(e) => ApiResponse::server_error(&format!("查询失败: {e}")),
     }
 }
 
@@ -289,7 +289,7 @@ pub async fn list_oee_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListOeeRecordsQuery>,
-) -> Json<ApiResponse<ListOeeRecordsResponse>> {
+) -> ApiResponse<ListOeeRecordsResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
     {
@@ -355,7 +355,7 @@ pub async fn list_oee_records(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count OEE records: {}", e);
-            return Json(ApiResponse::server_error("获取OEE记录列表失败"));
+            return ApiResponse::server_error("获取OEE记录列表失败");
         }
     };
 
@@ -391,7 +391,7 @@ pub async fn list_oee_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch OEE records: {}", e);
-            return Json(ApiResponse::server_error("获取OEE记录列表失败"));
+            return ApiResponse::server_error("获取OEE记录列表失败");
         }
     };
 
@@ -482,7 +482,7 @@ pub async fn list_oee_records(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListOeeRecordsResponse {
             records: records_list,
             total: total.unwrap_or(0),
@@ -490,7 +490,7 @@ pub async fn list_oee_records(
             page_size,
         },
         "获取OEE记录列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -508,7 +508,7 @@ pub async fn create_oee_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateOeeRecordRequest>,
-) -> Json<ApiResponse<OeeRecordResponse>> {
+) -> ApiResponse<OeeRecordResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeWrite).await
     {
@@ -567,7 +567,7 @@ pub async fn create_oee_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create OEE record: {}", e);
-            return Json(ApiResponse::server_error("创建OEE记录失败"));
+            return ApiResponse::server_error("创建OEE记录失败");
         }
     };
 
@@ -605,7 +605,7 @@ pub async fn create_oee_record(
         updated_at: result.updated_at,
     };
 
-    Json(ApiResponse::success(record, "OEE记录创建成功"))
+    ApiResponse::success(record, "OEE记录创建成功")
 }
 
 #[utoipa::path(
@@ -625,7 +625,7 @@ pub async fn get_oee_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<OeeRecordResponse>> {
+) -> ApiResponse<OeeRecordResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
     {
@@ -657,7 +657,7 @@ pub async fn get_oee_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch OEE record: {}", e);
-            return Json(ApiResponse::server_error("获取OEE记录失败"));
+            return ApiResponse::server_error("获取OEE记录失败");
         }
     };
 
@@ -686,9 +686,9 @@ pub async fn get_oee_record(
                 created_at: r.created_at,
                 updated_at: r.updated_at,
             };
-            Json(ApiResponse::success(record, "获取OEE记录成功"))
+            ApiResponse::success(record, "获取OEE记录成功")
         }
-        None => Json(ApiResponse::not_found("OEE记录不存在")),
+        None => ApiResponse::not_found("OEE记录不存在"),
     }
 }
 
@@ -711,7 +711,7 @@ pub async fn update_oee_record(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateOeeRecordRequest>,
-) -> Json<ApiResponse<OeeRecordResponse>> {
+) -> ApiResponse<OeeRecordResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeWrite).await
     {
@@ -734,10 +734,10 @@ pub async fn update_oee_record(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::not_found("OEE记录不存在")),
+        Ok(None) => return ApiResponse::not_found("OEE记录不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch OEE record: {}", e);
-            return Json(ApiResponse::server_error("更新OEE记录失败"));
+            return ApiResponse::server_error("更新OEE记录失败");
         }
     };
 
@@ -817,7 +817,7 @@ pub async fn update_oee_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update OEE record: {}", e);
-            return Json(ApiResponse::server_error("更新OEE记录失败"));
+            return ApiResponse::server_error("更新OEE记录失败");
         }
     };
 
@@ -846,9 +846,9 @@ pub async fn update_oee_record(
                 created_at: r.created_at,
                 updated_at: r.updated_at,
             };
-            Json(ApiResponse::success(record, "OEE记录更新成功"))
+            ApiResponse::success(record, "OEE记录更新成功")
         }
-        None => Json(ApiResponse::not_found("OEE记录不存在")),
+        None => ApiResponse::not_found("OEE记录不存在"),
     }
 }
 
@@ -869,7 +869,7 @@ pub async fn delete_oee_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeWrite).await
     {
@@ -887,14 +887,14 @@ pub async fn delete_oee_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete OEE record: {}", e);
-            return Json(ApiResponse::server_error("删除OEE记录失败"));
+            return ApiResponse::server_error("删除OEE记录失败");
         }
     };
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "OEE记录删除成功"))
+        ApiResponse::success("".to_string(), "OEE记录删除成功")
     } else {
-        Json(ApiResponse::not_found("OEE记录不存在"))
+        ApiResponse::not_found("OEE记录不存在")
     }
 }
 
@@ -917,7 +917,7 @@ pub async fn get_oee_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(req): Query<OeeStatisticsQuery>,
-) -> Json<ApiResponse<OeeStatisticsResponse>> {
+) -> ApiResponse<OeeStatisticsResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
     {
@@ -1092,7 +1092,7 @@ pub async fn get_oee_statistics(
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         OeeStatisticsResponse {
             total_records,
             avg_availability,
@@ -1103,7 +1103,7 @@ pub async fn get_oee_statistics(
             by_equipment,
         },
         "获取OEE统计数据成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1128,7 +1128,7 @@ pub async fn get_equipment_efficiency_analysis(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(equipment_id): Path<String>,
-) -> Json<ApiResponse<Vec<EquipmentEfficiencyAnalysis>>> {
+) -> ApiResponse<Vec<EquipmentEfficiencyAnalysis>> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
     {
@@ -1138,7 +1138,7 @@ pub async fn get_equipment_efficiency_analysis(
     let equipment_uuid = match Uuid::parse_str(&equipment_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的设备ID"));
+            return ApiResponse::bad_request("无效的设备ID");
         }
     };
 
@@ -1170,7 +1170,7 @@ pub async fn get_equipment_efficiency_analysis(
         Ok(e) => e,
         Err(err) => {
             tracing::error!("Failed to fetch equipment efficiency: {}", err);
-            return Json(ApiResponse::server_error("获取设备效率分析失败"));
+            return ApiResponse::server_error("获取设备效率分析失败");
         }
     };
 
@@ -1204,5 +1204,5 @@ pub async fn get_equipment_efficiency_analysis(
         })
         .collect();
 
-    Json(ApiResponse::success(analysis_list, "获取设备效率分析成功"))
+    ApiResponse::success(analysis_list, "获取设备效率分析成功")
 }

@@ -1,7 +1,7 @@
 //! Quality Traceability handlers
 
 use axum::{
-    extract::Extension, extract::Path, extract::Query, extract::State, routing::get, Json, Router,
+    extract::Extension, extract::Path, extract::Query, extract::State, routing::get, Router,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -138,7 +138,7 @@ pub async fn forward_traceability(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
-) -> Json<ApiResponse<TraceChainResponse>> {
+) -> ApiResponse<TraceChainResponse> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -163,10 +163,10 @@ pub async fn forward_traceability(
 
     let order = match order {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(ApiResponse::not_found("生产工单不存在")),
+        Ok(None) => return ApiResponse::not_found("生产工单不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch order: {}", e);
-            return Json(ApiResponse::server_error("正向追溯失败"));
+            return ApiResponse::server_error("正向追溯失败");
         }
     };
 
@@ -267,7 +267,7 @@ pub async fn forward_traceability(
             .map(|v| v.to_string().parse::<f64>().unwrap_or_default()),
     });
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         TraceChainResponse {
             nodes,
             links,
@@ -275,7 +275,7 @@ pub async fn forward_traceability(
             root_id: order_node_id,
         },
         "正向追溯查询成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -295,7 +295,7 @@ pub async fn backward_traceability(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(batch_no): Path<String>,
-) -> Json<ApiResponse<TraceChainResponse>> {
+) -> ApiResponse<TraceChainResponse> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -322,7 +322,7 @@ pub async fn backward_traceability(
     let batch = match batch {
         Ok(Some(b)) => b,
         Ok(None) => {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 TraceChainResponse {
                     nodes: vec![TraceNode {
                         id: "product_1".to_string(),
@@ -342,11 +342,11 @@ pub async fn backward_traceability(
                     root_id: "product_1".to_string(),
                 },
                 "反向追溯查询成功",
-            ));
+            );
         }
         Err(e) => {
             tracing::error!("Failed to fetch batch: {}", e);
-            return Json(ApiResponse::server_error("反向追溯失败"));
+            return ApiResponse::server_error("反向追溯失败");
         }
     };
 
@@ -415,7 +415,7 @@ pub async fn backward_traceability(
         quantity: None,
     });
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         TraceChainResponse {
             nodes,
             links,
@@ -423,7 +423,7 @@ pub async fn backward_traceability(
             root_id: product_node_id,
         },
         "反向追溯查询成功",
-    ))
+    )
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -447,7 +447,7 @@ pub async fn get_trace_chain(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<TraceChainQuery>,
-) -> Json<ApiResponse<TraceChainResponse>> {
+) -> ApiResponse<TraceChainResponse> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -461,7 +461,7 @@ pub async fn get_trace_chain(
     let id = match Uuid::parse_str(&query.identifier) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的标识符"));
+            return ApiResponse::bad_request("无效的标识符");
         }
     };
 
@@ -484,10 +484,10 @@ pub async fn get_trace_chain(
 
     match order {
         Ok(Some(_)) => forward_traceability(State(state), Extension(claims), Path(id)).await,
-        Ok(None) => Json(ApiResponse::not_found("追溯对象不存在")),
+        Ok(None) => ApiResponse::not_found("追溯对象不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch trace chain: {}", e);
-            Json(ApiResponse::server_error("追溯链查询失败"))
+            ApiResponse::server_error("追溯链查询失败")
         }
     }
 }
@@ -525,7 +525,7 @@ pub async fn list_quality_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListQualityRecordsQuery>,
-) -> Json<ApiResponse<ListQualityRecordsResponse>> {
+) -> ApiResponse<ListQualityRecordsResponse> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -606,7 +606,7 @@ pub async fn list_quality_records(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality records: {}", e);
-            return Json(ApiResponse::server_error("获取质量记录列表失败"));
+            return ApiResponse::server_error("获取质量记录列表失败");
         }
     };
 
@@ -639,7 +639,7 @@ pub async fn list_quality_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality records: {}", e);
-            return Json(ApiResponse::server_error("获取质量记录列表失败"));
+            return ApiResponse::server_error("获取质量记录列表失败");
         }
     };
 
@@ -709,7 +709,7 @@ pub async fn list_quality_records(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListQualityRecordsResponse {
             records: record_list,
             total,
@@ -717,7 +717,7 @@ pub async fn list_quality_records(
             page_size,
         },
         "获取质量记录列表成功",
-    ))
+    )
 }
 
 #[cfg(test)]

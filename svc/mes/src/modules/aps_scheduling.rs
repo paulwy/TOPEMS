@@ -958,7 +958,7 @@ pub async fn execute_aps_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ApsScheduleRequest>,
-) -> Json<ApiResponse<ApsScheduleResult>> {
+) -> ApiResponse<ApsScheduleResult> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -980,10 +980,10 @@ pub async fn execute_aps_schedule(
     };
 
     match run_aps_scheduling(&state.pool, &req, false, tenant_id).await {
-        Ok(result) => Json(ApiResponse::success(result, "APS 智能排程执行成功")),
+        Ok(result) => ApiResponse::success(result, "APS 智能排程执行成功"),
         Err(err) => {
             tracing::error!("APS排程失败: {}", err);
-            Json(ApiResponse::from(TopemsError::internal("APS排程失败", err)))
+            ApiResponse::from(TopemsError::internal("APS排程失败", err))
         }
     }
 }
@@ -1003,7 +1003,7 @@ pub async fn simulate_aps_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SimulateRequest>,
-) -> Json<ApiResponse<SimulateResult>> {
+) -> ApiResponse<SimulateResult> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -1065,14 +1065,11 @@ pub async fn simulate_aps_schedule(
                 comparison_with_current: None,
             };
 
-            Json(ApiResponse::success(simulate_result, "排程模拟完成"))
+            ApiResponse::success(simulate_result, "排程模拟完成")
         }
         Err(err) => {
             tracing::error!("排程模拟失败: {}", err);
-            Json(ApiResponse::from(TopemsError::internal(
-                "排程模拟失败",
-                err,
-            )))
+            ApiResponse::from(TopemsError::internal("排程模拟失败", err))
         }
     }
 }
@@ -1091,7 +1088,7 @@ pub async fn check_schedule_constraints(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ConstraintCheckRequest>,
-) -> Json<ApiResponse<Vec<ConstraintCheckResult>>> {
+) -> ApiResponse<Vec<ConstraintCheckResult>> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -1314,7 +1311,7 @@ pub async fn check_schedule_constraints(
         });
     }
 
-    Json(ApiResponse::success(results, "约束检查完成"))
+    ApiResponse::success(results, "约束检查完成")
 }
 
 #[utoipa::path(
@@ -1336,7 +1333,7 @@ pub async fn check_schedule_constraints(
 pub async fn get_optimization_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<OptimizationReport>> {
+) -> ApiResponse<OptimizationReport> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -1470,7 +1467,7 @@ pub async fn get_optimization_report(
         priority: 3,
     });
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         OptimizationReport {
             generated_at: Utc::now(),
             total_orders,
@@ -1482,7 +1479,7 @@ pub async fn get_optimization_report(
             improvement_suggestions,
         },
         "获取优化报告成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1504,7 +1501,7 @@ pub async fn get_bottleneck_analysis(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<BottleneckAnalysis>> {
+) -> ApiResponse<BottleneckAnalysis> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -1644,7 +1641,7 @@ pub async fn get_bottleneck_analysis(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         BottleneckAnalysis {
             analysis_date: Utc::now(),
             time_period,
@@ -1664,7 +1661,7 @@ pub async fn get_bottleneck_analysis(
             },
         },
         "获取瓶颈分析成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1684,7 +1681,7 @@ pub async fn check_order_feasibility(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
-) -> Json<ApiResponse<ConstraintCheckResult>> {
+) -> ApiResponse<ConstraintCheckResult> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -1705,12 +1702,12 @@ pub async fn check_order_feasibility(
     let result = check_schedule_constraints(State(state), Extension(claims), Json(req)).await;
 
     // 从结果中提取第一个
-    let data = result.0.data;
+    let data = result.data;
     match data {
         Some(mut results) if !results.is_empty() => {
-            Json(ApiResponse::success(results.remove(0), "可行性检查完成"))
+            ApiResponse::success(results.remove(0), "可行性检查完成")
         }
-        _ => Json(ApiResponse::server_error("可行性检查失败")),
+        _ => ApiResponse::server_error("可行性检查失败"),
     }
 }
 

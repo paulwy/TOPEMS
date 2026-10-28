@@ -172,7 +172,7 @@ pub struct TodayOutputQuery {
 pub async fn get_today_production_output(
     State(state): State<AppState>,
     Query(query): Query<TodayOutputQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // Mobile BFF 数据迁移已完成：改为查询 MES 自有表 work_reports。
     // Mobile 端通过 MesApi.create_work_report（由 TypedServiceClient<MesApi> 转发）
     // 直接写入 MES 表，无需跨 schema 查询 plugin_mobile。
@@ -185,9 +185,7 @@ pub async fn get_today_production_output(
     let operator = match query.operator {
         Some(op) => op,
         None => {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
-                "operator 参数是必需的",
-            ));
+            return ApiResponse::<serde_json::Value>::bad_request("operator 参数是必需的");
         }
     };
 
@@ -204,10 +202,10 @@ pub async fn get_today_production_output(
         .map(|v| v.round() as i64)
         .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "output": output_i64 }),
         "获取今日产量成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -231,7 +229,7 @@ pub async fn list_work_reports(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListWorkReportsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -294,7 +292,7 @@ pub async fn list_work_reports(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count work reports: {}", e);
-            return Json(ApiResponse::server_error("获取工报列表失败"));
+            return ApiResponse::server_error("获取工报列表失败");
         }
     };
 
@@ -330,7 +328,7 @@ pub async fn list_work_reports(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch work reports: {}", e);
-            return Json(ApiResponse::server_error("获取工报列表失败"));
+            return ApiResponse::server_error("获取工报列表失败");
         }
     };
 
@@ -415,7 +413,7 @@ pub async fn list_work_reports(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "reports": reports,
             "total": total.unwrap_or(0),
@@ -423,7 +421,7 @@ pub async fn list_work_reports(
             "page_size": page_size,
         }),
         "获取工报列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -443,7 +441,7 @@ pub async fn get_work_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<WorkReportResponse>> {
+) -> ApiResponse<WorkReportResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -452,7 +450,7 @@ pub async fn get_work_report(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工报ID"));
+            return ApiResponse::bad_request("无效的工报ID");
         }
     };
 
@@ -474,7 +472,7 @@ pub async fn get_work_report(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
                 report_no: r.report_no.unwrap_or_default(),
@@ -499,11 +497,11 @@ pub async fn get_work_report(
                 updated_at: naive_to_utc(r.updated_at),
             },
             "获取工报成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工报不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工报不存在"),
         Err(e) => {
             tracing::error!("Failed to get work report: {}", e);
-            Json(ApiResponse::server_error("获取工报失败"))
+            ApiResponse::server_error("获取工报失败")
         }
     }
 }
@@ -523,7 +521,7 @@ pub async fn create_work_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<CreateWorkReportRequest>,
-) -> Json<ApiResponse<WorkReportResponse>> {
+) -> ApiResponse<WorkReportResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -547,7 +545,7 @@ pub async fn create_work_report(
     let report_date = match parse_report_date(&body.report_date) {
         Ok(d) => d,
         Err(e) => {
-            return Json(ApiResponse::from(e));
+            return ApiResponse::from(e);
         }
     };
     let report_date = DateTime::<Utc>::from_naive_utc_and_offset(
@@ -572,7 +570,7 @@ pub async fn create_work_report(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin tx for create_work_report: {}", e);
-            return Json(ApiResponse::server_error("创建工报失败"));
+            return ApiResponse::server_error("创建工报失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -584,7 +582,7 @@ pub async fn create_work_report(
             "Failed to set nil RLS context for create_work_report: {}",
             e
         );
-        return Json(ApiResponse::server_error("创建工报失败"));
+        return ApiResponse::server_error("创建工报失败");
     }
 
     let result = sqlx::query!(
@@ -628,7 +626,7 @@ pub async fn create_work_report(
         Ok(r) => {
             if let Err(e) = tx.commit().await {
                 tracing::error!("Failed to commit tx for create_work_report: {}", e);
-                return Json(ApiResponse::server_error("创建工报失败"));
+                return ApiResponse::server_error("创建工报失败");
             }
 
             // D2 U2 环2（决策 A）：mes→erp 报工进度回传由同步 HTTP（erp_client.sync_mes_progress）
@@ -688,7 +686,7 @@ pub async fn create_work_report(
                     }
                 });
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 WorkReportResponse {
                     id: r.id.to_string(),
                     report_no: r.report_no.unwrap_or_default(),
@@ -713,11 +711,11 @@ pub async fn create_work_report(
                     updated_at: naive_to_utc(r.updated_at),
                 },
                 "创建工报成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to create work report: {}", e);
-            Json(ApiResponse::server_error("创建工报失败"))
+            ApiResponse::server_error("创建工报失败")
         }
     }
 }
@@ -741,7 +739,7 @@ pub async fn update_work_report(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<UpdateWorkReportRequest>,
-) -> Json<ApiResponse<WorkReportResponse>> {
+) -> ApiResponse<WorkReportResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -751,7 +749,7 @@ pub async fn update_work_report(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工报ID"));
+            return ApiResponse::bad_request("无效的工报ID");
         }
     };
 
@@ -774,7 +772,7 @@ pub async fn update_work_report(
                 chrono::NaiveDateTime::new(d, chrono::NaiveTime::MIN),
                 Utc,
             )),
-            Err(e) => return Json(ApiResponse::from(e)),
+            Err(e) => return ApiResponse::from(e),
         },
         None => None,
     };
@@ -837,7 +835,7 @@ pub async fn update_work_report(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
                 report_no: r.report_no.unwrap_or_default(),
@@ -862,11 +860,11 @@ pub async fn update_work_report(
                 updated_at: naive_to_utc(r.updated_at),
             },
             "更新工报成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工报不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工报不存在"),
         Err(e) => {
             tracing::error!("Failed to update work report: {}", e);
-            Json(ApiResponse::server_error("更新工报失败"))
+            ApiResponse::server_error("更新工报失败")
         }
     }
 }
@@ -888,7 +886,7 @@ pub async fn delete_work_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -898,7 +896,7 @@ pub async fn delete_work_report(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工报ID"));
+            return ApiResponse::bad_request("无效的工报ID");
         }
     };
 
@@ -912,10 +910,10 @@ pub async fn delete_work_report(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(id, "删除工报成功")),
+        Ok(_) => ApiResponse::success(id, "删除工报成功"),
         Err(e) => {
             tracing::error!("Failed to delete work report: {}", e);
-            Json(ApiResponse::server_error("删除工报失败"))
+            ApiResponse::server_error("删除工报失败")
         }
     }
 }
@@ -937,7 +935,7 @@ pub async fn approve_work_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<WorkReportResponse>> {
+) -> ApiResponse<WorkReportResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -947,7 +945,7 @@ pub async fn approve_work_report(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工报ID"));
+            return ApiResponse::bad_request("无效的工报ID");
         }
     };
 
@@ -977,7 +975,7 @@ pub async fn approve_work_report(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
                 report_no: r.report_no.unwrap_or_default(),
@@ -1002,11 +1000,11 @@ pub async fn approve_work_report(
                 updated_at: naive_to_utc(r.updated_at),
             },
             "审批通过成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工报不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工报不存在"),
         Err(e) => {
             tracing::error!("Failed to approve work report: {}", e);
-            Json(ApiResponse::server_error("审批通过失败"))
+            ApiResponse::server_error("审批通过失败")
         }
     }
 }
@@ -1030,7 +1028,7 @@ pub async fn reject_work_report(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<RejectWorkReportRequest>,
-) -> Json<ApiResponse<WorkReportResponse>> {
+) -> ApiResponse<WorkReportResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -1040,7 +1038,7 @@ pub async fn reject_work_report(
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(ApiResponse::bad_request("无效的工报ID"));
+            return ApiResponse::bad_request("无效的工报ID");
         }
     };
 
@@ -1072,7 +1070,7 @@ pub async fn reject_work_report(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
                 report_no: r.report_no.unwrap_or_default(),
@@ -1097,11 +1095,11 @@ pub async fn reject_work_report(
                 updated_at: naive_to_utc(r.updated_at),
             },
             "审批驳回成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("工报不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工报不存在"),
         Err(e) => {
             tracing::error!("Failed to reject work report: {}", e);
-            Json(ApiResponse::server_error("审批驳回失败"))
+            ApiResponse::server_error("审批驳回失败")
         }
     }
 }
@@ -1143,7 +1141,7 @@ pub async fn start_rework_approval(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ReworkApprovalStartRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MesReworkApprove).await
     {
@@ -1152,7 +1150,7 @@ pub async fn start_rework_approval(
     // 校验当前 status=rejected，创建 approval 记录并写入 audit log
     let approver_id = match claims.user_id() {
         Ok(uid) => uid,
-        Err(_) => return Json(ApiResponse::unauthorized("无效的用户身份")),
+        Err(_) => return ApiResponse::unauthorized("无效的用户身份"),
     };
     let record_id = Uuid::parse_str(&id).unwrap_or_default();
     let approval_id = match create_approval_and_log(
@@ -1168,13 +1166,10 @@ pub async fn start_rework_approval(
         Ok(aid) => aid,
         Err(e) => {
             tracing::error!("发起返工审批失败: {}", e);
-            return Json(ApiResponse::server_error("发起审批失败"));
+            return ApiResponse::server_error("发起审批失败");
         }
     };
-    Json(ApiResponse::success(
-        build_start_response(approval_id),
-        "返工审批已发起",
-    ))
+    ApiResponse::success(build_start_response(approval_id), "返工审批已发起")
 }
 
 /// 返工审批通过
@@ -1197,7 +1192,7 @@ pub async fn approve_rework(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ReworkApprovalDecisionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MesReworkApprove).await
     {
@@ -1217,12 +1212,9 @@ pub async fn approve_rework(
     .await
     {
         tracing::error!("返工审批通过失败: {}", e);
-        return Json(ApiResponse::server_error("审批通过失败"));
+        return ApiResponse::server_error("审批通过失败");
     }
-    Json(ApiResponse::success(
-        build_approve_response(req.approval_id),
-        "返工审批通过成功",
-    ))
+    ApiResponse::success(build_approve_response(req.approval_id), "返工审批通过成功")
 }
 
 /// 返工审批驳回
@@ -1245,7 +1237,7 @@ pub async fn reject_rework(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ReworkApprovalDecisionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::MesReworkApprove).await
     {
@@ -1263,12 +1255,9 @@ pub async fn reject_rework(
     .await
     {
         tracing::error!("返工审批驳回失败: {}", e);
-        return Json(ApiResponse::server_error("审批驳回失败"));
+        return ApiResponse::server_error("审批驳回失败");
     }
-    Json(ApiResponse::success(
-        build_reject_response(req.approval_id),
-        "返工审批驳回成功",
-    ))
+    ApiResponse::success(build_reject_response(req.approval_id), "返工审批驳回成功")
 }
 
 #[cfg(test)]

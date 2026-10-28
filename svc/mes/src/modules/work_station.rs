@@ -196,7 +196,7 @@ pub async fn list_work_stations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListWorkStationsQuery>,
-) -> Json<ApiResponse<ListWorkStationsResponse>> {
+) -> ApiResponse<ListWorkStationsResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -258,7 +258,7 @@ pub async fn list_work_stations(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count work stations: {}", e);
-            return Json(ApiResponse::server_error("获取工位列表失败"));
+            return ApiResponse::server_error("获取工位列表失败");
         }
     };
 
@@ -295,7 +295,7 @@ pub async fn list_work_stations(
         Ok(w) => w,
         Err(e) => {
             tracing::error!("Failed to fetch work stations: {}", e);
-            return Json(ApiResponse::server_error("获取工位列表失败"));
+            return ApiResponse::server_error("获取工位列表失败");
         }
     };
 
@@ -304,7 +304,7 @@ pub async fn list_work_stations(
         .map(row_to_workstation_response)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ListWorkStationsResponse {
             workstations: workstation_list,
             total: total.unwrap_or(0),
@@ -312,14 +312,14 @@ pub async fn list_work_stations(
             page_size: page_size as i32,
         },
         "获取工位列表成功",
-    ))
+    )
 }
 
 pub async fn create_work_station(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateWorkStationRequest>,
-) -> Json<ApiResponse<WorkStationResponse>> {
+) -> ApiResponse<WorkStationResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -379,14 +379,11 @@ pub async fn create_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create work station: {}", e);
-            return Json(ApiResponse::server_error("创建工位失败"));
+            return ApiResponse::server_error("创建工位失败");
         }
     };
 
-    Json(ApiResponse::success(
-        row_to_workstation_response(&row),
-        "工位创建成功",
-    ))
+    ApiResponse::success(row_to_workstation_response(&row), "工位创建成功")
 }
 
 #[utoipa::path(
@@ -406,7 +403,7 @@ pub async fn get_work_station(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkStationResponse>> {
+) -> ApiResponse<WorkStationResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
@@ -435,16 +432,13 @@ pub async fn get_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch work station: {}", e);
-            return Json(ApiResponse::server_error("获取工位失败"));
+            return ApiResponse::server_error("获取工位失败");
         }
     };
 
     match result {
-        Some(row) => Json(ApiResponse::success(
-            row_to_workstation_response(&row),
-            "获取工位成功",
-        )),
-        None => Json(ApiResponse::not_found("工位不存在")),
+        Some(row) => ApiResponse::success(row_to_workstation_response(&row), "获取工位成功"),
+        None => ApiResponse::not_found("工位不存在"),
     }
 }
 
@@ -453,7 +447,7 @@ pub async fn update_work_station(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWorkStationRequest>,
-) -> Json<ApiResponse<WorkStationResponse>> {
+) -> ApiResponse<WorkStationResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -509,16 +503,13 @@ pub async fn update_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update work station: {}", e);
-            return Json(ApiResponse::server_error("更新工位失败"));
+            return ApiResponse::server_error("更新工位失败");
         }
     };
 
     match result {
-        Some(row) => Json(ApiResponse::success(
-            row_to_workstation_response(&row),
-            "工位更新成功",
-        )),
-        None => Json(ApiResponse::not_found("工位不存在")),
+        Some(row) => ApiResponse::success(row_to_workstation_response(&row), "工位更新成功"),
+        None => ApiResponse::not_found("工位不存在"),
     }
 }
 
@@ -526,7 +517,7 @@ pub async fn delete_work_station(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -547,14 +538,14 @@ pub async fn delete_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete work station: {}", e);
-            return Json(ApiResponse::server_error("删除工位失败"));
+            return ApiResponse::server_error("删除工位失败");
         }
     };
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "工位删除成功"))
+        ApiResponse::success("".to_string(), "工位删除成功")
     } else {
-        Json(ApiResponse::not_found("工位不存在"))
+        ApiResponse::not_found("工位不存在")
     }
 }
 
@@ -575,7 +566,7 @@ pub async fn activate_work_station(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkStationResponse>> {
+) -> ApiResponse<WorkStationResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -603,16 +594,13 @@ pub async fn activate_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to activate work station: {}", e);
-            return Json(ApiResponse::server_error("激活工位失败"));
+            return ApiResponse::server_error("激活工位失败");
         }
     };
 
     match result {
-        Some(row) => Json(ApiResponse::success(
-            row_to_workstation_response(&row),
-            "工位激活成功",
-        )),
-        None => Json(ApiResponse::not_found("工位不存在")),
+        Some(row) => ApiResponse::success(row_to_workstation_response(&row), "工位激活成功"),
+        None => ApiResponse::not_found("工位不存在"),
     }
 }
 
@@ -633,7 +621,7 @@ pub async fn deactivate_work_station(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkStationResponse>> {
+) -> ApiResponse<WorkStationResponse> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
     {
@@ -661,16 +649,13 @@ pub async fn deactivate_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to deactivate work station: {}", e);
-            return Json(ApiResponse::server_error("停用工位失败"));
+            return ApiResponse::server_error("停用工位失败");
         }
     };
 
     match result {
-        Some(row) => Json(ApiResponse::success(
-            row_to_workstation_response(&row),
-            "工位停用成功",
-        )),
-        None => Json(ApiResponse::not_found("工位不存在或状态不允许停用")),
+        Some(row) => ApiResponse::success(row_to_workstation_response(&row), "工位停用成功"),
+        None => ApiResponse::not_found("工位不存在或状态不允许停用"),
     }
 }
 
