@@ -1,0 +1,23 @@
+-- ============================================================
+-- 存量库迁移台账残留治理（2026-10-28 第五十一轮）
+-- 目标：DROP iam._sqlx_migrations 数字版台账残留，收敛为 public 单一台账。
+--
+-- 背景：
+--   iam._sqlx_migrations 曾并存 47 条记录（14 条数字版 0-13 + 33 条日期版 2026...），
+--   全部与 public._sqlx_migrations 对应版本重复（0 缺失），是纯冗余残留。
+--   双台账并存 + search_path=iam,mes,public,analytics（iam 优先）导致 sqlx CLI
+--   永远读 iam 台账 → 把 500 个日期版迁移文件全视为 pending →
+--   `sqlx migrate run` 误重放历史迁移（2026-10-28 实测误删
+--   mes.production_processes.organization_id，v69 Part C 动态 DROP）。
+--
+-- 前提（执行前核对）：
+--   public._sqlx_migrations 完整覆盖全部迁移文件（500 文件 = 500 台账，SHA-384 一致）。
+--
+-- 注意：
+--   sqlx-cli 无指定迁移表能力，固定 `_sqlx_migrations` 按 search_path 解析（iam 优先）；
+--   本 DROP 后若再跑 `sqlx migrate info/run`，sqlx 会在 iam 重建空表（无害，无数据），
+--   但视角仍错乱。存量库迁移一律走 psql 直执行 + validate.sh（scripts/migration/validate.sh），
+--   禁止 `sqlx migrate run`；空库重建走 ensure-empty-db-prereqs.sh（其 iam 台账自洽）。
+-- ============================================================
+
+DROP TABLE IF EXISTS iam._sqlx_migrations;

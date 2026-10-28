@@ -5340,6 +5340,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ## 第四十八轮（2026-10-27）：P3 mes processes 契约字段双兼容 ✅
 ## 第四十九轮（2026-10-28）：P3 复验实机闭环 + create_process INSERT 类型修复 ✅
 ## 第五十轮（2026-10-28）：process_name 租户维度唯一索引 + 409 语义 ✅
+## 第五十一轮（2026-10-28）：iam 台账残留治理 → public 单一台账 ✅
+- **治理**：`DROP TABLE iam._sqlx_migrations`（47 条残留 = 14 数字版 0-13 + 33 日期版，全部与 public 对应版本重复、0 缺失——纯冗余）。核对前置：public 台账 500 = 迁移文件 500（数字文件 000-013 全覆盖 + 日期版 SHA-384 一致）；DROP 后 pg_tables 仅剩 public._sqlx_migrations 单一台账。
+- **根因链**：search_path=iam,mes,public,analytics（iam 优先）→ sqlx CLI 固定读 `_sqlx_migrations`（无指定迁移表能力）→ iam 台账缺日期版 → 500 文件全 pending → `sqlx migrate run` 误重放历史（第五十轮误删 organization_id 即此链条）。
+- **留痕**：一次性脚本 `scripts/migration/legacy-ledger-cleanup.sql`（含前置核对 + DROP + sqlx CLI 行为说明），其他环境存量库可复现。
+- **边界说明**：sqlx info/run 后会在 iam 重建空表（无害无数据）——存量库迁移一律 psql 直执行 + validate.sh，禁止 sqlx migrate run；空库重建（ensure-empty-db-prereqs.sh）走 iam 台账自洽不受影响。
+
 - **DB 迁移**：`20261028050000_mes_production_processes_name_unique.sql` 建部分唯一索引 `ux_mes_production_processes_tenant_name ON mes.production_processes (tenant_id, process_name) WHERE deleted_at IS NULL`（租户维度唯一；软删/物理删行不阻塞同名重建；同仓惯例：hrm.employees/finance.periods 同类）。存量库 psql 直执行 + public 台账补录（SHA-384，500=500）；validate.sh Errors 0（checksums.txt 已重生成）。
 - **409 语义**：create_process/update_process 捕获 DB 唯一冲突（`is_unique_violation`）→ **HTTP 409 + envelope code 409**「生产工序名称已存在（同租户内唯一）」；两 handler 错误应答改为显式 `(StatusCode, Json)`（消除 envelope 500 + HTTP 200 错位，S25 同类局部收口）；返回类型 `Json<...>` → `Response`（check_permission T 显式标注 + IntoResponse）。
 - **实机验证**：同名创建 → HTTP 409 + code 409；update 改名撞名 → HTTP 409；不同名创建 → 200；deactivate（状态停用）后同名重建 → 409（**语义说明**：deactivate 是 status='inactive' 停用而非 deleted_at 软删，停用名仍占用唯一；真删/软删（deleted_at）后重建不受阻）；探针行已清理；svc/mes lib 370 全绿、clippy deny 过。
