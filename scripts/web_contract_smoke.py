@@ -479,6 +479,10 @@ def main():
             msg = body.get("message") if body else None
             if not (body_code == 404 and msg and msg != "接口不存在，请检查路径"):
                 reason = "route_missing"        # BFF 统一 catch-all：路由缺失
+        elif status == 501 or body_code == 501:
+            # S25 语义：501 Not Implemented 是明确的“模块未实现”业务降级语义
+            # （如 mes/energy 的告警/报表端点），非错误响应，计 PASS。
+            reason = None
         elif status >= 500 or body_code == 500:
             reason = "handler_error"
         verdict = "FAIL" if reason else "PASS"
@@ -504,6 +508,8 @@ def main():
                         reason2 = "route_missing"
                 except Exception:
                     reason2 = "route_missing"
+            elif status2 == 501 or body_code2 == 501:
+                pass    # 501 降级语义（Not Implemented），正常
             elif status2 >= 500 or body_code2 == 500:
                 reason2 = "handler_error"
             if not reason2:

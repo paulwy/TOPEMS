@@ -3,31 +3,18 @@
 > 机制：`scripts/web_contract_smoke.py::load_expected_fails` 读取本清单，
 > 命中 (method, path) 的 FAIL 记为 KNOWN（不阻断门禁），其余 FAIL 阻断。
 >
-> **本清单当前条目 = S25 批量语义治理的剩余范围（第 53 轮登记，待第 54 轮
-> unified-core 等模块 envelope→HTTP 对齐后清零删除）。**
-> 条目为“后端语义债务”（http=200 body=500 / 404 错位），非前端缺口。
+> **本清单当前条目 = S25 批量语义治理的剩余范围（第 54 轮登记）。**
+> 第 54 轮已清零：audit / hrm 错列修复、communication core_emails schema 前缀、
+> mes/energy 501 降级判定、erp/hr 业务 404 语义。
+> 剩余 42 条均为“实现级缺口”（非 envelope 语义）：
+> - `workflow` 39 条：flow 模块代码仍查询 stub 表（core_workflow_tasks/instances/workflows），
+>   完整表（approvals/workflow_instances/workflows）结构不同（无 title/name_en/status/version 等列），
+>   需迁移补列或代码列映射对齐（第 55 轮实施）。
+> - `mobile` 3 条：mobile→MES 服务调用（TypedServiceClient<MesApi>）在 BFF 内嵌认证链路上失败，
+>   需排查 service token 在 /api/mes 路由的校验（第 55 轮实施）。
 
-## KNOWN（S25 续项：第 53 轮登记，下轮治理后清零）
+## KNOWN（第 54 轮登记：workflow 39 + mobile 3，实现级遗留）
 
-- GET /api/core/audit/permission-changes/00000000-0000-0000-0000-000000000099
-- GET /api/erp/hr/departments/00000000-0000-0000-0000-000000000099
-- GET /api/erp/hr/positions/00000000-0000-0000-0000-000000000099
-- GET /api/hrm/attendance/00000000-0000-0000-0000-000000000099
-- PUT /api/hrm/attendance/00000000-0000-0000-0000-000000000099
-- GET /api/hrm/departments/00000000-0000-0000-0000-000000000099
-- PUT /api/hrm/departments/00000000-0000-0000-0000-000000000099
-- GET /api/hrm/positions
-- GET /api/hrm/positions/00000000-0000-0000-0000-000000000099
-- PUT /api/hrm/positions/00000000-0000-0000-0000-000000000099
-- GET /api/hrm/setup/progress
-- GET /api/communication/mail/emails/00000000-0000-0000-0000-000000000099
-- GET /api/mes/energy/realtime
-- GET /api/mes/energy/history
-- GET /api/mes/energy/report
-- GET /api/mes/energy/forecast
-- GET /api/mes/energy/alerts
-- GET /api/mes/energy/equipment/00000000-0000-0000-0000-000000000099
-- GET /api/mes/energy/export
 - GET /api/mobile/production/orders/00000000-0000-0000-0000-000000000099
 - POST /api/mobile/production/orders/00000000-0000-0000-0000-000000000099/start
 - POST /api/mobile/production/orders/00000000-0000-0000-0000-000000000099/complete
