@@ -16,7 +16,6 @@ export type {
   RowAction,
   BatchAction,
   ListPageTemplateProps,
-  ExpandedRowRenderProps,
   ColumnConfig,
 } from '../ListPageTemplate';
 

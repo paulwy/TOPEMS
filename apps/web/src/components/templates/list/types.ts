@@ -159,17 +159,6 @@ export interface RowAction<T = Record<string, unknown>> {
 }
 
 /**
- * 展开行渲染属性
- * @template T - 数据行类型
- */
-export interface ExpandedRowRenderProps<T = Record<string, unknown>> {
-  /** 当前行数据 */
-  row: T;
-  /** 行索引 */
-  index: number;
-}
-
-/**
  * 列配置接口（用于列显示/隐藏配置）
  */
 export interface ColumnConfig {

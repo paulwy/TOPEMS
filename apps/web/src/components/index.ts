@@ -175,7 +175,6 @@ export type {
   RowAction,
   BatchAction,
   ListPageTemplateProps,
-  ExpandedRowRenderProps,
   ColumnConfig,
 } from './templates/ListPageTemplate';
 

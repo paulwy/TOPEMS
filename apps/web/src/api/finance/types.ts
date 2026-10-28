@@ -78,25 +78,6 @@ export interface FinancialVoucher {
   updated_at: string;
 }
 
-export interface VoucherItem {
-  id: string;
-  voucher_id: string;
-  line_number: number;
-  subject_code: string;
-  subject_name: string;
-  summary?: string;
-  debit_amount: number;
-  credit_amount: number;
-  quantity?: number;
-  unit?: string;
-  price?: number;
-  department_id?: string;
-  project_id?: string;
-  contract_id?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface VoucherItemRequest {
   line_number: number;
   subject_code: string;

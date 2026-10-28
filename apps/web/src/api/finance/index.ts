@@ -43,13 +43,7 @@ export { auxAccountApi } from './auxAccount';
 // types.ts 的 Budget 为展示模型（id/status 必填），页面数据流以 API 模型为准。
 // ============================================================================
 export type { Budget, BudgetItem } from './budget';
-export type {
-  AccountingSubject,
-  FinancialVoucher,
-  VoucherItem,
-  VoucherItemRequest,
-  AuxAccount,
-} from './types';
+export type { AccountingSubject, FinancialVoucher, VoucherItemRequest, AuxAccount } from './types';
 
 export type {
   VoucherEntry,

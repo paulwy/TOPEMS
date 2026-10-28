@@ -3860,7 +3860,6 @@ export type {
   ColumnDef,
   FilterOption,
   RowAction,
-  ExpandedRowRenderProps,
   ColumnConfig,
   BatchAction,
   ListPageTemplateProps,
