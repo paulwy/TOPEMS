@@ -5,7 +5,8 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
-    http::HeaderMap,
+    http::{HeaderMap, StatusCode},
+    response::{IntoResponse, Response},
     routing::{get, put},
     Json, Router,
 };
@@ -288,9 +289,15 @@ pub async fn create_process(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateProcessRequest>,
-) -> Json<ApiResponse<ProductionProcessResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessWrite).await {
-        return e;
+) -> Response {
+    if let Err(e) = check_permission::<ProductionProcessResponse>(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProcessWrite,
+    )
+    .await
+    {
+        return e.into_response();
     }
 
     let tenant_id = get_tenant_id(&claims, &headers);
@@ -335,7 +342,24 @@ pub async fn create_process(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create process: {}", e);
-            return Json(ApiResponse::server_error("创建生产工序失败"));
+            if let Some(db_err) = e.as_database_error() {
+                if db_err.is_unique_violation() {
+                    return (
+                        StatusCode::CONFLICT,
+                        Json(ApiResponse::<ProductionProcessResponse>::conflict(
+                            "生产工序名称已存在（同租户内唯一）",
+                        )),
+                    )
+                        .into_response();
+                }
+            }
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<ProductionProcessResponse>::server_error(
+                    "创建生产工序失败",
+                )),
+            )
+                .into_response();
         }
     };
 
@@ -343,6 +367,7 @@ pub async fn create_process(
         ProductionProcessResponse::from(result),
         "生产工序创建成功",
     ))
+    .into_response()
 }
 
 #[utoipa::path(
@@ -410,9 +435,15 @@ pub async fn update_process(
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProcessRequest>,
-) -> Json<ApiResponse<ProductionProcessResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessWrite).await {
-        return e;
+) -> Response {
+    if let Err(e) = check_permission::<ProductionProcessResponse>(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProcessWrite,
+    )
+    .await
+    {
+        return e.into_response();
     }
 
     let tenant_id = get_tenant_id(&claims, &headers);
@@ -454,7 +485,24 @@ pub async fn update_process(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update process: {}", e);
-            return Json(ApiResponse::server_error("更新生产工序失败"));
+            if let Some(db_err) = e.as_database_error() {
+                if db_err.is_unique_violation() {
+                    return (
+                        StatusCode::CONFLICT,
+                        Json(ApiResponse::<ProductionProcessResponse>::conflict(
+                            "生产工序名称已存在（同租户内唯一）",
+                        )),
+                    )
+                        .into_response();
+                }
+            }
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<ProductionProcessResponse>::server_error(
+                    "更新生产工序失败",
+                )),
+            )
+                .into_response();
         }
     };
 
@@ -462,8 +510,12 @@ pub async fn update_process(
         Some(r) => Json(ApiResponse::success(
             ProductionProcessResponse::from(r),
             "生产工序更新成功",
-        )),
-        None => Json(ApiResponse::not_found("生产工序不存在或状态不允许修改")),
+        ))
+        .into_response(),
+        None => Json(ApiResponse::<ProductionProcessResponse>::not_found(
+            "生产工序不存在或状态不允许修改",
+        ))
+        .into_response(),
     }
 }
 
