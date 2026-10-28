@@ -60,7 +60,7 @@ pub async fn list_instances(
     let offset = (page - 1) * page_size;
 
     // 用户维度可见性过滤：服务身份（sub 全 0 / role=service）豁免，返回全量；
-    // 普通用户仅可见「自己发起的」或「作为任务处理人参与（core_workflow_tasks.assignee_id）」的实例。
+    // 普通用户仅可见「自己发起的」或「作为任务处理人参与（public.core_workflow_tasks.assignee_id）」的实例。
     let user_uuid: Option<Uuid> = if is_service_claims(&claims) {
         None
     } else {
@@ -77,18 +77,18 @@ pub async fn list_instances(
 
     let total: i64 = if !has_filters {
         sqlx::query_scalar(
-            r#"SELECT COUNT(*) FROM core_workflow_instances
+            r#"SELECT COUNT(*) FROM public.core_workflow_instances
                WHERE ($1::uuid IS NULL OR initiator_id = $1 OR EXISTS (
-                   SELECT 1 FROM core_workflow_tasks t
-                   WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
+                   SELECT 1 FROM public.core_workflow_tasks t
+                   WHERE t.instance_id = public.core_workflow_instances.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
                ) OR EXISTS (
                    SELECT 1 FROM approvals a
-                   WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                   WHERE a.workflow_instance_id = public.core_workflow_instances.id AND a.deleted_at IS NULL
                      AND (a.assignee_id = $1 OR a.approved_by = $1)
                ) OR EXISTS (
                    SELECT 1 FROM approval_records ar
                    JOIN approvals a ON a.id = ar.approval_id
-                   WHERE a.workflow_instance_id = core_workflow_instances.id
+                   WHERE a.workflow_instance_id = public.core_workflow_instances.id
                      AND ar.actor_id = $1 AND ar.deleted_at IS NULL
                ))
                AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
@@ -100,21 +100,21 @@ pub async fn list_instances(
         .unwrap_or(0)
     } else {
         match sqlx::query_scalar(
-            r#"SELECT COUNT(*) FROM core_workflow_instances
+            r#"SELECT COUNT(*) FROM public.core_workflow_instances
                WHERE (title ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')
                  AND (workflow_id = $3 OR $3 IS NULL)
                  AND ($4::uuid IS NULL OR initiator_id = $4 OR EXISTS (
-                     SELECT 1 FROM core_workflow_tasks t
-                     WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $4 AND t.deleted_at IS NULL
+                     SELECT 1 FROM public.core_workflow_tasks t
+                     WHERE t.instance_id = public.core_workflow_instances.id AND t.assignee_id = $4 AND t.deleted_at IS NULL
                  ) OR EXISTS (
                      SELECT 1 FROM approvals a
-                     WHERE a.workflow_instance_id = core_workflow_instances.id AND a.deleted_at IS NULL
+                     WHERE a.workflow_instance_id = public.core_workflow_instances.id AND a.deleted_at IS NULL
                        AND (a.assignee_id = $4 OR a.approved_by = $4)
                  ) OR EXISTS (
                      SELECT 1 FROM approval_records ar
                      JOIN approvals a ON a.id = ar.approval_id
-                     WHERE a.workflow_instance_id = core_workflow_instances.id
+                     WHERE a.workflow_instance_id = public.core_workflow_instances.id
                        AND ar.actor_id = $4 AND ar.deleted_at IS NULL
                  ))
                  AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)"#,
@@ -140,11 +140,11 @@ pub async fn list_instances(
             r#"SELECT i.id, i.tenant_id, i.workflow_id, i.title, i.initiator_id, i.current_node_id, i.status, i.variables, i.started_at, i.completed_at, i.created_at, i.updated_at,
                       w.name AS workflow_name,
                       COALESCE(u.full_name, u.username) AS start_user_name
-               FROM core_workflow_instances i
+               FROM public.core_workflow_instances i
                LEFT JOIN public.core_workflows w ON w.id = i.workflow_id
                LEFT JOIN iam.users u ON u.id = i.initiator_id
                WHERE ($1::uuid IS NULL OR i.initiator_id = $1 OR EXISTS (
-                   SELECT 1 FROM core_workflow_tasks t
+                   SELECT 1 FROM public.core_workflow_tasks t
                    WHERE t.instance_id = i.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
                ) OR EXISTS (
                    SELECT 1 FROM approvals a
@@ -182,14 +182,14 @@ pub async fn list_instances(
             r#"SELECT i.id, i.tenant_id, i.workflow_id, i.title, i.initiator_id, i.current_node_id, i.status, i.variables, i.started_at, i.completed_at, i.created_at, i.updated_at,
                       w.name AS workflow_name,
                       COALESCE(u.full_name, u.username) AS start_user_name
-               FROM core_workflow_instances i
+               FROM public.core_workflow_instances i
                LEFT JOIN public.core_workflows w ON w.id = i.workflow_id
                LEFT JOIN iam.users u ON u.id = i.initiator_id
                WHERE (i.title ILIKE $1 OR $1 = '')
                  AND (i.status = $2 OR $2 = '')
                  AND (i.workflow_id = $3 OR $3 IS NULL)
                  AND ($4::uuid IS NULL OR i.initiator_id = $4 OR EXISTS (
-                     SELECT 1 FROM core_workflow_tasks t
+                     SELECT 1 FROM public.core_workflow_tasks t
                      WHERE t.instance_id = i.id AND t.assignee_id = $4 AND t.deleted_at IS NULL
                  ) OR EXISTS (
                      SELECT 1 FROM approvals a
@@ -247,7 +247,7 @@ pub async fn get_instance(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WorkflowInstance> {
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "SELECT id, tenant_id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at FROM core_workflow_instances WHERE id = $1",
+        "SELECT id, tenant_id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -293,7 +293,7 @@ pub async fn create_instance(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "INSERT INTO core_workflow_instances (workflow_id, title, initiator_id, variables, status, started_at, tenant_id) 
+        "INSERT INTO public.core_workflow_instances (workflow_id, title, initiator_id, variables, status, started_at, tenant_id) 
          VALUES ($1, $2, $3, $4, $5, NOW(), $6) 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
@@ -344,7 +344,7 @@ pub async fn start_instance(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE core_workflow_instances SET status = 'running', started_at = NOW(), updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = 'running', started_at = NOW(), updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
@@ -394,7 +394,7 @@ pub async fn approve_instance(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE core_workflow_instances SET status = 'approved', completed_at = NOW(), updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = 'approved', completed_at = NOW(), updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
@@ -444,7 +444,7 @@ pub async fn reject_instance(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE core_workflow_instances SET status = 'rejected', completed_at = NOW(), updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = 'rejected', completed_at = NOW(), updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
@@ -494,7 +494,7 @@ pub async fn cancel_instance(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE core_workflow_instances SET status = 'cancelled', completed_at = NOW(), updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = 'cancelled', completed_at = NOW(), updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
@@ -544,7 +544,7 @@ pub async fn resume_instance(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE core_workflow_instances SET status = 'running', completed_at = NULL, updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = 'running', completed_at = NULL, updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
@@ -594,7 +594,7 @@ pub async fn suspend_instance(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE core_workflow_instances SET status = 'suspended', updated_at = NOW() 
+        "UPDATE public.core_workflow_instances SET status = 'suspended', updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
          RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
@@ -686,9 +686,9 @@ pub async fn overdue_instances(
     let offset = (page - 1) * page_size;
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_workflow_instances i
+        r#"SELECT COUNT(*) FROM public.core_workflow_instances i
            WHERE EXISTS (
-               SELECT 1 FROM core_workflow_tasks t
+               SELECT 1 FROM public.core_workflow_tasks t
                WHERE t.instance_id = i.id
                  AND t.due_time IS NOT NULL
                  AND t.due_time < NOW()
@@ -709,9 +709,9 @@ pub async fn overdue_instances(
 
     let items: Vec<WorkflowInstance> = match sqlx::query_as::<_, WorkflowInstance>(
         r#"SELECT i.id, i.tenant_id, i.workflow_id, i.title, i.initiator_id, i.current_node_id, i.status, i.variables, i.started_at, i.completed_at, i.created_at, i.updated_at
-           FROM core_workflow_instances i
+           FROM public.core_workflow_instances i
            WHERE EXISTS (
-               SELECT 1 FROM core_workflow_tasks t
+               SELECT 1 FROM public.core_workflow_tasks t
                WHERE t.instance_id = i.id
                  AND t.due_time IS NOT NULL
                  AND t.due_time < NOW()
@@ -774,7 +774,7 @@ pub async fn retry_instance(
     };
     let node_id = payload.and_then(|p| p.node_id);
     let instance = sqlx::query_as::<_, WorkflowInstance>(
-        "UPDATE core_workflow_instances
+        "UPDATE public.core_workflow_instances
          SET status = 'running',
              current_node_id = COALESCE($2, current_node_id),
              completed_at = NULL,

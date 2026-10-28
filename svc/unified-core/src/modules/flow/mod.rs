@@ -48,7 +48,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS public.core_workflow_instances (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            workflow_id UUID NOT NULL REFERENCES core_workflows(id),
+            workflow_id UUID NOT NULL REFERENCES public.core_workflows(id),
             title VARCHAR(256) NOT NULL,
             initiator_id UUID NOT NULL,
             current_node_id VARCHAR(64),
@@ -68,7 +68,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS public.core_workflow_versions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            workflow_id UUID NOT NULL REFERENCES core_workflows(id),
+            workflow_id UUID NOT NULL REFERENCES public.core_workflows(id),
             version VARCHAR(64) NOT NULL,
             definition JSONB NOT NULL,
             change_description TEXT,
@@ -86,7 +86,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS public.core_workflow_tasks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            instance_id UUID NOT NULL REFERENCES core_workflow_instances(id),
+            instance_id UUID NOT NULL REFERENCES public.core_workflow_instances(id),
             node_id VARCHAR(64) NOT NULL,
             assignee_id UUID NOT NULL,
             status VARCHAR(32) DEFAULT 'pending',
@@ -108,7 +108,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // 存量库幂等补列：CREATE TABLE IF NOT EXISTS 不会为已存在的表补列
     sqlx::query(
         r#"
-        ALTER TABLE core_workflow_tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()
+        ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()
         "#,
     )
     .execute(pool)
@@ -213,14 +213,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_workflows_status ON core_workflows(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_instances_workflow ON core_workflow_instances(workflow_id)")
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_workflows_status ON public.core_workflows(status)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_instances_workflow ON public.core_workflow_instances(workflow_id)")
         .execute(pool)
         .await?;
     sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_core_tasks_instance ON core_workflow_tasks(instance_id)",
+        "CREATE INDEX IF NOT EXISTS idx_core_tasks_instance ON public.core_workflow_tasks(instance_id)",
     )
     .execute(pool)
     .await?;

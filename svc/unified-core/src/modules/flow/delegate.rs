@@ -444,7 +444,7 @@ pub async fn get_delegate_workflows(
             if let Some(wf_id) = r.workflow_id {
                 let wf: Option<serde_json::Value> = match sqlx::query_scalar(
                     r#"SELECT json_build_object('id', id, 'name', name, 'status', status)
-                       FROM core_workflows WHERE id = $1 AND deleted_at IS NULL"#,
+                       FROM public.core_workflows WHERE id = $1 AND deleted_at IS NULL"#,
                 )
                 .bind(wf_id)
                 .fetch_optional(&state.pool)

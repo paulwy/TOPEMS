@@ -135,9 +135,9 @@ pub async fn list_approval_tasks(
     let assignee_id = query.assignee_id.clone().filter(|s| !s.is_empty());
 
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON t.instance_id = i.id
-           JOIN core_workflows w ON i.workflow_id = w.id
+        r#"SELECT COUNT(*) FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON t.instance_id = i.id
+           JOIN public.core_workflows w ON i.workflow_id = w.id
            WHERE ($1::text IS NULL OR t.status = $1)
              AND ($2::text IS NULL OR t.assignee_id = $2::UUID)"#,
     )
@@ -157,9 +157,9 @@ pub async fn list_approval_tasks(
         r#"SELECT t.id as task_id, t.instance_id as task_instance_id, t.node_id as task_node_id, t.assignee_id as task_assignee_id, t.status as task_status, t.comment as task_comment, t.created_at as task_created_at, t.completed_at as task_completed_at,
                   i.id as instance_id, i.workflow_id as instance_workflow_id, i.title as instance_title, i.initiator_id as instance_initiator_id, i.status as instance_status, i.started_at as instance_started_at, i.completed_at as instance_completed_at,
                   w.id as workflow_id, CASE WHEN $5='en' THEN COALESCE(w.name_en, w.name) ELSE w.name END AS workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON t.instance_id = i.id
-           JOIN core_workflows w ON i.workflow_id = w.id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON t.instance_id = i.id
+           JOIN public.core_workflows w ON i.workflow_id = w.id
            WHERE ($1::text IS NULL OR t.status = $1)
              AND ($2::text IS NULL OR t.assignee_id = $2::UUID)
            ORDER BY t.created_at DESC
@@ -246,9 +246,9 @@ pub async fn get_approval_task(
         r#"SELECT t.id as task_id, t.instance_id as task_instance_id, t.node_id as task_node_id, t.assignee_id as task_assignee_id, t.status as task_status, t.comment as task_comment, t.created_at as task_created_at, t.completed_at as task_completed_at,
                   i.id as instance_id, i.workflow_id as instance_workflow_id, i.title as instance_title, i.initiator_id as instance_initiator_id, i.status as instance_status, i.started_at as instance_started_at, i.completed_at as instance_completed_at,
                   w.id as workflow_id, CASE WHEN $2='en' THEN COALESCE(w.name_en, w.name) ELSE w.name END AS workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON t.instance_id = i.id
-           JOIN core_workflows w ON i.workflow_id = w.id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON t.instance_id = i.id
+           JOIN public.core_workflows w ON i.workflow_id = w.id
            WHERE t.id = $1"#,
     )
     .bind(task_id)
@@ -309,9 +309,9 @@ pub async fn list_pending_approvals(
         r#"SELECT t.id as task_id, t.instance_id as task_instance_id, t.node_id as task_node_id, t.assignee_id as task_assignee_id, t.status as task_status, t.comment as task_comment, t.created_at as task_created_at, t.completed_at as task_completed_at,
                   i.id as instance_id, i.workflow_id as instance_workflow_id, i.title as instance_title, i.initiator_id as instance_initiator_id, i.status as instance_status, i.started_at as instance_started_at, i.completed_at as instance_completed_at,
                   w.id as workflow_id, CASE WHEN $1='en' THEN COALESCE(w.name_en, w.name) ELSE w.name END AS workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON t.instance_id = i.id
-           JOIN core_workflows w ON i.workflow_id = w.id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON t.instance_id = i.id
+           JOIN public.core_workflows w ON i.workflow_id = w.id
            WHERE t.status = 'pending'
            ORDER BY t.created_at DESC
            LIMIT 20"#,
@@ -384,7 +384,7 @@ pub async fn approve_task(
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
-        r#"UPDATE core_workflow_tasks
+        r#"UPDATE public.core_workflow_tasks
            SET status = 'approved',
                comment = COALESCE($1, comment),
                completed_at = NOW(),
@@ -407,7 +407,7 @@ pub async fn approve_task(
     match result {
         Some(row) => {
             let instance = match sqlx::query_as::<_, WorkflowInstance>(
-                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM core_workflow_instances WHERE id = $1",
+                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
             .fetch_one(&state.pool)
@@ -418,7 +418,7 @@ pub async fn approve_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM public.core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
             .bind(locale)
@@ -489,7 +489,7 @@ pub async fn reject_task(
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
-        r#"UPDATE core_workflow_tasks
+        r#"UPDATE public.core_workflow_tasks
            SET status = 'rejected',
                comment = COALESCE($1, comment),
                completed_at = NOW(),
@@ -512,7 +512,7 @@ pub async fn reject_task(
     match result {
         Some(row) => {
             let instance = match sqlx::query_as::<_, WorkflowInstance>(
-                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM core_workflow_instances WHERE id = $1",
+                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
             .fetch_one(&state.pool)
@@ -523,7 +523,7 @@ pub async fn reject_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM public.core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
             .bind(locale)
@@ -592,7 +592,7 @@ pub async fn claim_task(
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
-        r#"UPDATE core_workflow_tasks
+        r#"UPDATE public.core_workflow_tasks
            SET status = 'claimed',
                updated_at = NOW()
            WHERE id = $1 AND status = 'pending'
@@ -612,7 +612,7 @@ pub async fn claim_task(
     match result {
         Some(row) => {
             let instance = match sqlx::query_as::<_, WorkflowInstance>(
-                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM core_workflow_instances WHERE id = $1",
+                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
             .fetch_one(&state.pool)
@@ -623,7 +623,7 @@ pub async fn claim_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM public.core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
             .bind(locale)
@@ -692,7 +692,7 @@ pub async fn unclaim_task(
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
-        r#"UPDATE core_workflow_tasks
+        r#"UPDATE public.core_workflow_tasks
            SET status = 'pending',
                updated_at = NOW()
            WHERE id = $1 AND status = 'claimed'
@@ -712,7 +712,7 @@ pub async fn unclaim_task(
     match result {
         Some(row) => {
             let instance = match sqlx::query_as::<_, WorkflowInstance>(
-                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM core_workflow_instances WHERE id = $1",
+                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
             .fetch_one(&state.pool)
@@ -723,7 +723,7 @@ pub async fn unclaim_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM public.core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
             .bind(locale)
@@ -812,7 +812,7 @@ pub async fn delegate_task(
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
-        r#"UPDATE core_workflow_tasks
+        r#"UPDATE public.core_workflow_tasks
            SET assignee_id = $1,
                updated_at = NOW()
            WHERE id = $2
@@ -833,7 +833,7 @@ pub async fn delegate_task(
     match result {
         Some(row) => {
             let instance = match sqlx::query_as::<_, WorkflowInstance>(
-                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM core_workflow_instances WHERE id = $1",
+                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
             .fetch_one(&state.pool)
@@ -844,7 +844,7 @@ pub async fn delegate_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM public.core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
             .bind(locale)
@@ -931,7 +931,7 @@ pub async fn reassign_task(
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
-        r#"UPDATE core_workflow_tasks
+        r#"UPDATE public.core_workflow_tasks
            SET assignee_id = $1,
                updated_at = NOW()
            WHERE id = $2
@@ -952,7 +952,7 @@ pub async fn reassign_task(
     match result {
         Some(row) => {
             let instance = match sqlx::query_as::<_, WorkflowInstance>(
-                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM core_workflow_instances WHERE id = $1",
+                "SELECT id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at FROM public.core_workflow_instances WHERE id = $1",
             )
             .bind(row.task_instance_id)
             .fetch_one(&state.pool)
@@ -963,7 +963,7 @@ pub async fn reassign_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM public.core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
             .bind(locale)
@@ -1020,9 +1020,9 @@ pub async fn list_approvals(
         r#"SELECT t.id as task_id, t.instance_id as task_instance_id, t.node_id as task_node_id, t.assignee_id as task_assignee_id, t.status as task_status, t.comment as task_comment, t.created_at as task_created_at, t.completed_at as task_completed_at,
                   i.id as instance_id, i.workflow_id as instance_workflow_id, i.title as instance_title, i.initiator_id as instance_initiator_id, i.status as instance_status, i.started_at as instance_started_at, i.completed_at as instance_completed_at,
                   w.id as workflow_id, CASE WHEN $1='en' THEN COALESCE(w.name_en, w.name) ELSE w.name END AS workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON t.instance_id = i.id
-           JOIN core_workflows w ON i.workflow_id = w.id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON t.instance_id = i.id
+           JOIN public.core_workflows w ON i.workflow_id = w.id
            ORDER BY t.created_at DESC
            LIMIT 20"#,
     )
@@ -1152,7 +1152,7 @@ pub async fn create_approval(
     };
 
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        r#"INSERT INTO core_workflow_instances (workflow_id, title, initiator_id, status, tenant_id)
+        r#"INSERT INTO public.core_workflow_instances (workflow_id, title, initiator_id, status, tenant_id)
            VALUES ($1, $2, $3, 'running', $4)
            RETURNING id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at, tenant_id"#,
     )
@@ -1187,7 +1187,7 @@ pub async fn create_approval(
     };
 
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        r#"INSERT INTO core_workflow_tasks (instance_id, node_id, assignee_id, status, tenant_id)
+        r#"INSERT INTO public.core_workflow_tasks (instance_id, node_id, assignee_id, status, tenant_id)
            VALUES ($1, 'start', $2, 'pending', $3)
            RETURNING id, instance_id, node_id, assignee_id, status, comment, created_at, completed_at, tenant_id"#,
     )
@@ -1205,7 +1205,7 @@ pub async fn create_approval(
     };
 
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+        "SELECT id, tenant_id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM public.core_workflows WHERE id = $1",
     )
     .bind(workflow_id)
     .bind(locale)

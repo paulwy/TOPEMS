@@ -62,7 +62,7 @@ pub struct WorkflowInstance {
     pub completed_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    /// BE-09 P2：LEFT JOIN core_workflows 出工作流名（types.ts:121）。
+    /// BE-09 P2：LEFT JOIN public.core_workflows 出工作流名（types.ts:121）。
     #[serde(skip_serializing_if = "Option::is_none")]
     #[sqlx(default)]
     pub workflow_name: Option<String>,

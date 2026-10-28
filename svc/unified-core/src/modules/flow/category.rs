@@ -7,7 +7,7 @@
 //!   PUT    /categories/{id}         update
 //!   DELETE /categories/{id}         delete（软删）
 //!   GET    /categories/active       list_active
-//!   GET    /categories/{id}/workflows 分类下流程（预留，待 core_workflows 加 category_id 后启用）
+//!   GET    /categories/{id}/workflows 分类下流程（预留，待 public.core_workflows 加 category_id 后启用）
 //!   GET    /categories/tree         树形
 //!   POST   /categories/sort         排序
 
@@ -356,7 +356,7 @@ pub async fn list_active_categories(
     ApiResponse::success(items, "查询成功")
 }
 
-/// 分类下的流程列表（预留：core_workflows 尚未含 category_id 列，先返回空列表；
+/// 分类下的流程列表（预留：public.core_workflows 尚未含 category_id 列，先返回空列表；
 /// 待前端流程设计器落地、workflow 表加 category_id 后启用真实关联查询）
 pub async fn get_category_workflows(
     State(_state): State<AppState>,

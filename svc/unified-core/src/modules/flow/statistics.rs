@@ -16,64 +16,70 @@ use super::models::{MonthlyData, StatisticsResponse, WorkflowStat};
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_statistics(State(state): State<AppState>) -> ApiResponse<StatisticsResponse> {
-    let total_workflows: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflows")
+    let total_workflows: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflows")
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
 
     let active_workflows: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflows WHERE status = 'active'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflows WHERE status = 'active'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
-    let total_instances: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
-
-    let running_instances: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'pending'")
+    let total_instances: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_instances")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
+
+    let running_instances: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'pending'",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let completed_instances: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'completed'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'completed'",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let rejected_instances: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'rejected'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'rejected'",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let total_approvals: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_tasks")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
-
-    let pending_approvals: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_tasks WHERE status = 'pending'")
+    let total_approvals: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_tasks")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
-    let approved_approvals: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_tasks WHERE status = 'completed'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let pending_approvals: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE status = 'pending'",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
-    let rejected_approvals: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_tasks WHERE status = 'rejected'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let approved_approvals: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE status = 'completed'",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let rejected_approvals: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE status = 'rejected'",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let approval_rate = if total_approvals > 0 {
         (approved_approvals as f64 / total_approvals as f64) * 100.0
@@ -98,8 +104,8 @@ pub async fn get_statistics(State(state): State<AppState>) -> ApiResponse<Statis
                 ELSE 0 
             END AS completion_rate,
             0.0 AS avg_duration
-        FROM core_workflows w
-        LEFT JOIN core_workflow_instances i ON i.workflow_id = w.id
+        FROM public.core_workflows w
+        LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
         GROUP BY w.id, w.name
         ORDER BY instance_count DESC
         LIMIT 10"#,

@@ -283,48 +283,50 @@ pub async fn get_monitor_statistics(
     State(state): State<AppState>,
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<MonitorStatistics> {
-    let total_instances: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
+    let total_instances: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_instances")
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(0);
 
     let running_instances: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status IN ('running','pending')",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status IN ('running','pending')",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let completed_instances: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'completed'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'completed'",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let rejected_instances: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'rejected'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'rejected'",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let suspended_instances: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'suspended'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'suspended'",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let error_instances: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'error'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let error_instances: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error'",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let avg_duration: f64 = sqlx::query_scalar(
         r#"SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at))), 0)
-           FROM core_workflow_instances WHERE completed_at IS NOT NULL"#,
+           FROM public.core_workflow_instances WHERE completed_at IS NOT NULL"#,
     )
     .fetch_one(&state.pool)
     .await
@@ -337,7 +339,7 @@ pub async fn get_monitor_statistics(
     };
 
     let by_status: Vec<StatusCount> = sqlx::query_as(
-        r#"SELECT status, COUNT(*) as count FROM core_workflow_instances
+        r#"SELECT status, COUNT(*) as count FROM public.core_workflow_instances
            GROUP BY status ORDER BY count DESC"#,
     )
     .fetch_all(&state.pool)
@@ -346,8 +348,8 @@ pub async fn get_monitor_statistics(
 
     let by_workflow: Vec<WorkflowCount> = sqlx::query_as(
         r#"SELECT w.id::text as workflow_id, w.name as workflow_name, COUNT(i.id) as count
-           FROM core_workflows w
-           LEFT JOIN core_workflow_instances i ON i.workflow_id = w.id
+           FROM public.core_workflows w
+           LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
            GROUP BY w.id, w.name ORDER BY count DESC LIMIT 20"#,
     )
     .fetch_all(&state.pool)
@@ -380,21 +382,22 @@ pub async fn get_workflow_analysis(
     Path(workflow_id): Path<Uuid>,
 ) -> ApiResponse<WorkflowAnalysis> {
     let wf_name: Option<String> =
-        sqlx::query_scalar("SELECT name FROM core_workflows WHERE id = $1")
+        sqlx::query_scalar("SELECT name FROM public.core_workflows WHERE id = $1")
             .bind(workflow_id)
             .fetch_one(&state.pool)
             .await
             .ok();
 
-    let total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances WHERE workflow_id = $1")
-            .bind(workflow_id)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE workflow_id = $1",
+    )
+    .bind(workflow_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let completed: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE workflow_id = $1 AND status = 'completed'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE workflow_id = $1 AND status = 'completed'",
     )
     .bind(workflow_id)
     .fetch_one(&state.pool)
@@ -402,7 +405,7 @@ pub async fn get_workflow_analysis(
     .unwrap_or(0);
 
     let running: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE workflow_id = $1 AND status IN ('running','pending')",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE workflow_id = $1 AND status IN ('running','pending')",
     )
     .bind(workflow_id)
     .fetch_one(&state.pool)
@@ -411,7 +414,7 @@ pub async fn get_workflow_analysis(
 
     let avg_duration: f64 = sqlx::query_scalar(
         r#"SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at))), 0)
-           FROM core_workflow_instances WHERE workflow_id = $1 AND completed_at IS NOT NULL"#,
+           FROM public.core_workflow_instances WHERE workflow_id = $1 AND completed_at IS NOT NULL"#,
     )
     .bind(workflow_id)
     .fetch_one(&state.pool)
@@ -428,8 +431,8 @@ pub async fn get_workflow_analysis(
         r#"SELECT t.node_id, NULL as node_name, COUNT(DISTINCT t.instance_id) as instance_count,
                   COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(t.completed_at, NOW()) - t.created_at))), 0) as avg_duration_seconds,
                   COUNT(*) FILTER (WHERE t.status = 'error') as error_count
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON i.id = t.instance_id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON i.id = t.instance_id
            WHERE i.workflow_id = $1
            GROUP BY t.node_id ORDER BY instance_count DESC LIMIT 20"#,
     )
@@ -479,8 +482,8 @@ pub async fn get_node_statistics(
         r#"SELECT t.node_id, NULL as node_name, COUNT(DISTINCT t.instance_id) as instance_count,
                   COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(t.completed_at, NOW()) - t.created_at))), 0) as avg_duration_seconds,
                   COUNT(*) FILTER (WHERE t.status = 'error') as error_count
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON i.id = t.instance_id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON i.id = t.instance_id
            WHERE i.workflow_id = $1
            GROUP BY t.node_id ORDER BY instance_count DESC"#,
     )
@@ -501,8 +504,8 @@ pub async fn get_bottleneck_analysis(
         r#"SELECT t.node_id, NULL as node_name, COUNT(DISTINCT t.instance_id) as instance_count,
                   COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(t.completed_at, NOW()) - t.created_at))), 0) as avg_duration_seconds,
                   COUNT(*) FILTER (WHERE t.status = 'error') as error_count
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON i.id = t.instance_id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON i.id = t.instance_id
            WHERE i.workflow_id = $1
            GROUP BY t.node_id HAVING AVG(EXTRACT(EPOCH FROM (COALESCE(t.completed_at, NOW()) - t.created_at))) > 3600
            ORDER BY avg_duration_seconds DESC"#,
@@ -537,7 +540,7 @@ pub async fn get_efficiency_analysis(
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<EfficiencyAnalysis> {
     let total: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE completed_at IS NOT NULL",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE completed_at IS NOT NULL",
     )
     .fetch_one(&state.pool)
     .await
@@ -545,19 +548,19 @@ pub async fn get_efficiency_analysis(
 
     let avg_duration: f64 = sqlx::query_scalar(
         r#"SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at))), 0)
-           FROM core_workflow_instances WHERE completed_at IS NOT NULL"#,
+           FROM public.core_workflow_instances WHERE completed_at IS NOT NULL"#,
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0.0);
 
-    let total_all: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances")
+    let total_all: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_instances")
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
 
     let completed: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'completed'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'completed'",
     )
     .fetch_one(&state.pool)
     .await
@@ -576,8 +579,8 @@ pub async fn get_efficiency_analysis(
                   CASE WHEN COUNT(i.id) > 0
                        THEN ROUND((COUNT(*) FILTER (WHERE i.status = 'completed')::numeric / COUNT(i.id)::numeric) * 100, 2)
                        ELSE 0 END as completion_rate
-           FROM core_workflows w
-           LEFT JOIN core_workflow_instances i ON i.workflow_id = w.id
+           FROM public.core_workflows w
+           LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
            GROUP BY w.id, w.name ORDER BY instance_count DESC LIMIT 20"#,
     )
     .fetch_all(&state.pool)
@@ -613,13 +616,13 @@ pub async fn get_trend_data(
            ) d
            LEFT JOIN (
                SELECT started_at::date as dt, COUNT(*) as count
-               FROM core_workflow_instances WHERE started_at >= CURRENT_DATE - INTERVAL '30 days'
+               FROM public.core_workflow_instances WHERE started_at >= CURRENT_DATE - INTERVAL '30 days'
                GROUP BY started_at::date
            ) s ON s.dt = d.date
            LEFT JOIN (
                SELECT completed_at::date as dt, COUNT(*) as count,
                       AVG(EXTRACT(EPOCH FROM (completed_at - started_at))) as avg_dur
-               FROM core_workflow_instances WHERE completed_at >= CURRENT_DATE - INTERVAL '30 days'
+               FROM public.core_workflow_instances WHERE completed_at >= CURRENT_DATE - INTERVAL '30 days'
                GROUP BY completed_at::date
            ) c ON c.dt = d.date
            ORDER BY d.date"#,
@@ -641,7 +644,7 @@ pub async fn get_user_stats(
                   COUNT(*) as initiated_count,
                   COUNT(*) FILTER (WHERE i.status = 'completed') as completed_count,
                   COALESCE(AVG(EXTRACT(EPOCH FROM (i.completed_at - i.started_at))), 0) as avg_duration_seconds
-           FROM core_workflow_instances i
+           FROM public.core_workflow_instances i
            GROUP BY i.initiator_id ORDER BY initiated_count DESC LIMIT 20"#,
     )
     .fetch_all(&state.pool)
@@ -664,8 +667,8 @@ pub async fn get_department_stats(
                   CASE WHEN COUNT(i.id) > 0
                        THEN ROUND((COUNT(*) FILTER (WHERE i.status = 'completed')::numeric / COUNT(i.id)::numeric) * 100, 2)
                        ELSE 0 END as completion_rate
-           FROM core_workflows w
-           LEFT JOIN core_workflow_instances i ON i.workflow_id = w.id
+           FROM public.core_workflows w
+           LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
            GROUP BY w.name ORDER BY instance_count DESC LIMIT 20"#,
     )
     .fetch_all(&state.pool)
@@ -677,7 +680,7 @@ pub async fn get_department_stats(
 
 // ─── Handlers: Logs ──────────────────────────────────────────────────────────
 
-/// GET /monitor/logs — query from core_workflow_tasks as process log proxy
+/// GET /monitor/logs — query from public.core_workflow_tasks as process log proxy
 pub async fn list_logs(
     State(state): State<AppState>,
     Query(params): Query<LogQueryParams>,
@@ -686,7 +689,7 @@ pub async fn list_logs(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_tasks")
+    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_tasks")
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
@@ -700,9 +703,9 @@ pub async fn list_logs(
                   t.assignee_id as actor_id, NULL as actor_name,
                   t.comment, NULL as data,
                   NULL as duration, t.created_at
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON i.id = t.instance_id
-           JOIN core_workflows w ON w.id = i.workflow_id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON i.id = t.instance_id
+           JOIN public.core_workflows w ON w.id = i.workflow_id
            ORDER BY t.created_at DESC LIMIT $1 OFFSET $2"#,
     )
     .bind(page_size)
@@ -731,9 +734,9 @@ pub async fn get_log(
                   t.assignee_id as actor_id, NULL as actor_name,
                   t.comment, NULL as data,
                   NULL as duration, t.created_at
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON i.id = t.instance_id
-           JOIN core_workflows w ON w.id = i.workflow_id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON i.id = t.instance_id
+           JOIN public.core_workflows w ON w.id = i.workflow_id
            WHERE t.id = $1"#,
     )
     .bind(id)
@@ -763,12 +766,13 @@ pub async fn get_logs_by_instance(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_tasks WHERE instance_id = $1")
-            .bind(instance_id)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE instance_id = $1",
+    )
+    .bind(instance_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let items: Vec<ProcessLog> = sqlx::query_as(
         r#"SELECT t.id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
@@ -779,9 +783,9 @@ pub async fn get_logs_by_instance(
                   t.assignee_id as actor_id, NULL as actor_name,
                   t.comment, NULL as data,
                   NULL as duration, t.created_at
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON i.id = t.instance_id
-           JOIN core_workflows w ON w.id = i.workflow_id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON i.id = t.instance_id
+           JOIN public.core_workflows w ON w.id = i.workflow_id
            WHERE t.instance_id = $1
            ORDER BY t.created_at DESC LIMIT $2 OFFSET $3"#,
     )
@@ -809,8 +813,8 @@ pub async fn get_logs_by_workflow(
     let offset = (page - 1) * page_size;
 
     let total: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON i.id = t.instance_id
+        r#"SELECT COUNT(*) FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON i.id = t.instance_id
            WHERE i.workflow_id = $1"#,
     )
     .bind(workflow_id)
@@ -827,9 +831,9 @@ pub async fn get_logs_by_workflow(
                   t.assignee_id as actor_id, NULL as actor_name,
                   t.comment, NULL as data,
                   NULL as duration, t.created_at
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON i.id = t.instance_id
-           JOIN core_workflows w ON w.id = i.workflow_id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON i.id = t.instance_id
+           JOIN public.core_workflows w ON w.id = i.workflow_id
            WHERE i.workflow_id = $1
            ORDER BY t.created_at DESC LIMIT $2 OFFSET $3"#,
     )
@@ -857,8 +861,8 @@ pub async fn get_logs_by_node(
     let offset = (page - 1) * page_size;
 
     let total: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON i.id = t.instance_id
+        r#"SELECT COUNT(*) FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON i.id = t.instance_id
            WHERE i.workflow_id = $1 AND t.node_id = $2"#,
     )
     .bind(workflow_id)
@@ -876,9 +880,9 @@ pub async fn get_logs_by_node(
                   t.assignee_id as actor_id, NULL as actor_name,
                   t.comment, NULL as data,
                   NULL as duration, t.created_at
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON i.id = t.instance_id
-           JOIN core_workflows w ON w.id = i.workflow_id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON i.id = t.instance_id
+           JOIN public.core_workflows w ON w.id = i.workflow_id
            WHERE i.workflow_id = $1 AND t.node_id = $2
            ORDER BY t.created_at DESC LIMIT $3 OFFSET $4"#,
     )
@@ -906,12 +910,13 @@ pub async fn get_logs_by_user(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_tasks WHERE assignee_id = $1")
-            .bind(user_id)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE assignee_id = $1",
+    )
+    .bind(user_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let items: Vec<ProcessLog> = sqlx::query_as(
         r#"SELECT t.id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
@@ -922,9 +927,9 @@ pub async fn get_logs_by_user(
                   t.assignee_id as actor_id, NULL as actor_name,
                   t.comment, NULL as data,
                   NULL as duration, t.created_at
-           FROM core_workflow_tasks t
-           JOIN core_workflow_instances i ON i.id = t.instance_id
-           JOIN core_workflows w ON w.id = i.workflow_id
+           FROM public.core_workflow_tasks t
+           JOIN public.core_workflow_instances i ON i.id = t.instance_id
+           JOIN public.core_workflows w ON w.id = i.workflow_id
            WHERE t.assignee_id = $1
            ORDER BY t.created_at DESC LIMIT $2 OFFSET $3"#,
     )
@@ -946,31 +951,32 @@ pub async fn get_logs_by_user(
 /// GET /monitor/realtime
 pub async fn get_realtime_stats(State(state): State<AppState>) -> ApiResponse<RealtimeStats> {
     let active: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status IN ('running','pending')",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status IN ('running','pending')",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let pending_tasks: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_tasks WHERE status = 'pending' AND completed_at IS NULL",
+        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE status = 'pending' AND completed_at IS NULL",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let completed_today: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE completed_at >= CURRENT_DATE",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE completed_at >= CURRENT_DATE",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let error_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'error'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let error_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error'",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     ApiResponse::success(
         RealtimeStats {
@@ -990,43 +996,45 @@ pub async fn get_realtime_stats(State(state): State<AppState>) -> ApiResponse<Re
 /// GET /monitor/dashboard
 pub async fn get_dashboard_data(State(state): State<AppState>) -> ApiResponse<MonitorDashboard> {
     // Reuse statistics logic inline
-    let total_instances: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(0);
+    let total_instances: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_instances")
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(0);
     let running: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status IN ('running','pending')",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status IN ('running','pending')",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
     let completed: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'completed'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'completed'",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
     let rejected: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'rejected'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'rejected'",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
     let suspended: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'suspended'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'suspended'",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let error: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'error'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let error: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error'",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let avg_duration: f64 = sqlx::query_scalar(
         r#"SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at))), 0)
-           FROM core_workflow_instances WHERE completed_at IS NOT NULL"#,
+           FROM public.core_workflow_instances WHERE completed_at IS NOT NULL"#,
     )
     .fetch_one(&state.pool)
     .await
@@ -1039,7 +1047,7 @@ pub async fn get_dashboard_data(State(state): State<AppState>) -> ApiResponse<Mo
     };
 
     let by_status: Vec<StatusCount> = sqlx::query_as(
-        "SELECT status, COUNT(*) as count FROM core_workflow_instances GROUP BY status ORDER BY count DESC",
+        "SELECT status, COUNT(*) as count FROM public.core_workflow_instances GROUP BY status ORDER BY count DESC",
     )
     .fetch_all(&state.pool)
     .await
@@ -1047,7 +1055,7 @@ pub async fn get_dashboard_data(State(state): State<AppState>) -> ApiResponse<Mo
 
     let by_workflow: Vec<WorkflowCount> = sqlx::query_as(
         r#"SELECT w.id::text as workflow_id, w.name as workflow_name, COUNT(i.id) as count
-           FROM core_workflows w LEFT JOIN core_workflow_instances i ON i.workflow_id = w.id
+           FROM public.core_workflows w LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
            GROUP BY w.id, w.name ORDER BY count DESC LIMIT 10"#,
     )
     .fetch_all(&state.pool)
@@ -1058,21 +1066,21 @@ pub async fn get_dashboard_data(State(state): State<AppState>) -> ApiResponse<Mo
         r#"SELECT id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
                   workflow_id, title, initiator_id, current_node_id, status, variables,
                   started_at, completed_at, created_at, updated_at
-           FROM core_workflow_instances ORDER BY created_at DESC LIMIT 10"#,
+           FROM public.core_workflow_instances ORDER BY created_at DESC LIMIT 10"#,
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
     let pending_tasks: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_tasks WHERE status = 'pending' AND completed_at IS NULL",
+        "SELECT COUNT(*) FROM public.core_workflow_tasks WHERE status = 'pending' AND completed_at IS NULL",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let completed_today: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE completed_at >= CURRENT_DATE",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE completed_at >= CURRENT_DATE",
     )
     .fetch_one(&state.pool)
     .await
@@ -1121,7 +1129,7 @@ pub async fn get_performance_metrics(
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<PerformanceMetrics> {
     let total: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE completed_at IS NOT NULL",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE completed_at IS NOT NULL",
     )
     .fetch_one(&state.pool)
     .await
@@ -1129,22 +1137,23 @@ pub async fn get_performance_metrics(
 
     let avg_duration: f64 = sqlx::query_scalar(
         r#"SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at))), 0)
-           FROM core_workflow_instances WHERE completed_at IS NOT NULL"#,
+           FROM public.core_workflow_instances WHERE completed_at IS NOT NULL"#,
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0.0);
 
-    let total_all: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances")
+    let total_all: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_instances")
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
 
-    let error_count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'error'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let error_count: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error'",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let error_rate = if total_all > 0 {
         (error_count as f64 / total_all as f64) * 100.0
@@ -1159,8 +1168,8 @@ pub async fn get_performance_metrics(
                   CASE WHEN COUNT(i.id) > 0
                        THEN ROUND((COUNT(*) FILTER (WHERE i.status = 'error')::numeric / COUNT(i.id)::numeric) * 100, 2)
                        ELSE 0 END as error_rate
-           FROM core_workflows w
-           LEFT JOIN core_workflow_instances i ON i.workflow_id = w.id
+           FROM public.core_workflows w
+           LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
            GROUP BY w.id, w.name ORDER BY instance_count DESC LIMIT 20"#,
     )
     .fetch_all(&state.pool)
@@ -1188,26 +1197,27 @@ pub async fn get_sla_compliance(
     State(state): State<AppState>,
     Query(_params): Query<StatsQueryParams>,
 ) -> ApiResponse<SlaCompliance> {
-    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances")
+    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.core_workflow_instances")
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
 
     let completed: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'completed'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'completed'",
     )
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
-    let error: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'error'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let error: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'error'",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let rejected: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_workflow_instances WHERE status = 'rejected'",
+        "SELECT COUNT(*) FROM public.core_workflow_instances WHERE status = 'rejected'",
     )
     .fetch_one(&state.pool)
     .await
@@ -1227,8 +1237,8 @@ pub async fn get_sla_compliance(
                   CASE WHEN COUNT(i.id) > 0
                        THEN ROUND((COUNT(*) FILTER (WHERE i.status = 'completed')::numeric / COUNT(i.id)::numeric) * 100, 2)
                        ELSE 0 END as compliance_rate
-           FROM core_workflows w
-           LEFT JOIN core_workflow_instances i ON i.workflow_id = w.id
+           FROM public.core_workflows w
+           LEFT JOIN public.core_workflow_instances i ON i.workflow_id = w.id
            GROUP BY w.id, w.name ORDER BY total_instances DESC LIMIT 20"#,
     )
     .fetch_all(&state.pool)
@@ -1236,7 +1246,7 @@ pub async fn get_sla_compliance(
     .unwrap_or_default();
 
     let by_status: Vec<StatusCount> = sqlx::query_as(
-        "SELECT status, COUNT(*) as count FROM core_workflow_instances GROUP BY status ORDER BY count DESC",
+        "SELECT status, COUNT(*) as count FROM public.core_workflow_instances GROUP BY status ORDER BY count DESC",
     )
     .fetch_all(&state.pool)
     .await
@@ -1267,7 +1277,7 @@ pub async fn skip_node(
     Json(payload): Json<SkipNodeRequest>,
 ) -> ApiResponse<WorkflowInstance> {
     let instance = sqlx::query_as::<_, WorkflowInstance>(
-        r#"UPDATE core_workflow_instances
+        r#"UPDATE public.core_workflow_instances
            SET current_node_id = CASE WHEN current_node_id = $2 THEN NULL ELSE current_node_id END,
                updated_at = NOW()
            WHERE id = $1
@@ -1302,7 +1312,7 @@ pub async fn force_complete(
     Json(_payload): Json<Option<ForceActionRequest>>,
 ) -> ApiResponse<WorkflowInstance> {
     let instance = sqlx::query_as::<_, WorkflowInstance>(
-        r#"UPDATE core_workflow_instances
+        r#"UPDATE public.core_workflow_instances
            SET status = 'completed', completed_at = NOW(), updated_at = NOW()
            WHERE id = $1
            RETURNING id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
@@ -1335,7 +1345,7 @@ pub async fn force_terminate(
     Json(_payload): Json<Option<ForceActionRequest>>,
 ) -> ApiResponse<WorkflowInstance> {
     let instance = sqlx::query_as::<_, WorkflowInstance>(
-        r#"UPDATE core_workflow_instances
+        r#"UPDATE public.core_workflow_instances
            SET status = 'terminated', completed_at = NOW(), updated_at = NOW()
            WHERE id = $1
            RETURNING id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
