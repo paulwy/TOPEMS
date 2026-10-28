@@ -4,7 +4,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::modules::contract_util::unwrap_data;
+use crate::modules::contract_util::{downstream_error, unwrap_data};
 use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{api::wms_api::WmsApi, TypedServiceClient};
 
@@ -86,7 +86,7 @@ pub async fn get_inventory_item(
         Ok(data) => ApiResponse::success(unwrap_data(data), "获取库存详情成功"),
         Err(e) => {
             tracing::error!("调用WMS服务获取库存详情失败: {}", e);
-            ApiResponse::server_error("获取库存详情失败")
+            downstream_error(&e, "获取库存详情失败")
         }
     }
 }

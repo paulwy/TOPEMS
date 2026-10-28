@@ -7,12 +7,35 @@
 
 use serde_json::Value;
 
+use topems_shared_core::error::TopemsError;
+use topems_shared_core::response::api_error;
+use topems_shared_core::response::ApiResponse;
+
 /// 解包共享 client 返回的 ApiResponse JSON，取 `data` 字段。
 /// - `{"code":200,"data":{"items":[...]}}` → `{"items":[...]}`
 /// - `[{"id":...}]`（get_items 已解包）→ 原样
 /// - `{"items":[...],"total":0}`（业务 data 对象）→ 原样（无 data 键）
 pub fn unwrap_data(v: Value) -> Value {
     v.get("data").cloned().unwrap_or(v)
+}
+
+/// 下游服务调用错误 → 业务信封：4xx（下游业务错误信封，S25 后映射为 HTTP 4xx）
+/// 解析并透传；其余错误降级为 500。
+pub fn downstream_error(e: &TopemsError, fallback: &str) -> ApiResponse<serde_json::Value> {
+    if let TopemsError::ServiceError {
+        status_code,
+        message,
+    } = e
+    {
+        if (400..500).contains(status_code) {
+            let msg = serde_json::from_str::<serde_json::Value>(message)
+                .ok()
+                .and_then(|v| v.get("message").and_then(|m| m.as_str()).map(String::from))
+                .unwrap_or_else(|| format!("下游服务返回错误 ({})", status_code));
+            return api_error::<serde_json::Value>(*status_code, &msg);
+        }
+    }
+    ApiResponse::server_error(fallback)
 }
 
 #[cfg(test)]
