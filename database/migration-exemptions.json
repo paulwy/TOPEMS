@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "policy": "已提交迁移的受控修改豁免登记（登记豁免制，2026-10-28 启用）。仅限维护者登记、附验证证据的受控修改；未登记的已提交迁移内容修改仍为硬错误（checkNoModify 拦截）。",
+  "exemptions": [
+    {
+      "id": "B20261028-pgvector-ai-vector",
+      "date": "2026-10-28",
+      "committer": "paulwy",
+      "reason": "pgvector 类型裸 vector → ai.vector 显式 schema 前缀修复（消除 search_path 依赖；与 B 类清单更正同批次，B 类 8 页缺列根因已澄清为非代码缺陷）",
+      "files": [
+        "20260831190850_restore_legacy_vectors.sql",
+        "20260831190900_ai_vectors_schema.sql",
+        "20261007000010_align_missing_columns_selfheal4.sql",
+        "20261015000078_ai_knowledge_objects.sql"
+      ],
+      "evidence": "WSL 模拟生产机 migrate.sh run 499 迁移全量通过、B 类页面全部正常；commit cf989a152；《TOPEMS-20261028-B类清单更正说明-供主开发.md》",
+      "approved": true
+    }
+  ]
+}

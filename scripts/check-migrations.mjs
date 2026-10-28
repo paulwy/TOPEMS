@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-import { readdirSync, statSync } from 'node:fs';
+import { readdirSync, statSync, readFileSync } from 'node:fs';
 import { join, basename, extname, relative } from 'node:path';
 import { execSync } from 'node:child_process';
 
 const MIGRATIONS_DIR = join(process.cwd(), 'database', 'migrations');
+const EXEMPTIONS_FILE = join(process.cwd(), 'database', 'migration-exemptions.json');
 
 const RE_EARLY = /^(\d{3})[-_]([A-Za-z0-9][A-Za-z0-9_-]*)\.sql$/;
 const RE_NEW = /^(\d{8})(\d{6})_(.+)\.sql$/;
@@ -153,6 +154,27 @@ function checkNewSeq(neu) {
   }
 }
 
+/**
+ * 登记豁免制（2026-10-28 方案 A）：已提交迁移的受控修改需在
+ * database/migration-exemptions.json 显式登记（维护者 + 原因 + 验证证据）。
+ * 登记且 approved 的文件放行并打印审计提示；未登记的内容修改仍为硬错误。
+ */
+function readExemptions() {
+  try {
+    const raw = readFileSync(EXEMPTIONS_FILE, 'utf-8');
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data?.exemptions)) return [];
+    return data.exemptions.filter((e) => e && e.approved === true && Array.isArray(e.files));
+  } catch {
+    return []; // 登记文件缺失/损坏时按无豁免处理（保持硬规则）
+  }
+}
+
+function isExempt(file, exemptions) {
+  const norm = (p) => p.split('/').pop();
+  return exemptions.some((e) => e.files.some((f) => norm(f) === norm(file)));
+}
+
 function checkNoModify() {
   let nameStatus = '';
   try {
@@ -170,7 +192,9 @@ function checkNoModify() {
   // D (delete), A (add), R (rename), C (copy) are all structural changes,
   // not content modifications to existing migrations.
   // Content-modifying an existing migration is the only forbidden operation.
+  const exemptions = readExemptions();
   const contentModified = [];
+  const exempted = [];
   let renameCount = 0;
   for (const line of nameStatus.split('\n')) {
     if (!line.trim()) continue;
@@ -178,7 +202,11 @@ function checkNoModify() {
     if (!m) continue;
     const status = m[1];
     if (status === 'M') {
-      contentModified.push(m[2]);
+      if (isExempt(m[2], exemptions)) {
+        exempted.push(m[2]);
+      } else {
+        contentModified.push(m[2]);
+      }
     } else if (status === 'R' || status === 'D') {
       renameCount++;
     }
@@ -186,6 +214,12 @@ function checkNoModify() {
 
   for (const f of contentModified) {
     errors.push(`禁止修改已提交的迁移（内容变更）: ${f}`);
+  }
+
+  if (exempted.length > 0) {
+    warnings.push(
+      `受控修改豁免登记命中（database/migration-exemptions.json）: ${exempted.join(', ')} — 请复核登记中的原因与验证证据`
+    );
   }
 
   if (contentModified.length === 0 && renameCount > 0) {
