@@ -48,7 +48,7 @@ pub async fn list_companies(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CompanyRead).await {
@@ -126,7 +126,7 @@ pub async fn list_companies(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -134,13 +134,11 @@ pub async fn list_companies(
                     "page_size": page_size
                 }),
                 "公司列表获取成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取公司列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取公司列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取公司列表失败".to_string()))
         }
     }
 }
@@ -164,7 +162,7 @@ pub async fn create_company(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateCompanyRequest>,
-) -> Json<ApiResponse<Company>> {
+) -> ApiResponse<Company> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
@@ -208,7 +206,7 @@ pub async fn create_company(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
             // 记录审计日志
@@ -240,13 +238,11 @@ pub async fn create_company(
             .await;
 
             tracing::debug!("创建公司成功: {}", company.name);
-            Json(ApiResponse::success(company, "公司创建成功"))
+            ApiResponse::success(company, "公司创建成功")
         }
         Err(e) => {
             tracing::error!("创建公司失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建公司失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建公司失败".to_string()))
         }
     }
 }
@@ -272,7 +268,7 @@ pub async fn get_company(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Company>> {
+) -> ApiResponse<Company> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CompanyRead).await {
@@ -292,15 +288,11 @@ pub async fn get_company(
     .await;
 
     match result {
-        Ok(Some(company)) => Json(ApiResponse::success(company, "公司信息获取成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "公司不存在".to_string(),
-        ))),
+        Ok(Some(company)) => ApiResponse::success(company, "公司信息获取成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("公司不存在".to_string())),
         Err(e) => {
             tracing::error!("获取公司失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取公司失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取公司失败".to_string()))
         }
     }
 }
@@ -329,7 +321,7 @@ pub async fn update_company(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateCompanyRequest>,
-) -> Json<ApiResponse<Company>> {
+) -> ApiResponse<Company> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
@@ -351,15 +343,9 @@ pub async fn update_company(
     let existing = match existing {
         Ok(Some(c)) => c,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "公司不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("公司不存在".to_string()))
         }
-        Err(_) => {
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询公司失败".to_string(),
-            )))
-        }
+        Err(_) => return ApiResponse::from(TopemsError::Internal("查询公司失败".to_string())),
     };
 
     let now = Utc::now();
@@ -436,16 +422,14 @@ pub async fn update_company(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(company, "公司更新成功"))
+            ApiResponse::success(company, "公司更新成功")
         }
         Err(e) => {
             tracing::error!("更新公司失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新公司失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新公司失败".to_string()))
         }
     }
 }
@@ -472,7 +456,7 @@ pub async fn delete_company(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::CompanyWrite).await {
@@ -535,27 +519,21 @@ pub async fn delete_company(
                     if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
-                            return Json(ApiResponse::server_error("事务提交失败"));
+                            return ApiResponse::server_error("事务提交失败");
                         }
                     }
-                    Json(ApiResponse::success(company.id.to_string(), "公司删除成功"))
+                    ApiResponse::success(company.id.to_string(), "公司删除成功")
                 }
                 Err(e) => {
                     tracing::error!("删除公司失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal(
-                        "删除公司失败".to_string(),
-                    )))
+                    ApiResponse::from(TopemsError::Internal("删除公司失败".to_string()))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "公司不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("公司不存在".to_string())),
         Err(e) => {
             tracing::error!("查询公司失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询公司失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询公司失败".to_string()))
         }
     }
 }

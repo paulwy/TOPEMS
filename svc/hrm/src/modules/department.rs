@@ -67,7 +67,7 @@ pub async fn list_departments(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::DepartmentRead).await {
@@ -85,13 +85,13 @@ pub async fn list_departments(
     let result = sqlx::query_as::<_, Department>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, tenant_id, organization_id AS org_id,
+        SELECT id, tenant_id, org_id,
                CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR organization_id = $3)
+          AND ($3::uuid IS NULL OR org_id = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
         "#
@@ -113,7 +113,7 @@ pub async fn list_departments(
                 SELECT COUNT(*) FROM hrm.departments
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR organization_id = $3)
+                  AND ($3::uuid IS NULL OR org_id = $3)
                 "#
             ))
             .bind(&search_pattern)
@@ -124,7 +124,7 @@ pub async fn list_departments(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": departments,
                     "total": total,
@@ -132,13 +132,11 @@ pub async fn list_departments(
                     "page_size": page_size
                 }),
                 "获取部门列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取部门列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取部门列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取部门列表失败".to_string()))
         }
     }
 }
@@ -162,7 +160,7 @@ pub async fn create_department(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateDepartmentRequest>,
-) -> Json<ApiResponse<Department>> {
+) -> ApiResponse<Department> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::DepartmentWrite).await {
@@ -172,7 +170,7 @@ pub async fn create_department(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    // 从 JWT claims 自动填充 tenant_id 和 organization_id
+    // 从 JWT claims 自动填充 tenant_id 和 org_id
     let claims_tenant = claims
         .tenant_id
         .as_deref()
@@ -184,9 +182,9 @@ pub async fn create_department(
     let result = sqlx::query_as::<_, Department>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.departments (
-            id, tenant_id, organization_id, name, code, parent_id, manager_id, description, status, created_at, updated_at, name_en
+            id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at, name_en
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10, $11)
-        RETURNING id, tenant_id, organization_id AS org_id,
+        RETURNING id, tenant_id, org_id,
                   CASE WHEN $12 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                   code, parent_id, manager_id, description, status, created_at, updated_at
         "#),
@@ -211,7 +209,7 @@ pub async fn create_department(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
             // 发布 MDM 主数据事件
@@ -244,13 +242,11 @@ pub async fn create_department(
                     .await;
             });
 
-            Json(ApiResponse::success(department, "部门创建成功"))
+            ApiResponse::success(department, "部门创建成功")
         }
         Err(e) => {
             tracing::error!("创建部门失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "部门创建失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("部门创建失败".to_string()))
         }
     }
 }
@@ -277,7 +273,7 @@ pub async fn get_department(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Department>> {
+) -> ApiResponse<Department> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::DepartmentRead).await {
@@ -287,7 +283,7 @@ pub async fn get_department(
     let result = sqlx::query_as::<_, Department>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, tenant_id, organization_id AS org_id,
+        SELECT id, tenant_id, org_id,
                CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments WHERE id = $1
@@ -299,15 +295,11 @@ pub async fn get_department(
     .await;
 
     match result {
-        Ok(Some(department)) => Json(ApiResponse::success(department, "获取部门成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "部门不存在".to_string(),
-        ))),
+        Ok(Some(department)) => ApiResponse::success(department, "获取部门成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("部门不存在".to_string())),
         Err(e) => {
             tracing::error!("获取部门失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取部门失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取部门失败".to_string()))
         }
     }
 }
@@ -336,7 +328,7 @@ pub async fn update_department(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateDepartmentRequest>,
-) -> Json<ApiResponse<Department>> {
+) -> ApiResponse<Department> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::DepartmentWrite).await {
@@ -344,7 +336,7 @@ pub async fn update_department(
         Err(e) => return e,
     }
     let existing = sqlx::query_as::<_, Department>(
-        only_own_schema_query!("hrm", "SELECT id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("hrm", "SELECT id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at FROM hrm.departments WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -353,15 +345,9 @@ pub async fn update_department(
     let existing = match existing {
         Ok(Some(d)) => d,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "部门不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("部门不存在".to_string()))
         }
-        Err(_) => {
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询部门失败".to_string(),
-            )))
-        }
+        Err(_) => return ApiResponse::from(TopemsError::Internal("查询部门失败".to_string())),
     };
 
     let name = req.name.unwrap_or(existing.name);
@@ -380,10 +366,10 @@ pub async fn update_department(
     let result = sqlx::query_as::<_, Department>(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.departments SET
-            tenant_id = $2, organization_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
+            tenant_id = $2, org_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
             description = $8, status = $9, updated_at = $10, name_en = COALESCE($11, name_en)
         WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-        RETURNING id, tenant_id, organization_id AS org_id,
+        RETURNING id, tenant_id, org_id,
                   CASE WHEN $12 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                   code, parent_id, manager_id, description, status, created_at, updated_at
         "#),
@@ -410,7 +396,7 @@ pub async fn update_department(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("更新部门事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             // 发布 MDM 主数据事件
@@ -443,13 +429,11 @@ pub async fn update_department(
                     .await;
             });
 
-            Json(ApiResponse::success(department, "部门更新成功"))
+            ApiResponse::success(department, "部门更新成功")
         }
         Err(e) => {
             tracing::error!("更新部门失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "部门更新失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("部门更新失败".to_string()))
         }
     }
 }
@@ -475,7 +459,7 @@ pub async fn delete_department(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::DepartmentWrite).await {
@@ -506,7 +490,7 @@ pub async fn delete_department(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("删除部门事务提交失败: {}", e);
-                    return Json(ApiResponse::<String>::server_error("事务提交失败"));
+                    return ApiResponse::<String>::server_error("事务提交失败");
                 }
             }
             // 发布 MDM 主数据事件
@@ -533,16 +517,12 @@ pub async fn delete_department(
                     .await;
             });
 
-            Json(ApiResponse::success("".to_string(), "部门删除成功"))
+            ApiResponse::success("".to_string(), "部门删除成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "部门不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("部门不存在".to_string())),
         Err(e) => {
             tracing::error!("删除部门失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "部门删除失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("部门删除失败".to_string()))
         }
     }
 }

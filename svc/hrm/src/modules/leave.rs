@@ -147,7 +147,7 @@ pub async fn list_leaves(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -159,9 +159,7 @@ pub async fn list_leaves(
             Ok(eid) => eid,
             Err(msg) => {
                 tracing::error!("解析员工信息失败: {}", msg);
-                return Json(ApiResponse::<serde_json::Value>::server_error(
-                    "解析员工信息失败",
-                ));
+                return ApiResponse::<serde_json::Value>::server_error("解析员工信息失败");
             }
         };
     let status_filter = params.status;
@@ -201,7 +199,7 @@ pub async fn list_leaves(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -209,13 +207,11 @@ pub async fn list_leaves(
                     "page_size": page_size
                 }),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询请假列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询请假列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询请假列表失败")
         }
     }
 }
@@ -242,29 +238,26 @@ pub async fn create_leave(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateLeaveRequest>,
-) -> Json<ApiResponse<LeaveRequest>> {
+) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let employee_id =
-        match resolve_leave_employee_id(txn, req.user_id.as_deref(), req.employee_id).await {
-            Ok(Some(eid)) => eid,
-            Ok(None) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                    "员工ID不能为空".to_string(),
-                )))
-            }
-            Err(msg) => {
-                tracing::error!("解析员工信息失败: {}", msg);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "解析员工信息失败".to_string(),
-                )));
-            }
-        };
+    let employee_id = match resolve_leave_employee_id(txn, req.user_id.as_deref(), req.employee_id)
+        .await
+    {
+        Ok(Some(eid)) => eid,
+        Ok(None) => {
+            return ApiResponse::from(TopemsError::ValidationFailed("员工ID不能为空".to_string()))
+        }
+        Err(msg) => {
+            tracing::error!("解析员工信息失败: {}", msg);
+            return ApiResponse::from(TopemsError::Internal("解析员工信息失败".to_string()));
+        }
+    };
 
     if req.leave_type.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "请假类型不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -277,8 +270,8 @@ pub async fn create_leave(
 
     let result = sqlx::query_as::<_, LeaveRequest>(
         only_own_schema_query!("hrm", r#"
-        INSERT INTO hrm.leave_records (id, employee_id, leave_type, start_date, end_date, days, reason, status, organization_id, tenant_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11)
+        INSERT INTO hrm.leave_records (id, employee_id, leave_type, start_date, end_date, days, reason, status, tenant_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
         RETURNING id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
         "#)
     )
@@ -290,7 +283,6 @@ pub async fn create_leave(
     .bind(&req.days)
     .bind(&req.reason)
     .bind(org_id)
-    .bind(org_id)
     .bind(now)
     .bind(now)
     .fetch_one(&mut **txn)
@@ -298,16 +290,14 @@ pub async fn create_leave(
 
     let (response, status_str, error_msg) = match &result {
         Ok(leave) => (
-            Json(ApiResponse::success(leave.clone(), "请假申请提交成功")),
+            ApiResponse::success(leave.clone(), "请假申请提交成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建请假申请失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建请假申请失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("创建请假申请失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -341,7 +331,7 @@ pub async fn create_leave(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -369,7 +359,7 @@ pub async fn get_leave(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<LeaveRequest>> {
+) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, LeaveRequest>(
@@ -380,13 +370,11 @@ pub async fn get_leave(
     .await;
 
     match result {
-        Ok(Some(leave)) => Json(ApiResponse::success(leave, "查询成功")),
-        Ok(None) => Json(ApiResponse::<LeaveRequest>::not_found("请假申请不存在")),
+        Ok(Some(leave)) => ApiResponse::success(leave, "查询成功"),
+        Ok(None) => ApiResponse::<LeaveRequest>::not_found("请假申请不存在"),
         Err(e) => {
             tracing::error!("查询请假申请失败: {}", e);
-            Json(ApiResponse::<LeaveRequest>::server_error(
-                "查询请假申请失败",
-            ))
+            ApiResponse::<LeaveRequest>::server_error("查询请假申请失败")
         }
     }
 }
@@ -414,7 +402,7 @@ pub async fn update_leave(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateLeaveRequest>,
-) -> Json<ApiResponse<LeaveRequest>> {
+) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -448,19 +436,15 @@ pub async fn update_leave(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(leave, "请假申请更新成功"))
+            ApiResponse::success(leave, "请假申请更新成功")
         }
-        Ok(None) => Json(ApiResponse::<LeaveRequest>::not_found(
-            "请假申请不存在或已处理",
-        )),
+        Ok(None) => ApiResponse::<LeaveRequest>::not_found("请假申请不存在或已处理"),
         Err(e) => {
             tracing::error!("更新请假申请失败: {}", e);
-            Json(ApiResponse::<LeaveRequest>::server_error(
-                "更新请假申请失败",
-            ))
+            ApiResponse::<LeaveRequest>::server_error("更新请假申请失败")
         }
     }
 }
@@ -486,7 +470,7 @@ pub async fn delete_leave(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -499,23 +483,21 @@ pub async fn delete_leave(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success(id.to_string(), "请假申请已取消")),
+            ApiResponse::success(id.to_string(), "请假申请已取消"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            ApiResponse::from(TopemsError::ResourceNotFound(
                 "请假申请不存在或已处理".to_string(),
-            ))),
+            )),
             "error".to_string(),
             Some("请假申请不存在或已处理".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除请假申请失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "删除请假申请失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("删除请假申请失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -548,7 +530,7 @@ pub async fn delete_leave(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -576,7 +558,7 @@ pub async fn approve_leave(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApproveLeaveRequest>,
-) -> Json<ApiResponse<LeaveRequest>> {
+) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -604,17 +586,15 @@ pub async fn approve_leave(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(leave, "请假已批准"))
+            ApiResponse::success(leave, "请假已批准")
         }
-        Ok(None) => Json(ApiResponse::<LeaveRequest>::not_found(
-            "请假申请不存在或已处理",
-        )),
+        Ok(None) => ApiResponse::<LeaveRequest>::not_found("请假申请不存在或已处理"),
         Err(e) => {
             tracing::error!("批准请假失败: {}", e);
-            Json(ApiResponse::<LeaveRequest>::server_error("批准请假失败"))
+            ApiResponse::<LeaveRequest>::server_error("批准请假失败")
         }
     }
 }
@@ -639,7 +619,7 @@ pub async fn reject_leave(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<RejectLeaveRequest>,
-) -> Json<ApiResponse<LeaveRequest>> {
+) -> ApiResponse<LeaveRequest> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -669,17 +649,15 @@ pub async fn reject_leave(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(leave, "请假已拒绝"))
+            ApiResponse::success(leave, "请假已拒绝")
         }
-        Ok(None) => Json(ApiResponse::<LeaveRequest>::not_found(
-            "请假申请不存在或已处理",
-        )),
+        Ok(None) => ApiResponse::<LeaveRequest>::not_found("请假申请不存在或已处理"),
         Err(e) => {
             tracing::error!("拒绝请假失败: {}", e);
-            Json(ApiResponse::<LeaveRequest>::server_error("拒绝请假失败"))
+            ApiResponse::<LeaveRequest>::server_error("拒绝请假失败")
         }
     }
 }

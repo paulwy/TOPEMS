@@ -137,7 +137,7 @@ pub async fn get_init_progress(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<InitProgressResponse>> {
+) -> ApiResponse<InitProgressResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     // P2-2：进度行按会话租户归属；首启超管无租户时回退 DEFAULT_ORG_ID（与种子一致）
@@ -153,9 +153,9 @@ pub async fn get_init_progress(
 
     let steps = sqlx::query_as::<_, InitializationStatus>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, organization_id, step_name, step_order, status, completed_at, created_at, updated_at
+        SELECT id, tenant_id AS organization_id, step_name, step_order, status, completed_at, created_at, updated_at
         FROM hrm.initialization_status
-        WHERE organization_id = $1
+        WHERE tenant_id = $1
         ORDER BY step_order
         "#),
     )
@@ -168,7 +168,7 @@ pub async fn get_init_progress(
             // P0-2：新库/未播种空集按「未开始」处理——禁止空表 all()=true 误判完成，
             // 禁止 current_step 兜底 5；返回空 steps、current_step=1、未完成。
             if steps.is_empty() {
-                return Json(ApiResponse::success(
+                return ApiResponse::success(
                     InitProgressResponse {
                         is_completed: false,
                         current_step: 1,
@@ -176,7 +176,7 @@ pub async fn get_init_progress(
                         org_id: None,
                     },
                     "获取初始化进度成功",
-                ));
+                );
             }
 
             let is_completed = steps.iter().all(|s| s.status == "completed");
@@ -207,7 +207,7 @@ pub async fn get_init_progress(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 InitProgressResponse {
                     is_completed,
                     current_step,
@@ -215,13 +215,11 @@ pub async fn get_init_progress(
                     org_id: company_result.ok().flatten(),
                 },
                 "获取初始化进度成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取初始化进度失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取初始化进度失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取初始化进度失败".to_string()))
         }
     }
 }
@@ -240,7 +238,7 @@ pub async fn setup_company_info(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CompanyInfoRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -257,9 +255,9 @@ pub async fn setup_company_info(
 
     // 验证必填字段
     if req.name.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "公司名称不能为空".to_string(),
-        )));
+        ));
     }
 
     // P0-2：无则 INSERT、有则 UPDATE 的 upsert（新库 companies 为空，原 UPDATE
@@ -270,13 +268,13 @@ pub async fn setup_company_info(
         "hrm",
         r#"
         INSERT INTO hrm.companies (
-            id, tenant_id, organization_id, name, short_name, registration_number,
+            id, tenant_id, name, short_name, registration_number,
             tax_number, address, contact_phone, contact_email, website, description,
             status, created_at, updated_at
         ) VALUES (
             $1,
             COALESCE($12::uuid, '00000000-0000-0000-0000-000000000001'::uuid),
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+            $2, $3, $4, $5, $6, $7, $8, $9, $10,
             'active', $11, $11
         )
         ON CONFLICT (id) DO UPDATE SET
@@ -290,7 +288,7 @@ pub async fn setup_company_info(
             website = COALESCE(EXCLUDED.website, companies.website),
             description = COALESCE(EXCLUDED.description, companies.description),
             updated_at = EXCLUDED.updated_at
-        RETURNING id, tenant_id, organization_id, name, short_name, registration_number,
+        RETURNING id, tenant_id, name, short_name, registration_number,
                   tax_number, address, contact_phone, contact_email, website, description,
                   status, created_at, updated_at
         "#
@@ -318,7 +316,7 @@ pub async fn setup_company_info(
                 r#"
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
-                WHERE organization_id = $2 AND step_name = 'company_info'
+                WHERE tenant_id = $2 AND step_name = 'company_info'
                   AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
                 "#
             ))
@@ -331,7 +329,7 @@ pub async fn setup_company_info(
             // 记录日志
             let _ = sqlx::query(
                 only_own_schema_query!("hrm", r#"
-                INSERT INTO hrm.initialization_logs (id, organization_id, step_name, action, new_data, created_at, tenant_id)
+                INSERT INTO hrm.initialization_logs (id, tenant_id, step_name, action, new_data, created_at, tenant_id)
                 VALUES ($1, $2, 'company_info', 'update', $3, $4, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                 "#)
             )
@@ -345,19 +343,17 @@ pub async fn setup_company_info(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "org_id": company.id, "name": company.name }),
                 "公司信息保存成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("保存公司信息失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "保存公司信息失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("保存公司信息失败".to_string()))
         }
     }
 }
@@ -399,7 +395,7 @@ pub async fn setup_departments(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<DepartmentsBatchRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -415,9 +411,9 @@ pub async fn setup_departments(
     let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
 
     if req.departments.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "请至少创建一个部门".to_string(),
-        )));
+        ));
     }
 
     // P2-3/P2-4：整批预校验（空名、批次内重名/重码、库内同名），全部通过才写库；
@@ -428,20 +424,20 @@ pub async fn setup_departments(
     for dept in &req.departments {
         let name = dept.name.trim().to_string();
         if name.is_empty() {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "部门名称不能为空".to_string(),
-            )));
+            ));
         }
         if name.chars().count() > 255 {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "部门名称不能超过255个字符".to_string(),
-            )));
+            ));
         }
         let key = name.to_lowercase();
         if !seen_names.insert(key) {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "部门名称重复：{name}"
-            ))));
+            )));
         }
         if let Some(code) = dept
             .code
@@ -450,15 +446,15 @@ pub async fn setup_departments(
             .filter(|c| !c.is_empty())
         {
             if code.chars().count() > 50 {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "部门编码不能超过50个字符".to_string(),
-                )));
+                ));
             }
             let ckey = code.to_lowercase();
             if !seen_codes.insert(ckey) {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                return ApiResponse::from(TopemsError::ValidationFailed(format!(
                     "部门编码重复：{code}"
-                ))));
+                )));
             }
         }
         requested_names.push(name);
@@ -487,8 +483,8 @@ pub async fn setup_departments(
     .ok()
     .flatten();
     if let Some(dup) = dup_dept {
-        return Json(ApiResponse::from(TopemsError::ResourceAlreadyExists(
-            format!("部门已存在：{dup}"),
+        return ApiResponse::from(TopemsError::ResourceAlreadyExists(format!(
+            "部门已存在：{dup}"
         )));
     }
 
@@ -497,9 +493,9 @@ pub async fn setup_departments(
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Department>(
             only_own_schema_query!("hrm", r#"
-            INSERT INTO hrm.departments (id, tenant_id, organization_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
+            INSERT INTO hrm.departments (id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
-            RETURNING id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+            RETURNING id, tenant_id, org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
             "#),
         )
         .bind(id)
@@ -520,9 +516,9 @@ pub async fn setup_departments(
             Err(e) => {
                 tracing::error!("创建部门失败，整批回滚: {}", e);
                 // 不 commit：请求结束 txn drop 自动回滚整批，绝不部分提交。
-                return Json(ApiResponse::from(TopemsError::Internal(
+                return ApiResponse::from(TopemsError::Internal(
                     "创建部门失败，整批已回滚".to_string(),
-                )));
+                ));
             }
         }
     }
@@ -533,7 +529,7 @@ pub async fn setup_departments(
         r#"
         UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
-        WHERE organization_id = $2 AND step_name = 'departments'
+        WHERE tenant_id = $2 AND step_name = 'departments'
           AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#
     ))
@@ -548,11 +544,11 @@ pub async fn setup_departments(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed (departments): {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "created_count": created_depts.len(),
             "departments": created_depts.iter().map(|d| {
@@ -564,7 +560,7 @@ pub async fn setup_departments(
             }).collect::<Vec<_>>()
         }),
         &format!("成功创建 {} 个部门", created_depts.len()),
-    ))
+    )
 }
 
 #[allow(dead_code)]
@@ -600,7 +596,7 @@ pub async fn setup_positions(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<PositionsBatchRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -616,9 +612,9 @@ pub async fn setup_positions(
     let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
 
     if req.positions.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "请至少创建一个职位".to_string(),
-        )));
+        ));
     }
 
     // P2-3/P2-4：整批预校验（空名、批次内重名/重码、库内同名、部门归属存在性），
@@ -630,32 +626,32 @@ pub async fn setup_positions(
     for pos in &req.positions {
         let name = pos.name.trim().to_string();
         if name.is_empty() {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "职位名称不能为空".to_string(),
-            )));
+            ));
         }
         if name.chars().count() > 255 {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "职位名称不能超过255个字符".to_string(),
-            )));
+            ));
         }
         let key = name.to_lowercase();
         if !seen_names.insert(key) {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "职位名称重复：{name}"
-            ))));
+            )));
         }
         if let Some(code) = pos.code.as_deref().map(str::trim).filter(|c| !c.is_empty()) {
             if code.chars().count() > 50 {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "职位编码不能超过50个字符".to_string(),
-                )));
+                ));
             }
             let ckey = code.to_lowercase();
             if !seen_codes.insert(ckey) {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                return ApiResponse::from(TopemsError::ValidationFailed(format!(
                     "职位编码重复：{code}"
-                ))));
+                )));
             }
         }
         requested_names.push(name);
@@ -684,9 +680,9 @@ pub async fn setup_positions(
         .unwrap_or(0);
         let expected: i64 = i64::try_from(dept_ids.len()).unwrap_or(i64::MAX);
         if found != expected {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "引用的部门不存在或已删除".to_string(),
-            )));
+            ));
         }
     }
 
@@ -713,8 +709,8 @@ pub async fn setup_positions(
     .ok()
     .flatten();
     if let Some(dup) = dup_pos {
-        return Json(ApiResponse::from(TopemsError::ResourceAlreadyExists(
-            format!("职位已存在：{dup}"),
+        return ApiResponse::from(TopemsError::ResourceAlreadyExists(format!(
+            "职位已存在：{dup}"
         )));
     }
 
@@ -723,9 +719,9 @@ pub async fn setup_positions(
         let id = Uuid::new_v4();
         let result = sqlx::query_as::<_, Position>(
             only_own_schema_query!("hrm", r#"
-            INSERT INTO hrm.positions (id, tenant_id, organization_id, department_id, name, code, level, description, status, created_at, updated_at)
+            INSERT INTO hrm.positions (id, tenant_id, org_id, department_id, name, code, level, description, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
-            RETURNING id, tenant_id, organization_id AS org_id, department_id, name, code, level, description, status, created_at, updated_at
+            RETURNING id, tenant_id, org_id, department_id, name, code, level, description, status, created_at, updated_at
             "#),
         )
         .bind(id)
@@ -746,9 +742,9 @@ pub async fn setup_positions(
             Err(e) => {
                 tracing::error!("创建职位失败，整批回滚: {}", e);
                 // 不 commit：请求结束 txn drop 自动回滚整批，绝不部分提交。
-                return Json(ApiResponse::from(TopemsError::Internal(
+                return ApiResponse::from(TopemsError::Internal(
                     "创建职位失败，整批已回滚".to_string(),
-                )));
+                ));
             }
         }
     }
@@ -759,7 +755,7 @@ pub async fn setup_positions(
         r#"
         UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
-        WHERE organization_id = $2 AND step_name = 'positions'
+        WHERE tenant_id = $2 AND step_name = 'positions'
           AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#
     ))
@@ -773,11 +769,11 @@ pub async fn setup_positions(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed (positions): {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "created_count": created_positions.len(),
             "positions": created_positions.iter().map(|p| {
@@ -789,7 +785,7 @@ pub async fn setup_positions(
             }).collect::<Vec<_>>()
         }),
         &format!("成功创建 {} 个职位", created_positions.len()),
-    ))
+    )
 }
 
 #[allow(dead_code)]
@@ -847,7 +843,7 @@ pub async fn setup_admin_user(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<AdminUserRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -864,19 +860,17 @@ pub async fn setup_admin_user(
 
     // 验证必填字段
     if req.name.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "管理员姓名不能为空".to_string(),
-        )));
+        ));
     }
     if req.employee_number.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "员工编号不能为空".to_string(),
-        )));
+        ));
     }
     if req.password.len() < 6 {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "密码长度至少6位".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("密码长度至少6位".to_string()));
     }
 
     // 解析可登录用户名：缺省回退 employee_number；格式规则对齐 IAM register
@@ -892,18 +886,16 @@ pub async fn setup_admin_user(
             .chars()
             .all(|c| c.is_ascii_alphanumeric() || c == '_');
     if !username_valid {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "用户名必须为3-20个字符，只允许字母、数字和下划线；未传 username 时回退员工编号，员工编号不符合规则时请显式提供 username".to_string(),
-        )));
+        ));
     }
 
     // 邮箱格式轻校验（权威校验在 IAM 建号端点；此处提前给出 400 而非落到 500）
     if let Some(email) = &req.email {
         let email = email.trim();
         if !email.contains('@') || !email.contains('.') {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "邮箱格式不正确".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::ValidationFailed("邮箱格式不正确".to_string()));
         }
     }
 
@@ -943,9 +935,7 @@ pub async fn setup_admin_user(
                 Some(_) => "邮箱已被占用".to_string(),
                 None => "用户名或邮箱已被占用".to_string(),
             };
-            return Json(ApiResponse::from(TopemsError::ResourceAlreadyExists(
-                message,
-            )));
+            return ApiResponse::from(TopemsError::ResourceAlreadyExists(message));
         }
         Ok(_) => {}
         Err(e) => {
@@ -964,14 +954,14 @@ pub async fn setup_admin_user(
     let result = sqlx::query_as::<_, Employee>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.employees (
-            id, tenant_id, organization_id, department_id, position_id,
+            id, tenant_id, org_id, department_id, position_id,
             employee_number, name, gender, birth_date, hire_date,
             id_card_number, email, phone,
             emergency_contact_name, emergency_contact_phone, address,
             user_id,
             status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11, $12, $13, $14, $15, $16, $17, 'active', $18, $19)
-        RETURNING id, tenant_id, organization_id AS org_id, department_id, position_id,
+        RETURNING id, tenant_id, org_id, department_id, position_id,
                   employee_number, name, status, created_at, updated_at
         "#),
     )
@@ -1006,7 +996,7 @@ pub async fn setup_admin_user(
                 r#"
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
-                WHERE organization_id = $2 AND step_name = 'admin_user'
+                WHERE tenant_id = $2 AND step_name = 'admin_user'
                   AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
                 "#
             ))
@@ -1020,7 +1010,7 @@ pub async fn setup_admin_user(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed (admin): {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
 
@@ -1030,7 +1020,7 @@ pub async fn setup_admin_user(
             } else {
                 "员工档案已创建；账号由统一认证服务开通：请先调用 IAM 建号端点（POST /api/core/iam/users，传 username/email/password/full_name），再将返回的 user_id 回传本接口完成绑定".to_string()
             };
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "employee_id": employee.id,
                     "employee_number": employee.employee_number,
@@ -1041,7 +1031,7 @@ pub async fn setup_admin_user(
                     "message": message
                 }),
                 "管理员员工档案创建成功",
-            ))
+            )
         }
         Err(e) => {
             // 员工编号唯一冲突（部分唯一索引 idx_employees_employee_number_unique）→ 友好 409，绝不 500
@@ -1051,14 +1041,12 @@ pub async fn setup_admin_user(
                 .map(|c| c == "23505")
                 .unwrap_or(false);
             if duplicate_employee_number {
-                return Json(ApiResponse::from(TopemsError::ResourceAlreadyExists(
+                return ApiResponse::from(TopemsError::ResourceAlreadyExists(
                     "员工编号已存在".to_string(),
-                )));
+                ));
             }
             tracing::error!("创建管理员账户失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建管理员账户失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建管理员账户失败".to_string()))
         }
     }
 }
@@ -1095,7 +1083,7 @@ pub async fn complete_initialization(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CompleteInitRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -1111,17 +1099,17 @@ pub async fn complete_initialization(
     let org_id = tenant_filter.unwrap_or(DEFAULT_ORG_ID);
 
     if !req.confirm {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "请确认完成初始化".to_string(),
-        )));
+        ));
     }
 
     // 检查前置步骤是否完成
     let steps = sqlx::query_as::<_, InitializationStatus>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, organization_id, step_name, step_order, status, completed_at, created_at, updated_at
+        SELECT id, tenant_id AS organization_id, step_name, step_order, status, completed_at, created_at, updated_at
         FROM hrm.initialization_status
-        WHERE organization_id = $1 AND step_name != 'completion'
+        WHERE tenant_id = $1 AND step_name != 'completion'
         ORDER BY step_order
         "#),
     )
@@ -1138,9 +1126,9 @@ pub async fn complete_initialization(
                 .collect();
 
             if !incomplete.is_empty() {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "请先完成初始化步骤".to_string(),
-                )));
+                ));
             }
 
             // P1-1：落租户初始化标记。completion 行即首启闭环标记，进度读取据此判定
@@ -1151,7 +1139,7 @@ pub async fn complete_initialization(
                 r#"
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
-                WHERE organization_id = $2 AND step_name = 'completion'
+                WHERE tenant_id = $2 AND step_name = 'completion'
                   AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
                 "#
             ))
@@ -1221,7 +1209,7 @@ pub async fn complete_initialization(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed (complete): {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
 
@@ -1230,7 +1218,7 @@ pub async fn complete_initialization(
             } else {
                 "初始化已完成；管理员员工档案尚未绑定 IAM 账号：请先在统一认证开通账号并分配默认角色/权限，再用该账号登录。".to_string()
             };
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "is_completed": true,
                     "completed_at": now,
@@ -1242,13 +1230,11 @@ pub async fn complete_initialization(
                     }
                 }),
                 &message,
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("完成初始化失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "完成初始化失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("完成初始化失败".to_string()))
         }
     }
 }

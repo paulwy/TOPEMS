@@ -143,7 +143,7 @@ pub async fn list_reviews(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -192,7 +192,7 @@ pub async fn list_reviews(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -200,13 +200,11 @@ pub async fn list_reviews(
                     "page_size": page_size
                 }),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询绩效评核列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询绩效评核列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询绩效评核列表失败")
         }
     }
 }
@@ -219,19 +217,17 @@ pub async fn create_review(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreatePerformanceReviewRequest>,
-) -> Json<ApiResponse<PerformanceReview>> {
+) -> ApiResponse<PerformanceReview> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "员工ID不能为空".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("员工ID不能为空".to_string()));
     }
 
     if req.review_period.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "评核周期不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -261,16 +257,14 @@ pub async fn create_review(
 
     let (response, status_str, error_msg) = match &result {
         Ok(review) => (
-            Json(ApiResponse::success(review.clone(), "绩效评核创建成功")),
+            ApiResponse::success(review.clone(), "绩效评核创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建绩效评核失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建绩效评核失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("创建绩效评核失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -304,7 +298,7 @@ pub async fn create_review(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -331,7 +325,7 @@ pub async fn get_review(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PerformanceReview>> {
+) -> ApiResponse<PerformanceReview> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PerformanceReview>(
@@ -342,15 +336,11 @@ pub async fn get_review(
     .await;
 
     match result {
-        Ok(Some(review)) => Json(ApiResponse::success(review, "查询成功")),
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::not_found(
-            "绩效评核不存在",
-        )),
+        Ok(Some(review)) => ApiResponse::success(review, "查询成功"),
+        Ok(None) => ApiResponse::<PerformanceReview>::not_found("绩效评核不存在"),
         Err(e) => {
             tracing::error!("查询绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::server_error(
-                "查询绩效评核失败",
-            ))
+            ApiResponse::<PerformanceReview>::server_error("查询绩效评核失败")
         }
     }
 }
@@ -362,7 +352,7 @@ pub async fn update_review(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdatePerformanceReviewRequest>,
-) -> Json<ApiResponse<PerformanceReview>> {
+) -> ApiResponse<PerformanceReview> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -400,19 +390,15 @@ pub async fn update_review(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(review, "绩效评核更新成功"))
+            ApiResponse::success(review, "绩效评核更新成功")
         }
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::not_found(
-            "绩效评核不存在",
-        )),
+        Ok(None) => ApiResponse::<PerformanceReview>::not_found("绩效评核不存在"),
         Err(e) => {
             tracing::error!("更新绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::server_error(
-                "更新绩效评核失败",
-            ))
+            ApiResponse::<PerformanceReview>::server_error("更新绩效评核失败")
         }
     }
 }
@@ -424,7 +410,7 @@ pub async fn delete_review(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -437,23 +423,21 @@ pub async fn delete_review(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success(id.to_string(), "绩效评核已删除")),
+            ApiResponse::success(id.to_string(), "绩效评核已删除"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            ApiResponse::from(TopemsError::ResourceNotFound(
                 "绩效评核不存在或状态不正确".to_string(),
-            ))),
+            )),
             "error".to_string(),
             Some("绩效评核不存在或状态不正确".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除绩效评核失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "删除绩效评核失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("删除绩效评核失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -486,7 +470,7 @@ pub async fn delete_review(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -513,7 +497,7 @@ pub async fn submit_review(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PerformanceReview>> {
+) -> ApiResponse<PerformanceReview> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -536,19 +520,15 @@ pub async fn submit_review(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(review, "绩效评核已提交"))
+            ApiResponse::success(review, "绩效评核已提交")
         }
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::not_found(
-            "绩效评核不存在或状态不正确",
-        )),
+        Ok(None) => ApiResponse::<PerformanceReview>::not_found("绩效评核不存在或状态不正确"),
         Err(e) => {
             tracing::error!("提交绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::server_error(
-                "提交绩效评核失败",
-            ))
+            ApiResponse::<PerformanceReview>::server_error("提交绩效评核失败")
         }
     }
 }
@@ -572,7 +552,7 @@ pub async fn approve_review(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PerformanceReview>> {
+) -> ApiResponse<PerformanceReview> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -595,19 +575,15 @@ pub async fn approve_review(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(review, "绩效评核已批准"))
+            ApiResponse::success(review, "绩效评核已批准")
         }
-        Ok(None) => Json(ApiResponse::<PerformanceReview>::not_found(
-            "绩效评核不存在或状态不正确",
-        )),
+        Ok(None) => ApiResponse::<PerformanceReview>::not_found("绩效评核不存在或状态不正确"),
         Err(e) => {
             tracing::error!("批准绩效评核失败: {}", e);
-            Json(ApiResponse::<PerformanceReview>::server_error(
-                "批准绩效评核失败",
-            ))
+            ApiResponse::<PerformanceReview>::server_error("批准绩效评核失败")
         }
     }
 }
@@ -628,7 +604,7 @@ pub async fn list_goals(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -672,7 +648,7 @@ pub async fn list_goals(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -680,13 +656,11 @@ pub async fn list_goals(
                     "page_size": page_size
                 }),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询绩效目标列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询绩效目标列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询绩效目标列表失败")
         }
     }
 }
@@ -699,19 +673,17 @@ pub async fn create_goal(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreatePerformanceGoalRequest>,
-) -> Json<ApiResponse<PerformanceGoal>> {
+) -> ApiResponse<PerformanceGoal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "员工ID不能为空".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("员工ID不能为空".to_string()));
     }
 
     if req.title.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "目标标题不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -744,16 +716,14 @@ pub async fn create_goal(
 
     let (response, status_str, error_msg) = match &result {
         Ok(goal) => (
-            Json(ApiResponse::success(goal.clone(), "绩效目标创建成功")),
+            ApiResponse::success(goal.clone(), "绩效目标创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建绩效目标失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建绩效目标失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("创建绩效目标失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -787,7 +757,7 @@ pub async fn create_goal(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -814,7 +784,7 @@ pub async fn get_goal(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PerformanceGoal>> {
+) -> ApiResponse<PerformanceGoal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PerformanceGoal>(
@@ -825,13 +795,11 @@ pub async fn get_goal(
     .await;
 
     match result {
-        Ok(Some(goal)) => Json(ApiResponse::success(goal, "查询成功")),
-        Ok(None) => Json(ApiResponse::<PerformanceGoal>::not_found("绩效目标不存在")),
+        Ok(Some(goal)) => ApiResponse::success(goal, "查询成功"),
+        Ok(None) => ApiResponse::<PerformanceGoal>::not_found("绩效目标不存在"),
         Err(e) => {
             tracing::error!("查询绩效目标失败: {}", e);
-            Json(ApiResponse::<PerformanceGoal>::server_error(
-                "查询绩效目标失败",
-            ))
+            ApiResponse::<PerformanceGoal>::server_error("查询绩效目标失败")
         }
     }
 }
@@ -843,7 +811,7 @@ pub async fn update_goal(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdatePerformanceGoalRequest>,
-) -> Json<ApiResponse<PerformanceGoal>> {
+) -> ApiResponse<PerformanceGoal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -881,17 +849,15 @@ pub async fn update_goal(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(goal, "绩效目标更新成功"))
+            ApiResponse::success(goal, "绩效目标更新成功")
         }
-        Ok(None) => Json(ApiResponse::<PerformanceGoal>::not_found("绩效目标不存在")),
+        Ok(None) => ApiResponse::<PerformanceGoal>::not_found("绩效目标不存在"),
         Err(e) => {
             tracing::error!("更新绩效目标失败: {}", e);
-            Json(ApiResponse::<PerformanceGoal>::server_error(
-                "更新绩效目标失败",
-            ))
+            ApiResponse::<PerformanceGoal>::server_error("更新绩效目标失败")
         }
     }
 }
@@ -903,7 +869,7 @@ pub async fn delete_goal(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -916,23 +882,19 @@ pub async fn delete_goal(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success(id.to_string(), "绩效目标已删除")),
+            ApiResponse::success(id.to_string(), "绩效目标已删除"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "绩效目标不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("绩效目标不存在".to_string())),
             "error".to_string(),
             Some("绩效目标不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除绩效目标失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "删除绩效目标失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("删除绩效目标失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -965,7 +927,7 @@ pub async fn delete_goal(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -993,7 +955,7 @@ pub async fn get_employee_reviews(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PerformanceReview>(
@@ -1004,18 +966,16 @@ pub async fn get_employee_reviews(
     .await;
 
     match result {
-        Ok(items) => Json(ApiResponse::success(
+        Ok(items) => ApiResponse::success(
             serde_json::json!({
                 "items": items,
                 "total": items.len() as i64
             }),
             "查询成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("查询员工绩效评核失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询员工绩效评核失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询员工绩效评核失败")
         }
     }
 }
@@ -1040,7 +1000,7 @@ pub async fn get_employee_goals(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PerformanceGoal>(
@@ -1051,18 +1011,16 @@ pub async fn get_employee_goals(
     .await;
 
     match result {
-        Ok(items) => Json(ApiResponse::success(
+        Ok(items) => ApiResponse::success(
             serde_json::json!({
                 "items": items,
                 "total": items.len() as i64
             }),
             "查询成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("查询员工绩效目标失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询员工绩效目标失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询员工绩效目标失败")
         }
     }
 }

@@ -66,7 +66,7 @@ pub async fn list_salary_adjustments(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -129,7 +129,7 @@ pub async fn list_salary_adjustments(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -137,13 +137,11 @@ pub async fn list_salary_adjustments(
                     "page_size": page_size
                 }),
                 "获取薪资调整列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取薪资调整列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取薪资调整列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取薪资调整列表失败".to_string()))
         }
     }
 }
@@ -168,7 +166,7 @@ pub async fn get_salary_adjustment(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
+) -> ApiResponse<Option<SalaryAdjustment>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
@@ -203,12 +201,10 @@ pub async fn get_salary_adjustment(
     .await;
 
     match result {
-        Ok(sa) => Json(ApiResponse::success(sa, "获取薪资调整成功")),
+        Ok(sa) => ApiResponse::success(sa, "获取薪资调整成功"),
         Err(e) => {
             tracing::error!("获取薪资调整失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取薪资调整失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取薪资调整失败".to_string()))
         }
     }
 }
@@ -231,7 +227,7 @@ pub async fn create_salary_adjustment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateSalaryAdjustmentRequest>,
-) -> Json<ApiResponse<SalaryAdjustment>> {
+) -> ApiResponse<SalaryAdjustment> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let adjustment_amount = match (&req.old_salary, &req.new_salary) {
@@ -245,11 +241,10 @@ pub async fn create_salary_adjustment(
         "hrm",
         r#"
         INSERT INTO hrm.salary_adjustments (
-            id, organization_id, tenant_id, employee_id, adjustment_type,
+            id, tenant_id, employee_id, adjustment_type,
             previous_salary, new_salary, adjustment_amount, reason, effective_date, status
         ) VALUES (
             $1,
-            (SELECT organization_id FROM hrm.employees WHERE id = $2),
             (SELECT tenant_id FROM hrm.employees WHERE id = $2),
             $2, $3, $4, $5, $6, $7, $8, 'pending'
         )
@@ -276,16 +271,14 @@ pub async fn create_salary_adjustment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(sa, "创建薪资调整成功"))
+            ApiResponse::success(sa, "创建薪资调整成功")
         }
         Err(e) => {
             tracing::error!("创建薪资调整失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建薪资调整失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建薪资调整失败".to_string()))
         }
     }
 }
@@ -313,7 +306,7 @@ pub async fn update_salary_adjustment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateSalaryAdjustmentRequest>,
-) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
+) -> ApiResponse<Option<SalaryAdjustment>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
@@ -346,12 +339,10 @@ pub async fn update_salary_adjustment(
 
     let existing = match existing {
         Ok(Some(sa)) => sa,
-        Ok(None) => return Json(ApiResponse::success(None, "薪资调整不存在")),
+        Ok(None) => return ApiResponse::success(None, "薪资调整不存在"),
         Err(e) => {
             tracing::error!("获取薪资调整失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "获取薪资调整失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("获取薪资调整失败".to_string()));
         }
     };
 
@@ -399,16 +390,14 @@ pub async fn update_salary_adjustment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(sa, "更新薪资调整成功"))
+            ApiResponse::success(sa, "更新薪资调整成功")
         }
         Err(e) => {
             tracing::error!("更新薪资调整失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新薪资调整失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新薪资调整失败".to_string()))
         }
     }
 }
@@ -433,7 +422,7 @@ pub async fn approve_salary_adjustment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApproveSalaryAdjustmentRequest>,
-) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
+) -> ApiResponse<Option<SalaryAdjustment>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
@@ -463,16 +452,14 @@ pub async fn approve_salary_adjustment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(sa, "批准薪资调整成功"))
+            ApiResponse::success(sa, "批准薪资调整成功")
         }
         Err(e) => {
             tracing::error!("批准薪资调整失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批准薪资调整失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批准薪资调整失败".to_string()))
         }
     }
 }
@@ -497,7 +484,7 @@ pub async fn reject_salary_adjustment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<RejectSalaryAdjustmentRequest>,
-) -> Json<ApiResponse<Option<SalaryAdjustment>>> {
+) -> ApiResponse<Option<SalaryAdjustment>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, SalaryAdjustment>(only_own_schema_query!(
@@ -528,16 +515,14 @@ pub async fn reject_salary_adjustment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(sa, "拒绝薪资调整成功"))
+            ApiResponse::success(sa, "拒绝薪资调整成功")
         }
         Err(e) => {
             tracing::error!("拒绝薪资调整失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "拒绝薪资调整失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("拒绝薪资调整失败".to_string()))
         }
     }
 }

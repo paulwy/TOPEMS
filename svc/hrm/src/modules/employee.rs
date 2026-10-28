@@ -1,4 +1,4 @@
-use axum::{extract::Extension, routing::*, Json, Router};
+use axum::{extract::Extension, routing::*, Router};
 use serde::Deserialize;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
@@ -105,7 +105,7 @@ pub async fn list_employees(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ListResponse<Employee>>> {
+) -> ApiResponse<ListResponse<Employee>> {
     let mut guard = txn_arc.lock().await;
     let _txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
@@ -137,7 +137,7 @@ pub async fn list_employees(
         )
         .await;
 
-    Json(result)
+    result
 }
 
 #[utoipa::path(
@@ -164,7 +164,7 @@ pub async fn get_employee(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Employee>> {
+) -> ApiResponse<Employee> {
     let mut guard = txn_arc.lock().await;
     let _txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
@@ -183,7 +183,7 @@ pub async fn get_employee(
     if let Some(cached) = state.employee_cache.get(&cache_key).await {
         record_cache_hit("hrm", "employee", "get");
         if let Ok(employee) = serde_json::from_value::<Employee>(cached) {
-            return Json(ApiResponse::success(employee, "从本地内存缓存获取员工成功"));
+            return ApiResponse::success(employee, "从本地内存缓存获取员工成功");
         }
     }
 
@@ -196,7 +196,7 @@ pub async fn get_employee(
                 state.employee_cache.set(cache_key, value).await;
                 record_cache_set("hrm", "employee", "get");
             }
-            return Json(ApiResponse::success(employee, "从缓存获取员工成功"));
+            return ApiResponse::success(employee, "从缓存获取员工成功");
         }
     }
 
@@ -228,7 +228,7 @@ pub async fn get_employee(
             .await;
     }
 
-    Json(result)
+    result
 }
 
 #[utoipa::path(
@@ -255,7 +255,7 @@ pub async fn get_employee_details(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
@@ -314,16 +314,12 @@ pub async fn get_employee_details(
                 "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
                 "updated_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("updated_at"),
             });
-            Json(ApiResponse::success(details, "获取员工详细信息成功"))
+            ApiResponse::success(details, "获取员工详细信息成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "员工不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("员工不存在".to_string())),
         Err(e) => {
             tracing::error!("获取员工详细信息失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取员工详细信息失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取员工详细信息失败".to_string()))
         }
     }
 }
@@ -350,7 +346,7 @@ pub async fn create_employee(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     axum::extract::Json(req): axum::extract::Json<CreateEmployeeRequest>,
-) -> Json<ApiResponse<Employee>> {
+) -> ApiResponse<Employee> {
     let mut guard = txn_arc.lock().await;
     let _txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeWrite).await {
@@ -477,7 +473,7 @@ pub async fn create_employee(
     )
     .await;
 
-    Json(result)
+    result
 }
 
 #[utoipa::path(
@@ -506,7 +502,7 @@ pub async fn update_employee(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     axum::extract::Json(req): axum::extract::Json<UpdateEmployeeRequest>,
-) -> Json<ApiResponse<Employee>> {
+) -> ApiResponse<Employee> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeWrite).await {
@@ -528,7 +524,7 @@ pub async fn update_employee(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("更新员工事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
         for k in employee_cache_keys_all_locales(&tenant_id, &id) {
@@ -626,7 +622,7 @@ pub async fn update_employee(
     )
     .await;
 
-    Json(result)
+    result
 }
 
 #[utoipa::path(
@@ -653,7 +649,7 @@ pub async fn delete_employee(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeWrite).await {
@@ -675,7 +671,7 @@ pub async fn delete_employee(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("删除员工事务提交失败: {}", e);
-                return Json(ApiResponse::<String>::server_error("事务提交失败"));
+                return ApiResponse::<String>::server_error("事务提交失败");
             }
         }
         for k in employee_cache_keys_all_locales(&tenant_id, &id) {
@@ -755,7 +751,7 @@ pub async fn delete_employee(
     )
     .await;
 
-    Json(result)
+    result
 }
 
 #[utoipa::path(
@@ -779,7 +775,7 @@ pub async fn export_employees(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     axum::extract::Json(req): axum::extract::Json<ExportRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
@@ -800,14 +796,14 @@ pub async fn export_employees(
     let employees = match &req.ids {
         Some(ids) => {
             if ids.is_empty() {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "导出员工ID列表不能为空".to_string(),
-                )));
+                ));
             }
             if ids.len() as i64 > MAX_EXPORT_COUNT {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "导出数量超出上限".to_string(),
-                )));
+                ));
             }
             sqlx::query_as::<_, Employee>(only_own_schema_query!(
                 "hrm",
@@ -871,13 +867,11 @@ pub async fn export_employees(
                 "count": emps.len(),
                 "data": emps
             });
-            Json(ApiResponse::success(data, "导出成功"))
+            ApiResponse::success(data, "导出成功")
         }
         Err(e) => {
             tracing::error!("导出员工失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "导出失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("导出失败".to_string()))
         }
     }
 }

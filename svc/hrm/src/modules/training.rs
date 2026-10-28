@@ -70,7 +70,7 @@ pub async fn list_plans(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -110,7 +110,7 @@ pub async fn list_plans(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": plans,
                     "total": total,
@@ -118,13 +118,11 @@ pub async fn list_plans(
                     "page_size": page_size
                 }),
                 "获取培训计划列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取培训计划列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取培训计划列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取培训计划列表失败")
         }
     }
 }
@@ -136,7 +134,7 @@ pub async fn create_plan(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateTrainingPlanRequest>,
-) -> Json<ApiResponse<TrainingPlan>> {
+) -> ApiResponse<TrainingPlan> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
@@ -179,16 +177,14 @@ pub async fn create_plan(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(plan, "培训计划创建成功"))
+            ApiResponse::success(plan, "培训计划创建成功")
         }
         Err(e) => {
             tracing::error!("创建培训计划失败: {}", e);
-            Json(ApiResponse::<TrainingPlan>::server_error(
-                "培训计划创建失败",
-            ))
+            ApiResponse::<TrainingPlan>::server_error("培训计划创建失败")
         }
     }
 }
@@ -212,7 +208,7 @@ pub async fn get_plan(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, TrainingPlan>(
@@ -242,22 +238,18 @@ pub async fn get_plan(
             .await
             .unwrap_or_default();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "plan": plan,
                     "courses": courses
                 }),
                 "获取培训计划成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::<serde_json::Value>::not_found(
-            "培训计划不存在",
-        )),
+        Ok(None) => ApiResponse::<serde_json::Value>::not_found("培训计划不存在"),
         Err(e) => {
             tracing::error!("获取培训计划失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取培训计划失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取培训计划失败")
         }
     }
 }
@@ -269,7 +261,7 @@ pub async fn update_plan(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateTrainingPlanRequest>,
-) -> Json<ApiResponse<TrainingPlan>> {
+) -> ApiResponse<TrainingPlan> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -306,17 +298,15 @@ pub async fn update_plan(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(plan, "培训计划更新成功"))
+            ApiResponse::success(plan, "培训计划更新成功")
         }
-        Ok(None) => Json(ApiResponse::<TrainingPlan>::not_found("培训计划不存在")),
+        Ok(None) => ApiResponse::<TrainingPlan>::not_found("培训计划不存在"),
         Err(e) => {
             tracing::error!("更新培训计划失败: {}", e);
-            Json(ApiResponse::<TrainingPlan>::server_error(
-                "培训计划更新失败",
-            ))
+            ApiResponse::<TrainingPlan>::server_error("培训计划更新失败")
         }
     }
 }
@@ -327,7 +317,7 @@ pub async fn delete_plan(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -343,15 +333,15 @@ pub async fn delete_plan(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("".to_string(), "培训计划删除成功"))
+            ApiResponse::success("".to_string(), "培训计划删除成功")
         }
-        Ok(_) => Json(ApiResponse::<String>::not_found("培训计划不存在")),
+        Ok(_) => ApiResponse::<String>::not_found("培训计划不存在"),
         Err(e) => {
             tracing::error!("删除培训计划失败: {}", e);
-            Json(ApiResponse::<String>::server_error("培训计划删除失败"))
+            ApiResponse::<String>::server_error("培训计划删除失败")
         }
     }
 }
@@ -380,7 +370,7 @@ pub async fn list_courses(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -429,7 +419,7 @@ pub async fn list_courses(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": courses,
                     "total": total,
@@ -437,13 +427,11 @@ pub async fn list_courses(
                     "page_size": page_size
                 }),
                 "获取课程列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取课程列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取课程列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取课程列表失败")
         }
     }
 }
@@ -455,7 +443,7 @@ pub async fn create_course(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateTrainingCourseRequest>,
-) -> Json<ApiResponse<TrainingCourse>> {
+) -> ApiResponse<TrainingCourse> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
@@ -507,14 +495,14 @@ pub async fn create_course(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(course, "课程创建成功"))
+            ApiResponse::success(course, "课程创建成功")
         }
         Err(e) => {
             tracing::error!("创建课程失败: {}", e);
-            Json(ApiResponse::<TrainingCourse>::server_error("课程创建失败"))
+            ApiResponse::<TrainingCourse>::server_error("课程创建失败")
         }
     }
 }
@@ -538,7 +526,7 @@ pub async fn get_course(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<TrainingCourse>> {
+) -> ApiResponse<TrainingCourse> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, TrainingCourse>(only_own_schema_query!(
@@ -555,11 +543,11 @@ pub async fn get_course(
     .await;
 
     match result {
-        Ok(Some(course)) => Json(ApiResponse::success(course, "获取课程成功")),
-        Ok(None) => Json(ApiResponse::<TrainingCourse>::not_found("课程不存在")),
+        Ok(Some(course)) => ApiResponse::success(course, "获取课程成功"),
+        Ok(None) => ApiResponse::<TrainingCourse>::not_found("课程不存在"),
         Err(e) => {
             tracing::error!("获取课程失败: {}", e);
-            Json(ApiResponse::<TrainingCourse>::server_error("获取课程失败"))
+            ApiResponse::<TrainingCourse>::server_error("获取课程失败")
         }
     }
 }
@@ -571,7 +559,7 @@ pub async fn update_course(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateTrainingCourseRequest>,
-) -> Json<ApiResponse<TrainingCourse>> {
+) -> ApiResponse<TrainingCourse> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -619,15 +607,15 @@ pub async fn update_course(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(course, "课程更新成功"))
+            ApiResponse::success(course, "课程更新成功")
         }
-        Ok(None) => Json(ApiResponse::<TrainingCourse>::not_found("课程不存在")),
+        Ok(None) => ApiResponse::<TrainingCourse>::not_found("课程不存在"),
         Err(e) => {
             tracing::error!("更新课程失败: {}", e);
-            Json(ApiResponse::<TrainingCourse>::server_error("课程更新失败"))
+            ApiResponse::<TrainingCourse>::server_error("课程更新失败")
         }
     }
 }
@@ -638,7 +626,7 @@ pub async fn delete_course(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -654,15 +642,15 @@ pub async fn delete_course(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("".to_string(), "课程删除成功"))
+            ApiResponse::success("".to_string(), "课程删除成功")
         }
-        Ok(_) => Json(ApiResponse::<String>::not_found("课程不存在")),
+        Ok(_) => ApiResponse::<String>::not_found("课程不存在"),
         Err(e) => {
             tracing::error!("删除课程失败: {}", e);
-            Json(ApiResponse::<String>::server_error("课程删除失败"))
+            ApiResponse::<String>::server_error("课程删除失败")
         }
     }
 }
@@ -691,7 +679,7 @@ pub async fn list_records(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -740,7 +728,7 @@ pub async fn list_records(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": records,
                     "total": total,
@@ -748,13 +736,11 @@ pub async fn list_records(
                     "page_size": page_size
                 }),
                 "获取培训记录列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取培训记录列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取培训记录列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取培训记录列表失败")
         }
     }
 }
@@ -766,7 +752,7 @@ pub async fn create_record(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateTrainingRecordRequest>,
-) -> Json<ApiResponse<TrainingRecord>> {
+) -> ApiResponse<TrainingRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
@@ -804,16 +790,14 @@ pub async fn create_record(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(record, "培训记录创建成功"))
+            ApiResponse::success(record, "培训记录创建成功")
         }
         Err(e) => {
             tracing::error!("创建培训记录失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::server_error(
-                "培训记录创建失败",
-            ))
+            ApiResponse::<TrainingRecord>::server_error("培训记录创建失败")
         }
     }
 }
@@ -839,7 +823,7 @@ pub async fn enroll_course(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<EnrollRequest>,
-) -> Json<ApiResponse<TrainingRecord>> {
+) -> ApiResponse<TrainingRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let record_id = Uuid::new_v4();
@@ -877,14 +861,14 @@ pub async fn enroll_course(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(record, "报名成功"))
+            ApiResponse::success(record, "报名成功")
         }
         Err(e) => {
             tracing::error!("报名失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::server_error("报名失败"))
+            ApiResponse::<TrainingRecord>::server_error("报名失败")
         }
     }
 }
@@ -913,7 +897,7 @@ pub async fn get_record(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<TrainingRecord>> {
+) -> ApiResponse<TrainingRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
@@ -930,13 +914,11 @@ pub async fn get_record(
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(record, "获取培训记录成功")),
-        Ok(None) => Json(ApiResponse::<TrainingRecord>::not_found("培训记录不存在")),
+        Ok(Some(record)) => ApiResponse::success(record, "获取培训记录成功"),
+        Ok(None) => ApiResponse::<TrainingRecord>::not_found("培训记录不存在"),
         Err(e) => {
             tracing::error!("获取培训记录失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::server_error(
-                "获取培训记录失败",
-            ))
+            ApiResponse::<TrainingRecord>::server_error("获取培训记录失败")
         }
     }
 }
@@ -948,7 +930,7 @@ pub async fn update_record(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateTrainingRecordRequest>,
-) -> Json<ApiResponse<TrainingRecord>> {
+) -> ApiResponse<TrainingRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -986,17 +968,15 @@ pub async fn update_record(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(record, "培训记录更新成功"))
+            ApiResponse::success(record, "培训记录更新成功")
         }
-        Ok(None) => Json(ApiResponse::<TrainingRecord>::not_found("培训记录不存在")),
+        Ok(None) => ApiResponse::<TrainingRecord>::not_found("培训记录不存在"),
         Err(e) => {
             tracing::error!("更新培训记录失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::server_error(
-                "培训记录更新失败",
-            ))
+            ApiResponse::<TrainingRecord>::server_error("培训记录更新失败")
         }
     }
 }
@@ -1007,7 +987,7 @@ pub async fn delete_record(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -1023,15 +1003,15 @@ pub async fn delete_record(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("".to_string(), "培训记录删除成功"))
+            ApiResponse::success("".to_string(), "培训记录删除成功")
         }
-        Ok(_) => Json(ApiResponse::<String>::not_found("培训记录不存在")),
+        Ok(_) => ApiResponse::<String>::not_found("培训记录不存在"),
         Err(e) => {
             tracing::error!("删除培训记录失败: {}", e);
-            Json(ApiResponse::<String>::server_error("培训记录删除失败"))
+            ApiResponse::<String>::server_error("培训记录删除失败")
         }
     }
 }
@@ -1056,7 +1036,7 @@ pub async fn get_course_records(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -1091,7 +1071,7 @@ pub async fn get_course_records(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": records,
                     "total": total,
@@ -1099,13 +1079,11 @@ pub async fn get_course_records(
                     "page_size": page_size
                 }),
                 "获取课程培训记录成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取课程培训记录失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取课程培训记录失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取课程培训记录失败")
         }
     }
 }
@@ -1130,7 +1108,7 @@ pub async fn get_employee_records(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -1165,7 +1143,7 @@ pub async fn get_employee_records(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": records,
                     "total": total,
@@ -1173,13 +1151,11 @@ pub async fn get_employee_records(
                     "page_size": page_size
                 }),
                 "获取员工培训记录成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取员工培训记录失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取员工培训记录失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取员工培训记录失败")
         }
     }
 }
@@ -1203,7 +1179,7 @@ async fn set_plan_status(
     id: Uuid,
     status: &str,
     message: &str,
-) -> Json<ApiResponse<TrainingPlan>> {
+) -> ApiResponse<TrainingPlan> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -1224,13 +1200,11 @@ async fn set_plan_status(
     .await;
 
     match result {
-        Ok(Some(plan)) => Json(ApiResponse::success(plan, message)),
-        Ok(None) => Json(ApiResponse::<TrainingPlan>::not_found("培训计划不存在")),
+        Ok(Some(plan)) => ApiResponse::success(plan, message),
+        Ok(None) => ApiResponse::<TrainingPlan>::not_found("培训计划不存在"),
         Err(e) => {
             tracing::error!("更新培训计划状态失败: {}", e);
-            Json(ApiResponse::<TrainingPlan>::server_error(
-                "更新培训计划状态失败",
-            ))
+            ApiResponse::<TrainingPlan>::server_error("更新培训计划状态失败")
         }
     }
 }
@@ -1242,7 +1216,7 @@ pub async fn activate_plan(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<TrainingPlan>> {
+) -> ApiResponse<TrainingPlan> {
     set_plan_status(&state, &txn_arc, id, "active", "培训计划已启用").await
 }
 
@@ -1253,7 +1227,7 @@ pub async fn deactivate_plan(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<TrainingPlan>> {
+) -> ApiResponse<TrainingPlan> {
     set_plan_status(&state, &txn_arc, id, "inactive", "培训计划已停用").await
 }
 
@@ -1264,7 +1238,7 @@ pub async fn complete_record(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<TrainingRecord>> {
+) -> ApiResponse<TrainingRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -1292,17 +1266,15 @@ pub async fn complete_record(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(record, "培训记录已完成"))
+            ApiResponse::success(record, "培训记录已完成")
         }
-        Ok(None) => Json(ApiResponse::<TrainingRecord>::not_found("培训记录不存在")),
+        Ok(None) => ApiResponse::<TrainingRecord>::not_found("培训记录不存在"),
         Err(e) => {
             tracing::error!("更新培训记录状态失败: {}", e);
-            Json(ApiResponse::<TrainingRecord>::server_error(
-                "更新培训记录状态失败",
-            ))
+            ApiResponse::<TrainingRecord>::server_error("更新培训记录状态失败")
         }
     }
 }

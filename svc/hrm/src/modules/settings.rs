@@ -45,7 +45,7 @@ pub async fn get_settings(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -63,16 +63,14 @@ pub async fn get_settings(
                 let value: String = row.try_get("value").unwrap_or_default();
                 settings.insert(key, value);
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "category": category, "settings": settings }),
                 "获取模块设置成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取模块设置失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取模块设置失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取模块设置失败".to_string()))
         }
     }
 }
@@ -85,7 +83,7 @@ pub async fn update_settings(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateSettingsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now().naive_utc();
@@ -102,20 +100,18 @@ pub async fn update_settings(
             Ok(_) => updated += 1,
             Err(e) => {
                 tracing::error!("更新模块设置失败 (key={}): {}", key, e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "更新设置项失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("更新设置项失败".to_string()));
             }
         }
     }
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "category": category, "updated_count": updated, "settings": req.settings }),
         "模块设置更新成功",
-    ))
+    )
 }

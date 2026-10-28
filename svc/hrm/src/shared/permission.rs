@@ -99,9 +99,11 @@ pub async fn check_permission<T>(
     db: &PgPool,
     claims: &Claims,
     permission: &HrmPermission,
-) -> Result<(), axum::Json<ApiResponse<T>>> {
+) -> Result<(), ApiResponse<T>> {
     let shared_perm = permission.to_shared();
-    check_module_permission(db, claims, &shared_perm).await
+    check_module_permission(db, claims, &shared_perm)
+        .await
+        .map_err(|e| e.0)
 }
 
 #[allow(dead_code)]
@@ -109,8 +111,10 @@ pub async fn check_employee_permission<T>(
     db: &PgPool,
     claims: &Claims,
     employee_id: &Uuid,
-) -> Result<(), axum::Json<ApiResponse<T>>> {
-    check_resource_permission(db, claims, employee_id, "employee", "hrm:admin").await
+) -> Result<(), ApiResponse<T>> {
+    check_resource_permission(db, claims, employee_id, "employee", "hrm:admin")
+        .await
+        .map_err(|e| e.0)
 }
 
 #[cfg(test)]

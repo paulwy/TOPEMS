@@ -56,16 +56,16 @@ pub async fn get_today_status(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let user_id = params.user_id.as_deref();
     let employee_id = params.employee_id;
 
     if user_id.is_none() && employee_id.is_none() {
-        return Json(ApiResponse::<serde_json::Value>::bad_request(
+        return ApiResponse::<serde_json::Value>::bad_request(
             "user_id 或 employee_id 至少提供一个",
-        ));
+        );
     }
 
     // 如果传入 user_id，先解析为 employee_id（Mobile-BFF 数据迁移后统一走 hrm 表）
@@ -84,9 +84,7 @@ pub async fn get_today_status(
             }
             Err(e) => {
                 tracing::error!("解析 user_id 为 employee_id 失败: {}", e);
-                return Json(ApiResponse::<serde_json::Value>::server_error(
-                    "解析用户信息失败",
-                ));
+                return ApiResponse::<serde_json::Value>::server_error("解析用户信息失败");
             }
         }
     } else {
@@ -96,10 +94,10 @@ pub async fn get_today_status(
     let eid = match resolved_employee_id {
         Some(eid) => eid,
         None => {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 serde_json::json!({ "status": "not_checked_in" }),
                 "未找到对应员工，默认未签到",
-            ));
+            );
         }
     };
 
@@ -137,16 +135,14 @@ pub async fn get_today_status(
         Ok(None) => "not_checked_in",
         Err(e) => {
             tracing::error!("获取今日考勤状态失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取今日考勤状态失败",
-            ));
+            return ApiResponse::<serde_json::Value>::server_error("获取今日考勤状态失败");
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "status": status }),
         "获取今日考勤状态成功",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
@@ -183,7 +179,7 @@ pub async fn list_attendance(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::AttendanceRead).await {
@@ -200,7 +196,7 @@ pub async fn list_attendance(
     let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+        SELECT id, tenant_id, employee_id, date::timestamptz AS date,
                check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                status, work_hours::float8 AS work_hours, notes, created_at, updated_at
         FROM hrm.attendance_records
@@ -236,7 +232,7 @@ pub async fn list_attendance(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "records": records,
                     "total": total,
@@ -244,13 +240,11 @@ pub async fn list_attendance(
                     "page_size": page_size
                 }),
                 "获取考勤记录列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取考勤记录列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取考勤记录列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取考勤记录列表失败")
         }
     }
 }
@@ -277,13 +271,11 @@ pub async fn create_attendance(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateAttendanceRequest>,
-) -> Json<ApiResponse<AttendanceRecord>> {
+) -> ApiResponse<AttendanceRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "员工ID不能为空".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("员工ID不能为空".to_string()));
     }
 
     let id = Uuid::new_v4();
@@ -298,10 +290,10 @@ pub async fn create_attendance(
         "hrm",
         r#"
         INSERT INTO hrm.attendance_records (
-            id, organization_id, tenant_id, employee_id, date, check_in_time, check_out_time,
+            id, tenant_id, employee_id, date, check_in_time, check_out_time,
             status, work_hours, notes, created_at, updated_at
         ) VALUES ($1, $2, $2, $3, $4, $5::TIME, $6::TIME, $7, $8, $9, $10, $11)
-        RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+        RETURNING id, tenant_id, employee_id, date::timestamptz AS date,
                   check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                   status, work_hours::float8 AS work_hours, notes, created_at, updated_at
         "#
@@ -322,16 +314,14 @@ pub async fn create_attendance(
 
     let (response, status_str, error_msg) = match &result {
         Ok(record) => (
-            Json(ApiResponse::success(record.clone(), "考勤记录创建成功")),
+            ApiResponse::success(record.clone(), "考勤记录创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建考勤记录失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "考勤记录创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("考勤记录创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -365,7 +355,7 @@ pub async fn create_attendance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -393,13 +383,13 @@ pub async fn get_attendance(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<AttendanceRecord>> {
+) -> ApiResponse<AttendanceRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+        SELECT id, tenant_id, employee_id, date::timestamptz AS date,
                check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                status, work_hours::float8 AS work_hours, notes, created_at, updated_at
         FROM hrm.attendance_records WHERE deleted_at IS NULL AND id = $1
@@ -410,13 +400,11 @@ pub async fn get_attendance(
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(record, "获取考勤记录成功")),
-        Ok(None) => Json(ApiResponse::<AttendanceRecord>::not_found("考勤记录不存在")),
+        Ok(Some(record)) => ApiResponse::success(record, "获取考勤记录成功"),
+        Ok(None) => ApiResponse::<AttendanceRecord>::not_found("考勤记录不存在"),
         Err(e) => {
             tracing::error!("获取考勤记录失败: {}", e);
-            Json(ApiResponse::<AttendanceRecord>::server_error(
-                "获取考勤记录失败",
-            ))
+            ApiResponse::<AttendanceRecord>::server_error("获取考勤记录失败")
         }
     }
 }
@@ -444,13 +432,13 @@ pub async fn update_attendance(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateAttendanceRequest>,
-) -> Json<ApiResponse<AttendanceRecord>> {
+) -> ApiResponse<AttendanceRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let existing = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+        SELECT id, tenant_id, employee_id, date::timestamptz AS date,
                check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                status, work_hours::float8 AS work_hours, notes, created_at, updated_at
         FROM hrm.attendance_records WHERE deleted_at IS NULL AND id = $1
@@ -462,12 +450,8 @@ pub async fn update_attendance(
 
     let existing = match existing {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::<AttendanceRecord>::not_found("考勤记录不存在")),
-        Err(_e) => {
-            return Json(ApiResponse::<AttendanceRecord>::server_error(
-                "查询考勤记录失败",
-            ))
-        }
+        Ok(None) => return ApiResponse::<AttendanceRecord>::not_found("考勤记录不存在"),
+        Err(_e) => return ApiResponse::<AttendanceRecord>::server_error("查询考勤记录失败"),
     };
 
     let check_in = req.check_in.or(existing.check_in);
@@ -484,7 +468,7 @@ pub async fn update_attendance(
             check_in_time = $2::TIME, check_out_time = $3::TIME, status = $4,
             work_hours = $5, notes = $6, updated_at = $7
         WHERE id = $1 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-        RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+        RETURNING id, tenant_id, employee_id, date::timestamptz AS date,
                   check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                   status, work_hours::float8 AS work_hours, notes, created_at, updated_at
         "#
@@ -504,16 +488,14 @@ pub async fn update_attendance(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(record, "考勤记录更新成功"))
+            ApiResponse::success(record, "考勤记录更新成功")
         }
         Err(e) => {
             tracing::error!("更新考勤记录失败: {}", e);
-            Json(ApiResponse::<AttendanceRecord>::server_error(
-                "考勤记录更新失败",
-            ))
+            ApiResponse::<AttendanceRecord>::server_error("考勤记录更新失败")
         }
     }
 }
@@ -539,7 +521,7 @@ pub async fn delete_attendance(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -552,23 +534,19 @@ pub async fn delete_attendance(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "考勤记录删除成功")),
+            ApiResponse::success("".to_string(), "考勤记录删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "考勤记录不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("考勤记录不存在".to_string())),
             "error".to_string(),
             Some("考勤记录不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除考勤记录失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "考勤记录删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("考勤记录删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -601,7 +579,7 @@ pub async fn delete_attendance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -712,7 +690,7 @@ pub async fn list_attendance_records(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
 
@@ -727,9 +705,7 @@ pub async fn list_attendance_records(
         Ok(None) => None,
         Err(msg) => {
             tracing::error!("解析员工信息失败: {}", msg);
-            return Json(ApiResponse::<serde_json::Value>::server_error(
-                "解析员工信息失败",
-            ));
+            return ApiResponse::<serde_json::Value>::server_error("解析员工信息失败");
         }
     };
 
@@ -740,7 +716,7 @@ pub async fn list_attendance_records(
 
     let items_result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
-        r#"SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+        r#"SELECT id, tenant_id, employee_id, date::timestamptz AS date,
                   check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                   status, work_hours::float8 AS work_hours, notes, created_at, updated_at
            FROM hrm.attendance_records
@@ -771,7 +747,7 @@ pub async fn list_attendance_records(
             .fetch_one(&mut **txn)
             .await;
             let total = total_result.unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -779,13 +755,11 @@ pub async fn list_attendance_records(
                     "page_size": page_size
                 }),
                 "获取考勤记录成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询考勤记录失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询考勤记录失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询考勤记录失败")
         }
     }
 }
@@ -807,22 +781,20 @@ pub async fn check_in(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CheckRequest>,
-) -> Json<ApiResponse<AttendanceRecord>> {
+) -> ApiResponse<AttendanceRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let employee_id =
         match resolve_employee_id_from_req(txn, req.user_id.as_deref(), req.employee_id).await {
             Ok(Some(eid)) => eid,
             Ok(None) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "员工ID不能为空".to_string(),
-                )))
+                ))
             }
             Err(msg) => {
                 tracing::error!("解析员工信息失败: {}", msg);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "解析员工信息失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("解析员工信息失败".to_string()));
             }
         };
     let now = Utc::now();
@@ -834,7 +806,7 @@ pub async fn check_in(
 
     let existing = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
-        r#"SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+        r#"SELECT id, tenant_id, employee_id, date::timestamptz AS date,
                   check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                   status, work_hours::float8 AS work_hours, notes, created_at, updated_at
            FROM hrm.attendance_records
@@ -852,7 +824,7 @@ pub async fn check_in(
                 r#"UPDATE hrm.attendance_records
                    SET check_in_time = $2::TIME, status = COALESCE(status, 'present'), updated_at = now()
                    WHERE id = $1
-                   RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+                   RETURNING id, tenant_id, employee_id, date::timestamptz AS date,
                              check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                              status, work_hours::float8 AS work_hours, notes, created_at, updated_at"#
             ))
@@ -861,12 +833,10 @@ pub async fn check_in(
             .fetch_one(&mut **txn)
             .await;
             match result {
-                Ok(rec) => Json(ApiResponse::success(rec, "上班打卡成功")),
+                Ok(rec) => ApiResponse::success(rec, "上班打卡成功"),
                 Err(e) => {
                     tracing::error!("上班打卡更新失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal(
-                        "上班打卡失败".to_string(),
-                    )))
+                    ApiResponse::from(TopemsError::Internal("上班打卡失败".to_string()))
                 }
             }
         }
@@ -875,10 +845,10 @@ pub async fn check_in(
             let result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
                 "hrm",
                 r#"INSERT INTO hrm.attendance_records (
-                       id, organization_id, tenant_id, employee_id, date, check_in_time, check_out_time,
+                       id, tenant_id, employee_id, date, check_in_time, check_out_time,
                        status, work_hours, notes, created_at, updated_at
                    ) VALUES ($1, $2, $2, $3, $4, $5::TIME, NULL, 'present', NULL, NULL, $6, $6)
-                   RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+                   RETURNING id, tenant_id, employee_id, date::timestamptz AS date,
                              check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                              status, work_hours::float8 AS work_hours, notes, created_at, updated_at"#
             ))
@@ -891,20 +861,16 @@ pub async fn check_in(
             .fetch_one(&mut **txn)
             .await;
             match result {
-                Ok(rec) => Json(ApiResponse::success(rec, "上班打卡成功")),
+                Ok(rec) => ApiResponse::success(rec, "上班打卡成功"),
                 Err(e) => {
                     tracing::error!("上班打卡创建失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal(
-                        "上班打卡失败".to_string(),
-                    )))
+                    ApiResponse::from(TopemsError::Internal("上班打卡失败".to_string()))
                 }
             }
         }
         Err(e) => {
             tracing::error!("查询当天考勤失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "上班打卡失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("上班打卡失败".to_string()))
         }
     }
 }
@@ -926,29 +892,27 @@ pub async fn check_out(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CheckRequest>,
-) -> Json<ApiResponse<AttendanceRecord>> {
+) -> ApiResponse<AttendanceRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let employee_id =
         match resolve_employee_id_from_req(txn, req.user_id.as_deref(), req.employee_id).await {
             Ok(Some(eid)) => eid,
             Ok(None) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "员工ID不能为空".to_string(),
-                )))
+                ))
             }
             Err(msg) => {
                 tracing::error!("解析员工信息失败: {}", msg);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "解析员工信息失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("解析员工信息失败".to_string()));
             }
         };
     let now = Utc::now();
 
     let existing = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
         "hrm",
-        r#"SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+        r#"SELECT id, tenant_id, employee_id, date::timestamptz AS date,
                   check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                   status, work_hours::float8 AS work_hours, notes, created_at, updated_at
            FROM hrm.attendance_records
@@ -962,15 +926,13 @@ pub async fn check_out(
     let record = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            return ApiResponse::from(TopemsError::ResourceNotFound(
                 "当天无上班打卡记录，请先打卡上班".to_string(),
-            )))
+            ))
         }
         Err(e) => {
             tracing::error!("查询当天考勤失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "下班打卡失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("下班打卡失败".to_string()));
         }
     };
 
@@ -981,7 +943,7 @@ pub async fn check_out(
                work_hours = EXTRACT(EPOCH FROM (check_out_time - check_in_time)) / 3600.0,
                updated_at = now()
            WHERE id = $1
-           RETURNING id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+           RETURNING id, tenant_id, employee_id, date::timestamptz AS date,
                      check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
                      status, work_hours::float8 AS work_hours, notes, created_at, updated_at"#
     ))
@@ -991,12 +953,10 @@ pub async fn check_out(
     .await;
 
     match result {
-        Ok(rec) => Json(ApiResponse::success(rec, "下班打卡成功")),
+        Ok(rec) => ApiResponse::success(rec, "下班打卡成功"),
         Err(e) => {
             tracing::error!("下班打卡更新失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "下班打卡失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("下班打卡失败".to_string()))
         }
     }
 }
@@ -1019,7 +979,7 @@ pub async fn get_attendance_stats(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
 
@@ -1039,9 +999,7 @@ pub async fn get_attendance_stats(
             }
             Err(e) => {
                 tracing::error!("解析 user_id 为 employee_id 失败: {}", e);
-                return Json(ApiResponse::<serde_json::Value>::server_error(
-                    "解析用户信息失败",
-                ));
+                return ApiResponse::<serde_json::Value>::server_error("解析用户信息失败");
             }
         }
     } else {
@@ -1051,7 +1009,7 @@ pub async fn get_attendance_stats(
     let eid = match resolved_employee_id {
         Some(eid) => eid,
         None => {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 serde_json::json!({
                     "today_status": "not_checked_in",
                     "work_days_this_month": 0,
@@ -1061,7 +1019,7 @@ pub async fn get_attendance_stats(
                     "total_work_hours": 0,
                 }),
                 "未找到对应员工，返回空统计",
-            ));
+            );
         }
     };
 
@@ -1090,9 +1048,7 @@ pub async fn get_attendance_stats(
         ),
         Err(e) => {
             tracing::error!("获取考勤统计失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取考勤统计失败",
-            ));
+            return ApiResponse::<serde_json::Value>::server_error("获取考勤统计失败");
         }
     };
 
@@ -1130,9 +1086,7 @@ pub async fn get_attendance_stats(
         Ok(None) => ("not_checked_in", None, None),
         Err(e) => {
             tracing::error!("获取今日考勤状态失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取今日考勤状态失败",
-            ));
+            return ApiResponse::<serde_json::Value>::server_error("获取今日考勤状态失败");
         }
     };
 
@@ -1155,7 +1109,7 @@ pub async fn get_attendance_stats(
     }
     let absent_days = (expect_days - work_days).max(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "today_status": today_status,
             "today_check_in": today_check_in,
@@ -1167,5 +1121,5 @@ pub async fn get_attendance_stats(
             "total_work_hours": total_work_hours,
         }),
         "获取考勤统计成功",
-    ))
+    )
 }

@@ -157,7 +157,7 @@ pub async fn list_payroll_runs(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -201,7 +201,7 @@ pub async fn list_payroll_runs(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -209,13 +209,11 @@ pub async fn list_payroll_runs(
                     "page_size": page_size
                 }),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询薪资发放列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询薪资发放列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询薪资发放列表失败")
         }
     }
 }
@@ -227,13 +225,13 @@ pub async fn create_payroll_run(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreatePayrollRunRequest>,
-) -> Json<ApiResponse<PayrollRun>> {
+) -> ApiResponse<PayrollRun> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if !validate_pay_period(&req.pay_period) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "薪资周期为空或格式不正确（应为 YYYY-MM）".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -256,16 +254,14 @@ pub async fn create_payroll_run(
 
     let (response, status_str, error_msg) = match &result {
         Ok(run) => (
-            Json(ApiResponse::success(run.clone(), "薪资周期创建成功")),
+            ApiResponse::success(run.clone(), "薪资周期创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建薪资周期失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建薪资周期失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("创建薪资周期失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -299,7 +295,7 @@ pub async fn create_payroll_run(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -326,7 +322,7 @@ pub async fn get_payroll_run(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PayrollRun>(
@@ -346,22 +342,18 @@ pub async fn get_payroll_run(
             .await
             .unwrap_or_default();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "run": run,
                     "items": items
                 }),
                 "查询成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::<serde_json::Value>::not_found(
-            "薪资周期不存在",
-        )),
+        Ok(None) => ApiResponse::<serde_json::Value>::not_found("薪资周期不存在"),
         Err(e) => {
             tracing::error!("查询薪资周期失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询薪资周期失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询薪资周期失败")
         }
     }
 }
@@ -373,7 +365,7 @@ pub async fn delete_payroll_run(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -386,23 +378,21 @@ pub async fn delete_payroll_run(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success(id.to_string(), "薪资周期已删除")),
+            ApiResponse::success(id.to_string(), "薪资周期已删除"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            ApiResponse::from(TopemsError::ResourceNotFound(
                 "薪资周期不存在或状态不正确".to_string(),
-            ))),
+            )),
             "error".to_string(),
             Some("薪资周期不存在或状态不正确".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除薪资周期失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "删除薪资周期失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("删除薪资周期失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -435,7 +425,7 @@ pub async fn delete_payroll_run(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -472,7 +462,7 @@ pub async fn calculate_payroll_run(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PayrollRun>> {
+) -> ApiResponse<PayrollRun> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -496,14 +486,12 @@ pub async fn calculate_payroll_run(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("查询薪资周期失败: {}", e);
-            return Json(ApiResponse::<PayrollRun>::server_error("查询薪资周期失败"));
+            return ApiResponse::<PayrollRun>::server_error("查询薪资周期失败");
         }
     };
 
     if existing.is_none() {
-        return Json(ApiResponse::<PayrollRun>::not_found(
-            "薪资周期不存在或状态不正确",
-        ));
+        return ApiResponse::<PayrollRun>::not_found("薪资周期不存在或状态不正确");
     }
 
     // 2) 真实聚合：active 员工 JOIN 最新 active 合同薪资（>0），无合同薪资者不参与发薪（不编造）
@@ -539,9 +527,7 @@ pub async fn calculate_payroll_run(
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("聚合在职员工薪资失败: {}", e);
-            return Json(ApiResponse::<PayrollRun>::server_error(
-                "聚合在职员工薪资失败",
-            ));
+            return ApiResponse::<PayrollRun>::server_error("聚合在职员工薪资失败");
         }
     };
 
@@ -575,7 +561,7 @@ pub async fn calculate_payroll_run(
 
         if let Err(e) = res {
             tracing::error!("写入薪资明细失败 employee_id={}: {}", emp.employee_id, e);
-            return Json(ApiResponse::<PayrollRun>::server_error("写入薪资明细失败"));
+            return ApiResponse::<PayrollRun>::server_error("写入薪资明细失败");
         }
         total_gross += &amounts.gross;
         item_count += 1;
@@ -602,17 +588,15 @@ pub async fn calculate_payroll_run(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(run, "薪资计算完成"))
+            ApiResponse::success(run, "薪资计算完成")
         }
-        Ok(None) => Json(ApiResponse::<PayrollRun>::not_found(
-            "薪资周期不存在或状态不正确",
-        )),
+        Ok(None) => ApiResponse::<PayrollRun>::not_found("薪资周期不存在或状态不正确"),
         Err(e) => {
             tracing::error!("计算薪资失败: {}", e);
-            Json(ApiResponse::<PayrollRun>::server_error("计算薪资失败"))
+            ApiResponse::<PayrollRun>::server_error("计算薪资失败")
         }
     }
 }
@@ -636,7 +620,7 @@ pub async fn pay_payroll_run(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PayrollRun>> {
+) -> ApiResponse<PayrollRun> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -658,9 +642,7 @@ pub async fn pay_payroll_run(
     .unwrap_or(0);
 
     if pending_count == 0 {
-        return Json(ApiResponse::<PayrollRun>::bad_request(
-            "无可发放的薪资明细，请先执行薪资计算",
-        ));
+        return ApiResponse::<PayrollRun>::bad_request("无可发放的薪资明细，请先执行薪资计算");
     }
 
     let items_res = sqlx::query(only_own_schema_query!(
@@ -678,7 +660,7 @@ pub async fn pay_payroll_run(
 
     if let Err(e) = items_res {
         tracing::error!("更新薪资明细发放状态失败: {}", e);
-        return Json(ApiResponse::<PayrollRun>::server_error("发放薪资失败"));
+        return ApiResponse::<PayrollRun>::server_error("发放薪资失败");
     }
 
     let result = sqlx::query_as::<_, PayrollRun>(
@@ -699,17 +681,15 @@ pub async fn pay_payroll_run(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(run, "薪资发放完成"))
+            ApiResponse::success(run, "薪资发放完成")
         }
-        Ok(None) => Json(ApiResponse::<PayrollRun>::not_found(
-            "薪资周期不存在或状态不正确",
-        )),
+        Ok(None) => ApiResponse::<PayrollRun>::not_found("薪资周期不存在或状态不正确"),
         Err(e) => {
             tracing::error!("发放薪资失败: {}", e);
-            Json(ApiResponse::<PayrollRun>::server_error("发放薪资失败"))
+            ApiResponse::<PayrollRun>::server_error("发放薪资失败")
         }
     }
 }
@@ -730,7 +710,7 @@ pub async fn list_payroll_items(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -779,7 +759,7 @@ pub async fn list_payroll_items(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -787,13 +767,11 @@ pub async fn list_payroll_items(
                     "page_size": page_size
                 }),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询薪资明细列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询薪资明细列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询薪资明细列表失败")
         }
     }
 }
@@ -817,7 +795,7 @@ pub async fn get_payroll_item(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, PayrollItem>(
@@ -837,22 +815,18 @@ pub async fn get_payroll_item(
             .await
             .unwrap_or_default();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "item": item,
                     "details": details
                 }),
                 "查询成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::<serde_json::Value>::not_found(
-            "薪资明细不存在",
-        )),
+        Ok(None) => ApiResponse::<serde_json::Value>::not_found("薪资明细不存在"),
         Err(e) => {
             tracing::error!("查询薪资明细失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询薪资明细失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询薪资明细失败")
         }
     }
 }
@@ -873,7 +847,7 @@ pub async fn list_payroll_details(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -909,7 +883,7 @@ pub async fn list_payroll_details(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -917,13 +891,11 @@ pub async fn list_payroll_details(
                     "page_size": page_size
                 }),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询薪资详情列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询薪资详情列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询薪资详情列表失败")
         }
     }
 }
@@ -934,7 +906,7 @@ pub async fn create_payroll_detail(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<PayrollDetail>,
-) -> Json<ApiResponse<PayrollDetail>> {
+) -> ApiResponse<PayrollDetail> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
@@ -962,16 +934,14 @@ pub async fn create_payroll_detail(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(detail, "薪资详情添加成功"))
+            ApiResponse::success(detail, "薪资详情添加成功")
         }
         Err(e) => {
             tracing::error!("添加薪资详情失败: {}", e);
-            Json(ApiResponse::<PayrollDetail>::server_error(
-                "添加薪资详情失败",
-            ))
+            ApiResponse::<PayrollDetail>::server_error("添加薪资详情失败")
         }
     }
 }
@@ -998,7 +968,7 @@ pub async fn generate_payroll_voucher(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<GeneratePayrollVoucherRequest>,
-) -> Json<ApiResponse<PayrollVoucherResponse>> {
+) -> ApiResponse<PayrollVoucherResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     // 获取薪资发放记录
@@ -1012,18 +982,12 @@ pub async fn generate_payroll_voucher(
 
     let payroll_run = match payroll_run {
         Some(r) => r,
-        None => {
-            return Json(ApiResponse::<PayrollVoucherResponse>::not_found(
-                "薪资记录不存在",
-            ))
-        }
+        None => return ApiResponse::<PayrollVoucherResponse>::not_found("薪资记录不存在"),
     };
 
     // 检查薪资是否已发放
     if payroll_run.status != "paid" {
-        return Json(ApiResponse::<PayrollVoucherResponse>::bad_request(
-            "薪资未发放，无法生成凭证",
-        ));
+        return ApiResponse::<PayrollVoucherResponse>::bad_request("薪资未发放，无法生成凭证");
     }
 
     // 获取薪资明细汇总
@@ -1158,7 +1122,7 @@ pub async fn generate_payroll_voucher(
     }
 
     // 凭证由 erp 订阅器异步生成（不再同步等待 erp 回执）；本接口立即受理成功。
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PayrollVoucherResponse {
             success: true,
             voucher_id: None,
@@ -1171,7 +1135,7 @@ pub async fn generate_payroll_voucher(
             employee_count: payroll_run.employee_count,
         },
         "薪资凭证生成请求已提交",
-    ))
+    )
 }
 
 /// 工资单（员工视角的薪资明细，JOIN payroll_items + payroll_runs + employees）
@@ -1211,7 +1175,7 @@ pub async fn list_payroll_slips(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -1281,7 +1245,7 @@ pub async fn list_payroll_slips(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -1289,13 +1253,11 @@ pub async fn list_payroll_slips(
                     "page_size": page_size
                 }),
                 "查询工资单成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询工资单失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询工资单失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询工资单失败")
         }
     }
 }

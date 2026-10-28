@@ -207,7 +207,7 @@ pub async fn list_job_openings(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -262,7 +262,7 @@ pub async fn list_job_openings(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -270,13 +270,11 @@ pub async fn list_job_openings(
                     "page_size": page_size
                 }),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询职位列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询职位列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询职位列表失败")
         }
     }
 }
@@ -289,13 +287,13 @@ pub async fn create_job_opening(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateJobOpeningRequest>,
-) -> Json<ApiResponse<JobOpening>> {
+) -> ApiResponse<JobOpening> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if req.title.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "职位标题不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -332,16 +330,14 @@ pub async fn create_job_opening(
 
     let (response, status_str, error_msg) = match &result {
         Ok(opening) => (
-            Json(ApiResponse::success(opening.clone(), "职位创建成功")),
+            ApiResponse::success(opening.clone(), "职位创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建职位失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建职位失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("创建职位失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -375,7 +371,7 @@ pub async fn create_job_opening(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -402,7 +398,7 @@ pub async fn get_job_opening(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<JobOpening>> {
+) -> ApiResponse<JobOpening> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, JobOpening>(
@@ -413,11 +409,11 @@ pub async fn get_job_opening(
     .await;
 
     match result {
-        Ok(Some(opening)) => Json(ApiResponse::success(opening, "查询成功")),
-        Ok(None) => Json(ApiResponse::<JobOpening>::not_found("职位不存在")),
+        Ok(Some(opening)) => ApiResponse::success(opening, "查询成功"),
+        Ok(None) => ApiResponse::<JobOpening>::not_found("职位不存在"),
         Err(e) => {
             tracing::error!("查询职位失败: {}", e);
-            Json(ApiResponse::<JobOpening>::server_error("查询职位失败"))
+            ApiResponse::<JobOpening>::server_error("查询职位失败")
         }
     }
 }
@@ -429,7 +425,7 @@ pub async fn update_job_opening(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateJobOpeningRequest>,
-) -> Json<ApiResponse<JobOpening>> {
+) -> ApiResponse<JobOpening> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -473,15 +469,15 @@ pub async fn update_job_opening(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(opening, "职位更新成功"))
+            ApiResponse::success(opening, "职位更新成功")
         }
-        Ok(None) => Json(ApiResponse::<JobOpening>::not_found("职位不存在")),
+        Ok(None) => ApiResponse::<JobOpening>::not_found("职位不存在"),
         Err(e) => {
             tracing::error!("更新职位失败: {}", e);
-            Json(ApiResponse::<JobOpening>::server_error("更新职位失败"))
+            ApiResponse::<JobOpening>::server_error("更新职位失败")
         }
     }
 }
@@ -493,7 +489,7 @@ pub async fn delete_job_opening(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(
@@ -505,23 +501,21 @@ pub async fn delete_job_opening(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success(id.to_string(), "职位已删除")),
+            ApiResponse::success(id.to_string(), "职位已删除"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            ApiResponse::from(TopemsError::ResourceNotFound(
                 "职位不存在或已发布".to_string(),
-            ))),
+            )),
             "error".to_string(),
             Some("职位不存在或已发布".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除职位失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "删除职位失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("删除职位失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -554,7 +548,7 @@ pub async fn delete_job_opening(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -581,7 +575,7 @@ pub async fn publish_job_opening(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<JobOpening>> {
+) -> ApiResponse<JobOpening> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -604,17 +598,15 @@ pub async fn publish_job_opening(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(opening, "职位已发布"))
+            ApiResponse::success(opening, "职位已发布")
         }
-        Ok(None) => Json(ApiResponse::<JobOpening>::not_found(
-            "职位不存在或状态不正确",
-        )),
+        Ok(None) => ApiResponse::<JobOpening>::not_found("职位不存在或状态不正确"),
         Err(e) => {
             tracing::error!("发布职位失败: {}", e);
-            Json(ApiResponse::<JobOpening>::server_error("发布职位失败"))
+            ApiResponse::<JobOpening>::server_error("发布职位失败")
         }
     }
 }
@@ -638,7 +630,7 @@ pub async fn close_job_opening(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<JobOpening>> {
+) -> ApiResponse<JobOpening> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -661,17 +653,15 @@ pub async fn close_job_opening(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(opening, "职位已关闭"))
+            ApiResponse::success(opening, "职位已关闭")
         }
-        Ok(None) => Json(ApiResponse::<JobOpening>::not_found(
-            "职位不存在或状态不正确",
-        )),
+        Ok(None) => ApiResponse::<JobOpening>::not_found("职位不存在或状态不正确"),
         Err(e) => {
             tracing::error!("关闭职位失败: {}", e);
-            Json(ApiResponse::<JobOpening>::server_error("关闭职位失败"))
+            ApiResponse::<JobOpening>::server_error("关闭职位失败")
         }
     }
 }
@@ -692,7 +682,7 @@ pub async fn list_candidates(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -742,7 +732,7 @@ pub async fn list_candidates(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -750,13 +740,11 @@ pub async fn list_candidates(
                     "page_size": page_size
                 }),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询候选人列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询候选人列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询候选人列表失败")
         }
     }
 }
@@ -769,13 +757,13 @@ pub async fn create_candidate(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateCandidateRequest>,
-) -> Json<ApiResponse<Candidate>> {
+) -> ApiResponse<Candidate> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if req.name.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "候选人姓名不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -809,16 +797,14 @@ pub async fn create_candidate(
 
     let (response, status_str, error_msg) = match &result {
         Ok(candidate) => (
-            Json(ApiResponse::success(candidate.clone(), "候选人添加成功")),
+            ApiResponse::success(candidate.clone(), "候选人添加成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("添加候选人失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "添加候选人失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("添加候选人失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -852,7 +838,7 @@ pub async fn create_candidate(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -879,7 +865,7 @@ pub async fn get_candidate(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Candidate>> {
+) -> ApiResponse<Candidate> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Candidate>(
@@ -890,11 +876,11 @@ pub async fn get_candidate(
     .await;
 
     match result {
-        Ok(Some(candidate)) => Json(ApiResponse::success(candidate, "查询成功")),
-        Ok(None) => Json(ApiResponse::<Candidate>::not_found("候选人不存在")),
+        Ok(Some(candidate)) => ApiResponse::success(candidate, "查询成功"),
+        Ok(None) => ApiResponse::<Candidate>::not_found("候选人不存在"),
         Err(e) => {
             tracing::error!("查询候选人失败: {}", e);
-            Json(ApiResponse::<Candidate>::server_error("查询候选人失败"))
+            ApiResponse::<Candidate>::server_error("查询候选人失败")
         }
     }
 }
@@ -906,7 +892,7 @@ pub async fn update_candidate(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateCandidateRequest>,
-) -> Json<ApiResponse<Candidate>> {
+) -> ApiResponse<Candidate> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -946,15 +932,15 @@ pub async fn update_candidate(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(candidate, "候选人信息更新成功"))
+            ApiResponse::success(candidate, "候选人信息更新成功")
         }
-        Ok(None) => Json(ApiResponse::<Candidate>::not_found("候选人不存在")),
+        Ok(None) => ApiResponse::<Candidate>::not_found("候选人不存在"),
         Err(e) => {
             tracing::error!("更新候选人失败: {}", e);
-            Json(ApiResponse::<Candidate>::server_error("更新候选人失败"))
+            ApiResponse::<Candidate>::server_error("更新候选人失败")
         }
     }
 }
@@ -966,7 +952,7 @@ pub async fn delete_candidate(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -979,23 +965,19 @@ pub async fn delete_candidate(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success(id.to_string(), "候选人已删除")),
+            ApiResponse::success(id.to_string(), "候选人已删除"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "候选人不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("候选人不存在".to_string())),
             "error".to_string(),
             Some("候选人不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除候选人失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "删除候选人失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("删除候选人失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -1028,7 +1010,7 @@ pub async fn delete_candidate(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -1052,7 +1034,7 @@ pub async fn list_interviews(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -1097,7 +1079,7 @@ pub async fn list_interviews(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -1105,13 +1087,11 @@ pub async fn list_interviews(
                     "page_size": page_size
                 }),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询面试列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询面试列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("查询面试列表失败")
         }
     }
 }
@@ -1123,7 +1103,7 @@ pub async fn create_interview(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateInterviewRequest>,
-) -> Json<ApiResponse<Interview>> {
+) -> ApiResponse<Interview> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
@@ -1160,14 +1140,14 @@ pub async fn create_interview(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(interview, "面试安排成功"))
+            ApiResponse::success(interview, "面试安排成功")
         }
         Err(e) => {
             tracing::error!("安排面试失败: {}", e);
-            Json(ApiResponse::<Interview>::server_error("安排面试失败"))
+            ApiResponse::<Interview>::server_error("安排面试失败")
         }
     }
 }
@@ -1191,7 +1171,7 @@ pub async fn get_interview(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Interview>> {
+) -> ApiResponse<Interview> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Interview>(
@@ -1202,11 +1182,11 @@ pub async fn get_interview(
     .await;
 
     match result {
-        Ok(Some(interview)) => Json(ApiResponse::success(interview, "查询成功")),
-        Ok(None) => Json(ApiResponse::<Interview>::not_found("面试不存在")),
+        Ok(Some(interview)) => ApiResponse::success(interview, "查询成功"),
+        Ok(None) => ApiResponse::<Interview>::not_found("面试不存在"),
         Err(e) => {
             tracing::error!("查询面试失败: {}", e);
-            Json(ApiResponse::<Interview>::server_error("查询面试失败"))
+            ApiResponse::<Interview>::server_error("查询面试失败")
         }
     }
 }
@@ -1218,7 +1198,7 @@ pub async fn update_interview(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateInterviewRequest>,
-) -> Json<ApiResponse<Interview>> {
+) -> ApiResponse<Interview> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -1260,15 +1240,15 @@ pub async fn update_interview(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(interview, "面试信息更新成功"))
+            ApiResponse::success(interview, "面试信息更新成功")
         }
-        Ok(None) => Json(ApiResponse::<Interview>::not_found("面试不存在")),
+        Ok(None) => ApiResponse::<Interview>::not_found("面试不存在"),
         Err(e) => {
             tracing::error!("更新面试失败: {}", e);
-            Json(ApiResponse::<Interview>::server_error("更新面试失败"))
+            ApiResponse::<Interview>::server_error("更新面试失败")
         }
     }
 }
@@ -1279,7 +1259,7 @@ pub async fn delete_interview(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -1295,14 +1275,14 @@ pub async fn delete_interview(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(id.to_string(), "面试已取消"))
+            ApiResponse::success(id.to_string(), "面试已取消")
         }
         Err(e) => {
             tracing::error!("取消面试失败: {}", e);
-            Json(ApiResponse::<String>::server_error("取消面试失败"))
+            ApiResponse::<String>::server_error("取消面试失败")
         }
     }
 }
@@ -1327,7 +1307,7 @@ pub async fn complete_interview(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateInterviewRequest>,
-) -> Json<ApiResponse<Interview>> {
+) -> ApiResponse<Interview> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -1360,17 +1340,15 @@ pub async fn complete_interview(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(interview, "面试已完成"))
+            ApiResponse::success(interview, "面试已完成")
         }
-        Ok(None) => Json(ApiResponse::<Interview>::not_found(
-            "面试不存在或状态不正确",
-        )),
+        Ok(None) => ApiResponse::<Interview>::not_found("面试不存在或状态不正确"),
         Err(e) => {
             tracing::error!("完成面试失败: {}", e);
-            Json(ApiResponse::<Interview>::server_error("完成面试失败"))
+            ApiResponse::<Interview>::server_error("完成面试失败")
         }
     }
 }

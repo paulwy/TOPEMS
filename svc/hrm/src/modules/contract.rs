@@ -51,12 +51,12 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_expiring_tail(
     State(_state): State<ApiState>,
     Path(tail): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     tracing::debug!(
         "HRM contracts expiring_tail called tail={}（忽略尾段，返回空集合）",
         tail
     );
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": [],
             "total": 0,
@@ -65,7 +65,7 @@ pub async fn list_expiring_tail(
             "days_threshold": 30
         }),
         "获取即将到期合同列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -90,7 +90,7 @@ pub async fn list_contracts(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -144,7 +144,7 @@ pub async fn list_contracts(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": contracts,
                     "total": total,
@@ -152,13 +152,11 @@ pub async fn list_contracts(
                     "page_size": page_size
                 }),
                 "获取合同列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取合同列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取合同列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取合同列表失败")
         }
     }
 }
@@ -180,7 +178,7 @@ pub async fn list_expiring_contracts(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let days = params.days.unwrap_or(30);
@@ -229,7 +227,7 @@ pub async fn list_expiring_contracts(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": contracts,
                     "total": total,
@@ -238,13 +236,11 @@ pub async fn list_expiring_contracts(
                     "days_threshold": days
                 }),
                 "获取即将到期合同列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取即将到期合同失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取即将到期合同失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取即将到期合同失败")
         }
     }
 }
@@ -279,19 +275,17 @@ pub async fn create_contract(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateContractRequest>,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "员工ID不能为空".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("员工ID不能为空".to_string()));
     }
 
     if req.contract_type.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "合同类型不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -314,11 +308,11 @@ pub async fn create_contract(
     let result = sqlx::query_as::<_, Contract>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.contracts (
-            id, tenant_id, organization_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
+            id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
             party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
             contract_file_path, reminder_days, status, notes, created_at, updated_at,
             contract_name, probation_end_date, currency, salary_type, work_location, department, position
-        ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'active', $16, $17, $18,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'active', $16, $17, $18,
                   $19, $20, $21, $22, $23, $24, $25)
         RETURNING id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name, party_a_contact,
                   party_b_name, party_b_contact, start_date::timestamptz AS start_date,
@@ -357,16 +351,14 @@ pub async fn create_contract(
 
     let (response, status_str, error_msg) = match &result {
         Ok(contract) => (
-            Json(ApiResponse::success(contract.clone(), "合同创建成功")),
+            ApiResponse::success(contract.clone(), "合同创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建合同失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "合同创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("合同创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -398,7 +390,7 @@ pub async fn create_contract(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -426,7 +418,7 @@ pub async fn get_contract(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Contract>(
@@ -461,20 +453,18 @@ pub async fn get_contract(
             .await
             .unwrap_or_default();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "contract": contract,
                     "renewals": renewals
                 }),
                 "获取合同成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::<serde_json::Value>::not_found("合同不存在")),
+        Ok(None) => ApiResponse::<serde_json::Value>::not_found("合同不存在"),
         Err(e) => {
             tracing::error!("获取合同失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取合同失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取合同失败")
         }
     }
 }
@@ -503,7 +493,7 @@ pub async fn update_contract(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateContractRequest>,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let contract_result = sqlx::query_as::<_, Contract>(
@@ -523,15 +513,9 @@ pub async fn update_contract(
     let _contract = match contract_result {
         Ok(Some(c)) => c,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "合同不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("合同不存在".to_string()))
         }
-        Err(_) => {
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询合同失败".to_string(),
-            )))
-        }
+        Err(_) => return ApiResponse::from(TopemsError::Internal("查询合同失败".to_string())),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -598,16 +582,14 @@ pub async fn update_contract(
 
     let (response, status_str, error_msg) = match &result {
         Ok(contract) => (
-            Json(ApiResponse::success(contract.clone(), "合同更新成功")),
+            ApiResponse::success(contract.clone(), "合同更新成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("更新合同失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "合同更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("合同更新失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -640,7 +622,7 @@ pub async fn update_contract(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -669,7 +651,7 @@ pub async fn delete_contract(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query(only_own_schema_query!(
@@ -682,23 +664,19 @@ pub async fn delete_contract(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "合同删除成功")),
+            ApiResponse::success("".to_string(), "合同删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "合同不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("合同不存在".to_string())),
             "error".to_string(),
             Some("合同不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除合同失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "合同删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("合同删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -731,7 +709,7 @@ pub async fn delete_contract(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -760,7 +738,7 @@ pub async fn create_renewal(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateRenewalRequest>,
-) -> Json<ApiResponse<ContractRenewal>> {
+) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let renewal_id = Uuid::new_v4();
@@ -801,16 +779,14 @@ pub async fn create_renewal(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(renewal, "续签申请提交成功"))
+            ApiResponse::success(renewal, "续签申请提交成功")
         }
         Err(e) => {
             tracing::error!("提交续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::server_error(
-                "提交续签申请失败",
-            ))
+            ApiResponse::<ContractRenewal>::server_error("提交续签申请失败")
         }
     }
 }
@@ -831,7 +807,7 @@ pub async fn list_renewals(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
@@ -878,7 +854,7 @@ pub async fn list_renewals(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": renewals,
                     "total": total,
@@ -886,13 +862,11 @@ pub async fn list_renewals(
                     "page_size": page_size
                 }),
                 "获取续签记录列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取续签记录失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取续签记录失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取续签记录失败")
         }
     }
 }
@@ -925,7 +899,7 @@ pub async fn get_renewal(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ContractRenewal>> {
+) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
@@ -942,13 +916,11 @@ pub async fn get_renewal(
     .await;
 
     match result {
-        Ok(Some(renewal)) => Json(ApiResponse::success(renewal, "获取续签记录成功")),
-        Ok(None) => Json(ApiResponse::<ContractRenewal>::not_found("续签记录不存在")),
+        Ok(Some(renewal)) => ApiResponse::success(renewal, "获取续签记录成功"),
+        Ok(None) => ApiResponse::<ContractRenewal>::not_found("续签记录不存在"),
         Err(e) => {
             tracing::error!("获取续签记录失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::server_error(
-                "获取续签记录失败",
-            ))
+            ApiResponse::<ContractRenewal>::server_error("获取续签记录失败")
         }
     }
 }
@@ -961,7 +933,7 @@ pub async fn update_renewal(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateRenewalRequest>,
-) -> Json<ApiResponse<ContractRenewal>> {
+) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -1006,19 +978,15 @@ pub async fn update_renewal(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(renewal, "续签申请更新成功"))
+            ApiResponse::success(renewal, "续签申请更新成功")
         }
-        Ok(None) => Json(ApiResponse::<ContractRenewal>::not_found(
-            "续签申请不存在或状态不正确",
-        )),
+        Ok(None) => ApiResponse::<ContractRenewal>::not_found("续签申请不存在或状态不正确"),
         Err(e) => {
             tracing::error!("更新续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::server_error(
-                "更新续签申请失败",
-            ))
+            ApiResponse::<ContractRenewal>::server_error("更新续签申请失败")
         }
     }
 }
@@ -1030,7 +998,7 @@ pub async fn delete_renewal(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -1055,17 +1023,15 @@ pub async fn delete_renewal(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("".to_string(), "续签申请已取消"))
+            ApiResponse::success("".to_string(), "续签申请已取消")
         }
-        Ok(_) => Json(ApiResponse::<String>::not_found(
-            "续签申请不存在或状态不正确",
-        )),
+        Ok(_) => ApiResponse::<String>::not_found("续签申请不存在或状态不正确"),
         Err(e) => {
             tracing::error!("取消续签申请失败: {}", e);
-            Json(ApiResponse::<String>::server_error("取消续签申请失败"))
+            ApiResponse::<String>::server_error("取消续签申请失败")
         }
     }
 }
@@ -1090,7 +1056,7 @@ pub async fn approve_renewal(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ContractRenewal>> {
+) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -1127,19 +1093,15 @@ pub async fn approve_renewal(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(renewal, "续签申请已批准"))
+            ApiResponse::success(renewal, "续签申请已批准")
         }
-        Ok(None) => Json(ApiResponse::<ContractRenewal>::not_found(
-            "续签申请不存在或状态不正确",
-        )),
+        Ok(None) => ApiResponse::<ContractRenewal>::not_found("续签申请不存在或状态不正确"),
         Err(e) => {
             tracing::error!("批准续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::server_error(
-                "批准续签申请失败",
-            ))
+            ApiResponse::<ContractRenewal>::server_error("批准续签申请失败")
         }
     }
 }
@@ -1165,7 +1127,7 @@ pub async fn reject_renewal(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<RejectRequest>,
-) -> Json<ApiResponse<ContractRenewal>> {
+) -> ApiResponse<ContractRenewal> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -1203,19 +1165,15 @@ pub async fn reject_renewal(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(renewal, "续签申请已拒绝"))
+            ApiResponse::success(renewal, "续签申请已拒绝")
         }
-        Ok(None) => Json(ApiResponse::<ContractRenewal>::not_found(
-            "续签申请不存在或状态不正确",
-        )),
+        Ok(None) => ApiResponse::<ContractRenewal>::not_found("续签申请不存在或状态不正确"),
         Err(e) => {
             tracing::error!("拒绝续签申请失败: {}", e);
-            Json(ApiResponse::<ContractRenewal>::server_error(
-                "拒绝续签申请失败",
-            ))
+            ApiResponse::<ContractRenewal>::server_error("拒绝续签申请失败")
         }
     }
 }
@@ -1245,7 +1203,7 @@ pub async fn execute_renewal(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -1276,24 +1234,21 @@ pub async fn execute_renewal(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            return Json(ApiResponse::<serde_json::Value>::not_found(
-                "续签记录不存在",
-            ));
+            return ApiResponse::<serde_json::Value>::not_found("续签记录不存在");
         }
         Err(e) => {
-            return Json(ApiResponse::<serde_json::Value>::from(
-                TopemsError::internal("查询续签记录失败", e),
+            return ApiResponse::<serde_json::Value>::from(TopemsError::internal(
+                "查询续签记录失败",
+                e,
             ))
         }
     };
 
     if renewal.status != "approved" {
-        return Json(ApiResponse::<serde_json::Value>::bad_request(
-            "续签申请未批准，无法执行",
-        ));
+        return ApiResponse::<serde_json::Value>::bad_request("续签申请未批准，无法执行");
     }
 
     let now = Utc::now();
@@ -1330,20 +1285,18 @@ pub async fn execute_renewal(
             .execute(&mut **txn)
             .await;
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "message": "合同续签执行成功",
                     "contract_id": renewal.contract_id,
                     "renewal_id": id
                 }),
                 "合同续签执行成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("执行合同续签失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "执行合同续签失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("执行合同续签失败")
         }
     }
 }

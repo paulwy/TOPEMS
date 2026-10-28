@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
-    Json, Router,
+    Router,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -38,12 +38,12 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn summary_tail(
     State(_state): State<ApiState>,
     Path(tail): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     tracing::debug!(
         "HRM reports summary_tail called with tail={}（忽略尾段，返回空结构）",
         tail
     );
-    Json(ApiResponse::success(serde_json::json!({}), "获取统计成功"))
+    ApiResponse::success(serde_json::json!({}), "获取统计成功")
 }
 
 #[derive(Debug, Deserialize)]
@@ -132,7 +132,7 @@ pub async fn employee_summary(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let _start_date = params.start_date.clone();
@@ -229,7 +229,7 @@ pub async fn employee_summary(
             Ok(avg_tenure),
             Ok(new_hires),
             Ok(terminations),
-        ) => Json(ApiResponse::success(
+        ) => ApiResponse::success(
             serde_json::json!({
                 "total_employees": total,
                 "active_employees": active,
@@ -241,12 +241,10 @@ pub async fn employee_summary(
                 "terminations_this_month": terminations,
             }),
             "获取员工统计成功",
-        )),
+        ),
         _ => {
             tracing::error!("获取员工统计失败");
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取员工统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取员工统计失败".to_string()))
         }
     }
 }
@@ -280,7 +278,7 @@ pub async fn department_summary(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, DepartmentSummaryRow>(only_own_schema_query!(
@@ -314,16 +312,14 @@ pub async fn department_summary(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "departments": data }),
                 "获取部门统计成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取部门统计失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取部门统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取部门统计失败".to_string()))
         }
     }
 }
@@ -353,7 +349,7 @@ pub async fn contract_summary(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
@@ -406,7 +402,7 @@ pub async fn contract_summary(
         expiring_next_month_result,
     ) {
         (Ok(total), Ok(active), Ok(expired), Ok(this_month), Ok(next_month)) => {
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "total_contracts": total,
                     "active_contracts": active,
@@ -415,13 +411,11 @@ pub async fn contract_summary(
                     "expiring_next_month": next_month,
                 }),
                 "获取合同统计成功",
-            ))
+            )
         }
         _ => {
             tracing::error!("获取合同统计失败");
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取合同统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取合同统计失败".to_string()))
         }
     }
 }
@@ -454,7 +448,7 @@ pub async fn training_summary(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let total_plans_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -521,7 +515,7 @@ pub async fn training_summary(
                 0.0
             };
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "total_plans": total_plans,
                     "active_plans": active_plans,
@@ -532,13 +526,11 @@ pub async fn training_summary(
                     "avg_completion_rate": avg_completion_rate.round(),
                 }),
                 "获取培训统计成功",
-            ))
+            )
         }
         _ => {
             tracing::error!("获取培训统计失败");
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取培训统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取培训统计失败".to_string()))
         }
     }
 }
@@ -568,7 +560,7 @@ pub async fn attendance_summary(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let (start_date, end_date) = params.get_date_range();
@@ -628,7 +620,7 @@ pub async fn attendance_summary(
                 0.0
             };
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "total_records": total,
                     "on_time_count": on_time,
@@ -640,13 +632,11 @@ pub async fn attendance_summary(
                     "end_date": end_date,
                 }),
                 "获取考勤统计成功",
-            ))
+            )
         }
         _ => {
             tracing::error!("获取考勤统计失败");
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取考勤统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取考勤统计失败".to_string()))
         }
     }
 }
@@ -678,7 +668,7 @@ pub async fn payroll_summary(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let _start_date = params.start_date.clone();
@@ -740,7 +730,7 @@ pub async fn payroll_summary(
             Ok(max_salary),
             Ok(employee_count),
             Ok(bonus_total),
-        ) => Json(ApiResponse::success(
+        ) => ApiResponse::success(
             serde_json::json!({
                 "total_payroll": total_payroll,
                 "avg_salary": avg_salary,
@@ -750,12 +740,10 @@ pub async fn payroll_summary(
                 "bonus_total": bonus_total,
             }),
             "获取薪资统计成功",
-        )),
+        ),
         _ => {
             tracing::error!("获取薪资统计失败");
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取薪资统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取薪资统计失败".to_string()))
         }
     }
 }

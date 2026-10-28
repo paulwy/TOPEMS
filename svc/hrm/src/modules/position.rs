@@ -116,7 +116,7 @@ pub async fn list_positions(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResult<Position>>> {
+) -> ApiResponse<PaginatedResult<Position>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PositionRead).await {
@@ -137,13 +137,13 @@ pub async fn list_positions(
 
     let result = sqlx::query_as::<_, Position>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, tenant_id, organization_id AS org_id, department_id,
+        SELECT id, tenant_id, org_id, department_id,
                CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
         FROM hrm.positions
         WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
           AND ($2::uuid IS NULL OR department_id = $2)
-          AND ($3::uuid IS NULL OR organization_id = $3)
+          AND ($3::uuid IS NULL OR org_id = $3)
           AND ($4::text IS NULL OR status = $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
@@ -166,7 +166,7 @@ pub async fn list_positions(
                 SELECT COUNT(*) FROM hrm.positions
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
                   AND ($2::uuid IS NULL OR department_id = $2)
-                  AND ($3::uuid IS NULL OR organization_id = $3)
+                  AND ($3::uuid IS NULL OR org_id = $3)
                   AND ($4::text IS NULL OR status = $4)
                 "#),
             )
@@ -179,17 +179,14 @@ pub async fn list_positions(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResult::new(items, total, pagination.page(), page_size),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询岗位列表失败: {}", e);
-            Json(ApiResponse::<PaginatedResult<Position>>::error(
-                500,
-                "查询岗位列表失败",
-            ))
+            ApiResponse::<PaginatedResult<Position>>::error(500, "查询岗位列表失败")
         }
     }
 }
@@ -216,7 +213,7 @@ pub async fn create_position(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreatePositionRequest>,
-) -> Json<ApiResponse<Position>> {
+) -> ApiResponse<Position> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PositionWrite).await {
@@ -224,9 +221,9 @@ pub async fn create_position(
         Err(e) => return e,
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "岗位名称不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -243,9 +240,9 @@ pub async fn create_position(
 
     let result = sqlx::query_as::<_, Position>(
         only_own_schema_query!("hrm", r#"
-        INSERT INTO hrm.positions (id, tenant_id, organization_id, department_id, name, code, level, salary_range_min, salary_range_max, description, requirements, status, created_at, updated_at, name_en)
+        INSERT INTO hrm.positions (id, tenant_id, org_id, department_id, name, code, level, salary_range_min, salary_range_max, description, requirements, status, created_at, updated_at, name_en)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13, $14)
-        RETURNING id, tenant_id, organization_id AS org_id, department_id,
+        RETURNING id, tenant_id, org_id, department_id,
                   CASE WHEN $15 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                   code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
         "#)
@@ -273,11 +270,11 @@ pub async fn create_position(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(position.clone(), "岗位创建成功")),
+                ApiResponse::success(position.clone(), "岗位创建成功"),
                 "success",
                 None,
             )
@@ -285,9 +282,7 @@ pub async fn create_position(
         Err(e) => {
             tracing::error!("创建岗位失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建岗位失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("创建岗位失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -342,7 +337,7 @@ pub async fn get_position(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Position>> {
+) -> ApiResponse<Position> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PositionRead).await {
@@ -351,7 +346,7 @@ pub async fn get_position(
     }
     let result = sqlx::query_as::<_, Position>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, tenant_id, organization_id AS org_id, department_id,
+        SELECT id, tenant_id, org_id, department_id,
                CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
         FROM hrm.positions WHERE deleted_at IS NULL AND id = $1
@@ -363,11 +358,11 @@ pub async fn get_position(
     .await;
 
     match result {
-        Ok(Some(position)) => Json(ApiResponse::success(position, "查询成功")),
-        Ok(None) => Json(ApiResponse::<Position>::not_found("岗位不存在")),
+        Ok(Some(position)) => ApiResponse::success(position, "查询成功"),
+        Ok(None) => ApiResponse::<Position>::not_found("岗位不存在"),
         Err(e) => {
             tracing::error!("查询岗位失败: {}", e);
-            Json(ApiResponse::<Position>::server_error("查询岗位失败"))
+            ApiResponse::<Position>::server_error("查询岗位失败")
         }
     }
 }
@@ -397,7 +392,7 @@ pub async fn update_position(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdatePositionRequest>,
-) -> Json<ApiResponse<Position>> {
+) -> ApiResponse<Position> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PositionWrite).await {
@@ -410,7 +405,7 @@ pub async fn update_position(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.positions
         SET
-            organization_id = COALESCE($1, organization_id),
+            org_id = COALESCE($1, org_id),
             department_id = COALESCE($2, department_id),
             name = COALESCE($3, name),
             code = COALESCE($4, code),
@@ -423,7 +418,7 @@ pub async fn update_position(
             updated_at = $11,
             name_en = COALESCE($13, name_en)
         WHERE id = $12
-        RETURNING id, tenant_id, organization_id AS org_id, department_id,
+        RETURNING id, tenant_id, org_id, department_id,
                   CASE WHEN $14 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                   code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
         "#)
@@ -450,15 +445,15 @@ pub async fn update_position(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(position, "岗位更新成功"))
+            ApiResponse::success(position, "岗位更新成功")
         }
-        Ok(None) => Json(ApiResponse::<Position>::not_found("岗位不存在")),
+        Ok(None) => ApiResponse::<Position>::not_found("岗位不存在"),
         Err(e) => {
             tracing::error!("更新岗位失败: {}", e);
-            Json(ApiResponse::<Position>::server_error("更新岗位失败"))
+            ApiResponse::<Position>::server_error("更新岗位失败")
         }
     }
 }
@@ -485,7 +480,7 @@ pub async fn delete_position(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::PositionWrite).await {
@@ -505,28 +500,24 @@ pub async fn delete_position(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(id.to_string(), "岗位删除成功")),
+                ApiResponse::success(id.to_string(), "岗位删除成功"),
                 "success".to_string(),
                 None,
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "岗位不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("岗位不存在".to_string())),
             "error".to_string(),
             Some("岗位不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除岗位失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "删除岗位失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("删除岗位失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )

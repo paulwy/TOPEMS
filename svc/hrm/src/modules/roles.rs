@@ -35,9 +35,9 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 /// GET /roles — 角色列表（集合类空列表兜底，待上游支持）
-pub async fn list_roles(State(_state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn list_roles(State(_state): State<ApiState>) -> ApiResponse<serde_json::Value> {
     // 待上游支持：角色资源落地后改为真实分页查询
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": [],
             "total": 0,
@@ -45,25 +45,25 @@ pub async fn list_roles(State(_state): State<ApiState>) -> Json<ApiResponse<serd
             "page_size": 20
         }),
         "查询成功",
-    ))
+    )
 }
 
 /// GET /roles/{id} — 角色详情（详情类：HTTP 200 + 内层 404）
 pub async fn get_role(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 待上游支持：角色资源落地后改为按 id 查询
-    Json(api_error(404, &format!("角色不存在: {id}")))
+    api_error(404, &format!("角色不存在: {id}"))
 }
 
 /// POST /roles — 创建角色（轻量兜底，不落地，待上游支持）
 pub async fn create_role(
     State(_state): State<ApiState>,
     Json(_body): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 待上游支持：角色资源落地后改为真实创建
-    Json(ApiResponse::success_no_data("角色创建已记录（待上游支持）"))
+    ApiResponse::success_no_data("角色创建已记录（待上游支持）")
 }
 
 /// PUT /roles/{id} — 更新角色（轻量兜底，不落地，待上游支持）
@@ -71,20 +71,16 @@ pub async fn update_role(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
     Json(_body): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 待上游支持：角色资源落地后改为真实更新
-    Json(ApiResponse::success_no_data(&format!(
-        "角色更新已记录（待上游支持）: {id}"
-    )))
+    ApiResponse::success_no_data(&format!("角色更新已记录（待上游支持）: {id}"))
 }
 
 /// DELETE /roles/{id} — 删除角色（轻量兜底，不落地，待上游支持）
 pub async fn delete_role(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 待上游支持：角色资源落地后改为真实删除
-    Json(ApiResponse::success_no_data(&format!(
-        "角色删除已记录（待上游支持）: {id}"
-    )))
+    ApiResponse::success_no_data(&format!("角色删除已记录（待上游支持）: {id}"))
 }
