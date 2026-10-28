@@ -75,8 +75,8 @@ async fn create_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -> uuid
     )
     .await;
     let data = resp
-        .0
         .data
+        .clone()
         .unwrap_or_else(|| panic!("create_tenant error: {:?}", resp.message));
     serde_json::to_value(data).unwrap()["id"]
         .as_str()
@@ -90,8 +90,8 @@ async fn list_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let resp = list_tenants(State(test_app_state(pool)), Query(empty_query())).await;
     let data = resp
-        .0
         .data
+        .clone()
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let value: Value = serde_json::to_value(data).unwrap();
     assert_eq!(value["total"], 0);
@@ -104,8 +104,8 @@ async fn create_and_list(pool: sqlx::PgPool) {
 
     let resp = list_tenants(State(test_app_state(pool.clone())), Query(empty_query())).await;
     let data = resp
-        .0
         .data
+        .clone()
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let value: Value = serde_json::to_value(data).unwrap();
     assert_eq!(value["total"], 1);
@@ -120,8 +120,8 @@ async fn get_by_id(pool: sqlx::PgPool) {
 
     let resp = get_tenant(State(test_app_state(pool)), Path(id)).await;
     let data = resp
-        .0
         .data
+        .clone()
         .unwrap_or_else(|| panic!("get_tenant error: {:?}", resp.message));
     let value: Value = serde_json::to_value(data).unwrap();
     assert_eq!(value["name"], "贝塔租户");
@@ -135,8 +135,8 @@ async fn get_by_code(pool: sqlx::PgPool) {
 
     let resp = get_tenant_by_code(State(test_app_state(pool)), Path("ten-gamma".to_string())).await;
     let data = resp
-        .0
         .data
+        .clone()
         .unwrap_or_else(|| panic!("get_tenant_by_code error: {:?}", resp.message));
     let value: Value = serde_json::to_value(data).unwrap();
     assert_eq!(value["code"], "ten-gamma");
@@ -152,8 +152,8 @@ async fn delete_removes(pool: sqlx::PgPool) {
 
     let resp = list_tenants(State(test_app_state(pool)), Query(empty_query())).await;
     let data = resp
-        .0
         .data
+        .clone()
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let value: Value = serde_json::to_value(data).unwrap();
     assert_eq!(value["total"], 0);
