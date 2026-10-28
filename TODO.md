@@ -5502,3 +5502,26 @@ P2（2-4 周后）
 
 ### 优先级
 P2（2-4 周后）
+
+---
+
+## topems.sh 脚本拆分排期（专门排期）
+
+### 目标
+将 4063 行的 topems.sh 按功能模块拆分。
+
+### 拆分策略
+- [ ] Step 1: 服务管理模块（start/stop/restart/status/logs）-> service.sh
+- [ ] Step 2: 编译模块（build/build-all/build-backend/build-frontend）-> build.sh
+- [ ] Step 3: 数据库模块（db start/stop/status/migrate/backup/restore）-> db.sh
+- [ ] Step 4: 部署模块（deploy/run/run-stop）-> deploy.sh
+- [ ] Step 5: 工具模块（doctor/clean/check）-> utils.sh
+- [ ] Step 6: 主脚本 topems.sh 只保留命令分发
+
+### 工作量
+- 总工作量：3d
+- 风险：中（需要测试所有命令）
+- 预期收益：可维护性提升
+
+### 优先级
+P2（2-4 周后）

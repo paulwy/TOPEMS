@@ -86,6 +86,23 @@ plugin-registry svc/plugin-registry    topems-plugin-registry  8096
 
 load_services_config
 
+# 加载模块
+if [ -f "$SCRIPT_DIR/service.sh" ]; then
+    source "$SCRIPT_DIR/service.sh"
+fi
+if [ -f "$SCRIPT_DIR/build.sh" ]; then
+    source "$SCRIPT_DIR/build.sh"
+fi
+if [ -f "$SCRIPT_DIR/db.sh" ]; then
+    source "$SCRIPT_DIR/db.sh"
+fi
+if [ -f "$SCRIPT_DIR/deploy.sh" ]; then
+    source "$SCRIPT_DIR/deploy.sh"
+fi
+if [ -f "$SCRIPT_DIR/utils.sh" ]; then
+    source "$SCRIPT_DIR/utils.sh"
+fi
+
 # 服务管理函数
 get_service_path() { echo "$SERVICES_CONFIG" | grep "^${1} " | awk '{print $2}'; }
 get_service_port() { echo "$SERVICES_CONFIG" | grep "^${1} " | awk '{print $4}'; }
@@ -1458,38 +1475,6 @@ get_service_description() {
     esac
 }
 
-# 检查并重启异常服务
-check_and_restart_services() {
-    info "检查服务状态并自动重启..."
-
-    local restarted=0
-    local running=0
-    local total=0
-
-    for service in $(get_all_services); do
-        total=$((total + 1))
-        local port
-        port=$(get_service_port "$service")
-        if check_port $port; then
-            running=$((running + 1))
-        else
-            warning "$service 未运行，自动重启..."
-            if start_service "$service" 2>/dev/null; then
-                restarted=$((restarted + 1))
-            else
-                error "$service 重启失败"
-            fi
-        fi
-    done
-
-    echo ""
-    if [ $restarted -eq 0 ]; then
-        success "所有服务运行正常 (${running}/${total})"
-    else
-        info "已重启 ${restarted} 个服务"
-    fi
-}
-
 # 等待核心服务就绪
 wait_for_core_services() {
     info "等待核心服务就绪..."
@@ -1513,143 +1498,6 @@ wait_for_core_services() {
         fi
     done
 }
-
-# 启动所有服务（V64 支持: --only-core / --no-frontend / --skip=<svc> / --register）
-start_all_services() {
-    _preflight_check "$@" || return 1
-    local -a extra_opts=("$@")
-    # 剥掉 --skip-preflight 避免透传给子函数
-    local -a filtered_opts=()
-    for opt in "${extra_opts[@]}"; do [ "$opt" != "--skip-preflight" ] && filtered_opts+=("$opt"); done
-    extra_opts=("${filtered_opts[@]}")
-    # V3xx SQLx 缓存新鲜度门禁：缓存与当前代码匹配才启动（--skip-sqlx-check 可跳过）
-    _check_sqlx_cache_freshness "${extra_opts[@]}" || return 1
-    info "启动所有服务..."
-    info "支持参数: --only-core --no-frontend --no-register --skip=<svc> --skip-sqlx-check --skip-preflight"
-    load_env
-
-    local only_core=0
-    local skip_fe=0
-    local no_register=0
-    local skip_packages=""
-    for opt in "${extra_opts[@]}"; do
-        case "$opt" in
-            --only-core)    only_core=1 ;;
-            --no-frontend)  skip_fe=1 ;;
-            --no-register)  no_register=1 ;;
-            --skip=*)       skip_packages="${skip_packages} ${opt#--skip=}" ;;
-        esac
-    done
-
-    local success_count=0
-    local fail_count=0
-    local register_failed_log="/tmp/topems-register-failed.log"
-    rm -f "$register_failed_log"
-
-    info "========== [1/3] 启动核心服务 (iam=unified-core) =========="
-    for service in $CORE_SERVICES; do
-        local skip_this=0
-        for s in $skip_packages; do
-            [ "$service" = "$s" ] && skip_this=1 && break
-        done
-        [ $skip_this -eq 1 ] && { warning "跳过 $service (--skip)"; continue; }
-
-        if start_service "$service"; then
-            success_count=$((success_count + 1))
-        else
-            fail_count=$((fail_count + 1))
-        fi
-    done
-
-    wait_for_core_services
-
-    # 核心服务启动后，主动等待 plugin-registry 注册接口就绪
-    if [ "$no_register" = "0" ]; then
-        info "等待 plugin-registry 注册接口就绪..."
-        if _wait_for_plugin_registry; then
-            success "plugin-registry 注册接口已就绪"
-        else
-            warning "plugin-registry 注册接口未就绪，注册将在服务启动后自动重试"
-        fi
-    fi
-
-    if [ "$only_core" = "1" ]; then
-        info "========== --only-core 指定，仅启动核心服务，退出 =========="
-    else
-        info "========== [2/3] 启动其他服务 =========="
-        local -a svc_start_order=()
-        for service in $(get_all_services); do
-            if echo "$CORE_SERVICES" | grep -wq "$service"; then
-                continue
-            fi
-            local skip_this=0
-            for s in $skip_packages; do
-                [ "$service" = "$s" ] && skip_this=1 && break
-            done
-            [ $skip_this -eq 1 ] && continue
-            svc_start_order+=("$service")
-        done
-
-        for service in "${svc_start_order[@]}"; do
-            if start_service "$service"; then
-                success_count=$((success_count + 1))
-            else
-                fail_count=$((fail_count + 1))
-            fi
-        done
-
-        # 全部服务启动后，统一重试注册失败的服务
-        if [ "$no_register" = "0" ] && [ -f "$register_failed_log" ] && [ -s "$register_failed_log" ]; then
-            local failed_count
-            failed_count=$(wc -l < "$register_failed_log" | tr -s ' ' | xargs)
-            echo ""
-            info "========== [2b/3] 重试注册失败的服务 ($failed_count 个) =========="
-            while IFS= read -r svc; do
-                [ -z "$svc" ] && continue
-                if register_plugin "$svc"; then
-                    success "$svc 重新注册成功"
-                else
-                    warning "$svc 重新注册仍失败"
-                fi
-            done < "$register_failed_log"
-        fi
-    fi
-
-    if [ $skip_fe -eq 1 ]; then
-        info "========== [3/3] 已指定 --no-frontend，跳过前端 =========="
-    else
-        info "========== [3/3] 启动前端 =========="
-        if start_frontend; then
-            success_count=$((success_count + 1))
-        else
-            fail_count=$((fail_count + 1))
-        fi
-    fi
-
-    echo ""
-    info "========== 启动汇总 =========="
-    info "成功: $success_count   失败: $fail_count"
-    info "查看日志: ls /tmp/topems-*.log"
-    info "健康检查: $0 status"
-    info "停止服务: $0 stop-all"
-
-    if [ $fail_count -eq 0 ]; then
-        success "所有服务启动完成 ($success_count 成功) ✅"
-    else
-        warning "服务启动完成 ($success_count 成功, $fail_count 失败)"
-    fi
-}
-
-# 停止所有服务
-stop_all_services() {
-    info "停止所有服务..."
-    for service in $(get_all_services); do
-        stop_service "$service" || true
-    done
-    stop_frontend || true
-    rm -f /tmp/topems-register-failed.log
-}
-
 # 启动开发环境（macOS）
 # shellcheck disable=SC2120
 start_dev_macos() {
