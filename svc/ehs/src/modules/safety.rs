@@ -184,45 +184,142 @@ pub struct UpdateInspectionRecordRequest {
 }
 
 pub async fn create_plan_item(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(plan_id): axum::extract::Path<String>,
+    axum::extract::Path(plan_id_str): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let plan_id = match uuid::Uuid::parse_str(&plan_id_str) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(ApiResponse::bad_request("plan_id 格式无效"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "id": uuid::Uuid::new_v4().to_string(),
-            "plan_id": plan_id,
-            "item_no": format!("ITM-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
-            "title": req.get("title").and_then(|v| v.as_str()).unwrap_or("检查项"),
-            "category": req.get("category").and_then(|v| v.as_str()).unwrap_or("general"),
-            "status": "active",
-            "tenant_id": tenant_id.to_string(),
-            "created_at": chrono::Utc::now().to_rfc3339(),
-        }),
-        "检查项创建成功",
-    ))
+    let tenant_id = resolve_inspection_tenant(&claims);
+
+    let item_no = req
+        .get("item_no")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| {
+            format!(
+                "ITM-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            )
+        });
+    let title = match req.get("title").and_then(|v| v.as_str()) {
+        Some(t) if !t.is_empty() => t.to_string(),
+        _ => {
+            return Json(ApiResponse::bad_request("title 不能为空"));
+        }
+    };
+    let category = req
+        .get("category")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let description = req
+        .get("description")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let standard = req
+        .get("standard")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let order_num: i32 = req
+        .get("order_num")
+        .and_then(|v| v.as_i64())
+        .and_then(|n| i32::try_from(n).ok())
+        .unwrap_or(0);
+
+    let result = sqlx::query(
+        "INSERT INTO ehs.qa_ehs_inspection_items \
+         (plan_id, item_no, title, category, description, standard, order_num, tenant_id) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) \
+         RETURNING id::text AS id, plan_id::text AS plan_id, item_no, title, category, \
+                   description, standard, order_num, created_at::text AS created_at, \
+                   updated_at::text AS updated_at, tenant_id::text AS tenant_id",
+    )
+    .bind(plan_id)
+    .bind(&item_no)
+    .bind(&title)
+    .bind(&category)
+    .bind(&description)
+    .bind(&standard)
+    .bind(order_num)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let obj: serde_json::Value = serde_json::json!({
+                "id": row.try_get::<String, _>("id").unwrap_or_default(),
+                "plan_id": row.try_get::<String, _>("plan_id").unwrap_or_default(),
+                "item_no": row.try_get::<String, _>("item_no").unwrap_or_default(),
+                "title": row.try_get::<String, _>("title").unwrap_or_default(),
+                "category": row.try_get::<Option<String>, _>("category").unwrap_or_default(),
+                "description": row.try_get::<Option<String>, _>("description").unwrap_or_default(),
+                "standard": row.try_get::<Option<String>, _>("standard").unwrap_or_default(),
+                "order_num": row.try_get::<i32, _>("order_num").unwrap_or(0),
+                "created_at": row.try_get::<String, _>("created_at").unwrap_or_default(),
+                "updated_at": row.try_get::<String, _>("updated_at").unwrap_or_default(),
+            });
+            Json(ApiResponse::success(obj, "检查项创建成功"))
+        }
+        Ok(None) => Json(ApiResponse::server_error("检查项创建失败")),
+        Err(e) => {
+            tracing::error!("Failed to create inspection plan item: {}", e);
+            Json(ApiResponse::server_error("检查项创建失败"))
+        }
+    }
 }
 
 pub async fn delete_plan_item(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path((_plan_id, item_id)): axum::extract::Path<(String, String)>,
+    axum::extract::Path((plan_id_str, item_id_str)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting inspection plan item: {}", item_id);
-    Json(ApiResponse::success((), "检查项删除成功"))
+    let plan_id = match uuid::Uuid::parse_str(&plan_id_str) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(ApiResponse::bad_request("plan_id 格式无效"));
+        }
+    };
+    let item_id = match uuid::Uuid::parse_str(&item_id_str) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(ApiResponse::bad_request("item_id 格式无效"));
+        }
+    };
+    let tenant_id = resolve_inspection_tenant(&claims);
+
+    let result = sqlx::query(
+        "UPDATE ehs.qa_ehs_inspection_items \
+         SET deleted_at = now() \
+         WHERE id = $1 AND plan_id = $2 AND deleted_at IS NULL \
+           AND ($3::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)",
+    )
+    .bind(item_id)
+    .bind(plan_id)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(pg_result) => {
+            if pg_result.rows_affected() == 0 {
+                Json(ApiResponse::not_found("检查项不存在或已删除"))
+            } else {
+                Json(ApiResponse::success((), "检查项删除成功"))
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to delete inspection plan item: {}", e);
+            Json(ApiResponse::server_error("检查项删除失败"))
+        }
+    }
 }
 
 /// POST /checks —— 页面创建安全检查记录（前端 safetyCheck.ts createCheck 契约）
