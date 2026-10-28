@@ -100,27 +100,3 @@ impl FolderService {
         Ok(result.rows_affected() > 0)
     }
 }
-
-pub async fn init_database(pool: &PgPool) -> Result<()> {
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS public.core_doc_folders (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id UUID NOT NULL,
-            name VARCHAR(200) NOT NULL,
-            parent_id UUID REFERENCES core_doc_folders(id),
-            description TEXT,
-            sort_order INTEGER DEFAULT 0,
-            is_enabled BOOLEAN DEFAULT true,
-            created_by VARCHAR(100),
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW(),
-                deleted_at TIMESTAMP
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(())
-}

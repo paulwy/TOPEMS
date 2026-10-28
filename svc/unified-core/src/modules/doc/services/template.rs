@@ -119,30 +119,3 @@ impl TemplateService {
         .await
     }
 }
-
-pub async fn init_database(pool: &PgPool) -> Result<()> {
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS public.core_doc_templates (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id UUID NOT NULL,
-            name VARCHAR(200) NOT NULL,
-            category VARCHAR(100),
-            description TEXT,
-            content TEXT NOT NULL,
-            content_type VARCHAR(50) DEFAULT 'html',
-            fields JSONB DEFAULT '[]',
-            is_enabled BOOLEAN DEFAULT true,
-            is_default BOOLEAN DEFAULT false,
-            created_by VARCHAR(100),
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            updated_at TIMESTAMPTZ DEFAULT NOW(),
-                deleted_at TIMESTAMP
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(())
-}
