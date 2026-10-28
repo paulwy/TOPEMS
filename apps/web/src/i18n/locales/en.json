@@ -324,7 +324,7 @@
     "dash_health_title": "System health",
     "dash_health_subtitle": "Service status monitoring",
     "dash_health_api_gateway": "API Gateway",
-    "dash_health_message_queue": "Message Queue",
+    "dash_health_message_queue": "Event Bus (Redis Stream)",
     "dash_health_database": "Database",
     "dash_health_cache": "Cache service",
     "dash_all_modules": "All modules",

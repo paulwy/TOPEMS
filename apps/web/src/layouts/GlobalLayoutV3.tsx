@@ -1,44 +1,19 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import type { LucideIcon } from 'lucide-react';
+import { Home, LayoutGrid } from 'lucide-react';
 import { AppShell } from '../components/redesign/layout/AppShell';
 import type { NavItem } from '../components/redesign/layout/SideRail';
 import { usePermission } from '../hooks/usePermission';
-import { MENU_PERMISSIONS } from '../config/menuPermissions';
 import {
   useUnreadNotificationCount,
   useSetUnreadNotificationCount,
 } from '@/store/notificationBadgeStore';
 import { getUnreadCount } from '@/api/notification';
-import {
-  AlertTriangle,
-  BarChart3,
-  BookOpen,
-  Box,
-  Boxes,
-  ClipboardList,
-  Beaker,
-  Clock,
-  Cpu,
-  DollarSign,
-  Factory,
-  FileText,
-  FlaskConical,
-  Handshake,
-  Home,
-  Layers,
-  Mail,
-  Map,
-  MessageSquare,
-  Package,
-  Settings,
-  ShieldCheck,
-  ShoppingCart,
-  Target,
-  TrendingDown,
-  TrendingUp,
-  Truck,
-  Users,
-} from 'lucide-react';
+import { navigationRegistryV2 } from '@/lib/navigation';
+import { lucideIcons } from '@/lib/iconMapping';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import i18n, { ensureNamespacesLoaded, subscribeResourceVersion, getResourceVersion } from '@/i18n';
 
 /**
  * GlobalLayoutV3 — Industrial OS 全局布局
@@ -57,800 +32,150 @@ export interface GlobalLayoutV3Props {
   fullWidth?: boolean;
 }
 
-// 导航项配置（与旧版 navigationRegistryV2 对齐，后续可从 registry 动态生成）
-const navItems: NavItem[] = [
-  { id: 'dashboard', label: 'shared.sidebar.dashboard', icon: Home, path: '/dashboard' },
-  {
-    id: 'mes',
-    label: 'shared.sidebar.mes',
-    icon: Factory,
-    path: '/mes/dashboard',
-    children: [
-      {
-        id: 'mes-dashboard',
-        label: 'shared.sidebar.mes_dashboard',
-        icon: BarChart3,
-        path: '/mes/dashboard',
-      },
-      {
-        id: 'mes-production-orders',
-        label: 'shared.sidebar.mes_production_orders',
-        icon: FileText,
-        path: '/mes/production-orders',
-      },
-      {
-        id: 'mes-work-orders',
-        label: 'shared.sidebar.mes_work_orders',
-        icon: ClipboardList,
-        path: '/mes/work-orders',
-      },
-      {
-        id: 'mes-equipment',
-        label: 'shared.sidebar.mes_equipment',
-        icon: Cpu,
-        path: '/mes/equipment',
-      },
-      {
-        id: 'mes-quality',
-        label: 'shared.sidebar.mes_quality',
-        icon: ShieldCheck,
-        path: '/mes/quality',
-      },
-      { id: 'mes-wip', label: 'shared.sidebar.mes_wip', icon: Box, path: '/mes/wip' },
-      {
-        id: 'mes-report',
-        label: 'shared.sidebar.mes_report',
-        icon: BarChart3,
-        path: '/mes/production-record',
-      },
-    ],
-  },
-  {
-    id: 'erp',
-    label: 'shared.sidebar.erp',
-    icon: Layers,
-    path: '/erp/dashboard',
-    children: [
-      {
-        id: 'erp-dashboard',
-        label: 'shared.sidebar.erp_dashboard',
-        icon: BarChart3,
-        path: '/erp/dashboard',
-      },
-      {
-        id: 'erp-purchase-order',
-        label: 'shared.sidebar.erp_purchase_order',
-        icon: ShoppingCart,
-        path: '/erp/purchase-order',
-      },
-      {
-        id: 'erp-sales-orders',
-        label: 'shared.sidebar.erp_sales_order',
-        icon: TrendingUp,
-        path: '/erp/sales-orders',
-      },
-      {
-        id: 'erp-inventory',
-        label: 'shared.sidebar.erp_inventory',
-        icon: Package,
-        path: '/erp/inventory-management',
-      },
-      {
-        id: 'erp-accounting',
-        label: 'shared.sidebar.erp_accounting',
-        icon: DollarSign,
-        path: '/erp/accounting-management',
-      },
-      {
-        id: 'erp-financial-report',
-        label: 'shared.sidebar.erp_financial_report',
-        icon: BarChart3,
-        path: '/erp/financial-report',
-      },
-      // 观察项：ERP 下曾误挂"人力资源"子项（指向 /hrm/dashboard，与主菜单 HRM 重复），已移除，
-      // 人力资源统一由顶层 hrm 菜单承载。
-    ],
-  },
-  {
-    id: 'scm',
-    label: 'shared.sidebar.scm',
-    icon: Truck,
-    path: '/scm/dashboard',
-    children: [
-      {
-        id: 'scm-dashboard',
-        label: 'shared.sidebar.scm_dashboard',
-        icon: BarChart3,
-        path: '/scm/dashboard',
-      },
-      {
-        id: 'scm-overview',
-        label: 'shared.sidebar.scm_overview',
-        icon: BarChart3,
-        path: '/scm/overview',
-      },
-      {
-        id: 'scm-suppliers',
-        label: 'shared.sidebar.scm_suppliers',
-        icon: Truck,
-        path: '/scm/suppliers',
-      },
-      {
-        id: 'scm-purchase-orders',
-        label: 'shared.sidebar.scm_purchase_orders',
-        icon: ShoppingCart,
-        path: '/scm/purchase-orders',
-      },
-      {
-        id: 'scm-purchase-requisition',
-        label: 'shared.sidebar.scm_purchase_requisition',
-        icon: FileText,
-        path: '/scm/purchase-requisition',
-      },
-      {
-        id: 'scm-contracts',
-        label: 'shared.sidebar.scm_contracts',
-        icon: FileText,
-        path: '/scm/contracts',
-      },
-      {
-        id: 'scm-mrp-plan',
-        label: 'shared.sidebar.scm_mrp_plan',
-        icon: Target,
-        path: '/scm/mrp-plan',
-      },
-      {
-        id: 'scm-price-comparison',
-        label: 'shared.sidebar.scm_price_comparison',
-        icon: TrendingUp,
-        path: '/scm/price-comparison',
-      },
-    ],
-  },
-  // S8: 补 SRM 模块入口（与 SCM 采购区分：供应商关系/招标寻源/合同协同）
-  {
-    id: 'srm',
-    label: 'shared.config.srm_name',
-    icon: Handshake,
-    path: '/srm/dashboard',
-    children: [
-      {
-        id: 'srm-dashboard',
-        label: 'shared.sidebar.srm_dashboard',
-        icon: BarChart3,
-        path: '/srm/dashboard',
-      },
-      {
-        id: 'srm-supplier',
-        label: 'shared.sidebar.srm_supplier',
-        icon: Users,
-        path: '/srm/supplier',
-      },
-      {
-        id: 'srm-bidding',
-        label: 'shared.sidebar.srm_bidding',
-        icon: FileText,
-        path: '/srm/bidding',
-      },
-      {
-        id: 'srm-contract',
-        label: 'shared.sidebar.srm_contract',
-        icon: ShoppingCart,
-        path: '/srm/contract',
-      },
-    ],
-  },
-  {
-    id: 'crm',
-    label: 'shared.sidebar.crm',
-    icon: Users,
-    path: '/crm/dashboard',
-    children: [
-      {
-        id: 'crm-dashboard',
-        label: 'shared.sidebar.crm_dashboard',
-        icon: BarChart3,
-        path: '/crm/dashboard',
-      },
-      {
-        id: 'crm-customers',
-        label: 'shared.sidebar.crm_customers',
-        icon: Users,
-        path: '/crm/customers',
-      },
-      {
-        id: 'crm-contacts',
-        label: 'shared.sidebar.crm_contacts',
-        icon: Users,
-        path: '/crm/contacts',
-      },
-      {
-        id: 'crm-opportunities',
-        label: 'shared.sidebar.crm_opportunities',
-        icon: Target,
-        path: '/crm/opportunities',
-      },
-      {
-        id: 'crm-interactions',
-        label: 'shared.sidebar.crm_interactions',
-        icon: FileText,
-        path: '/crm/interactions',
-      },
-    ],
-  },
-  {
-    id: 'qms',
-    label: 'shared.sidebar.qms',
-    icon: ShieldCheck,
-    path: '/qms/dashboard',
-    children: [
-      {
-        id: 'qms-dashboard',
-        label: 'shared.sidebar.qms_dashboard',
-        icon: BarChart3,
-        path: '/qms/dashboard',
-      },
-      {
-        id: 'qms-inspection',
-        label: 'shared.sidebar.qms_inspection',
-        icon: ShieldCheck,
-        path: '/qms/inspection',
-      },
-      {
-        id: 'qms-nonconformance',
-        label: 'shared.sidebar.qms_nonconformance',
-        icon: AlertTriangle,
-        path: '/qms/nonconformance',
-      },
-      { id: 'qms-eightd', label: 'shared.sidebar.qms_eightd', icon: FileText, path: '/qms/eightd' },
-      {
-        id: 'qms-audit',
-        label: 'shared.sidebar.qms_audit',
-        icon: FileText,
-        path: '/qms/audit-management',
-      },
-    ],
-  },
-  // S8: 补 EHS 模块入口（URL 直达此前已 200，菜单未注册）
-  {
-    id: 'ehs',
-    label: 'shared.config.ehs_name',
-    icon: ShieldCheck,
-    path: '/ehs/dashboard',
-    children: [
-      {
-        id: 'ehs-dashboard',
-        label: 'shared.sidebar.ehs_dashboard',
-        icon: BarChart3,
-        path: '/ehs/dashboard',
-      },
-      {
-        id: 'ehs-accident',
-        label: 'shared.sidebar.ehs_accident',
-        icon: AlertTriangle,
-        path: '/ehs/accident',
-      },
-      {
-        id: 'ehs-hazard',
-        label: 'shared.sidebar.ehs_hazard',
-        icon: ShieldCheck,
-        path: '/ehs/hazard',
-      },
-      {
-        id: 'ehs-training',
-        label: 'shared.sidebar.ehs_training',
-        icon: BookOpen,
-        path: '/ehs/training',
-      },
-    ],
-  },
-  // S8: 补 LIMS 模块入口
-  {
-    id: 'lims',
-    label: 'shared.config.lims_name',
-    icon: FlaskConical,
-    path: '/lims/dashboard',
-    children: [
-      {
-        id: 'lims-dashboard',
-        label: 'shared.sidebar.lims_dashboard',
-        icon: BarChart3,
-        path: '/lims/dashboard',
-      },
-      {
-        id: 'lims-sample',
-        label: 'shared.sidebar.lims_sample',
-        icon: Package,
-        path: '/lims/sample',
-      },
-      {
-        id: 'lims-task',
-        label: 'shared.sidebar.lims_task',
-        icon: ClipboardList,
-        path: '/lims/task',
-      },
-      {
-        id: 'lims-instrument',
-        label: 'shared.sidebar.lims_instrument',
-        icon: Cpu,
-        path: '/lims/instrument',
-      },
-    ],
-  },
-  {
-    id: 'wms',
-    label: 'shared.sidebar.wms',
-    icon: Box,
-    path: '/wms/dashboard',
-    children: [
-      {
-        id: 'wms-dashboard',
-        label: 'shared.sidebar.wms_dashboard',
-        icon: BarChart3,
-        path: '/wms/dashboard',
-      },
-      {
-        id: 'wms-inbound',
-        label: 'shared.sidebar.wms_inbound',
-        icon: Package,
-        path: '/wms/inbound-order',
-      },
-      {
-        id: 'wms-outbound',
-        label: 'shared.sidebar.wms_outbound',
-        icon: Package,
-        path: '/wms/outbound-order',
-      },
-      {
-        id: 'wms-inventory',
-        label: 'shared.sidebar.wms_inventory',
-        icon: Boxes,
-        path: '/wms/inventory',
-      },
-      {
-        id: 'wms-transfer',
-        label: 'shared.sidebar.wms_transfer',
-        icon: Truck,
-        path: '/wms/transfer',
-      },
-    ],
-  },
-  // S8: 补 TMS 模块入口
-  {
-    id: 'tms',
-    label: 'shared.config.tms_name',
-    icon: Truck,
-    path: '/tms/dashboard',
-    children: [
-      {
-        id: 'tms-dashboard',
-        label: 'shared.sidebar.tms_dashboard',
-        icon: BarChart3,
-        path: '/tms/dashboard',
-      },
-      {
-        id: 'tms-shipments',
-        label: 'shared.sidebar.tms_shipments',
-        icon: Truck,
-        path: '/tms/shipments',
-      },
-      {
-        id: 'tms-routes',
-        label: 'shared.sidebar.tms_routes',
-        icon: Map,
-        path: '/tms/routes',
-      },
-      {
-        id: 'tms-vehicles',
-        label: 'shared.sidebar.tms_vehicles',
-        icon: Box,
-        path: '/tms/vehicles',
-      },
-    ],
-  },
-  {
-    id: 'bi',
-    label: 'shared.sidebar.bi',
-    icon: BarChart3,
-    path: '/bi/dashboard',
-    children: [
-      {
-        id: 'bi-dashboard',
-        label: 'shared.sidebar.bi_dashboard',
-        icon: BarChart3,
-        path: '/bi/dashboard',
-      },
-      {
-        id: 'bi-analytics',
-        label: 'shared.sidebar.bi_analytics',
-        icon: TrendingUp,
-        path: '/bi/analytics',
-      },
-      {
-        id: 'bi-comparison',
-        label: 'shared.sidebar.bi_comparison',
-        icon: Target,
-        path: '/bi/comparison',
-      },
-      { id: 'bi-report', label: 'shared.sidebar.bi_report', icon: FileText, path: '/bi/report' },
-      {
-        id: 'bi-visualization',
-        label: 'shared.sidebar.bi_visualization',
-        icon: BarChart3,
-        path: '/bi/visualization',
-      },
-      {
-        id: 'bi-data-source',
-        label: 'shared.sidebar.bi_data_source',
-        icon: Package,
-        path: '/bi/data-source',
-      },
-      { id: 'bi-dataset', label: 'shared.sidebar.bi_dataset', icon: Boxes, path: '/bi/dataset' },
-    ],
-  },
-  {
-    id: 'gis',
-    label: 'shared.sidebar.gis',
-    icon: Map,
-    path: '/gis/dashboard',
-    children: [
-      {
-        id: 'gis-dashboard',
-        label: 'shared.sidebar.gis_dashboard',
-        icon: Map,
-        path: '/gis/dashboard',
-      },
-      { id: 'gis-map', label: 'shared.sidebar.gis_map', icon: Map, path: '/gis/map' },
-      {
-        id: 'gis-tracking',
-        label: 'shared.sidebar.gis_tracking',
-        icon: Truck,
-        path: '/gis/tracking',
-      },
-      { id: 'gis-fence', label: 'shared.sidebar.gis_fence', icon: ShieldCheck, path: '/gis/fence' },
-    ],
-  },
-  {
-    id: 'doc',
-    label: 'shared.sidebar.doc',
-    icon: FileText,
-    path: '/doc/dashboard',
-    children: [
-      {
-        id: 'doc-dashboard',
-        label: 'shared.sidebar.doc_dashboard',
-        icon: BarChart3,
-        path: '/doc/dashboard',
-      },
-      { id: 'doc-list', label: 'shared.sidebar.doc_list', icon: FileText, path: '/doc/list' },
-      {
-        id: 'doc-documents',
-        label: 'shared.sidebar.doc_documents',
-        icon: FileText,
-        path: '/doc/documents',
-      },
-      {
-        id: 'doc-knowledge',
-        label: 'shared.sidebar.doc_knowledge',
-        icon: BookOpen,
-        path: '/doc/knowledge-base',
-      },
-    ],
-  },
-  {
-    id: 'im',
-    label: 'shared.sidebar.im',
-    icon: MessageSquare,
-    // P5: 徽标由未读数 store 动态注入，无未读时不渲染（不再硬编码残留数字 3）
-    path: '/im/dashboard',
-    children: [
-      {
-        id: 'im-dashboard',
-        label: 'shared.sidebar.im_dashboard',
-        icon: BarChart3,
-        path: '/im/dashboard',
-      },
-      { id: 'im-mail', label: 'shared.sidebar.im_mail', icon: Mail, path: '/im/mail' },
-    ],
-  },
-  {
-    id: 'hrm',
-    label: 'shared.sidebar.hrm',
-    icon: Users,
-    path: '/hrm/dashboard',
-    children: [
-      {
-        id: 'hrm-dashboard',
-        label: 'shared.sidebar.hrm_dashboard',
-        icon: BarChart3,
-        path: '/hrm/dashboard',
-      },
-      {
-        id: 'hrm-employees',
-        label: 'shared.sidebar.hrm_employees',
-        icon: Users,
-        path: '/hrm/employees',
-      },
-      {
-        id: 'hrm-organization',
-        label: 'shared.sidebar.hrm_organization',
-        icon: Layers,
-        path: '/hrm/organization',
-      },
-      {
-        id: 'hrm-attendance',
-        label: 'shared.sidebar.hrm_attendance',
-        icon: Clock,
-        path: '/hrm/attendance',
-      },
-      {
-        id: 'hrm-payroll',
-        label: 'shared.sidebar.hrm_payroll',
-        icon: DollarSign,
-        path: '/hrm/payroll',
-      },
-      {
-        id: 'hrm-performance',
-        label: 'shared.sidebar.hrm_performance',
-        icon: Target,
-        path: '/hrm/performance',
-      },
-    ],
-  },
-  {
-    id: 'finance',
-    label: 'shared.sidebar.finance',
-    icon: DollarSign,
-    path: '/finance/dashboard',
-    children: [
-      {
-        id: 'finance-dashboard',
-        label: 'shared.sidebar.finance_dashboard',
-        icon: BarChart3,
-        path: '/finance/dashboard',
-      },
-      {
-        id: 'finance-ledger',
-        label: 'shared.sidebar.finance_ledger',
-        icon: BookOpen,
-        path: '/finance/ledger',
-      },
-      {
-        id: 'finance-vouchers',
-        label: 'shared.sidebar.finance_vouchers',
-        icon: FileText,
-        path: '/finance/vouchers',
-      },
-      {
-        id: 'finance-receivable',
-        label: 'shared.sidebar.finance_receivable',
-        icon: TrendingUp,
-        path: '/finance/receivable-payable',
-      },
-      {
-        id: 'finance-assets',
-        label: 'shared.sidebar.finance_assets',
-        icon: Package,
-        path: '/finance/assets',
-      },
-      {
-        id: 'finance-budget',
-        label: 'shared.sidebar.finance_budget',
-        icon: Target,
-        path: '/finance/budget',
-      },
-      {
-        id: 'finance-reports',
-        label: 'shared.sidebar.finance_reports',
-        icon: BarChart3,
-        path: '/finance/reports',
-      },
-    ],
-  },
-  {
-    id: 'admin',
-    label: 'shared.sidebar.admin',
-    icon: Settings,
-    path: '/admin/dashboard',
-    children: [
-      {
-        id: 'admin-dashboard',
-        label: 'shared.sidebar.admin_dashboard',
-        icon: BarChart3,
-        path: '/admin/dashboard',
-      },
-      {
-        id: 'admin-account',
-        label: 'shared.sidebar.admin_account',
-        icon: Users,
-        path: '/iam/user',
-      },
-      {
-        id: 'admin-permission',
-        label: 'shared.sidebar.admin_permission',
-        icon: ShieldCheck,
-        path: '/admin/permission-audit',
-      },
-      {
-        id: 'admin-audit-log',
-        label: 'shared.sidebar.admin_audit_log',
-        icon: FileText,
-        path: '/admin/audit-log',
-      },
-      {
-        id: 'admin-monitor',
-        label: 'shared.sidebar.admin_monitor',
-        icon: BarChart3,
-        path: '/admin/monitor',
-      },
-      {
-        id: 'admin-settings',
-        label: 'shared.sidebar.admin_settings',
-        icon: Settings,
-        path: '/admin/system-settings',
-      },
-    ],
-  },
-  {
-    id: 'pm',
-    label: 'shared.sidebar.pm',
-    icon: ClipboardList,
-    path: '/pm/dashboard',
-    children: [
-      {
-        id: 'pm-dashboard',
-        label: 'shared.sidebar.pm_dashboard',
-        icon: BarChart3,
-        path: '/pm/dashboard',
-      },
-      {
-        id: 'pm-projects',
-        label: 'shared.sidebar.pm_projects',
-        icon: ClipboardList,
-        path: '/pm/projects',
-      },
-      {
-        id: 'pm-tasks',
-        label: 'shared.sidebar.pm_tasks',
-        icon: ClipboardList,
-        path: '/pm/task-kanban',
-      },
-      {
-        id: 'pm-timeline',
-        label: 'shared.sidebar.pm_timeline',
-        icon: TrendingUp,
-        path: '/pm/timeline',
-      },
-      {
-        id: 'pm-contracts',
-        label: 'shared.sidebar.pm_contracts',
-        icon: FileText,
-        path: '/pm/contracts',
-      },
-      {
-        id: 'pm-resources',
-        label: 'shared.sidebar.pm_resources',
-        icon: Users,
-        path: '/pm/resources',
-      },
-    ],
-  },
-  // S8: 补 RD（研发管理）模块入口
-  {
-    id: 'rd',
-    label: 'shared.config.rd_name',
-    icon: Beaker,
-    path: '/rd/dashboard',
-    children: [
-      {
-        id: 'rd-dashboard',
-        label: 'shared.sidebar.rd_dashboard',
-        icon: BarChart3,
-        path: '/rd/dashboard',
-      },
-      {
-        id: 'rd-project',
-        label: 'shared.sidebar.rd_project',
-        icon: ClipboardList,
-        path: '/rd/project',
-      },
-      {
-        id: 'rd-experiment',
-        label: 'shared.sidebar.rd_experiment',
-        icon: FlaskConical,
-        path: '/rd/experiment',
-      },
-      {
-        id: 'rd-formula',
-        label: 'shared.sidebar.rd_formula',
-        icon: Beaker,
-        path: '/rd/formula',
-      },
-    ],
-  },
-  {
-    id: 'asset',
-    label: 'shared.sidebar.asset',
-    icon: Package,
-    path: '/asset/dashboard',
-    children: [
-      {
-        id: 'asset-dashboard',
-        label: 'shared.sidebar.asset_dashboard',
-        icon: BarChart3,
-        path: '/asset/dashboard',
-      },
-      { id: 'asset-list', label: 'shared.sidebar.asset_list', icon: Package, path: '/asset/list' },
-      {
-        id: 'asset-categories',
-        label: 'shared.sidebar.asset_categories',
-        icon: Layers,
-        path: '/asset/categories',
-      },
-      {
-        id: 'asset-depreciation',
-        label: 'shared.sidebar.asset_depreciation',
-        icon: TrendingDown,
-        path: '/asset/depreciation',
-      },
-      {
-        id: 'asset-transfers',
-        label: 'shared.sidebar.asset_transfers',
-        icon: Truck,
-        path: '/asset/transfers',
-      },
-    ],
-  },
-  {
-    id: 'pdm',
-    label: 'shared.sidebar.pdm',
-    icon: Boxes,
-    path: '/pdm/dashboard',
-    children: [
-      {
-        id: 'pdm-dashboard',
-        label: 'shared.sidebar.pdm_dashboard',
-        icon: BarChart3,
-        path: '/pdm/dashboard',
-      },
-      {
-        id: 'pdm-product',
-        label: 'shared.sidebar.pdm_product',
-        icon: Package,
-        path: '/pdm/product',
-      },
-      {
-        id: 'pdm-material',
-        label: 'shared.sidebar.pdm_material',
-        icon: Package,
-        path: '/pdm/material',
-      },
-      { id: 'pdm-bom', label: 'shared.sidebar.pdm_bom', icon: Layers, path: '/pdm/bom' },
-      { id: 'pdm-process', label: 'shared.sidebar.pdm_process', icon: Cpu, path: '/pdm/process' },
-      {
-        id: 'pdm-change',
-        label: 'shared.sidebar.pdm_change',
-        icon: TrendingUp,
-        path: '/pdm/change',
-      },
-    ],
-  },
+/**
+ * 顶栏模块展示顺序：仅用于稳定排序，不决定菜单内容。
+ * 菜单内容、权限、图标、路径均来自 navigationRegistryV2，新增模块会自动出现。
+ */
+const MODULE_ORDER: readonly string[] = [
+  'mes',
+  'erp',
+  'scm',
+  'srm',
+  'crm',
+  'qms',
+  'ehs',
+  'lims',
+  'wms',
+  'tms',
+  'bi',
+  'gis',
+  'doc',
+  'im',
+  'notification',
+  'oa',
+  'workflow',
+  'ticket',
+  'hrm',
+  'finance',
+  'admin',
+  'pm',
+  'rd',
+  'asset',
+  'pdm',
+  'aps',
+  'ai',
+  'automation',
+  'integration',
+  'monitor',
+  'report',
+  'master',
+  'iam',
+  'plugin',
+  'mobile',
 ];
+
+const MODULE_ORDER_INDEX = new Map(MODULE_ORDER.map((code, index) => [code, index]));
+
+/** 图标名 → Lucide 组件；未知图标统一回退为 LayoutGrid，避免渲染崩溃 */
+function resolveIcon(iconName?: string): LucideIcon {
+  const icon = iconName ? lucideIcons[iconName] : null;
+  return (icon as LucideIcon | null) ?? LayoutGrid;
+}
+
+/** 订阅 i18n 资源版本，命名空间异步注入后重新生成菜单文案 */
+function useI18nResourceVersion(): number {
+  return useSyncExternalStore(subscribeResourceVersion, getResourceVersion);
+}
+
+/**
+ * 由导航注册表动态生成侧边栏菜单。
+ * 模块级权限由 getTopNavItems 过滤；子项权限由 getSidebarNavItems 过滤。
+ * 配置了子菜单但用户无任何子项权限时隐藏整组（与旧版权限过滤行为一致）。
+ */
+function buildSidebarItems(
+  checkPermission: (permission: string) => boolean,
+  unreadCount: number
+): NavItem[] {
+  const registryItems = navigationRegistryV2
+    .getTopNavItems(checkPermission)
+    .slice()
+    .sort((a, b) => {
+      const orderA = MODULE_ORDER_INDEX.get(a.code) ?? Number.MAX_SAFE_INTEGER;
+      const orderB = MODULE_ORDER_INDEX.get(b.code) ?? Number.MAX_SAFE_INTEGER;
+      if (orderA !== orderB) return orderA - orderB;
+      if ((a.order || 0) !== (b.order || 0)) return (a.order || 0) - (b.order || 0);
+      return a.code.localeCompare(b.code);
+    });
+
+  const items: NavItem[] = [
+    {
+      id: 'dashboard',
+      label: i18n.t('shared.sidebar.dashboard'),
+      icon: Home,
+      path: '/dashboard',
+    },
+  ];
+
+  for (const moduleItem of registryItems) {
+    const moduleConfig = navigationRegistryV2.getModule(moduleItem.code);
+    const configuredChildren = (moduleConfig?.navItems ?? []).filter(
+      (item) => item.showInSidebar !== false
+    );
+    const children = navigationRegistryV2
+      .getSidebarNavItems(moduleItem.code, checkPermission)
+      .map<NavItem>((child) => ({
+        id: `${moduleItem.code}:${child.code}`,
+        label: child.labelKey ? i18n.t(child.labelKey) : child.label,
+        icon: resolveIcon(child.icon),
+        path: child.path,
+      }));
+
+    // 配置了二级菜单但全部被权限过滤掉：不展示空组
+    if (configuredChildren.length > 0 && children.length === 0) {
+      continue;
+    }
+
+    items.push({
+      id: moduleItem.code,
+      label: moduleItem.labelKey ? i18n.t(moduleItem.labelKey) : moduleItem.label,
+      icon: resolveIcon(moduleItem.icon),
+      path: moduleItem.path,
+      badge: moduleItem.code === 'notification' && unreadCount > 0 ? unreadCount : undefined,
+      children: children.length > 0 ? children : undefined,
+    });
+  }
+
+  return items;
+}
 
 // 底部菜单项已移除：系统设置在左侧"系统管理"二级菜单，个人中心在右上角头像下拉菜单
 const footerItems: NavItem[] = [];
-
-// 路径到导航项 ID 的映射
 
 export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWidth = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
   // P1-4 前端权限守卫：侧边栏菜单按权限过滤（无权限的模块组/入口不展示）
   const { checkPermission } = usePermission();
+  const resourceVersion = useI18nResourceVersion();
 
   // P5: 未读数轮询写入 store，消息中心徽标实时跟随；无未读时徽标自动隐藏
   const unreadCount = useUnreadNotificationCount();
   const setUnread = useSetUnreadNotificationCount();
+
+  // 侧边栏会一次性展示全部模块，预先加载其导航文案命名空间，避免未访问模块
+  // 的菜单名显示成原始 i18n key（如 mes.nav.module_name）
+  useEffect(() => {
+    const namespaces = new Set<string>();
+    navigationRegistryV2.getAllModules().forEach((module) => {
+      const keys = [module.nameKey, ...module.navItems.map((item) => item.labelKey)];
+      keys.forEach((key) => {
+        const namespace = key?.split('.')[0];
+        if (namespace) namespaces.add(namespace);
+      });
+    });
+    void ensureNamespacesLoaded([...namespaces]).catch(() => undefined);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const refresh = async () => {
@@ -871,48 +196,24 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
     };
   }, [setUnread]);
 
-  // 将未读数注入消息中心菜单项徽标，0/undefined 时不展示；
-  // P1-4：菜单按权限过滤（无权限映射的 path 恒显示；有映射而用户无权限则整组/项隐藏；
-  // 叶子级：children 逐项过滤，可见子项为 0 时隐藏整组）
+  // 菜单内容完全由 navigationRegistryV2 动态生成：
+  // P1-4：模块/子项权限均在 registry 查询时过滤；未读数注入 notification 组徽标
   const items = useMemo<NavItem[]>(
-    () =>
-      navItems
-        .map((item) => {
-          if (item.children && item.children.length > 0) {
-            const visibleChildren = item.children.filter(
-              (child) =>
-                !child.path ||
-                !MENU_PERMISSIONS[child.path] ||
-                checkPermission(MENU_PERMISSIONS[child.path])
-            );
-            return visibleChildren.length > 0 ? { ...item, children: visibleChildren } : null;
-          }
-          return item;
-        })
-        .filter((item): item is NavItem => item !== null)
-        .filter(
-          (item) =>
-            !item.path ||
-            !MENU_PERMISSIONS[item.path] ||
-            checkPermission(MENU_PERMISSIONS[item.path])
-        )
-        .map((item) =>
-          item.id === 'im' ? { ...item, badge: unreadCount > 0 ? unreadCount : undefined } : item
-        ),
-    [unreadCount, checkPermission]
+    () => buildSidebarItems(checkPermission, unreadCount),
+    // resourceVersion 变化代表模块命名空间翻译已异步注入，需要重新解析 label
+    [checkPermission, unreadCount, resourceVersion]
   );
 
-  // 根据当前路径计算激活的导航项（支持子菜单）
+  // 根据当前路径计算激活的导航项（优先匹配子菜单，再匹配模块组）
   const activeId = useMemo(() => {
-    // 扁平化所有菜单项（包括子菜单）
     const allItems: { id: string; path?: string }[] = [];
-    navItems.forEach((item) => {
-      allItems.push({ id: item.id, path: item.path });
+    items.forEach((item) => {
       if (item.children) {
         item.children.forEach((child) => {
           allItems.push({ id: child.id, path: child.path });
         });
       }
+      allItems.push({ id: item.id, path: item.path });
     });
 
     // 精确匹配
@@ -929,12 +230,12 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
     }
 
     return 'dashboard';
-  }, [location.pathname]);
+  }, [items, location.pathname]);
 
   const handleItemClick = (id: string) => {
     // 扁平化所有菜单项，查找对应的 path
     const allItems: { id: string; path?: string }[] = [];
-    navItems.forEach((item) => {
+    items.forEach((item) => {
       allItems.push({ id: item.id, path: item.path });
       if (item.children) {
         item.children.forEach((child) => {
@@ -954,7 +255,7 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   };
 
   const handleNotificationsOpen = () => {
-    navigate('/im');
+    navigate(NOTIFICATION_PATHS.list);
   };
 
   const handleSettingsOpen = () => {

@@ -23,7 +23,7 @@ const MailPage: React.FC = () => {
 
   return (
     <MasterDetailPageTemplate
-      title={t('im.index.k0')}
+      title={t('im.mail_page_index.e1')}
       subtitle={t('im.mail_page_index.e2')}
       loading={m.loading}
       items={[]}
