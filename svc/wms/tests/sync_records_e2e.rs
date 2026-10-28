@@ -70,8 +70,7 @@ async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
         Query(params),
     )
     .await;
-    resp
-        .data
+    resp.data
         .clone()
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message))
 }

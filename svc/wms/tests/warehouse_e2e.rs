@@ -175,10 +175,7 @@ async fn update_warehouse_changes_name(pool: sqlx::PgPool) {
     )
     .await;
     assert_eq!(got.data.as_ref().unwrap().name, "新仓");
-    assert_eq!(
-        got.data.as_ref().unwrap().address.as_deref(),
-        Some("新址")
-    );
+    assert_eq!(got.data.as_ref().unwrap().address.as_deref(), Some("新址"));
 }
 
 #[sqlx::test(migrations = false)]

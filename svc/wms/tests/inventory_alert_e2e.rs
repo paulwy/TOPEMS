@@ -98,8 +98,7 @@ async fn body_of(pool: sqlx::PgPool, alert_type: Option<String>) -> Value {
         Extension(txn_arc),
     )
     .await;
-    resp
-        .data
+    resp.data
         .clone()
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message))
 }

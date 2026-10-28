@@ -139,7 +139,10 @@ async fn probe_redis_streams() -> (String, String, String) {
             };
             (
                 status.to_string(),
-                format!("Redis Stream · {} 个事件流 · {}ms", stream_count, elapsed_ms),
+                format!(
+                    "Redis Stream · {} 个事件流 · {}ms",
+                    stream_count, elapsed_ms
+                ),
                 detail,
             )
         }

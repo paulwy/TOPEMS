@@ -74,8 +74,7 @@ async fn body_of(pool: sqlx::PgPool, warehouse_id: Option<uuid::Uuid>) -> ListRe
         Extension(txn_arc),
     )
     .await;
-    resp
-        .data
+    resp.data
         .clone()
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.message))
 }
