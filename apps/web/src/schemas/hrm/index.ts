@@ -10,4 +10,3 @@ export { salaryAdjustmentSchema } from './salaryAdjustment';
 export { positionSchema } from './position';
 export { payrollSchema } from './payroll';
 export { contractSchema } from './contract';
-export { attendanceSchema } from './attendance';
