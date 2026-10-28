@@ -905,9 +905,9 @@ pub async fn update_flow_step(
             sequence = COALESCE($1::int4, sequence),
             work_station_id = COALESCE($2::uuid, work_station_id),
             equipment_ids = COALESCE($3::uuid[], equipment_ids),
-            standard_time = COALESCE($4::int4, standard_time),
-            wait_time = COALESCE($5::int4, wait_time),
-            transfer_time = COALESCE($6::int4, transfer_time),
+            standard_time = COALESCE($4::float8, standard_time),
+            wait_time = COALESCE($5::float8, wait_time),
+            transfer_time = COALESCE(NULLIF($6, ''), transfer_time),
             quality_check_required = COALESCE($7, quality_check_required),
             description = COALESCE($8, description)
         WHERE id = $9

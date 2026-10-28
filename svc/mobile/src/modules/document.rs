@@ -59,11 +59,19 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             url TEXT NOT NULL DEFAULT '',
             status VARCHAR(32) NOT NULL DEFAULT 'draft',
             author_id UUID,
+            tenant_id UUID,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             deleted_at TIMESTAMPTZ
         )
         "#
+    ))
+    .execute(pool)
+    .await?;
+    // 存量库自愈：早期建表语句缺 tenant_id（查询/写入均引用），补列对齐
+    sqlx::query(only_own_schema_query!(
+        "mobile",
+        "ALTER TABLE mobile.documents ADD COLUMN IF NOT EXISTS tenant_id UUID"
     ))
     .execute(pool)
     .await?;
