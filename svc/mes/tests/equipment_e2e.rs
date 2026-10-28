@@ -60,9 +60,9 @@ async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
     let q: ListEquipmentQuery = serde_json::from_value(query).unwrap();
     let resp = list_equipment(State(state), Extension(claims), Query(q)).await;
     serde_json::to_value(
-        resp.0
+        resp
             .data
-            .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message)),
+            .unwrap_or_else(|| panic!("handler error: {:?}", resp.message)),
     )
     .unwrap()
 }

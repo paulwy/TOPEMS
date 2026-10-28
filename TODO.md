@@ -5365,6 +5365,13 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ## 第五十轮（2026-10-28）：process_name 租户维度唯一索引 + 409 语义 ✅
 ## 第五十一轮（2026-10-28）：iam 台账残留治理 → public 单一台账 ✅
 ## 第五十二轮（2026-10-28）：空库重建一致性验证（v69 删 organization_id vs 代码 INSERT）✅
+## 第五十三轮（2026-10-28）：S25 批量语义治理（svc/mes 全模块 envelope→HTTP 对齐）✅
+- **批量改造**：svc/mes 全模块（含 quality_management/、material_bom/ 子目录）handler 去 `Json(...)` 包装——返回 `ApiResponse<T>`（其 IntoResponse 已按 envelope code 映射 HTTP：0→200/400/401/403/404/409/422/500）；共 **791 处调用 + 278 处签名**（脚本机械替换 + 括号平衡修正，跳过字符串/注释）；`check_permission` 返回 `Result<(), ApiResponse<T>>`（map_err 解构 `e.0`），早退无需类型标注。
+- **网关收口**：移除 mes_real_module.rs `normalize_business_not_found` 中间件（历史「业务 404→HTTP 200」兼容层，S25 后使命已尽；真实路由缺失 catch-all 保持 404）。
+- **契约演进**：web_contract_smoke.py 判定更新——业务 404（body.code==404 且 message 非「接口不存在，请检查路径」）→ PASS；仅空体/BFF catch-all 404 → route_missing FAIL（mobile 脚本原有「空体区分」逻辑已兼容）。
+- **实机验证**：业务 404→HTTP 404（原 200）；重复名→HTTP 409；非法 UUID→HTTP 400；路由缺失→HTTP 404 保持。clippy（server+mes）deny 全过、lib 370 全绿。
+- **遗留（下一轮范围）**：契约冒烟 66 FAIL 全为 unified-core/flow 模块（workflow/monitor 等）http=200 body=500 错位——既有未治理形态，待批量化治理（「等模块」续项）。
+
 - **问题**：v69_unify_organization_id Part C 在空库全量重放时 DROP 有 tenant_id 表的 organization_id（含 mes.production_processes）→ 代码 create_process INSERT 此前写 organization_id 列 → 空库重建后创建工序必 500。
 - **修复**：① 代码 INSERT 去掉 organization_id 列（tenant_id 承担租户隔离，bind 不变：$9 由双用变单用）；② 迁移 `20261028060000_mes_production_processes_org_id_nullable.sql` 存量库 organization_id 改可空（DO 块条件：空库列不存在时跳过，幂等）——保证存量库（可空）与空库（无列）双路径 INSERT 均成功。
 - **双路径实机验证**：① 存量库（organization_id 可空）：创建工序 → 200 + process_no（INSERT 无该列）；② 空库模拟（事务内 DROP organization_id 后跑代码同款 INSERT SQL）→ INSERT 0 1 成功 → ROLLBACK 还原列；探针行已清理；validate.sh Errors 0（checksums 重生成）；svc/mes lib 370 全绿、clippy deny 过。

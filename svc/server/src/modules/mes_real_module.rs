@@ -9,11 +9,6 @@
 #![cfg(feature = "module-mes")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use axum::body::Body;
-use axum::extract::Request;
-use axum::http::StatusCode;
-use axum::middleware::Next;
-use axum::response::Response;
 use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
@@ -31,41 +26,6 @@ pub struct MesRealModule {
     routes: Router,
     db: sqlx::PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
-}
-
-/// APS/MES 业务"不存在"响应归一化。
-///
-/// 背景：/api/aps/material-plans/{id} 经 aps_compat 308 重定向到 /api/mes/material-plans/{id}，
-/// 而 mes 的 material_plan handler 对 RowNotFound 返回 `Err((StatusCode::NOT_FOUND, Json(..)))`
-/// （HTTP 404），与前端契约"HTTP 200 + 内层 code=404"（同 service 的 production_plan 已如此）
-/// 不一致，被前后端契约冒烟判为"路由缺失"。
-/// 此处不改 svc/mes（禁改），在网关层把业务 404（JSON body.code==404 且非 BFF catch-all）
-/// 的 HTTP 状态码改写为 200；真实路由缺失（空体 / BFF "接口不存在，请检查路径"）保持 404。
-async fn normalize_business_not_found(req: Request, next: Next) -> Response {
-    let resp = next.run(req).await;
-    if resp.status() != StatusCode::NOT_FOUND {
-        return resp;
-    }
-    let (parts, body) = resp.into_parts();
-    // 仅 404 响应才缓冲，体积极小；1MiB 上限足够，超限则原样返回。
-    let bytes = match axum::body::to_bytes(body, 1 << 20).await {
-        Ok(b) => b,
-        Err(_) => return Response::from_parts(parts, Body::empty()),
-    };
-    let is_business_404 = serde_json::from_slice::<serde_json::Value>(&bytes)
-        .ok()
-        .map(|v| {
-            v.get("code").and_then(|c| c.as_i64()) == Some(404)
-                && v.get("message").and_then(|m| m.as_str()) != Some("接口不存在，请检查路径")
-        })
-        .unwrap_or(false);
-    if is_business_404 {
-        let mut parts = parts;
-        parts.status = StatusCode::OK;
-        Response::from_parts(parts, Body::from(bytes))
-    } else {
-        Response::from_parts(parts, Body::from(bytes))
-    }
 }
 
 impl MesRealModule {
@@ -166,9 +126,6 @@ impl MesRealModule {
                 ctx.auth_state.clone(),
                 topems_shared_auth::auth::auth_middleware,
             ))
-            // 业务 404 归一化（见 normalize_business_not_found 注释）：把 RowNotFound 类
-            // "不存在"响应的 HTTP 状态码由 404 改写为 200，与前端契约一致。
-            .layer(axum::middleware::from_fn(normalize_business_not_found))
             // P2：8099 请求层 RLS 中间件（对齐 finance_real_module 同构；2026-10-22 批量补挂新增模块）
             .layer(axum::middleware::from_fn_with_state(
                 ctx.db.clone(),

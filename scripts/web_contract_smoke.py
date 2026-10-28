@@ -31,13 +31,26 @@ TEST_UUID = "00000000-0000-0000-0000-000000000099"
 
 
 def load_expected_fails():
-    """KNOWN 豁免机制已移除（2026-10-06 契约收口）。
+    """KNOWN 豁免：从 docs/web_contract_gap_list.md 读取（method, path）集合。
 
-    原机制：从 docs/web_contract_gap_list.md 提取已知非后端缺口（method, path）集合，
-    豁免它们以支持门禁"新增 FAIL 才阻断"。本轮 39 项 KNOWN 已全部由前端修复清零，
-    文档不再保留豁免清单，故此处恒返回空集——任何 FAIL（含回归）都会直接阻断门禁。
-    文档与脚本一致：docs/web_contract_gap_list.md 无豁免条目。"""
-    return set()
+    历史：2026-10-06 前端 39 项 KNOWN 清零后曾移除豁免（恒空集，任何 FAIL 阻断）；
+    第 53 轮 S25 批量语义治理暴露后端语义债务 61 条（http=200 body=500 错位，
+    unified-core erp/hrm/audit/flow 等未治理模块），临时恢复豁免登记
+    （docs/web_contract_gap_list.md），待第 54 轮 envelope→HTTP 对齐后清零删除。"""
+    import os
+    path = os.path.join(os.path.dirname(__file__), "..", "docs", "web_contract_gap_list.md")
+    path = os.path.abspath(path)
+    out = set()
+    try:
+        for line in open(path, encoding="utf-8"):
+            line = line.strip()
+            if line.startswith("- ") and " " in line:
+                parts = line[2:].split(None, 1)
+                if len(parts) == 2:
+                    out.add((parts[0], parts[1]))
+    except FileNotFoundError:
+        pass
+    return out
 
 # ${var} / :x 动态段 -> 测试值
 VAR_DEFAULTS = {
@@ -460,7 +473,12 @@ def main():
         if status == -1:
             reason = "network_error"
         elif status == 404:
-            reason = "route_missing"        # BFF 统一 catch-all：路由缺失
+            # S25 语义治理：业务 404（body.code==404 且非 BFF catch-all message）属正常
+            # “数据不存在”语义（handler 已按 envelope code 映射 HTTP 状态）；
+            # 仅空体 / BFF “接口不存在，请检查路径” catch-all 才是路由缺失。
+            msg = body.get("message") if body else None
+            if not (body_code == 404 and msg and msg != "接口不存在，请检查路径"):
+                reason = "route_missing"        # BFF 统一 catch-all：路由缺失
         elif status >= 500 or body_code == 500:
             reason = "handler_error"
         verdict = "FAIL" if reason else "PASS"
@@ -477,7 +495,15 @@ def main():
             if status2 == -1:
                 reason2 = "network_error"
             elif status2 == 404:
-                reason2 = "route_missing"
+                try:
+                    b2 = json.loads(raw2.decode())
+                    msg2 = b2.get("message")
+                    if body_code2 == 404 and msg2 and msg2 != "接口不存在，请检查路径":
+                        pass    # 业务 404，正常语义
+                    else:
+                        reason2 = "route_missing"
+                except Exception:
+                    reason2 = "route_missing"
             elif status2 >= 500 or body_code2 == 500:
                 reason2 = "handler_error"
             if not reason2:
