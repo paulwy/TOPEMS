@@ -1,7 +1,7 @@
 //! 客户模块（前端 mobile/customer.ts 契约对齐，2026-10-05）
 //! 复用 CRM 服务客户端（/api/crm/customers 完整 CRUD）
 
-use crate::modules::contract_util::unwrap_data;
+use crate::modules::contract_util::{downstream_error, unwrap_data};
 use axum::{extract::State, Json};
 use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{api::crm_api::CrmApi, TypedServiceClient};
@@ -14,7 +14,7 @@ pub async fn list_customers(
         Ok(data) => ApiResponse::success(serde_json::Value::Array(data), "获取客户列表成功"),
         Err(e) => {
             tracing::error!("调用CRM服务获取客户列表失败: {}", e);
-            ApiResponse::server_error("获取客户列表失败")
+            downstream_error(&e, "获取客户列表失败")
         }
     }
 }
@@ -28,7 +28,7 @@ pub async fn get_customer(
         Ok(data) => ApiResponse::success(unwrap_data(data), "获取客户详情成功"),
         Err(e) => {
             tracing::error!("调用CRM服务获取客户详情失败: {}", e);
-            ApiResponse::server_error("获取客户详情失败")
+            downstream_error(&e, "获取客户详情失败")
         }
     }
 }
@@ -42,7 +42,7 @@ pub async fn create_customer(
         Ok(data) => ApiResponse::success(unwrap_data(data), "创建客户成功"),
         Err(e) => {
             tracing::error!("调用CRM服务创建客户失败: {}", e);
-            ApiResponse::server_error("创建客户失败")
+            downstream_error(&e, "创建客户失败")
         }
     }
 }
@@ -57,7 +57,7 @@ pub async fn update_customer(
         Ok(data) => ApiResponse::success(unwrap_data(data), "更新客户成功"),
         Err(e) => {
             tracing::error!("调用CRM服务更新客户失败: {}", e);
-            ApiResponse::server_error("更新客户失败")
+            downstream_error(&e, "更新客户失败")
         }
     }
 }
@@ -71,7 +71,7 @@ pub async fn delete_customer(
         Ok(data) => ApiResponse::success(unwrap_data(data), "删除客户成功"),
         Err(e) => {
             tracing::error!("调用CRM服务删除客户失败: {}", e);
-            ApiResponse::server_error("删除客户失败")
+            downstream_error(&e, "删除客户失败")
         }
     }
 }

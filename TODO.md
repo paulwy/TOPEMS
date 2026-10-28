@@ -1,3 +1,18 @@
+## v1.112 WCS/MCS 契约冒烟收口：mobile service 写路径修复 + 4xx 透传（2026-10-29）✅
+
+> 目标：MCS（scripts/mobile_contract_smoke.py）9 FAIL → 0 FAIL；WCS 保持全绿。
+
+- **根因链（MCS 9 FAIL 全 500）**：mobile 模块以 service token（`mobile-service`，无 tenant_id claims）经 TypedServiceClient 调 CRM/HRM/WMS 写路径 → CRM `resolve_create_tenant` 对非超管且无 `claims.tenant_id` 返回 400「缺少租户ID」→ mobile 抹平 500；WMS inventory 落库另缺 `org_id`（NOT NULL 无默认）且 RETURNING `tenant_id` 为 NULL（模型 Uuid 非空）致 500；attendance/customer 的 404/400 业务错误被 mobile 一律 500 化。
+- **修复**：
+  - `lib/shared-auth/src/middleware/tenant.rs` `resolve_create_tenant`：service claims 与超管同语义 `Ok(None)`（落 nil 租户，配合 RLS `current=nil` 豁免全量可见）；8 个 svc 写路径统一受益（crm/ehs/finance/scm/erp×2/srm/pdm）。
+  - `svc/crm/src/modules/customer.rs`：create INSERT `status` 默认 `"active"`（防御性——列 NOT NULL 有 DEFAULT，显式 NULL 兜底）。
+  - `svc/wms/src/modules/inventory.rs`：INSERT 补 `org_id` 列 + `org_id/organization_id` COALESCE 默认组织（`...002`，对齐 wms warehouse 惯例 org=tenant）；RETURNING `tenant_id` COALESCE 全零（对齐 CRM 惯例，模型 Uuid 非空）。
+  - mobile 4xx 透传：customer 5 / attendance 2（check-in/out 元组响应按 `ServiceError.status_code` 动态 HTTP 状态）/ inventory 3 改用 `downstream_error`——业务 400/404 保真，不再 500 抹平。
+  - `scripts/mobile_contract_smoke.py`：prepare_data 注入真实 `warehouse_id`（WMS `warehouse_id` NOT NULL 契约字段）+ inventory 载荷补该字段。
+- **验证**：MCS **114/114 PASS 0 FAIL**（39 WARN 业务性非 2xx 不阻塞）；WCS **4105/4105 0 FAIL**（3 条 `?` 待人工复核）；smoke-prod **20/0 PASS**（无回归）。
+- **观察项（如实登记）**：WCS 3 条 `?`（rd/experiment.ts:36/83/109 `unresolved arg=url`）；MCS 39 WARN（approval delegate/approve/reject、documents 写、inventory GET/{id}、production 单读等业务 404，非失败）；**前端契约错位待业务排期**：`apps/mobile/src/api/inventory.ts` createItem 用 `code/location`（字符串）而 WMS 需 `sku/warehouse_id/location_id`；`attendance.ts` checkIn/checkOut 用 `latitude/longitude` 而 HRM 需 `lat/lng` 且 `user_id/employee_id` 至少其一。
+- 活文档变更日志 v1.112 登记
+
 ## S25 语义治理闭环：flow 表前缀 + mobile 4xx 透传（第 55 轮，2026-10-28）✅ 已完成
 
 > 目标：清零 `docs/web_contract_gap_list.md` 剩余 42 条 KNOWN（workflow 39 + mobile 3）。

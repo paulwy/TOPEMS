@@ -306,7 +306,9 @@ pub async fn create_customer(
     .bind(req.employee_count)
     .bind(req.revenue)
     .bind(req.source.as_deref())
-    .bind(req.status.as_deref())
+    // status 列 NOT NULL（DEFAULT 'active'）：前端契约可省略，未传时绑定默认值，
+    // 避免显式 NULL 违反 NOT NULL 约束（MCS 冒烟暴露 500）
+    .bind(req.status.as_deref().unwrap_or("active"))
     .bind(req.fax.as_deref())
     .bind(req.postal_code.as_deref())
     .bind(req.notes.as_deref())

@@ -8,13 +8,14 @@ use serde::{Deserialize, Serialize};
 use topems_shared_core::response::ApiResponse;
 
 use topems_shared_auth::auth::AuthState;
+use topems_shared_core::error::TopemsError;
 use topems_shared_service_client::service_client::{
     api::hrm_api::{HrmApi, HrmCheckInRequest, HrmCheckOutRequest, HrmCreateLeaveRequest},
     TypedServiceClient,
 };
 
 use super::auth_utils::extract_user_id_from_token;
-use crate::modules::contract_util::unwrap_data;
+use crate::modules::contract_util::{downstream_error, unwrap_data};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttendanceRecord {
@@ -431,10 +432,15 @@ pub async fn check_in(
         Ok(record) => (StatusCode::OK, ApiResponse::success(record, "打卡成功")),
         Err(e) => {
             tracing::error!("调用HRM服务打卡失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("打卡失败"),
-            )
+            let status = match &e {
+                TopemsError::ServiceError { status_code, .. }
+                    if (400..500).contains(status_code) =>
+                {
+                    StatusCode::from_u16(*status_code).unwrap_or(StatusCode::BAD_REQUEST)
+                }
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            (status, downstream_error(&e, "打卡失败"))
         }
     }
 }
@@ -476,10 +482,15 @@ pub async fn check_out(
         Ok(record) => (StatusCode::OK, ApiResponse::success(record, "下班打卡成功")),
         Err(e) => {
             tracing::error!("调用HRM服务下班打卡失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("下班打卡失败"),
-            )
+            let status = match &e {
+                TopemsError::ServiceError { status_code, .. }
+                    if (400..500).contains(status_code) =>
+                {
+                    StatusCode::from_u16(*status_code).unwrap_or(StatusCode::BAD_REQUEST)
+                }
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            (status, downstream_error(&e, "下班打卡失败"))
         }
     }
 }

@@ -91,11 +91,15 @@ pub fn get_tenant_id_from_claims(claims: &Claims) -> Uuid {
 
 /// 解析创建行要落库的 tenant_id：
 /// - 超管（`is_superuser`）→ `Ok(None)`，落公共行（`tenant_id = NULL`）；
+/// - 服务身份（service token，无租户维度）→ `Ok(None)` 同超管语义：
+///   服务间调用是全局基础设施，落 nil 租户配合 RLS `current = nil` 豁免全量可见
+///   （与 tenant_middleware 对 service claims 固定 nil 上下文一致）；否则 mobile
+///   等模块以 service token 调 CRM/HRM/WMS 写路径会 400「缺少租户ID」→ 冒烟 500。
 /// - 普通用户 → 必须携带可解析的 `claims.tenant_id`，缺失或非法返回
 ///   `Err((400, 说明))`，由调用方直接回 400，禁止静默落全零 UUID
 ///   （全零行在 RLS 租户过滤下对本租户不可见）。
 pub fn resolve_create_tenant(claims: &Claims) -> Result<Option<Uuid>, (u16, String)> {
-    if claims.is_superuser {
+    if claims.is_superuser || is_service_claims(claims) {
         return Ok(None);
     }
     match claims.tenant_id.as_deref() {

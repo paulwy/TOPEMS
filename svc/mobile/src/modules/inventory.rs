@@ -60,7 +60,7 @@ pub async fn create_inventory_item(
         Ok(data) => ApiResponse::success(unwrap_data(data), "创建库存成功"),
         Err(e) => {
             tracing::error!("调用WMS服务创建库存失败: {}", e);
-            ApiResponse::server_error("创建库存失败")
+            downstream_error(&e, "创建库存失败")
         }
     }
 }
@@ -101,7 +101,7 @@ pub async fn update_inventory_item(
         Ok(data) => ApiResponse::success(unwrap_data(data), "更新库存成功"),
         Err(e) => {
             tracing::error!("调用WMS服务更新库存失败: {}", e);
-            ApiResponse::server_error("更新库存失败")
+            downstream_error(&e, "更新库存失败")
         }
     }
 }
@@ -115,7 +115,7 @@ pub async fn delete_inventory_item(
         Ok(data) => ApiResponse::success(unwrap_data(data), "删除库存成功"),
         Err(e) => {
             tracing::error!("调用WMS服务删除库存失败: {}", e);
-            ApiResponse::server_error("删除库存失败")
+            downstream_error(&e, "删除库存失败")
         }
     }
 }

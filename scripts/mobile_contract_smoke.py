@@ -39,6 +39,8 @@ def _probe_base() -> str:
 MOBILE_URL = _probe_base()
 TEST_UID = "e91e2228-ab9d-4ac3-99f4-fdcd9c723f21"
 TEST_UUID = "00000000-0000-0000-0000-000000000099"
+# WMS inventory.warehouse_id NOT NULL：由 prepare_data 从真实库取一个仓库 id 注入载荷
+TEST_WAREHOUSE_ID = None
 
 
 def load_jwt_secret() -> str:
@@ -82,6 +84,19 @@ def prepare_data() -> None:
             capture_output=True, timeout=15,
             check=False,
         )
+        # WMS inventory.warehouse_id NOT NULL：取一个真实仓库 id 供 POST /inventory 使用
+        global TEST_WAREHOUSE_ID
+        r = subprocess.run(
+            ["psql", db, "-tAc",
+             "SELECT id FROM wms.warehouses ORDER BY created_at LIMIT 1"],
+            capture_output=True, timeout=15,
+            check=False,
+        )
+        wid = r.stdout.decode().strip() if r.stdout else ""
+        if wid:
+            TEST_WAREHOUSE_ID = wid
+            POST_BODIES["/inventory"]["warehouse_id"] = wid
+            print(f"[prepare] 注入 WMS 仓库 id: {wid}")
     except Exception as e:
         print(f"[prepare] 准备测试数据失败（非阻塞）: {e}")
 
@@ -108,7 +123,7 @@ VAR_DEFAULTS = {
 # POST/PUT/PATCH 写操作的最小合法 body（按路径模板精确匹配，否则空 {}）
 POST_BODIES = {
     "/customer": {"name": "冒烟测试客户", "customer_type": "enterprise", "owner_id": "e91e2228-ab9d-4ac3-99f4-fdcd9c723f21", "phone": "13800000000", "email": "smoke@test.local"},
-    "/inventory": {"sku": "SMOKE-SKU-001", "name": "冒烟测试库存", "quantity": 10, "unit": "件"},
+    "/inventory": {"sku": "SMOKE-SKU-001", "name": "冒烟测试库存", "quantity": 10, "unit": "件", "warehouse_id": "REPLACE_WAREHOUSE"},
     "/attendance/check-in": {"lat": 38.04, "lng": 114.51},
     "/attendance/check-out": {"lat": 38.04, "lng": 114.51},
     "/device/register": {"device_id": "smoke-device-1", "device_name": "冒烟设备", "device_type": "android", "os_type": "android", "os_version": "14", "app_version": "1.0.0", "push_token": "smoke-device-token"},

@@ -357,12 +357,17 @@ pub async fn create_inventory(
 
     let result = sqlx::query_as::<_, InventoryItem>(
         only_own_schema_query!("wms", r#"
-        INSERT INTO wms.inventory (id, organization_id, warehouse_id, location_id,
+        INSERT INTO wms.inventory (id, org_id, organization_id, warehouse_id, location_id,
                                    material_code, material_name, specification,
                                    quantity, unit, available_quantity,
                                    min_quantity, max_quantity, quality_status, created_at, updated_at, tenant_id)
-        VALUES ($1, $13, $2, $3, $4, $5, $6, $7, $8, $7, $9, $10, 'qualified', $11, $12, $13)
-        RETURNING id, tenant_id, material_code as sku, material_name as name, specification, unit, quantity::float8,
+        VALUES ($1,
+                COALESCE($13, '00000000-0000-0000-0000-000000000002'),
+                COALESCE($13, '00000000-0000-0000-0000-000000000002'),
+                $2, $3, $4, $5, $6, $7, $8, $7, $9, $10,
+                'qualified', $11, $12, $13)
+        RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id,
+                  material_code as sku, material_name as name, specification, unit, quantity::float8,
                   location_id, warehouse_id, min_quantity::float8, max_quantity::float8, quality_status as status,
                   created_at, updated_at
         "#),
