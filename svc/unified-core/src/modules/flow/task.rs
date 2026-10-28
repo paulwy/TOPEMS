@@ -51,7 +51,7 @@ pub struct TaskQueryParams {
 pub async fn list_tasks(
     State(state): State<AppState>,
     Query(params): Query<TaskQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowTask>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -91,9 +91,7 @@ pub async fn list_tasks(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询任务总数失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "查询任务总数失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("查询任务总数失败".to_string()));
             }
         }
     };
@@ -131,7 +129,7 @@ pub async fn list_tasks(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询任务列表失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal("查询任务列表失败".to_string())));
+                return ApiResponse::from(TopemsError::Internal("查询任务列表失败".to_string()));
             }
         }
     } else {
@@ -175,15 +173,15 @@ pub async fn list_tasks(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询任务列表失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal("查询任务列表失败".to_string())));
+                return ApiResponse::from(TopemsError::Internal("查询任务列表失败".to_string()));
             }
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -203,7 +201,7 @@ pub async fn list_tasks(
 pub async fn get_task(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowTask>> {
+) -> ApiResponse<WorkflowTask> {
     let task = match sqlx::query_as::<_, WorkflowTask>(
         r#"SELECT t.id, t.tenant_id, t.instance_id, t.node_id, t.assignee_id, t.status, t.comment, t.priority, t.due_time, t.created_at, t.completed_at, t.claimed_at,
                   COALESCE(u.full_name, u.username) AS assignee_name,
@@ -232,14 +230,14 @@ pub async fn get_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string()));
             }
             tracing::error!("查询任务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询任务失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询任务失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(task, "查询成功"))
+    ApiResponse::success(task, "查询成功")
 }
 
 #[utoipa::path(
@@ -260,7 +258,7 @@ pub async fn claim_task(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowTask>> {
+) -> ApiResponse<WorkflowTask> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -280,14 +278,14 @@ pub async fn claim_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string()));
             }
             tracing::error!("认领任务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("认领任务失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("认领任务失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(task, "认领成功"))
+    ApiResponse::success(task, "认领成功")
 }
 
 #[utoipa::path(
@@ -308,7 +306,7 @@ pub async fn unclaim_task(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowTask>> {
+) -> ApiResponse<WorkflowTask> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -328,14 +326,14 @@ pub async fn unclaim_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string()));
             }
             tracing::error!("取消认领任务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("取消认领任务失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("取消认领任务失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(task, "取消认领成功"))
+    ApiResponse::success(task, "取消认领成功")
 }
 
 #[utoipa::path(
@@ -358,7 +356,7 @@ pub async fn approve_task(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
-) -> Json<ApiResponse<WorkflowTask>> {
+) -> ApiResponse<WorkflowTask> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -379,14 +377,14 @@ pub async fn approve_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string()));
             }
             tracing::error!("审批任务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("审批任务失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("审批任务失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(task, "审批通过"))
+    ApiResponse::success(task, "审批通过")
 }
 
 #[utoipa::path(
@@ -409,7 +407,7 @@ pub async fn reject_task(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
-) -> Json<ApiResponse<WorkflowTask>> {
+) -> ApiResponse<WorkflowTask> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -430,14 +428,14 @@ pub async fn reject_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string()));
             }
             tracing::error!("拒绝任务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("拒绝任务失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("拒绝任务失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(task, "已拒绝"))
+    ApiResponse::success(task, "已拒绝")
 }
 
 #[utoipa::path(
@@ -460,7 +458,7 @@ pub async fn complete_task(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
-) -> Json<ApiResponse<WorkflowTask>> {
+) -> ApiResponse<WorkflowTask> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -481,14 +479,14 @@ pub async fn complete_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string()));
             }
             tracing::error!("完成任务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("完成任务失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("完成任务失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(task, "完成成功"))
+    ApiResponse::success(task, "完成成功")
 }
 
 #[utoipa::path(
@@ -511,7 +509,7 @@ pub async fn delegate_task(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
-) -> Json<ApiResponse<WorkflowTask>> {
+) -> ApiResponse<WorkflowTask> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -532,14 +530,14 @@ pub async fn delegate_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string()));
             }
             tracing::error!("委托任务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("委托任务失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("委托任务失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(task, "委托成功"))
+    ApiResponse::success(task, "委托成功")
 }
 
 #[utoipa::path(
@@ -561,7 +559,7 @@ pub async fn batch_approve(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<TaskBatchRequest>,
-) -> Json<ApiResponse<TaskBatchResult>> {
+) -> ApiResponse<TaskBatchResult> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -610,14 +608,14 @@ pub async fn batch_approve(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         TaskBatchResult {
             success_count,
             failed_count: failed_tasks.len() as i32,
             failed_tasks,
         },
         "批量操作完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -639,7 +637,7 @@ pub async fn batch_complete(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<TaskBatchRequest>,
-) -> Json<ApiResponse<TaskBatchResult>> {
+) -> ApiResponse<TaskBatchResult> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -688,14 +686,14 @@ pub async fn batch_complete(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         TaskBatchResult {
             success_count,
             failed_count: failed_tasks.len() as i32,
             failed_tasks,
         },
         "批量操作完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -717,7 +715,7 @@ pub async fn batch_delegate(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<TaskBatchRequest>,
-) -> Json<ApiResponse<TaskBatchResult>> {
+) -> ApiResponse<TaskBatchResult> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -766,14 +764,14 @@ pub async fn batch_delegate(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         TaskBatchResult {
             success_count,
             failed_count: failed_tasks.len() as i32,
             failed_tasks,
         },
         "批量操作完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -794,7 +792,7 @@ pub async fn batch_delegate(
 pub async fn my_tasks(
     State(state): State<AppState>,
     Query(params): Query<TaskQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowTask>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
     list_tasks(State(state), Query(params)).await
 }
 
@@ -815,7 +813,7 @@ pub async fn my_tasks(
 pub async fn my_pending_tasks(
     State(state): State<AppState>,
     Query(mut params): Query<TaskQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowTask>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
     params.status = Some("pending".to_string());
     list_tasks(State(state), Query(params)).await
 }
@@ -837,7 +835,7 @@ pub async fn my_pending_tasks(
 pub async fn my_completed_tasks(
     State(state): State<AppState>,
     Query(mut params): Query<TaskQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowTask>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
     params.status = Some("completed".to_string());
     list_tasks(State(state), Query(params)).await
 }
@@ -859,7 +857,7 @@ pub async fn my_completed_tasks(
 pub async fn candidate_tasks(
     State(state): State<AppState>,
     Query(params): Query<TaskQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowTask>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
     list_tasks(State(state), Query(params)).await
 }
 
@@ -880,7 +878,7 @@ pub async fn candidate_tasks(
 pub async fn get_task_count(
     State(state): State<AppState>,
     Query(params): Query<TaskQueryParams>,
-) -> Json<ApiResponse<i64>> {
+) -> ApiResponse<i64> {
     let status = params.status.clone();
     let assignee_id = params.assignee_id.clone();
 
@@ -906,13 +904,11 @@ pub async fn get_task_count(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询任务数量失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询任务数量失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询任务数量失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(count, "查询成功"))
+    ApiResponse::success(count, "查询成功")
 }
 
 #[utoipa::path(
@@ -924,8 +920,8 @@ pub async fn get_task_count(
         (status = 200, description = "查询成功", body = ApiResponse<TaskStats>),
     ),
 )]
-pub async fn get_task_stats(State(_state): State<AppState>) -> Json<ApiResponse<TaskStats>> {
-    Json(ApiResponse::success(
+pub async fn get_task_stats(State(_state): State<AppState>) -> ApiResponse<TaskStats> {
+    ApiResponse::success(
         TaskStats {
             todo: 0,
             done: 0,
@@ -938,7 +934,7 @@ pub async fn get_task_stats(State(_state): State<AppState>) -> Json<ApiResponse<
             candidate: 0,
         },
         "查询成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -958,7 +954,7 @@ pub async fn get_task_stats(State(_state): State<AppState>) -> Json<ApiResponse<
 pub async fn high_priority_tasks(
     State(state): State<AppState>,
     Query(mut params): Query<TaskQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowTask>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
     params.status = Some("pending".to_string());
     list_tasks(State(state), Query(params)).await
 }
@@ -980,6 +976,6 @@ pub async fn high_priority_tasks(
 pub async fn overdue_tasks(
     State(state): State<AppState>,
     Query(params): Query<TaskQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowTask>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowTask>> {
     list_tasks(State(state), Query(params)).await
 }

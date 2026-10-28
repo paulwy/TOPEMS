@@ -129,7 +129,7 @@ async fn list_runs_empty_returns_zero(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = list_runs(State(state), Query(empty_params())).await;
-    let body = resp.0.data.unwrap();
+    let body = resp.data.unwrap();
     assert_eq!(body.total, 0);
 }
 
@@ -142,7 +142,7 @@ async fn list_runs_counts_inserted(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = list_runs(State(state), Query(empty_params())).await;
-    let body = resp.0.data.unwrap();
+    let body = resp.data.unwrap();
     assert_eq!(body.total, 2);
     assert_eq!(body.items.len(), 2);
 }
@@ -158,7 +158,7 @@ async fn list_runs_filters_by_status(pool: sqlx::PgPool) {
     params.status = Some("running".to_string());
     let state = test_app_state(pool);
     let resp = list_runs(State(state), Query(params)).await;
-    let body = resp.0.data.unwrap();
+    let body = resp.data.unwrap();
     assert_eq!(body.total, 1);
     assert_eq!(body.items[0].status, "running");
 }
@@ -171,7 +171,7 @@ async fn get_run_returns_run(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = get_run(State(state), Path(run_id)).await;
-    let got: AutomationRun = resp.0.data.unwrap();
+    let got: AutomationRun = resp.data.unwrap();
     assert_eq!(got.id, run_id);
     assert_eq!(got.rule_id, rid);
     assert_eq!(got.status, "running");
@@ -183,7 +183,7 @@ async fn get_run_missing_returns_none(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = get_run(State(state), Path(uuid::Uuid::new_v4())).await;
-    assert!(resp.0.data.is_none());
+    assert!(resp.data.is_none());
 }
 
 #[sqlx::test(migrations = false)]
@@ -194,7 +194,7 @@ async fn retry_run_creates_new_run(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool.clone());
     let resp = retry_run(State(state), Path(run_id)).await;
-    let body: serde_json::Value = resp.0.data.unwrap();
+    let body: serde_json::Value = resp.data.unwrap();
     let new_id = body["run_id"].as_str().unwrap();
     assert!(!new_id.is_empty());
 
@@ -221,7 +221,7 @@ async fn cancel_run_marks_cancelled(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool.clone());
     let resp = cancel_run(State(state), Path(run_id)).await;
-    let body: serde_json::Value = resp.0.data.unwrap();
+    let body: serde_json::Value = resp.data.unwrap();
     assert_eq!(body["success"], serde_json::json!(true));
 
     let status: String = sqlx::query_scalar("SELECT status FROM automation_runs WHERE id = $1")
@@ -240,7 +240,7 @@ async fn cancel_non_running_returns_not_found(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = cancel_run(State(state), Path(run_id)).await;
-    assert!(resp.0.data.is_none());
+    assert!(resp.data.is_none());
 }
 
 #[sqlx::test(migrations = false)]
@@ -256,7 +256,7 @@ async fn purge_runs_deletes_matching(pool: sqlx::PgPool) {
     };
     let state = test_app_state(pool.clone());
     let resp = purge_runs(State(state), Json(payload)).await;
-    let body: serde_json::Value = resp.0.data.unwrap();
+    let body: serde_json::Value = resp.data.unwrap();
     assert_eq!(body["deleted"], serde_json::json!(1));
 
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM automation_runs")
@@ -282,7 +282,7 @@ async fn get_run_steps_returns_steps(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = get_run_steps(State(state), Path(run_id)).await;
-    let steps: serde_json::Value = resp.0.data.unwrap();
+    let steps: serde_json::Value = resp.data.unwrap();
     assert_eq!(steps[0]["name"], serde_json::json!("init"));
 }
 
@@ -294,7 +294,7 @@ async fn get_run_steps_none_returns_empty_array(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = get_run_steps(State(state), Path(run_id)).await;
-    let steps: serde_json::Value = resp.0.data.unwrap();
+    let steps: serde_json::Value = resp.data.unwrap();
     assert_eq!(steps, serde_json::json!([]));
 }
 
@@ -323,7 +323,7 @@ async fn get_run_logs_splits_lines(pool: sqlx::PgPool) {
         }),
     )
     .await;
-    let body: serde_json::Value = resp.0.data.unwrap();
+    let body: serde_json::Value = resp.data.unwrap();
     assert_eq!(body["total"], serde_json::json!(3));
     assert_eq!(body["lines"].as_array().unwrap().len(), 3);
 }
@@ -353,7 +353,7 @@ async fn get_run_log_by_id_delegates(pool: sqlx::PgPool) {
         }),
     )
     .await;
-    let body: serde_json::Value = resp.0.data.unwrap();
+    let body: serde_json::Value = resp.data.unwrap();
     assert_eq!(body["total"], serde_json::json!(2));
 }
 
@@ -380,7 +380,7 @@ async fn trigger_rule_creates_run(pool: sqlx::PgPool) {
     };
     let state = test_app_state(pool.clone());
     let resp = trigger_rule(State(state), Path(rule_id), Json(Some(payload))).await;
-    let body: serde_json::Value = resp.0.data.unwrap();
+    let body: serde_json::Value = resp.data.unwrap();
     let run_id = body["run_id"].as_str().unwrap();
 
     let (status, trigger_type, input): (String, Option<String>, Option<serde_json::Value>) =
@@ -411,7 +411,7 @@ async fn trigger_rule_without_payload(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool.clone());
     let resp = trigger_rule(State(state), Path(rule_id), Json(None)).await;
-    let body: serde_json::Value = resp.0.data.unwrap();
+    let body: serde_json::Value = resp.data.unwrap();
     let run_id = body["run_id"].as_str().unwrap();
 
     let input: Option<serde_json::Value> =
@@ -429,5 +429,5 @@ async fn trigger_rule_missing_rule_returns_none(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = trigger_rule(State(state), Path(uuid::Uuid::new_v4()), Json(None)).await;
-    assert!(resp.0.data.is_none());
+    assert!(resp.data.is_none());
 }

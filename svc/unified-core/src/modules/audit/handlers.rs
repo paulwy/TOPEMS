@@ -1,6 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
-    Extension, Json,
+    Extension,
 };
 use chrono::{DateTime, Utc};
 use topems_shared_core::TopemsError;
@@ -20,7 +20,7 @@ pub async fn list_operation_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<OperationLogQuery>,
-) -> Json<ApiResponse<OperationLogListResponse>> {
+) -> ApiResponse<OperationLogListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -84,9 +84,9 @@ pub async fn list_operation_logs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计日志总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "查询操作审计日志总数失败".to_string(),
-            )));
+            ));
         }
     };
 
@@ -130,25 +130,25 @@ pub async fn list_operation_logs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计日志列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "查询操作审计日志列表失败".to_string(),
-            )));
+            ));
         }
     };
 
-    Json(api_success(OperationLogListResponse {
+    api_success(OperationLogListResponse {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
 pub async fn get_operation_log(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<OperationLog>> {
+) -> ApiResponse<OperationLog> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -170,24 +170,24 @@ pub async fn get_operation_log(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计日志详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "查询操作审计日志详情失败".to_string(),
-            )));
+            ));
         }
     };
 
     match log {
-        Some(log) => Json(api_success(log)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Some(log) => api_success(log),
+        None => ApiResponse::from(TopemsError::ResourceNotFound(
             "操作审计日志不存在".to_string(),
-        ))),
+        )),
     }
 }
 
 pub async fn get_operation_log_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<OperationLogStatsResponse>> {
+) -> ApiResponse<OperationLogStatsResponse> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -204,9 +204,7 @@ pub async fn get_operation_log_stats(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计统计总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询操作审计统计失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询操作审计统计失败".to_string()));
         }
     };
 
@@ -222,9 +220,7 @@ pub async fn get_operation_log_stats(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计按模块统计失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询操作审计统计失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询操作审计统计失败".to_string()));
         }
     };
 
@@ -240,9 +236,7 @@ pub async fn get_operation_log_stats(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计按操作类型统计失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询操作审计统计失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询操作审计统计失败".to_string()));
         }
     };
 
@@ -253,11 +247,11 @@ pub async fn get_operation_log_stats(
         .into_iter()
         .collect::<std::collections::HashMap<_, _>>());
 
-    Json(api_success(OperationLogStatsResponse {
+    api_success(OperationLogStatsResponse {
         total,
         by_module,
         by_operation,
-    }))
+    })
 }
 
 // ===== 权限变更审计 handlers（调用 audit_query 真实实现） =====
@@ -265,7 +259,7 @@ pub async fn get_operation_log_stats(
 pub async fn list_permission_changes(
     State(state): State<AppState>,
     Query(query): Query<OperationLogQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let audit_params = AuditLogQueryParams {
         source: Some("permission_audit_logs".to_string()),
         user_id: query.user_id.clone(),
@@ -282,8 +276,7 @@ pub async fn list_permission_changes(
         page: query.page,
         page_size: query.page_size,
     };
-    let Json(result) =
-        super::audit_query::query_audit_logs(State(state), Query(audit_params)).await;
+    let result = super::audit_query::query_audit_logs(State(state), Query(audit_params)).await;
     match result.data {
         Some(paginated) => {
             let items: Vec<serde_json::Value> = paginated
@@ -291,25 +284,25 @@ pub async fn list_permission_changes(
                 .iter()
                 .map(|item| serde_json::to_value(item).unwrap_or(serde_json::json!({})))
                 .collect();
-            Json(api_success(serde_json::json!({
+            api_success(serde_json::json!({
                 "items": items,
                 "total": paginated.total,
                 "page": paginated.page,
                 "page_size": paginated.page_size,
-            })))
+            }))
         }
-        None => Json(ApiResponse::from(match result.code {
+        None => ApiResponse::from(match result.code {
             404 => TopemsError::ResourceNotFound(result.message),
             400 => TopemsError::ValidationFailed(result.message),
             _ => TopemsError::Internal(result.message),
-        })),
+        }),
     }
 }
 
 pub async fn get_permission_change(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match sqlx::query_as::<_, super::audit_query::AuditLogEntry>(
         r#"
         SELECT
@@ -319,20 +312,20 @@ pub async fn get_permission_change(
             user_id,
             NULL::text AS username,
             action,
-            target_type AS entity_type,
-            target_id AS entity_id,
+            NULL::text AS entity_type,
+            NULL::text AS entity_id,
             NULL::text AS resource,
-            NULL::text AS ip_address,
-            NULL::text AS user_agent,
+            ip_address,
+            user_agent,
             NULL::text AS status,
             NULL::bool AS success,
             NULL::text AS error_message,
             jsonb_build_object(
-                'before', before,
-                'after', after,
-                'reason', reason
+                'before', old_value,
+                'after', new_value,
+                'reason', NULL
             ) AS details,
-            created_at
+            changed_at AS created_at
         FROM iam.permission_audit_logs
         WHERE id::text = $1::text
         "#,
@@ -341,24 +334,22 @@ pub async fn get_permission_change(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(entry)) => Json(api_success(
-            serde_json::to_value(entry).unwrap_or(serde_json::json!({})),
-        )),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(Some(entry)) => {
+            api_success(serde_json::to_value(entry).unwrap_or(serde_json::json!({})))
+        }
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "权限变更记录不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("查询权限变更记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询权限变更记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询权限变更记录失败".to_string()))
         }
     }
 }
 
 pub async fn get_permission_change_stats(
     State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let audit_params = AuditLogQueryParams {
         source: Some("permission_audit_logs".to_string()),
         user_id: None,
@@ -375,8 +366,7 @@ pub async fn get_permission_change_stats(
         page: None,
         page_size: None,
     };
-    let Json(result) =
-        super::audit_query::get_audit_log_stats(State(state), Query(audit_params)).await;
+    let result = super::audit_query::get_audit_log_stats(State(state), Query(audit_params)).await;
     match result.data {
         Some(stats) => {
             let by_action: std::collections::HashMap<String, i64> = stats
@@ -393,7 +383,7 @@ pub async fn get_permission_change_stats(
             let revokes = *by_action.get("role_unassign").unwrap_or(&0)
                 + *by_action.get("permission_revoke").unwrap_or(&0);
             let updates = *by_action.get("update").unwrap_or(&0);
-            Json(api_success(serde_json::json!({
+            api_success(serde_json::json!({
                 "total_changes": stats.total,
                 "today_changes": stats.today_total,
                 "role_changes": role_changes,
@@ -406,13 +396,13 @@ pub async fn get_permission_change_stats(
                 "by_user": stats.by_user.iter().map(|c| serde_json::json!({"user": c.key, "count": c.count})).collect::<Vec<_>>(),
                 "by_operator": stats.by_user.iter().map(|c| serde_json::json!({"operator": c.key, "count": c.count})).collect::<Vec<_>>(),
                 "trend": stats.trend.iter().map(|t| serde_json::json!({"date": t.date, "count": t.count})).collect::<Vec<_>>(),
-            })))
+            }))
         }
-        None => Json(ApiResponse::from(match result.code {
+        None => ApiResponse::from(match result.code {
             404 => TopemsError::ResourceNotFound(result.message),
             400 => TopemsError::ValidationFailed(result.message),
             _ => TopemsError::Internal(result.message),
-        })),
+        }),
     }
 }
 
@@ -441,7 +431,7 @@ pub async fn export_permission_changes(
 pub async fn list_access_logs(
     State(state): State<AppState>,
     Query(query): Query<OperationLogQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let audit_params = AuditLogQueryParams {
         source: Some("audit_logs".to_string()),
         user_id: query.user_id.clone(),
@@ -458,8 +448,7 @@ pub async fn list_access_logs(
         page: query.page,
         page_size: query.page_size,
     };
-    let Json(result) =
-        super::audit_query::query_audit_logs(State(state), Query(audit_params)).await;
+    let result = super::audit_query::query_audit_logs(State(state), Query(audit_params)).await;
     match result.data {
         Some(paginated) => {
             let items: Vec<serde_json::Value> = paginated
@@ -467,25 +456,25 @@ pub async fn list_access_logs(
                 .iter()
                 .map(|item| serde_json::to_value(item).unwrap_or(serde_json::json!({})))
                 .collect();
-            Json(api_success(serde_json::json!({
+            api_success(serde_json::json!({
                 "items": items,
                 "total": paginated.total,
                 "page": paginated.page,
                 "page_size": paginated.page_size,
-            })))
+            }))
         }
-        None => Json(ApiResponse::from(match result.code {
+        None => ApiResponse::from(match result.code {
             404 => TopemsError::ResourceNotFound(result.message),
             400 => TopemsError::ValidationFailed(result.message),
             _ => TopemsError::Internal(result.message),
-        })),
+        }),
     }
 }
 
 pub async fn get_access_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match sqlx::query_as::<_, super::audit_query::AuditLogEntry>(
         r#"
         SELECT
@@ -522,25 +511,19 @@ pub async fn get_access_log(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(entry)) => Json(api_success(
-            serde_json::to_value(entry).unwrap_or(serde_json::json!({})),
-        )),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "访问日志不存在".to_string(),
-        ))),
+        Ok(Some(entry)) => {
+            api_success(serde_json::to_value(entry).unwrap_or(serde_json::json!({})))
+        }
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("访问日志不存在".to_string())),
         Err(e) => {
             tracing::error!("查询访问日志失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询访问日志失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询访问日志失败".to_string()))
         }
     }
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-pub async fn get_access_log_stats(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn get_access_log_stats(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let audit_params = AuditLogQueryParams {
         source: Some("audit_logs".to_string()),
         user_id: None,
@@ -557,8 +540,7 @@ pub async fn get_access_log_stats(
         page: None,
         page_size: None,
     };
-    let Json(result) =
-        super::audit_query::get_audit_log_stats(State(state), Query(audit_params)).await;
+    let result = super::audit_query::get_audit_log_stats(State(state), Query(audit_params)).await;
     match result.data {
         Some(stats) => {
             let _by_action: std::collections::HashMap<String, i64> = stats
@@ -566,7 +548,7 @@ pub async fn get_access_log_stats(
                 .iter()
                 .map(|c| (c.key.clone(), c.count))
                 .collect();
-            Json(api_success(serde_json::json!({
+            api_success(serde_json::json!({
                 "total_logs": stats.total,
                 "allowed": stats.success_total,
                 "denied": stats.failure_total,
@@ -575,13 +557,13 @@ pub async fn get_access_log_stats(
                 "by_user": stats.by_user.iter().map(|c| serde_json::json!({"user": c.key, "count": c.count})).collect::<Vec<_>>(),
                 "by_action": stats.by_action.iter().map(|c| serde_json::json!({"action": c.key, "count": c.count})).collect::<Vec<_>>(),
                 "trend": stats.trend.iter().map(|t| serde_json::json!({"date": t.date, "count": t.count})).collect::<Vec<_>>(),
-            })))
+            }))
         }
-        None => Json(ApiResponse::from(match result.code {
+        None => ApiResponse::from(match result.code {
             404 => TopemsError::ResourceNotFound(result.message),
             400 => TopemsError::ValidationFailed(result.message),
             _ => TopemsError::Internal(result.message),
-        })),
+        }),
     }
 }
 

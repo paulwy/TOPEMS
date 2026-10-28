@@ -114,7 +114,7 @@ const COLUMNS: &str = "id, delegator_id, attorney_id, workflow_id, scope, start_
 pub async fn list_delegates(
     State(state): State<AppState>,
     Query(query): Query<DelegateListQuery>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowDelegate>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowDelegate>> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -138,9 +138,7 @@ pub async fn list_delegates(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询委托总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询委托总数失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询委托总数失败".to_string()));
         }
     };
 
@@ -165,12 +163,12 @@ pub async fn list_delegates(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询委托列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询委托列表失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询委托列表失败".to_string()));
         }
     };
 
     let items: Vec<WorkflowDelegate> = rows.into_iter().map(WorkflowDelegate::from).collect();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -179,13 +177,13 @@ pub async fn list_delegates(
             total_pages: (total + page_size - 1) / page_size,
         },
         "查询成功",
-    ))
+    )
 }
 
 pub async fn get_delegate(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowDelegate>> {
+) -> ApiResponse<WorkflowDelegate> {
     let row: Option<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
            FROM core_flow_delegates WHERE id = $1 AND deleted_at IS NULL"#,
@@ -197,14 +195,12 @@ pub async fn get_delegate(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询委托失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询委托失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询委托失败".to_string()));
         }
     };
     match row {
-        Some(r) => Json(ApiResponse::success(WorkflowDelegate::from(r), "查询成功")),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "委托不存在".to_string(),
-        ))),
+        Some(r) => ApiResponse::success(WorkflowDelegate::from(r), "查询成功"),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string())),
     }
 }
 
@@ -212,7 +208,7 @@ pub async fn create_delegate(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateDelegateRequest>,
-) -> Json<ApiResponse<WorkflowDelegate>> {
+) -> ApiResponse<WorkflowDelegate> {
     let delegator_id = payload
         .delegator_id
         .or_else(|| Uuid::parse_str(&claims.sub).ok())
@@ -238,15 +234,13 @@ pub async fn create_delegate(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建委托失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("创建委托失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("创建委托失败".to_string()));
         }
     };
 
     match row {
-        Some(r) => Json(ApiResponse::success(WorkflowDelegate::from(r), "创建成功")),
-        None => Json(ApiResponse::from(TopemsError::Internal(
-            "创建委托失败".to_string(),
-        ))),
+        Some(r) => ApiResponse::success(WorkflowDelegate::from(r), "创建成功"),
+        None => ApiResponse::from(TopemsError::Internal("创建委托失败".to_string())),
     }
 }
 
@@ -254,7 +248,7 @@ pub async fn update_delegate(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateDelegateRequest>,
-) -> Json<ApiResponse<WorkflowDelegate>> {
+) -> ApiResponse<WorkflowDelegate> {
     let row: Option<DelegateRow> = match sqlx::query_as(
         r#"UPDATE core_flow_delegates
            SET attorney_id = COALESCE($2, attorney_id),
@@ -282,22 +276,20 @@ pub async fn update_delegate(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新委托失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("更新委托失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("更新委托失败".to_string()));
         }
     };
 
     match row {
-        Some(r) => Json(ApiResponse::success(WorkflowDelegate::from(r), "更新成功")),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "委托不存在".to_string(),
-        ))),
+        Some(r) => ApiResponse::success(WorkflowDelegate::from(r), "更新成功"),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string())),
     }
 }
 
 pub async fn delete_delegate(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let res = sqlx::query(
         r#"UPDATE core_flow_delegates SET deleted_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
@@ -307,18 +299,13 @@ pub async fn delete_delegate(
     .await;
 
     match res {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "删除成功",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "委托不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id}), "删除成功")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string())),
         Err(e) => {
             tracing::error!("删除委托失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除委托失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除委托失败".to_string()))
         }
     }
 }
@@ -327,7 +314,7 @@ pub async fn set_delegate_status(
     state: &AppState,
     id: Uuid,
     status: &str,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let res = sqlx::query(
         r#"UPDATE core_flow_delegates SET status = $2, updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
@@ -338,18 +325,13 @@ pub async fn set_delegate_status(
     .await;
 
     match res {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id, "status": status}),
-            "操作成功",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "委托不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id, "status": status}), "操作成功")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string())),
         Err(e) => {
             tracing::error!("更新委托状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新委托状态失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新委托状态失败".to_string()))
         }
     }
 }
@@ -357,14 +339,14 @@ pub async fn set_delegate_status(
 pub async fn activate_delegate(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     set_delegate_status(&state, id, "active").await
 }
 
 pub async fn deactivate_delegate(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     set_delegate_status(&state, id, "inactive").await
 }
 
@@ -372,7 +354,7 @@ pub async fn get_my_delegates(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<DelegateListQuery>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowDelegate>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowDelegate>> {
     let uid = Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil());
     list_delegates(
         State(state),
@@ -392,7 +374,7 @@ pub async fn get_my_attorneys(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<DelegateListQuery>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowDelegate>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowDelegate>> {
     let uid = Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil());
     list_delegates(
         State(state),
@@ -412,7 +394,7 @@ pub async fn get_active_delegate(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<DelegateListQuery>,
-) -> Json<ApiResponse<Vec<WorkflowDelegate>>> {
+) -> ApiResponse<Vec<WorkflowDelegate>> {
     let uid = query.user_id.or_else(|| Uuid::parse_str(&claims.sub).ok());
     let rows: Vec<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
@@ -431,17 +413,17 @@ pub async fn get_active_delegate(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询有效委托失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询有效委托失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询有效委托失败".to_string()));
         }
     };
     let items: Vec<WorkflowDelegate> = rows.into_iter().map(WorkflowDelegate::from).collect();
-    Json(ApiResponse::success(items, "查询成功"))
+    ApiResponse::success(items, "查询成功")
 }
 
 pub async fn get_delegate_workflows(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let row: Option<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
            FROM core_flow_delegates WHERE id = $1 AND deleted_at IS NULL"#,
@@ -453,7 +435,7 @@ pub async fn get_delegate_workflows(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询委托失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询委托失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询委托失败".to_string()));
         }
     };
 
@@ -471,33 +453,31 @@ pub async fn get_delegate_workflows(
                     Ok(v) => v,
                     Err(e) => {
                         tracing::error!("查询委托关联流程失败: {}", e);
-                        return Json(ApiResponse::from(TopemsError::Internal(
+                        return ApiResponse::from(TopemsError::Internal(
                             "查询委托关联流程失败".to_string(),
-                        )));
+                        ));
                     }
                 };
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({
                         "delegate_id": r.id,
                         "workflow_id": wf_id,
                         "workflow": wf.unwrap_or(serde_json::Value::Null),
                     }),
                     "查询成功",
-                ))
+                )
             } else {
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({
                         "delegate_id": r.id,
                         "workflow_id": null,
                         "workflow": null,
                     }),
                     "查询成功",
-                ))
+                )
             }
         }
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "委托不存在".to_string(),
-        ))),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string())),
     }
 }
 
@@ -505,7 +485,7 @@ pub async fn check_delegation(
     State(state): State<AppState>,
     Path(workflow_id): Path<Uuid>,
     Query(query): Query<DelegateListQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let uid = query.user_id;
     let rows: Vec<DelegateRow> = match sqlx::query_as(
         r#"SELECT id, delegator_id, attorney_id, workflow_id, scope, start_date, end_date, reason, status, created_at, updated_at
@@ -526,12 +506,12 @@ pub async fn check_delegation(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("检查委托失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("检查委托失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("检查委托失败".to_string()));
         }
     };
     let items: Vec<WorkflowDelegate> = rows.into_iter().map(WorkflowDelegate::from).collect();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({"delegated": !items.is_empty(), "delegates": items}),
         "查询成功",
-    ))
+    )
 }

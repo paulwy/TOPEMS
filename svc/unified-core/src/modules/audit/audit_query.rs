@@ -11,7 +11,6 @@ use axum::{
     extract::{Query, State},
     http::{header, StatusCode},
     response::{IntoResponse, Response},
-    Json,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
@@ -144,7 +143,7 @@ fn parse_datetime(value: Option<&str>) -> Option<DateTime<Utc>> {
 pub async fn query_audit_logs(
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
-) -> Json<ApiResponse<PaginatedAuditLogs>> {
+) -> ApiResponse<PaginatedAuditLogs> {
     let source = resolve_source(params.source.as_deref());
     let (page, page_size) = clamp_pagination(params.page, params.page_size);
     let offset = (page - 1) * page_size;
@@ -396,19 +395,19 @@ pub async fn query_audit_logs(
         }
     };
 
-    Json(api_success(PaginatedAuditLogs {
+    api_success(PaginatedAuditLogs {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
 /// 审计日志统计
 pub async fn get_audit_log_stats(
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
-) -> Json<ApiResponse<AuditLogStats>> {
+) -> ApiResponse<AuditLogStats> {
     let source = resolve_source(params.source.as_deref());
     let start_date = parse_datetime(params.start_date.as_deref());
     let end_date = parse_datetime(params.end_date.as_deref());
@@ -522,7 +521,7 @@ pub async fn get_audit_log_stats(
 
     stats.trend = load_trend(&state, source, start_date, end_date).await;
 
-    Json(api_success(stats))
+    api_success(stats)
 }
 
 async fn load_top_by_column(
@@ -664,9 +663,7 @@ pub async fn export_audit_logs(
         .map_err(|_| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<()>::from(TopemsError::Internal(
-                    "查询审计日志失败".to_string(),
-                ))),
+                ApiResponse::<()>::from(TopemsError::Internal("查询审计日志失败".to_string())),
             )
                 .into_response()
         })?;
@@ -971,11 +968,11 @@ fn csv_field(value: &str) -> String {
 }
 
 /// 列出可用的审计日志源
-pub async fn list_audit_sources() -> Json<ApiResponse<serde_json::Value>> {
-    Json(api_success(serde_json::json!({
+pub async fn list_audit_sources() -> ApiResponse<serde_json::Value> {
+    api_success(serde_json::json!({
         "sources": ALLOWED_SOURCES,
         "default": "audit_logs",
-    })))
+    }))
 }
 
 #[cfg(test)]

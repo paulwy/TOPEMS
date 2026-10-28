@@ -19,7 +19,7 @@ use super::login_log_models::{
 pub async fn record_login(
     State(state): State<AppState>,
     Json(req): Json<RecordLoginRequest>,
-) -> Json<ApiResponse<LoginLog>> {
+) -> ApiResponse<LoginLog> {
     let tenant_id = req
         .tenant_id
         .as_ref()
@@ -52,18 +52,18 @@ pub async fn record_login(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("记录登录日志失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("记录登录日志失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("记录登录日志失败".to_string()));
         }
     };
 
-    Json(api_success(log))
+    api_success(log)
 }
 
 pub async fn list_login_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<LoginLogQuery>,
-) -> Json<ApiResponse<LoginLogListResponse>> {
+) -> ApiResponse<LoginLogListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -113,9 +113,7 @@ pub async fn list_login_logs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询登录日志总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询登录日志总数失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询登录日志总数失败".to_string()));
         }
     };
 
@@ -163,23 +161,23 @@ pub async fn list_login_logs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询登录日志列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询登录日志列表失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询登录日志列表失败".to_string()));
         }
     };
 
-    Json(api_success(LoginLogListResponse {
+    api_success(LoginLogListResponse {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
 pub async fn get_login_log(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<LoginLog>> {
+) -> ApiResponse<LoginLog> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -198,22 +196,20 @@ pub async fn get_login_log(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询登录日志详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询登录日志详情失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询登录日志详情失败".to_string()));
         }
     };
 
     match log {
-        Some(log) => Json(api_success(log)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "登录日志不存在".to_string(),
-        ))),
+        Some(log) => api_success(log),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("登录日志不存在".to_string())),
     }
 }
 
 pub async fn delete_login_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_id = Uuid::nil();
 
     let result = sqlx::query(
@@ -225,15 +221,11 @@ pub async fn delete_login_log(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(api_success(true)),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "登录日志不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => api_success(true),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("登录日志不存在".to_string())),
         Err(e) => {
             tracing::error!("删除登录日志失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除登录日志失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除登录日志失败".to_string()))
         }
     }
 }
@@ -241,11 +233,9 @@ pub async fn delete_login_log(
 pub async fn batch_delete_login_logs(
     State(state): State<AppState>,
     Json(req): Json<DeleteLoginLogRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if req.ids.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "ID列表不能为空".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("ID列表不能为空".to_string()));
     }
 
     let tenant_id = Uuid::nil();
@@ -257,9 +247,7 @@ pub async fn batch_delete_login_logs(
         .collect();
 
     if uuids.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "无效的ID格式".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("无效的ID格式".to_string()));
     }
 
     let placeholders = uuids
@@ -283,15 +271,13 @@ pub async fn batch_delete_login_logs(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("批量删除登录日志失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "批量删除登录日志失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("批量删除登录日志失败".to_string()));
         }
     };
 
-    Json(api_success(json!({
+    api_success(json!({
         "deleted_count": result.rows_affected(),
-    })))
+    }))
 }
 
 pub async fn record_login_event(

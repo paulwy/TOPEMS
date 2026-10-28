@@ -88,7 +88,7 @@ async fn list_templates_empty(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = list_templates(State(state), Extension(claims)).await;
-    let items: Vec<Template> = resp.0.data.unwrap();
+    let items: Vec<Template> = resp.data.unwrap();
     assert!(items.is_empty());
 }
 
@@ -104,7 +104,7 @@ async fn create_template_returns(pool: sqlx::PgPool) {
         Json(template_req("报销模板")),
     )
     .await;
-    let tpl: Template = resp.0.data.unwrap();
+    let tpl: Template = resp.data.unwrap();
     assert_eq!(tpl.name, "报销模板");
     assert_eq!(tpl.category.as_deref(), Some("通用"));
 }
@@ -121,12 +121,12 @@ async fn get_template_roundtrip(pool: sqlx::PgPool) {
         Json(template_req("合同模板")),
     )
     .await;
-    let tpl: Template = resp.0.data.unwrap();
+    let tpl: Template = resp.data.unwrap();
 
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = get_template(State(state), Extension(claims), Path(tpl.id)).await;
-    let got: Option<Template> = resp.0.data.unwrap();
+    let got: Option<Template> = resp.data.unwrap();
     assert!(got.is_some());
     assert_eq!(got.unwrap().id, tpl.id);
 }
@@ -138,7 +138,7 @@ async fn list_folders_empty(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = list_folders(State(state), Extension(claims)).await;
-    let items: Vec<Folder> = resp.0.data.unwrap();
+    let items: Vec<Folder> = resp.data.unwrap();
     assert!(items.is_empty());
 }
 
@@ -149,6 +149,6 @@ async fn create_folder_returns(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = create_folder(State(state), Extension(claims), Json(folder_req("财务"))).await;
-    let folder: Folder = resp.0.data.unwrap();
+    let folder: Folder = resp.data.unwrap();
     assert_eq!(folder.name, "财务");
 }

@@ -77,7 +77,7 @@ async fn create_via_handler(pool: sqlx::PgPool, name: &str, code: &str) -> Autom
         Json(create_req(name, code)),
     )
     .await;
-    resp.0.data.unwrap()
+    resp.data.unwrap()
 }
 
 #[sqlx::test(migrations = false)]
@@ -86,7 +86,7 @@ async fn list_empty_returns_zero(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = list_rules(State(state), Query(empty_params())).await;
-    let body = resp.0.data.unwrap();
+    let body = resp.data.unwrap();
     assert_eq!(body.total, 0);
 }
 
@@ -102,7 +102,7 @@ async fn create_applies_defaults(pool: sqlx::PgPool) {
         Json(create_req("规则A", "RULE_A")),
     )
     .await;
-    let rule: AutomationRule = resp.0.data.unwrap();
+    let rule: AutomationRule = resp.data.unwrap();
     assert_eq!(rule.name, "规则A");
     assert_eq!(rule.code, "RULE_A");
     assert_eq!(rule.status, "draft");
@@ -120,7 +120,7 @@ async fn list_counts_created(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = list_rules(State(state), Query(empty_params())).await;
-    let body = resp.0.data.unwrap();
+    let body = resp.data.unwrap();
     assert_eq!(body.total, 2);
     assert_eq!(body.items.len(), 2);
 }
@@ -132,7 +132,7 @@ async fn get_returns_rule(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = get_rule(State(state), Path(rule.id)).await;
-    let got: AutomationRule = resp.0.data.unwrap();
+    let got: AutomationRule = resp.data.unwrap();
     assert_eq!(got.id, rule.id);
     assert_eq!(got.name, "规则A");
 }
@@ -143,7 +143,7 @@ async fn get_missing_returns_none(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = get_rule(State(state), Path(uuid::Uuid::new_v4())).await;
-    assert!(resp.0.data.is_none());
+    assert!(resp.data.is_none());
 }
 
 #[sqlx::test(migrations = false)]
@@ -153,7 +153,7 @@ async fn enable_switches_status(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = enable_rule(State(state), Path(rule.id)).await;
-    let got: AutomationRule = resp.0.data.unwrap();
+    let got: AutomationRule = resp.data.unwrap();
     assert_eq!(got.status, "enabled");
 }
 
@@ -164,7 +164,7 @@ async fn disable_switches_status(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = disable_rule(State(state), Path(rule.id)).await;
-    let got: AutomationRule = resp.0.data.unwrap();
+    let got: AutomationRule = resp.data.unwrap();
     assert_eq!(got.status, "disabled");
 }
 
@@ -175,12 +175,12 @@ async fn delete_removes_rule(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool.clone());
     let resp = delete_rule(State(state), Path(rule.id)).await;
-    let deleted: serde_json::Value = resp.0.data.unwrap();
+    let deleted: serde_json::Value = resp.data.unwrap();
     assert_eq!(deleted["success"], serde_json::json!(true));
 
     let state = test_app_state(pool.clone());
     let resp = get_rule(State(state), Path(rule.id)).await;
-    assert!(resp.0.data.is_none());
+    assert!(resp.data.is_none());
 }
 
 #[sqlx::test(migrations = false)]
@@ -190,7 +190,7 @@ async fn get_by_code_returns_rule(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = get_rule_by_code(State(state), Path("RULE_A".to_string())).await;
-    let got: AutomationRule = resp.0.data.unwrap();
+    let got: AutomationRule = resp.data.unwrap();
     assert_eq!(got.id, rule.id);
     assert_eq!(got.name, "规则A");
 }
@@ -212,7 +212,7 @@ async fn update_rule_fields(pool: sqlx::PgPool) {
     };
     let state = test_app_state(pool);
     let resp = update_rule(State(state), Path(rule.id), Json(payload)).await;
-    let got: AutomationRule = resp.0.data.unwrap();
+    let got: AutomationRule = resp.data.unwrap();
     assert_eq!(got.name, "规则A-改");
     assert_eq!(got.status, "enabled");
 }
@@ -224,7 +224,7 @@ async fn duplicate_creates_copy(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = duplicate_rule(State(state), Path(rule.id)).await;
-    let copy: AutomationRule = resp.0.data.unwrap();
+    let copy: AutomationRule = resp.data.unwrap();
     assert_ne!(copy.id, rule.id);
     assert!(copy.name.contains("副本"));
     assert!(copy.code.contains("_copy_"));

@@ -26,7 +26,7 @@ pub async fn list_groups(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<MenuGroupQuery>,
-) -> Json<ApiResponse<MenuGroupListResponse>> {
+) -> ApiResponse<MenuGroupListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -54,7 +54,7 @@ pub async fn list_groups(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询菜单分组总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询菜单分组总数失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询菜单分组总数失败".to_string()));
         }
     };
 
@@ -80,24 +80,22 @@ pub async fn list_groups(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询菜单分组列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询菜单分组列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询菜单分组列表失败".to_string()));
         }
     };
 
-    Json(api_success(MenuGroupListResponse {
+    api_success(MenuGroupListResponse {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
 pub async fn get_group(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<MenuGroup>> {
+) -> ApiResponse<MenuGroup> {
     let sql = format!(
         r#"SELECT {} FROM core_menu_groups WHERE deleted_at IS NULL AND id = $1"#,
         MENU_GROUP_COLUMNS
@@ -111,17 +109,13 @@ pub async fn get_group(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询菜单分组详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询菜单分组详情失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询菜单分组详情失败".to_string()));
         }
     };
 
     match group {
-        Some(g) => Json(api_success(g)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "菜单分组不存在".to_string(),
-        ))),
+        Some(g) => api_success(g),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("菜单分组不存在".to_string())),
     }
 }
 
@@ -129,17 +123,17 @@ pub async fn create_group(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMenuGroupRequest>,
-) -> Json<ApiResponse<MenuGroup>> {
+) -> ApiResponse<MenuGroup> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     if req.code.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "菜单分组编码不能为空".to_string(),
-        )));
+        ));
     }
     if req.name.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "菜单分组名称不能为空".to_string(),
-        )));
+        ));
     }
 
     let sql = format!(
@@ -161,13 +155,11 @@ pub async fn create_group(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建菜单分组失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "创建菜单分组失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("创建菜单分组失败".to_string()));
         }
     };
 
-    Json(api_success(group))
+    api_success(group)
 }
 
 pub async fn update_group(
@@ -175,7 +167,7 @@ pub async fn update_group(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMenuGroupRequest>,
-) -> Json<ApiResponse<MenuGroup>> {
+) -> ApiResponse<MenuGroup> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -212,17 +204,13 @@ pub async fn update_group(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新菜单分组失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "更新菜单分组失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("更新菜单分组失败".to_string()));
         }
     };
 
     match group {
-        Some(g) => Json(api_success(g)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "菜单分组不存在".to_string(),
-        ))),
+        Some(g) => api_success(g),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("菜单分组不存在".to_string())),
     }
 }
 
@@ -230,7 +218,7 @@ pub async fn delete_group(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -246,15 +234,11 @@ pub async fn delete_group(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(api_success("菜单分组删除成功".to_string())),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "菜单分组不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => api_success("菜单分组删除成功".to_string()),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("菜单分组不存在".to_string())),
         Err(e) => {
             tracing::error!("删除菜单分组失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除菜单分组失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除菜单分组失败".to_string()))
         }
     }
 }
@@ -263,7 +247,7 @@ pub async fn list_menus(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<MenuQuery>,
-) -> Json<ApiResponse<MenuListResponse>> {
+) -> ApiResponse<MenuListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -297,9 +281,7 @@ pub async fn list_menus(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询菜单项总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询菜单项总数失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询菜单项总数失败".to_string()));
         }
     };
 
@@ -329,24 +311,19 @@ pub async fn list_menus(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询菜单项列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询菜单项列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询菜单项列表失败".to_string()));
         }
     };
 
-    Json(api_success(MenuListResponse {
+    api_success(MenuListResponse {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
-pub async fn get_menu(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Menu>> {
+pub async fn get_menu(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiResponse<Menu> {
     let sql = format!(
         r#"SELECT {} FROM core_menus WHERE deleted_at IS NULL AND id = $1"#,
         MENU_COLUMNS
@@ -360,17 +337,13 @@ pub async fn get_menu(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询菜单项详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询菜单项详情失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询菜单项详情失败".to_string()));
         }
     };
 
     match menu {
-        Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "菜单项不存在".to_string(),
-        ))),
+        Some(m) => api_success(m),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("菜单项不存在".to_string())),
     }
 }
 
@@ -378,17 +351,17 @@ pub async fn create_menu(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMenuRequest>,
-) -> Json<ApiResponse<Menu>> {
+) -> ApiResponse<Menu> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     if req.code.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "菜单项编码不能为空".to_string(),
-        )));
+        ));
     }
     if req.name.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "菜单项名称不能为空".to_string(),
-        )));
+        ));
     }
 
     let sql = format!(
@@ -414,13 +387,11 @@ pub async fn create_menu(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建菜单项失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "创建菜单项失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("创建菜单项失败".to_string()));
         }
     };
 
-    Json(api_success(menu))
+    api_success(menu)
 }
 
 pub async fn update_menu(
@@ -428,7 +399,7 @@ pub async fn update_menu(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMenuRequest>,
-) -> Json<ApiResponse<Menu>> {
+) -> ApiResponse<Menu> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -473,17 +444,13 @@ pub async fn update_menu(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新菜单项失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "更新菜单项失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("更新菜单项失败".to_string()));
         }
     };
 
     match menu {
-        Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "菜单项不存在".to_string(),
-        ))),
+        Some(m) => api_success(m),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("菜单项不存在".to_string())),
     }
 }
 
@@ -491,7 +458,7 @@ pub async fn delete_menu(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -507,15 +474,11 @@ pub async fn delete_menu(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(api_success("菜单项删除成功".to_string())),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "菜单项不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => api_success("菜单项删除成功".to_string()),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("菜单项不存在".to_string())),
         Err(e) => {
             tracing::error!("删除菜单项失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除菜单项失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除菜单项失败".to_string()))
         }
     }
 }

@@ -1,7 +1,7 @@
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! Kubernetes 服务发现集成测试（真实 K8s 集群）
 //!
-//! 环境变量 `K8S_TEST_API_SERVER`（如 https://127.0.0.1:6443）、
+//! 环境变量 `K8S_TEST_API_SERVER`（如 https://127.0.1:6443）、
 //! `K8S_TEST_NAMESPACE`（默认 default）、`K8S_TEST_TOKEN` 未设置或不可达时自动跳过。
 //! 需准备可访问的 K8s 集群（minikube/kind/真实集群均可）。
 

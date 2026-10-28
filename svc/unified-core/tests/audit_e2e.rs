@@ -95,18 +95,18 @@ async fn record_login_inserts_and_listable(pool: sqlx::PgPool) {
         tenant_id: None,
         user_id: None,
         username: "alice".to_string(),
-        ip_address: "10.0.0.1".to_string(),
+        ip_address: "10.0.1".to_string(),
         user_agent: Some("curl/8".to_string()),
         status: "success".to_string(),
         error_message: None,
     };
     let created = record_login(State(state.clone()), axum::Json(req)).await;
     assert!(
-        created.0.success,
+        created.success,
         "record_login failed: {:?}",
-        created.0.message
+        created.message
     );
-    assert_eq!(created.0.data.as_ref().unwrap().username, "alice");
+    assert_eq!(created.data.as_ref().unwrap().username, "alice");
 
     let resp = list_login_logs(
         State(state),
@@ -114,7 +114,7 @@ async fn record_login_inserts_and_listable(pool: sqlx::PgPool) {
         Query(empty_login_query()),
     )
     .await;
-    let body = resp.0.data.expect("list failed");
+    let body = resp.data.expect("list failed");
     assert_eq!(body.total, 1);
     assert_eq!(body.items.len(), 1);
     assert_eq!(body.items[0].username, "alice");
@@ -131,11 +131,11 @@ async fn operation_logs_empty_returns_zero(pool: sqlx::PgPool) {
     )
     .await;
     assert!(
-        resp.0.success,
+        resp.success,
         "list_operation_logs failed: {:?}",
-        resp.0.message
+        resp.message
     );
-    let body: OperationLogListResponse = resp.0.data.expect("data missing");
+    let body: OperationLogListResponse = resp.data.expect("data missing");
     assert_eq!(body.total, 0);
     assert!(body.items.is_empty());
 }
@@ -145,7 +145,7 @@ async fn operation_logs_with_data_lists_one(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     sqlx::query(
         r#"INSERT INTO core_operation_logs (tenant_id, user_id, user_name, module, operation, resource_type, resource_id, description, response_status, ip_address, trace_id)
-           VALUES ('00000000-0000-0000-0000-000000000000', '22222222-2222-2222-2222-222222222222', 'bob', 'ehs', 'create', 'plan', 'plan-1', '创建应急预案', 200, '10.0.0.2', 'trace-abc')"#,
+           VALUES ('00000000-0000-0000-0000-000000000000', '22222222-2222-2222-2222-222222222222', 'bob', 'ehs', 'create', 'plan', 'plan-1', '创建应急预案', 200, '10.0.2', 'trace-abc')"#,
     )
     .execute(&pool)
     .await
@@ -159,11 +159,11 @@ async fn operation_logs_with_data_lists_one(pool: sqlx::PgPool) {
     )
     .await;
     assert!(
-        resp.0.success,
+        resp.success,
         "list_operation_logs failed: {:?}",
-        resp.0.message
+        resp.message
     );
-    let body: OperationLogListResponse = resp.0.data.expect("data missing");
+    let body: OperationLogListResponse = resp.data.expect("data missing");
     assert_eq!(body.total, 1);
     assert_eq!(body.items[0].user_name, "bob");
     assert_eq!(body.items[0].module, "ehs");

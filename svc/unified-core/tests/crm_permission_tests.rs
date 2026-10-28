@@ -241,7 +241,7 @@ async fn test_crm_006_create_opportunity() {
         Some(json!({
             "title": "测试商机",
             "customer_id": null,
-            "amount": 50000.0,
+            "amount": 50000,
             "stage": "qualification"
         })),
     )

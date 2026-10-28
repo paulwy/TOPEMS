@@ -121,7 +121,7 @@ pub struct BatchUpdateRulesRequest {
 pub async fn list_rules(
     State(state): State<AppState>,
     Query(query): Query<RuleListQuery>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowRule>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowRule>> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -145,9 +145,7 @@ pub async fn list_rules(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询规则总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询规则总数失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询规则总数失败".to_string()));
         }
     };
 
@@ -172,12 +170,12 @@ pub async fn list_rules(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询规则列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询规则列表失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询规则列表失败".to_string()));
         }
     };
 
     let items: Vec<WorkflowRule> = rows.into_iter().map(WorkflowRule::from).collect();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -186,13 +184,13 @@ pub async fn list_rules(
             total_pages: (total + page_size - 1) / page_size,
         },
         "查询成功",
-    ))
+    )
 }
 
 pub async fn get_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowRule>> {
+) -> ApiResponse<WorkflowRule> {
     let row: Option<RuleRow> = match sqlx::query_as(
         r#"SELECT id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description, created_at, updated_at
            FROM core_flow_rules WHERE id = $1 AND deleted_at IS NULL"#,
@@ -204,26 +202,24 @@ pub async fn get_rule(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询规则失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询规则失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询规则失败".to_string()));
         }
     };
 
     match row {
-        Some(r) => Json(ApiResponse::success(WorkflowRule::from(r), "查询成功")),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "规则不存在".to_string(),
-        ))),
+        Some(r) => ApiResponse::success(WorkflowRule::from(r), "查询成功"),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())),
     }
 }
 
 pub async fn create_rule(
     State(state): State<AppState>,
     Json(payload): Json<CreateRuleRequest>,
-) -> Json<ApiResponse<WorkflowRule>> {
+) -> ApiResponse<WorkflowRule> {
     if payload.name.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "规则名称不能为空".to_string(),
-        )));
+        ));
     }
     let rule_type = payload.rule_type.unwrap_or_else(|| "condition".to_string());
     let condition = payload.condition.unwrap_or(serde_json::json!({}));
@@ -252,15 +248,13 @@ pub async fn create_rule(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建规则失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("创建规则失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("创建规则失败".to_string()));
         }
     };
 
     match row {
-        Some(r) => Json(ApiResponse::success(WorkflowRule::from(r), "创建成功")),
-        None => Json(ApiResponse::from(TopemsError::Internal(
-            "创建规则失败".to_string(),
-        ))),
+        Some(r) => ApiResponse::success(WorkflowRule::from(r), "创建成功"),
+        None => ApiResponse::from(TopemsError::Internal("创建规则失败".to_string())),
     }
 }
 
@@ -268,7 +262,7 @@ pub async fn update_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateRuleRequest>,
-) -> Json<ApiResponse<WorkflowRule>> {
+) -> ApiResponse<WorkflowRule> {
     let row: Option<RuleRow> = match sqlx::query_as(
         r#"UPDATE core_flow_rules
            SET name = COALESCE($2, name),
@@ -300,22 +294,20 @@ pub async fn update_rule(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新规则失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("更新规则失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("更新规则失败".to_string()));
         }
     };
 
     match row {
-        Some(r) => Json(ApiResponse::success(WorkflowRule::from(r), "更新成功")),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "规则不存在".to_string(),
-        ))),
+        Some(r) => ApiResponse::success(WorkflowRule::from(r), "更新成功"),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())),
     }
 }
 
 pub async fn delete_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let res = sqlx::query(
         r#"UPDATE core_flow_rules SET deleted_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
@@ -325,18 +317,13 @@ pub async fn delete_rule(
     .await;
 
     match res {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "删除成功",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "规则不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id}), "删除成功")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())),
         Err(e) => {
             tracing::error!("删除规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除规则失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除规则失败".to_string()))
         }
     }
 }
@@ -345,7 +332,7 @@ pub async fn get_rules_by_workflow(
     State(state): State<AppState>,
     Path(workflow_id): Path<Uuid>,
     Query(query): Query<RuleListQuery>,
-) -> Json<ApiResponse<Vec<WorkflowRule>>> {
+) -> ApiResponse<Vec<WorkflowRule>> {
     let rule_type = query.rule_type.filter(|s| !s.is_empty());
     let rows: Vec<RuleRow> = match sqlx::query_as(
         r#"SELECT id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description, created_at, updated_at
@@ -362,18 +349,18 @@ pub async fn get_rules_by_workflow(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询流程规则失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询流程规则失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询流程规则失败".to_string()));
         }
     };
 
     let items: Vec<WorkflowRule> = rows.into_iter().map(WorkflowRule::from).collect();
-    Json(ApiResponse::success(items, "查询成功"))
+    ApiResponse::success(items, "查询成功")
 }
 
 pub async fn get_rules_by_node(
     State(state): State<AppState>,
     Path((workflow_id, node_id)): Path<(Uuid, String)>,
-) -> Json<ApiResponse<Vec<WorkflowRule>>> {
+) -> ApiResponse<Vec<WorkflowRule>> {
     let rows: Vec<RuleRow> = match sqlx::query_as(
         r#"SELECT id, name, workflow_id, node_id, rule_type, condition, action, priority, status, description, created_at, updated_at
            FROM core_flow_rules
@@ -388,18 +375,18 @@ pub async fn get_rules_by_node(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询节点规则失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询节点规则失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询节点规则失败".to_string()));
         }
     };
 
     let items: Vec<WorkflowRule> = rows.into_iter().map(WorkflowRule::from).collect();
-    Json(ApiResponse::success(items, "查询成功"))
+    ApiResponse::success(items, "查询成功")
 }
 
 pub async fn get_rules_by_type(
     State(state): State<AppState>,
     Query(query): Query<RuleListQuery>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowRule>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowRule>> {
     list_rules(
         State(state),
         Query(RuleListQuery {
@@ -417,7 +404,7 @@ pub async fn set_rule_status(
     state: &AppState,
     id: Uuid,
     status: &str,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let res = sqlx::query(
         r#"UPDATE core_flow_rules SET status = $2, updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
@@ -428,18 +415,13 @@ pub async fn set_rule_status(
     .await;
 
     match res {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id, "status": status}),
-            "操作成功",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "规则不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id, "status": status}), "操作成功")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())),
         Err(e) => {
             tracing::error!("更新规则状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新规则状态失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新规则状态失败".to_string()))
         }
     }
 }
@@ -447,25 +429,25 @@ pub async fn set_rule_status(
 pub async fn activate_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     set_rule_status(&state, id, "active").await
 }
 
 pub async fn deactivate_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     set_rule_status(&state, id, "inactive").await
 }
 
 pub async fn batch_update_rules(
     State(state): State<AppState>,
     Json(payload): Json<BatchUpdateRulesRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if payload.rules.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "规则列表不能为空".to_string(),
-        )));
+        ));
     }
     let mut updated = 0usize;
     for rule in payload.rules {
@@ -493,14 +475,9 @@ pub async fn batch_update_rules(
             Ok(_) => {}
             Err(e) => {
                 tracing::error!("批量更新规则失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "批量更新规则失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("批量更新规则失败".to_string()));
             }
         }
     }
-    Json(ApiResponse::success(
-        serde_json::json!({"updated": updated}),
-        "批量更新成功",
-    ))
+    ApiResponse::success(serde_json::json!({"updated": updated}), "批量更新成功")
 }

@@ -288,7 +288,7 @@ pub async fn list_instance_variables(
     State(state): State<AppState>,
     Path(instance_id): Path<Uuid>,
     Query(query): Query<VariableListQuery>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowVariable>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowVariable>> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).min(200);
     match list_variables(
@@ -305,7 +305,7 @@ pub async fn list_instance_variables(
         Ok((rows, total)) => {
             let items: Vec<WorkflowVariable> =
                 rows.into_iter().map(WorkflowVariable::from).collect();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse {
                     items,
                     total,
@@ -314,13 +314,11 @@ pub async fn list_instance_variables(
                     total_pages: (total + page_size - 1) / page_size,
                 },
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询实例变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询实例变量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询实例变量失败".to_string()))
         }
     }
 }
@@ -328,17 +326,13 @@ pub async fn list_instance_variables(
 pub async fn get_instance_variable(
     State(state): State<AppState>,
     Path((instance_id, key)): Path<(Uuid, String)>,
-) -> Json<ApiResponse<WorkflowVariable>> {
+) -> ApiResponse<WorkflowVariable> {
     match find_variable(&state.pool, "instance", Some(instance_id), None, None, &key).await {
-        Ok(Some(r)) => Json(ApiResponse::success(WorkflowVariable::from(r), "查询成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "变量不存在".to_string(),
-        ))),
+        Ok(Some(r)) => ApiResponse::success(WorkflowVariable::from(r), "查询成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string())),
         Err(e) => {
             tracing::error!("查询实例变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询实例变量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询实例变量失败".to_string()))
         }
     }
 }
@@ -347,7 +341,7 @@ pub async fn set_instance_variable(
     State(state): State<AppState>,
     Path((instance_id, key)): Path<(Uuid, String)>,
     Json(payload): Json<SetVariableRequest>,
-) -> Json<ApiResponse<WorkflowVariable>> {
+) -> ApiResponse<WorkflowVariable> {
     match upsert_variable(
         &state.pool,
         "instance",
@@ -360,15 +354,11 @@ pub async fn set_instance_variable(
     )
     .await
     {
-        Ok(Some(r)) => Json(ApiResponse::success(WorkflowVariable::from(r), "设置成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
-            "设置变量失败".to_string(),
-        ))),
+        Ok(Some(r)) => ApiResponse::success(WorkflowVariable::from(r), "设置成功"),
+        Ok(None) => ApiResponse::from(TopemsError::Internal("设置变量失败".to_string())),
         Err(e) => {
             tracing::error!("设置实例变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "设置实例变量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("设置实例变量失败".to_string()))
         }
     }
 }
@@ -377,7 +367,7 @@ pub async fn set_instance_variables_batch(
     State(state): State<AppState>,
     Path(instance_id): Path<Uuid>,
     Json(payload): Json<SetVariablesBatchRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut updated = 0usize;
     for (key, value) in payload.variables {
         match upsert_variable(
@@ -396,35 +386,25 @@ pub async fn set_instance_variables_batch(
             Ok(None) => {}
             Err(e) => {
                 tracing::error!("批量设置实例变量失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
+                return ApiResponse::from(TopemsError::Internal(
                     "批量设置实例变量失败".to_string(),
-                )));
+                ));
             }
         }
     }
-    Json(ApiResponse::success(
-        serde_json::json!({"updated": updated}),
-        "批量设置成功",
-    ))
+    ApiResponse::success(serde_json::json!({"updated": updated}), "批量设置成功")
 }
 
 pub async fn delete_instance_variable(
     State(state): State<AppState>,
     Path((instance_id, key)): Path<(Uuid, String)>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match delete_variable(&state.pool, "instance", Some(instance_id), None, None, &key).await {
-        Ok(n) if n > 0 => Json(ApiResponse::success(
-            serde_json::json!({"deleted": n}),
-            "删除成功",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "变量不存在".to_string(),
-        ))),
+        Ok(n) if n > 0 => ApiResponse::success(serde_json::json!({"deleted": n}), "删除成功"),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string())),
         Err(e) => {
             tracing::error!("删除实例变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除实例变量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除实例变量失败".to_string()))
         }
     }
 }
@@ -432,27 +412,23 @@ pub async fn delete_instance_variable(
 pub async fn get_variables_by_scope(
     State(state): State<AppState>,
     Path((instance_id, scope)): Path<(Uuid, String)>,
-) -> Json<ApiResponse<Vec<WorkflowVariable>>> {
+) -> ApiResponse<Vec<WorkflowVariable>> {
     let scope = match scope.as_str() {
         "global" | "local" => scope,
         other => {
             tracing::warn!("未知变量作用域: {}", other);
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "未知变量作用域".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::ValidationFailed("未知变量作用域".to_string()));
         }
     };
     match list_variables(&state.pool, &scope, Some(instance_id), None, None, 1, 500).await {
         Ok((rows, _)) => {
             let items: Vec<WorkflowVariable> =
                 rows.into_iter().map(WorkflowVariable::from).collect();
-            Json(ApiResponse::success(items, "查询成功"))
+            ApiResponse::success(items, "查询成功")
         }
         Err(e) => {
             tracing::error!("查询作用域变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询作用域变量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询作用域变量失败".to_string()))
         }
     }
 }
@@ -461,7 +437,7 @@ pub async fn get_variable_history(
     State(state): State<AppState>,
     Path((instance_id, key)): Path<(Uuid, String)>,
     Query(query): Query<VariableListQuery>,
-) -> Json<ApiResponse<PaginatedResponse<VariableHistory>>> {
+) -> ApiResponse<PaginatedResponse<VariableHistory>> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).min(200);
     let offset = (page - 1) * page_size;
@@ -483,14 +459,12 @@ pub async fn get_variable_history(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询变量历史失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询变量历史失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询变量历史失败".to_string()));
         }
     };
     let total = i64::try_from(rows.len()).unwrap_or(0);
     let items: Vec<VariableHistory> = rows.into_iter().map(VariableHistory::from).collect();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -499,7 +473,7 @@ pub async fn get_variable_history(
             total_pages: (total + page_size - 1) / page_size,
         },
         "查询成功",
-    ))
+    )
 }
 
 // ===== task 作用域 =====
@@ -508,7 +482,7 @@ pub async fn list_task_variables(
     State(state): State<AppState>,
     Path(task_id): Path<Uuid>,
     Query(query): Query<VariableListQuery>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowVariable>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowVariable>> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).min(200);
     match list_variables(
@@ -525,7 +499,7 @@ pub async fn list_task_variables(
         Ok((rows, total)) => {
             let items: Vec<WorkflowVariable> =
                 rows.into_iter().map(WorkflowVariable::from).collect();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse {
                     items,
                     total,
@@ -534,13 +508,11 @@ pub async fn list_task_variables(
                     total_pages: (total + page_size - 1) / page_size,
                 },
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询任务变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询任务变量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询任务变量失败".to_string()))
         }
     }
 }
@@ -549,7 +521,7 @@ pub async fn set_task_variable(
     State(state): State<AppState>,
     Path((task_id, key)): Path<(Uuid, String)>,
     Json(payload): Json<SetVariableRequest>,
-) -> Json<ApiResponse<WorkflowVariable>> {
+) -> ApiResponse<WorkflowVariable> {
     match upsert_variable(
         &state.pool,
         "task",
@@ -562,15 +534,11 @@ pub async fn set_task_variable(
     )
     .await
     {
-        Ok(Some(r)) => Json(ApiResponse::success(WorkflowVariable::from(r), "设置成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
-            "设置变量失败".to_string(),
-        ))),
+        Ok(Some(r)) => ApiResponse::success(WorkflowVariable::from(r), "设置成功"),
+        Ok(None) => ApiResponse::from(TopemsError::Internal("设置变量失败".to_string())),
         Err(e) => {
             tracing::error!("设置任务变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "设置任务变量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("设置任务变量失败".to_string()))
         }
     }
 }
@@ -581,7 +549,7 @@ pub async fn get_global_variables(
     State(state): State<AppState>,
     Path(workflow_id): Path<Uuid>,
     Query(query): Query<VariableListQuery>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowVariable>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowVariable>> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).min(200);
     match list_variables(
@@ -598,7 +566,7 @@ pub async fn get_global_variables(
         Ok((rows, total)) => {
             let items: Vec<WorkflowVariable> =
                 rows.into_iter().map(WorkflowVariable::from).collect();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse {
                     items,
                     total,
@@ -607,13 +575,11 @@ pub async fn get_global_variables(
                     total_pages: (total + page_size - 1) / page_size,
                 },
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询全局变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询全局变量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询全局变量失败".to_string()))
         }
     }
 }
@@ -622,7 +588,7 @@ pub async fn set_global_variable(
     State(state): State<AppState>,
     Path((workflow_id, key)): Path<(Uuid, String)>,
     Json(payload): Json<SetVariableRequest>,
-) -> Json<ApiResponse<WorkflowVariable>> {
+) -> ApiResponse<WorkflowVariable> {
     match upsert_variable(
         &state.pool,
         "global",
@@ -635,15 +601,11 @@ pub async fn set_global_variable(
     )
     .await
     {
-        Ok(Some(r)) => Json(ApiResponse::success(WorkflowVariable::from(r), "设置成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
-            "设置变量失败".to_string(),
-        ))),
+        Ok(Some(r)) => ApiResponse::success(WorkflowVariable::from(r), "设置成功"),
+        Ok(None) => ApiResponse::from(TopemsError::Internal("设置变量失败".to_string())),
         Err(e) => {
             tracing::error!("设置全局变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "设置全局变量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("设置全局变量失败".to_string()))
         }
     }
 }

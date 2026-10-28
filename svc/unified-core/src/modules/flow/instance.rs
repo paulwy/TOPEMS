@@ -54,7 +54,7 @@ pub async fn list_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InstanceQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -130,7 +130,7 @@ pub async fn list_instances(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询工作流实例总数失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal("查询工作流实例总数失败".to_string())));
+                return ApiResponse::from(TopemsError::Internal("查询工作流实例总数失败".to_string()));
             }
         }
     };
@@ -169,7 +169,7 @@ pub async fn list_instances(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询工作流实例列表失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal("查询工作流实例列表失败".to_string())));
+                return ApiResponse::from(TopemsError::Internal("查询工作流实例列表失败".to_string()));
             }
         }
     } else {
@@ -217,15 +217,15 @@ pub async fn list_instances(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询工作流实例列表失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal("查询工作流实例列表失败".to_string())));
+                return ApiResponse::from(TopemsError::Internal("查询工作流实例列表失败".to_string()));
             }
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -245,7 +245,7 @@ pub async fn list_instances(
 pub async fn get_instance(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "SELECT id, tenant_id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at FROM core_workflow_instances WHERE id = $1",
     )
@@ -256,14 +256,14 @@ pub async fn get_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string()));
             }
             tracing::error!("查询工作流实例失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询工作流实例失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询工作流实例失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(instance, "查询成功"))
+    ApiResponse::success(instance, "查询成功")
 }
 
 #[utoipa::path(
@@ -282,7 +282,7 @@ pub async fn create_instance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateInstanceRequest>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     // 租户绑定对齐 nil 上下文惯例（超管/无 claims → None/SQL NULL；普通用户 → Some(claims.tenant_id)）。
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -309,11 +309,11 @@ pub async fn create_instance(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建工作流实例失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("创建工作流实例失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("创建工作流实例失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(instance, "创建成功"))
+    ApiResponse::success(instance, "创建成功")
 }
 
 #[utoipa::path(
@@ -334,7 +334,7 @@ pub async fn start_instance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -356,14 +356,14 @@ pub async fn start_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string()));
             }
             tracing::error!("启动工作流实例失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("启动工作流实例失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("启动工作流实例失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(instance, "启动成功"))
+    ApiResponse::success(instance, "启动成功")
 }
 
 #[utoipa::path(
@@ -384,7 +384,7 @@ pub async fn approve_instance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -406,14 +406,14 @@ pub async fn approve_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string()));
             }
             tracing::error!("审批工作流实例失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("审批工作流实例失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("审批工作流实例失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(instance, "审批通过"))
+    ApiResponse::success(instance, "审批通过")
 }
 
 #[utoipa::path(
@@ -434,7 +434,7 @@ pub async fn reject_instance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -456,14 +456,14 @@ pub async fn reject_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string()));
             }
             tracing::error!("拒绝工作流实例失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("拒绝工作流实例失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("拒绝工作流实例失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(instance, "已拒绝"))
+    ApiResponse::success(instance, "已拒绝")
 }
 
 #[utoipa::path(
@@ -484,7 +484,7 @@ pub async fn cancel_instance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -506,14 +506,14 @@ pub async fn cancel_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string()));
             }
             tracing::error!("取消工作流实例失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("取消工作流实例失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("取消工作流实例失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(instance, "取消成功"))
+    ApiResponse::success(instance, "取消成功")
 }
 
 #[utoipa::path(
@@ -534,7 +534,7 @@ pub async fn resume_instance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -556,14 +556,14 @@ pub async fn resume_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string()));
             }
             tracing::error!("恢复工作流实例失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("恢复工作流实例失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("恢复工作流实例失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(instance, "恢复成功"))
+    ApiResponse::success(instance, "恢复成功")
 }
 
 #[utoipa::path(
@@ -584,7 +584,7 @@ pub async fn suspend_instance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -606,14 +606,14 @@ pub async fn suspend_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string()));
             }
             tracing::error!("暂停工作流实例失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("暂停工作流实例失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("暂停工作流实例失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(instance, "暂停成功"))
+    ApiResponse::success(instance, "暂停成功")
 }
 
 #[utoipa::path(
@@ -633,7 +633,7 @@ pub async fn suspend_instance(
 pub async fn get_instance_details(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     get_instance(State(state), Path(id)).await
 }
 
@@ -657,7 +657,7 @@ pub async fn error_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InstanceQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let mut params = params;
     params.status = Some("error".to_string());
     list_instances(State(state), Extension(claims), Query(params)).await
@@ -680,7 +680,7 @@ pub async fn error_instances(
 pub async fn overdue_instances(
     State(state): State<AppState>,
     Query(params): Query<InstanceQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -701,9 +701,9 @@ pub async fn overdue_instances(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询逾期工作流实例总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "查询逾期工作流实例总数失败".to_string(),
-            )));
+            ));
         }
     };
 
@@ -728,14 +728,14 @@ pub async fn overdue_instances(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询逾期工作流实例列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询逾期工作流实例列表失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询逾期工作流实例列表失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize)]
@@ -763,7 +763,7 @@ pub async fn retry_instance(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<Option<RetryInstanceRequest>>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -789,17 +789,15 @@ pub async fn retry_instance(
     .await;
 
     match instance {
-        Ok(v) => Json(ApiResponse::success(v, "重试成功")),
+        Ok(v) => ApiResponse::success(v, "重试成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                return ApiResponse::from(TopemsError::ResourceNotFound(
                     "工作流实例不存在".to_string(),
-                )));
+                ));
             }
             tracing::error!("重试工作流实例失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "重试工作流实例失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("重试工作流实例失败".to_string()))
         }
     }
 }

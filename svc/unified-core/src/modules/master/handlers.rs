@@ -970,17 +970,14 @@ pub async fn create_ref_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMasterDataRefRequest>,
-) -> Json<ApiResponse<MasterDataRef>> {
+) -> ApiResponse<MasterDataRef> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
 
     match service.create_ref(tenant_id, req, Some(operator)).await {
-        Ok(r) => Json(ApiResponse::success(r, "主数据引用创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "create_ref_handler",
-            e,
-        ))),
+        Ok(r) => ApiResponse::success(r, "主数据引用创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("create_ref_handler", e)),
     }
 }
 
@@ -990,7 +987,7 @@ pub async fn update_ref_handler(
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
     Json(req): Json<UpdateMasterDataRefRequest>,
-) -> Json<ApiResponse<MasterDataRef>> {
+) -> ApiResponse<MasterDataRef> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
@@ -999,11 +996,8 @@ pub async fn update_ref_handler(
         .update_ref(tenant_id, &master_data_id, req, Some(operator))
         .await
     {
-        Ok(r) => Json(ApiResponse::success(r, "主数据引用更新成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "update_ref_handler",
-            e,
-        ))),
+        Ok(r) => ApiResponse::success(r, "主数据引用更新成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("update_ref_handler", e)),
     }
 }
 
@@ -1012,7 +1006,7 @@ pub async fn delete_ref_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let operator = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
@@ -1021,11 +1015,8 @@ pub async fn delete_ref_handler(
         .delete_ref(tenant_id, &master_data_id, Some(operator))
         .await
     {
-        Ok(b) => Json(ApiResponse::success(b, "主数据引用已删除")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "delete_ref_handler",
-            e,
-        ))),
+        Ok(b) => ApiResponse::success(b, "主数据引用已删除"),
+        Err(e) => ApiResponse::from(TopemsError::internal("delete_ref_handler", e)),
     }
 }
 
@@ -1034,17 +1025,14 @@ pub async fn get_ref_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
-) -> Json<ApiResponse<MasterDataRef>> {
+) -> ApiResponse<MasterDataRef> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.get_ref(tenant_id, &master_data_id).await {
-        Ok(Some(r)) => Json(ApiResponse::success(r, "查询成功")),
-        Ok(None) => Json(ApiResponse::not_found("主数据引用不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "get_ref_handler",
-            e,
-        ))),
+        Ok(Some(r)) => ApiResponse::success(r, "查询成功"),
+        Ok(None) => ApiResponse::not_found("主数据引用不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("get_ref_handler", e)),
     }
 }
 
@@ -1053,17 +1041,14 @@ pub async fn get_ref_by_code_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((domain, code)): Path<(String, String)>,
-) -> Json<ApiResponse<MasterDataRef>> {
+) -> ApiResponse<MasterDataRef> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.get_ref_by_code(tenant_id, &domain, &code).await {
-        Ok(Some(r)) => Json(ApiResponse::success(r, "查询成功")),
-        Ok(None) => Json(ApiResponse::not_found("主数据引用不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "get_ref_by_code_handler",
-            e,
-        ))),
+        Ok(Some(r)) => ApiResponse::success(r, "查询成功"),
+        Ok(None) => ApiResponse::not_found("主数据引用不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("get_ref_by_code_handler", e)),
     }
 }
 
@@ -1072,7 +1057,7 @@ pub async fn list_refs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<MasterDataQuery>,
-) -> Json<ApiResponse<MasterDataListResponse>> {
+) -> ApiResponse<MasterDataListResponse> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
@@ -1080,7 +1065,7 @@ pub async fn list_refs_handler(
     let page_size = query.page_size.unwrap_or(20).min(100);
 
     match service.list_refs(tenant_id, query).await {
-        Ok((items, total)) => Json(ApiResponse::success(
+        Ok((items, total)) => ApiResponse::success(
             MasterDataListResponse {
                 items,
                 total,
@@ -1088,11 +1073,8 @@ pub async fn list_refs_handler(
                 page_size,
             },
             "查询成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "list_refs_handler",
-            e,
-        ))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("list_refs_handler", e)),
     }
 }
 
@@ -1101,7 +1083,7 @@ pub async fn list_changes_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
-) -> Json<ApiResponse<Vec<MasterDataChangeLog>>> {
+) -> ApiResponse<Vec<MasterDataChangeLog>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1114,11 +1096,8 @@ pub async fn list_changes_handler(
         .list_changes(opt_tenant_id, &master_data_id, 50)
         .await
     {
-        Ok(changes) => Json(ApiResponse::success(changes, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "list_changes_handler",
-            e,
-        ))),
+        Ok(changes) => ApiResponse::success(changes, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("list_changes_handler", e)),
     }
 }
 
@@ -1126,16 +1105,13 @@ pub async fn list_changes_handler(
 pub async fn get_overall_stats_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<MdmOverallStats>> {
+) -> ApiResponse<MdmOverallStats> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.get_overall_stats(tenant_id).await {
-        Ok(stats) => Json(ApiResponse::success(stats, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "get_overall_stats_handler",
-            e,
-        ))),
+        Ok(stats) => ApiResponse::success(stats, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("get_overall_stats_handler", e)),
     }
 }
 
@@ -1143,16 +1119,13 @@ pub async fn get_overall_stats_handler(
 pub async fn get_sync_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<SyncStatus>>> {
+) -> ApiResponse<Vec<SyncStatus>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.get_sync_status(tenant_id).await {
-        Ok(status) => Json(ApiResponse::success(status, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "get_sync_status_handler",
-            e,
-        ))),
+        Ok(status) => ApiResponse::success(status, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("get_sync_status_handler", e)),
     }
 }
 
@@ -1163,17 +1136,14 @@ pub async fn get_quality_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<QualityReportQuery>,
-) -> Json<ApiResponse<QualityReport>> {
+) -> ApiResponse<QualityReport> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let stale_hours = params.stale_threshold_hours.unwrap_or(24);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.get_quality_report(tenant_id, stale_hours).await {
-        Ok(report) => Json(ApiResponse::success(report, "质量报告生成成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "get_quality_report_handler",
-            e,
-        ))),
+        Ok(report) => ApiResponse::success(report, "质量报告生成成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("get_quality_report_handler", e)),
     }
 }
 
@@ -1181,16 +1151,13 @@ pub async fn get_quality_report_handler(
 pub async fn list_duplicates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<DuplicateRecord>>> {
+) -> ApiResponse<Vec<DuplicateRecord>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.list_duplicates(tenant_id).await {
-        Ok(dups) => Json(ApiResponse::success(dups, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "list_duplicates_handler",
-            e,
-        ))),
+        Ok(dups) => ApiResponse::success(dups, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("list_duplicates_handler", e)),
     }
 }
 
@@ -1199,17 +1166,14 @@ pub async fn list_stale_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<StaleQuery>,
-) -> Json<ApiResponse<Vec<StaleRecord>>> {
+) -> ApiResponse<Vec<StaleRecord>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let threshold = params.stale_threshold_hours.unwrap_or(24);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.list_stale(tenant_id, threshold).await {
-        Ok(records) => Json(ApiResponse::success(records, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "list_stale_handler",
-            e,
-        ))),
+        Ok(records) => ApiResponse::success(records, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("list_stale_handler", e)),
     }
 }
 
@@ -1219,16 +1183,13 @@ pub async fn list_stale_handler(
 pub async fn run_reconciliation_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<ReconciliationResult>> {
+) -> ApiResponse<ReconciliationResult> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
     match service.run_reconciliation(tenant_id).await {
-        Ok(result) => Json(ApiResponse::success(result, "对账完成")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "run_reconciliation_handler",
-            e,
-        ))),
+        Ok(result) => ApiResponse::success(result, "对账完成"),
+        Err(e) => ApiResponse::from(TopemsError::internal("run_reconciliation_handler", e)),
     }
 }
 
@@ -1237,7 +1198,7 @@ pub async fn list_reconciliation_logs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReconciliationLogQuery>,
-) -> Json<ApiResponse<Vec<ReconciliationLog>>> {
+) -> ApiResponse<Vec<ReconciliationLog>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let unresolved = params.unresolved_only.unwrap_or(false);
     let limit = params.limit.unwrap_or(50).min(200);
@@ -1247,11 +1208,8 @@ pub async fn list_reconciliation_logs_handler(
         .list_reconciliation_logs(tenant_id, unresolved, limit)
         .await
     {
-        Ok(logs) => Json(ApiResponse::success(logs, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "list_reconciliation_logs_handler",
-            e,
-        ))),
+        Ok(logs) => ApiResponse::success(logs, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("list_reconciliation_logs_handler", e)),
     }
 }
 
@@ -1260,7 +1218,7 @@ pub async fn resolve_reconciliation_issue_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(issue_id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = MasterDataService::new(state.pool.clone());
 
@@ -1268,12 +1226,12 @@ pub async fn resolve_reconciliation_issue_handler(
         .resolve_reconciliation_issue(tenant_id, issue_id)
         .await
     {
-        Ok(true) => Json(ApiResponse::success(true, "对账问题已标记为解决")),
-        Ok(false) => Json(ApiResponse::not_found("对账问题不存在或已解决")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+        Ok(true) => ApiResponse::success(true, "对账问题已标记为解决"),
+        Ok(false) => ApiResponse::not_found("对账问题不存在或已解决"),
+        Err(e) => ApiResponse::from(TopemsError::internal(
             "resolve_reconciliation_issue_handler",
             e,
-        ))),
+        )),
     }
 }
 
@@ -1303,24 +1261,18 @@ pub async fn create_approval_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateApprovalRequest>,
-) -> Json<ApiResponse<MasterDataApproval>> {
+) -> ApiResponse<MasterDataApproval> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let requested_by = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
 
     if !requires_approval(&req.domain) {
-        return Json(ApiResponse::bad_request(&format!(
-            "域 {} 不需要审批",
-            req.domain
-        )));
+        return ApiResponse::bad_request(&format!("域 {} 不需要审批", req.domain));
     }
 
     match service.create_approval(tenant_id, req, requested_by).await {
-        Ok(approval) => Json(ApiResponse::success(approval, "审批请求已创建")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "create_approval_handler",
-            e,
-        ))),
+        Ok(approval) => ApiResponse::success(approval, "审批请求已创建"),
+        Err(e) => ApiResponse::from(TopemsError::internal("create_approval_handler", e)),
     }
 }
 
@@ -1330,7 +1282,7 @@ pub async fn review_approval_handler(
     Extension(claims): Extension<Claims>,
     Path(approval_id): Path<Uuid>,
     Json(req): Json<ReviewApprovalRequest>,
-) -> Json<ApiResponse<MasterDataApproval>> {
+) -> ApiResponse<MasterDataApproval> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let reviewer = claims.username.clone();
     let service = MasterDataService::new(state.pool.clone());
@@ -1345,13 +1297,10 @@ pub async fn review_approval_handler(
             } else {
                 "审批已拒绝"
             };
-            Json(ApiResponse::success(approval, msg))
+            ApiResponse::success(approval, msg)
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("审批请求不存在或已处理")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "review_approval_handler",
-            e,
-        ))),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("审批请求不存在或已处理"),
+        Err(e) => ApiResponse::from(TopemsError::internal("review_approval_handler", e)),
     }
 }
 
@@ -1360,7 +1309,7 @@ pub async fn list_pending_approvals_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PendingApprovalQuery>,
-) -> Json<ApiResponse<Vec<MasterDataApproval>>> {
+) -> ApiResponse<Vec<MasterDataApproval>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1374,11 +1323,8 @@ pub async fn list_pending_approvals_handler(
         .list_pending_approvals(opt_tenant_id, params.domain.as_deref(), limit)
         .await
     {
-        Ok(approvals) => Json(ApiResponse::success(approvals, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "list_pending_approvals_handler",
-            e,
-        ))),
+        Ok(approvals) => ApiResponse::success(approvals, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("list_pending_approvals_handler", e)),
     }
 }
 
@@ -1387,7 +1333,7 @@ pub async fn list_approval_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(master_data_id): Path<String>,
-) -> Json<ApiResponse<Vec<MasterDataApproval>>> {
+) -> ApiResponse<Vec<MasterDataApproval>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1400,11 +1346,8 @@ pub async fn list_approval_history_handler(
         .list_approval_history(opt_tenant_id, &master_data_id)
         .await
     {
-        Ok(history) => Json(ApiResponse::success(history, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "list_approval_history_handler",
-            e,
-        ))),
+        Ok(history) => ApiResponse::success(history, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("list_approval_history_handler", e)),
     }
 }
 

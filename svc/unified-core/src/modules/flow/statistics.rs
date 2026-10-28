@@ -1,5 +1,5 @@
 use crate::AppState;
-use axum::{extract::State, Json};
+use axum::extract::State;
 use topems_shared_core::response::ApiResponse;
 
 use super::models::{MonthlyData, StatisticsResponse, WorkflowStat};
@@ -15,9 +15,7 @@ use super::models::{MonthlyData, StatisticsResponse, WorkflowStat};
     ),
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-pub async fn get_statistics(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<StatisticsResponse>> {
+pub async fn get_statistics(State(state): State<AppState>) -> ApiResponse<StatisticsResponse> {
     let total_workflows: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflows")
         .fetch_one(&state.pool)
         .await
@@ -112,7 +110,7 @@ pub async fn get_statistics(
 
     let monthly_data: Vec<MonthlyData> = Vec::new();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         StatisticsResponse {
             total_workflows,
             active_workflows,
@@ -131,5 +129,5 @@ pub async fn get_statistics(
             monthly_data,
         },
         "查询成功",
-    ))
+    )
 }

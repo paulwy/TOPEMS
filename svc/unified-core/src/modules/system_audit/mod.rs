@@ -1,10 +1,7 @@
 //! System Audit Logs module - /system/audit-logs 端点实现
 
 use crate::AppState;
-use axum::{
-    extract::{Path, Query, State},
-    Json,
-};
+use axum::extract::{Path, Query, State};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -65,7 +62,7 @@ pub struct AuditStatsParams {
 pub async fn list_audit_logs(
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<AuditLog>>> {
+) -> ApiResponse<PaginatedResponse<AuditLog>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.or(params.page_size).unwrap_or(20).min(200);
     let offset = (page - 1) * page_size;
@@ -125,33 +122,29 @@ pub async fn list_audit_logs(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 pub async fn get_audit_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AuditLog>> {
+) -> ApiResponse<AuditLog> {
     let log: Result<AuditLog, _> = sqlx::query_as("SELECT * FROM audit_logs WHERE id = $1")
         .bind(id)
         .fetch_one(&state.pool)
         .await;
 
     match log {
-        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Ok(v) => ApiResponse::success(v, "查询成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "审计日志不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("审计日志不存在".to_string()))
             } else {
                 tracing::error!("查询审计日志失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询审计日志失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("查询审计日志失败".to_string()))
             }
         }
     }
@@ -160,7 +153,7 @@ pub async fn get_audit_log(
 pub async fn export_audit_logs(
     State(state): State<AppState>,
     Query(params): Query<AuditLogQueryParams>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let user_uuid = params
         .user_id
         .clone()
@@ -191,7 +184,7 @@ pub async fn export_audit_logs(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "count": items.len(),
             "data": items,
@@ -199,14 +192,14 @@ pub async fn export_audit_logs(
             "exported_at": Utc::now().to_rfc3339(),
         }),
         "导出成功",
-    ))
+    )
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_audit_stats(
     State(state): State<AppState>,
     Query(params): Query<AuditStatsParams>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let group_by = params
         .group_by
         .clone()
@@ -299,7 +292,7 @@ pub async fn get_audit_stats(
         group_map.insert(key, serde_json::json!(count));
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total": total,
             "success": success_count,
@@ -308,5 +301,5 @@ pub async fn get_audit_stats(
             "by_group": Value::Object(group_map),
         }),
         "查询成功",
-    ))
+    )
 }

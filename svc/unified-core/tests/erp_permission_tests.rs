@@ -115,7 +115,7 @@ async fn test_erp_002_create_purchase_order() {
         Some(json!({
             "supplier_id": null,
             "items": [{ "product_id": null, "quantity": 10, "price": 100.0 }],
-            "total_amount": 1000.0,
+            "total_amount": 1000,
             "status": "draft"
         })),
     )

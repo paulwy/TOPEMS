@@ -216,7 +216,7 @@ pub struct RunLogQueryParams {
 pub async fn list_rules(
     State(state): State<AppState>,
     Query(params): Query<RuleQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<AutomationRule>>> {
+) -> ApiResponse<PaginatedResponse<AutomationRule>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params
         .page_size
@@ -252,16 +252,16 @@ pub async fn list_rules(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 pub async fn get_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AutomationRule>> {
+) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> =
         sqlx::query_as("SELECT * FROM automation_rules WHERE id = $1")
             .bind(id)
@@ -269,17 +269,13 @@ pub async fn get_rule(
             .await;
 
     match rule {
-        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Ok(v) => ApiResponse::success(v, "查询成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "规则不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
             } else {
                 tracing::error!("查询规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询规则失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("查询规则失败".to_string()))
             }
         }
     }
@@ -288,7 +284,7 @@ pub async fn get_rule(
 pub async fn get_rule_by_code(
     State(state): State<AppState>,
     Path(code): Path<String>,
-) -> Json<ApiResponse<AutomationRule>> {
+) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> =
         sqlx::query_as("SELECT * FROM automation_rules WHERE code = $1")
             .bind(&code)
@@ -296,17 +292,13 @@ pub async fn get_rule_by_code(
             .await;
 
     match rule {
-        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Ok(v) => ApiResponse::success(v, "查询成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "规则不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
             } else {
                 tracing::error!("查询规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询规则失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("查询规则失败".to_string()))
             }
         }
     }
@@ -316,7 +308,7 @@ pub async fn create_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateRuleRequest>,
-) -> Json<ApiResponse<AutomationRule>> {
+) -> ApiResponse<AutomationRule> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
     let status = payload
         .status
@@ -352,12 +344,10 @@ pub async fn create_rule(
     .await;
 
     match rule {
-        Ok(v) => Json(ApiResponse::success(v, "创建成功")),
+        Ok(v) => ApiResponse::success(v, "创建成功"),
         Err(e) => {
             tracing::error!("创建规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建规则失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建规则失败".to_string()))
         }
     }
 }
@@ -366,7 +356,7 @@ pub async fn update_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateRuleRequest>,
-) -> Json<ApiResponse<AutomationRule>> {
+) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> = sqlx::query_as(
         r#"UPDATE automation_rules SET
               name = COALESCE($2, name),
@@ -393,17 +383,13 @@ pub async fn update_rule(
     .await;
 
     match rule {
-        Ok(v) => Json(ApiResponse::success(v, "更新成功")),
+        Ok(v) => ApiResponse::success(v, "更新成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "规则不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
             } else {
                 tracing::error!("更新规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "更新规则失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("更新规则失败".to_string()))
             }
         }
     }
@@ -412,25 +398,20 @@ pub async fn update_rule(
 pub async fn delete_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let result = sqlx::query("DELETE FROM automation_rules WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"success": true}),
-            "删除成功",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "规则不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"success": true}), "删除成功")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())),
         Err(e) => {
             tracing::error!("删除规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除规则失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除规则失败".to_string()))
         }
     }
 }
@@ -438,7 +419,7 @@ pub async fn delete_rule(
 pub async fn enable_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AutomationRule>> {
+) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> = sqlx::query_as(
         "UPDATE automation_rules SET status = 'enabled', updated_at = NOW() WHERE id = $1 RETURNING *",
     )
@@ -447,17 +428,13 @@ pub async fn enable_rule(
     .await;
 
     match rule {
-        Ok(v) => Json(ApiResponse::success(v, "启用成功")),
+        Ok(v) => ApiResponse::success(v, "启用成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "规则不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
             } else {
                 tracing::error!("启用规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "启用规则失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("启用规则失败".to_string()))
             }
         }
     }
@@ -466,7 +443,7 @@ pub async fn enable_rule(
 pub async fn disable_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AutomationRule>> {
+) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> = sqlx::query_as(
         "UPDATE automation_rules SET status = 'disabled', updated_at = NOW() WHERE id = $1 RETURNING *",
     )
@@ -475,17 +452,13 @@ pub async fn disable_rule(
     .await;
 
     match rule {
-        Ok(v) => Json(ApiResponse::success(v, "禁用成功")),
+        Ok(v) => ApiResponse::success(v, "禁用成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "规则不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
             } else {
                 tracing::error!("禁用规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "禁用规则失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("禁用规则失败".to_string()))
             }
         }
     }
@@ -494,7 +467,7 @@ pub async fn disable_rule(
 pub async fn duplicate_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AutomationRule>> {
+) -> ApiResponse<AutomationRule> {
     let rule: Result<AutomationRule, _> = sqlx::query_as(
         r#"INSERT INTO automation_rules (name, code, description, trigger, action, on_success, on_error, canvas, status)
            SELECT name || ' (副本)', code || '_copy_' || substr(gen_random_uuid()::text, 1, 8),
@@ -506,17 +479,13 @@ pub async fn duplicate_rule(
     .await;
 
     match rule {
-        Ok(v) => Json(ApiResponse::success(v, "复制成功")),
+        Ok(v) => ApiResponse::success(v, "复制成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "规则不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
             } else {
                 tracing::error!("复制规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "复制规则失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("复制规则失败".to_string()))
             }
         }
     }
@@ -526,7 +495,7 @@ pub async fn trigger_rule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<Option<TriggerRequest>>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let rule: Result<AutomationRule, _> =
         sqlx::query_as("SELECT * FROM automation_rules WHERE id = $1")
             .bind(id)
@@ -537,14 +506,10 @@ pub async fn trigger_rule(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "规则不存在".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()));
             }
             tracing::error!("触发规则失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "触发规则失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("触发规则失败".to_string()));
         }
     };
 
@@ -570,16 +535,14 @@ pub async fn trigger_rule(
             .execute(&state.pool)
             .await;
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"run_id": run_id.to_string()}),
                 "触发成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("创建运行记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "触发规则失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("触发规则失败".to_string()))
         }
     }
 }
@@ -589,7 +552,7 @@ pub async fn trigger_rule(
 pub async fn list_runs(
     State(state): State<AppState>,
     Query(params): Query<RunQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<AutomationRun>>> {
+) -> ApiResponse<PaginatedResponse<AutomationRun>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params
         .page_size
@@ -628,16 +591,16 @@ pub async fn list_runs(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 pub async fn get_run(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AutomationRun>> {
+) -> ApiResponse<AutomationRun> {
     let run: Result<AutomationRun, _> =
         sqlx::query_as("SELECT * FROM automation_runs WHERE id = $1")
             .bind(id)
@@ -645,26 +608,19 @@ pub async fn get_run(
             .await;
 
     match run {
-        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Ok(v) => ApiResponse::success(v, "查询成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "运行记录不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("运行记录不存在".to_string()))
             } else {
                 tracing::error!("查询运行记录失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询运行记录失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("查询运行记录失败".to_string()))
             }
         }
     }
 }
 
-pub async fn retry_run(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Value>> {
+pub async fn retry_run(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiResponse<Value> {
     let run: Result<AutomationRun, _> =
         sqlx::query_as("SELECT * FROM automation_runs WHERE id = $1")
             .bind(id)
@@ -675,13 +631,11 @@ pub async fn retry_run(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                return ApiResponse::from(TopemsError::ResourceNotFound(
                     "运行记录不存在".to_string(),
-                )));
+                ));
             }
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询运行记录失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询运行记录失败".to_string()));
         }
     };
 
@@ -697,23 +651,18 @@ pub async fn retry_run(
     .await;
 
     match new_run {
-        Ok((new_id,)) => Json(ApiResponse::success(
+        Ok((new_id,)) => ApiResponse::success(
             serde_json::json!({"run_id": new_id.to_string()}),
             "重试成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("重试运行失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "重试运行失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("重试运行失败".to_string()))
         }
     }
 }
 
-pub async fn cancel_run(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Value>> {
+pub async fn cancel_run(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiResponse<Value> {
     let result = sqlx::query(
         "UPDATE automation_runs SET status = 'cancelled', completed_at = NOW() WHERE id = $1 AND status = 'running'",
     )
@@ -722,18 +671,15 @@ pub async fn cancel_run(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"success": true}),
-            "取消成功",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"success": true}), "取消成功")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound(
             "运行记录不存在或非运行中".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("取消运行失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "取消运行失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("取消运行失败".to_string()))
         }
     }
 }
@@ -741,7 +687,7 @@ pub async fn cancel_run(
 pub async fn get_run_steps(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let steps: Result<Option<Value>, _> =
         sqlx::query_scalar("SELECT steps FROM automation_runs WHERE id = $1")
             .bind(id)
@@ -749,17 +695,13 @@ pub async fn get_run_steps(
             .await;
 
     match steps {
-        Ok(Some(s)) => Json(ApiResponse::success(s, "查询成功")),
-        Ok(None) => Json(ApiResponse::success(serde_json::json!([]), "查询成功")),
+        Ok(Some(s)) => ApiResponse::success(s, "查询成功"),
+        Ok(None) => ApiResponse::success(serde_json::json!([]), "查询成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "运行记录不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("运行记录不存在".to_string()))
             } else {
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询步骤失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("查询步骤失败".to_string()))
             }
         }
     }
@@ -769,7 +711,7 @@ pub async fn get_run_logs(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Query(_params): Query<RunLogQueryParams>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let logs: Result<Option<String>, _> =
         sqlx::query_scalar("SELECT logs FROM automation_runs WHERE id = $1")
             .bind(id)
@@ -779,24 +721,20 @@ pub async fn get_run_logs(
     match logs {
         Ok(Some(l)) => {
             let lines: Vec<&str> = l.lines().collect();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"lines": lines, "total": lines.len(), "truncated": false}),
                 "查询成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::success(
+        Ok(None) => ApiResponse::success(
             serde_json::json!({"lines": [], "total": 0, "truncated": false}),
             "查询成功",
-        )),
+        ),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "运行记录不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("运行记录不存在".to_string()))
             } else {
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询日志失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("查询日志失败".to_string()))
             }
         }
     }
@@ -809,14 +747,14 @@ pub async fn get_run_log_by_id(
     State(state): State<AppState>,
     Path((run_id, _log_id)): Path<(Uuid, Uuid)>,
     Query(params): Query<RunLogQueryParams>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     get_run_logs(State(state), Path(run_id), Query(params)).await
 }
 
 pub async fn purge_runs(
     State(state): State<AppState>,
     Json(payload): Json<PurgeRequest>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let result = sqlx::query(
         r#"DELETE FROM automation_runs
            WHERE ($1::text IS NULL OR created_at < $1::timestamp)
@@ -828,15 +766,13 @@ pub async fn purge_runs(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             serde_json::json!({"deleted": r.rows_affected()}),
             "清理成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("清理运行记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "清理运行记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("清理运行记录失败".to_string()))
         }
     }
 }
@@ -846,7 +782,7 @@ pub async fn purge_runs(
 pub async fn list_variables(
     State(state): State<AppState>,
     Query(params): Query<VariableQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<AutomationVariable>>> {
+) -> ApiResponse<PaginatedResponse<AutomationVariable>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params
         .page_size
@@ -893,16 +829,16 @@ pub async fn list_variables(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 pub async fn get_variable(
     State(state): State<AppState>,
     Path(key): Path<String>,
-) -> Json<ApiResponse<AutomationVariable>> {
+) -> ApiResponse<AutomationVariable> {
     let var: Result<AutomationVariable, _> = sqlx::query_as(
         r#"SELECT id, tenant_id, key,
                   CASE WHEN is_secret THEN NULL ELSE value END as value,
@@ -914,17 +850,13 @@ pub async fn get_variable(
     .await;
 
     match var {
-        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Ok(v) => ApiResponse::success(v, "查询成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "变量不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()))
             } else {
                 tracing::error!("查询变量失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询变量失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("查询变量失败".to_string()))
             }
         }
     }
@@ -934,7 +866,7 @@ pub async fn create_variable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateVariableRequest>,
-) -> Json<ApiResponse<AutomationVariable>> {
+) -> ApiResponse<AutomationVariable> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
     let tenant_bind = if claims.is_superuser {
         Uuid::nil()
@@ -974,12 +906,10 @@ pub async fn create_variable(
     .await;
 
     match var {
-        Ok(v) => Json(ApiResponse::success(v, "创建成功")),
+        Ok(v) => ApiResponse::success(v, "创建成功"),
         Err(e) => {
             tracing::error!("创建变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建变量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建变量失败".to_string()))
         }
     }
 }
@@ -988,7 +918,7 @@ pub async fn update_variable(
     State(state): State<AppState>,
     Path(key): Path<String>,
     Json(payload): Json<UpdateVariableRequest>,
-) -> Json<ApiResponse<AutomationVariable>> {
+) -> ApiResponse<AutomationVariable> {
     let var: Result<AutomationVariable, _> = sqlx::query_as(
         r#"UPDATE automation_variables SET
               value = COALESCE($2, value),
@@ -1010,17 +940,13 @@ pub async fn update_variable(
     .await;
 
     match var {
-        Ok(v) => Json(ApiResponse::success(v, "更新成功")),
+        Ok(v) => ApiResponse::success(v, "更新成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "变量不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()))
             } else {
                 tracing::error!("更新变量失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "更新变量失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("更新变量失败".to_string()))
             }
         }
     }
@@ -1029,25 +955,20 @@ pub async fn update_variable(
 pub async fn delete_variable(
     State(state): State<AppState>,
     Path(key): Path<String>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let result = sqlx::query("DELETE FROM automation_variables WHERE key = $1")
         .bind(&key)
         .execute(&state.pool)
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"success": true}),
-            "删除成功",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "变量不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"success": true}), "删除成功")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string())),
         Err(e) => {
             tracing::error!("删除变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除变量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除变量失败".to_string()))
         }
     }
 }
@@ -1055,7 +976,7 @@ pub async fn delete_variable(
 pub async fn reveal_variable(
     State(state): State<AppState>,
     Path(key): Path<String>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let value: Result<Option<String>, _> = sqlx::query_scalar(
         "SELECT value FROM automation_variables WHERE key = $1 AND is_secret = true",
     )
@@ -1064,22 +985,13 @@ pub async fn reveal_variable(
     .await;
 
     match value {
-        Ok(Some(v)) => Json(ApiResponse::success(
-            serde_json::json!({"value": v}),
-            "查询成功",
-        )),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "密钥变量不存在".to_string(),
-        ))),
+        Ok(Some(v)) => ApiResponse::success(serde_json::json!({"value": v}), "查询成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("密钥变量不存在".to_string())),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "密钥变量不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("密钥变量不存在".to_string()))
             } else {
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("查询失败".to_string()))
             }
         }
     }
@@ -1089,7 +1001,7 @@ pub async fn bulk_import_variables(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BulkImportRequest>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
     let tenant_bind = if claims.is_superuser {
         Uuid::nil()
@@ -1131,18 +1043,16 @@ pub async fn bulk_import_variables(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({"imported": imported, "skipped": skipped}),
         "批量导入完成",
-    ))
+    )
 }
 
 // ─── Dashboard handlers ───────────────────────────────────────────────────────
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-pub async fn get_dashboard_stats(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<DashboardStats>> {
+pub async fn get_dashboard_stats(State(state): State<AppState>) -> ApiResponse<DashboardStats> {
     let total_rules: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM automation_rules")
         .fetch_one(&state.pool)
         .await
@@ -1201,7 +1111,7 @@ pub async fn get_dashboard_stats(
             .await
             .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         DashboardStats {
             total_rules,
             enabled_rules,
@@ -1215,16 +1125,16 @@ pub async fn get_dashboard_stats(
             runs_today,
         },
         "查询成功",
-    ))
+    )
 }
 
-pub async fn health_check() -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success("ok".to_string(), "服务正常"))
+pub async fn health_check() -> ApiResponse<String> {
+    ApiResponse::success("ok".to_string(), "服务正常")
 }
 
 // ─── Designer handlers ────────────────────────────────────────────────────────
 
-pub async fn get_designer_resources() -> Json<ApiResponse<DesignerResources>> {
+pub async fn get_designer_resources() -> ApiResponse<DesignerResources> {
     let triggers = vec![
         ResourceItem {
             type_: "cron".to_string(),
@@ -1291,16 +1201,13 @@ pub async fn get_designer_resources() -> Json<ApiResponse<DesignerResources>> {
         },
     ];
 
-    Json(ApiResponse::success(
-        DesignerResources { triggers, actions },
-        "查询成功",
-    ))
+    ApiResponse::success(DesignerResources { triggers, actions }, "查询成功")
 }
 
 pub async fn get_designer_canvas(
     State(state): State<AppState>,
     Path(rule_id): Path<String>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let canvas: Result<Option<Value>, _> =
         sqlx::query_scalar("SELECT canvas FROM automation_rules WHERE id::text = $1 OR code = $1")
             .bind(&rule_id)
@@ -1308,20 +1215,16 @@ pub async fn get_designer_canvas(
             .await;
 
     match canvas {
-        Ok(Some(c)) => Json(ApiResponse::success(c, "查询成功")),
-        Ok(None) => Json(ApiResponse::success(
+        Ok(Some(c)) => ApiResponse::success(c, "查询成功"),
+        Ok(None) => ApiResponse::success(
             serde_json::json!({"nodes": [], "edges": [], "viewport": {"x": 0, "y": 0, "zoom": 1}}),
             "查询成功",
-        )),
+        ),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "规则不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
             } else {
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询画布失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("查询画布失败".to_string()))
             }
         }
     }
@@ -1331,7 +1234,7 @@ pub async fn save_designer_canvas(
     State(state): State<AppState>,
     Path(rule_id): Path<String>,
     Json(payload): Json<SaveCanvasRequest>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let result = sqlx::query(
         "UPDATE automation_rules SET canvas = $2, updated_at = NOW() WHERE id::text = $1 OR code = $1",
     )
@@ -1341,15 +1244,11 @@ pub async fn save_designer_canvas(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(payload.canvas, "保存成功")),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "规则不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(payload.canvas, "保存成功"),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())),
         Err(e) => {
             tracing::error!("保存画布失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "保存画布失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("保存画布失败".to_string()))
         }
     }
 }
@@ -1358,17 +1257,14 @@ pub async fn validate_canvas(
     State(_state): State<AppState>,
     Path(_rule_id): Path<String>,
     Json(_payload): Json<SaveCanvasRequest>,
-) -> Json<ApiResponse<Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"valid": true, "errors": []}),
-        "校验通过",
-    ))
+) -> ApiResponse<Value> {
+    ApiResponse::success(serde_json::json!({"valid": true, "errors": []}), "校验通过")
 }
 
 pub async fn sync_to_rule(
     State(state): State<AppState>,
     Path(rule_id): Path<String>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let result = sqlx::query(
         "UPDATE automation_rules SET updated_at = NOW() WHERE id::text = $1 OR code = $1",
     )
@@ -1377,18 +1273,14 @@ pub async fn sync_to_rule(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(
             serde_json::json!({"success": true, "message": "已同步到规则定义"}),
             "同步成功",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "规则不存在".to_string(),
-        ))),
+        ),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())),
         Err(e) => {
             tracing::error!("同步失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "同步失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("同步失败".to_string()))
         }
     }
 }
@@ -1396,7 +1288,7 @@ pub async fn sync_to_rule(
 pub async fn sync_from_rule(
     State(state): State<AppState>,
     Path(rule_id): Path<String>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let canvas: Result<Option<Value>, _> =
         sqlx::query_scalar("SELECT canvas FROM automation_rules WHERE id::text = $1 OR code = $1")
             .bind(&rule_id)
@@ -1404,20 +1296,16 @@ pub async fn sync_from_rule(
             .await;
 
     match canvas {
-        Ok(Some(c)) => Json(ApiResponse::success(c, "同步成功")),
-        Ok(None) => Json(ApiResponse::success(
+        Ok(Some(c)) => ApiResponse::success(c, "同步成功"),
+        Ok(None) => ApiResponse::success(
             serde_json::json!({"nodes": [], "edges": [], "viewport": {"x": 0, "y": 0, "zoom": 1}}),
             "同步成功",
-        )),
+        ),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "规则不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))
             } else {
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "同步失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("同步失败".to_string()))
             }
         }
     }

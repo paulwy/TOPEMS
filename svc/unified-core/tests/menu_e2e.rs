@@ -91,9 +91,8 @@ async fn create_group_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -
     )
     .await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("create_group error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("create_group error: {:?}", resp.message));
     serde_json::to_value(data).unwrap()["id"]
         .as_str()
         .unwrap()
@@ -111,9 +110,8 @@ async fn list_groups_empty(pool: sqlx::PgPool) {
     )
     .await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(data.total, 0);
 }
 
@@ -129,9 +127,8 @@ async fn create_group_and_list(pool: sqlx::PgPool) {
     )
     .await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(data.total, 1);
     assert_eq!(data.items[0].id, id);
     let item = serde_json::to_value(&data.items[0]).unwrap();
@@ -149,7 +146,7 @@ async fn delete_group_removes(pool: sqlx::PgPool) {
         Path(id),
     )
     .await;
-    assert!(del.0.data.is_some(), "delete failed: {:?}", del.0.message);
+    assert!(del.data.is_some(), "delete failed: {:?}", del.message);
 
     let resp = list_groups(
         State(test_app_state(pool)),
@@ -158,9 +155,8 @@ async fn delete_group_removes(pool: sqlx::PgPool) {
     )
     .await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(data.total, 0);
 }
 
@@ -174,9 +170,8 @@ async fn list_menus_empty(pool: sqlx::PgPool) {
     )
     .await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(data.total, 0);
 }
 
@@ -202,9 +197,8 @@ async fn create_menu_with_group_and_list(pool: sqlx::PgPool) {
     )
     .await;
     let data = created
-        .0
         .data
-        .unwrap_or_else(|| panic!("create_menu error: {:?}", created.0.message));
+        .unwrap_or_else(|| panic!("create_menu error: {:?}", created.message));
     let menu: Value = serde_json::to_value(data).unwrap();
     assert_eq!(menu["name"], "仪表盘");
     assert_eq!(menu["code"], "dashboard");
@@ -216,9 +210,8 @@ async fn create_menu_with_group_and_list(pool: sqlx::PgPool) {
     )
     .await;
     let list = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(list.total, 1);
 }
 
@@ -245,9 +238,8 @@ async fn get_menu_returns(pool: sqlx::PgPool) {
     .await;
     let menu_id: uuid::Uuid = serde_json::to_value(
         created
-            .0
             .data
-            .unwrap_or_else(|| panic!("create_menu error: {:?}", created.0.message)),
+            .unwrap_or_else(|| panic!("create_menu error: {:?}", created.message)),
     )
     .unwrap()["id"]
         .as_str()
@@ -257,9 +249,8 @@ async fn get_menu_returns(pool: sqlx::PgPool) {
 
     let resp = get_menu(State(test_app_state(pool)), Path(menu_id)).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("get_menu error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("get_menu error: {:?}", resp.message));
     let menu: Value = serde_json::to_value(data).unwrap();
     assert_eq!(menu["name"], "报表");
 }

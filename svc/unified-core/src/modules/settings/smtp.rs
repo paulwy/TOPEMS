@@ -69,7 +69,7 @@ pub struct TestEmailRequest {
 pub async fn get_smtp_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<SmtpConfig>> {
+) -> ApiResponse<SmtpConfig> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -97,27 +97,23 @@ pub async fn get_smtp_config(
                     } else {
                         PASSWORD_MASK.to_string()
                     };
-                    Json(ApiResponse::success(cfg, "获取 SMTP 配置成功"))
+                    ApiResponse::success(cfg, "获取 SMTP 配置成功")
                 }
                 Err(e) => {
                     tracing::error!("Failed to parse SMTP config: {}", e);
-                    Json(ApiResponse::success(
+                    ApiResponse::success(
                         SmtpConfig::default(),
                         "SMTP 配置为空或解析失败，已返回默认配置",
-                    ))
+                    )
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::success(
-            SmtpConfig::default(),
-            "SMTP 配置尚未配置，已返回默认配置",
-        )),
+        Ok(None) => {
+            ApiResponse::success(SmtpConfig::default(), "SMTP 配置尚未配置，已返回默认配置")
+        }
         Err(e) => {
             tracing::error!("Failed to load SMTP config: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "获取 SMTP 配置失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("获取 SMTP 配置失败", e))
         }
     }
 }
@@ -127,7 +123,7 @@ pub async fn update_smtp_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<SmtpConfig>,
-) -> Json<ApiResponse<SmtpConfig>> {
+) -> ApiResponse<SmtpConfig> {
     let tenant_id = tenant_uuid(&claims);
 
     // If the caller submitted the masked placeholder or an empty password,
@@ -158,10 +154,7 @@ pub async fn update_smtp_config(
     let serialized = match serde_json::to_string(&to_store) {
         Ok(s) => s,
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "序列化 SMTP 配置失败",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("序列化 SMTP 配置失败", e));
         }
     };
 
@@ -181,10 +174,7 @@ pub async fn update_smtp_config(
 
     if let Err(e) = result {
         tracing::error!("Failed to save SMTP config: {}", e);
-        return Json(ApiResponse::from(TopemsError::internal(
-            "保存 SMTP 配置失败",
-            e,
-        )));
+        return ApiResponse::from(TopemsError::internal("保存 SMTP 配置失败", e));
     }
 
     // Return the config with a masked password.
@@ -194,7 +184,7 @@ pub async fn update_smtp_config(
     } else {
         PASSWORD_MASK.to_string()
     };
-    Json(ApiResponse::success(response, "保存 SMTP 配置成功"))
+    ApiResponse::success(response, "保存 SMTP 配置成功")
 }
 
 /// `POST /system/settings/smtp/test`
@@ -202,9 +192,9 @@ pub async fn test_smtp_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<TestEmailRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if payload.to.is_empty() {
-        return Json(ApiResponse::bad_request("收件人邮箱不能为空"));
+        return ApiResponse::bad_request("收件人邮箱不能为空");
     }
 
     // Use inline config if provided, otherwise fall back to the saved config.
@@ -230,22 +220,20 @@ pub async fn test_smtp_config(
                         cfg
                     }
                     Err(_) => {
-                        return Json(ApiResponse::not_found(
+                        return ApiResponse::not_found(
                             "未找到已保存的 SMTP 配置，请先保存或提供内联配置",
-                        ));
+                        );
                     }
                 }
             }
             _ => {
-                return Json(ApiResponse::not_found(
-                    "未找到已保存的 SMTP 配置，请先保存或提供内联配置",
-                ));
+                return ApiResponse::not_found("未找到已保存的 SMTP 配置，请先保存或提供内联配置");
             }
         }
     };
 
     if config.host.is_empty() || config.from_email.is_empty() {
-        return Json(ApiResponse::bad_request("SMTP 主机和发件人邮箱不能为空"));
+        return ApiResponse::bad_request("SMTP 主机和发件人邮箱不能为空");
     }
 
     let to = payload.to.clone();
@@ -262,23 +250,17 @@ pub async fn test_smtp_config(
         tokio::task::spawn_blocking(move || send_test_email(&config, &to, subject, &body)).await;
 
     match result {
-        Ok(Ok(())) => Json(ApiResponse::success(
+        Ok(Ok(())) => ApiResponse::success(
             serde_json::json!({ "sent": true, "to": to_for_response }),
             "测试邮件发送成功",
-        )),
+        ),
         Ok(Err(e)) => {
             tracing::error!("Test email failed: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "测试邮件发送失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("测试邮件发送失败", e))
         }
         Err(e) => {
             tracing::error!("Test email task failed: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "测试邮件任务异常",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("测试邮件任务异常", e))
         }
     }
 }

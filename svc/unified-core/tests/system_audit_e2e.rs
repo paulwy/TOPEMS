@@ -70,9 +70,8 @@ async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let resp = list_audit_logs(State(test_app_state(pool)), Query(empty_params())).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(data.total, 0);
 }
 
@@ -83,9 +82,8 @@ async fn list_returns_inserted(pool: sqlx::PgPool) {
 
     let resp = list_audit_logs(State(test_app_state(pool.clone())), Query(empty_params())).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(data.total, 1);
     let items = serde_json::to_value(data.items).unwrap();
     assert_eq!(items[0]["action"], "create");
@@ -98,9 +96,8 @@ async fn get_returns_log(pool: sqlx::PgPool) {
 
     let resp = get_audit_log(State(test_app_state(pool)), Path(id)).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let log = serde_json::to_value(data).unwrap();
     assert_eq!(log["action"], "update");
     assert_eq!(log["user_name"], "张三");
@@ -113,9 +110,8 @@ async fn export_returns_csv_rows(pool: sqlx::PgPool) {
 
     let resp = export_audit_logs(State(test_app_state(pool)), Query(empty_params())).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert!(data["data"].is_array());
     assert_eq!(data["data"].as_array().unwrap().len(), 1);
 }
@@ -133,9 +129,8 @@ async fn stats_groups_by_action(pool: sqlx::PgPool) {
     };
     let resp = get_audit_stats(State(test_app_state(pool)), Query(params)).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let value: Value = serde_json::to_value(data).unwrap();
     assert!(value["total"].as_i64().unwrap_or(0) >= 2);
 }

@@ -62,7 +62,7 @@ async fn list_empty_returns_zero(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let resp = list_variables(State(state), Query(empty_params())).await;
-    let body = resp.0.data.unwrap();
+    let body = resp.data.unwrap();
     assert_eq!(body.total, 0);
 }
 
@@ -78,7 +78,7 @@ async fn create_returns_variable(pool: sqlx::PgPool) {
         Json(create_req("api_key", "v1")),
     )
     .await;
-    let var: AutomationVariable = resp.0.data.unwrap();
+    let var: AutomationVariable = resp.data.unwrap();
     assert_eq!(var.key, "api_key");
     assert_eq!(var.value.as_deref(), Some("v1"));
 }
@@ -95,11 +95,11 @@ async fn get_roundtrip(pool: sqlx::PgPool) {
         Json(create_req("db_host", "localhost")),
     )
     .await;
-    let var: AutomationVariable = resp.0.data.unwrap();
+    let var: AutomationVariable = resp.data.unwrap();
 
     let state = test_app_state(pool);
     let resp = get_variable(State(state), Path(var.key.clone())).await;
-    let got: AutomationVariable = resp.0.data.unwrap();
+    let got: AutomationVariable = resp.data.unwrap();
     assert_eq!(got.key, "db_host");
 }
 
@@ -115,7 +115,7 @@ async fn update_changes_value(pool: sqlx::PgPool) {
         Json(create_req("timeout", "30")),
     )
     .await;
-    let var: AutomationVariable = resp.0.data.unwrap();
+    let var: AutomationVariable = resp.data.unwrap();
 
     let req = UpdateVariableRequest {
         value: Some("60".to_string()),
@@ -125,7 +125,7 @@ async fn update_changes_value(pool: sqlx::PgPool) {
     };
     let state = test_app_state(pool);
     let resp = update_variable(State(state), Path(var.key), Json(req)).await;
-    let updated: AutomationVariable = resp.0.data.unwrap();
+    let updated: AutomationVariable = resp.data.unwrap();
     assert_eq!(updated.value.as_deref(), Some("60"));
 }
 
@@ -141,14 +141,14 @@ async fn delete_removes_variable(pool: sqlx::PgPool) {
         Json(create_req("temp", "x")),
     )
     .await;
-    let var: AutomationVariable = resp.0.data.unwrap();
+    let var: AutomationVariable = resp.data.unwrap();
 
     let state = test_app_state(pool.clone());
     let resp = delete_variable(State(state), Path(var.key.clone())).await;
-    let deleted: serde_json::Value = resp.0.data.unwrap();
+    let deleted: serde_json::Value = resp.data.unwrap();
     assert_eq!(deleted["success"], serde_json::json!(true));
 
     let state = test_app_state(pool);
     let resp = get_variable(State(state), Path(var.key)).await;
-    assert!(resp.0.data.is_none());
+    assert!(resp.data.is_none());
 }

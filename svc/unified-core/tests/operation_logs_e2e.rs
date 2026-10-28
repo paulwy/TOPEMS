@@ -70,7 +70,7 @@ async fn insert_log(
            (id, tenant_id, user_id, user_name, module, operation,
             resource_type, resource_id, description, request_data,
             response_status, ip_address, user_agent, trace_id)
-           VALUES ($1, $5, NULL, $2, $3, 'read', 'Voucher', NULL, 'test', '{}', $4, '127.0.0.1', 'test-agent', NULL)"#,
+           VALUES ($1, $5, NULL, $2, $3, 'read', 'Voucher', NULL, 'test', '{}', $4, '127.0.1', 'test-agent', NULL)"#,
     )
     .bind(id)
     .bind(user_name)
@@ -87,7 +87,7 @@ async fn call_list(pool: sqlx::PgPool, query: OperationLogQuery) -> OperationLog
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = list_operation_logs(State(state), Extension(claims), Query(query)).await;
-    resp.0.data.unwrap()
+    resp.data.unwrap()
 }
 
 #[sqlx::test(migrations = false)]
@@ -161,7 +161,7 @@ async fn get_operation_log_returns_log(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = get_operation_log(State(state), Extension(claims), Path(id)).await;
-    let log: OperationLog = resp.0.data.unwrap();
+    let log: OperationLog = resp.data.unwrap();
     assert_eq!(log.id, id);
     assert_eq!(log.user_name, "alice");
     assert_eq!(log.module, "finance");
@@ -174,7 +174,7 @@ async fn get_operation_log_not_found_returns_none(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = get_operation_log(State(state), Extension(claims), Path(uuid::Uuid::new_v4())).await;
-    assert!(resp.0.data.is_none());
+    assert!(resp.data.is_none());
 }
 
 #[sqlx::test(migrations = false)]
@@ -184,7 +184,7 @@ async fn stats_empty_returns_zero(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = get_operation_log_stats(State(state), Extension(claims)).await;
-    let body: OperationLogStatsResponse = resp.0.data.unwrap();
+    let body: OperationLogStatsResponse = resp.data.unwrap();
     assert_eq!(body.total, 0);
 }
 
@@ -198,6 +198,6 @@ async fn stats_counts_inserted_rows(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = get_operation_log_stats(State(state), Extension(claims)).await;
-    let body: OperationLogStatsResponse = resp.0.data.unwrap();
+    let body: OperationLogStatsResponse = resp.data.unwrap();
     assert_eq!(body.total, 3);
 }

@@ -42,7 +42,7 @@ pub async fn list_comments(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(q): Query<CommentListQuery>,
-) -> Json<ApiResponse<Vec<Comment>>> {
+) -> ApiResponse<Vec<Comment>> {
     let tenant_opt = resolve_tenant(&claims);
     let sql = format!(
         r#"SELECT {} FROM core_comments
@@ -64,13 +64,11 @@ pub async fn list_comments(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询评论列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询评论列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询评论列表失败".to_string()));
         }
     };
 
-    Json(api_success(items))
+    api_success(items)
 }
 
 /// POST /comments — 创建评论（作者取自 Claims）。
@@ -78,16 +76,16 @@ pub async fn create_comment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateCommentRequest>,
-) -> Json<ApiResponse<Comment>> {
+) -> ApiResponse<Comment> {
     if req.content.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "评论内容不能为空".to_string(),
-        )));
+        ));
     }
     if req.entity_type.trim().is_empty() || req.entity_id.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "缺少实体类型或实体 ID".to_string(),
-        )));
+        ));
     }
 
     let tenant_id = resolve_tenant(&claims).unwrap_or_else(Uuid::nil);
@@ -113,13 +111,11 @@ pub async fn create_comment(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建评论失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "创建评论失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("创建评论失败".to_string()));
         }
     };
 
-    Json(api_success(comment))
+    api_success(comment)
 }
 
 /// PUT /comments/{id} — 作者本人更新内容。
@@ -128,11 +124,11 @@ pub async fn update_comment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateCommentRequest>,
-) -> Json<ApiResponse<Comment>> {
+) -> ApiResponse<Comment> {
     if req.content.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "评论内容不能为空".to_string(),
-        )));
+        ));
     }
 
     let sql = format!(
@@ -153,17 +149,15 @@ pub async fn update_comment(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新评论失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "更新评论失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("更新评论失败".to_string()));
         }
     };
 
     match comment {
-        Some(c) => Json(api_success(c)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Some(c) => api_success(c),
+        None => ApiResponse::from(TopemsError::ResourceNotFound(
             "评论不存在或无权修改".to_string(),
-        ))),
+        )),
     }
 }
 
@@ -172,7 +166,7 @@ pub async fn delete_comment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let result = sqlx::query(
         r#"UPDATE core_comments SET deleted_at = NOW()
            WHERE id = $1 AND author_id = $2 AND deleted_at IS NULL"#,
@@ -183,15 +177,13 @@ pub async fn delete_comment(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(api_success(id.to_string())),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(r) if r.rows_affected() > 0 => api_success(id.to_string()),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound(
             "评论不存在或无权删除".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("删除评论失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除评论失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除评论失败".to_string()))
         }
     }
 }
@@ -204,7 +196,7 @@ pub async fn delete_comment(
 pub async fn list_favorites(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<Favorite>>> {
+) -> ApiResponse<Vec<Favorite>> {
     let tenant_opt = resolve_tenant(&claims);
     let sql = format!(
         r#"SELECT {} FROM core_favorites
@@ -222,13 +214,11 @@ pub async fn list_favorites(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询收藏列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询收藏列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询收藏列表失败".to_string()));
         }
     };
 
-    Json(api_success(items))
+    api_success(items)
 }
 
 /// POST /favorites — 幂等添加收藏（唯一键冲突不报错，返回已有记录）。
@@ -236,11 +226,11 @@ pub async fn add_favorite(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AddFavoriteRequest>,
-) -> Json<ApiResponse<Favorite>> {
+) -> ApiResponse<Favorite> {
     if req.entity_type.trim().is_empty() || req.entity_id.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "缺少实体类型或实体 ID".to_string(),
-        )));
+        ));
     }
 
     let tenant_id = resolve_tenant(&claims).unwrap_or_else(Uuid::nil);
@@ -259,9 +249,7 @@ pub async fn add_favorite(
     .await
     {
         tracing::error!("添加收藏失败: {}", e);
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "添加收藏失败".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("添加收藏失败".to_string()));
     }
 
     let fav: Option<Favorite> = match sqlx::query_as(&format!(
@@ -279,17 +267,13 @@ pub async fn add_favorite(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("读取收藏记录失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "读取收藏记录失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("读取收藏记录失败".to_string()));
         }
     };
 
     match fav {
-        Some(f) => Json(api_success(f)),
-        None => Json(ApiResponse::from(TopemsError::Internal(
-            "收藏未保存".to_string(),
-        ))),
+        Some(f) => api_success(f),
+        None => ApiResponse::from(TopemsError::Internal("收藏未保存".to_string())),
     }
 }
 
@@ -298,7 +282,7 @@ pub async fn remove_favorite(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let result = sqlx::query(r#"DELETE FROM core_favorites WHERE id = $1 AND user_id = $2"#)
         .bind(id)
         .bind(&claims.sub)
@@ -306,15 +290,13 @@ pub async fn remove_favorite(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(api_success(id.to_string())),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(r) if r.rows_affected() > 0 => api_success(id.to_string()),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound(
             "收藏不存在或无权删除".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("删除收藏失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除收藏失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除收藏失败".to_string()))
         }
     }
 }
@@ -324,7 +306,7 @@ pub async fn check_favorite(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(q): Query<FavoriteCheckQuery>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt = resolve_tenant(&claims);
     let exists: Option<bool> = match sqlx::query_scalar(
         r#"SELECT EXISTS(
@@ -343,11 +325,9 @@ pub async fn check_favorite(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询收藏状态失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询收藏状态失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询收藏状态失败".to_string()));
         }
     };
 
-    Json(api_success(exists.unwrap_or(false)))
+    api_success(exists.unwrap_or(false))
 }

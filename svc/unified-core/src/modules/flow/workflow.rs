@@ -43,7 +43,7 @@ pub async fn list_workflows(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<WorkflowQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<Workflow>>> {
+) -> ApiResponse<PaginatedResponse<Workflow>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -83,9 +83,7 @@ pub async fn list_workflows(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询工作流总数失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "查询工作流总数失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("查询工作流总数失败".to_string()));
             }
         }
     };
@@ -103,7 +101,7 @@ pub async fn list_workflows(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询工作流列表失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal("查询工作流列表失败".to_string())));
+                return ApiResponse::from(TopemsError::Internal("查询工作流列表失败".to_string()));
             }
         }
     } else {
@@ -126,15 +124,15 @@ pub async fn list_workflows(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询工作流列表失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal("查询工作流列表失败".to_string())));
+                return ApiResponse::from(TopemsError::Internal("查询工作流列表失败".to_string()));
             }
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -155,7 +153,7 @@ pub async fn get_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Workflow>> {
+) -> ApiResponse<Workflow> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -175,14 +173,14 @@ pub async fn get_workflow(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()));
             }
             tracing::error!("查询工作流失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询工作流失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询工作流失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(workflow, "查询成功"))
+    ApiResponse::success(workflow, "查询成功")
 }
 
 #[utoipa::path(
@@ -201,7 +199,7 @@ pub async fn create_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateWorkflowRequest>,
-) -> Json<ApiResponse<Workflow>> {
+) -> ApiResponse<Workflow> {
     // 租户绑定对齐 nil 上下文惯例（与本文件其余写路径一致）：
     // 超管/无 claims → None（SQL NULL，命中 tenant_id IS NULL 分支）；普通用户 → Some(claims.tenant_id)。
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
@@ -231,11 +229,11 @@ pub async fn create_workflow(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建工作流失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("创建工作流失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("创建工作流失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(workflow, "创建成功"))
+    ApiResponse::success(workflow, "创建成功")
 }
 
 #[utoipa::path(
@@ -258,7 +256,7 @@ pub async fn update_workflow(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateWorkflowRequest>,
-) -> Json<ApiResponse<Workflow>> {
+) -> ApiResponse<Workflow> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -289,14 +287,14 @@ pub async fn update_workflow(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()));
             }
             tracing::error!("更新工作流失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("更新工作流失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("更新工作流失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(workflow, "更新成功"))
+    ApiResponse::success(workflow, "更新成功")
 }
 
 #[utoipa::path(
@@ -317,7 +315,7 @@ pub async fn delete_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -335,18 +333,14 @@ pub async fn delete_workflow(
     match result {
         Ok(v) => {
             if v.rows_affected() == 0 {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "工作流不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()))
             } else {
-                Json(ApiResponse::success_no_data("删除成功"))
+                ApiResponse::success_no_data("删除成功")
             }
         }
         Err(e) => {
             tracing::error!("删除工作流失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除工作流失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除工作流失败".to_string()))
         }
     }
 }
@@ -369,7 +363,7 @@ pub async fn publish_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Workflow>> {
+) -> ApiResponse<Workflow> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -391,14 +385,14 @@ pub async fn publish_workflow(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()));
             }
             tracing::error!("发布工作流失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("发布工作流失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("发布工作流失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(workflow, "发布成功"))
+    ApiResponse::success(workflow, "发布成功")
 }
 
 #[utoipa::path(
@@ -419,7 +413,7 @@ pub async fn unpublish_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Workflow>> {
+) -> ApiResponse<Workflow> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -441,14 +435,14 @@ pub async fn unpublish_workflow(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()));
             }
             tracing::error!("取消发布工作流失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("取消发布工作流失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("取消发布工作流失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(workflow, "取消发布成功"))
+    ApiResponse::success(workflow, "取消发布成功")
 }
 
 #[utoipa::path(
@@ -469,7 +463,7 @@ pub async fn activate_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Workflow>> {
+) -> ApiResponse<Workflow> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -491,14 +485,14 @@ pub async fn activate_workflow(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()));
             }
             tracing::error!("激活工作流失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("激活工作流失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("激活工作流失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(workflow, "激活成功"))
+    ApiResponse::success(workflow, "激活成功")
 }
 
 #[utoipa::path(
@@ -519,7 +513,7 @@ pub async fn deactivate_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Workflow>> {
+) -> ApiResponse<Workflow> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -541,14 +535,14 @@ pub async fn deactivate_workflow(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()));
             }
             tracing::error!("停用工作流失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("停用工作流失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("停用工作流失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(workflow, "停用成功"))
+    ApiResponse::success(workflow, "停用成功")
 }
 
 #[utoipa::path(
@@ -569,7 +563,7 @@ pub async fn deploy_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Workflow>> {
+) -> ApiResponse<Workflow> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -591,14 +585,14 @@ pub async fn deploy_workflow(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()));
             }
             tracing::error!("部署工作流失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("部署工作流失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("部署工作流失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(workflow, "部署成功"))
+    ApiResponse::success(workflow, "部署成功")
 }
 
 #[utoipa::path(
@@ -621,7 +615,7 @@ pub async fn rollback_workflow(
     Extension(claims): Extension<Claims>,
     Path(workflow_id): Path<Uuid>,
     Json(payload): Json<RollbackWorkflowRequest>,
-) -> Json<ApiResponse<Workflow>> {
+) -> ApiResponse<Workflow> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -644,10 +638,10 @@ pub async fn rollback_workflow(
     .await
     {
         Ok(Some(t)) => t.0,
-        Ok(None) => return Json(ApiResponse::from(TopemsError::ResourceNotFound("目标版本不存在".to_string()))),
+        Ok(None) => return ApiResponse::from(TopemsError::ResourceNotFound("目标版本不存在".to_string())),
         Err(e) => {
             tracing::error!("回滚查询目标版本失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("回滚失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("回滚失败".to_string()));
         }
     };
 
@@ -666,10 +660,10 @@ pub async fn rollback_workflow(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())));
+                return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()));
             }
             tracing::error!("回滚工作流失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("回滚工作流失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("回滚工作流失败".to_string()));
         }
     };
 
@@ -690,10 +684,10 @@ pub async fn rollback_workflow(
     .await
     {
         tracing::error!("回滚切换版本激活状态失败: {}", e);
-        return Json(ApiResponse::from(TopemsError::Internal("回滚失败".to_string())));
+        return ApiResponse::from(TopemsError::Internal("回滚失败".to_string()));
     }
 
-    Json(ApiResponse::success(workflow, "回滚成功"))
+    ApiResponse::success(workflow, "回滚成功")
 }
 
 #[derive(Debug, Deserialize)]
@@ -727,7 +721,7 @@ pub async fn list_workflow_versions(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(workflow_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<WorkflowVersion>>> {
+) -> ApiResponse<Vec<WorkflowVersion>> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -751,12 +745,10 @@ pub async fn list_workflow_versions(
     .await;
 
     match versions {
-        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Ok(v) => ApiResponse::success(v, "查询成功"),
         Err(e) => {
             tracing::error!("查询工作流版本失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询工作流版本失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询工作流版本失败".to_string()))
         }
     }
 }
@@ -782,7 +774,7 @@ pub async fn create_workflow_version(
     Extension(claims): Extension<Claims>,
     Path(workflow_id): Path<Uuid>,
     Json(payload): Json<CreateWorkflowVersionRequest>,
-) -> Json<ApiResponse<WorkflowVersion>> {
+) -> ApiResponse<WorkflowVersion> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -802,13 +794,11 @@ pub async fn create_workflow_version(
         Ok(b) => b,
         Err(e) => {
             tracing::error!("校验工作流失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("创建工作流版本失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("创建工作流版本失败".to_string()));
         }
     };
     if !wf_ok {
-        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "工作流不存在".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()));
     }
     // definition 未传时从当前工作流快照
     let definition = match payload.definition {
@@ -822,10 +812,10 @@ pub async fn create_workflow_version(
         .await
         {
             Ok(Some(d)) => d,
-            Ok(None) => return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string()))),
+            Ok(None) => return ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())),
             Err(e) => {
                 tracing::error!("读取工作流快照失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal("创建工作流版本失败".to_string())));
+                return ApiResponse::from(TopemsError::Internal("创建工作流版本失败".to_string()));
             }
         },
     };
@@ -840,7 +830,7 @@ pub async fn create_workflow_version(
     .await
     {
         tracing::error!("创建版本前重置激活状态失败: {}", e);
-        return Json(ApiResponse::from(TopemsError::Internal("创建版本失败".to_string())));
+        return ApiResponse::from(TopemsError::Internal("创建版本失败".to_string()));
     }
 
     let version = sqlx::query_as::<_, WorkflowVersion>(
@@ -859,12 +849,10 @@ pub async fn create_workflow_version(
     .await;
 
     match version {
-        Ok(v) => Json(ApiResponse::success(v, "创建版本成功")),
+        Ok(v) => ApiResponse::success(v, "创建版本成功"),
         Err(e) => {
             tracing::error!("创建工作流版本失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建工作流版本失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建工作流版本失败".to_string()))
         }
     }
 }
@@ -888,7 +876,7 @@ pub async fn get_workflow_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<WorkflowVersion>> {
+) -> ApiResponse<WorkflowVersion> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -911,17 +899,15 @@ pub async fn get_workflow_version(
     .await;
 
     match version {
-        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Ok(v) => ApiResponse::success(v, "查询成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                return ApiResponse::from(TopemsError::ResourceNotFound(
                     "工作流版本不存在".to_string(),
-                )));
+                ));
             }
             tracing::error!("查询工作流版本失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询工作流版本失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询工作流版本失败".to_string()))
         }
     }
 }
@@ -946,7 +932,7 @@ pub async fn activate_workflow_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<WorkflowVersion>> {
+) -> ApiResponse<WorkflowVersion> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -959,9 +945,7 @@ pub async fn activate_workflow_version(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("激活版本开启事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "激活工作流版本失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string()));
         }
     };
 
@@ -980,15 +964,13 @@ pub async fn activate_workflow_version(
     match exists {
         Ok(true) => {}
         Ok(false) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            return ApiResponse::from(TopemsError::ResourceNotFound(
                 "工作流版本不存在".to_string(),
-            )));
+            ));
         }
         Err(e) => {
             tracing::error!("校验版本失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "激活工作流版本失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string()));
         }
     }
 
@@ -999,7 +981,7 @@ pub async fn activate_workflow_version(
         .await
     {
         tracing::error!("去激活其他版本失败: {}", e);
-        return Json(ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string())));
+        return ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string()));
     }
 
     // 3. 激活目标版本
@@ -1019,17 +1001,13 @@ pub async fn activate_workflow_version(
         Ok(v) => {
             if let Err(e) = tx.commit().await {
                 tracing::error!("提交激活版本事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "激活工作流版本失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string()));
             }
-            Json(ApiResponse::success(v, "版本激活成功"))
+            ApiResponse::success(v, "版本激活成功")
         }
         Err(e) => {
             tracing::error!("激活工作流版本失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "激活工作流版本失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string()))
         }
     }
 }
@@ -1054,7 +1032,7 @@ pub async fn delete_workflow_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1075,18 +1053,16 @@ pub async fn delete_workflow_version(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::from(TopemsError::ResourceNotFound(
             "工作流版本不存在".to_string(),
-        ))),
-        Ok(_) => Json(ApiResponse::success(
+        )),
+        Ok(_) => ApiResponse::success(
             serde_json::json!({ "deleted": true, "version_id": version_id }),
             "版本删除成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("删除工作流版本失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除工作流版本失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除工作流版本失败".to_string()))
         }
     }
 }

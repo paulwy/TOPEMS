@@ -73,7 +73,7 @@ async fn list_empty_returns_empty(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = list_documents(State(state), Extension(claims)).await;
-    let docs: Vec<Document> = resp.0.data.unwrap();
+    let docs: Vec<Document> = resp.data.unwrap();
     assert!(docs.is_empty());
 }
 
@@ -86,7 +86,7 @@ async fn list_superuser_sees_all_tenants(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = list_documents(State(state), Extension(claims)).await;
-    let docs: Vec<Document> = resp.0.data.unwrap();
+    let docs: Vec<Document> = resp.data.unwrap();
     assert_eq!(docs.len(), 2);
 }
 
@@ -99,7 +99,7 @@ async fn list_tenant_sees_only_own(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = tenant_claims();
     let resp = list_documents(State(state), Extension(claims)).await;
-    let docs: Vec<Document> = resp.0.data.unwrap();
+    let docs: Vec<Document> = resp.data.unwrap();
     assert_eq!(docs.len(), 1);
     assert_eq!(docs[0].tenant_id.to_string(), TENANT_A);
 }
@@ -121,7 +121,7 @@ async fn create_applies_defaults(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = create_document(State(state), Extension(claims), Json(req)).await;
-    let doc: Document = resp.0.data.unwrap();
+    let doc: Document = resp.data.unwrap();
     assert_eq!(doc.title, "测试文档");
     assert_eq!(doc.status.as_deref(), Some("draft"));
     assert_eq!(doc.content_type.as_deref(), Some("html"));
@@ -137,7 +137,7 @@ async fn get_returns_document(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = get_document(State(state), Extension(claims), Path(id)).await;
-    let doc: Option<Document> = resp.0.data.unwrap();
+    let doc: Option<Document> = resp.data.unwrap();
     assert!(doc.is_some());
     assert_eq!(doc.unwrap().title, "doc-a");
 }
@@ -149,7 +149,7 @@ async fn get_missing_returns_none(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = get_document(State(state), Extension(claims), Path(uuid::Uuid::new_v4())).await;
-    let doc: Option<Document> = resp.0.data.unwrap();
+    let doc: Option<Document> = resp.data.unwrap();
     assert!(doc.is_none());
 }
 
@@ -168,7 +168,7 @@ async fn update_changes_title(pool: sqlx::PgPool) {
     let state = test_app_state(pool);
     let claims = super_claims();
     let resp = update_document(State(state), Extension(claims), Path(id), Json(req)).await;
-    let doc: Option<Document> = resp.0.data.unwrap();
+    let doc: Option<Document> = resp.data.unwrap();
     assert_eq!(doc.unwrap().title, "新标题");
 }
 
@@ -180,13 +180,13 @@ async fn delete_hides_from_list(pool: sqlx::PgPool) {
     let state = test_app_state(pool.clone());
     let claims = super_claims();
     let resp = delete_document(State(state), Extension(claims), Path(id)).await;
-    let deleted: bool = resp.0.data.unwrap();
+    let deleted: bool = resp.data.unwrap();
     assert!(deleted);
 
     // 软删除后 list 不再返回
     let state = test_app_state(pool.clone());
     let claims = super_claims();
     let resp = list_documents(State(state), Extension(claims)).await;
-    let docs: Vec<Document> = resp.0.data.unwrap();
+    let docs: Vec<Document> = resp.data.unwrap();
     assert!(docs.is_empty());
 }

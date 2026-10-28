@@ -101,7 +101,7 @@ async fn count_table_with_tenant_and_condition(
 pub async fn list_documents(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<Document>>> {
+) -> ApiResponse<Vec<Document>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -110,11 +110,8 @@ pub async fn list_documents(
     };
     let service = DocumentService::new(state.pool.clone());
     match service.list_documents(opt_tenant_id).await {
-        Ok(documents) => Json(ApiResponse::success(documents, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "list_documents",
-            e,
-        ))),
+        Ok(documents) => ApiResponse::success(documents, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("list_documents", e)),
     }
 }
 
@@ -135,7 +132,7 @@ pub async fn get_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
-) -> Json<ApiResponse<Option<Document>>> {
+) -> ApiResponse<Option<Document>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -144,8 +141,8 @@ pub async fn get_document(
     };
     let service = DocumentService::new(state.pool.clone());
     match service.get_document(opt_tenant_id, document_id).await {
-        Ok(document) => Json(ApiResponse::success(document, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("get_document", e))),
+        Ok(document) => ApiResponse::success(document, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("get_document", e)),
     }
 }
 
@@ -164,16 +161,13 @@ pub async fn create_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDocumentRequest>,
-) -> Json<ApiResponse<Document>> {
+) -> ApiResponse<Document> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = DocumentService::new(state.pool.clone());
     let created_by = claims.username.clone();
     match service.create_document(tenant_id, req, &created_by).await {
-        Ok(document) => Json(ApiResponse::success(document, "创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "create_document",
-            e,
-        ))),
+        Ok(document) => ApiResponse::success(document, "创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("create_document", e)),
     }
 }
 
@@ -196,15 +190,12 @@ pub async fn update_document(
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
     Json(req): Json<UpdateDocumentRequest>,
-) -> Json<ApiResponse<Option<Document>>> {
+) -> ApiResponse<Option<Document>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = DocumentService::new(state.pool.clone());
     match service.update_document(tenant_id, document_id, req).await {
-        Ok(document) => Json(ApiResponse::success(document, "更新成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "update_document",
-            e,
-        ))),
+        Ok(document) => ApiResponse::success(document, "更新成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("update_document", e)),
     }
 }
 
@@ -225,15 +216,12 @@ pub async fn delete_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = DocumentService::new(state.pool.clone());
     match service.delete_document(tenant_id, document_id).await {
-        Ok(deleted) => Json(ApiResponse::success(deleted, "删除成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "delete_document",
-            e,
-        ))),
+        Ok(deleted) => ApiResponse::success(deleted, "删除成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("delete_document", e)),
     }
 }
 
@@ -250,7 +238,7 @@ pub async fn delete_document(
 pub async fn list_templates(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<Template>>> {
+) -> ApiResponse<Vec<Template>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -259,11 +247,8 @@ pub async fn list_templates(
     };
     let service = TemplateService::new(state.pool.clone());
     match service.list_templates(opt_tenant_id).await {
-        Ok(templates) => Json(ApiResponse::success(templates, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "list_templates",
-            e,
-        ))),
+        Ok(templates) => ApiResponse::success(templates, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("list_templates", e)),
     }
 }
 
@@ -280,7 +265,7 @@ pub async fn list_templates(
 pub async fn list_template_categories(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<String>>> {
+) -> ApiResponse<Vec<String>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -289,11 +274,8 @@ pub async fn list_template_categories(
     };
     let service = TemplateService::new(state.pool.clone());
     match service.list_categories(opt_tenant_id).await {
-        Ok(categories) => Json(ApiResponse::success(categories, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "list_template_categories",
-            e,
-        ))),
+        Ok(categories) => ApiResponse::success(categories, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("list_template_categories", e)),
     }
 }
 
@@ -314,7 +296,7 @@ pub async fn get_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
-) -> Json<ApiResponse<Option<Template>>> {
+) -> ApiResponse<Option<Template>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -323,8 +305,8 @@ pub async fn get_template(
     };
     let service = TemplateService::new(state.pool.clone());
     match service.get_template(opt_tenant_id, template_id).await {
-        Ok(template) => Json(ApiResponse::success(template, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("get_template", e))),
+        Ok(template) => ApiResponse::success(template, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("get_template", e)),
     }
 }
 
@@ -343,16 +325,13 @@ pub async fn create_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTemplateRequest>,
-) -> Json<ApiResponse<Template>> {
+) -> ApiResponse<Template> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = TemplateService::new(state.pool.clone());
     let created_by = claims.username.clone();
     match service.create_template(tenant_id, req, &created_by).await {
-        Ok(template) => Json(ApiResponse::success(template, "创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "create_template",
-            e,
-        ))),
+        Ok(template) => ApiResponse::success(template, "创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("create_template", e)),
     }
 }
 
@@ -375,15 +354,12 @@ pub async fn update_template(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<UpdateTemplateRequest>,
-) -> Json<ApiResponse<Option<Template>>> {
+) -> ApiResponse<Option<Template>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = TemplateService::new(state.pool.clone());
     match service.update_template(tenant_id, template_id, req).await {
-        Ok(template) => Json(ApiResponse::success(template, "更新成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "update_template",
-            e,
-        ))),
+        Ok(template) => ApiResponse::success(template, "更新成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("update_template", e)),
     }
 }
 
@@ -404,15 +380,12 @@ pub async fn delete_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = TemplateService::new(state.pool.clone());
     match service.delete_template(tenant_id, template_id).await {
-        Ok(deleted) => Json(ApiResponse::success(deleted, "删除成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "delete_template",
-            e,
-        ))),
+        Ok(deleted) => ApiResponse::success(deleted, "删除成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("delete_template", e)),
     }
 }
 
@@ -429,7 +402,7 @@ pub async fn delete_template(
 pub async fn list_folders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<Folder>>> {
+) -> ApiResponse<Vec<Folder>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -438,8 +411,8 @@ pub async fn list_folders(
     };
     let service = FolderService::new(state.pool.clone());
     match service.list_folders(opt_tenant_id).await {
-        Ok(folders) => Json(ApiResponse::success(folders, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("list_folders", e))),
+        Ok(folders) => ApiResponse::success(folders, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("list_folders", e)),
     }
 }
 
@@ -460,7 +433,7 @@ pub async fn get_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(folder_id): Path<Uuid>,
-) -> Json<ApiResponse<Option<Folder>>> {
+) -> ApiResponse<Option<Folder>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -469,8 +442,8 @@ pub async fn get_folder(
     };
     let service = FolderService::new(state.pool.clone());
     match service.get_folder(opt_tenant_id, folder_id).await {
-        Ok(folder) => Json(ApiResponse::success(folder, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("get_folder", e))),
+        Ok(folder) => ApiResponse::success(folder, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("get_folder", e)),
     }
 }
 
@@ -489,13 +462,13 @@ pub async fn create_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateFolderRequest>,
-) -> Json<ApiResponse<Folder>> {
+) -> ApiResponse<Folder> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = FolderService::new(state.pool.clone());
     let created_by = claims.username.clone();
     match service.create_folder(tenant_id, req, &created_by).await {
-        Ok(folder) => Json(ApiResponse::success(folder, "创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("create_folder", e))),
+        Ok(folder) => ApiResponse::success(folder, "创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("create_folder", e)),
     }
 }
 
@@ -518,12 +491,12 @@ pub async fn update_folder(
     Extension(claims): Extension<Claims>,
     Path(folder_id): Path<Uuid>,
     Json(req): Json<UpdateFolderRequest>,
-) -> Json<ApiResponse<Option<Folder>>> {
+) -> ApiResponse<Option<Folder>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = FolderService::new(state.pool.clone());
     match service.update_folder(tenant_id, folder_id, req).await {
-        Ok(folder) => Json(ApiResponse::success(folder, "更新成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("update_folder", e))),
+        Ok(folder) => ApiResponse::success(folder, "更新成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("update_folder", e)),
     }
 }
 
@@ -544,12 +517,12 @@ pub async fn delete_folder(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(folder_id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let service = FolderService::new(state.pool.clone());
     match service.delete_folder(tenant_id, folder_id).await {
-        Ok(deleted) => Json(ApiResponse::success(deleted, "删除成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("delete_folder", e))),
+        Ok(deleted) => ApiResponse::success(deleted, "删除成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("delete_folder", e)),
     }
 }
 
@@ -579,7 +552,7 @@ pub struct DocDashboardStats {
 pub async fn get_dashboard_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<DocDashboardStats>> {
+) -> ApiResponse<DocDashboardStats> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -646,7 +619,7 @@ pub async fn get_dashboard_handler(
         this_month_updated,
     };
 
-    Json(ApiResponse::success(stats, "查询成功"))
+    ApiResponse::success(stats, "查询成功")
 }
 
 pub fn create_routes() -> Router<AppState> {
@@ -1012,7 +985,7 @@ pub fn create_routes() -> Router<AppState> {
 pub async fn list_document_versions(
     State(state): State<AppState>,
     Path(document_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<DocumentVersion>>> {
+) -> ApiResponse<Vec<DocumentVersion>> {
     let versions = sqlx::query_as::<_, DocumentVersion>(
         "SELECT id, document_id, version, content, summary, created_by, created_at
          FROM core_doc_document_versions
@@ -1024,10 +997,10 @@ pub async fn list_document_versions(
     .await;
 
     match versions {
-        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Ok(v) => ApiResponse::success(v, "查询成功"),
         Err(e) => {
             tracing::error!("查询文档版本失败: {}", e);
-            Json(ApiResponse::server_error("查询文档版本失败"))
+            ApiResponse::server_error("查询文档版本失败")
         }
     }
 }
@@ -1050,7 +1023,7 @@ pub async fn list_document_versions(
 pub async fn get_document_version(
     State(state): State<AppState>,
     Path((document_id, version)): Path<(Uuid, i32)>,
-) -> Json<ApiResponse<DocumentVersion>> {
+) -> ApiResponse<DocumentVersion> {
     let ver = sqlx::query_as::<_, DocumentVersion>(
         "SELECT id, document_id, version, content, summary, created_by, created_at
          FROM core_doc_document_versions
@@ -1062,13 +1035,13 @@ pub async fn get_document_version(
     .await;
 
     match ver {
-        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Ok(v) => ApiResponse::success(v, "查询成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::not_found("文档版本不存在"));
+                return ApiResponse::not_found("文档版本不存在");
             }
             tracing::error!("查询文档版本失败: {}", e);
-            Json(ApiResponse::server_error("查询文档版本失败"))
+            ApiResponse::server_error("查询文档版本失败")
         }
     }
 }
@@ -1091,7 +1064,7 @@ pub async fn get_document_version(
 pub async fn restore_document_version(
     State(state): State<AppState>,
     Path((document_id, version)): Path<(Uuid, i32)>,
-) -> Json<ApiResponse<Document>> {
+) -> ApiResponse<Document> {
     let content = sqlx::query_scalar::<_, String>(
         "SELECT content FROM core_doc_document_versions WHERE document_id = $1 AND version = $2",
     )
@@ -1102,10 +1075,10 @@ pub async fn restore_document_version(
 
     let content = match content {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(ApiResponse::not_found("文档版本不存在")),
+        Ok(None) => return ApiResponse::not_found("文档版本不存在"),
         Err(e) => {
             tracing::error!("读取文档版本失败: {}", e);
-            return Json(ApiResponse::server_error("恢复文档版本失败"));
+            return ApiResponse::server_error("恢复文档版本失败");
         }
     };
 
@@ -1121,13 +1094,13 @@ pub async fn restore_document_version(
     .await;
 
     match doc {
-        Ok(d) => Json(ApiResponse::success(d, "恢复成功")),
+        Ok(d) => ApiResponse::success(d, "恢复成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::not_found("文档不存在"));
+                return ApiResponse::not_found("文档不存在");
             }
             tracing::error!("恢复文档版本失败: {}", e);
-            Json(ApiResponse::server_error("恢复文档版本失败"))
+            ApiResponse::server_error("恢复文档版本失败")
         }
     }
 }
@@ -1144,194 +1117,185 @@ fn empty_paged() -> PaginatedResponse<serde_json::Value> {
 
 // ---------- health ----------
 
-pub async fn doc_health() -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success("ok".to_string(), "服务正常"))
+pub async fn doc_health() -> ApiResponse<String> {
+    ApiResponse::success("ok".to_string(), "服务正常")
 }
 
 // ---------- 协作：协作者 ----------
 
 /// 待上游支持：协作者列表
-pub async fn list_collaborators_stub() -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(vec![], "查询成功"))
+pub async fn list_collaborators_stub() -> ApiResponse<Vec<serde_json::Value>> {
+    ApiResponse::success(vec![], "查询成功")
 }
 
 /// 待上游支持：添加协作者
-pub async fn add_collaborators_stub() -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(vec![], "操作成功"))
+pub async fn add_collaborators_stub() -> ApiResponse<Vec<serde_json::Value>> {
+    ApiResponse::success(vec![], "操作成功")
 }
 
 /// 待上游支持：更新协作者权限
-pub async fn update_collaborator_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("协作者不存在或待上游支持"))
+pub async fn update_collaborator_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("协作者不存在或待上游支持")
 }
 
 /// 待上游支持：移除协作者
-pub async fn remove_collaborator_stub() -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success_no_data("删除成功"))
+pub async fn remove_collaborator_stub() -> ApiResponse<()> {
+    ApiResponse::success_no_data("删除成功")
 }
 
 // ---------- 协作：评论 ----------
 
 /// 待上游支持：评论列表
-pub async fn list_comments_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn list_comments_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：创建评论
-pub async fn create_comment_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("文档不存在或待上游支持"))
+pub async fn create_comment_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("文档不存在或待上游支持")
 }
 
 /// 待上游支持：更新评论
-pub async fn update_comment_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("评论不存在或待上游支持"))
+pub async fn update_comment_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("评论不存在或待上游支持")
 }
 
 /// 待上游支持：删除评论
-pub async fn delete_comment_stub() -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success_no_data("删除成功"))
+pub async fn delete_comment_stub() -> ApiResponse<()> {
+    ApiResponse::success_no_data("删除成功")
 }
 
 // ---------- 协作：活动记录 ----------
 
 /// 待上游支持：文档活动记录
-pub async fn list_activities_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn list_activities_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 // ---------- 协作：分享 ----------
 
 /// 待上游支持：创建分享链接
-pub async fn create_share_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("文档不存在或待上游支持"))
+pub async fn create_share_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("文档不存在或待上游支持")
 }
 
 /// 待上游支持：分享链接列表
-pub async fn list_shares_stub() -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(vec![], "查询成功"))
+pub async fn list_shares_stub() -> ApiResponse<Vec<serde_json::Value>> {
+    ApiResponse::success(vec![], "查询成功")
 }
 
 /// 待上游支持：删除分享链接
-pub async fn delete_share_stub() -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success_no_data("删除成功"))
+pub async fn delete_share_stub() -> ApiResponse<()> {
+    ApiResponse::success_no_data("删除成功")
 }
 
 // ---------- 版本控制扩展 ----------
 
 /// 待上游支持：发布版本
-pub async fn publish_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("版本不存在或待上游支持"))
+pub async fn publish_version_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("版本不存在或待上游支持")
 }
 
 /// 待上游支持：取消发布
-pub async fn unpublish_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("版本不存在或待上游支持"))
+pub async fn unpublish_version_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("版本不存在或待上游支持")
 }
 
 /// 待上游支持：版本对比
-pub async fn diff_versions_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("版本不存在或待上游支持"))
+pub async fn diff_versions_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("版本不存在或待上游支持")
 }
 
 /// 待上游支持：获取文档锁
-pub async fn get_lock_stub() -> Json<ApiResponse<Option<serde_json::Value>>> {
-    Json(ApiResponse::success(None, "查询成功"))
+pub async fn get_lock_stub() -> ApiResponse<Option<serde_json::Value>> {
+    ApiResponse::success(None, "查询成功")
 }
 
 /// 待上游支持：加锁
-pub async fn acquire_lock_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("文档不存在或待上游支持"))
+pub async fn acquire_lock_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("文档不存在或待上游支持")
 }
 
 /// 待上游支持：解锁
-pub async fn release_lock_stub() -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success_no_data("解锁成功"))
+pub async fn release_lock_stub() -> ApiResponse<()> {
+    ApiResponse::success_no_data("解锁成功")
 }
 
 // ---------- 工作区 ----------
 
 /// 待上游支持：工作区列表
-pub async fn list_workspaces_stub() -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(vec![], "查询成功"))
+pub async fn list_workspaces_stub() -> ApiResponse<Vec<serde_json::Value>> {
+    ApiResponse::success(vec![], "查询成功")
 }
 
 /// 待上游支持：工作区详情
-pub async fn get_workspace_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("工作区不存在或待上游支持"))
+pub async fn get_workspace_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("工作区不存在或待上游支持")
 }
 
 /// 待上游支持：创建工作区
-pub async fn create_workspace_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("待上游支持"))
+pub async fn create_workspace_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("待上游支持")
 }
 
 /// 待上游支持：更新工作区
-pub async fn update_workspace_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("工作区不存在或待上游支持"))
+pub async fn update_workspace_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("工作区不存在或待上游支持")
 }
 
 /// 待上游支持：删除工作区
-pub async fn delete_workspace_stub() -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success_no_data("删除成功"))
+pub async fn delete_workspace_stub() -> ApiResponse<()> {
+    ApiResponse::success_no_data("删除成功")
 }
 
 /// 待上游支持：工作区目录树
-pub async fn get_workspace_tree_stub() -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(vec![], "查询成功"))
+pub async fn get_workspace_tree_stub() -> ApiResponse<Vec<serde_json::Value>> {
+    ApiResponse::success(vec![], "查询成功")
 }
 
 /// 待上游支持：移动项目
-pub async fn move_items_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"moved": 0}),
-        "操作成功",
-    ))
+pub async fn move_items_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"moved": 0}), "操作成功")
 }
 
 /// 待上游支持：复制项目
-pub async fn copy_items_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"copied": 0}),
-        "操作成功",
-    ))
+pub async fn copy_items_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"copied": 0}), "操作成功")
 }
 
 /// 待上游支持：排序
-pub async fn sort_items_stub() -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success_no_data("排序成功"))
+pub async fn sort_items_stub() -> ApiResponse<()> {
+    ApiResponse::success_no_data("排序成功")
 }
 
 /// 待上游支持：回收站列表
-pub async fn list_trash_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn list_trash_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：从回收站恢复
-pub async fn restore_from_trash_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("项目不存在或待上游支持"))
+pub async fn restore_from_trash_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("项目不存在或待上游支持")
 }
 
 /// 待上游支持：彻底删除回收站项目
-pub async fn delete_from_trash_stub() -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success_no_data("删除成功"))
+pub async fn delete_from_trash_stub() -> ApiResponse<()> {
+    ApiResponse::success_no_data("删除成功")
 }
 
 /// 待上游支持：清空回收站
-pub async fn empty_trash_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"deleted": 0}),
-        "操作成功",
-    ))
+pub async fn empty_trash_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"deleted": 0}), "操作成功")
 }
 
 /// 待上游支持：搜索工作区
-pub async fn search_workspace_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn search_workspace_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：工作区统计
-pub async fn get_workspace_stats_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+pub async fn get_workspace_stats_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({
             "total_documents": 0,
             "total_folders": 0,
@@ -1342,93 +1306,91 @@ pub async fn get_workspace_stats_stub() -> Json<ApiResponse<serde_json::Value>> 
             "by_type": []
         }),
         "查询成功",
-    ))
+    )
 }
 
 // ---------- 模板审批 ----------
 
 /// 待上游支持：模板审批列表
-pub async fn list_template_approvals_stub(
-) -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn list_template_approvals_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：创建审批
-pub async fn create_approval_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("模板不存在或待上游支持"))
+pub async fn create_approval_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("模板不存在或待上游支持")
 }
 
 /// 待上游支持：提交模板审批
-pub async fn submit_template_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("模板不存在或待上游支持"))
+pub async fn submit_template_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("模板不存在或待上游支持")
 }
 
 /// 待上游支持：审批详情
-pub async fn get_approval_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("审批不存在或待上游支持"))
+pub async fn get_approval_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("审批不存在或待上游支持")
 }
 
 /// 待上游支持：审批通过
-pub async fn approve_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("审批不存在或待上游支持"))
+pub async fn approve_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("审批不存在或待上游支持")
 }
 
 /// 待上游支持：审批拒绝
-pub async fn reject_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("审批不存在或待上游支持"))
+pub async fn reject_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("审批不存在或待上游支持")
 }
 
 /// 待上游支持：取消审批
-pub async fn cancel_approval_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("审批不存在或待上游支持"))
+pub async fn cancel_approval_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("审批不存在或待上游支持")
 }
 
 /// 待上游支持：待审批列表
-pub async fn list_pending_approvals_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>>
-{
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn list_pending_approvals_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：我的待审批
-pub async fn list_my_pending_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn list_my_pending_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：我提交的
-pub async fn list_my_submitted_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn list_my_submitted_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：我的历史
-pub async fn list_my_history_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn list_my_history_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 // ---------- 模板分配与统计 ----------
 
 /// 待上游支持：模板分配列表
-pub async fn list_assignments_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn list_assignments_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：创建分配
-pub async fn create_assignment_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("模板不存在或待上游支持"))
+pub async fn create_assignment_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("模板不存在或待上游支持")
 }
 
 /// 待上游支持：删除分配
-pub async fn delete_assignment_stub() -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success_no_data("删除成功"))
+pub async fn delete_assignment_stub() -> ApiResponse<()> {
+    ApiResponse::success_no_data("删除成功")
 }
 
 /// 待上游支持：模板使用统计
-pub async fn get_template_usage_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("模板不存在或待上游支持"))
+pub async fn get_template_usage_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("模板不存在或待上游支持")
 }
 
 /// 待上游支持：全局使用统计
-pub async fn get_usage_stats_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+pub async fn get_usage_stats_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({
             "total_templates": 0,
             "total_uses": 0,
@@ -1436,115 +1398,114 @@ pub async fn get_usage_stats_stub() -> Json<ApiResponse<serde_json::Value>> {
             "active_users": 0
         }),
         "查询成功",
-    ))
+    )
 }
 
 /// 待上游支持：热门模板
-pub async fn get_top_templates_stub() -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(vec![], "查询成功"))
+pub async fn get_top_templates_stub() -> ApiResponse<Vec<serde_json::Value>> {
+    ApiResponse::success(vec![], "查询成功")
 }
 
 /// 待上游支持：克隆模板
-pub async fn clone_template_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("模板不存在或待上游支持"))
+pub async fn clone_template_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("模板不存在或待上游支持")
 }
 
 /// 待上游支持：导出模板
-pub async fn export_template_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("模板不存在或待上游支持"))
+pub async fn export_template_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("模板不存在或待上游支持")
 }
 
 /// 待上游支持：依赖列表
-pub async fn list_dependencies_stub() -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(vec![], "查询成功"))
+pub async fn list_dependencies_stub() -> ApiResponse<Vec<serde_json::Value>> {
+    ApiResponse::success(vec![], "查询成功")
 }
 
 /// 待上游支持：添加依赖
-pub async fn add_dependency_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("模板不存在或待上游支持"))
+pub async fn add_dependency_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("模板不存在或待上游支持")
 }
 
 /// 待上游支持：移除依赖
-pub async fn remove_dependency_stub() -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success_no_data("删除成功"))
+pub async fn remove_dependency_stub() -> ApiResponse<()> {
+    ApiResponse::success_no_data("删除成功")
 }
 
 // ---------- 模板扩展操作 ----------
 
 /// 待上游支持：渲染模板
-pub async fn render_template_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("模板不存在或待上游支持"))
+pub async fn render_template_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("模板不存在或待上游支持")
 }
 
 /// 待上游支持：复制模板
-pub async fn duplicate_template_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("模板不存在或待上游支持"))
+pub async fn duplicate_template_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("模板不存在或待上游支持")
 }
 
 /// 待上游支持：切换模板状态
-pub async fn toggle_template_status_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("模板不存在或待上游支持"))
+pub async fn toggle_template_status_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("模板不存在或待上游支持")
 }
 
 // ---------- 模板版本 ----------
 
 /// 待上游支持：模板版本列表
-pub async fn list_template_versions_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>>
-{
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn list_template_versions_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：模板版本详情
-pub async fn get_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("版本不存在或待上游支持"))
+pub async fn get_template_version_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("版本不存在或待上游支持")
 }
 
 /// 待上游支持：创建模板版本
-pub async fn create_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("模板不存在或待上游支持"))
+pub async fn create_template_version_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("模板不存在或待上游支持")
 }
 
 /// 待上游支持：更新模板版本
-pub async fn update_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("版本不存在或待上游支持"))
+pub async fn update_template_version_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("版本不存在或待上游支持")
 }
 
 /// 待上游支持：删除模板版本
-pub async fn delete_template_version_stub() -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success_no_data("删除成功"))
+pub async fn delete_template_version_stub() -> ApiResponse<()> {
+    ApiResponse::success_no_data("删除成功")
 }
 
 /// 待上游支持：激活模板版本
-pub async fn activate_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("版本不存在或待上游支持"))
+pub async fn activate_template_version_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("版本不存在或待上游支持")
 }
 
 /// 待上游支持：回滚模板版本
-pub async fn rollback_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("版本不存在或待上游支持"))
+pub async fn rollback_template_version_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("版本不存在或待上游支持")
 }
 
 /// 待上游支持：分叉模板版本
-pub async fn fork_template_version_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("版本不存在或待上游支持"))
+pub async fn fork_template_version_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("版本不存在或待上游支持")
 }
 
 /// 待上游支持：版本差异
-pub async fn get_version_diff_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("版本不存在或待上游支持"))
+pub async fn get_version_diff_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("版本不存在或待上游支持")
 }
 
 /// 待上游支持：版本对比
-pub async fn compare_versions_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found("版本不存在或待上游支持"))
+pub async fn compare_versions_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("版本不存在或待上游支持")
 }
 
 /// 待上游支持：版本历史
-pub async fn get_version_history_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
-    Json(ApiResponse::success(empty_paged(), "查询成功"))
+pub async fn get_version_history_stub() -> ApiResponse<PaginatedResponse<serde_json::Value>> {
+    ApiResponse::success(empty_paged(), "查询成功")
 }
 
 /// 待上游支持：更新日志
-pub async fn get_changelog_stub() -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(vec![], "查询成功"))
+pub async fn get_changelog_stub() -> ApiResponse<Vec<serde_json::Value>> {
+    ApiResponse::success(vec![], "查询成功")
 }

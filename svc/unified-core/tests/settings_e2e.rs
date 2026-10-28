@@ -51,9 +51,8 @@ async fn list_api_keys_empty(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let resp = list_api_keys(State(test_app_state(pool)), Extension(super_claims())).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert!(data.is_empty());
 }
 
@@ -72,9 +71,8 @@ async fn create_api_key_persists(pool: sqlx::PgPool) {
     )
     .await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(data.name, "部署密钥");
     assert!(data.secret.contains("****"));
 
@@ -84,9 +82,8 @@ async fn create_api_key_persists(pool: sqlx::PgPool) {
     )
     .await;
     let items = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(items.len(), 1);
     assert_eq!(items[0].name, "部署密钥");
 }
@@ -106,9 +103,8 @@ async fn delete_api_key_removes(pool: sqlx::PgPool) {
     )
     .await;
     let entry: ApiKeyEntry = created
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", created.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", created.message));
 
     let del = delete_api_key(
         State(test_app_state(pool.clone())),
@@ -116,13 +112,12 @@ async fn delete_api_key_removes(pool: sqlx::PgPool) {
         axum::extract::Path(entry.id),
     )
     .await;
-    assert!(del.0.data.is_some());
+    assert!(del.data.is_some());
 
     let resp = list_api_keys(State(test_app_state(pool)), Extension(super_claims())).await;
     let items = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert!(items.is_empty());
 }
 
@@ -131,9 +126,8 @@ async fn get_smtp_returns_default_when_unset(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let resp = get_smtp_config(State(test_app_state(pool)), Extension(super_claims())).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert!(!data.enabled);
 }
 
@@ -147,13 +141,12 @@ async fn update_smtp_persists_and_reads_back(pool: sqlx::PgPool) {
         Json(payload),
     )
     .await;
-    assert!(upd.0.data.is_some(), "update failed: {:?}", upd.0.message);
+    assert!(upd.data.is_some(), "update failed: {:?}", upd.message);
 
     let resp = get_smtp_config(State(test_app_state(pool)), Extension(super_claims())).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert!(data.enabled);
     assert_eq!(data.host, "smtp.example.com");
     assert_eq!(data.port, 465);

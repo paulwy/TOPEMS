@@ -69,7 +69,7 @@ fn is_allowed_type(t: &str) -> bool {
 pub async fn list_api_keys(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ApiKeyEntry>>> {
+) -> ApiResponse<Vec<ApiKeyEntry>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -109,14 +109,11 @@ pub async fn list_api_keys(
                 entry.created_at = updated_at.and_utc().to_rfc3339();
                 entries.push(entry);
             }
-            Json(ApiResponse::success(entries, "获取 API Key 列表成功"))
+            ApiResponse::success(entries, "获取 API Key 列表成功")
         }
         Err(e) => {
             tracing::error!("Failed to list API keys: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "获取 API Key 列表失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("获取 API Key 列表失败", e))
         }
     }
 }
@@ -126,18 +123,18 @@ pub async fn create_api_key(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateApiKeyRequest>,
-) -> Json<ApiResponse<ApiKeyEntry>> {
+) -> ApiResponse<ApiKeyEntry> {
     if payload.name.trim().is_empty() {
-        return Json(ApiResponse::bad_request("API Key 名称不能为空"));
+        return ApiResponse::bad_request("API Key 名称不能为空");
     }
     if payload.secret.is_empty() {
-        return Json(ApiResponse::bad_request("API Key 密钥不能为空"));
+        return ApiResponse::bad_request("API Key 密钥不能为空");
     }
     if !is_allowed_type(&payload.key_type) {
-        return Json(ApiResponse::bad_request(&format!(
+        return ApiResponse::bad_request(&format!(
             "API Key 类型无效，允许: {}",
             ALLOWED_TYPES.join(", ")
-        )));
+        ));
     }
 
     let tenant_id = tenant_uuid(&claims);
@@ -161,10 +158,7 @@ pub async fn create_api_key(
     let serialized = match serde_json::to_string(&entry) {
         Ok(s) => s,
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "序列化 API Key 失败",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("序列化 API Key 失败", e));
         }
     };
 
@@ -182,17 +176,14 @@ pub async fn create_api_key(
 
     if let Err(e) = result {
         tracing::error!("Failed to create API key: {}", e);
-        return Json(ApiResponse::from(TopemsError::internal(
-            "创建 API Key 失败",
-            e,
-        )));
+        return ApiResponse::from(TopemsError::internal("创建 API Key 失败", e));
     }
 
     // Return the entry with a masked secret (mask the plaintext, not the
     // ciphertext that was persisted).
     let mut response = entry;
     response.secret = mask_secret(&plaintext_secret);
-    Json(ApiResponse::success(response, "创建 API Key 成功"))
+    ApiResponse::success(response, "创建 API Key 成功")
 }
 
 /// `DELETE /system/api-keys/{id}`
@@ -200,7 +191,7 @@ pub async fn delete_api_key(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_uuid(&claims);
     let key = setting_key(&id);
 
@@ -212,17 +203,13 @@ pub async fn delete_api_key(
             .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({ "id": id }),
-            "删除 API Key 成功",
-        )),
-        Ok(_) => Json(ApiResponse::not_found("API Key 不存在")),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({ "id": id }), "删除 API Key 成功")
+        }
+        Ok(_) => ApiResponse::not_found("API Key 不存在"),
         Err(e) => {
             tracing::error!("Failed to delete API key: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "删除 API Key 失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("删除 API Key 失败", e))
         }
     }
 }
@@ -232,7 +219,7 @@ pub async fn get_api_key(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ApiKeyEntry>> {
+) -> ApiResponse<ApiKeyEntry> {
     let tenant_id = tenant_uuid(&claims);
     let key = setting_key(&id);
 
@@ -253,10 +240,7 @@ pub async fn get_api_key(
             let mut entry = match serde_json::from_str::<ApiKeyEntry>(&raw) {
                 Ok(e) => e,
                 Err(e) => {
-                    return Json(ApiResponse::from(TopemsError::internal(
-                        "解析 API Key 数据失败",
-                        e,
-                    )));
+                    return ApiResponse::from(TopemsError::internal("解析 API Key 数据失败", e));
                 }
             };
             entry.id = setting_key
@@ -265,15 +249,12 @@ pub async fn get_api_key(
                 .to_string();
             entry.secret = mask_secret(&decrypt_secret(&state, &entry.secret));
             entry.created_at = updated_at.and_utc().to_rfc3339();
-            Json(ApiResponse::success(entry, "获取 API Key 详情成功"))
+            ApiResponse::success(entry, "获取 API Key 详情成功")
         }
-        Err(sqlx::error::Error::RowNotFound) => Json(ApiResponse::not_found("API Key 不存在")),
+        Err(sqlx::error::Error::RowNotFound) => ApiResponse::not_found("API Key 不存在"),
         Err(e) => {
             tracing::error!("Failed to get API key: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "获取 API Key 详情失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("获取 API Key 详情失败", e))
         }
     }
 }
@@ -291,7 +272,7 @@ pub async fn update_api_key(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(payload): Json<UpdateApiKeyRequest>,
-) -> Json<ApiResponse<ApiKeyEntry>> {
+) -> ApiResponse<ApiKeyEntry> {
     let tenant_id = tenant_uuid(&claims);
     let key = setting_key(&id);
 
@@ -306,14 +287,11 @@ pub async fn update_api_key(
     let row = match existing {
         Ok(row) => row,
         Err(sqlx::error::Error::RowNotFound) => {
-            return Json(ApiResponse::not_found("API Key 不存在"));
+            return ApiResponse::not_found("API Key 不存在");
         }
         Err(e) => {
             tracing::error!("Failed to load API key for update: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal(
-                "更新 API Key 失败",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("更新 API Key 失败", e));
         }
     };
 
@@ -324,31 +302,28 @@ pub async fn update_api_key(
     let mut entry = match serde_json::from_str::<ApiKeyEntry>(&raw) {
         Ok(e) => e,
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "解析 API Key 数据失败",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("解析 API Key 数据失败", e));
         }
     };
 
     if let Some(name) = payload.name {
         if name.trim().is_empty() {
-            return Json(ApiResponse::bad_request("API Key 名称不能为空"));
+            return ApiResponse::bad_request("API Key 名称不能为空");
         }
         entry.name = name;
     }
     if let Some(key_type) = payload.key_type {
         if !is_allowed_type(&key_type) {
-            return Json(ApiResponse::bad_request(&format!(
+            return ApiResponse::bad_request(&format!(
                 "API Key 类型无效，允许: {}",
                 ALLOWED_TYPES.join(", ")
-            )));
+            ));
         }
         entry.key_type = key_type;
     }
     if let Some(secret) = payload.secret {
         if secret.is_empty() {
-            return Json(ApiResponse::bad_request("API Key 密钥不能为空"));
+            return ApiResponse::bad_request("API Key 密钥不能为空");
         }
         entry.secret = encrypt_secret(&state, &secret);
     }
@@ -356,10 +331,7 @@ pub async fn update_api_key(
     let serialized = match serde_json::to_string(&entry) {
         Ok(s) => s,
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "序列化 API Key 失败",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("序列化 API Key 失败", e));
         }
     };
 
@@ -381,15 +353,12 @@ pub async fn update_api_key(
                 .to_string();
             response.secret = mask_secret(&decrypt_secret(&state, &response.secret));
             response.created_at = updated_at.and_utc().to_rfc3339();
-            Json(ApiResponse::success(response, "更新 API Key 成功"))
+            ApiResponse::success(response, "更新 API Key 成功")
         }
-        Ok(_) => Json(ApiResponse::not_found("API Key 不存在")),
+        Ok(_) => ApiResponse::not_found("API Key 不存在"),
         Err(e) => {
             tracing::error!("Failed to update API key: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "更新 API Key 失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("更新 API Key 失败", e))
         }
     }
 }

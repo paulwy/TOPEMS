@@ -227,7 +227,7 @@ pub async fn list_monitor_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InstanceQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     super::instance::list_instances(State(state), Extension(claims), Query(params)).await
 }
 
@@ -236,7 +236,7 @@ pub async fn running_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InstanceQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let mut params = params;
     params.status = Some("running".to_string());
     super::instance::list_instances(State(state), Extension(claims), Query(params)).await
@@ -247,7 +247,7 @@ pub async fn completed_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InstanceQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let mut params = params;
     params.status = Some("completed".to_string());
     super::instance::list_instances(State(state), Extension(claims), Query(params)).await
@@ -258,7 +258,7 @@ pub async fn rejected_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InstanceQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let mut params = params;
     params.status = Some("rejected".to_string());
     super::instance::list_instances(State(state), Extension(claims), Query(params)).await
@@ -269,7 +269,7 @@ pub async fn suspended_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InstanceQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<WorkflowInstance>>> {
+) -> ApiResponse<PaginatedResponse<WorkflowInstance>> {
     let mut params = params;
     params.status = Some("suspended".to_string());
     super::instance::list_instances(State(state), Extension(claims), Query(params)).await
@@ -282,7 +282,7 @@ pub async fn suspended_instances(
 pub async fn get_monitor_statistics(
     State(state): State<AppState>,
     Query(_params): Query<StatsQueryParams>,
-) -> Json<ApiResponse<MonitorStatistics>> {
+) -> ApiResponse<MonitorStatistics> {
     let total_instances: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances")
         .fetch_one(&state.pool)
         .await
@@ -354,7 +354,7 @@ pub async fn get_monitor_statistics(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         MonitorStatistics {
             total_instances,
             running_instances,
@@ -368,7 +368,7 @@ pub async fn get_monitor_statistics(
             by_workflow,
         },
         "查询成功",
-    ))
+    )
 }
 
 // ─── Handlers: Analysis ──────────────────────────────────────────────────────
@@ -378,7 +378,7 @@ pub async fn get_monitor_statistics(
 pub async fn get_workflow_analysis(
     State(state): State<AppState>,
     Path(workflow_id): Path<Uuid>,
-) -> Json<ApiResponse<WorkflowAnalysis>> {
+) -> ApiResponse<WorkflowAnalysis> {
     let wf_name: Option<String> =
         sqlx::query_scalar("SELECT name FROM core_workflows WHERE id = $1")
             .bind(workflow_id)
@@ -454,7 +454,7 @@ pub async fn get_workflow_analysis(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         WorkflowAnalysis {
             workflow_id: workflow_id.to_string(),
             workflow_name: wf_name.unwrap_or_else(|| "未知流程".to_string()),
@@ -467,14 +467,14 @@ pub async fn get_workflow_analysis(
             bottlenecks,
         },
         "查询成功",
-    ))
+    )
 }
 
 /// GET /monitor/analysis/{workflow_id}/nodes
 pub async fn get_node_statistics(
     State(state): State<AppState>,
     Path(workflow_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<NodeStat>>> {
+) -> ApiResponse<Vec<NodeStat>> {
     let nodes: Vec<NodeStat> = sqlx::query_as(
         r#"SELECT t.node_id, NULL as node_name, COUNT(DISTINCT t.instance_id) as instance_count,
                   COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(t.completed_at, NOW()) - t.created_at))), 0) as avg_duration_seconds,
@@ -489,14 +489,14 @@ pub async fn get_node_statistics(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(nodes, "查询成功"))
+    ApiResponse::success(nodes, "查询成功")
 }
 
 /// GET /monitor/analysis/{workflow_id}/bottlenecks
 pub async fn get_bottleneck_analysis(
     State(state): State<AppState>,
     Path(workflow_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<Bottleneck>>> {
+) -> ApiResponse<Vec<Bottleneck>> {
     let nodes: Vec<NodeStat> = sqlx::query_as(
         r#"SELECT t.node_id, NULL as node_name, COUNT(DISTINCT t.instance_id) as instance_count,
                   COALESCE(AVG(EXTRACT(EPOCH FROM (COALESCE(t.completed_at, NOW()) - t.created_at))), 0) as avg_duration_seconds,
@@ -527,7 +527,7 @@ pub async fn get_bottleneck_analysis(
         })
         .collect();
 
-    Json(ApiResponse::success(bottlenecks, "查询成功"))
+    ApiResponse::success(bottlenecks, "查询成功")
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
@@ -535,7 +535,7 @@ pub async fn get_bottleneck_analysis(
 pub async fn get_efficiency_analysis(
     State(state): State<AppState>,
     Query(_params): Query<StatsQueryParams>,
-) -> Json<ApiResponse<EfficiencyAnalysis>> {
+) -> ApiResponse<EfficiencyAnalysis> {
     let total: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM core_workflow_instances WHERE completed_at IS NOT NULL",
     )
@@ -584,7 +584,7 @@ pub async fn get_efficiency_analysis(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         EfficiencyAnalysis {
             total_instances: total,
             avg_duration_seconds: avg_duration,
@@ -595,14 +595,14 @@ pub async fn get_efficiency_analysis(
             by_workflow,
         },
         "查询成功",
-    ))
+    )
 }
 
 /// GET /monitor/analysis/trend
 pub async fn get_trend_data(
     State(state): State<AppState>,
     Query(_params): Query<StatsQueryParams>,
-) -> Json<ApiResponse<Vec<TrendData>>> {
+) -> ApiResponse<Vec<TrendData>> {
     let trends: Vec<TrendData> = sqlx::query_as(
         r#"SELECT d.date as date,
                   COALESCE(s.count, 0) as instances_started,
@@ -628,14 +628,14 @@ pub async fn get_trend_data(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(trends, "查询成功"))
+    ApiResponse::success(trends, "查询成功")
 }
 
 /// GET /monitor/analysis/users
 pub async fn get_user_stats(
     State(state): State<AppState>,
     Query(_params): Query<StatsQueryParams>,
-) -> Json<ApiResponse<Vec<UserWorkflowStat>>> {
+) -> ApiResponse<Vec<UserWorkflowStat>> {
     let stats: Vec<UserWorkflowStat> = sqlx::query_as(
         r#"SELECT i.initiator_id::text as user_id, NULL as user_name,
                   COUNT(*) as initiated_count,
@@ -648,14 +648,14 @@ pub async fn get_user_stats(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(stats, "查询成功"))
+    ApiResponse::success(stats, "查询成功")
 }
 
 /// GET /monitor/analysis/departments
 pub async fn get_department_stats(
     State(state): State<AppState>,
     Query(_params): Query<StatsQueryParams>,
-) -> Json<ApiResponse<Vec<DepartmentWorkflowStat>>> {
+) -> ApiResponse<Vec<DepartmentWorkflowStat>> {
     // No department column on instances; return aggregated by workflow as proxy
     let stats: Vec<DepartmentWorkflowStat> = sqlx::query_as(
         r#"SELECT w.name as department,
@@ -672,7 +672,7 @@ pub async fn get_department_stats(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(stats, "查询成功"))
+    ApiResponse::success(stats, "查询成功")
 }
 
 // ─── Handlers: Logs ──────────────────────────────────────────────────────────
@@ -681,7 +681,7 @@ pub async fn get_department_stats(
 pub async fn list_logs(
     State(state): State<AppState>,
     Query(params): Query<LogQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<ProcessLog>>> {
+) -> ApiResponse<PaginatedResponse<ProcessLog>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -711,17 +711,17 @@ pub async fn list_logs(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 /// GET /monitor/logs/{id}
 pub async fn get_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProcessLog>> {
+) -> ApiResponse<ProcessLog> {
     let log: Result<ProcessLog, _> = sqlx::query_as(
         r#"SELECT t.id, '00000000-0000-0000-0000-000000000000'::uuid as tenant_id,
                   t.instance_id as workflow_instance_id,
@@ -741,17 +741,13 @@ pub async fn get_log(
     .await;
 
     match log {
-        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Ok(v) => ApiResponse::success(v, "查询成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "日志不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("日志不存在".to_string()))
             } else {
                 tracing::error!("查询流程日志失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询流程日志失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("查询流程日志失败".to_string()))
             }
         }
     }
@@ -762,7 +758,7 @@ pub async fn get_logs_by_instance(
     State(state): State<AppState>,
     Path(instance_id): Path<Uuid>,
     Query(params): Query<LogQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<ProcessLog>>> {
+) -> ApiResponse<PaginatedResponse<ProcessLog>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -796,10 +792,10 @@ pub async fn get_logs_by_instance(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 /// GET /monitor/logs/workflow/{workflow_id}
@@ -807,7 +803,7 @@ pub async fn get_logs_by_workflow(
     State(state): State<AppState>,
     Path(workflow_id): Path<Uuid>,
     Query(params): Query<LogQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<ProcessLog>>> {
+) -> ApiResponse<PaginatedResponse<ProcessLog>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -844,10 +840,10 @@ pub async fn get_logs_by_workflow(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 /// GET /monitor/logs/node/{workflow_id}/{node_id}
@@ -855,7 +851,7 @@ pub async fn get_logs_by_node(
     State(state): State<AppState>,
     Path((workflow_id, node_id)): Path<(Uuid, String)>,
     Query(params): Query<LogQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<ProcessLog>>> {
+) -> ApiResponse<PaginatedResponse<ProcessLog>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -894,10 +890,10 @@ pub async fn get_logs_by_node(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 /// GET /monitor/logs/user/{user_id}
@@ -905,7 +901,7 @@ pub async fn get_logs_by_user(
     State(state): State<AppState>,
     Path(user_id): Path<Uuid>,
     Query(params): Query<LogQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<ProcessLog>>> {
+) -> ApiResponse<PaginatedResponse<ProcessLog>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -939,16 +935,16 @@ pub async fn get_logs_by_user(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "查询成功",
-    ))
+    )
 }
 
 // ─── Handlers: Realtime / Dashboard / Performance / SLA ─────────────────────
 
 /// GET /monitor/realtime
-pub async fn get_realtime_stats(State(state): State<AppState>) -> Json<ApiResponse<RealtimeStats>> {
+pub async fn get_realtime_stats(State(state): State<AppState>) -> ApiResponse<RealtimeStats> {
     let active: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM core_workflow_instances WHERE status IN ('running','pending')",
     )
@@ -976,7 +972,7 @@ pub async fn get_realtime_stats(State(state): State<AppState>) -> Json<ApiRespon
             .await
             .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         RealtimeStats {
             active_instances: active,
             pending_tasks,
@@ -987,14 +983,12 @@ pub async fn get_realtime_stats(State(state): State<AppState>) -> Json<ApiRespon
             updated_at: Utc::now(),
         },
         "查询成功",
-    ))
+    )
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/dashboard
-pub async fn get_dashboard_data(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<MonitorDashboard>> {
+pub async fn get_dashboard_data(State(state): State<AppState>) -> ApiResponse<MonitorDashboard> {
     // Reuse statistics logic inline
     let total_instances: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances")
         .fetch_one(&state.pool)
@@ -1084,7 +1078,7 @@ pub async fn get_dashboard_data(
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         MonitorDashboard {
             overview: MonitorStatistics {
                 total_instances,
@@ -1117,7 +1111,7 @@ pub async fn get_dashboard_data(
             },
         },
         "查询成功",
-    ))
+    )
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
@@ -1125,7 +1119,7 @@ pub async fn get_dashboard_data(
 pub async fn get_performance_metrics(
     State(state): State<AppState>,
     Query(_params): Query<StatsQueryParams>,
-) -> Json<ApiResponse<PerformanceMetrics>> {
+) -> ApiResponse<PerformanceMetrics> {
     let total: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM core_workflow_instances WHERE completed_at IS NOT NULL",
     )
@@ -1173,7 +1167,7 @@ pub async fn get_performance_metrics(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PerformanceMetrics {
             total_instances: total,
             avg_duration_seconds: avg_duration,
@@ -1185,7 +1179,7 @@ pub async fn get_performance_metrics(
             by_workflow,
         },
         "查询成功",
-    ))
+    )
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
@@ -1193,7 +1187,7 @@ pub async fn get_performance_metrics(
 pub async fn get_sla_compliance(
     State(state): State<AppState>,
     Query(_params): Query<StatsQueryParams>,
-) -> Json<ApiResponse<SlaCompliance>> {
+) -> ApiResponse<SlaCompliance> {
     let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_workflow_instances")
         .fetch_one(&state.pool)
         .await
@@ -1248,7 +1242,7 @@ pub async fn get_sla_compliance(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         SlaCompliance {
             summary: SlaSummary {
                 total_instances: total,
@@ -1261,7 +1255,7 @@ pub async fn get_sla_compliance(
             by_status,
         },
         "查询成功",
-    ))
+    )
 }
 
 // ─── Handlers: Instance actions (skip / force-complete / force-terminate) ───
@@ -1271,7 +1265,7 @@ pub async fn skip_node(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(payload): Json<SkipNodeRequest>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let instance = sqlx::query_as::<_, WorkflowInstance>(
         r#"UPDATE core_workflow_instances
            SET current_node_id = CASE WHEN current_node_id = $2 THEN NULL ELSE current_node_id END,
@@ -1287,17 +1281,15 @@ pub async fn skip_node(
     .await;
 
     match instance {
-        Ok(v) => Json(ApiResponse::success(v, "跳过节点成功")),
+        Ok(v) => ApiResponse::success(v, "跳过节点成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                ApiResponse::from(TopemsError::ResourceNotFound(
                     "工作流实例不存在".to_string(),
-                )))
+                ))
             } else {
                 tracing::error!("跳过节点失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "跳过节点失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("跳过节点失败".to_string()))
             }
         }
     }
@@ -1308,7 +1300,7 @@ pub async fn force_complete(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(_payload): Json<Option<ForceActionRequest>>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let instance = sqlx::query_as::<_, WorkflowInstance>(
         r#"UPDATE core_workflow_instances
            SET status = 'completed', completed_at = NOW(), updated_at = NOW()
@@ -1322,17 +1314,15 @@ pub async fn force_complete(
     .await;
 
     match instance {
-        Ok(v) => Json(ApiResponse::success(v, "强制完成成功")),
+        Ok(v) => ApiResponse::success(v, "强制完成成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                ApiResponse::from(TopemsError::ResourceNotFound(
                     "工作流实例不存在".to_string(),
-                )))
+                ))
             } else {
                 tracing::error!("强制完成失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "强制完成失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("强制完成失败".to_string()))
             }
         }
     }
@@ -1343,7 +1333,7 @@ pub async fn force_terminate(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(_payload): Json<Option<ForceActionRequest>>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let instance = sqlx::query_as::<_, WorkflowInstance>(
         r#"UPDATE core_workflow_instances
            SET status = 'terminated', completed_at = NOW(), updated_at = NOW()
@@ -1357,17 +1347,15 @@ pub async fn force_terminate(
     .await;
 
     match instance {
-        Ok(v) => Json(ApiResponse::success(v, "强制终止成功")),
+        Ok(v) => ApiResponse::success(v, "强制终止成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                ApiResponse::from(TopemsError::ResourceNotFound(
                     "工作流实例不存在".to_string(),
-                )))
+                ))
             } else {
                 tracing::error!("强制终止失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "强制终止失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("强制终止失败".to_string()))
             }
         }
     }
