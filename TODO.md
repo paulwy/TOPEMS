@@ -1,3 +1,13 @@
+## S25 语义治理闭环：flow 表前缀 + mobile 4xx 透传（第 55 轮，2026-10-28）✅ 已完成
+
+> 目标：清零 `docs/web_contract_gap_list.md` 剩余 42 条 KNOWN（workflow 39 + mobile 3）。
+
+- **workflow 39 条根因**：flow 代码裸引用 `core_workflow_*` 表，search_path（flow 优先）解析到 `flow` schema 的残缺 stub 表（2-3 列），查询列不存在 → 500；`public` schema 的完整 stub 表（13-14 列，20261007140000 对齐迁移）与代码查询列完全匹配。**修复：SQL 裸表名显式 `public.` 前缀**（core_workflow_tasks/instances/versions 164 处 + 首轮正则漏网的表名 `core_workflows`（无下划线后缀）60 处，共 224 处）；
+- **mobile 3 条根因**：S25 后业务 404 映射 HTTP 404，`TypedServiceClient` 对非 2xx 一律 Err → mobile proxy 500；service token 认证链路本身正常（手动生成 mobile-service/mes:admin token 直调 /api/mes/orders/{id} 返回业务 404）。**修复：mobile production 3 个 handler 的 Err 分支新增 `downstream_error` 辅助**——`TopemsError::ServiceError` 4xx 解析下游信封 message 并透传对应业务码，其余降级 500；
+- **实测**：flow approvals/approval-tasks/workflows/instances/rules 全 200；mobile orders/{id} 返回业务 404「生产工单不存在」；契约冒烟 **4105/4105 PASS, 0 FAIL, 豁免 0**；
+- **61 条 KNOWN 全链清零**（第 53→55 轮）：unified-core 673/hrm 492 去 Json、audit/communication/hrm schema 错列、energy 501 判定、flow 表前缀、mobile 4xx 透传；
+- commits：本轮 3 个（见提交记录）。
+
 ## S25 unified-core/hrm 语义治理（第 54 轮，2026-10-28）✅ 已完成
 
 > 目标：清零 `docs/web_contract_gap_list.md` 61 条 KNOWN 豁免（envelope→HTTP 对齐延续）。
