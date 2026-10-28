@@ -206,17 +206,3 @@ export const assetTypeColors = {
   report: '#388e3c',
   dashboard: '#c2185b',
 } as const;
-
-export const assetStatusColors = {
-  active: '#388e3c',
-  deprecated: '#f57c00',
-  archived: '#757575',
-  development: '#1976d2',
-} as const;
-
-export const assetSensitivityColors = {
-  public: '#388e3c',
-  internal: '#1976d2',
-  confidential: '#f57c00',
-  restricted: '#d32f2f',
-} as const;

@@ -12,9 +12,3 @@ export const G2_PALETTE = [
   '#E86452', // 红
   '#6DC8EC', // 青
 ] as const;
-
-/** 演示辅助色（非系列色，用于对照线 / 占位 / 灰态示例）。 */
-export const DEMO_COLORS = {
-  neutralGrey: '#9E9E9E',
-  materialBlue: '#1976D2',
-} as const;

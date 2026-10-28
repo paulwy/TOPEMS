@@ -9,6 +9,5 @@ export * from './officeSupplies';
 export * from './meetingRoom';
 export * from './vehicleRequest';
 export * from './purchaseOrder';
-export * from './salesOrder';
 export * from './budget';
 export * from './inventory';
